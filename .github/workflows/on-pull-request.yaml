@@ -20,24 +20,4 @@ jobs:
       - uses: ./.github/actions/linting
 
   run-tests:
-    name: Test
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest]
-        package:
-          - evo-client-common
-          - evo-files
-          - evo-objects
-        python-version:
-          - "3.10"
-          - "3.11"
-          - "3.12"
-          - "3.13"
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ./.github/actions/testing
-        with:
-          PYTHON_VERSION: ${{ matrix.python-version }}
-          PACKAGE: ${{ matrix.package}}
+    uses: ./.github/workflows/run-all-tests.yaml

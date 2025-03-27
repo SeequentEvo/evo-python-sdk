@@ -1,0 +1,28 @@
+name: "Publish"
+description: "Builds and published a package"
+
+inputs:
+  PACKAGE:
+    required: true
+    description: "uv package to publish"
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v4
+    - uses: ./.github/actions/install-uv
+
+    - name: Build package
+      shell: bash
+      run: uv build --package ${{ inputs.package }}
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        path: ./dist
+        name: ${{ inputs.package }}
+
+    - name: Publish package
+      shell: bash
+      run: |
+        echo "Coming soon..." 

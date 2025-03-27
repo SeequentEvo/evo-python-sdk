@@ -1,0 +1,21 @@
+name: Build and publish evo-files
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - packages/evo-files/**
+
+jobs:
+  run-tests:
+    uses: ./.github/workflows/run-all-tests.yaml
+
+  build-package:
+    name: Build and publish package
+    needs: [run-tests]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ./.github/actions/publish
+        with:
+          PACKAGE: evo-files
