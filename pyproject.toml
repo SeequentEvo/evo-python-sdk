@@ -19,8 +19,3 @@ evo-objects = { workspace = true }
 
 [tool.uv.workspace]
 members = ["packages/*"]
-
-[[tool.uv.index]]
-name = "artifactory"
-url = "https://seequent.jfrog.io/artifactory/api/pypi/evo-converters-packages-pypi-local/simple"
-publish-url = "https://seequent.jfrog.io/artifactory/api/pypi/evo-converters-packages-pypi-local"

@@ -78,7 +78,7 @@ jobs:
           path: ./dist
           name: ${{ matrix.package }}
 
-      - name: Publish package to Artifactory
+      - name: Publish package
         shell: bash
         run: |
-          uv publish --index artifactory --username ${{ vars.EVO_ARTIFACTORY_USER }} --password ${{ secrets.EVO_ARTIFACTORY_TOKEN }}
+          echo "Coming soon..."
