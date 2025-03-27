@@ -1,5 +1,5 @@
 name: "Publish"
-description: "Builds and published a package"
+description: "Builds and publishes a package"
 
 inputs:
   PACKAGE:
