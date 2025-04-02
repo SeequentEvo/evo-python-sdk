@@ -61,7 +61,7 @@ Thank you for your interest in contributing to Seequent software. Please have a 
 We rely on an open, friendly, inclusive environment. To help us ensure this remains possible, please familiarise yourself with our [code of conduct](./CODE_OF_CONDUCT.md).
 
 ## License
-Evo schemas are open source and licensed under the [Apache 2.0 license](./LICENSE.md).
+Evo Python SDK's are open source and licensed under the [Apache 2.0 license](./LICENSE.md).
 
 Copyright © 2025 Bentley Systems, Incorporated.
 
