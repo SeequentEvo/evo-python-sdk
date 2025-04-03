@@ -132,7 +132,7 @@ class MockConnector(mock.AsyncMock):
 
 def _get_open_port() -> int:
     s = socket.socket(socket.AF_INET, type=socket.SOCK_STREAM)
-    s.bind(("127.0.0.1", 4000))
+    s.bind(("127.0.0.1", 0))
     _, port = s.getsockname()
     s.close()
     return port
