@@ -21,6 +21,7 @@ from typing import Literal, Optional
 from pydantic import BaseModel, Field, ValidationInfo, field_validator
 from evo.common.utils import BackoffLinear, Retry
 from evo.oauth.exceptions import OAuthError, OIDCError
+from urllib.parse import urlparse
 
 __all__ = [
     "AccessToken",
@@ -193,7 +194,8 @@ class UserAccessToken(AccessToken):
 
             # 1. The Issuer Identifier for the OpenID Provider (which is typically obtained during Discovery) MUST exactly
             #    match the value of the iss (issuer) Claim.
-            if issuer.endswith("seequent.com"):
+            parsed_issuer = urlparse(issuer)
+            if parsed_issuer.hostname and parsed_issuer.hostname.endswith(".seequent.com"):
                 # Seequent ID is not fully compliant with OpenID Connect.
                 logger.debug("Skipping issuer validation for Seequent ID.")
             elif claims.get("iss") != issuer:
