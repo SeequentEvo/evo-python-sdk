@@ -9,22 +9,17 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from .cache import Cache
-from .feedback import NoFeedback, PartialFeedback, iter_with_fb
-from .health_check import get_service_health, get_service_status
-from .retry import BackoffExponential, BackoffIncremental, BackoffLinear, BackoffMethod, Retry, RetryHandler
+from importlib.abc import Traversable
+from importlib.resources import files
 
-__all__ = [
-    "BackoffExponential",
-    "BackoffIncremental",
-    "BackoffLinear",
-    "BackoffMethod",
-    "Cache",
-    "NoFeedback",
-    "PartialFeedback",
-    "Retry",
-    "RetryHandler",
-    "get_service_health",
-    "get_service_status",
-    "iter_with_fb",
-]
+_ROOT = files(__name__)
+
+
+def get(filename: str) -> Traversable:
+    """Get the path to a file in this directory.
+
+    :param filename: The name of the file.
+
+    :return: A Traversable object representing the file.
+    """
+    return _ROOT / filename

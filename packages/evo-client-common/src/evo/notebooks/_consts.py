@@ -9,22 +9,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from .cache import Cache
-from .feedback import NoFeedback, PartialFeedback, iter_with_fb
-from .health_check import get_service_health, get_service_status
-from .retry import BackoffExponential, BackoffIncremental, BackoffLinear, BackoffMethod, Retry, RetryHandler
+DEFAULT_DISCOVERY_URL = "https://discover.api.seequent.com"
+DEFAULT_ISSUER_URL = "https://ims.bentley.com"
+DEFAULT_REDIRECT_URL = "http://localhost:3000/signin-oidc"
+DEFAULT_CLIENT_ID = "evopythonsdk"
+DEFAULT_DEVICE_FLOW_CLIENT_ID = "evo-sdk-device-flow"
 
-__all__ = [
-    "BackoffExponential",
-    "BackoffIncremental",
-    "BackoffLinear",
-    "BackoffMethod",
-    "Cache",
-    "NoFeedback",
-    "PartialFeedback",
-    "Retry",
-    "RetryHandler",
-    "get_service_health",
-    "get_service_status",
-    "iter_with_fb",
-]
+DEFAULT_CACHE_LOCATION = "./notebook-data"
