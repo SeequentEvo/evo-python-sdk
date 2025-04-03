@@ -1,5 +1,8 @@
 name: Build and publish evo-objects
 
+permissions:
+  contents: read
+
 on:
   push:
     branches:
