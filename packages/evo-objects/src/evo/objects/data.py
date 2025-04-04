@@ -22,9 +22,9 @@ from .exceptions import SchemaIDFormatError
 
 __all__ = [
     "ObjectMetadata",
-    "SchemaVersion",
     "ObjectSchema",
     "ObjectVersion",
+    "SchemaVersion",
 ]
 
 

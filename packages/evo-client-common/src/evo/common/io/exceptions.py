@@ -12,8 +12,8 @@
 from ..exceptions import EvoClientException
 
 __all__ = [
-    "ChunkedIOException",
     "ChunkedIOError",
+    "ChunkedIOException",
     "RenewalError",
     "RenewalTimeoutError",
 ]

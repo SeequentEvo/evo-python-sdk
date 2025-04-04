@@ -9,23 +9,23 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from .storage import StorageDestination
 from .bytes import BytesDestination, BytesSource
 from .chunked_io_manager import ChunkedIOManager, ChunkedIOTracker, ChunkMetadata
 from .download import Download
 from .http import HTTPIOBase, HTTPSource, ResourceAuthorizationError
+from .storage import StorageDestination
 from .upload import Upload
 
 __all__ = [
-    "StorageDestination",
     "BytesDestination",
     "BytesSource",
+    "ChunkMetadata",
     "ChunkedIOManager",
     "ChunkedIOTracker",
-    "ChunkMetadata",
     "Download",
     "HTTPIOBase",
     "HTTPSource",
     "ResourceAuthorizationError",
+    "StorageDestination",
     "Upload",
 ]

@@ -18,8 +18,8 @@ build-backend = "setuptools.build_meta"
 aiohttp = ["aiohttp"]
 notebooks = [
     "evo-client-common[aiohttp]",
+    "ipython",
     "ipywidgets",
-    "jupyter",
     "python-dotenv",
 ]
 
@@ -32,12 +32,16 @@ test = [
     "pytest",
 ]
 dev = [
-    "evo-client-common",
+    "evo-client-common[aiohttp]",
     "bumpver",
     "coverage[toml]",
     "ruff==0.9.1", # keep in sync with .pre-commit-config.yaml
     "pre-commit",
     {include-group="test"},
+]
+notebooks = [
+    "evo-client-common[aiohttp,notebooks]",
+    "jupyter",
 ]
 
 [tool.setuptools.packages.find]
@@ -47,6 +51,9 @@ namespaces = true
 [tool.ruff]
 src = ["src", "tests"]
 line-length = 120
+
+[tool.ruff.lint]
+extend-select = ["I", "RUF022"]
 
 [tool.bumpver]
 current_version = "v0.1.0"

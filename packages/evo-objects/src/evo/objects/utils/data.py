@@ -21,7 +21,7 @@ from evo.common.io.exceptions import DataExistsError
 from evo.common.utils import NoFeedback, PartialFeedback
 
 from ..io import _CACHE_SCOPE, ObjectDataUpload
-from ._types import Table, DataFrame
+from ._types import DataFrame, Table
 
 __all__ = [
     "ObjectDataClient",

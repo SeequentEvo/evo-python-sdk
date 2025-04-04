@@ -11,37 +11,36 @@
 
 from uuid import UUID
 
+from pydantic import ValidationError
 from pydantic.type_adapter import TypeAdapter
 
-from evo.common import APIConnector, HealthCheckType, ServiceHealth, ServiceUser, Page
+from evo.common import APIConnector, HealthCheckType, Page, ServiceHealth, ServiceUser
 from evo.common.utils import get_service_health
 
-from pydantic import ValidationError
-
 from .data import (
-    OrderByOperatorEnum,
-    WorkspaceOrderByEnum,
-    Workspace,
     BoundingBox,
     Coordinate,
-    WorkspaceRole,
-    UserRole,
+    OrderByOperatorEnum,
     User,
+    UserRole,
+    Workspace,
+    WorkspaceOrderByEnum,
+    WorkspaceRole,
 )
 from .endpoints.api import AdminApi, GeneralApi, ThumbnailsApi, WorkspacesApi
-from .endpoints.models import (
-    WorkspaceRoleOptionalResponse,
-    WorkspaceRoleRequiredResponse,
-    CreateWorkspaceRequest,
-    UpdateWorkspaceRequest,
-    GeometryTypeEnum,
-    RoleEnum,
-    Label,
-)
 from .endpoints.models import BoundingBox as PydanticBoundingBox
 from .endpoints.models import Coordinate as PydanticCoordinate
-from .endpoints.models import UserRole as PydanticUserRole
+from .endpoints.models import (
+    CreateWorkspaceRequest,
+    GeometryTypeEnum,
+    Label,
+    RoleEnum,
+    UpdateWorkspaceRequest,
+    WorkspaceRoleOptionalResponse,
+    WorkspaceRoleRequiredResponse,
+)
 from .endpoints.models import User as PydanticUser
+from .endpoints.models import UserRole as PydanticUserRole
 
 
 class WorkspaceAPIClient:

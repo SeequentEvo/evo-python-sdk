@@ -17,7 +17,6 @@ from evo.oauth import OAuthScopes
 from evo.oauth.data import OIDCConfig
 from evo.oauth.exceptions import OIDCError
 
-
 EXCPECTED_SCOPE_NAMES = {
     OAuthScopes.openid: "openid",
     OAuthScopes.profile: "profile",

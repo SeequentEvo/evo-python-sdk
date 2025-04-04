@@ -12,9 +12,9 @@
 import json
 from uuid import UUID
 
-from data import load_test_data
 from parameterized import param, parameterized
 
+from data import load_test_data
 from evo.common.data import RequestMethod
 from evo.common.test_tools import MockResponse, TestWithConnector
 from evo.discovery import DiscoveryAPIClient, Hub, Organization

@@ -19,6 +19,7 @@ from enum import Flag, auto
 from typing import Literal, Optional
 
 from pydantic import BaseModel, Field, ValidationInfo, field_validator
+
 from evo.common.utils import BackoffLinear, Retry
 from evo.oauth.exceptions import OAuthError, OIDCError
 from urllib.parse import urlparse
@@ -173,13 +174,16 @@ class UserAccessToken(AccessToken):
     refresh_token: Optional[str] = None
     """The refresh token, which can be used to obtain new access tokens using the same authorization grant."""
 
-    def validate_id_token(self, issuer: str, client_id: str) -> None:
+    def validate_id_token(self, issuer: str, client_id: str, ignore_iat: bool = False) -> None:
         """Validate an ID token according to the OpenID Connect specification.
 
         https://openid.net/specs/openid-connect-basic-1_0.html#IDTokenValidation
 
         :param issuer: The issuer URL to validate against.
         :param client_id: The client ID to validate against.
+        :param ignore_iat: Whether to ignore the `iat` claim when validating the token. Sometimes when caching tokens
+            it may be preferable to validate the token without checking the `iat` claim, otherwise the token may be
+            rejected if it was issued more than 5 minutes ago.
 
         :raises OAuthError: If the ID token is invalid or cannot be decoded.
         """
@@ -210,7 +214,7 @@ class UserAccessToken(AccessToken):
             # 3. The current time MUST be before the time represented by the exp Claim (possibly allowing for some small
             #    leeway to account for clock skew).
             exp_claim = datetime.fromtimestamp(claims.get("exp"), tz=timezone.utc) + _ALLOWABLE_CLOCK_DRIFT
-            if self.issued_at > exp_claim:
+            if self.issued_at > exp_claim and not ignore_iat:
                 raise OAuthError("Token has expired.")
 
             # 4. The iat Claim can be used to reject tokens that were issued too far away from the current time, limiting the
@@ -218,7 +222,7 @@ class UserAccessToken(AccessToken):
             min_iat = self.issued_at - _ALLOWABLE_CLOCK_DRIFT
             max_iat = self.issued_at + _ALLOWABLE_CLOCK_DRIFT
             iat_claim = datetime.fromtimestamp(claims.get("iat"), tz=timezone.utc)
-            if not min_iat < iat_claim < max_iat:
+            if not min_iat < iat_claim < max_iat and not ignore_iat:
                 raise OAuthError("Token was issued too far away from the current time.")
         except OAuthError:
             raise  # Re-raise OAuthError exceptions.

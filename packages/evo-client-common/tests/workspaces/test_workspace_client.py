@@ -16,7 +16,7 @@ from uuid import UUID
 from data import load_test_data
 from evo.common import HealthCheckType, RequestMethod
 from evo.common.test_tools import BASE_URL, MockResponse, TestHTTPHeaderDict, TestWithConnector, utc_datetime
-from evo.workspaces import ServiceUser, Workspace, WorkspaceRole, WorkspaceAPIClient, User, UserRole
+from evo.workspaces import ServiceUser, User, UserRole, Workspace, WorkspaceAPIClient, WorkspaceRole
 
 ORG_UUID = UUID(int=0)
 USER_ID = UUID(int=2)

@@ -23,20 +23,20 @@ from IPython.display import display, display_html
 
 from evo import logging
 from evo.aio import AioTransport
-from evo.common import ApiConnector, BaseServiceClient, Environment
+from evo.common import APIConnector, BaseAPIClient, Environment
 from evo.common.exceptions import UnauthorizedException
 from evo.common.interfaces import IAuthorizer, ICache, IFeedback, ITransport
-from evo.service_manager import ServiceManager
 from evo.discovery import Hub, Organization
 from evo.oauth import OAuthScopes, OIDCConnector
+from evo.service_manager import ServiceManager
 from evo.workspaces import Workspace
 
 from ._consts import (
-    DEFAULT_DISCOVERY_URL,
-    DEFAULT_ISSUER_URL,
     DEFAULT_CACHE_LOCATION,
     DEFAULT_CLIENT_ID,
     DEFAULT_DEVICE_FLOW_CLIENT_ID,
+    DEFAULT_DISCOVERY_URL,
+    DEFAULT_ISSUER_URL,
     DEFAULT_REDIRECT_URL,
 )
 from ._helpers import FileName, build_button_widget, build_img_widget, init_cache
@@ -223,7 +223,7 @@ class WorkspaceSelectorWidget(_UUIDSelectorWidget):
 
 
 # Generic type variable for the client factory method.
-T_client = TypeVar("T_client", bound=BaseServiceClient)
+T_client = TypeVar("T_client", bound=BaseAPIClient)
 
 
 class ServiceManagerWidget(widgets.HBox):
@@ -498,7 +498,7 @@ class ServiceManagerWidget(widgets.HBox):
     def workspaces(self) -> list[Workspace]:
         return self._service_manager.list_workspaces()
 
-    def get_connector(self) -> ApiConnector:
+    def get_connector(self) -> APIConnector:
         """Get an API connector for the currently selected hub.
 
         :returns: The API connector.

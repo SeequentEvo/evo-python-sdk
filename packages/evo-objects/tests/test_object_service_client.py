@@ -22,11 +22,11 @@ from evo.common import HealthCheckType, Page, RequestMethod, ServiceUser
 from evo.common.io.exceptions import DataNotFoundError
 from evo.common.test_tools import MockResponse, TestWithConnector, TestWithStorage
 from evo.objects import (
+    ObjectAPIClient,
     ObjectDataDownload,
     ObjectDataUpload,
     ObjectMetadata,
     ObjectSchema,
-    ObjectAPIClient,
     ObjectVersion,
     SchemaVersion,
 )

@@ -19,10 +19,10 @@ from abc import ABC, abstractmethod
 from ..exceptions import RetryError
 
 __all__ = [
-    "BackoffMethod",
     "BackoffExponential",
     "BackoffIncremental",
     "BackoffLinear",
+    "BackoffMethod",
     "Retry",
     "RetryHandler",
 ]

@@ -27,8 +27,8 @@ from .http import (
     TestWithConnector,
 )
 from .io import (
-    StorageDestinationRequestHandler,
     DownloadRequestHandler,
+    StorageDestinationRequestHandler,
     TestWithDownloadHandler,
     TestWithUploadHandler,
     UrlGenerator,
@@ -46,9 +46,9 @@ __all__ = [
     "ORG",
     "WORKSPACE_ID",
     "AbstractTestRequestHandler",
-    "StorageDestinationRequestHandler",
     "DownloadRequestHandler",
     "MockResponse",
+    "StorageDestinationRequestHandler",
     "TestAuthorizer",
     "TestHTTPHeaderDict",
     "TestTransport",

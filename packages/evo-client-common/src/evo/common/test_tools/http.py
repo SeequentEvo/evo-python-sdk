@@ -30,6 +30,8 @@ class TestHTTPHeaderDict(HTTPHeaderDict):
     visually compare the actual and expected values in unit tests.
     """
 
+    __test__ = False  # Prevent unittest from discovering this class as a test case.
+
     def __repr__(self) -> str:
         repr_data = {key.title(): value for key, value in self.items()}
         return f"{self.__class__.__name__}({repr_data!r})"

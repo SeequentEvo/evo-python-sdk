@@ -14,7 +14,8 @@ build-backend = "setuptools.build_meta"
 
 [project.optional-dependencies]
 aiohttp = ["evo-client-common[aiohttp]>=0.1.0"]
-utils = ["pyarrow"]
+notebooks = ["evo-client-common[notebooks]>=0.1.0"]
+utils = ["pyarrow", "pandas"]
 
 [dependency-groups]
 # Dev dependencies. The version is left unspecified so the latest is installed.
@@ -25,10 +26,15 @@ test = [
     "pytest",
 ]
 dev = [
+    "evo-objects[aiohttp,utils]",
     "bumpver",
     "coverage[toml]",
     "ruff",
     {include-group="test"},
+]
+notebooks = [
+    "evo-objects[aiohttp,notebooks,utils]",
+    "jupyter",
 ]
 
 [tool.setuptools.packages.find]
@@ -38,6 +44,9 @@ namespaces = true
 [tool.ruff]
 src = ["src", "tests"]
 line-length = 120
+
+[tool.ruff.lint]
+extend-select = ["I", "RUF022"]
 
 [tool.bumpver]
 current_version = "v0.1.0"

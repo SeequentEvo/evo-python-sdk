@@ -1,7 +1,9 @@
 repos:
-  - repo: local
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: v0.9.1 # keep in sync with pyproject.toml
     hooks:
-      - id: audit-commits
-        name: Audit commit
-        language: script
-        entry: ./scripts/audit-commits.sh
+      - id: ruff
+        args: ["--fix", "--no-cache"]
+
+      - id: ruff-format
+        args: ["--no-cache"]

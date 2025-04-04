@@ -10,16 +10,16 @@
 #  limitations under the License.
 
 from .client import WorkspaceAPIClient
-from .data import ServiceUser, UserPermission, Workspace, WorkspaceRole, User, UserRole, BoundingBox, Coordinate
+from .data import BoundingBox, Coordinate, ServiceUser, User, UserPermission, UserRole, Workspace, WorkspaceRole
 
 __all__ = [
-    "User",
-    "UserRole",
-    "Coordinate",
     "BoundingBox",
+    "Coordinate",
     "ServiceUser",
+    "User",
     "UserPermission",
+    "UserRole",
     "Workspace",
-    "WorkspaceRole",
     "WorkspaceAPIClient",
+    "WorkspaceRole",
 ]

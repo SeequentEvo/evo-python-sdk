@@ -4,13 +4,36 @@ version = "0.1.0"
 description = "Monorepo containing independently versioned Evo Python SDKs"
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = []
+dependencies = [
+    "evo-client-common[aiohttp]",
+    "evo-objects[utils]",
+    "evo-files",
+]
+
+[project.optional-dependencies]
+notebooks = [
+    "evo-client-common[notebooks]",
+]
 
 [dependency-groups]
+test = ["pytest", "freezegun", "parameterized==0.9.0"]
 dev = [
     "pre-commit >= 4",
-    "ruff==0.9.1", # keep in sync with .pre-commit-config.yaml
+    "ruff==0.9.1",              # keep in sync with .pre-commit-config.yaml
+    "bumpver",
+    "coverage[toml]",
+    { include-group = "test" },
 ]
+notebooks = [
+    "evo-python-sdk[notebooks]",
+    "jupyter",
+]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+extend-select = ["I", "RUF022"]
 
 [tool.uv.sources]
 evo-client-common = { workspace = true }

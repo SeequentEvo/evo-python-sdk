@@ -23,7 +23,7 @@ from urllib.parse import urlencode
 from parameterized import parameterized_class
 
 from evo.common import RequestMethod
-from evo.common.io.storage import StorageBlock, StorageDestination, BlockList
+from evo.common.io.storage import BlockList, StorageBlock, StorageDestination
 from evo.common.test_tools import TestWithUploadHandler, utc_datetime
 from evo.common.utils import BackoffLinear, Retry
 

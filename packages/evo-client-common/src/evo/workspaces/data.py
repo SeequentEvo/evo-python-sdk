@@ -12,23 +12,23 @@
 from __future__ import annotations
 
 import enum
-from typing import NamedTuple
 from dataclasses import dataclass, field
 from datetime import datetime
+from typing import NamedTuple
 from uuid import UUID
 
-from evo.common import ServiceUser, Environment
+from evo.common import Environment, ServiceUser
 
 from .exceptions import UserPermissionTypeError
 
 __all__ = [
-    "UserPermission",
-    "WorkspaceRole",
-    "Workspace",
-    "Coordinate",
     "BoundingBox",
-    "WorkspaceOrderByEnum",
+    "Coordinate",
     "OrderByOperatorEnum",
+    "UserPermission",
+    "Workspace",
+    "WorkspaceOrderByEnum",
+    "WorkspaceRole",
 ]
 
 

@@ -13,8 +13,8 @@ from dataclasses import dataclass
 from uuid import UUID
 
 __all__ = [
-    "Organization",
     "Hub",
+    "Organization",
 ]
 
 

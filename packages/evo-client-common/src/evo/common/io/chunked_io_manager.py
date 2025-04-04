@@ -25,10 +25,10 @@ from .interfaces import IDestination, ISource
 logger = logging.getLogger("io.manager")
 
 __all__ = [
-    "ChunkedIOManager",
-    "ChunkMetadata",
-    "ChunkedIOTracker",
     "DEFAULT_CHUNK_SIZE",
+    "ChunkMetadata",
+    "ChunkedIOManager",
+    "ChunkedIOTracker",
 ]
 
 DEFAULT_CHUNK_SIZE = 4 * 1024 * 1024
