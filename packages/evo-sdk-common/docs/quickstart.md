@@ -1,6 +1,6 @@
 # Getting Started
 
-## Basic Usage
+## Basic usage
 
 Just want to get going? This is the simplest setup to interact with an Evo service.
 
@@ -156,7 +156,7 @@ async with hub_connector:
     workspaces = await workspace_client.list_workspaces()
 ```
 
-### Interacting with Services
+### Interacting with services
 
 Service clients are used to interact with individual services. Workspace objects have a `get_environment()` method that
 returns an environment object. This object can be used by one or more service clients to interact with different

@@ -1,10 +1,10 @@
-# Getting Started
+# Getting started
 
-## Basic Usage
+## Basic usage
 
-Just want to get going? See [the Getting Started guide for evo-sdk-common](../evo-sdk-common/quickstart.md) for information on how to authenticate, then select the organisation, hub and workspace that you would like to use.
+Just want to get going? See [the evo-sdk-common documentation](https://pypi.org/project/evo-sdk-common/) for information on how to authenticate, then select the organisation, hub and workspace that you would like to use.
 
-### Interacting with the Geoscience Object Service
+### Interacting with the Geoscience Object API
 
 `evo.objects.ObjectAPIClient` requires an `evo.common.Environment` and an
 `evo.common.APIConnector`. Workspace objects have a `get_environment()` method that returns an
