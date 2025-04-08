@@ -25,6 +25,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: ./.github/actions/install-uv
+
       - name: Build package
         shell: bash
         run: uv build --package evo-objects
