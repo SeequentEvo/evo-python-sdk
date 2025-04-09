@@ -10,10 +10,8 @@
 
 # Evo SDK Common
 
-`evo-sdk-common`
-
 Evo SDK Common is a Python package that establishes a common framework for use by client libraries that interact
-with Evo APIs. 
+with Seequent Evo APIs.
 
 ## Installation
 
