@@ -7,6 +7,7 @@ name = "evo-files"
 description = "Python SDK for using the Seequent Evo Files API"
 version = "0.1.0"
 requires-python = ">=3.10"
+license-files = ["LICENSE.md"]
 readme = { file = "README.md", content-type = "text/markdown" }
 dependencies = [
     "evo-sdk-common>=0.1.0",
