@@ -12,7 +12,5 @@
 DEFAULT_DISCOVERY_URL = "https://discover.api.seequent.com"
 DEFAULT_ISSUER_URL = "https://ims.bentley.com"
 DEFAULT_REDIRECT_URL = "http://localhost:3000/signin-oidc"
-DEFAULT_CLIENT_ID = "evopythonsdk"
-DEFAULT_DEVICE_FLOW_CLIENT_ID = "evo-sdk-device-flow"
 
 DEFAULT_CACHE_LOCATION = "./notebook-data"

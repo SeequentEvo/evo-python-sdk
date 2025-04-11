@@ -21,6 +21,22 @@ formats and sizes are accepted.
 pip install evo-files 
 ```
 
+## Usage
+
+To get up and running quickly with the Evo File SDK, start by configuring your
+[environment and API connector](https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-sdk-common/docs/quickstart.md).
+
+You can then use the `FileAPIClient` to perform operations, for example:
+
+```python
+from evo.files import FileAPIClient
+
+file_client = FileAPIClient(environment, connector)
+files = await file_client.list_files()
+```
+
+For some interactive Jupyter notebook examples, see the [examples folder](docs/examples).
+
 ## Developing the library
 
 For instructions on contributing to the development of this library, please refer to the [evo-python-sdk documentation](https://github.com/seequentevo/evo-python-sdk).

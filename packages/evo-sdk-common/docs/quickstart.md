@@ -1,8 +1,10 @@
-# Getting Started
+# Getting started
 
 ## Basic usage
 
 Just want to get going? This is the simplest setup to interact with an Evo service.
+
+**Note:** If you'd like to run these examples interactively, you can use the [quickstart Jupyter notebook](examples/quickstart.ipynb). 
 
 ``` python 
 from evo.aio import AioTransport
@@ -14,7 +16,7 @@ from evo.workspaces import WorkspaceAPIClient
 
 # Configure the transport.
 transport = AioTransport(
-    user_agent="evo-sdk-common-poc",
+    user_agent="evo-sdk-common-examples",
     max_attempts=3,
     backoff_method=BackoffIncremental(2),
     num_pools=4,
@@ -33,25 +35,30 @@ authorizer = AuthorizationCodeAuthorizer(
 )
 await authorizer.login()
 
-# Select an Organization.
+# Select an organization
 async with APIConnector("https://discover.api.seequent.com", transport, authorizer) as api_connector:
     discovery_client = DiscoveryAPIClient(api_connector)
     organizations = await discovery_client.list_organizations()
 
-selected_org = organizations[0]
+# Select the first organization for this example
+selected_organization = organizations[0]
 
-# Select a hub and create a connector.
-hub_connector = APIConnector(selected_org.hubs[0].url, transport, authorizer)
+# You will only have one hub for your organization
+hub = selected_organization.hubs[0]
 
-# Select a Workspace.
+# Select a hub and create a connector
+hub_connector = APIConnector(hub.url, transport, authorizer)
+
+# Select a workspace
 async with hub_connector:
-    workspace_client = WorkspaceAPIClient(hub_connector, selected_org.id)
+    workspace_client = WorkspaceAPIClient(hub_connector, selected_organization.id)
     workspaces = await workspace_client.list_workspaces()
 
-workspace = workspaces[0]
-workspace_env = workspace.get_environment()
+# Select the first workspace for this example (you may have multiple)
+selected_workspace = workspaces[0]
+workspace_env = selected_workspace.get_environment()
 
-# Interact with a service.
+# Interact with a service
 async with hub_connector:
     service_client = BaseAPIClient(workspace_env, hub_connector)
     ...
@@ -75,9 +82,9 @@ opened, a new session will be created.
 from evo.aio import AioTransport
 from evo.common.utils import BackoffIncremental
 
-# Configure the transport.
+# Configure the transport
 transport = AioTransport(
-    user_agent="evo-sdk-common-poc",
+    user_agent="evo-sdk-common-example",
     max_attempts=3,
     backoff_method=BackoffIncremental(2),
     num_pools=4,
@@ -169,7 +176,7 @@ async with hub_connector:
     ...
 ```
 
-## Skip Organization and Workspace Discovery
+## Skip organization and workspace discovery
 
 If you already know the hub URL, organization ID, and workspace ID, you can skip the discovery steps and directly create
 connector and environment objects.

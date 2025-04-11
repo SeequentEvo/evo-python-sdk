@@ -123,7 +123,7 @@ class AuthorizationCodeAuthorizer(_NotebookAuthorizerMixin[oauth.UserAccessToken
         """
         warnings.warn(
             "The evo.notebooks.AuthorizationCodeAuthorizer is not secure, and should only ever be used in Jupyter"
-            "notebooks in a private environment."
+            " notebooks in a private environment."
         )
         super().__init__(oidc_connector=oidc_connector, redirect_url=redirect_url, scopes=scopes)
         self._env = _OAuthEnv(env)
@@ -133,10 +133,7 @@ class AuthorizationCodeAuthorizer(_NotebookAuthorizerMixin[oauth.UserAccessToken
         # Overrides the parent implementation so that we can automatically login at startup.
         async with self._mutex:
             if (token := self._env.get_token()) is None:
-                token = await self._handle_login(
-                    scopes=oauth.OAuthScopes.all_evo | oauth.OAuthScopes.offline_access,
-                    timeout_seconds=60,
-                )
+                token = await self._handle_login(timeout_seconds=60)
                 self._update_token(token)
             yield token
 

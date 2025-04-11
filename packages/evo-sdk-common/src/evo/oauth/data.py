@@ -163,7 +163,7 @@ class AccessToken(BaseModel):
 
 
 class UserAccessToken(AccessToken):
-    """A bearer token response from an OAuth server, for authorication_grant flows.
+    """A bearer token response from an OAuth server, for authorization_grant flows.
 
     https://www.rfc-editor.org/rfc/rfc6749#section-5.1
     """

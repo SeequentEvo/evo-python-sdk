@@ -730,7 +730,9 @@ notebooks = [
 dev = [
     { name = "bumpver" },
     { name = "coverage", extra = ["toml"] },
+    { name = "evo-python-sdk", extra = ["notebooks"] },
     { name = "freezegun" },
+    { name = "jupyter" },
     { name = "parameterized" },
     { name = "pre-commit" },
     { name = "pytest" },
@@ -758,7 +760,9 @@ requires-dist = [
 dev = [
     { name = "bumpver" },
     { name = "coverage", extras = ["toml"] },
+    { name = "evo-python-sdk", extras = ["notebooks"] },
     { name = "freezegun" },
+    { name = "jupyter" },
     { name = "parameterized", specifier = "==0.9.0" },
     { name = "pre-commit", specifier = ">=4" },
     { name = "pytest" },

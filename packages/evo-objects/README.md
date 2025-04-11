@@ -20,9 +20,11 @@ data, empowering our users to build responsive modern workflows.
 pip install evo-objects
 ```
 
-## Using the library
+## Usage
 
-See the [Getting Started](docs/quickstart.md) guide for how to use this library.
+See the [Getting started guide](docs/quickstart.md) to learn how to use this library.
+
+
 
 ## Developing the library
 

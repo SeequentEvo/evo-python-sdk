@@ -33,8 +33,6 @@ from evo.workspaces import Workspace
 
 from ._consts import (
     DEFAULT_CACHE_LOCATION,
-    DEFAULT_CLIENT_ID,
-    DEFAULT_DEVICE_FLOW_CLIENT_ID,
     DEFAULT_DISCOVERY_URL,
     DEFAULT_ISSUER_URL,
     DEFAULT_REDIRECT_URL,
@@ -279,10 +277,10 @@ class ServiceManagerWidget(widgets.HBox):
     @classmethod
     def with_auth_code(
         cls,
+        client_id: str,
         oidc_issuer: str = DEFAULT_ISSUER_URL,
         discovery_url: str = DEFAULT_DISCOVERY_URL,
         redirect_url: str = DEFAULT_REDIRECT_URL,
-        client_id: str = DEFAULT_CLIENT_ID,
         client_secret: str | None = None,
         cache_location: FileName = DEFAULT_CACHE_LOCATION,
         oauth_scopes: OAuthScopes = OAuthScopes.all_evo | OAuthScopes.offline_access,
@@ -290,16 +288,19 @@ class ServiceManagerWidget(widgets.HBox):
     ) -> ServiceManagerWidget:
         """Create a ServiceManagerWidget with an authorization code authorizer.
 
+        To use it, you will need an OAuth client ID. See the documentation for information on how to obtain this:
+        https://developer.seequent.com/docs/guides/getting-started/apps-and-tokens
+
         Chain this method with the login method to authenticate the user and obtain an access token:
 
         ```python
-        manager = await ServiceManagerWidget.with_auth_code().login()
+        manager = await ServiceManagerWidget.with_auth_code(client_id="your-client-id").login()
         ```
 
+        :param client_id: The client ID to use for authentication.
         :param oidc_issuer: The OIDC issuer URL.
         :param discovery_url: The URL of the Evo Discovery service.
         :param redirect_url: The local URL to redirect the user back to after authorisation.
-        :param client_id: The client ID to use for authentication.
         :param client_secret: The client secret to use for authentication.
         :param cache_location: The location of the cache file.
         :param oauth_scopes: The OAuth scopes to request.
@@ -325,10 +326,10 @@ class ServiceManagerWidget(widgets.HBox):
     @classmethod
     def with_device_flow(
         cls,
+        client_id: str,
+        client_secret: str | None = None,
         oidc_issuer: str = DEFAULT_ISSUER_URL,
         discovery_url: str = DEFAULT_DISCOVERY_URL,
-        client_id: str = DEFAULT_DEVICE_FLOW_CLIENT_ID,
-        client_secret: str | None = None,
         cache_location: FileName = DEFAULT_CACHE_LOCATION,
         oauth_scopes: OAuthScopes = OAuthScopes.all_evo,
         proxy: StrOrURL | None = None,
@@ -338,13 +339,13 @@ class ServiceManagerWidget(widgets.HBox):
         Chain this method with the login method to authenticate the user and obtain an access token:
 
         ```python
-        manager = await ServiceManagerWidget.with_device_flow().login()
+        manager = await ServiceManagerWidget.with_device_flow(client_id="your-client-id").login()
         ```
 
-        :param oidc_issuer: The OIDC issuer URL.
-        :param discovery_url: The URL of the Evo Discovery service.
         :param client_id: The client ID to use for authentication.
         :param client_secret: The client secret to use for authentication.
+        :param oidc_issuer: The OIDC issuer URL.
+        :param discovery_url: The URL of the Evo Discovery service.
         :param cache_location: The location of the cache file.
         :param oauth_scopes: The OAuth scopes to request.
         :param proxy: The proxy URL to use for API requests.
@@ -407,7 +408,7 @@ class ServiceManagerWidget(widgets.HBox):
         This method returns the current instance of the ServiceManagerWidget to allow for method chaining.
 
         ```python
-        manager = await ServiceManagerWidget.with_auth_code().login()
+        manager = await ServiceManagerWidget.with_auth_code(client_id="your-client-id").login()
         ```
 
         :param timeout_seconds: The maximum time (in seconds) to wait for the authorisation process to complete.

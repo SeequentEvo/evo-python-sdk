@@ -25,7 +25,7 @@ notebooks = [
     "evo-sdk-common[aiohttp]",
     "ipython",
     "ipywidgets",
-    "python-dotenv",
+    "python-dotenv"
 ]
 
 [dependency-groups]

@@ -23,6 +23,7 @@ dev = [
     "bumpver",
     "coverage[toml]",
     { include-group = "test" },
+    { include-group = "notebooks" },
 ]
 notebooks = [
     "evo-python-sdk[notebooks]",

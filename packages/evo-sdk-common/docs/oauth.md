@@ -1,6 +1,12 @@
-# OAuth Examples
+# OAuth examples
 
 The OAuth implementation provided requires additional dependencies to be installed. To install the required dependencies, make sure you depend on `evo-sdk-common[all]`.
+
+```
+pip install evo-sdk-common[all]
+```
+
+**Note:** If you'd like to run these examples interactively, you can use the [OAuth Jupyter notebook](examples/oauth.ipynb).
 
 ## OpenID Connect
 
@@ -29,9 +35,10 @@ connector = OIDCConnector(
 )
 ```
 
-## Manage Access Tokens
+## Manage access tokens
 
 The `OAuth` library provides authorizer classes to handle different OAuth flows. The `AuthorizationCodeAuthorizer` can be used for user access tokens, and the `ClientCredientialsAuthorizer` can be used for service to service authentication.
+
 ### Simplest way to manage user access tokens
 
 `AuthorizationCodeAuthorizer` is the simplest way to manage user access tokens. Logging in will open a browser window to the authorisation URL and wait for the user to authenticate and authorise the application. The `AuthorizationCodeAuthorizer` object allows the user access token to be used in API requests.
@@ -54,7 +61,7 @@ print(await authorizer.get_default_headers())
 
 This is how `APIConnector` automatically refreshes the access token when it expires.
 
-> Note: You MUST request the `offline_access` scope at login to get a refresh token. Offline access is not included by default in any of the predefined scope groups.
+**Note:** You MUST request the `offline_access` scope at login to get a refresh token. Offline access is not included by default in any of the predefined scope groups.
 
 ``` python
 refreshed = await authorizer.refresh_token()
@@ -74,9 +81,9 @@ async with OAuthRedirectHandler(connector, REDIRECT_URL) as handler:
 print(f"Access token: {result.access_token}")
 ```
 
-## Client Credientials Authentication
+## Client credentials authentication
 
-Using `ClientCredientialsAuthorizer` we can handle service to service authentication.
+Using `ClientCredientialsAuthorizer` we can handle service-to-service authentication.
 
 ``` python
 import logging
@@ -101,50 +108,6 @@ authorizer = ClientCredentialsAuthorizer(
     ),
     scopes=OAuthScopes.openid | OAuthScopes.profile | OAuthScopes.evo_discovery | OAuthScopes.evo_workspace,
 )
-
-print(await authorizer.get_default_headers())
-```
-
-## Device Flow Authentication
-
-Using `DeviceFlowAuthorizer` we can handle device flow authentication. This is useful for devices that do not have a browser or a keyboard.
-
-``` python
-import logging
-from evo.aio import AioTransport
-from evo.oauth import DeviceFlowAuthorizer, OAuthScopes, OIDCConnector
-
-logging.basicConfig(level=logging.INFO)
-
-ISSUER_URI = "https://ims.bentley.com"
-USER_AGENT = "Evo-SDK-Device-Flow"
-CLIENT_ID = "<client-id>"
-
-authorizer = DeviceFlowAuthorizer(
-    oidc_connector=OIDCConnector(
-        transport=AioTransport(
-            user_agent=USER_AGENT,
-        ),
-        oidc_issuer=ISSUER_URI,
-        client_id=CLIENT_ID,
-    ),
-    scopes=OAuthScopes.all_evo,
-)
-
-async with authorizer.login() as flow:
-    print("+------------------------------------------------------------------------+")
-    print("|                                                                        |")
-    print("| Using a browser on another device, visit:                              |")
-    print(f"| {flow.verification_uri:<70} |")
-    print("|                                                                        |")
-    print("| And enter the code:                                                    |")
-    print(f"| {flow.user_code:<70} |")
-    if flow.verification_uri_complete is not None:
-        print("|                                                                        |")
-        print("| Or visit this URL:                                                     |")
-        print(f"| {flow.verification_uri_complete:<70} |")
-    print("|                                                                        |")
-    print("+------------------------------------------------------------------------+")
 
 print(await authorizer.get_default_headers())
 ```
