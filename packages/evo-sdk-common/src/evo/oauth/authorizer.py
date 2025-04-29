@@ -372,9 +372,9 @@ class AccessTokenAuthorizer(IAuthorizer):
         """
         self._access_token = access_token
 
-    def refresh_token(self) -> bool:
+    async def refresh_token(self) -> bool:
         logger.debug("AccessTokenAuthorizer does not support refreshing expired tokens.")
         return False
 
-    def get_default_headers(self) -> HTTPHeaderDict:
+    async def get_default_headers(self) -> HTTPHeaderDict:
         return HTTPHeaderDict({"Authorization": f"Bearer {self._access_token}"})
