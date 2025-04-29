@@ -111,3 +111,16 @@ authorizer = ClientCredentialsAuthorizer(
 
 print(await authorizer.get_default_headers())
 ```
+
+## Specifying a token with AccessTokenAuthorizer
+
+If you already have an access token, and you're happy to manage the validity of it and refresh it yourself, you can
+use the `AccessTokenAuthorizer` to skip all OAuth processes and simply use the token to authorise requests.
+
+```python
+from evo.oauth import AccessTokenAuthorizer
+
+authorizer = AccessTokenAuthorizer(access_token="your-access-token-here")
+
+print(authorizer.get_default_headers())
+```

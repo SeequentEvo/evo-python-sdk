@@ -115,7 +115,10 @@ authorizer = AuthorizationCodeAuthorizer(
 await authorizer.login()
 ```
 
-Alternatively, a client of `client credientials` grant type can use the `ClientCredentialsAuthorizer` for authorization into Evo. This allows for service to service requests, instead of user login and redirects. 
+If you already have an access token, and don't need to worry about whether it's expired or not, you can use the
+`evo.oauth.AccessTokenAuthorizer` class.
+
+Alternatively, a client of `client credentials` grant type can use the `ClientCredentialsAuthorizer` for authorization into Evo. This allows for service to service requests, instead of user login and redirects.
 
 ``` python
 from evo.oauth import OIDCConnector, ClientCredentialsAuthorizer, OAuthScopes

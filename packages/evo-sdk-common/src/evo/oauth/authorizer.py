@@ -25,6 +25,7 @@ from .oauth_redirect_handler import OAuthRedirectHandler
 from .oidc import OIDCConnector
 
 __all__ = [
+    "AccessTokenAuthorizer",
     "AuthorizationCodeAuthorizer",
     "ClientCredentialsAuthorizer",
     "DeviceFlowAuthorizer",
@@ -360,3 +361,20 @@ class DeviceFlowAuthorizer(_BaseAuthorizer[AccessToken]):
             and "urn:ietf:params:oauth:grant-type:device_code" not in self._connector.config.grant_types_supported
         ):
             raise OIDCError("Authorization provider does not support the 'device_code' grant type.")
+
+
+class AccessTokenAuthorizer(IAuthorizer):
+    def __init__(self, access_token: str):
+        """An OAuth authorizer that uses the provided access token to authorize requests.
+
+        This authorizer does not make any attempt to refresh expired tokens. This is handy if you already have an
+        access token and are happy to support refreshing it when it expires outside of this interface.
+        """
+        self._access_token = access_token
+
+    def refresh_token(self) -> bool:
+        logger.debug("AccessTokenAuthorizer does not support refreshing expired tokens.")
+        return False
+
+    def get_default_headers(self) -> HTTPHeaderDict:
+        return HTTPHeaderDict({"Authorization": f"Bearer {self._access_token}"})

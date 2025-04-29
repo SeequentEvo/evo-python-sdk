@@ -11,7 +11,12 @@
 
 from __future__ import annotations
 
-from .authorizer import AuthorizationCodeAuthorizer, ClientCredentialsAuthorizer, DeviceFlowAuthorizer
+from .authorizer import (
+    AccessTokenAuthorizer,
+    AuthorizationCodeAuthorizer,
+    ClientCredentialsAuthorizer,
+    DeviceFlowAuthorizer,
+)
 from .data import AccessToken, DeviceFlowResponse, OAuthScopes, UserAccessToken
 from .exceptions import OAuthError, OIDCError
 from .oauth_redirect_handler import OAuthRedirectHandler
@@ -19,6 +24,7 @@ from .oidc import OIDCConnector
 
 __all__ = [
     "AccessToken",
+    "AccessTokenAuthorizer",
     "AuthorizationCodeAuthorizer",
     "ClientCredentialsAuthorizer",
     "DeviceFlowAuthorizer",
