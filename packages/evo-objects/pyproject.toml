@@ -4,7 +4,7 @@ description = "Python SDK for using the Seequent Evo Geoscience Object API"
 version = "0.1.0"
 requires-python = ">=3.10"
 license-files = ["LICENSE.md"]
-readme = "README.md"
+dynamic = ["readme"]
 authors = [
     { name = "Seequent", email = "support@seequent.com" }
 ]
@@ -12,10 +12,6 @@ dependencies = [
     "evo-sdk-common>=0.1.0",
     "pydantic>=2,<3",
 ]
-
-[build-system]
-requires = ["setuptools >= 61.0.0"]
-build-backend = "setuptools.build_meta"
 
 [project.optional-dependencies]
 aiohttp = ["evo-sdk-common[aiohttp]>=0.1.0"]
@@ -42,10 +38,6 @@ notebooks = [
     "jupyter",
 ]
 
-[tool.setuptools.packages.find]
-where = ["src"]
-namespaces = true
-
 [tool.ruff]
 src = ["src", "tests"]
 line-length = 120
@@ -53,15 +45,24 @@ line-length = 120
 [tool.ruff.lint]
 extend-select = ["I", "RUF022"]
 
-[tool.bumpver]
-current_version = "v0.1.0"
-version_pattern = "vMAJOR.MINOR.PATCH[.PYTAGNUM]"
-commit = "True"
-tag = "True"
-commit_message = "Bump version from {old_version} to {new_version}"
+[build-system]
+requires = ["hatchling", "hatch-fancy-pypi-readme"]
+build-backend = "hatchling.build"
 
-[tool.bumpver.file_patterns]
-"pyproject.toml" = [
-    'version = "{pep440_version}"',
-    'current_version = "{version}"',
-]
+[tool.hatch.build.targets.sdist]
+include = ["/src"]
+
+[tool.hatch.build.targets.wheel]
+include = ["/src"]
+
+[tool.hatch.metadata.hooks.fancy-pypi-readme]
+content-type = "text/markdown"
+
+[[tool.hatch.metadata.hooks.fancy-pypi-readme.fragments]]
+path = "README.md"
+
+[[tool.hatch.metadata.hooks.fancy-pypi-readme.substitutions]]
+# Literal TOML strings (single quotes) need no escaping of backslashes.
+# Converts relative links to absolute links in PyPI
+pattern = '\[(.+?)\]\(((?!https?://)\S+?)\)'
+replacement = '[\1](https://github.com/SeequentEvo/evo-python-sdk/tree/main/packages/$HFPR_PACKAGE_NAME/\g<2>)'

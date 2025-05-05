@@ -714,7 +714,7 @@ test = [
 [[package]]
 name = "evo-python-sdk"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "evo-files" },
     { name = "evo-objects", extra = ["utils"] },
