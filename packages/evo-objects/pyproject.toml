@@ -1,7 +1,7 @@
 [project]
 name = "evo-objects"
 description = "Python SDK for using the Seequent Evo Geoscience Object API"
-version = "0.1.0"
+version = "0.1.1"
 requires-python = ">=3.10"
 license-files = ["LICENSE.md"]
 dynamic = ["readme"]
@@ -53,7 +53,7 @@ build-backend = "hatchling.build"
 include = ["/src"]
 
 [tool.hatch.build.targets.wheel]
-include = ["/src"]
+packages = ["src/evo"]
 
 [tool.hatch.metadata.hooks.fancy-pypi-readme]
 content-type = "text/markdown"
