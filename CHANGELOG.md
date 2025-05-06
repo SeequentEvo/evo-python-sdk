@@ -3,8 +3,10 @@
 ## evo-sdk-common@v0.1.3
 ### What's changed
 #### evo-sdk-common
+* Make `evo.service_manager.ServiceManager` load all workspaces by @wordsworthc in https://github.com/SeequentEvo/evo-python-sdk/pull/47
+* Update changelog and version for evo-sdk-common@v0.1.3 by @robbieaverill in https://github.com/SeequentEvo/evo-python-sdk/pull/46
 * Manually re-compile changelog by @robbieaverill in https://github.com/SeequentEvo/evo-python-sdk/pull/43
-* Add Jupyter notebook examples for using evo-sdk-common by @robbieaverill in https://github.com/SeequentEvo/evo-python-sdk/pull/42
+* Add Jupyter notebook examples for using evo-sdk-common, evo-files by @robbieaverill in https://github.com/SeequentEvo/evo-python-sdk/pull/42
 
 **Full changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-sdk-common@v0.1.2...evo-sdk-common@v0.1.3
 

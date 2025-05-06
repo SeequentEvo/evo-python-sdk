@@ -362,10 +362,10 @@ class TestObjectAPIClient(TestWithConnector, TestWithStorage):
 
     async def test_prepare_data_upload_batches(self) -> None:
         """Test preparing multiple data uploads in batches."""
-        put_data_reponse = load_test_data("put_data_batch.json")
+        put_data_response = load_test_data("put_data_batch.json")
         # The service can only generate _MAX_UPLOAD_URLS upload URLs in a single request.
-        batch_1 = put_data_reponse[:_MAX_UPLOAD_URLS]
-        batch_2 = put_data_reponse[_MAX_UPLOAD_URLS:]
+        batch_1 = put_data_response[:_MAX_UPLOAD_URLS]
+        batch_2 = put_data_response[_MAX_UPLOAD_URLS:]
 
         batch_1_by_name = {
             upload["name"]: upload
@@ -378,7 +378,7 @@ class TestObjectAPIClient(TestWithConnector, TestWithStorage):
             if upload["exists"] is False  # Pre-existing data is skipped.
         }
 
-        aiter_uploads = self.object_client.prepare_data_upload([data["name"] for data in put_data_reponse])
+        aiter_uploads = self.object_client.prepare_data_upload([data["name"] for data in put_data_response])
         with self.transport.set_http_response(
             status_code=200, content=json.dumps(batch_1), headers={"Content-Type": "application/json"}
         ):

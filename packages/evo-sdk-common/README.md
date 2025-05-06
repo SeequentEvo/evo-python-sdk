@@ -20,6 +20,11 @@ with Seequent Evo APIs.
 pip install evo-sdk-common
 ```
 
+To use the SDK within a Jupyter notebook, include the `notebooks` optional dependency:
+```
+pip install evo-sdk-common[notebooks]
+```
+
 ## Usage
 
 See the [Getting Started](docs/quickstart.md) guide to learn how to use this library. There is more detailed information about authentication options in the [OAuth examples](docs/oauth.md), and a selection of interactive Jupyter notebooks in the [examples folder](docs/examples).

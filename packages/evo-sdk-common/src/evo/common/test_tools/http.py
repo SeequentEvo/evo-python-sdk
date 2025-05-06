@@ -38,7 +38,7 @@ class TestHTTPHeaderDict(HTTPHeaderDict):
 
 
 class MockResponse(mock.Mock):
-    """Fake HTTPResponse object to be returned by a mocked IHtttpTransport"""
+    """Fake HTTPResponse object to be returned by a mocked IHttpTransport"""
 
     def __init__(
         self,

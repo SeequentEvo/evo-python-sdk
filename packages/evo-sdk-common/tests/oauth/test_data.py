@@ -17,7 +17,7 @@ from evo.oauth import OAuthScopes
 from evo.oauth.data import OIDCConfig
 from evo.oauth.exceptions import OIDCError
 
-EXCPECTED_SCOPE_NAMES = {
+EXPECTED_SCOPE_NAMES = {
     OAuthScopes.openid: "openid",
     OAuthScopes.profile: "profile",
     OAuthScopes.organization: "organization",
@@ -53,8 +53,8 @@ class TestOAuthScopes(unittest.TestCase):
         params: f"{func.__name__}_{index}_{parameterized.to_safe_name(str(params[0][0]))}",
     )
     def test_single_scope_string(self, scope: OAuthScopes) -> None:
-        self.assertIn(scope, EXCPECTED_SCOPE_NAMES)
-        expected_string = EXCPECTED_SCOPE_NAMES[scope]
+        self.assertIn(scope, EXPECTED_SCOPE_NAMES)
+        expected_string = EXPECTED_SCOPE_NAMES[scope]
         self.assertEqual(expected_string, str(scope))
         self.assertEqual(1, len(scope), "Expected a single scope")
 
@@ -102,7 +102,7 @@ class TestOAuthScopes(unittest.TestCase):
         name_func=lambda f, n, p: f"{f.__name__}_{n}_{parameterized.to_safe_name(p[0][0].name)}",
     )
     def test_multiple_scope_string(self, scopes: OAuthScopes, expected_scopes: tuple[OAuthScopes, ...]) -> None:
-        expected_string = " ".join([EXCPECTED_SCOPE_NAMES[scope] for scope in self.expand_scopes(expected_scopes)])
+        expected_string = " ".join([EXPECTED_SCOPE_NAMES[scope] for scope in self.expand_scopes(expected_scopes)])
         self.assertEqual(expected_string, str(scopes))
 
         for scope in expected_scopes:

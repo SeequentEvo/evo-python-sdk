@@ -144,7 +144,7 @@ class FileAPIDownload(Download[FileMetadata], _FileIOMixin):
     def __init__(self, connector: APIConnector, metadata: FileMetadata, initial_url: str) -> None:
         """
         :param connector: The connector to use for the API calls.
-        :param metadata: The metadata of the file that wil be downloaded.
+        :param metadata: The metadata of the file that will be downloaded.
         :param initial_url: The initial URL to use for the download.
         """
         super().__init__(connector, initial_url)

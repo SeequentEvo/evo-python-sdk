@@ -23,6 +23,7 @@ build-backend = "setuptools.build_meta"
 aiohttp = ["aiohttp"]
 notebooks = [
     "evo-sdk-common[aiohttp]",
+    "ipykernel",
     "ipython",
     "ipywidgets",
     "python-dotenv"
