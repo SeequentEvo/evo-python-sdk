@@ -28,8 +28,7 @@ Thank you for your interest in contributing to Seequent software. Please have a 
 
 ### Getting started
 
-All Python SDKs in this monorepo are managed with [uv](https://docs.astral.sh/uv/). 
-We use [workspaces](https://docs.astral.sh/uv/concepts/projects/workspaces/) in order to manage the different SDKs
+All Python SDKs in this monorepo are managed with [uv](https://docs.astral.sh/uv/). We use [workspaces](https://docs.astral.sh/uv/concepts/projects/workspaces/) in order to manage the different SDKs
 published out of this repository. 
 
 With workspaces, `uv lock` operates on the entire workspace at once. `uv run` and `uv sync` operate on the workspace root by default, though both accept a `--package` argument allowing you to run a command in a particular workspace member from any workspace directory.
