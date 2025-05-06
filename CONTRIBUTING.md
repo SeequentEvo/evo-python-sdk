@@ -8,7 +8,7 @@ There are many ways you can contribute. This document provides a summary of some
 If you have a question about how the code in this library works, or would like to propose a change, feel free to
 open a new issue on GitHub.
 
-If you have a general question, head over to [Seequent Community](https://community.seequent.com/).
+If you have a general question, head over to the Evo Group in the [Seequent Community](https://community.seequent.com/group/19-evo/).
 
 ## Reporting bugs/issues
 
@@ -32,7 +32,6 @@ Seequent requires that all commits are signed with verified signatures. Please e
 
 To ensure your pull request is merged as quickly as possible, please consider the following:
 
-* If this is your first contribution to this project, check out our [contributing guide](CONTRIBUTING.md).
 * Try to prevent breaking changes and ensure backwards compatibility. If a breaking change is necessary, please call
   them out in your pull request.
 * Reference issues in your pull request if you're closing one.
