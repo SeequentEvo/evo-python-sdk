@@ -577,7 +577,7 @@ wheels = [
 
 [[package]]
 name = "evo-files"
-version = "0.1.0"
+version = "0.1.1"
 source = { editable = "packages/evo-files" }
 dependencies = [
     { name = "evo-sdk-common" },
@@ -640,7 +640,7 @@ test = [
 
 [[package]]
 name = "evo-objects"
-version = "0.1.0"
+version = "0.1.1"
 source = { editable = "packages/evo-objects" }
 dependencies = [
     { name = "evo-sdk-common" },
@@ -714,7 +714,7 @@ test = [
 [[package]]
 name = "evo-python-sdk"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "evo-files" },
     { name = "evo-objects", extra = ["utils"] },
@@ -780,7 +780,7 @@ test = [
 
 [[package]]
 name = "evo-sdk-common"
-version = "0.1.3"
+version = "0.1.4"
 source = { editable = "packages/evo-sdk-common" }
 dependencies = [
     { name = "pure-interface" },
@@ -794,6 +794,7 @@ aiohttp = [
 ]
 notebooks = [
     { name = "aiohttp" },
+    { name = "ipykernel" },
     { name = "ipython", version = "8.34.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "ipython", version = "9.0.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "ipywidgets" },
@@ -826,6 +827,7 @@ test = [
 requires-dist = [
     { name = "aiohttp", marker = "extra == 'aiohttp'" },
     { name = "evo-sdk-common", extras = ["aiohttp"], marker = "extra == 'notebooks'", editable = "packages/evo-sdk-common" },
+    { name = "ipykernel", marker = "extra == 'notebooks'" },
     { name = "ipython", marker = "extra == 'notebooks'" },
     { name = "ipywidgets", marker = "extra == 'notebooks'" },
     { name = "pure-interface", specifier = ">=8.0.0" },
