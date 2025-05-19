@@ -10,6 +10,12 @@ dependencies = [
     "evo-files",
 ]
 
+[project.urls]
+Source = "https://github.com/SeequentEvo/evo-python-sdk"
+Tracker = "https://github.com/SeequentEvo/evo-python-sdk/issues"
+Homepage = "https://www.seequent.com/"
+Documentation = "https://developer.seequent.com/"
+
 [project.optional-dependencies]
 notebooks = [
     "evo-sdk-common[notebooks]",
