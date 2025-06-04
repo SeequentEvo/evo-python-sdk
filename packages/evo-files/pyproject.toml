@@ -13,16 +13,16 @@ authors = [
     { name = "Seequent", email = "support@seequent.com" }
 ]
 
+dependencies = [
+    "evo-sdk-common>=0.1.0",
+    "pydantic>=2,<3",
+]
+
 [project.urls]
 Source = "https://github.com/SeequentEvo/evo-python-sdk"
 Tracker = "https://github.com/SeequentEvo/evo-python-sdk/issues"
 Homepage = "https://www.seequent.com/"
 Documentation = "https://developer.seequent.com/"
-
-dependencies = [
-    "evo-sdk-common>=0.1.0",
-    "pydantic>=2,<3",
-]
 
 [project.optional-dependencies]
 aiohttp = ["evo-sdk-common[aiohttp]>=0.1.0"]
