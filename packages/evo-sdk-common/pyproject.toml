@@ -8,12 +8,19 @@ dynamic = ["readme"]
 authors = [
     { name = "Seequent", email = "support@seequent.com" }
 ]
+
 dependencies = [
     # Specify the minimum versions to avoid security issues.
     "pure-interface>=8.0.0",
     "pydantic>=2",
     "python-dateutil",
 ]
+
+[project.urls]
+Source = "https://github.com/SeequentEvo/evo-python-sdk"
+Tracker = "https://github.com/SeequentEvo/evo-python-sdk/issues"
+Homepage = "https://www.seequent.com/"
+Documentation = "https://developer.seequent.com/"
 
 [project.optional-dependencies]
 aiohttp = ["aiohttp"]
