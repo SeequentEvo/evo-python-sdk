@@ -1,5 +1,19 @@
 # Changelog
 
+## evo-objects@v0.1.1
+### What's changed
+#### evo-objects
+* Swap build backend to hatch and implement "fancy PyPI readme" package to make readme links absolute by @robbieaverill in https://github.com/SeequentEvo/evo-python-sdk/pull/57
+
+**Full changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-objects@v0.1.0...evo-objects@v0.1.1
+
+## evo-files@v0.1.1
+### What's changed
+#### evo-files
+* Swap build backend to hatch and implement "fancy PyPI readme" package to make readme links absolute by @robbieaverill in https://github.com/SeequentEvo/evo-python-sdk/pull/57
+
+**Full changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-files@v0.1.0...evo-files@v0.1.1
+
 ## evo-sdk-common@v0.1.3
 ### What's changed
 #### evo-sdk-common
