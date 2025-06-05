@@ -34,16 +34,22 @@ FILE_NAME_TOO_LONG_ERR_NO = 63
 def _check_path_length(path: Path) -> None:
     if os.name == "posix":
         try:
-            max_path_length = os.pathconf(path, "PC_PATH_MAX")  # https://linux.die.net/man/3/pathconf
-        except OSError as e:
-            if e.errno == FILE_NAME_TOO_LONG_ERR_NO:
-                raise FileNameTooLongError()
-            else:
-                logger.error("Error checking path length. Assuming path is not too long.", exc_info=True)
-                return
+            # https://linux.die.net/man/3/pathconf
+            max_path_length = os.pathconf(path, "PC_PATH_MAX")
+        except FileNotFoundError:
+            # If the path does not exist, we cannot check its length
+            logger.info("File does not exist.", exc_info=True)
+            max_path_length = 1024  # Default value for POSIX systems
         except ValueError:
             logger.error("Error checking path length. Assuming path is not too long.", exc_info=True)
             return
+        except OSError as e:
+            if e.errno == FILE_NAME_TOO_LONG_ERR_NO:
+                raise FileNameTooLongError() from e
+
+            logger.error("Error checking path length. Assuming path is not too long.", exc_info=True)
+            return
+
     elif os.name == "nt":
         max_path_length = MAX_WINDOWS_PATH_LEN
     else:
