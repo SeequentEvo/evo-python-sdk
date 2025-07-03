@@ -14,10 +14,11 @@ from uuid import UUID
 
 from parameterized import param, parameterized
 
-from data import load_test_data
 from evo.common.data import RequestMethod
 from evo.common.test_tools import MockResponse, TestWithConnector
 from evo.discovery import DiscoveryAPIClient, Hub, Organization
+
+from ..data import load_test_data
 
 
 def _sample_data_as_response_content(sample_data: dict) -> str:

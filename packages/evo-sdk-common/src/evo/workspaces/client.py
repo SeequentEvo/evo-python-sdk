@@ -18,6 +18,7 @@ from evo.common import APIConnector, HealthCheckType, Page, ServiceHealth, Servi
 from evo.common.utils import get_service_health
 
 from .data import (
+    BasicWorkspace,
     BoundingBox,
     Coordinate,
     OrderByOperatorEnum,
@@ -28,9 +29,8 @@ from .data import (
     WorkspaceRole,
 )
 from .endpoints.api import AdminApi, GeneralApi, ThumbnailsApi, WorkspacesApi
-from .endpoints.models import BoundingBox as PydanticBoundingBox
-from .endpoints.models import Coordinate as PydanticCoordinate
 from .endpoints.models import (
+    BasicWorkspaceResponse,
     CreateWorkspaceRequest,
     GeometryTypeEnum,
     Label,
@@ -39,6 +39,8 @@ from .endpoints.models import (
     WorkspaceRoleOptionalResponse,
     WorkspaceRoleRequiredResponse,
 )
+from .endpoints.models import BoundingBox as PydanticBoundingBox
+from .endpoints.models import Coordinate as PydanticCoordinate
 from .endpoints.models import User as PydanticUser
 from .endpoints.models import UserRole as PydanticUserRole
 
@@ -65,7 +67,8 @@ class WorkspaceAPIClient:
         """
         return await get_service_health(self._connector, "workspace", check_type=check_type)
 
-    def __parse_bounding_box(self, model: PydanticBoundingBox) -> BoundingBox:
+    @staticmethod
+    def __parse_bounding_box(model: PydanticBoundingBox) -> BoundingBox:
         def convert_coordinate(pydantic_coordinate: PydanticCoordinate) -> Coordinate:
             return Coordinate(latitude=pydantic_coordinate.root[1], longitude=pydantic_coordinate.root[0])
 
@@ -96,10 +99,19 @@ class WorkspaceAPIClient:
             labels=model.labels,
         )
 
-    def __parse_user_role_model(self, model: PydanticUserRole) -> UserRole:
+    @staticmethod
+    def __parse_workspace_basic_model(model: BasicWorkspaceResponse) -> BasicWorkspace:
+        return BasicWorkspace(
+            id=model.id,
+            display_name=model.name,
+        )
+
+    @staticmethod
+    def __parse_user_role_model(model: PydanticUserRole) -> UserRole:
         return UserRole(user_id=model.user_id, role=WorkspaceRole[str(model.role.value)])
 
-    def __parse_user_model(self, model: PydanticUser) -> User:
+    @staticmethod
+    def __parse_user_model(model: PydanticUser) -> User:
         return User(
             user_id=model.user_id,
             role=WorkspaceRole[str(model.role.value)],
@@ -230,6 +242,46 @@ class WorkspaceAPIClient:
                 break
 
         return sorted(workspaces, key=lambda x: x.display_name)
+
+    async def list_workspaces_summary(
+        self,
+        limit: int | None = None,
+        offset: int | None = None,
+        order_by: dict[WorkspaceOrderByEnum, OrderByOperatorEnum] | None = None,
+        filter_created_by: UUID | None = None,
+        created_at: str | None = None,
+        updated_at: str | None = None,
+        name: str | None = None,
+        deleted: bool | None = None,
+        filter_user_id: UUID | None = None,
+    ) -> Page[BasicWorkspace]:
+        """
+        Get an optionally paginated list of basic workspaces with optional filtering and sorting.
+
+        This method provides faster performance than list_workspaces() or list_all_workspaces()
+        by returning BasicWorkspace objects with minimal data instead of full Workspace objects.
+        """
+        parsed_order_by = ",".join([f"{op}:{field}" for field, op in order_by.items()]) if order_by else None
+
+        response = await self._workspaces_api.list_workspaces_summary(
+            org_id=str(self._org_id),
+            limit=limit,
+            offset=offset,
+            order_by=parsed_order_by,
+            filter_created_by=str(filter_created_by) if filter_created_by else None,
+            created_at=created_at,
+            updated_at=updated_at,
+            name=name,
+            deleted=deleted,
+            filter_user_id=str(filter_user_id) if filter_user_id else None,
+        )
+
+        return Page(
+            offset=offset or 0,
+            limit=limit or response.links.total,
+            total=response.links.total,
+            items=[self.__parse_workspace_basic_model(item) for item in response.results],
+        )
 
     async def get_workspace(self, workspace_id: UUID, deleted: bool = False) -> Workspace:
         response = await self._workspaces_api.get_workspace(

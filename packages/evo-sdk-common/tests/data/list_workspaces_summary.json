@@ -1,0 +1,24 @@
+{
+    "links": {
+        "first": "http://unittest.localhost/workspace/orgs/00000000-0000-0000-0000-000000000000/workspaces/summary",
+        "next": null,
+        "previous": null,
+        "count": 3,
+        "last": "http://unittest.localhost/workspace/orgs/00000000-0000-0000-0000-000000000000/workspaces/summary",
+        "total": 3
+    },
+    "results": [
+        {
+            "id": "00000000-0000-0000-0000-00000000000a",
+            "name": "Test Workspace A"
+        },
+        {
+            "id": "00000000-0000-0000-0000-00000000000b",
+            "name": "Test Workspace B"
+        },
+        {
+            "id": "00000000-0000-0000-0000-00000000000c",
+            "name": "Test Workspace C"
+        }
+    ]
+}

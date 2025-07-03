@@ -22,10 +22,13 @@ from evo.common import Environment, ServiceUser
 from .exceptions import UserPermissionTypeError
 
 __all__ = [
+    "BasicWorkspace",
     "BoundingBox",
     "Coordinate",
     "OrderByOperatorEnum",
+    "User",
     "UserPermission",
+    "UserRole",
     "Workspace",
     "WorkspaceOrderByEnum",
     "WorkspaceRole",
@@ -113,14 +116,17 @@ class BoundingBox:
 
 
 @dataclass(frozen=True, kw_only=True)
-class Workspace:
-    """Metadata about a workspace environment."""
-
+class BasicWorkspace:
     id: UUID
     """The workspace UUID."""
 
     display_name: str
     """The workspace display name."""
+
+
+@dataclass(frozen=True, kw_only=True)
+class Workspace(BasicWorkspace):
+    """Metadata about a workspace environment."""
 
     description: str | None
     """The workspace description."""

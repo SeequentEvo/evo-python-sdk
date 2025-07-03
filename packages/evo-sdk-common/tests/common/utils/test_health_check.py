@@ -14,11 +14,12 @@ from typing import Any
 
 from parameterized import parameterized
 
-from data import load_test_data
 from evo.common import DependencyStatus, HealthCheckType, RequestMethod, ServiceHealth, ServiceStatus
 from evo.common.exceptions import ServiceHealthCheckFailed
 from evo.common.test_tools import TestWithConnector
 from evo.common.utils import get_service_health, get_service_status
+
+from ...data import load_test_data
 
 
 def using_test_data(full: bool, with_dependencies: bool, strict: bool) -> Any:

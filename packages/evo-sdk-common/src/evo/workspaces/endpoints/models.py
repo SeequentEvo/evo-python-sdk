@@ -38,6 +38,14 @@ class BaseInstanceUserRoleResponse(CustomBaseModel):
     name: Annotated[StrictStr, Field(title="Name")]
 
 
+class BasicWorkspaceResponse(CustomBaseModel):
+    id: Annotated[UUID, Field(title="Id")]
+    name: Annotated[StrictStr, Field(title="Name")]
+    """
+    The name of the workspace, unique within an organization and hub
+    """
+
+
 class Coordinate(RootModel[list[StrictFloat | StrictInt]]):
     root: Annotated[list[StrictFloat | StrictInt], Field(max_length=2, min_length=2)]
     """
@@ -195,6 +203,11 @@ class ListInstanceUsersResponse(CustomBaseModel):
 class ListUserRoleResponse(CustomBaseModel):
     links: Annotated[dict[str, Any], Field(title="Links")]
     results: Annotated[list[User], Field(title="Results")]
+
+
+class ListWorkspaceSummaryResponse(CustomBaseModel):
+    links: PaginationLinks
+    results: Annotated[list[BasicWorkspaceResponse], Field(title="Results")]
 
 
 class MlEnablementRequest(CustomBaseModel):
