@@ -173,7 +173,7 @@ class WorkspaceAPIClient:
         self,
         limit: int | None = None,
         offset: int | None = None,
-        order_by: dict[WorkspaceOrderByEnum, OrderByOperatorEnum] | None = None,
+        order_by: dict[WorkspaceOrderByEnum | str, OrderByOperatorEnum | str] | None = None,
         filter_created_by: UUID | None = None,
         created_at: str | None = None,
         updated_at: str | None = None,
@@ -185,7 +185,14 @@ class WorkspaceAPIClient:
         if not offset:
             offset = 0
         if order_by:
-            parsed_order_by = ",".join([f"{op}:{field}" for field, op in order_by.items()])
+            parsed_order_by = ",".join(
+                [
+                    f"{op.value if isinstance(op, OrderByOperatorEnum) else op}:{field.value if isinstance(field, WorkspaceOrderByEnum) else field}"
+                    for field, op in order_by.items()
+                ]
+            )
+        else:
+            parsed_order_by = None
         response = await self._workspaces_api.list_workspaces(
             org_id=str(self._org_id),
             limit=limit,
@@ -247,7 +254,7 @@ class WorkspaceAPIClient:
         self,
         limit: int | None = None,
         offset: int | None = None,
-        order_by: dict[WorkspaceOrderByEnum, OrderByOperatorEnum] | None = None,
+        order_by: dict[WorkspaceOrderByEnum | str, OrderByOperatorEnum | str] | None = None,
         filter_created_by: UUID | None = None,
         created_at: str | None = None,
         updated_at: str | None = None,
@@ -261,7 +268,15 @@ class WorkspaceAPIClient:
         This method provides faster performance than list_workspaces() or list_all_workspaces()
         by returning BasicWorkspace objects with minimal data instead of full Workspace objects.
         """
-        parsed_order_by = ",".join([f"{op}:{field}" for field, op in order_by.items()]) if order_by else None
+        if order_by:
+            parsed_order_by = ",".join(
+                [
+                    f"{op.value if isinstance(op, OrderByOperatorEnum) else op}:{field.value if isinstance(field, WorkspaceOrderByEnum) else field}"
+                    for field, op in order_by.items()
+                ]
+            )
+        else:
+            parsed_order_by = None
 
         response = await self._workspaces_api.list_workspaces_summary(
             org_id=str(self._org_id),
