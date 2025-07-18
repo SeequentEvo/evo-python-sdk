@@ -185,7 +185,9 @@ class WorkspaceAPIClient:
         if not offset:
             offset = 0
         if order_by:
-            parsed_order_by = ",".join([f"{op}:{field}" for field, op in order_by.items()])
+            parsed_order_by = ",".join([f"{op.value}:{field.value}" for field, op in order_by.items()])
+        else:
+            parsed_order_by = None
         response = await self._workspaces_api.list_workspaces(
             org_id=str(self._org_id),
             limit=limit,
@@ -261,7 +263,10 @@ class WorkspaceAPIClient:
         This method provides faster performance than list_workspaces() or list_all_workspaces()
         by returning BasicWorkspace objects with minimal data instead of full Workspace objects.
         """
-        parsed_order_by = ",".join([f"{op}:{field}" for field, op in order_by.items()]) if order_by else None
+        if order_by:
+            parsed_order_by = ",".join([f"{op.value}:{field.value}" for field, op in order_by.items()])
+        else:
+            parsed_order_by = None
 
         response = await self._workspaces_api.list_workspaces_summary(
             org_id=str(self._org_id),

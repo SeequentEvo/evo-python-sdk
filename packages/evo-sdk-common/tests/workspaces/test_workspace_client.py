@@ -310,11 +310,12 @@ class TestWorkspaceClient(TestWithConnector):
         self.assertEqual([], workspaces.items())
 
     async def test_list_workspaces_summary_all_args(self):
+        order_by = {WorkspaceOrderByEnum.name: OrderByOperatorEnum.asc}
         with self.transport.set_http_response(200, self._empty_content(), headers={"Content-Type": "application/json"}):
             workspaces = await self.workspace_client.list_workspaces_summary(
                 offset=10,
                 limit=20,
-                order_by={WorkspaceOrderByEnum.name.value: OrderByOperatorEnum.asc.value},
+                order_by=order_by,
                 filter_created_by=USER_ID,
                 created_at=str(utc_datetime(2020, 1, 1)),
                 updated_at=str(utc_datetime(2020, 1, 1)),
