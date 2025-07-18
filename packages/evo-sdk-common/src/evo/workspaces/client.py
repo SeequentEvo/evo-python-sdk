@@ -173,7 +173,7 @@ class WorkspaceAPIClient:
         self,
         limit: int | None = None,
         offset: int | None = None,
-        order_by: dict[WorkspaceOrderByEnum | str, OrderByOperatorEnum | str] | None = None,
+        order_by: dict[WorkspaceOrderByEnum, OrderByOperatorEnum] | None = None,
         filter_created_by: UUID | None = None,
         created_at: str | None = None,
         updated_at: str | None = None,
@@ -185,12 +185,7 @@ class WorkspaceAPIClient:
         if not offset:
             offset = 0
         if order_by:
-            parsed_order_by = ",".join(
-                [
-                    f"{op.value if isinstance(op, OrderByOperatorEnum) else op}:{field.value if isinstance(field, WorkspaceOrderByEnum) else field}"
-                    for field, op in order_by.items()
-                ]
-            )
+            parsed_order_by = ",".join([f"{op.value}:{field.value}" for field, op in order_by.items()])
         else:
             parsed_order_by = None
         response = await self._workspaces_api.list_workspaces(
@@ -254,7 +249,7 @@ class WorkspaceAPIClient:
         self,
         limit: int | None = None,
         offset: int | None = None,
-        order_by: dict[WorkspaceOrderByEnum | str, OrderByOperatorEnum | str] | None = None,
+        order_by: dict[WorkspaceOrderByEnum, OrderByOperatorEnum] | None = None,
         filter_created_by: UUID | None = None,
         created_at: str | None = None,
         updated_at: str | None = None,
@@ -269,12 +264,7 @@ class WorkspaceAPIClient:
         by returning BasicWorkspace objects with minimal data instead of full Workspace objects.
         """
         if order_by:
-            parsed_order_by = ",".join(
-                [
-                    f"{op.value if isinstance(op, OrderByOperatorEnum) else op}:{field.value if isinstance(field, WorkspaceOrderByEnum) else field}"
-                    for field, op in order_by.items()
-                ]
-            )
+            parsed_order_by = ",".join([f"{op.value}:{field.value}" for field, op in order_by.items()])
         else:
             parsed_order_by = None
 
