@@ -309,29 +309,34 @@ class TestWorkspaceClient(TestWithConnector):
         )
         self.assertEqual([], workspaces.items())
 
-    async def test_list_workspaces_summary_all_args(self):
-        order_by = {WorkspaceOrderByEnum.name: OrderByOperatorEnum.asc}
-        with self.transport.set_http_response(200, self._empty_content(), headers={"Content-Type": "application/json"}):
-            workspaces = await self.workspace_client.list_workspaces_summary(
-                offset=10,
-                limit=20,
-                order_by=order_by,
-                filter_created_by=USER_ID,
-                created_at=str(utc_datetime(2020, 1, 1)),
-                updated_at=str(utc_datetime(2020, 1, 1)),
-                name="Test Workspace A",
-                deleted=False,
-                filter_user_id=USER_ID,
+    async def test_list_workspaces_summary_all_args(self) -> None:
+        for order_by in [
+            {WorkspaceOrderByEnum.name: OrderByOperatorEnum.asc},
+            {"name": "asc"},
+        ]:
+            with self.transport.set_http_response(
+                200, self._empty_content(), headers={"Content-Type": "application/json"}
+            ):
+                workspaces = await self.workspace_client.list_workspaces_summary(
+                    offset=10,
+                    limit=20,
+                    order_by=order_by,
+                    filter_created_by=USER_ID,
+                    created_at=str(utc_datetime(2020, 1, 1)),
+                    updated_at=str(utc_datetime(2020, 1, 1)),
+                    name="Test Workspace A",
+                    deleted=False,
+                    filter_user_id=USER_ID,
+                )
+            self.assert_request_made(
+                method=RequestMethod.GET,
+                path=f"{BASE_PATH}/workspaces/summary?"
+                f"limit=20&offset=10&order_by=asc%3Aname&filter%5Bcreated_by%5D=00000000-0000-0000-0000-000000000002&"
+                f"created_at=2020-01-01+00%3A00%3A00%2B00%3A00&updated_at=2020-01-01+00%3A00%3A00%2B00%3A00&"
+                f"name=Test+Workspace+A&deleted=False&filter%5Buser_id%5D=00000000-0000-0000-0000-000000000002",
+                headers={"Accept": "application/json"},
             )
-        self.assert_request_made(
-            method=RequestMethod.GET,
-            path=f"{BASE_PATH}/workspaces/summary?"
-            f"limit=20&offset=10&order_by=asc%3Aname&filter%5Bcreated_by%5D=00000000-0000-0000-0000-000000000002&"
-            f"created_at=2020-01-01+00%3A00%3A00%2B00%3A00&updated_at=2020-01-01+00%3A00%3A00%2B00%3A00&"
-            f"name=Test+Workspace+A&deleted=False&filter%5Buser_id%5D=00000000-0000-0000-0000-000000000002",
-            headers={"Accept": "application/json"},
-        )
-        self.assertEqual([], workspaces.items())
+            self.assertEqual([], workspaces.items())
 
     async def test_list_workspaces_summary(self) -> None:
         content = load_test_data("list_workspaces_summary.json")
