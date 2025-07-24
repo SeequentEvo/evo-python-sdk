@@ -1,8 +1,10 @@
 # OAuth examples
 
-The OAuth implementation provided requires additional dependencies to be installed. To install the required dependencies, make sure you depend on `evo-sdk-common[notebooks]`.
+The OAuth implementation provided requires additional dependencies to be installed. To install the required dependencies,
+make sure you depend on `evo-sdk-common[notebooks]`. If you installed the `evo-sdk` package, this optional dependency
+will already be installed for you.
 
-```
+```shell
 pip install evo-sdk-common[notebooks]
 ```
 
@@ -12,7 +14,7 @@ pip install evo-sdk-common[notebooks]
 
 The `OAuthConnector` is the central component for all of our OAuth workflows.
 
-``` python
+```python
 from evo.aio import AioTransport
 from evo.oauth import OAuthConnector
 
@@ -36,7 +38,7 @@ The `OAuth` library provides authorizer classes to handle different OAuth flows.
 
 `AuthorizationCodeAuthorizer` is the simplest way to manage user access tokens. Logging in will open a browser window to the authorisation URL and wait for the user to authenticate and authorise the application. The `AuthorizationCodeAuthorizer` object allows the user access token to be used in API requests.
 
-``` python
+```python
 from evo.oauth import AuthorizationCodeAuthorizer, OAuthScopes
 
 authorizer = AuthorizationCodeAuthorizer(
@@ -56,7 +58,7 @@ This is how `APIConnector` automatically refreshes the access token when it expi
 
 **Note:** You MUST request the `offline_access` scope at login to get a refresh token. Offline access is not included by default in any of the predefined scope groups.
 
-``` python
+```python
 refreshed = await authorizer.refresh_token()
 print(f"The token was {'' if refreshed else 'not '}refreshed.")
 ```
@@ -65,7 +67,7 @@ print(f"The token was {'' if refreshed else 'not '}refreshed.")
 
 The `OAuthRedirectHandler` wraps the `OAuthConnector` and implements a localhost HTTP server to handle the OAuth redirect. This is useful for applications that cannot open a browser window, such as a command-line application. The `OAuthRedirectHandler` is an asynchronous context manager that manages the lifecycle of the HTTP server.
 
-``` python
+```python
 from evo.oauth import OAuthRedirectHandler, OAuthScopes
 
 async with OAuthRedirectHandler(connector, REDIRECT_URL) as handler:
@@ -78,7 +80,7 @@ print(f"Access token: {result.access_token}")
 
 The `ClientCredientialsAuthorizer` allows you to handle service-to-service authentication.
 
-``` python
+```python
 from evo.aio import AioTransport
 from evo.oauth import ClientCredentialsAuthorizer, OAuthScopes, OAuthConnector
 
