@@ -184,7 +184,6 @@ class WorkspaceAPIClient:
         deleted: bool | None = None,
         filter_user_id: UUID | None = None,
     ) -> Page[Workspace]:
-        print("Listing workspaces")
         parsed_order_by = None
         if not offset:
             offset = 0
@@ -195,7 +194,6 @@ class WorkspaceAPIClient:
                     for field, op in order_by.items()
                 ]
             )
-            print(f"Parsed order_by: {parsed_order_by}")
         else:
             parsed_order_by = None
         response = await self._workspaces_api.list_workspaces(
