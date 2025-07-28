@@ -9,7 +9,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from typing import Literal
+from typing import Literal, TypeAlias
 from uuid import UUID
 
 from pydantic import ValidationError
@@ -44,6 +44,9 @@ from .endpoints.models import BoundingBox as PydanticBoundingBox
 from .endpoints.models import Coordinate as PydanticCoordinate
 from .endpoints.models import User as PydanticUser
 from .endpoints.models import UserRole as PydanticUserRole
+
+WorkspaceOrderByLiteral: TypeAlias = Literal["name", "created_at", "updated_at", "user_role"]
+OrderByOperatorLiteral: TypeAlias = Literal["asc", "desc"]
 
 
 class WorkspaceAPIClient:
@@ -175,7 +178,7 @@ class WorkspaceAPIClient:
         limit: int | None = None,
         offset: int | None = None,
         order_by: dict[WorkspaceOrderByEnum, OrderByOperatorEnum]
-        | dict[Literal["name", "created_at", "updated_at", "user_role"], Literal["asc", "desc"]]
+        | dict[WorkspaceOrderByLiteral, OrderByOperatorLiteral]
         | None = None,
         filter_created_by: UUID | None = None,
         created_at: str | None = None,
@@ -258,7 +261,7 @@ class WorkspaceAPIClient:
         limit: int | None = None,
         offset: int | None = None,
         order_by: dict[WorkspaceOrderByEnum, OrderByOperatorEnum]
-        | dict[Literal["name", "created_at", "updated_at", "user_role"], Literal["asc", "desc"]]
+        | dict[WorkspaceOrderByLiteral, OrderByOperatorLiteral]
         | None = None,
         filter_created_by: UUID | None = None,
         created_at: str | None = None,
