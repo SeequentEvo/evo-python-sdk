@@ -19,6 +19,7 @@ from dateutil.parser import parse as dateutil_parse
 
 from data import load_test_data
 from evo.common import HealthCheckType, Page, RequestMethod, ServiceUser
+from evo.common.data import OrderByOperatorEnum
 from evo.common.io.exceptions import DataNotFoundError
 from evo.common.test_tools import MockResponse, TestWithConnector, TestWithStorage
 from evo.objects import (
@@ -30,6 +31,7 @@ from evo.objects import (
     ObjectVersion,
     SchemaVersion,
 )
+from evo.objects.data import ObjectOrderByEnum, OrgObjectMetadata
 from evo.objects.exceptions import ObjectAlreadyExistsError, ObjectUUIDError
 from evo.objects.utils import ObjectDataClient
 from helpers import NoImport
@@ -46,8 +48,12 @@ class TestObjectAPIClient(TestWithConnector, TestWithStorage):
         self.object_client = ObjectAPIClient(connector=self.connector, environment=self.environment)
 
     @property
+    def instance_base_path(self) -> str:
+        return f"geoscience-object/orgs/{self.environment.org_id}"
+
+    @property
     def base_path(self) -> str:
-        return f"geoscience-object/orgs/{self.environment.org_id}/workspaces/{self.environment.workspace_id}"
+        return f"{self.instance_base_path}/workspaces/{self.environment.workspace_id}"
 
     async def test_check_service_health(self) -> None:
         """Test service health check implementation"""
@@ -87,7 +93,9 @@ class TestObjectAPIClient(TestWithConnector, TestWithStorage):
             MockResponse(status_code=200, content=json.dumps(content_1), headers={"Content-Type": "application/json"}),
         ]
         self.transport.request.side_effect = responses
-        page_one = await self.object_client.list_objects(limit=2)
+        page_one = await self.object_client.list_objects(
+            limit=2, order_by={ObjectOrderByEnum.created_at: OrderByOperatorEnum.asc}, schema_id=["test"]
+        )
         expected_items_page_one = [
             ObjectMetadata(
                 environment=self.environment,
@@ -137,7 +145,7 @@ class TestObjectAPIClient(TestWithConnector, TestWithStorage):
         self.assertFalse(page_one.is_last)
         self.assert_request_made(
             method=RequestMethod.GET,
-            path=f"{self.base_path}/objects?limit=2&offset=0",
+            path=f"{self.base_path}/objects?limit=2&offset=0&order_by=asc%3Acreated_at&schema_id=test",
             headers={"Accept": "application/json"},
         )
         self.transport.request.reset_mock()
@@ -176,6 +184,105 @@ class TestObjectAPIClient(TestWithConnector, TestWithStorage):
             headers={"Accept": "application/json"},
         )
 
+    async def test_list_objects_for_instance(self) -> None:
+        content_0 = load_test_data("list_objects_for_instance_0.json")
+        content_1 = load_test_data("list_objects_for_instance_1.json")
+        responses = [
+            MockResponse(status_code=200, content=json.dumps(content_0), headers={"Content-Type": "application/json"}),
+            MockResponse(status_code=200, content=json.dumps(content_1), headers={"Content-Type": "application/json"}),
+        ]
+        self.transport.request.side_effect = responses
+        page_one = await self.object_client.list_objects_for_instance(
+            limit=2, order_by={ObjectOrderByEnum.created_at: OrderByOperatorEnum.asc}, schema_id=["test"]
+        )
+        expected_items_page_one = [
+            OrgObjectMetadata(
+                environment=self.environment,
+                workspace_id=UUID("00000000-0000-0000-0000-00000000162e"),
+                workspace_name="Test Workspace",
+                id=UUID("00000000-0000-0000-0000-000000000002"),
+                name="m.json",
+                created_at=dateutil_parse("2020-01-01 01:30:00+00:00").replace(tzinfo=datetime.timezone.utc),
+                created_by=ServiceUser(
+                    id=UUID("00000000-0000-0000-0000-000000000010"),
+                    name="x y",
+                    email="test@example.com",
+                ),
+                modified_at=dateutil_parse("2020-01-02 01:30:00+00:00").replace(tzinfo=datetime.timezone.utc),
+                modified_by=ServiceUser(
+                    id=UUID("00000000-0000-0000-0000-000000000010"),
+                    name="x y",
+                    email="test@example.com",
+                ),
+                schema_id=ObjectSchema("objects", "test", SchemaVersion(1, 2, 3)),
+            ),
+            OrgObjectMetadata(
+                environment=self.environment,
+                workspace_id=UUID("00000000-0000-0000-0000-00000000162e"),
+                workspace_name="Test Workspace",
+                id=UUID("00000000-0000-0000-0000-000000000003"),
+                name="n.json",
+                created_at=dateutil_parse("2020-01-02 01:30:00+00:00").replace(tzinfo=datetime.timezone.utc),
+                created_by=ServiceUser(
+                    id=UUID("00000000-0000-0000-0000-000000000011"),
+                    name=None,
+                    email=None,
+                ),
+                modified_at=dateutil_parse("2020-01-03 01:30:00+00:00").replace(tzinfo=datetime.timezone.utc),
+                modified_by=ServiceUser(
+                    id=UUID("00000000-0000-0000-0000-000000000011"),
+                    name=None,
+                    email=None,
+                ),
+                schema_id=ObjectSchema("objects", "test", SchemaVersion(1, 2, 3)),
+            ),
+        ]
+        self.assertIsInstance(page_one, Page)
+        self.assertEqual(expected_items_page_one, page_one.items())
+        self.assertEqual(0, page_one.offset)
+        self.assertEqual(2, page_one.limit)
+        self.assertFalse(page_one.is_last)
+        self.assert_request_made(
+            method=RequestMethod.GET,
+            path=f"{self.instance_base_path}/objects?offset=0&limit=2&permitted_workspaces_only=True&order_by=asc%3Acreated_at&schema_id=test",
+            headers={"Accept": "application/json"},
+        )
+        self.transport.request.reset_mock()
+
+        page_two = await self.object_client.list_objects_for_instance(offset=page_one.next_offset, limit=page_one.limit)
+        expected_items_page_two = [
+            OrgObjectMetadata(
+                environment=self.environment,
+                workspace_id=UUID("00000000-0000-0000-0000-0000000004d2"),
+                workspace_name="Test Workspace 2",
+                id=UUID("00000000-0000-0000-0000-000000000002"),
+                name="o.json",
+                created_at=dateutil_parse("2020-01-01 01:30:00+00:00").replace(tzinfo=datetime.timezone.utc),
+                created_by=ServiceUser(
+                    id=UUID("00000000-0000-0000-0000-000000000010"),
+                    name="x y",
+                    email="test@example.com",
+                ),
+                modified_at=dateutil_parse("2020-01-02 01:30:00+00:00").replace(tzinfo=datetime.timezone.utc),
+                modified_by=ServiceUser(
+                    id=UUID("00000000-0000-0000-0000-000000000011"),
+                    name=None,
+                    email=None,
+                ),
+                schema_id=ObjectSchema("objects", "test", SchemaVersion(1, 2, 3)),
+            ),
+        ]
+        self.assertIsInstance(page_two, Page)
+        self.assertEqual(expected_items_page_two, page_two.items())
+        self.assertEqual(2, page_two.offset)
+        self.assertEqual(2, page_two.limit)
+        self.assertTrue(page_two.is_last)
+        self.assert_request_made(
+            method=RequestMethod.GET,
+            path=f"{self.instance_base_path}/objects?offset=2&limit=2&permitted_workspaces_only=True",
+            headers={"Accept": "application/json"},
+        )
+
     async def test_list_all_objects(self) -> None:
         content_0 = load_test_data("list_objects_0.json")
         content_1 = load_test_data("list_objects_1.json")
@@ -184,7 +291,9 @@ class TestObjectAPIClient(TestWithConnector, TestWithStorage):
             MockResponse(status_code=200, content=json.dumps(content_1), headers={"Content-Type": "application/json"}),
         ]
         self.transport.request.side_effect = responses
-        all_objects = await self.object_client.list_all_objects(limit_per_request=2)
+        all_objects = await self.object_client.list_all_objects(
+            limit_per_request=2, order_by={ObjectOrderByEnum.created_at: OrderByOperatorEnum.asc}, schema_id=["test"]
+        )
         expected_objects = [
             ObjectMetadata(
                 environment=self.environment,
@@ -250,12 +359,12 @@ class TestObjectAPIClient(TestWithConnector, TestWithStorage):
         self.assertEqual(expected_objects, all_objects)
         self.assert_any_request_made(
             method=RequestMethod.GET,
-            path=f"{self.base_path}/objects?limit=2&offset=0",
+            path=f"{self.base_path}/objects?limit=2&offset=0&order_by=asc%3Acreated_at&schema_id=test",
             headers={"Accept": "application/json"},
         )
         self.assert_any_request_made(
             method=RequestMethod.GET,
-            path=f"{self.base_path}/objects?limit=2&offset=2",
+            path=f"{self.base_path}/objects?limit=2&offset=2&order_by=asc%3Acreated_at&schema_id=test",
             headers={"Accept": "application/json"},
         )
 
@@ -1017,3 +1126,65 @@ class TestObjectAPIClient(TestWithConnector, TestWithStorage):
         # Check geoscience object.
         self.assertEqual(expected_object_dict, actual_object.as_dict())
         self.assertIs(actual_object.schema, actual_metadata.schema_id)
+
+    async def test_delete_object_by_path(self) -> None:
+        expected_path = "A/m.json"
+        with self.transport.set_http_response(status_code=204):
+            actual_object = await self.object_client.delete_object_by_path(expected_path)
+
+        self.assert_request_made(
+            method=RequestMethod.DELETE,
+            path=f"{self.base_path}/objects/path/{expected_path}",
+            headers={"Accept-Encoding": "gzip"},
+        )
+        self.assertIsNone(actual_object)
+
+    async def test_delete_object_by_id(self) -> None:
+        expected_uuid = UUID(int=2)
+        with self.transport.set_http_response(status_code=204):
+            actual_object = await self.object_client.delete_object_by_id(expected_uuid)
+
+        self.assert_request_made(
+            method=RequestMethod.DELETE,
+            path=f"{self.base_path}/objects/{expected_uuid}",
+            headers={"Accept-Encoding": "gzip"},
+        )
+        self.assertIsNone(actual_object)
+
+    async def test_restore_geoscience_object(self) -> None:
+        expected_uuid = UUID(int=2)
+        with self.transport.set_http_response(status_code=204):
+            result = await self.object_client.restore_geoscience_object(expected_uuid)
+            # The service returns no content on a successful restore without rename.
+            assert result is None
+
+        self.assert_request_made(
+            method=RequestMethod.POST,
+            path=f"{self.base_path}/objects/{expected_uuid}?deleted=False",
+            headers={
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+            },
+        )
+
+    async def test_restore_geoscience_object_with_rename(self) -> None:
+        get_object_response = load_test_data("get_object.json")
+        expected_uuid = UUID(int=2)
+        # Given a server response that is a 303 redirect with the updated (post-rename) object metadata...
+        with self.transport.set_http_response(status_code=303, content=json.dumps(get_object_response)):
+            # ...the restored object metadata should be returned.
+            restored_object_metadata = await self.object_client.restore_geoscience_object(expected_uuid)
+            assert restored_object_metadata is not None
+
+        self.assert_request_made(
+            method=RequestMethod.POST,
+            path=f"{self.base_path}/objects/{expected_uuid}?deleted=False",
+            headers={
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+            },
+        )
+        self.assertEqual("A", restored_object_metadata.parent)
+        self.assertEqual("m.json", restored_object_metadata.name)
+        self.assertEqual(expected_uuid, restored_object_metadata.id)
+        self.assertEqual("2023-08-03T05:47:18.3402289Z", restored_object_metadata.version_id)

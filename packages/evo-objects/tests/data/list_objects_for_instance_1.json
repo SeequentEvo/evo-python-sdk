@@ -1,0 +1,31 @@
+{
+    "objects": [
+        {
+            "name": "o.json",
+            "object_id": "00000000-0000-0000-0000-000000000002",
+            "schema": "/objects/test/1.2.3/test.schema.json",
+            "version_id": "3",
+            "created_at": "2020-01-01 01:30:00+00:00",
+            "created_by": {
+                "id": "00000000-0000-0000-0000-000000000010",
+                "name": "x y",
+                "email": "test@example.com"
+            },
+            "modified_at": "2020-01-02 01:30:00+00:00",
+            "modified_by": {
+                "id": "00000000-0000-0000-0000-000000000011",
+                "name": null,
+                "email": null
+            },
+            "workspace_id": "00000000-0000-0000-0000-0000000004d2",
+            "workspace_name": "Test Workspace 2"
+        }
+    ],
+    "offset": 2,
+    "limit": 2,
+    "total": 3,
+    "links": {
+        "next": null,
+        "prev": "http://unittest.localhost/path/geoscience-object/orgs/00000000-0000-0000-0000-0000000004d2/objects?limit=2"
+    }
+}
