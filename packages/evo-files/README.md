@@ -15,9 +15,14 @@ The File API provides the ability to manage files of any type or size, associate
 Enable your product with Evo connected workflows by integrating with the Seequent Evo File API. Most file
 formats and sizes are accepted.
 
+## Pre-requisites
+
+* Python ^3.10
+* An [application registered in Bentley](https://developer.bentley.com/register/?product=seequent-evo)
+
 ## Installation
 
-```
+```shell
 pip install evo-files 
 ```
 
@@ -37,11 +42,12 @@ files = await file_client.list_files()
 
 For some interactive Jupyter notebook examples, see the [examples folder](docs/examples).
 
-## Developing the library
+## Contributing
 
 For instructions on contributing to the development of this library, please refer to the [evo-python-sdk documentation](https://github.com/seequentevo/evo-python-sdk).
 
 ## License
+
 The Python SDK for Evo is open source and licensed under the [Apache 2.0 license.](./LICENSE.md).
 
 Copyright © 2025 Bentley Systems, Incorporated.
