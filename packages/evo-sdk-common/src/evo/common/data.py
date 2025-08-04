@@ -396,3 +396,10 @@ class ServiceHealth:
                 for dependency, status in self.dependencies.items():
                     msg += f"\n  {dependency}: {status}"
             raise ServiceHealthCheckFailed(msg)
+
+
+class OrderByOperatorEnum(str, enum.Enum):
+    """Enumeration for order_by operators for listing endpoints."""
+
+    asc = "asc"
+    desc = "desc"

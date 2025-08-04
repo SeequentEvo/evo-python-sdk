@@ -15,6 +15,7 @@ The contents of this module are utilities that make it easy to test service clie
 only be used for unit tests.
 """
 
+import sys
 import warnings
 
 from .consts import ACCESS_TOKEN, BASE_URL, HUB, ORG, WORKSPACE_ID
@@ -36,8 +37,9 @@ from .io import (
 from .storage import TestWithStorage
 from .utils import long_test, utc_datetime, utc_time
 
-# Issue a warning whenever this module is imported.
-warnings.warn(__doc__)
+if "pytest" not in sys.modules:
+    # Issue a warning whenever this module is imported.
+    warnings.warn(__doc__)
 
 __all__ = [
     "ACCESS_TOKEN",

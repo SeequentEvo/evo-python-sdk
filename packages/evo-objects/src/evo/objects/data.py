@@ -11,9 +11,11 @@
 
 from __future__ import annotations
 
+import enum
 import re
 from dataclasses import dataclass
 from datetime import datetime
+from uuid import UUID
 
 from evo.common import ResourceMetadata
 from evo.workspaces import ServiceUser
@@ -22,10 +24,21 @@ from .exceptions import SchemaIDFormatError
 
 __all__ = [
     "ObjectMetadata",
+    "ObjectOrderByEnum",
     "ObjectSchema",
     "ObjectVersion",
     "SchemaVersion",
 ]
+
+
+class ObjectOrderByEnum(str, enum.Enum):
+    author = "author"
+    created_at = "created_at"
+    created_by = "created_by"
+    deleted_at = "deleted_at"
+    modified_at = "modified_at"
+    modified_by = "modified_by"
+    object_name = "object_name"
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -61,6 +74,36 @@ class ObjectMetadata(ResourceMetadata):
             workspace_id=self.environment.workspace_id,
             object_id=self.id,
             version_id=self.version_id,
+        )
+
+
+@dataclass(frozen=True, kw_only=True)
+class OrgObjectMetadata(ResourceMetadata):
+    """Metadata about a geoscience object in an organization listing."""
+
+    workspace_id: UUID
+    """The ID of the workspace that contains the object."""
+
+    workspace_name: str | None
+    """The name of the workspace that contains the object."""
+
+    schema_id: ObjectSchema
+    """The geoscience object schema."""
+
+    modified_at: datetime
+    """The date and time when the object was last modified."""
+
+    modified_by: ServiceUser | None
+    """The user who last modified the object."""
+
+    @property
+    def url(self) -> str:
+        """The url of the object."""
+        return "{hub_url}/geoscience-object/orgs/{org_id}/workspaces/{workspace_id}/objects/{object_id}".format(
+            hub_url=self.environment.hub_url.rstrip("/"),
+            org_id=self.environment.org_id,
+            workspace_id=self.workspace_id,
+            object_id=self.id,
         )
 
 

@@ -16,7 +16,7 @@ from pydantic import ValidationError
 from pydantic.type_adapter import TypeAdapter
 
 from evo.common import APIConnector, HealthCheckType, Page, ServiceHealth, ServiceUser
-from evo.common.utils import get_service_health
+from evo.common.utils import get_service_health, parse_order_by
 
 from .data import (
     BasicWorkspace,
@@ -187,18 +187,9 @@ class WorkspaceAPIClient:
         deleted: bool | None = None,
         filter_user_id: UUID | None = None,
     ) -> Page[Workspace]:
-        parsed_order_by = None
+        parsed_order_by = parse_order_by(order_by)  # type: ignore
         if not offset:
             offset = 0
-        if order_by:
-            parsed_order_by = ",".join(
-                [
-                    f"{op.value if isinstance(op, OrderByOperatorEnum) else op}:{field.value if isinstance(field, WorkspaceOrderByEnum) else field}"
-                    for field, op in order_by.items()
-                ]
-            )
-        else:
-            parsed_order_by = None
         response = await self._workspaces_api.list_workspaces(
             org_id=str(self._org_id),
             limit=limit,
@@ -276,15 +267,7 @@ class WorkspaceAPIClient:
         This method provides faster performance than list_workspaces() or list_all_workspaces()
         by returning BasicWorkspace objects with minimal data instead of full Workspace objects.
         """
-        if order_by:
-            parsed_order_by = ",".join(
-                [
-                    f"{op.value if isinstance(op, OrderByOperatorEnum) else op}:{field.value if isinstance(field, WorkspaceOrderByEnum) else field}"
-                    for field, op in order_by.items()
-                ]
-            )
-        else:
-            parsed_order_by = None
+        parsed_order_by = parse_order_by(order_by)
 
         response = await self._workspaces_api.list_workspaces_summary(
             org_id=str(self._org_id),

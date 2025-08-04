@@ -18,6 +18,7 @@ from typing import NamedTuple
 from uuid import UUID
 
 from evo.common import Environment, ServiceUser
+from evo.common.data import OrderByOperatorEnum
 
 from .exceptions import UserPermissionTypeError
 
@@ -33,11 +34,6 @@ __all__ = [
     "WorkspaceOrderByEnum",
     "WorkspaceRole",
 ]
-
-
-class OrderByOperatorEnum(str, enum.Enum):
-    asc = "asc"
-    desc = "desc"
 
 
 class WorkspaceOrderByEnum(str, enum.Enum):
