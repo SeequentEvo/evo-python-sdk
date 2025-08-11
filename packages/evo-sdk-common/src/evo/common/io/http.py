@@ -29,6 +29,7 @@ from ..data import EmptyResponse, HTTPHeaderDict, HTTPResponse, RequestMethod
 from ..exceptions import ForbiddenException, UnauthorizedException
 from ..interfaces import IFeedback, ITransport
 from ..utils import NoFeedback, Retry
+from ..utils.urls import load_base_url
 from .bytes import BytesDestination
 from .chunked_io_manager import ChunkedIOManager
 from .exceptions import ChunkedIOError, RenewalError, RenewalTimeoutError
@@ -117,10 +118,9 @@ class HTTPIOBase:
         async with self.__mutex:
             if self.__connector is None:
                 url = await self.__get_new_url()
-                if not url.startswith("https://"):
-                    raise ValueError("Unsupported URL scheme")
-                base_url = "https://" + urlparse(url).hostname
-                self.__connector = APIConnector(base_url=base_url, transport=self.__transport)
+                self.__connector = APIConnector(
+                    base_url=load_base_url(url, allow_insecure=False), transport=self.__transport
+                )
                 self.__update_url(url)
         await self.__connector.__aenter__()
         return self
