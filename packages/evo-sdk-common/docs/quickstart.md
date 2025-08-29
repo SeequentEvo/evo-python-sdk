@@ -99,7 +99,7 @@ If you already have an access token, and don't need to worry about whether it's 
 Alternatively, a client of `client credentials` grant type can use the `ClientCredentialsAuthorizer` for authorization into Evo. This allows for service to service requests, instead of user login and redirects.
 
 ```python
-from evo.oauth import OAuthConnector, ClientCredentialsAuthorizer, OAuthScopes
+from evo.oauth import OAuthConnector, ClientCredentialsAuthorizer, EvoScopes
 
 CLIENT_NAME = "Your Client Name"
 CLIENT_ID = "your-client-id"
@@ -111,7 +111,7 @@ authorizer = ClientCredentialsAuthorizer(
         client_id=CLIENT_ID,
         client_secret=CLIENT_SECRET,
     ),
-    scopes=OAuthScopes.all_evo,
+    scopes=EvoScopes.all_evo,
 )
 
 # Authorize the client.

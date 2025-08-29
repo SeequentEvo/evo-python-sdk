@@ -27,7 +27,7 @@ from evo.common import APIConnector, BaseAPIClient, Environment
 from evo.common.exceptions import UnauthorizedException
 from evo.common.interfaces import IAuthorizer, ICache, IFeedback, ITransport
 from evo.discovery import Hub, Organization
-from evo.oauth import OAuthConnector, OAuthScopes
+from evo.oauth import AnyScopes, EvoScopes, OAuthConnector
 from evo.service_manager import ServiceManager
 from evo.workspaces import Workspace
 
@@ -283,7 +283,7 @@ class ServiceManagerWidget(widgets.HBox):
         redirect_url: str = DEFAULT_REDIRECT_URL,
         client_secret: str | None = None,
         cache_location: FileName = DEFAULT_CACHE_LOCATION,
-        oauth_scopes: OAuthScopes = OAuthScopes.all_evo | OAuthScopes.offline_access,
+        oauth_scopes: AnyScopes = EvoScopes.all_evo | EvoScopes.offline_access,
         proxy: StrOrURL | None = None,
     ) -> ServiceManagerWidget:
         """Create a ServiceManagerWidget with an authorization code authorizer.

@@ -19,7 +19,7 @@ from evo.common.data import HTTPHeaderDict
 from evo.common.interfaces import IAuthorizer
 
 from .connector import OAuthConnector
-from .data import AccessToken, OAuthScopes
+from .data import AccessToken, AnyScopes, EvoScopes, Scopes
 from .exceptions import OAuthError
 from .oauth_redirect_handler import OAuthRedirectHandler
 
@@ -37,7 +37,7 @@ T = TypeVar("T", bound=AccessToken)
 class _BaseAuthorizer(IAuthorizer, Generic[T]):
     pi_partial_implementation = True  # Suppress warning about missing interface methods.
 
-    def __init__(self, oauth_connector: OAuthConnector, scopes: OAuthScopes = OAuthScopes.default) -> None:
+    def __init__(self, oauth_connector: OAuthConnector, scopes: AnyScopes = EvoScopes.default) -> None:
         """
         :param oauth_connector: The connector to use for fetching tokens.
         :param scopes: The OAuth scopes to request.
@@ -46,9 +46,7 @@ class _BaseAuthorizer(IAuthorizer, Generic[T]):
 
         self._connector = oauth_connector
         self.__token: T | None = None
-
-        assert isinstance(scopes, OAuthScopes), "Scopes must be an instance of OAuthScopes."
-        self._scopes: OAuthScopes = scopes
+        self._scopes = Scopes(scopes)
 
     def _get_token(self) -> T | None:
         """Get the current access token, or None if the token is not available.
@@ -114,7 +112,7 @@ class ClientCredentialsAuthorizer(_BaseAuthorizer[AccessToken]):
         """
         data = {  # The payload to send to the OAuth server in the token request.
             "grant_type": "client_credentials",
-            "scope": str(self._scopes),
+            "scope": self._scopes,
         }
 
         logger.debug("Fetching access token...")
@@ -167,7 +165,7 @@ class AuthorizationCodeAuthorizer(_BaseAuthorizer[AccessToken]):
     """
 
     def __init__(
-        self, oauth_connector: OAuthConnector, redirect_url: str, scopes: OAuthScopes = OAuthScopes.default
+        self, oauth_connector: OAuthConnector, redirect_url: str, scopes: AnyScopes = EvoScopes.default
     ) -> None:
         """
         :param oauth_connector: The OAuth connector to use for fetching tokens.

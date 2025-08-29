@@ -22,7 +22,7 @@ from urllib.parse import urlencode, urlparse
 from evo import logging
 
 from .connector import OAuthConnector
-from .data import AccessToken, OAuthScopes
+from .data import AccessToken, AnyScopes
 from .exceptions import OAuthError
 
 try:
@@ -163,7 +163,7 @@ class OAuthRedirectHandler:
         except asyncio.TimeoutError:
             raise OAuthError("Timed out waiting for OAuth response.")
 
-    async def login(self, scopes: OAuthScopes, timeout_seconds: int | float = 60) -> AccessToken:
+    async def login(self, scopes: AnyScopes, timeout_seconds: int | float = 60) -> AccessToken:
         """Authenticate the user and obtain an access token.
 
         This method will launch a web browser to authenticate the user and obtain an access token.
@@ -181,7 +181,7 @@ class OAuthRedirectHandler:
         webbrowser.open(auth_uri)
         return await self.get_result(timeout_seconds)
 
-    def create_authorization_url(self, scopes: OAuthScopes) -> str:
+    def create_authorization_url(self, scopes: AnyScopes) -> str:
         """Create an authorization URL for the given client.
 
         https://www.oauth.com/oauth2-servers/pkce/authorization-request/
@@ -190,7 +190,6 @@ class OAuthRedirectHandler:
 
         :return: The authorization URL.
         """
-        assert isinstance(scopes, OAuthScopes), "Scopes must be an instance of OAuthScopes."
         base_url = self.__oauth_connector.base_uri + self.__oauth_connector.endpoint("authorize")
         challenge, state = self._get_challenge_and_state()
         qs_params = {  # The query string parameters for the authorisation URL.

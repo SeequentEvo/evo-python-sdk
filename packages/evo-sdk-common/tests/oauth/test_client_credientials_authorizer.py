@@ -11,7 +11,7 @@
 
 from evo.common.test_tools import MockResponse
 from evo.oauth import ClientCredentialsAuthorizer
-from evo.oauth.data import AccessToken, OAuthScopes
+from evo.oauth.data import AccessToken, EvoScopes
 
 from ._helpers import CLIENT_ID, CLIENT_SECRET, TestWithOAuthConnector, get_access_token
 
@@ -19,7 +19,7 @@ from ._helpers import CLIENT_ID, CLIENT_SECRET, TestWithOAuthConnector, get_acce
 class TestClientCredentialsAuthorizer(TestWithOAuthConnector):
     def setUp(self):
         super().setUp()
-        self.authorizer = ClientCredentialsAuthorizer(oauth_connector=self.connector, scopes=OAuthScopes.all_evo)
+        self.authorizer = ClientCredentialsAuthorizer(oauth_connector=self.connector, scopes=EvoScopes.all_evo)
         self.first_token = get_access_token(access_token="first_token")
         self.second_token = get_access_token(access_token="second_token")
 
@@ -41,7 +41,7 @@ class TestClientCredentialsAuthorizer(TestWithOAuthConnector):
         self.assert_token_equals(self.first_token)
         self.assert_fetched_token(
             grant_type="client_credentials",
-            scope="evo.discovery evo.workspace evo.blocksync evo.object evo.file",
+            scope="evo.blocksync evo.discovery evo.file evo.object evo.workspace",
             client_id=CLIENT_ID,
             client_secret=CLIENT_SECRET,
         )
@@ -54,7 +54,7 @@ class TestClientCredentialsAuthorizer(TestWithOAuthConnector):
         self.assertTrue(result)
         self.assert_fetched_token(
             grant_type="client_credentials",
-            scope="evo.discovery evo.workspace evo.blocksync evo.object evo.file",
+            scope="evo.blocksync evo.discovery evo.file evo.object evo.workspace",
             client_id=CLIENT_ID,
             client_secret=CLIENT_SECRET,
         )

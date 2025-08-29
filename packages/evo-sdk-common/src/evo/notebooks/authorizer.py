@@ -96,7 +96,7 @@ class AuthorizationCodeAuthorizer(_NotebookAuthorizerMixin[oauth.AccessToken], o
         self,
         oauth_connector: oauth.OAuthConnector,
         redirect_url: str,
-        scopes: oauth.OAuthScopes,
+        scopes: oauth.AnyScopes,
         env: DotEnv,
     ) -> None:
         """

@@ -39,12 +39,12 @@ The `OAuth` library provides authorizer classes to handle different OAuth flows.
 `AuthorizationCodeAuthorizer` is the simplest way to manage user access tokens. Logging in will open a browser window to the authorisation URL and wait for the user to authenticate and authorise the application. The `AuthorizationCodeAuthorizer` object allows the user access token to be used in API requests.
 
 ```python
-from evo.oauth import AuthorizationCodeAuthorizer, OAuthScopes
+from evo.oauth import AuthorizationCodeAuthorizer, EvoScopes
 
 authorizer = AuthorizationCodeAuthorizer(
     oauth_connector=connector,
     redirect_url=REDIRECT_URL,
-    scopes=OAuthScopes.all_evo | OAuthScopes.offline_access,
+    scopes=EvoScopes.all_evo | EvoScopes.offline_access,
 )
 await authorizer.login()
 print(await authorizer.get_default_headers())
@@ -68,10 +68,10 @@ print(f"The token was {'' if refreshed else 'not '}refreshed.")
 The `OAuthRedirectHandler` wraps the `OAuthConnector` and implements a localhost HTTP server to handle the OAuth redirect. This is useful for applications that cannot open a browser window, such as a command-line application. The `OAuthRedirectHandler` is an asynchronous context manager that manages the lifecycle of the HTTP server.
 
 ```python
-from evo.oauth import OAuthRedirectHandler, OAuthScopes
+from evo.oauth import OAuthRedirectHandler, EvoScopes
 
 async with OAuthRedirectHandler(connector, REDIRECT_URL) as handler:
-    result = await handler.login(OAuthScopes.offline_access)
+    result = await handler.login(EvoScopes.offline_access)
 
 print(f"Access token: {result.access_token}")
 ```
@@ -82,7 +82,7 @@ The `ClientCredientialsAuthorizer` allows you to handle service-to-service authe
 
 ```python
 from evo.aio import AioTransport
-from evo.oauth import ClientCredentialsAuthorizer, OAuthScopes, OAuthConnector
+from evo.oauth import ClientCredentialsAuthorizer, EvoScopes, OAuthConnector
 
 # OAuth client app credentials
 # See: https://developer.seequent.com/docs/guides/getting-started/apps-and-tokens
@@ -96,7 +96,7 @@ authorizer = ClientCredentialsAuthorizer(
         client_id=CLIENT_ID,
         client_secret=CLIENT_SECRET,
     ),
-    scopes=OAuthScopes.evo_discovery | OAuthScopes.evo_workspace,
+    scopes=EvoScopes.evo_discovery | EvoScopes.evo_workspace,
 )
 
 print(await authorizer.get_default_headers())

@@ -15,7 +15,7 @@ from parameterized import parameterized
 
 from evo.common import HTTPHeaderDict
 from evo.common.test_tools import MockResponse, TestHTTPHeaderDict, long_test
-from evo.oauth import AccessToken, AuthorizationCodeAuthorizer, OAuthError, OAuthScopes
+from evo.oauth import AccessToken, AnyScopes, AuthorizationCodeAuthorizer, EvoScopes, OAuthError
 
 from ._helpers import (
     AUTHORIZATION_CODE,
@@ -47,7 +47,7 @@ class TestAuthorizationCodeAuthorizer(TestWithOAuthConnector):
             ),
         ]
 
-    async def _login(self, scopes: OAuthScopes | None = None, timeout_seconds: int | None = None) -> None:
+    async def _login(self, scopes: AnyScopes | None = None, timeout_seconds: int | None = None) -> None:
         if scopes is not None:
             self.authorizer._scopes = scopes
 
@@ -58,7 +58,7 @@ class TestAuthorizationCodeAuthorizer(TestWithOAuthConnector):
 
     async def login(
         self,
-        scopes: OAuthScopes | None = None,
+        scopes: AnyScopes | None = None,
         timeout_seconds: int | None = None,
         authenticate: bool = True,
         state: str = STATE_TOKEN,
@@ -98,7 +98,7 @@ class TestAuthorizationCodeAuthorizer(TestWithOAuthConnector):
         """Test the login method of the AuthorizationCodeAuthorizer."""
         mock_open = await self.login()
         expected_auth_url = self.get_expected_auth_url(
-            state=STATE_TOKEN, verifier=VERIFIER_TOKEN, scopes=OAuthScopes.default
+            state=STATE_TOKEN, verifier=VERIFIER_TOKEN, scopes=EvoScopes.default
         )
         mock_open.assert_called_once_with(expected_auth_url)
         self.assert_fetched_token(
@@ -113,9 +113,9 @@ class TestAuthorizationCodeAuthorizer(TestWithOAuthConnector):
 
     async def test_login_custom_scopes(self) -> None:
         """Test the login method of the AuthorizationCodeAuthorizer with custom scopes."""
-        mock_open = await self.login(scopes=OAuthScopes.all_evo)
+        mock_open = await self.login(scopes=EvoScopes.all_evo)
         expected_auth_url = self.get_expected_auth_url(
-            state=STATE_TOKEN, verifier=VERIFIER_TOKEN, scopes=OAuthScopes.all_evo
+            state=STATE_TOKEN, verifier=VERIFIER_TOKEN, scopes=EvoScopes.all_evo
         )
         mock_open.assert_called_once_with(expected_auth_url)
         self.assert_fetched_token(
@@ -140,7 +140,7 @@ class TestAuthorizationCodeAuthorizer(TestWithOAuthConnector):
         """Test the login method of the AuthorizationCodeAuthorizer with a custom timeout."""
         mock_open = await self.login(timeout_seconds=delay, authenticate=False)
         expected_auth_url = self.get_expected_auth_url(
-            state=STATE_TOKEN, verifier=VERIFIER_TOKEN, scopes=OAuthScopes.default
+            state=STATE_TOKEN, verifier=VERIFIER_TOKEN, scopes=EvoScopes.default
         )
         mock_open.assert_called_once_with(expected_auth_url)
         self.assert_token_equals(None)
@@ -155,9 +155,9 @@ class TestAuthorizationCodeAuthorizer(TestWithOAuthConnector):
     @long_test
     async def test_login_custom_scopes_timeout(self, _label: str, delay: int) -> None:
         """Test the login method of the AuthorizationCodeAuthorizer with custom scopes and a custom timeout."""
-        mock_open = await self.login(scopes=OAuthScopes.all_evo, timeout_seconds=delay, authenticate=False)
+        mock_open = await self.login(scopes=EvoScopes.all_evo, timeout_seconds=delay, authenticate=False)
         expected_auth_url = self.get_expected_auth_url(
-            state=STATE_TOKEN, verifier=VERIFIER_TOKEN, scopes=OAuthScopes.all_evo
+            state=STATE_TOKEN, verifier=VERIFIER_TOKEN, scopes=EvoScopes.all_evo
         )
         mock_open.assert_called_once_with(expected_auth_url)
         self.assert_token_equals(None)
@@ -166,7 +166,7 @@ class TestAuthorizationCodeAuthorizer(TestWithOAuthConnector):
         """Test the login method of the AuthorizationCodeAuthorizer."""
         mock_open = await self.login()
         expected_auth_url = self.get_expected_auth_url(
-            state=STATE_TOKEN, verifier=VERIFIER_TOKEN, scopes=OAuthScopes.default
+            state=STATE_TOKEN, verifier=VERIFIER_TOKEN, scopes=EvoScopes.default
         )
         mock_open.assert_called_once_with(expected_auth_url)
         self.assert_fetched_token(

@@ -16,7 +16,7 @@ from urllib.parse import parse_qs, urlparse
 from parameterized import parameterized
 
 from evo.common.test_tools import long_test
-from evo.oauth import OAuthError, OAuthRedirectHandler, OAuthScopes
+from evo.oauth import EvoScopes, OAuthError, OAuthRedirectHandler
 
 from ._helpers import (
     AUTHORIZATION_CODE,
@@ -116,7 +116,7 @@ class TestOAuthRedirectHandlerWithMockOAuth(TestWithMockOAuthConnector):
 
         async with self.handler:
             with patch_webbrowser_open(authenticate=True) as mock_webbrowser_open:
-                result = await self.handler.login(OAuthScopes.all_evo)
+                result = await self.handler.login(EvoScopes.all_evo)
 
         mock_webbrowser_open.assert_called_once_with(expect_auth_url)
         self.handler.get_token.assert_called_once_with(STATE_TOKEN, AUTHORIZATION_CODE)
@@ -137,7 +137,7 @@ class TestOAuthRedirectHandlerWithMockOAuth(TestWithMockOAuthConnector):
 
         async with self.handler:
             with patch_webbrowser_open(authenticate=False) as mock_webbrowser_open:
-                auth = asyncio.create_task(self.handler.login(OAuthScopes.all_evo, delay))
+                auth = asyncio.create_task(self.handler.login(EvoScopes.all_evo, delay))
                 self.assertFalse(auth.done())
                 with self.assertRaises(OAuthError):
                     await auth
@@ -148,11 +148,9 @@ class TestOAuthRedirectHandlerWithMockOAuth(TestWithMockOAuthConnector):
 
     def test_create_authorization_url(self) -> None:
         """Test creating the authorization URL"""
-        expected_url = self.get_expected_auth_url(
-            state=STATE_TOKEN, verifier=VERIFIER_TOKEN, scopes=OAuthScopes.default
-        )
+        expected_url = self.get_expected_auth_url(state=STATE_TOKEN, verifier=VERIFIER_TOKEN, scopes=EvoScopes.default)
         with patch_urlsafe_tokens(state=STATE_TOKEN, verifier=VERIFIER_TOKEN):
-            actual_url = self.handler.create_authorization_url(OAuthScopes.default)
+            actual_url = self.handler.create_authorization_url(EvoScopes.default)
 
         # Check the auth URL and query parameters.
         self.assertEqual(expected_url, actual_url)
@@ -160,10 +158,10 @@ class TestOAuthRedirectHandlerWithMockOAuth(TestWithMockOAuthConnector):
     def test_create_authorization_url_generates_unique_tokens(self) -> None:
         """Test creating the authorization URL generates unique state and verifier tokens."""
 
-        uri_one = self.handler.create_authorization_url(OAuthScopes.default)
+        uri_one = self.handler.create_authorization_url(EvoScopes.default)
         query_one = parse_qs(urlparse(uri_one).query)
 
-        uri_two = self.handler.create_authorization_url(OAuthScopes.default)
+        uri_two = self.handler.create_authorization_url(EvoScopes.default)
         query_two = parse_qs(urlparse(uri_two).query)
 
         self.assertNotEqual(query_one["state"], query_two["state"])

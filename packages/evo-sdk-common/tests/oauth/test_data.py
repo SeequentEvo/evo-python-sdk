@@ -13,80 +13,79 @@ import unittest
 
 from parameterized import parameterized
 
-from evo.oauth import OAuthScopes
+from evo.oauth import EvoScopes, OAuthScopes
 
 EXPECTED_SCOPE_NAMES = {
-    OAuthScopes.offline_access: "offline_access",
-    OAuthScopes.evo_discovery: "evo.discovery",
-    OAuthScopes.evo_workspace: "evo.workspace",
-    OAuthScopes.evo_blocksync: "evo.blocksync",
-    OAuthScopes.evo_object: "evo.object",
-    OAuthScopes.evo_file: "evo.file",
-    OAuthScopes.evo_audit: "evo.audit",
+    EvoScopes.offline_access: "offline_access",
+    EvoScopes.evo_discovery: "evo.discovery",
+    EvoScopes.evo_workspace: "evo.workspace",
+    EvoScopes.evo_blocksync: "evo.blocksync",
+    EvoScopes.evo_object: "evo.object",
+    EvoScopes.evo_file: "evo.file",
+    EvoScopes.evo_audit: "evo.audit",
 }
 
 
-class TestOAuthScopes(unittest.TestCase):
+class TestEvoScopes(unittest.TestCase):
     @parameterized.expand(
         [
-            (OAuthScopes.offline_access,),
-            (OAuthScopes.evo_discovery,),
-            (OAuthScopes.evo_workspace,),
-            (OAuthScopes.evo_blocksync,),
-            (OAuthScopes.evo_object,),
-            (OAuthScopes.evo_file,),
-            (OAuthScopes.evo_audit,),
+            (EvoScopes.offline_access,),
+            (EvoScopes.evo_discovery,),
+            (EvoScopes.evo_workspace,),
+            (EvoScopes.evo_blocksync,),
+            (EvoScopes.evo_object,),
+            (EvoScopes.evo_file,),
+            (EvoScopes.evo_audit,),
         ],
         name_func=lambda func,
         index,
         params: f"{func.__name__}_{index}_{parameterized.to_safe_name(str(params[0][0]))}",
     )
-    def test_single_scope_string(self, scope: OAuthScopes) -> None:
+    def test_single_scope_string(self, scope: EvoScopes) -> None:
         self.assertIn(scope, EXPECTED_SCOPE_NAMES)
         expected_string = EXPECTED_SCOPE_NAMES[scope]
         self.assertEqual(expected_string, str(scope))
-        self.assertEqual(1, len(scope), "Expected a single scope")
+        self.assertEqual(1, len(scope.members), "Expected a single scope")
 
     @classmethod
-    def expand_scopes(cls, scopes: tuple[OAuthScopes, ...]) -> list[OAuthScopes]:
+    def expand_scopes(cls, scopes: tuple[EvoScopes, ...]) -> list[EvoScopes]:
         """Expand a tuple of scopes into a list of individual scopes."""
         all_scopes = set()
         for scope in scopes:
-            if len(scope) == 1:
-                all_scopes.add(scope)
-            else:
-                for member in OAuthScopes:
-                    if member in scope and len(member) == 1:
-                        all_scopes.add(member)
+            all_scopes.update(scope.members)
 
-        return sorted(all_scopes, key=lambda s: s.value)
+        return sorted(all_scopes)
 
     @parameterized.expand(
         [
             (
-                OAuthScopes.default,
+                EvoScopes.default,
                 (
-                    OAuthScopes.evo_discovery,
-                    OAuthScopes.evo_workspace,
+                    EvoScopes.evo_discovery,
+                    EvoScopes.evo_workspace,
                 ),
             ),
             (
-                OAuthScopes.all_evo,
+                EvoScopes.all_evo,
                 (
-                    OAuthScopes.default,
-                    OAuthScopes.evo_blocksync,
-                    OAuthScopes.evo_object,
-                    OAuthScopes.evo_file,
+                    EvoScopes.default,
+                    EvoScopes.evo_blocksync,
+                    EvoScopes.evo_object,
+                    EvoScopes.evo_file,
                 ),
             ),
         ],
         name_func=lambda f, n, p: f"{f.__name__}_{n}_{parameterized.to_safe_name(p[0][0].name)}",
     )
-    def test_multiple_scope_string(self, scopes: OAuthScopes, expected_scopes: tuple[OAuthScopes, ...]) -> None:
+    def test_multiple_scope_string(self, scopes: EvoScopes, expected_scopes: tuple[EvoScopes, ...]) -> None:
         expected_string = " ".join([EXPECTED_SCOPE_NAMES[scope] for scope in self.expand_scopes(expected_scopes)])
         self.assertEqual(expected_string, str(scopes))
 
         for scope in expected_scopes:
             self.assertIn(scope, scopes)
 
-        self.assertEqual(len(self.expand_scopes(expected_scopes)), len(scopes))
+        self.assertEqual(len(self.expand_scopes(expected_scopes)), len(scopes.members))
+
+    def test_oauth_scope_alias(self) -> None:
+        """Test that the OAuthScopes alias points to EvoScopes for backwards compatibility."""
+        self.assertIs(EvoScopes, OAuthScopes)

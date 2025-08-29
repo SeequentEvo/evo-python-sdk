@@ -17,17 +17,20 @@ from .authorizer import (
     ClientCredentialsAuthorizer,
 )
 from .connector import OAuthConnector
-from .data import AccessToken, OAuthScopes
+from .data import AccessToken, AnyScopes, EvoScopes, OAuthScopes, Scopes
 from .exceptions import OAuthError
 from .oauth_redirect_handler import OAuthRedirectHandler
 
 __all__ = [
     "AccessToken",
     "AccessTokenAuthorizer",
+    "AnyScopes",
     "AuthorizationCodeAuthorizer",
     "ClientCredentialsAuthorizer",
+    "EvoScopes",
     "OAuthConnector",
     "OAuthError",
     "OAuthRedirectHandler",
     "OAuthScopes",
+    "Scopes",
 ]

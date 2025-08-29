@@ -26,7 +26,7 @@ from aiohttp.client import ClientSession
 
 from evo.common import RequestMethod
 from evo.common.test_tools import TestTransport, utc_datetime
-from evo.oauth import OAuthConnector, OAuthScopes
+from evo.oauth import AnyScopes, EvoScopes, OAuthConnector
 from evo.oauth.data import AccessToken
 
 ACCESS_TOKEN = "TestAccessToken"
@@ -41,7 +41,7 @@ REDIRECT_URL = "http://localhost:1234"
 STATE_TOKEN = "TestStateToken"
 VERIFIER_TOKEN = "TestVerifierToken"
 AUTHORIZATION_CODE = "TestAuthorizationCode"
-OAUTH_SCOPES = OAuthScopes.all_evo
+OAUTH_SCOPES = EvoScopes.all_evo
 
 
 def _jwt_encode(**data: Any) -> str:
@@ -122,7 +122,7 @@ class TestWithOAuthConnector(unittest.IsolatedAsyncioTestCase):
         )
 
     def get_expected_auth_url(
-        self, state: str = STATE_TOKEN, verifier: str = VERIFIER_TOKEN, scopes: OAuthScopes = OAuthScopes.default
+        self, state: str = STATE_TOKEN, verifier: str = VERIFIER_TOKEN, scopes: AnyScopes = EvoScopes.default
     ) -> str:
         base_url = self.connector.base_uri + self.connector.endpoint("authorize")
 
@@ -192,7 +192,7 @@ class TestWithMockOAuthConnector(unittest.IsolatedAsyncioTestCase):
         self.connector = MockOAuthConnector(spec=OAuthConnector)
 
     def get_expected_auth_url(
-        self, state: str = STATE_TOKEN, verifier: str = VERIFIER_TOKEN, scopes: OAuthScopes = OAuthScopes.default
+        self, state: str = STATE_TOKEN, verifier: str = VERIFIER_TOKEN, scopes: AnyScopes = EvoScopes.default
     ) -> str:
         base_url = self.connector.base_uri + "/connect/authorize"
 
