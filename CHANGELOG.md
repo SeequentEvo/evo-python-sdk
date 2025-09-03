@@ -1,5 +1,30 @@
 # Changelog
 
+## evo-sdk@v0.1.5
+### What's Changed
+* Add support for deleted flag in listings, and specific Gone exception by @chriscunningham-seequent in https://github.com/SeequentEvo/evo-python-sdk/pull/95
+* Update CHANGELOG.md by @shivangj-10 in https://github.com/SeequentEvo/evo-python-sdk/pull/94
+* Bump versions by @davidknight-seequent in https://github.com/SeequentEvo/evo-python-sdk/pull/96
+* Add support for configuring the close grace period for AioTransport by @chriscunningham-seequent in https://github.com/SeequentEvo/evo-python-sdk/pull/99
+
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-sdk@v0.1.4...evo-sdk@v0.1.5
+
+### Other Changes
+#### evo-sdk-common
+* Add support for configuring the close grace period for AioTransport by @chriscunningham-seequent in https://github.com/SeequentEvo/evo-python-sdk/pull/99
+
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-sdk-common@v0.4.4...evo-sdk-common@v0.4.5
+
+## evo-sdk-common@v0.4.5
+### What's Changed
+#### evo-sdk-common
+* Add support for configuring the close grace period for AioTransport by @chriscunningham-seequent in https://github.com/SeequentEvo/evo-python-sdk/pull/99
+
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-sdk-common@v0.4.4...evo-sdk-common@v0.4.5
+
 ## evo-sdk@v0.1.4
 ### What's Changed
 #### evo-sdk-common
