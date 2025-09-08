@@ -39,7 +39,7 @@ To install the `evo-sdk` package, including all sub-packages, run the following 
 pip install evo-sdk
 ```
 
-Seequent Evo APIs use OAuth for authentication. In order to support it in this example, we'll be using the
+Seequent Evo APIs use OAuth for authentication. In order to support it in this example, we will be using the
 [asyncio library](https://pypi.org/project/asyncio/) to power the OAuth callback process.
 
 ```shell
