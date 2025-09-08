@@ -85,7 +85,7 @@ For next steps and more information about using Evo, see:
 
 ## Contributing
 
-Thank you for your interest in contributing to Seequent software. Please have a look over our [contribution guide](./CONTRIBUTING.md).
+Thank you for your interest in contributing to Seequent software. Please have a look over our [contribution guide](./CONTRIBUTING.md) which includes details on how to set up signed commits.
 
 ### Getting started
 
