@@ -126,13 +126,13 @@ Notebooks can be run in your tool of choice (e.g. VS Code). To use Jupyter (the 
 uv sync --all-packages --all-extras
 ```
 
-Then in the directory of the notebook(s) you want to run, type:
+Then, in the directory of the notebook(s) you want to run:
 
 ```shell
 uv run jupyter notebook
 ```
 
-It should open a browser where you can open the notebooks for the current directory.
+A browser should launch where you can open the notebooks for the current directory.
 
 ## Code of conduct
 
