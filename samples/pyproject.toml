@@ -1,0 +1,26 @@
+[project]
+name = "samples"
+version = "1.0.0"
+description = "Code samples for the Seequent Evo Python SDK"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "evo-schemas>=2025.9.12",
+    "evo-sdk",
+    "geosoft>=2025.1.1 ; sys_platform == 'windows'",
+    "jupyterlab>=4.3.6",
+    "pandas>=2.2.3",
+    "prettytable>=3.16.0",
+    "pyarrow>=19.0.1",
+    "requests>=2.32.3",
+    "uuid>=1.30",
+]
+
+[project.urls]
+Source = "https://github.com/SeequentEvo/evo-python-sdk"
+Tracker = "https://github.com/SeequentEvo/evo-python-sdk/issues"
+Homepage = "https://www.seequent.com/"
+Documentation = "https://developer.seequent.com/"
+
+[tool.uv.sources]
+evo-sdk = { workspace = true }

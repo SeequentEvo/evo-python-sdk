@@ -1,0 +1,3 @@
+This is a sample text file for Evo SDK code samples.
+You can use this file to test file reading and writing operations.
+Feel free to modify or replace this content as needed.

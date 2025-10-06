@@ -7,7 +7,7 @@ dependencies = [
     "evo-sdk-common[aiohttp,notebooks]",
     "evo-objects[aiohttp,notebooks,utils]",
     "evo-files[aiohttp,notebooks]",
-    "jupyter"
+    "jupyter",
 ]
 dynamic = ["readme"]
 
@@ -20,9 +20,9 @@ Documentation = "https://developer.seequent.com/"
 [dependency-groups]
 test = [
     "pytest",
- "freezegun",
- "parameterized==0.9.0",
- "pytest-asyncio>=1.1.0",
+    "freezegun",
+    "parameterized==0.9.0",
+    "pytest-asyncio>=1.1.0",
 ]
 dev = [
     "pre-commit >= 4",
@@ -42,6 +42,7 @@ extend-select = ["I", "RUF022"]
 evo-sdk-common = { workspace = true }
 evo-files = { workspace = true }
 evo-objects = { workspace = true }
+samples = { path = "samples" }
 
 [tool.uv.workspace]
 members = ["packages/*"]

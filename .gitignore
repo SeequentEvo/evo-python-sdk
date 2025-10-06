@@ -21,4 +21,13 @@ venv*/
 .env
 .tox/
 
-.DS_store
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Sample data directories (ignore all data except input folders)
+samples/*/publish*/data/*
+samples/*/download*/data/*
+!samples/*/publish*/data/input/
+
+# macOS invisible files
+.DS_Store

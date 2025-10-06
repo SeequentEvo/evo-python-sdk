@@ -1,0 +1,3 @@
+evo-schemas
+evo-sdk
+geosoft
