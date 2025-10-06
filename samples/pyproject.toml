@@ -22,5 +22,3 @@ Tracker = "https://github.com/SeequentEvo/evo-python-sdk/issues"
 Homepage = "https://www.seequent.com/"
 Documentation = "https://developer.seequent.com/"
 
-[tool.uv.sources]
-evo-sdk = { workspace = true }
