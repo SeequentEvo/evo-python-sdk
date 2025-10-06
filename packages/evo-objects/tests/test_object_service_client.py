@@ -31,7 +31,7 @@ from evo.objects import (
     ObjectVersion,
     SchemaVersion,
 )
-from evo.objects.data import ObjectOrderByEnum, OrgObjectMetadata
+from evo.objects.data import ObjectOrderByEnum, OrgObjectMetadata, Stage
 from evo.objects.exceptions import ObjectAlreadyExistsError, ObjectUUIDError
 from evo.objects.utils import ObjectDataClient
 from helpers import NoImport
@@ -116,6 +116,7 @@ class TestObjectAPIClient(TestWithConnector, TestWithStorage):
                 parent="/A",
                 schema_id=ObjectSchema("objects", "test", SchemaVersion(1, 2, 3)),
                 version_id="2",
+                stage=Stage(name="Approved", id=UUID("00000000-0000-0000-0000-000000000999")),
             ),
             ObjectMetadata(
                 environment=self.environment,
@@ -136,6 +137,7 @@ class TestObjectAPIClient(TestWithConnector, TestWithStorage):
                 parent="/A",
                 schema_id=ObjectSchema("objects", "test", SchemaVersion(1, 2, 3)),
                 version_id="1",
+                stage=None,
             ),
         ]
         self.assertIsInstance(page_one, Page)
@@ -171,6 +173,7 @@ class TestObjectAPIClient(TestWithConnector, TestWithStorage):
                 parent="/B",
                 schema_id=ObjectSchema("objects", "test", SchemaVersion(1, 2, 3)),
                 version_id="3",
+                stage=None,
             ),
         ]
         self.assertIsInstance(page_two, Page)
@@ -215,6 +218,7 @@ class TestObjectAPIClient(TestWithConnector, TestWithStorage):
                     email="test@example.com",
                 ),
                 schema_id=ObjectSchema("objects", "test", SchemaVersion(1, 2, 3)),
+                stage=Stage(name="Approved", id=UUID("00000000-0000-0000-0000-000000000747")),
             ),
             OrgObjectMetadata(
                 environment=self.environment,
@@ -235,6 +239,7 @@ class TestObjectAPIClient(TestWithConnector, TestWithStorage):
                     email=None,
                 ),
                 schema_id=ObjectSchema("objects", "test", SchemaVersion(1, 2, 3)),
+                stage=None,
             ),
         ]
         self.assertIsInstance(page_one, Page)
@@ -270,6 +275,7 @@ class TestObjectAPIClient(TestWithConnector, TestWithStorage):
                     email=None,
                 ),
                 schema_id=ObjectSchema("objects", "test", SchemaVersion(1, 2, 3)),
+                stage=None,
             ),
         ]
         self.assertIsInstance(page_two, Page)
@@ -317,6 +323,7 @@ class TestObjectAPIClient(TestWithConnector, TestWithStorage):
                 parent="/A",
                 schema_id=ObjectSchema("objects", "test", SchemaVersion(1, 2, 3)),
                 version_id="2",
+                stage=Stage(name="Approved", id=UUID("00000000-0000-0000-0000-000000000999")),
             ),
             ObjectMetadata(
                 environment=self.environment,
@@ -337,6 +344,7 @@ class TestObjectAPIClient(TestWithConnector, TestWithStorage):
                 parent="/A",
                 schema_id=ObjectSchema("objects", "test", SchemaVersion(1, 2, 3)),
                 version_id="1",
+                stage=None,
             ),
             ObjectMetadata(
                 environment=self.environment,
@@ -357,6 +365,7 @@ class TestObjectAPIClient(TestWithConnector, TestWithStorage):
                 parent="/B",
                 schema_id=ObjectSchema("objects", "test", SchemaVersion(1, 2, 3)),
                 version_id="3",
+                stage=None,
             ),
         ]
         self.assertEqual(expected_objects, all_objects)
@@ -384,6 +393,7 @@ class TestObjectAPIClient(TestWithConnector, TestWithStorage):
                     name="x z",
                     email="test@example.com",
                 ),
+                stage=Stage(name="Approved", id=UUID("00000000-0000-0000-0000-000000000123")),
             ),
             ObjectVersion(
                 version_id="2020-01-01T01:30:00.0000000Z",
@@ -393,6 +403,7 @@ class TestObjectAPIClient(TestWithConnector, TestWithStorage):
                     name="x y",
                     email="test@example.com",
                 ),
+                stage=Stage(name="Approved", id=UUID("00000000-0000-0000-0000-000000000123")),
             ),
             ObjectVersion(
                 version_id="2010-01-01T01:30:00.0000000Z",
@@ -402,6 +413,7 @@ class TestObjectAPIClient(TestWithConnector, TestWithStorage):
                     name="x w",
                     email="test@example.com",
                 ),
+                stage=None,
             ),
         ]
 
@@ -425,6 +437,7 @@ class TestObjectAPIClient(TestWithConnector, TestWithStorage):
                     name="x z",
                     email="test@example.com",
                 ),
+                stage=Stage(name="Approved", id=UUID("00000000-0000-0000-0000-000000000123")),
             ),
             ObjectVersion(
                 version_id="2020-01-01T01:30:00.0000000Z",
@@ -434,6 +447,7 @@ class TestObjectAPIClient(TestWithConnector, TestWithStorage):
                     name="x y",
                     email="test@example.com",
                 ),
+                stage=Stage(name="Approved", id=UUID("00000000-0000-0000-0000-000000000123")),
             ),
             ObjectVersion(
                 version_id="2010-01-01T01:30:00.0000000Z",
@@ -443,6 +457,7 @@ class TestObjectAPIClient(TestWithConnector, TestWithStorage):
                     name="x w",
                     email="test@example.com",
                 ),
+                stage=None,
             ),
         ]
 
@@ -1191,3 +1206,44 @@ class TestObjectAPIClient(TestWithConnector, TestWithStorage):
         self.assertEqual("m.json", restored_object_metadata.name)
         self.assertEqual(expected_uuid, restored_object_metadata.id)
         self.assertEqual("2023-08-03T05:47:18.3402289Z", restored_object_metadata.version_id)
+
+    async def test_list_stages(self) -> None:
+        list_stages_response = load_test_data("list_stages.json")
+
+        with self.transport.set_http_response(
+            200, json.dumps(list_stages_response), headers={"Content-Type": "application/json"}
+        ):
+            stages = await self.object_client.list_stages()
+
+        self.assert_request_made(
+            method=RequestMethod.GET,
+            path=f"{self.instance_base_path}/stages",
+            headers={"Accept": "application/json"},
+        )
+
+        self.assertListEqual(
+            [
+                Stage(id=UUID(int=1), name="Approved"),
+                Stage(id=UUID(int=2), name="Experimental"),
+                Stage(id=UUID(int=3), name="In Review"),
+                Stage(id=UUID(int=4), name="Peer Review"),
+                Stage(id=UUID(int=5), name="Preliminary Update"),
+                Stage(id=UUID(int=6), name="Resource Ready"),
+            ],
+            stages,
+        )
+
+    async def test_set_stage(self) -> None:
+        object_id = UUID(int=0)
+        version_id = 1
+        stage_id = UUID(int=2)
+
+        with self.transport.set_http_response(status_code=204):
+            await self.object_client.set_stage(object_id, version_id, stage_id)
+
+        self.assert_request_made(
+            method=RequestMethod.PATCH,
+            path=f"{self.base_path}/objects/{object_id}/metadata?version_id={version_id}",
+            headers={"Content-Type": "application/json"},
+            body={"stage_id": str(stage_id)},
+        )

@@ -21,6 +21,8 @@ jobs:
           - macos-latest
         package:
           - evo-sdk-common
+          - evo-colormaps
+          - evo-blockmodels
           - evo-files
           - evo-objects
         python-version:

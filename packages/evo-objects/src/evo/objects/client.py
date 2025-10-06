@@ -22,13 +22,14 @@ from evo.common.io.exceptions import DataNotFoundError
 from evo.common.utils import get_service_health, parse_order_by
 from evo.workspaces import ServiceUser
 
-from .data import ObjectMetadata, ObjectOrderByEnum, ObjectSchema, ObjectVersion, OrgObjectMetadata
-from .endpoints import ObjectsApi
+from .data import ObjectMetadata, ObjectOrderByEnum, ObjectSchema, ObjectVersion, OrgObjectMetadata, Stage
+from .endpoints import MetadataApi, ObjectsApi, StagesApi
 from .endpoints.models import (
     GeoscienceObject,
     GeoscienceObjectVersion,
     GetObjectResponse,
     ListedObject,
+    MetadataUpdateBody,
     OrgListedObject,
     PostObjectResponse,
     UpdateGeoscienceObject,
@@ -53,10 +54,12 @@ def _version_from_listed_version(model: GeoscienceObjectVersion) -> ObjectVersio
     :return: An ObjectVersion instance.
     """
     created_by = None if model.created_by is None else ServiceUser.from_model(model.created_by)  # type: ignore
+    stage = None if model.stage is None else Stage.from_model(model.stage)
     return ObjectVersion(
         version_id=model.version_id,
         created_at=model.created_at,
         created_by=created_by,
+        stage=stage,
     )
 
 
@@ -109,7 +112,9 @@ class DownloadedObject:
 class ObjectAPIClient(BaseAPIClient):
     def __init__(self, environment: Environment, connector: APIConnector) -> None:
         super().__init__(environment, connector)
+        self._stages_api = StagesApi(connector=connector)
         self._objects_api = ObjectsApi(connector=connector)
+        self._metadata_api = MetadataApi(connector=connector)
 
     async def get_service_health(self, check_type: HealthCheckType = HealthCheckType.FULL) -> ServiceHealth:
         """Get the health of the geoscience object service.
@@ -132,6 +137,7 @@ class ObjectAPIClient(BaseAPIClient):
         """
         created_by = None if model.created_by is None else ServiceUser.from_model(model.created_by)
         modified_by = None if model.modified_by is None else ServiceUser.from_model(model.modified_by)
+        stage = None if model.stage is None else Stage.from_model(model.stage)
         return ObjectMetadata(
             environment=self._environment,
             id=model.object_id,
@@ -143,6 +149,7 @@ class ObjectAPIClient(BaseAPIClient):
             parent=model.path.rstrip("/"),
             schema_id=ObjectSchema.from_id(model.schema_),
             version_id=model.version_id,
+            stage=stage,
         )
 
     def _metadata_from_org_listed_object(self, model: OrgListedObject) -> OrgObjectMetadata:
@@ -154,6 +161,7 @@ class ObjectAPIClient(BaseAPIClient):
         """
         created_by = None if model.created_by is None else ServiceUser.from_model(model.created_by)
         modified_by = None if model.modified_by is None else ServiceUser.from_model(model.modified_by)
+        stage = None if model.stage is None else Stage.from_model(model.stage)
         return OrgObjectMetadata(
             environment=self._environment,
             workspace_id=model.workspace_id,
@@ -165,6 +173,7 @@ class ObjectAPIClient(BaseAPIClient):
             modified_at=model.modified_at,
             modified_by=modified_by,
             schema_id=ObjectSchema.from_id(model.schema_),
+            stage=stage,
         )
 
     def _metadata_from_endpoint_model(self, model: GetObjectResponse | PostObjectResponse) -> ObjectMetadata:
@@ -177,6 +186,7 @@ class ObjectAPIClient(BaseAPIClient):
         object_path = PurePosixPath(model.object_path)
         created_by = None if model.created_by is None else ServiceUser.from_model(model.created_by)
         modified_by = None if model.modified_by is None else ServiceUser.from_model(model.modified_by)
+        stage = None if model.stage is None else Stage.from_model(model.stage)
         return ObjectMetadata(
             environment=self._environment,
             id=model.object_id,
@@ -188,6 +198,7 @@ class ObjectAPIClient(BaseAPIClient):
             parent=str(object_path.parent),
             schema_id=ObjectSchema.from_id(model.object.schema_),
             version_id=model.version_id,
+            stage=stage,
         )
 
     async def list_objects(
@@ -658,3 +669,28 @@ class ObjectAPIClient(BaseAPIClient):
         if isinstance(result, EmptyResponse):
             return None
         return self._metadata_from_endpoint_model(result)
+
+    async def list_stages(self) -> list[Stage]:
+        """List all available stages in the organisation.
+
+        :return: A list of all available stages."""
+        response = await self._stages_api.list_stages(org_id=str(self._environment.org_id))
+        return [Stage.from_model(model) for model in response.stages]
+
+    async def set_stage(self, object_id: UUID, version_id: int, stage_id: UUID) -> None:
+        """Set the stage of a specific version of a geoscience object.
+
+        :param object_id: The UUID of the geoscience object.
+        :param version_id: The version ID of the geoscience object.
+        :param stage_id: The UUID of the stage to set.
+
+        :return: None
+        """
+
+        await self._metadata_api.update_metadata(
+            object_id=str(object_id),
+            org_id=str(self._environment.org_id),
+            workspace_id=str(self._environment.workspace_id),
+            metadata_update_body=MetadataUpdateBody(stage_id=stage_id),
+            version_id=version_id,
+        )

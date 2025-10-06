@@ -1,7 +1,7 @@
 [project]
 name = "evo-objects"
 description = "Python SDK for using the Seequent Evo Geoscience Object API"
-version = "0.2.2"
+version = "0.2.3"
 requires-python = ">=3.10"
 license-files = ["LICENSE.md"]
 dynamic = ["readme"]

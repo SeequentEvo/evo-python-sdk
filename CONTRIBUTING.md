@@ -36,7 +36,8 @@ To ensure your pull request is merged as quickly as possible, please consider th
   them out in your pull request.
 * Reference issues in your pull request if you're closing one.
 * Ensure your code has been automatically linted.
-* Verify that all tests pass, and write new tests with excellent code coverage for new code.
+* Verify that all tests pass, and write new tests with appropriate code coverage for new code.
+* Verify that all sample code and example notebooks can be run successfully.
 
 ### Contributor License Agreement (CLA)
 

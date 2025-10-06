@@ -15,7 +15,11 @@ test-files:
 test-objects:
 	uv run --package evo-objects pytest packages/evo-objects/tests
 
+test-colormaps:
+	uv run --package evo-colormaps pytest packages/evo-colormaps/tests
+
 test:
 	@make test-common
 	@make test-files
 	@make test-objects
+	@make test-colormaps

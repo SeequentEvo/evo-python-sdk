@@ -11,6 +11,12 @@ changelog:
     - title: evo-sdk-common
       labels:
         - evo-sdk-common
+    - title: evo-colormaps
+      labels:
+        - evo-colormaps
+    - title: evo-blockmodels
+      labels:
+        - evo-blockmodels
     - title: evo-files
       labels:
         - evo-files

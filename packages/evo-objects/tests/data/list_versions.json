@@ -40,6 +40,10 @@
                     "name": "35b8b8ba5479a34e905a1b9e212e1cb4a52ec484b969359f2c28f5a00311dbca"
                 }],
                 "download": "http://unittest.localhost/path/geoscience-object/orgs/00000000-0000-0000-0000-0000000004d2/workspaces/00000000-0000-0000-0000-00000000162e/objects/path/A/m.json"
+            },
+            "stage": {
+                "name": "Approved",
+                "stage_id": "00000000-0000-0000-0000-000000000123"
             }
         },
         {
@@ -58,6 +62,10 @@
                     "name": "35b8b8ba5479a34e905a1b9e212e1cb4a52ec484b969359f2c28f5a00311dbca"
                 }],
                 "download": "http://unittest.localhost/path/geoscience-object/orgs/00000000-0000-0000-0000-0000000004d2/workspaces/00000000-0000-0000-0000-00000000162e/objects/path/A/m.json"
+            },
+            "stage": {
+                "name": "Approved",
+                "stage_id": "00000000-0000-0000-0000-000000000123"
             }
         },
         {

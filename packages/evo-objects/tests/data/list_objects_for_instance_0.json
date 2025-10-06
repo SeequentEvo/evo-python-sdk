@@ -18,7 +18,11 @@
                 "email": "test@example.com"
             },
             "workspace_id": "00000000-0000-0000-0000-00000000162e",
-            "workspace_name": "Test Workspace"
+            "workspace_name": "Test Workspace",
+            "stage": {
+                "name": "Approved",
+                "stage_id": "00000000-0000-0000-0000-000000000747"
+            }
         },
         {
             "name": "n.json",

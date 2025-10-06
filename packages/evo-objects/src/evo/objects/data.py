@@ -15,6 +15,7 @@ import enum
 import re
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Protocol
 from uuid import UUID
 
 from evo.common import ResourceMetadata
@@ -28,6 +29,7 @@ __all__ = [
     "ObjectSchema",
     "ObjectVersion",
     "SchemaVersion",
+    "Stage",
 ]
 
 
@@ -59,6 +61,9 @@ class ObjectMetadata(ResourceMetadata):
 
     modified_by: ServiceUser | None
     """The user who last modified the object."""
+
+    stage: Stage | None
+    """The stage of the object, if available."""
 
     @property
     def path(self) -> str:
@@ -96,6 +101,9 @@ class OrgObjectMetadata(ResourceMetadata):
     modified_by: ServiceUser | None
     """The user who last modified the object."""
 
+    stage: Stage | None
+    """The stage of the object, if available."""
+
     @property
     def url(self) -> str:
         """The url of the object."""
@@ -119,6 +127,30 @@ class ObjectVersion:
 
     created_by: ServiceUser | None
     """The user that uploaded the version."""
+
+    stage: Stage | None
+    """The stage associated with this version, if applicable."""
+
+
+class _StageModel(Protocol):
+    stage_id: UUID
+    name: str
+
+
+@dataclass(frozen=True, kw_only=True)
+class Stage:
+    """Metadata about a stage"""
+
+    id: UUID
+    """The stage UUID."""
+
+    name: str
+    """The stage name."""
+
+    @classmethod
+    def from_model(cls, model: _StageModel) -> Stage:
+        """Create a new instance from an instance of a generated model."""
+        return cls(id=model.stage_id, name=model.name)
 
 
 @dataclass(frozen=True, order=True)

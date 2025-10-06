@@ -43,6 +43,7 @@ class TestObjectDataDownload(TestWithConnector, TestWithDownloadHandler):
             parent="/some/path",
             schema_id=...,
             version_id=VERSION_ID,
+            stage=None,
         )
         self.download = ObjectDataDownload(
             connector=self.connector, metadata=self.metadata, name=DATA_NAME, initial_url=INITIAL_URL

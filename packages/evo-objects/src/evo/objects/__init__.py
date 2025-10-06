@@ -10,7 +10,7 @@
 #  limitations under the License.
 
 from .client import DownloadedObject, ObjectAPIClient
-from .data import ObjectMetadata, ObjectSchema, ObjectVersion, SchemaVersion
+from .data import ObjectMetadata, ObjectSchema, ObjectVersion, SchemaVersion, Stage
 from .io import ObjectDataDownload, ObjectDataUpload
 
 __all__ = [
@@ -22,4 +22,5 @@ __all__ = [
     "ObjectSchema",
     "ObjectVersion",
     "SchemaVersion",
+    "Stage",
 ]

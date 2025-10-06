@@ -59,5 +59,9 @@
                 "download_url": "https://storage.unittest.localhost/wheres/my/data/0000000000000000000000000000000000000000000000000000000000000002"
             }
         ]
+    },
+    "stage": {
+        "name": "Approved",
+        "stage_id": "00000000-0000-0000-0000-000000000888"
     }
 }
