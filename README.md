@@ -14,7 +14,110 @@ Evo is a unified platform for geoscience teams. It enables access, connection, c
 
 Evo is powered by Seequent, a Bentley organisation.
 
-## SDKs
+## Prerequisites
+
+Before you get started, make sure you have:
+
+* **A local copy of this repository**
+
+    For users who just want to use the code samples or who aren't familiar with Git, download a copy of this repository as a ZIP file:
+
+    <img src="images/download-zip.png" alt="Download ZIP from GitHub" width="400" />
+
+
+    For users who are familiar with Git:
+
+    ```shell
+    git clone https://github.com/SeequentEvo/evo-python-sdk.git
+    ```
+
+* **A Bentley Developer Account**
+
+    Register your Evo application in the [Bentley Developer Portal](https://developer.bentley.com/my-apps) to get your client credentials.
+
+    HINT: For step-by-step instructions, follow this [guide](https://developer.seequent.com/docs/guides/getting-started/apps-and-tokens).
+
+* **(Optional) A Python code editor, eg. VS Code**
+    
+    For running and editing the sample notebooks and other source code files.
+
+## About this repository
+
+`evo-python-sdk` is designed for developers, data scientists, and technical users who want to work with Seequent Evo APIs and geoscience data. 
+
+* To quickly learn how to use Evo APIs, start with the [Getting started with Evo samples](#getting-started-with-evo-code-samples) section, which contains practical, end-to-end Jupyter notebook examples for common workflows. Most new users should begin with this section.
+
+* If you are interested in the underlying SDKs or need to understand the implementation details, explore the [Getting started with Evo SDK development](#getting-started-with-evo-sdk-development) section, which contains the source code for each Evo SDK. 
+
+* To learn about contributing to this repository, take a look at the [Contributing](#contributing) section.
+
+
+## Getting started with Evo code samples
+
+### Open a terminal at the root of this repository
+
+The command line interface makes it easy to prepare your Python environment.
+
+#### Windows
+1. Find the local copy of this repository in **Windows Explorer**. It will be called **evo-python-sdk-main** if you downloaded as a ZIP file.
+1. Right-click on the folder and choose **Open in Terminal**.
+
+    <img src="images/open-terminal-win.png" alt="Open a terminal on Windows" width="300" />
+
+### macOS
+1. Find the local copy of this repository in **Finder**. It will be called **evo-python-sdk-main** if you downloaded as a ZIP file.
+
+1. Open the folder so that you can see it's contents.
+1. On the *Path bar* at the bottom of the window, right-click on **evo-path-sdk-main**.
+    
+    HINT: If the *Path bar* isn't visible, select **Show Path Bar** from the **View** menu.
+
+     <img src="images/open-terminal-mac1.png" alt="Right-click the folder on macOS" width="400" />
+
+1. From the pop-up menu, select **Open in Terminal**.
+
+    <img src="images/open-terminal-mac2.png" alt="Right-click the folder on macOS" width="400" />
+
+### Install uv
+
+To install `uv` on your machine, run one of the following commands from the root directory of this repository. These scripts ensure everyone is using the same version of `uv`.
+
+#### Windows
+```shell
+powershell -ExecutionPolicy Bypass -c "irm https://astral.sh/uv/$(Get-Content ./UV_VERSION)/install.ps1 | iex"
+```
+
+#### Linux / macOS
+```shell
+./scripts/install-uv.sh
+```
+You can run the same script again whenever the version in the `UV_VERSION` file changes. It will replace your existing installation of UV.
+
+### Setting up and running Jupyter notebooks
+
+Notebooks can be run in a web browser or in your tool of choice (e.g. VS Code). 
+
+1. Open a terminal in the root directory and move to the `samples` directory:
+
+    ```shell
+    cd samples
+    ```
+
+1. Prepare your Python environment:
+
+    ```shell
+    uv sync
+    ```
+
+1. Start a Jupyter Lab session in your web browser:
+
+    ```shell
+    uv run jupyter notebook
+    ```
+
+1. Navigate to a notebook and enter your Evo app client credentials.
+
+## Getting started with Evo SDK development
 
 This repository contains a number of sub-packages. You may choose to install the `evo-sdk` package, which includes all
 sub-packages and optional dependencies (e.g. Jupyter notebook support), or choose a specific package to install:
@@ -27,27 +130,7 @@ sub-packages and optional dependencies (e.g. Jupyter notebook support), or choos
 | [evo-objects](packages/evo-objects/README.md) | <a href="https://pypi.org/project/evo-objects/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/evo-objects" /></a> | A geoscience object service client library designed to help get up and running with the Geoscience Object API. |
 | [evo-colormaps](packages/evo-colormaps/README.md)  | <a href="https://pypi.org/project/evo-colormaps/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/evo-colormaps" /></a> | A service client to create colour mappings and associate them to geoscience data with the Colormap API.|
 
-## Pre-requisites
-
-* Python ^3.10
-* An [application registered in Bentley](https://developer.bentley.com/register/?product=seequent-evo)
-
-## Installation
-
-To install the `evo-sdk` package, including all sub-packages, run the following command:
-
-```shell
-pip install evo-sdk
-```
-
-Seequent Evo APIs use OAuth for authentication. In order to support it in this example, we'll be using the
-[asyncio library](https://pypi.org/project/asyncio/) to power the OAuth callback process.
-
-```shell
-pip install asyncio
-```
-
-## Getting started
+### Getting started
 
 Now that you have installed the Evo SDK, you can get started by configuring your API connector, and performing a
 basic API call to list the organizations that you have access to:
@@ -101,12 +184,12 @@ With workspaces, `uv lock` operates on the entire workspace at once. `uv run` an
 
 To install UV on your machine, run one of the following convenience scripts from the root of the repo. These scripts ensure everyone is using the same version.
 
-Windows:
+#### Windows
 ```shell
 ./scripts/install-uv.ps1
 ```
 
-UNIX-like:
+#### Linux / macOS
 ```shell
 ./scripts/install-uv.sh
 ```
