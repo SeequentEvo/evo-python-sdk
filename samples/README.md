@@ -5,27 +5,87 @@ Welcome to the Evo Python SDK code samples! This directory contains comprehensiv
 ## 📋 Prerequisites
 
 - **Python**: Version 3.10 or higher
-- **Evo Application**: You'll need a [registered application in Bentley](https://developer.bentley.com/register/?product=seequent-evo) to obtain a client ID
+- **Evo app**: You'll need a [registered app in Bentley](https://developer.bentley.com/register/?product=seequent-evo) to obtain a client ID
 - **Jupyter Environment**: JupyterLab, VS Code, or another Jupyter notebook editor
 
 ## 🚀 Quick Start
 
 ### 1. Set Up Your Environment
 
-The recommended approach is to use `uv` (included in this repository) for dependency management:
+Before running Jupyter notebooks, you need to install the package manager `uv` which will make is easy to set up your Python environment.
 
-```bash
-# From the root directory of the repository
-./scripts/install-uv.sh  # On macOS/Linux
-# or
-./scripts/install-uv.ps1  # On Windows
+#### Windows
+1. Find the local copy of this repository in **Windows Explorer**. It will be called **evo-python-sdk-main** if you downloaded as a ZIP file.
+1. Right-click on the folder and choose **Open in Terminal**.
 
-# Move to the samples directory
-cd samples
+    <img src="images/open-terminal-win.png" alt="Open a terminal on Windows" width="300" />
 
-# Install the dependencies
-uv sync
-```
+1. Enter the following command to install `uv`.
+    ```shell
+    powershell -ExecutionPolicy Bypass -c "irm https://astral.sh/uv/$(Get-Content ./UV_VERSION)/install.ps1 | iex"
+    ```
+
+1. Set up your environment by moving to the **samples** directory and installing the Python dependencies.
+    ```bash
+    # Move to the samples directory
+    cd samples
+
+    # Install the dependencies
+    uv sync
+    ```
+
+### macOS
+1. Find the local copy of this repository in **Finder**. It will be called **evo-python-sdk-main** if you downloaded as a ZIP file.
+
+1. Open the folder so that you can see it's contents.
+1. On the *Path bar* at the bottom of the window, right-click on **evo-path-sdk-main**.
+    
+    HINT: If the *Path bar* isn't visible, select **Show Path Bar** from the **View** menu.
+
+     <img src="images/open-terminal-mac1.png" alt="Right-click the folder on macOS" width="400" />
+
+1. From the pop-up menu, select **Open in Terminal**.
+
+    <img src="images/open-terminal-mac2.png" alt="Right-click the folder on macOS" width="400" />
+
+1. Enter the following command to install `uv`.
+    ```bash
+    # From the root directory of the repository
+    ./scripts/install-uv.sh
+    ```
+
+1. Set up your environment by moving to the **samples** directory and installing the Python dependencies.
+    ```bash
+    # Move to the samples directory
+    cd samples
+
+    # Install the dependencies
+    uv sync
+    ```
+
+### Linux
+
+NOTE: This example is based on [Ubuntu](https://ubuntu.com), but other Linux distros should operate in a similar way.
+
+1. Find the local copy of this repository in **Files**. It will be called **evo-python-sdk-main** if you downloaded as a ZIP file.
+1. Right-click on the folder and choose **Open in Terminal**.
+
+    <img src="images/open-terminal-ubuntu.png" alt="Open a terminal on Windows" width="500" />
+
+1. Enter the following command to install `uv`.
+    ```bash
+    # From the root directory of the repository
+    ./scripts/install-uv.sh
+    ```
+
+1. Set up your environment by moving to the **samples** directory and installing the Python dependencies.
+    ```bash
+    # Move to the samples directory
+    cd samples
+
+    # Install the dependencies
+    uv sync
+    ```
 
 ### 2. Start with Authentication
 
@@ -41,7 +101,7 @@ Before diving into specific samples, **start here**:
 Launch Jupyter and open the desired notebook:
 
 ```bash
-jupyter lab
+uv run jupyter notebook
 # or if using VS Code, simply open the .ipynb files
 ```
 
