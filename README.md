@@ -56,7 +56,7 @@ Before you get started, make sure you have:
 
 ### Open a terminal at the root of this repository
 
-The command line interface makes it easy to prepare your Python environment.
+Before running Jupyter notebooks, you need to install the package manager `uv` which will make is easy to set up your Python environment.
 
 #### Windows
 1. Find the local copy of this repository in **Windows Explorer**. It will be called **evo-python-sdk-main** if you downloaded as a ZIP file.
@@ -78,16 +78,25 @@ The command line interface makes it easy to prepare your Python environment.
 
     <img src="images/open-terminal-mac2.png" alt="Right-click the folder on macOS" width="400" />
 
+### Linux
+
+NOTE: This example is based on [Ubuntu](https://ubuntu.com), but other Linux distros should operate in a similar way.
+
+1. Find the local copy of this repository in **Files**. It will be called **evo-python-sdk-main** if you downloaded as a ZIP file.
+1. Right-click on the folder and choose **Open in Terminal**.
+
+    <img src="images/open-terminal-ubuntu.png" alt="Open a terminal on Windows" width="300" />
+
 ### Install uv
 
-To install `uv` on your machine, run one of the following commands from the root directory of this repository. These scripts ensure everyone is using the same version of `uv`.
+To install `uv` on your machine, run one of the following commands from the *root directory* of this repository. These scripts ensure everyone is using the same version of `uv`.
 
 #### Windows
 ```shell
 powershell -ExecutionPolicy Bypass -c "irm https://astral.sh/uv/$(Get-Content ./UV_VERSION)/install.ps1 | iex"
 ```
 
-#### Linux / macOS
+#### macOS / Linux
 ```shell
 ./scripts/install-uv.sh
 ```
@@ -109,13 +118,15 @@ Notebooks can be run in a web browser or in your tool of choice (e.g. VS Code).
     uv sync
     ```
 
-1. Start a Jupyter Lab session in your web browser:
+1. Start a Jupyter Lab session, which will launch your web browser:
 
     ```shell
     uv run jupyter notebook
     ```
 
-1. Navigate to a notebook and enter your Evo app client credentials.
+1. In your web browser, navigate to a notebook and enter your Evo app client credentials.
+
+For a full catalogue of Jupyter notebooks in this repository, check out the README file in the **samples** directory. 
 
 ## Getting started with Evo SDK development
 
