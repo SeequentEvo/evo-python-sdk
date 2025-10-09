@@ -10,7 +10,7 @@
 
 ## Evo
 
-Evo is a unified platform for geoscience teams. It enables access, connection, computation, and management of subsurface data. This empowers better decision-making, simplified collaboration, and accelerated innovation. Evo is built on open APIs, allowing developers to build custom integrations and applications. Our open schemas, code examples, and SDK are available for the community to use and extend. 
+Evo is a unified platform for geoscience teams. It enables access, connection, computation, and management of subsurface data. This empowers better decision-making, simplified collaboration, and accelerated innovation. Evo is built on open APIs, allowing developers to build custom integrations and applications. Our open schemas, code examples, and SDK are available for the community to use and extend.
 
 Evo is powered by Seequent, a Bentley organisation.
 
@@ -27,6 +27,7 @@ sub-packages and optional dependencies (e.g. Jupyter notebook support), or choos
 | [evo-objects](packages/evo-objects/README.md) | <a href="https://pypi.org/project/evo-objects/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/evo-objects" /></a> | A geoscience object service client library designed to help get up and running with the Geoscience Object API. |
 | [evo-colormaps](packages/evo-colormaps/README.md)  | <a href="https://pypi.org/project/evo-colormaps/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/evo-colormaps" /></a> | A service client to create colour mappings and associate them to geoscience data with the Colormap API.|
 | [evo-blockmodels](packages/evo-blockmodels/README.md) | <a href="https://pypi.org/project/evo-blockmodels/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/evo-blockmodels" /></a> | The Block Model API provides the ability to manage and report on block models in your Evo workspaces. |
+| [evo-tasks](packages/evo-tasks/README.md)  | <a href="https://pypi.org/project/evo-tasks/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/evo-tasks" /></a> | A service client to send jobs to the Tasks API.|
 
 ## Pre-requisites
 
@@ -84,6 +85,7 @@ For next steps and more information about using Evo, see:
 * [`evo-objects`](packages/evo-objects/README.md): for interacting with the Geoscience Object API
 * [`evo-colormaps`](packages/evo-colormaps/README.md): for interacting with the Colormap API
 * [`evo-blockmodels`](packages/evo-blockmodels/README.md): for interacting with the Block Model API
+* [`evo-tasks`](packages/evo-tasks/README.md): for interacting with the Tasks API
 * [Seequent Developer Portal](https://developer.seequent.com/docs/guides/getting-started/quick-start-guide): for guides,
   tutorials, and API references
 
@@ -93,9 +95,9 @@ Thank you for your interest in contributing to Seequent software. Please have a 
 
 ### Getting started
 
-All Python SDKs in this monorepo are managed with [uv](https://docs.astral.sh/uv/). 
+All Python SDKs in this monorepo are managed with [uv](https://docs.astral.sh/uv/).
 We use [workspaces](https://docs.astral.sh/uv/concepts/projects/workspaces/) in order to manage the different SDKs
-published out of this repository. 
+published out of this repository.
 
 With workspaces, `uv lock` operates on the entire workspace at once. `uv run` and `uv sync` operate on the workspace root by default, though both accept a `--package` argument allowing you to run a command in a particular workspace member from any workspace directory.
 

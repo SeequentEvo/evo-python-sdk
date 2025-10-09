@@ -1,0 +1,10 @@
+{
+    "status": "succeeded",
+    "progress": 100,
+    "message": "Job succeeded",
+    "error": null,
+    "results": {
+        "foo": "bar",
+        "baz": 42
+    }
+}
