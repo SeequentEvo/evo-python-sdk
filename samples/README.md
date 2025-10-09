@@ -147,11 +147,25 @@ Before diving into the geoscience code samples, we recommend that you first test
 
 <img src="../docs/img/jupyter-start-here.png" alt="Jupyter start here" width="350" />
 
-📁 **[auth-and-evo-discovery](auth-and-evo-discovery/)**
-Essential setup for all other samples. Contains:
-- `native-app-token.ipynb` - Authentication for desktop applications
-- `service-app-token.ipynb` - Authentication for service applications  
-- `evo-discovery.ipynb` - Find your organization ID and hub URL
+a. Click to open **auth-and-evo-discovery**.
+b. Click to open **native-app-token.ipynb**.
+c. Enter your **client ID** and **callback URL** from when you registered your Evo app.
+
+<img src="../docs/img/notebook-auth-setup.png" alt="Auth setup" width="500" />
+
+d. Run the first code cell by pressing Shift+Enter or by pressing the Play button in the toolbar.
+
+e. Run the next code cell. You may see red warning text - this is normal.
+
+f. If everything is set up correctly, your web browser should open a new tab and ask you to sign in with your Bentley ID. Once you have signed in and granted access to the app, return to the tab with Jupyter running.
+
+g. Using the widget that appears under the code cell, select your Organisation, Hub and Workspace.
+
+h. Run the next code cell. You should see a printout of your Evo hub URL, organisation ID and workspace ID.
+
+The values printed in the last cell are required for almost all Evo API calls. This is because all Evo data is stored in a workspace that exists in your assigned Evo hub and organisation.
+
+Now that you know how Evo auth works, explore the other Jupyter notebooks. They all require your client ID and callback URL, just like in this example.
 
 ## 📚 Sample categories
 
