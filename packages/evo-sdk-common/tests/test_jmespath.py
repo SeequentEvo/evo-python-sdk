@@ -127,6 +127,25 @@ class TestJMESPathArrayProxy(unittest.TestCase):
         self.assertIsInstance(result, type(expected_result), f"Expected {type(expected_result)} from {expression}")
         self.assertEqual(result, expected_result, "JMESPath search did not yield expected result")
 
+    @parameterized.expand(
+        [
+            ("array index syntax", "[0]", evo_jmespath.JMESPathObjectProxy({"name": "Alice", "age": 30})),
+            ("array filter syntax", "[?age > `30`]", evo_jmespath.JMESPathArrayProxy([{"name": "Charlie", "age": 35}])),
+            ("array projection syntax", "[].name", evo_jmespath.JMESPathArrayProxy(["Alice", "Bob", "Charlie"])),
+        ]
+    )
+    def test_search(self, _label: str, expression: str, expected_result: Any) -> None:
+        """Test the search method on JMESPathArrayProxy."""
+        data = [
+            {"name": "Alice", "age": 30},
+            {"name": "Bob", "age": 25},
+            {"name": "Charlie", "age": 35},
+        ]
+        proxy = evo_jmespath.JMESPathArrayProxy(data)
+        result = proxy.search(expression)
+        self.assertIsInstance(result, type(expected_result), f"Expected {type(expected_result)} from {expression}")
+        self.assertEqual(result, expected_result, "JMESPath search did not yield expected result")
+
     def test_repr(self) -> None:
         """Test that repr() works on JMESPathArrayProxy."""
         self.assertEqual(
@@ -180,6 +199,31 @@ class TestJMESPathObjectProxy(unittest.TestCase):
         }
         proxy = evo_jmespath.JMESPathObjectProxy(data)
         result = proxy[expression]
+        self.assertIsInstance(result, type(expected_result), f"Expected {type(expected_result)} from {expression}")
+        self.assertEqual(result, expected_result, "JMESPath search did not yield expected result")
+
+    @parameterized.expand(
+        [
+            ("direct key access", "person1", evo_jmespath.JMESPathObjectProxy({"name": "Alice", "age": 30})),
+            ("nested key access", "person2.name", "Bob"),
+            ("missing key", "person4", None),
+            ("array projection", "*.name", evo_jmespath.JMESPathArrayProxy(["Alice", "Bob", "Charlie"])),
+            (
+                "object projection",
+                "{names: *.name}",
+                evo_jmespath.JMESPathObjectProxy({"names": ["Alice", "Bob", "Charlie"]}),
+            ),
+        ]
+    )
+    def test_search(self, _label: str, expression: str, expected_result: Any) -> None:
+        """Test the search method on JMESPathObjectProxy."""
+        data = {
+            "person1": {"name": "Alice", "age": 30},
+            "person2": {"name": "Bob", "age": 25},
+            "person3": {"name": "Charlie", "age": 35},
+        }
+        proxy = evo_jmespath.JMESPathObjectProxy(data)
+        result = proxy.search(expression)
         self.assertIsInstance(result, type(expected_result), f"Expected {type(expected_result)} from {expression}")
         self.assertEqual(result, expected_result, "JMESPath search did not yield expected result")
 

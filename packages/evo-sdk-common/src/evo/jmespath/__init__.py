@@ -61,6 +61,17 @@ class _JMESPathProxyMixin(Generic[T]):
     def raw(self) -> T:
         return self._data
 
+    def search(self, expression: str) -> Any:
+        """Search the proxied data with a JMESPath expression.
+
+        :param expression: The JMESPath expression to compile and search.
+
+        :return: The result of the search, as JMESArrayProxy, JMESObjectProxy, or a primitive type.
+
+        :raises JMESPathError: If the expression is invalid.
+        """
+        return search(expression, self._data)
+
     def json_dumps(
         self,
         /,
@@ -116,7 +127,7 @@ class JMESPathArrayProxy(Generic[T], _JMESPathProxyMixin[Sequence[T]], Sequence[
         if isinstance(index, int):
             return proxy(self.raw[index])
         else:
-            return search(index, self.raw)
+            return self.search(index)
 
     def __len__(self) -> int:
         return len(self._data)
@@ -128,7 +139,7 @@ class JMESPathArrayProxy(Generic[T], _JMESPathProxyMixin[Sequence[T]], Sequence[
 
 class JMESPathObjectProxy(Generic[T], _JMESPathProxyMixin[Mapping[str, T]], Mapping[str, T]):
     def __getitem__(self, key: str) -> Any:
-        return search(key, self.raw)
+        return self.search(key)
 
     def __iter__(self) -> Iterator[str]:
         return iter(self.raw)
