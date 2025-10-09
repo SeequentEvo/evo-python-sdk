@@ -12,15 +12,39 @@ Welcome to the Evo Python SDK code samples! This directory contains comprehensiv
 
 ### 1. Register an Evo app
 
-Register your Evo application in the [Bentley Developer Portal](https://developer.bentley.com/my-apps) to get your client credentials. If a member of your team has already registered an app, contact them and ask for the client credentials.
+Register your Evo application in the [Bentley Developer Portal](https://developer.bentley.com/my-apps) to get your client credentials. If a member of your team has already registered an app, contact them and ask for the client credentials. For in-depth instructions, follow this [guide](https://developer.seequent.com/docs/guides/getting-started/apps-and-tokens) on the Seequent Developer Portal.
 
-For in-depth instructions, follow this [guide](https://developer.seequent.com/docs/guides/getting-started/apps-and-tokens) on the Seequent Developer Portal.
+a. In a new browser tab or window, visit [https://developer.bentley.com/](https://developer.bentley.com/) and sign in.
+
+b. Click your profile in the top-right corner and select **My Apps**. You may need to agree to Bentley developer terms before proceeding.
+
+<img src="../docs/img/profile-menu-apps.png" alt="Select My Apps" width="250" />
+
+c. Click the dropdown arrow on the **Register New** button and choose **Register new app for Seequent Evo**.
+
+<img src="../docs/img/register-new.png" alt="Register new app" width="300" />
+
+d. Enter an application name and select the **Native** application type.
+
+<img src="../docs/img/app-name-native.png" alt="Enter app name" width="700" />
+
+e. Enter **http://localhost:3000/signin-callback** in **Redirect URIs**.
+
+<img src="../docs/img/app-callbacks.png" alt="Enter callback url" width="300" />
+
+f. Click **Register**.
+
+<img src="../docs/img/app-register.png" alt="Click register" width="250" />
+
+g. The next screen displays the unique **Client ID** of your application. Save a copy - you will need it to run the Jupyter notebooks.
+
+<img src="../docs/img/edit-app-native.png" alt="Copy client ID" width="400" />
 
 ### 2. Obtain a local copy of this repository
 
 If you want to focus on the code samples, or if you aren't comfortable using Git, download a copy of this repository as a ZIP file. Visit [https://github.com/SeequentEvo/evo-python-sdk](https://github.com/SeequentEvo/evo-python-sdk) and follow the instructions below:
 
-<img src="../images/download-zip.png" alt="Download ZIP from GitHub" width="350" />
+<img src="../docs/img/download-zip.png" alt="Download ZIP from GitHub" width="350" />
 
 
 Alternatively, if you are comfortable using Git:
@@ -39,7 +63,7 @@ Follow the instructions below for [Windows](#windows), [macOS](#macos) or [Linux
 1. Find the local copy of this repository in **Windows Explorer**. It will be called **evo-python-sdk-main** if you downloaded as a ZIP file.
 1. Right-click on the folder and choose **Open in Terminal**.
 
-    <img src="images/open-terminal-win.png" alt="Open a terminal on Windows" width="300" />
+    <img src="../docs/img/open-terminal-win.png" alt="Open a terminal on Windows" width="300" />
 
 1. Enter the following command to install `uv`.
     ```pwsh
@@ -63,11 +87,11 @@ Follow the instructions below for [Windows](#windows), [macOS](#macos) or [Linux
     
     HINT: If the *Path bar* isn't visible, select **Show Path Bar** from the **View** menu.
 
-     <img src="images/open-terminal-mac1.png" alt="Right-click the folder on macOS" width="400" />
+     <img src="../docs/img/open-terminal-mac1.png" alt="Right-click the folder on macOS" width="400" />
 
 1. From the pop-up menu, select **Open in Terminal**.
 
-    <img src="images/open-terminal-mac2.png" alt="Right-click the folder on macOS" width="400" />
+    <img src="../docs/img/open-terminal-mac2.png" alt="Right-click the folder on macOS" width="400" />
 
 1. Enter the following command to install `uv`.
     ```bash
@@ -91,7 +115,7 @@ NOTE: This example is based on [Ubuntu](https://ubuntu.com), but other Linux env
 1. Find the local copy of this repository in **Files**. It will be called **evo-python-sdk-main** if you downloaded as a ZIP file.
 1. Right-click on the folder and choose **Open in Terminal**.
 
-    <img src="images/open-terminal-ubuntu.png" alt="Open a terminal on Windows" width="500" />
+    <img src="../docs/img/open-terminal-ubuntu.png" alt="Open a terminal on Windows" width="600" />
 
 1. Enter the following command to install `uv`.
     ```bash
@@ -117,11 +141,11 @@ uv run jupyter notebook
 # or if using VS Code, simply open the .ipynb files
 ```
 
-You should see the **samples** directory in your web browser:
-
-<img src="images/jupyter-start-here.png" alt="Jupyter start here" width="350" />
+Jupyter will list everything in the **samples** directory, and you can click to browse each section.
 
 Before diving into the geoscience code samples, we recommend that you first test your Evo app to make sure your client credentials are set up correctly.
+
+<img src="../docs/img/jupyter-start-here.png" alt="Jupyter start here" width="350" />
 
 📁 **[auth-and-evo-discovery](auth-and-evo-discovery/)**
 Essential setup for all other samples. Contains:

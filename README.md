@@ -20,25 +20,15 @@ Before you get started, make sure you have:
 
 * **A registered Evo app**
 
-    *Evo apps* provide the credentials necessary to generate Evo access tokens, which are in turn used to provide access to your Evo data. An app can be created by you or by a member of your team.
+    *Evo apps* provide the credentials necessary to generate Evo access tokens, which in turn provide access to your Evo data. An app can be created by you or by a member of your team.
     
-    Register an Evo app in the [Bentley Developer Portal](https://developer.bentley.com/my-apps).
-
-    For in-depth instructions, follow this [guide](https://developer.seequent.com/docs/guides/getting-started/apps-and-tokens) on the Seequent Developer Portal.
+    Register an Evo app in the [Bentley Developer Portal](https://developer.bentley.com/my-apps). For in-depth instructions, follow this [guide](https://developer.seequent.com/docs/guides/getting-started/apps-and-tokens) on the Seequent Developer Portal.
 
     NOTE: You must have a **Bentley developer account** in order to create apps. If you try to register an app using the link above but find that you don't have permission, contact your account administrator to get access.
 
 * **A local copy of this repository**
 
-    For users who want to focus on the code samples, or who aren't comfortable using Git, download a copy of this repository as a ZIP file:
-
-    <img src="images/download-zip.png" alt="Download ZIP from GitHub" width="350" />
-
-    For users who are comfortable using Git:
-
-    ```shell
-    git clone https://github.com/SeequentEvo/evo-python-sdk.git
-    ```
+    Clone the repository using Git or download it as a ZIP file from the green **Code** button at the top of the page.
 
 * **A Python code editor, eg. VS Code, PyCharm**
     
@@ -56,7 +46,9 @@ Before you get started, make sure you have:
 
 ## Getting started with Evo code samples
 
-For detailed information about the available code samples, authentication setup, and step-by-step guides for working with the Jupyter notebooks, please refer to the [**samples/README.md**](samples/README.md) file. This comprehensive guide will walk you through all the sample categories and help you get started with Evo APIs. 
+For detailed information about the creating Evo apps, the authentication setup, available code samples, and step-by-step guides for working with the Jupyter notebooks, please refer to the [**samples/README.md**](samples/README.md) file. 
+
+This comprehensive guide will walk you through everything required get started with Evo APIs. 
 
 ## Getting started with Evo SDK development
 
