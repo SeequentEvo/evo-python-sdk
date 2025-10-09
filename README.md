@@ -14,7 +14,43 @@ Evo is a unified platform for geoscience teams. It enables access, connection, c
 
 Evo is powered by Seequent, a Bentley organisation.
 
-## SDKs
+## Prerequisites
+
+Before you get started, make sure you have:
+
+* **A registered Evo app**
+
+    *Evo apps* provide the credentials necessary to generate Evo access tokens, which in turn provide access to your Evo data. An app can be created by you or by a member of your team.
+    
+    Register an Evo app in the [Bentley Developer Portal](https://developer.bentley.com/my-apps). For in-depth instructions, follow this [guide](https://developer.seequent.com/docs/guides/getting-started/apps-and-tokens) on the Seequent Developer Portal.
+
+    NOTE: You must have a **Bentley developer account** in order to create apps. If you try to register an app using the link above but find that you don't have permission, contact your account administrator to get access.
+
+* **A local copy of this repository**
+
+    Clone the repository using Git or download it as a ZIP file from the green **Code** button at the top of the page.
+
+* **A Python code editor, eg. VS Code, PyCharm**
+    
+    For running and editing the sample notebooks and other source code files.
+
+## About this repository
+
+`evo-python-sdk` is designed for developers, data scientists, and technical users who want to work with Seequent Evo APIs and geoscience data. 
+
+* To quickly learn how to use Evo APIs, start with the [Getting started with Evo samples](#getting-started-with-evo-code-samples) section, which contains practical, end-to-end Jupyter notebook examples for common workflows. Most new users should begin with this section.
+
+* If you are interested in the underlying SDKs or need to understand the implementation details, explore the [Getting started with Evo SDK development](#getting-started-with-evo-sdk-development) section, which contains the source code for each Evo SDK. 
+
+* To learn about contributing to this repository, take a look at the [Contributing](#contributing) section.
+
+## Getting started with Evo code samples
+
+For detailed information about the creating Evo apps, the authentication setup, available code samples, and step-by-step guides for working with the Jupyter notebooks, please refer to the [**samples/README.md**](samples/README.md) file. 
+
+This comprehensive guide will walk you through everything required get started with Evo APIs. 
+
+## Getting started with Evo SDK development
 
 This repository contains a number of sub-packages. You may choose to install the `evo-sdk` package, which includes all
 sub-packages and optional dependencies (e.g. Jupyter notebook support), or choose a specific package to install:
@@ -28,27 +64,7 @@ sub-packages and optional dependencies (e.g. Jupyter notebook support), or choos
 | [evo-colormaps](packages/evo-colormaps/README.md)  | <a href="https://pypi.org/project/evo-colormaps/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/evo-colormaps" /></a> | A service client to create colour mappings and associate them to geoscience data with the Colormap API.|
 | [evo-blockmodels](packages/evo-blockmodels/README.md) | <a href="https://pypi.org/project/evo-blockmodels/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/evo-blockmodels" /></a> | The Block Model API provides the ability to manage and report on block models in your Evo workspaces. |
 
-## Pre-requisites
-
-* Python ^3.10
-* An [application registered in Bentley](https://developer.bentley.com/register/?product=seequent-evo)
-
-## Installation
-
-To install the `evo-sdk` package, including all sub-packages, run the following command:
-
-```shell
-pip install evo-sdk
-```
-
-Seequent Evo APIs use OAuth for authentication. In order to support it in this example, we'll be using the
-[asyncio library](https://pypi.org/project/asyncio/) to power the OAuth callback process.
-
-```shell
-pip install asyncio
-```
-
-## Getting started
+### Getting started
 
 Now that you have installed the Evo SDK, you can get started by configuring your API connector, and performing a
 basic API call to list the organizations that you have access to:
@@ -103,12 +119,12 @@ With workspaces, `uv lock` operates on the entire workspace at once. `uv run` an
 
 To install UV on your machine, run one of the following convenience scripts from the root of the repo. These scripts ensure everyone is using the same version.
 
-Windows:
+#### Windows
 ```shell
 ./scripts/install-uv.ps1
 ```
 
-UNIX-like:
+#### Linux / macOS
 ```shell
 ./scripts/install-uv.sh
 ```

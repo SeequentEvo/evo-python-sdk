@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gmd:MD_Metadata xsi:schemaLocation="http://www.isotc211.org/2005/gmd ../schemas/iso19139fra/gmd/gmd.xsd" xmlns:fo="http://www.w3.org/1999/XSL/Format" xmlns:map="urn:brgm:mapping" xmlns:gmd="http://www.isotc211.org/2005/gmd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:gml="http://www.opengis.net/gml" xmlns:gts="http://www.isotc211.org/2005/gts" xmlns:gmx="http://www.isotc211.org/2005/gmx" xmlns:gfc="http://www.isotc211.org/2005/gfc" xmlns:gco="http://www.isotc211.org/2005/gco">
+	<geosoft xmlns="http://www.geosoft.com/schema/geo">
+		<dataset version="1">
+			<lineage>
+				<process name="geogxnet.dll(Geosoft.GX.GridUtils.GridStat;Run)" user="Philip Suttak" version="Version 9.9 (20201020.19)" date="2020-10-21" time="11:31:47">
+					<parameter name="COORDSYS_COPYFROM::FILETYPE" value="Voxel" type="string"/>
+					<parameter name="COORDSYS_COPYFROM::VOXEL" value=".\Mt Palmer Susceptibility_Mt Palmer Susceptibility.geosoft_voxel" type="string"/>
+					<parameter name="GRIDSTAT::DX" value="25" type="double"/>
+					<parameter name="GRIDSTAT::DY" value="25" type="double"/>
+					<parameter name="GRIDSTAT::GRID" value=".\mag_MC.grd" type="string"/>
+					<parameter name="GRIDSTAT::MODIFY_ONLY" value="" type="integer"/>
+					<parameter name="GRIDSTAT::ROT" value="0" type="double"/>
+					<parameter name="GRIDSTAT::ROT1" value="0" type="double"/>
+					<parameter name="GRIDSTAT::SKIP_GRID_DIALOG" value="1" type="integer"/>
+					<parameter name="GRIDSTAT::X0" value="714650" type="double"/>
+					<parameter name="GRIDSTAT::Y0" value="6528300" type="double"/>
+					<parameter name="IPJSET::PROJECTION" value="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&#xA;&lt;projection type=&quot;TRANSVERSE_MERCATOR&quot; name=&quot;GDA94 / MGA zone 50&quot; wellknown_epsg=&quot;28350&quot; projection=&quot;Map Grid of Australia zone 50&quot; ellipsoid=&quot;GRS 1980&quot; datum=&quot;GDA94&quot; datumtrf=&quot;GDA94 to WGS 84 (1)&quot; datumtrf_epsg=&quot;1150&quot; datumtrf_description=&quot;[GDA94] (3m) Australia - GDA&quot; radius=&quot;6378137&quot; eccentricity=&quot;0.081819191042815806&quot; xmlns=&quot;http://www.geosoft.com/schema/geo&quot;&gt;&#xA;	&lt;shift x=&quot;0&quot; y=&quot;0&quot; z=&quot;0&quot;/&gt;&#xA;	&lt;parameters scale=&quot;0.9996&quot; false_east=&quot;500000&quot; false_north=&quot;10000000&quot; lat_origin=&quot;0&quot; lon_origin=&quot;117&quot;/&gt;&#xA;	&lt;units name=&quot;m&quot; unit_scale=&quot;1&quot;/&gt;&#xA;&lt;/projection&gt;&#xA;" type="string"/>
+					<source name="c:\Users\philips\Desktop\workspace\Datasets\9.9 tech demo\mag_MC.grd" type="GRID"/>
+					<source name="c:\Users\philips\Desktop\workspace\Datasets\9.9 tech demo\Mt Palmer Susceptibility_Mt Palmer Susceptibility.geosoft_voxel" type="VOXEL"/>
+				</process>
+				<process name="geogxnet.dll(Geosoft.GX.GridUtils.GridStat;Run)" user="Philip Suttak" version="Version 9.9 (20201020.19)" date="2020-10-21" time="11:31:47">
+					<parameter name="COORDSYS_COPYFROM::FILETYPE" value="Voxel" type="string"/>
+					<parameter name="COORDSYS_COPYFROM::VOXEL" value=".\Mt Palmer Susceptibility_Mt Palmer Susceptibility.geosoft_voxel" type="string"/>
+					<parameter name="GRIDSTAT::DX" value="25" type="double"/>
+					<parameter name="GRIDSTAT::DY" value="25" type="double"/>
+					<parameter name="GRIDSTAT::GRID" value=".\mag_MC.grd" type="string"/>
+					<parameter name="GRIDSTAT::MODIFY_ONLY" value="" type="integer"/>
+					<parameter name="GRIDSTAT::ROT" value="0" type="double"/>
+					<parameter name="GRIDSTAT::ROT1" value="0" type="double"/>
+					<parameter name="GRIDSTAT::SKIP_GRID_DIALOG" value="1" type="integer"/>
+					<parameter name="GRIDSTAT::X0" value="714650" type="double"/>
+					<parameter name="GRIDSTAT::Y0" value="6528300" type="double"/>
+					<parameter name="IPJSET::PROJECTION" value="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&#xA;&lt;projection type=&quot;TRANSVERSE_MERCATOR&quot; name=&quot;GDA94 / MGA zone 50&quot; wellknown_epsg=&quot;28350&quot; projection=&quot;Map Grid of Australia zone 50&quot; ellipsoid=&quot;GRS 1980&quot; datum=&quot;GDA94&quot; datumtrf=&quot;GDA94 to WGS 84 (1)&quot; datumtrf_epsg=&quot;1150&quot; datumtrf_description=&quot;[GDA94] (3m) Australia - GDA&quot; radius=&quot;6378137&quot; eccentricity=&quot;0.081819191042815806&quot; xmlns=&quot;http://www.geosoft.com/schema/geo&quot;&gt;&#xA;	&lt;shift x=&quot;0&quot; y=&quot;0&quot; z=&quot;0&quot;/&gt;&#xA;	&lt;parameters scale=&quot;0.9996&quot; false_east=&quot;500000&quot; false_north=&quot;10000000&quot; lat_origin=&quot;0&quot; lon_origin=&quot;117&quot;/&gt;&#xA;	&lt;units name=&quot;m&quot; unit_scale=&quot;1&quot;/&gt;&#xA;&lt;/projection&gt;&#xA;" type="string"/>
+					<source name="c:\Users\philips\Desktop\workspace\Datasets\9.9 tech demo\mag_MC.grd" type="GRID">
+						<lineage>
+							<process name="geogxnet.dll(Geosoft.GX.GridUtils.GridStat;Run)" user="Philip Suttak" version="Version 9.9 (20201020.19)" date="2020-10-21" time="11:31:47">
+								<parameter name="COORDSYS_COPYFROM::FILETYPE" value="Voxel" type="string"/>
+								<parameter name="COORDSYS_COPYFROM::VOXEL" value=".\Mt Palmer Susceptibility_Mt Palmer Susceptibility.geosoft_voxel" type="string"/>
+								<parameter name="GRIDSTAT::DX" value="25" type="double"/>
+								<parameter name="GRIDSTAT::DY" value="25" type="double"/>
+								<parameter name="GRIDSTAT::GRID" value=".\mag_MC.grd" type="string"/>
+								<parameter name="GRIDSTAT::MODIFY_ONLY" value="" type="integer"/>
+								<parameter name="GRIDSTAT::ROT" value="0" type="double"/>
+								<parameter name="GRIDSTAT::ROT1" value="0" type="double"/>
+								<parameter name="GRIDSTAT::SKIP_GRID_DIALOG" value="1" type="integer"/>
+								<parameter name="GRIDSTAT::X0" value="714650" type="double"/>
+								<parameter name="GRIDSTAT::Y0" value="6528300" type="double"/>
+								<parameter name="IPJSET::PROJECTION" value="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&#xA;&lt;projection type=&quot;TRANSVERSE_MERCATOR&quot; name=&quot;GDA94 / MGA zone 50&quot; wellknown_epsg=&quot;28350&quot; projection=&quot;Map Grid of Australia zone 50&quot; ellipsoid=&quot;GRS 1980&quot; datum=&quot;GDA94&quot; datumtrf=&quot;GDA94 to WGS 84 (1)&quot; datumtrf_epsg=&quot;1150&quot; datumtrf_description=&quot;[GDA94] (3m) Australia - GDA&quot; radius=&quot;6378137&quot; eccentricity=&quot;0.081819191042815806&quot; xmlns=&quot;http://www.geosoft.com/schema/geo&quot;&gt;&#xA;	&lt;shift x=&quot;0&quot; y=&quot;0&quot; z=&quot;0&quot;/&gt;&#xA;	&lt;parameters scale=&quot;0.9996&quot; false_east=&quot;500000&quot; false_north=&quot;10000000&quot; lat_origin=&quot;0&quot; lon_origin=&quot;117&quot;/&gt;&#xA;	&lt;units name=&quot;m&quot; unit_scale=&quot;1&quot;/&gt;&#xA;&lt;/projection&gt;&#xA;" type="string"/>
+								<source name="c:\Users\philips\Desktop\workspace\Datasets\9.9 tech demo\mag_MC.grd" type="GRID"/>
+								<source name="c:\Users\philips\Desktop\workspace\Datasets\9.9 tech demo\Mt Palmer Susceptibility_Mt Palmer Susceptibility.geosoft_voxel" type="VOXEL"/>
+							</process>
+						</lineage>
+					</source>
+					<source name="c:\Users\philips\Desktop\workspace\Datasets\9.9 tech demo\Mt Palmer Susceptibility_Mt Palmer Susceptibility.geosoft_voxel" type="VOXEL"/>
+				</process>
+			</lineage>
+			<title>mag_MC</title>
+			<file_format>Geosoft Grid</file_format>
+			<project_name>c:\users\philips\desktop\workspace\datasets\9.9 tech demo\9.9 tech demo.gpf</project_name>
+			<metadata_created_by>Philip Suttak</metadata_created_by>
+			<metadata_creation_date>2020-10-21</metadata_creation_date>
+			<georeference>
+				<dataextents>
+					<extent2d minx="714650" miny="6528300" maxx="717575" maxy="6532600"/>
+				</dataextents>
+				<projection type="TRANSVERSE_MERCATOR" name="GDA94 / MGA zone 50" wellknown_epsg="28350" projection="Map Grid of Australia zone 50" ellipsoid="GRS 1980" datum="GDA94" datumtrf="GDA94 to WGS 84 (1)" datumtrf_epsg="1150" datumtrf_description="[GDA94] (3m) Australia - GDA [TRF=GDA94 to WGS 84 (1)]" radius="6378137" eccentricity="0.081819191042815806">
+					<shift x="0" y="0" z="0"/>
+					<parameters scale="0.9996" false_east="500000" false_north="10000000" lat_origin="0" lon_origin="117"/>
+					<units name="m" unit_scale="1"/>
+				</projection>
+			</georeference>
+		</dataset>
+	</geosoft>
+	<gmd:dataQualityInfo>
+		<gmd:DQ_DataQuality>
+			<gmd:lineage>
+				<gmd:LI_Lineage>
+					<gmd:processStep xlink:type="Geosoft Process" xlink:title="geogxnet.dll(Geosoft.GX.GridUtils.GridStat;Run)">
+						<gmd:LI_ProcessStep>
+							<gmd:dateTime>
+								<gco:DateTime>2020-10-21T11:31:47</gco:DateTime>
+							</gmd:dateTime>
+							<gmd:processor>
+								<gmd:CI_ResponsibleParty>
+									<gmd:individualName>
+										<gco:CharacterString>Philip Suttak</gco:CharacterString>
+									</gmd:individualName>
+								</gmd:CI_ResponsibleParty>
+							</gmd:processor>
+							<gmd:source xlink:type="Data Parameter" xlink:role="COORDSYS_COPYFROM::FILETYPE" xlink:title="Voxel">
+								<gmd:LI_Source/>
+							</gmd:source>
+							<gmd:source xlink:type="Data Parameter" xlink:role="COORDSYS_COPYFROM::VOXEL" xlink:title=".\Mt Palmer Susceptibility_Mt Palmer Susceptibility.geosoft_voxel">
+								<gmd:LI_Source/>
+							</gmd:source>
+							<gmd:source xlink:type="Data Parameter" xlink:role="GRIDSTAT::DX" xlink:title="25">
+								<gmd:LI_Source/>
+							</gmd:source>
+							<gmd:source xlink:type="Data Parameter" xlink:role="GRIDSTAT::DY" xlink:title="25">
+								<gmd:LI_Source/>
+							</gmd:source>
+							<gmd:source xlink:type="Data Parameter" xlink:role="GRIDSTAT::GRID" xlink:title=".\mag_MC.grd">
+								<gmd:LI_Source/>
+							</gmd:source>
+							<gmd:source xlink:type="Data Parameter" xlink:role="GRIDSTAT::MODIFY_ONLY" xlink:title="">
+								<gmd:LI_Source/>
+							</gmd:source>
+							<gmd:source xlink:type="Data Parameter" xlink:role="GRIDSTAT::ROT" xlink:title="0">
+								<gmd:LI_Source/>
+							</gmd:source>
+							<gmd:source xlink:type="Data Parameter" xlink:role="GRIDSTAT::ROT1" xlink:title="0">
+								<gmd:LI_Source/>
+							</gmd:source>
+							<gmd:source xlink:type="Data Parameter" xlink:role="GRIDSTAT::SKIP_GRID_DIALOG" xlink:title="1">
+								<gmd:LI_Source/>
+							</gmd:source>
+							<gmd:source xlink:type="Data Parameter" xlink:role="GRIDSTAT::X0" xlink:title="714650">
+								<gmd:LI_Source/>
+							</gmd:source>
+							<gmd:source xlink:type="Data Parameter" xlink:role="GRIDSTAT::Y0" xlink:title="6528300">
+								<gmd:LI_Source/>
+							</gmd:source>
+							<gmd:source xlink:type="Data Parameter" xlink:role="IPJSET::PROJECTION" xlink:title="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&#xA;&lt;projection type=&quot;TRANSVERSE_MERCATOR&quot; name=&quot;GDA94 / MGA zone 50&quot; wellknown_epsg=&quot;28350&quot; projection=&quot;Map Grid of Australia zone 50&quot; ellipsoid=&quot;GRS 1980&quot; datum=&quot;GDA94&quot; datumtrf=&quot;GDA94 to WGS 84 (1)&quot; datumtrf_epsg=&quot;1150&quot; datumtrf_description=&quot;[GDA94] (3m) Australia - GDA&quot; radius=&quot;6378137&quot; eccentricity=&quot;0.081819191042815806&quot; xmlns=&quot;http://www.geosoft.com/schema/geo&quot;&gt;&#xA;	&lt;shift x=&quot;0&quot; y=&quot;0&quot; z=&quot;0&quot;/&gt;&#xA;	&lt;parameters scale=&quot;0.9996&quot; false_east=&quot;500000&quot; false_north=&quot;10000000&quot; lat_origin=&quot;0&quot; lon_origin=&quot;117&quot;/&gt;&#xA;	&lt;units name=&quot;m&quot; unit_scale=&quot;1&quot;/&gt;&#xA;&lt;/projection&gt;&#xA;">
+								<gmd:LI_Source/>
+							</gmd:source>
+							<gmd:source xlink:type="Data Source" xlink:role="GRID" xlink:title="c:\Users\philips\Desktop\workspace\Datasets\9.9 tech demo\mag_MC.grd">
+								<gmd:LI_Source/>
+							</gmd:source>
+							<gmd:source xlink:type="Data Source" xlink:role="VOXEL" xlink:title="c:\Users\philips\Desktop\workspace\Datasets\9.9 tech demo\Mt Palmer Susceptibility_Mt Palmer Susceptibility.geosoft_voxel">
+								<gmd:LI_Source/>
+							</gmd:source>
+						</gmd:LI_ProcessStep>
+					</gmd:processStep>
+					<gmd:processStep xlink:type="Geosoft Process" xlink:title="geogxnet.dll(Geosoft.GX.GridUtils.GridStat;Run)">
+						<gmd:LI_ProcessStep>
+							<gmd:dateTime>
+								<gco:DateTime>2020-10-21T11:31:47</gco:DateTime>
+							</gmd:dateTime>
+							<gmd:processor>
+								<gmd:CI_ResponsibleParty>
+									<gmd:individualName>
+										<gco:CharacterString>Philip Suttak</gco:CharacterString>
+									</gmd:individualName>
+								</gmd:CI_ResponsibleParty>
+							</gmd:processor>
+							<gmd:source xlink:type="Data Parameter" xlink:role="COORDSYS_COPYFROM::FILETYPE" xlink:title="Voxel">
+								<gmd:LI_Source/>
+							</gmd:source>
+							<gmd:source xlink:type="Data Parameter" xlink:role="COORDSYS_COPYFROM::VOXEL" xlink:title=".\Mt Palmer Susceptibility_Mt Palmer Susceptibility.geosoft_voxel">
+								<gmd:LI_Source/>
+							</gmd:source>
+							<gmd:source xlink:type="Data Parameter" xlink:role="GRIDSTAT::DX" xlink:title="25">
+								<gmd:LI_Source/>
+							</gmd:source>
+							<gmd:source xlink:type="Data Parameter" xlink:role="GRIDSTAT::DY" xlink:title="25">
+								<gmd:LI_Source/>
+							</gmd:source>
+							<gmd:source xlink:type="Data Parameter" xlink:role="GRIDSTAT::GRID" xlink:title=".\mag_MC.grd">
+								<gmd:LI_Source/>
+							</gmd:source>
+							<gmd:source xlink:type="Data Parameter" xlink:role="GRIDSTAT::MODIFY_ONLY" xlink:title="">
+								<gmd:LI_Source/>
+							</gmd:source>
+							<gmd:source xlink:type="Data Parameter" xlink:role="GRIDSTAT::ROT" xlink:title="0">
+								<gmd:LI_Source/>
+							</gmd:source>
+							<gmd:source xlink:type="Data Parameter" xlink:role="GRIDSTAT::ROT1" xlink:title="0">
+								<gmd:LI_Source/>
+							</gmd:source>
+							<gmd:source xlink:type="Data Parameter" xlink:role="GRIDSTAT::SKIP_GRID_DIALOG" xlink:title="1">
+								<gmd:LI_Source/>
+							</gmd:source>
+							<gmd:source xlink:type="Data Parameter" xlink:role="GRIDSTAT::X0" xlink:title="714650">
+								<gmd:LI_Source/>
+							</gmd:source>
+							<gmd:source xlink:type="Data Parameter" xlink:role="GRIDSTAT::Y0" xlink:title="6528300">
+								<gmd:LI_Source/>
+							</gmd:source>
+							<gmd:source xlink:type="Data Parameter" xlink:role="IPJSET::PROJECTION" xlink:title="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&#xA;&lt;projection type=&quot;TRANSVERSE_MERCATOR&quot; name=&quot;GDA94 / MGA zone 50&quot; wellknown_epsg=&quot;28350&quot; projection=&quot;Map Grid of Australia zone 50&quot; ellipsoid=&quot;GRS 1980&quot; datum=&quot;GDA94&quot; datumtrf=&quot;GDA94 to WGS 84 (1)&quot; datumtrf_epsg=&quot;1150&quot; datumtrf_description=&quot;[GDA94] (3m) Australia - GDA&quot; radius=&quot;6378137&quot; eccentricity=&quot;0.081819191042815806&quot; xmlns=&quot;http://www.geosoft.com/schema/geo&quot;&gt;&#xA;	&lt;shift x=&quot;0&quot; y=&quot;0&quot; z=&quot;0&quot;/&gt;&#xA;	&lt;parameters scale=&quot;0.9996&quot; false_east=&quot;500000&quot; false_north=&quot;10000000&quot; lat_origin=&quot;0&quot; lon_origin=&quot;117&quot;/&gt;&#xA;	&lt;units name=&quot;m&quot; unit_scale=&quot;1&quot;/&gt;&#xA;&lt;/projection&gt;&#xA;">
+								<gmd:LI_Source/>
+							</gmd:source>
+							<gmd:source xlink:type="Data Source" xlink:role="GRID" xlink:title="c:\Users\philips\Desktop\workspace\Datasets\9.9 tech demo\mag_MC.grd">
+								<gmd:LI_Source/>
+							</gmd:source>
+							<gmd:source xlink:type="Data Source" xlink:role="VOXEL" xlink:title="c:\Users\philips\Desktop\workspace\Datasets\9.9 tech demo\Mt Palmer Susceptibility_Mt Palmer Susceptibility.geosoft_voxel">
+								<gmd:LI_Source/>
+							</gmd:source>
+						</gmd:LI_ProcessStep>
+					</gmd:processStep>
+				</gmd:LI_Lineage>
+			</gmd:lineage>
+		</gmd:DQ_DataQuality>
+	</gmd:dataQualityInfo>
+	<gmd:identificationInfo>
+		<gmd:MD_DataIdentification>
+			<gmd:citation>
+				<gmd:CI_Citation>
+					<gmd:title>
+						<gco:CharacterString>mag_MC</gco:CharacterString>
+					</gmd:title>
+					<gmd:collectiveTitle>
+						<gco:CharacterString>c:\users\philips\desktop\workspace\datasets\9.9 tech demo\9.9 tech demo.gpf</gco:CharacterString>
+					</gmd:collectiveTitle>
+				</gmd:CI_Citation>
+			</gmd:citation>
+			<gmd:resourceFormat>
+				<gmd:MD_Format>
+					<gmd:name>
+						<gco:CharacterString>Geosoft Grid</gco:CharacterString>
+					</gmd:name>
+				</gmd:MD_Format>
+			</gmd:resourceFormat>
+			<gmd:extent>
+				<gmd:EX_Extent>
+					<gmd:geographicElement>
+						<gmd:EX_GeographicBoundingBox>
+							<gmd:westBoundLongitude>
+								<gco:Decimal>119.25577109290572</gco:Decimal>
+							</gmd:westBoundLongitude>
+							<gmd:eastBoundLongitude>
+								<gco:Decimal>119.2874276613029</gco:Decimal>
+							</gmd:eastBoundLongitude>
+							<gmd:southBoundLatitude>
+								<gco:Decimal>-31.359993834066465</gco:Decimal>
+							</gmd:southBoundLatitude>
+							<gmd:northBoundLatitude>
+								<gco:Decimal>-31.320682535080728</gco:Decimal>
+							</gmd:northBoundLatitude>
+						</gmd:EX_GeographicBoundingBox>
+					</gmd:geographicElement>
+				</gmd:EX_Extent>
+			</gmd:extent>
+		</gmd:MD_DataIdentification>
+	</gmd:identificationInfo>
+	<gmd:contact>
+		<gmd:CI_ResponsibleParty>
+			<gmd:individualName>
+				<gco:CharacterString>Philip Suttak</gco:CharacterString>
+			</gmd:individualName>
+		</gmd:CI_ResponsibleParty>
+	</gmd:contact>
+	<evo xmlns="http://www.seequent.com/schema/evo">
+		<object>
+			<uuid>750a8766-d6b9-4f28-ba75-acdc8ec4ed4c</uuid>
+			<path>Magnetics.json</path>
+			<version_id>1708628520225523825</version_id>
+			<created_at>2024-02-22T19:02:00Z</created_at>
+			<created_by>
+				<name>Philip Suttak</name>
+				<id>d63b6b91-e07a-40ab-908e-91f561a46b70</id>
+				<email>Philip.Suttak@bentley.com</email>
+			</created_by>
+			<etag>c19a1e2eab5cafe5223e9456b4a05ba0c843da5f</etag>
+			<workspace_id>b1c97f60-0868-4fbb-9d28-0256dc1f8f76</workspace_id>
+		</object>
+	</evo>
+	<gmd:dateStamp>
+		<gco:Date>2020-10-21</gco:Date>
+	</gmd:dateStamp>
+	<gmd:referenceSystemInfo>
+		<gmd:MD_ReferenceSystem>
+			<gmd:referenceSystemIdentifier>
+				<gmd:RS_Identifier>
+					<gmd:codeSpace>
+						<gco:CharacterString>ESRI</gco:CharacterString>
+					</gmd:codeSpace>
+					<gmd:code>
+						<gco:CharacterString>PROJCS["GDA_1994_MGA_Zone_50",GEOGCS["GCS_GDA_1994",DATUM["D_GDA_1994",SPHEROID["GRS_1980",6378137.0,298.257222101]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],PARAMETER["False_Easting",500000.0],PARAMETER["False_Northing",10000000.0],PARAMETER["Central_Meridian",117.0],PARAMETER["Scale_Factor",0.9996],PARAMETER["Latitude_Of_Origin",0.0],UNIT["Meter",1.0],AUTHORITY["EPSG",28350]]</gco:CharacterString>
+					</gmd:code>
+					<gmd:version>
+						<gco:CharacterString>1</gco:CharacterString>
+					</gmd:version>
+				</gmd:RS_Identifier>
+			</gmd:referenceSystemIdentifier>
+		</gmd:MD_ReferenceSystem>
+	</gmd:referenceSystemInfo>
+</gmd:MD_Metadata>
