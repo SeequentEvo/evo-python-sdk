@@ -4,15 +4,36 @@ Welcome to the Evo Python SDK code samples! This directory contains comprehensiv
 
 ## 📋 Prerequisites
 
+- **Evo app**: You need a [registered app in Bentley](https://developer.bentley.com/register/?product=seequent-evo) to obtain a client ID
 - **Python**: Version 3.10 or higher
-- **Evo app**: You'll need a [registered app in Bentley](https://developer.bentley.com/register/?product=seequent-evo) to obtain a client ID
 - **Jupyter Environment**: JupyterLab, VS Code, or another Jupyter notebook editor
 
-## 🚀 Quick Start
+## 🚀 Quick start
 
-### 1. Set Up Your Environment
+### 1. Register an Evo app
 
-Before running Jupyter notebooks, you need to install the package manager `uv` which will make is easy to set up your Python environment.
+Register your Evo application in the [Bentley Developer Portal](https://developer.bentley.com/my-apps) to get your client credentials. If a member of your team has already registered an app, contact them and ask for the client credentials.
+
+For in-depth instructions, follow this [guide](https://developer.seequent.com/docs/guides/getting-started/apps-and-tokens) on the Seequent Developer Portal.
+
+### 2. Obtain a local copy of this repository
+
+If you want to focus on the code samples, or if you aren't comfortable using Git, download a copy of this repository as a ZIP file. Visit [https://github.com/SeequentEvo/evo-python-sdk](https://github.com/SeequentEvo/evo-python-sdk) and follow the instructions below:
+
+<img src="../images/download-zip.png" alt="Download ZIP from GitHub" width="350" />
+
+
+Alternatively, if you are comfortable using Git:
+
+```shell
+git clone https://github.com/SeequentEvo/evo-python-sdk.git
+```
+
+### 3. Set up your environment
+
+You must first install the package manager `uv` that will make is easy to set up your Python environment.
+
+Follow the instructions below for [Windows](#windows), [macOS](#macos) or [Linux](#linux).
 
 #### Windows
 1. Find the local copy of this repository in **Windows Explorer**. It will be called **evo-python-sdk-main** if you downloaded as a ZIP file.
@@ -21,12 +42,12 @@ Before running Jupyter notebooks, you need to install the package manager `uv` w
     <img src="images/open-terminal-win.png" alt="Open a terminal on Windows" width="300" />
 
 1. Enter the following command to install `uv`.
-    ```shell
+    ```pwsh
     powershell -ExecutionPolicy Bypass -c "irm https://astral.sh/uv/$(Get-Content ./UV_VERSION)/install.ps1 | iex"
     ```
 
 1. Set up your environment by moving to the **samples** directory and installing the Python dependencies.
-    ```bash
+    ```pwsh
     # Move to the samples directory
     cd samples
 
@@ -65,7 +86,7 @@ Before running Jupyter notebooks, you need to install the package manager `uv` w
 
 ### Linux
 
-NOTE: This example is based on [Ubuntu](https://ubuntu.com), but other Linux distros should operate in a similar way.
+NOTE: This example is based on [Ubuntu](https://ubuntu.com), but other Linux environments will operate in a similar way.
 
 1. Find the local copy of this repository in **Files**. It will be called **evo-python-sdk-main** if you downloaded as a ZIP file.
 1. Right-click on the folder and choose **Open in Terminal**.
@@ -87,52 +108,38 @@ NOTE: This example is based on [Ubuntu](https://ubuntu.com), but other Linux dis
     uv sync
     ```
 
-### 2. Start with Authentication
+### 4. Run the notebooks
 
-Before diving into specific samples, **start here**:
-
-📁 **[auth-and-evo-discovery](auth-and-evo-discovery/)** - Essential first steps
-- Create an Evo access token (choose your authentication method)
-- Discover your organization ID and Evo hub URL
-- **Start with these notebooks before using any other samples**
-
-### 3. Run the Notebooks
-
-Launch Jupyter and open the desired notebook:
+From the **samples** directory, launch Jupyter.
 
 ```bash
 uv run jupyter notebook
 # or if using VS Code, simply open the .ipynb files
 ```
 
-## 📚 Sample Categories
+You should see the **samples** directory in your web browser:
 
-### 🔐 Authentication & Discovery
-**📁 [auth-and-evo-discovery](auth-and-evo-discovery/)**
+<img src="images/jupyter-start-here.png" alt="Jupyter start here" width="350" />
 
+Before diving into the geoscience code samples, we recommend that you first test your Evo app to make sure your client credentials are set up correctly.
+
+📁 **[auth-and-evo-discovery](auth-and-evo-discovery/)**
 Essential setup for all other samples. Contains:
 - `native-app-token.ipynb` - Authentication for desktop applications
 - `service-app-token.ipynb` - Authentication for service applications  
 - `evo-discovery.ipynb` - Find your organization ID and hub URL
 
-*Required for: All other samples*
+## 📚 Sample categories
 
-### 📁 File Operations
-**📁 [files](files/)**
+### 🔐 Authentication & discovery
+**📁 [auth-and-evo-discovery](auth-and-evo-discovery/)**
 
-Basic file management operations:
-- Upload files to Evo
-- Download files from Evo
-- List and organize files
-- Delete files
+Learn about Evo auth and the Evo Discovery service:
+- `native-app-token.ipynb` - Authentication for desktop applications
+- `service-app-token.ipynb` - Authentication for service applications  
+- `evo-discovery.ipynb` - Find your organization ID and hub URL
 
-**📁 [file-handling](file-handling/)**
-
-Advanced file processing:
-- Working with Parquet data files
-- Data manipulation and analysis
-
-### 🧊 Block Models
+### 🧊 Block models
 **📁 [blockmodels](blockmodels/)**
 
 Comprehensive block model workflows organized by operation:
@@ -141,7 +148,16 @@ Comprehensive block model workflows organized by operation:
 - **Manage**: List, delete, and restore block models
 - **Update**: Add, delete, rename, and update columns
 
-### 🌍 Geoscience Objects
+### 🗂️ File operations
+**📁 [files](files/)**
+
+Basic unstructured file management operations:
+- Upload files to Evo
+- Download files from Evo
+- List and organize files
+- Delete files
+
+### 🌍 Geoscience objects
 **📁 [geoscience-objects](geoscience-objects/)**
 
 Publish and download various geoscience data types:
@@ -152,25 +168,31 @@ Publish and download various geoscience data types:
 
 *Note: Some notebooks have platform-specific requirements (e.g., Windows-only dependencies)*
 
-### 🏢 Workspace Management
+### 🏢 Workspace management
 **📁 [workspaces](workspaces/)**
 
 Administrative operations:
 - Manage Evo workspaces
 - Handle user roles and permissions
 
-## 🔧 Running a Sample
+### ✨ Extras
+**📁 [common-tasks](common-tasks/)**
 
-1. **Complete authentication setup** (auth-and-evo-discovery folder)
-2. **Navigate to your chosen sample folder**
-3. **Install requirements**: `pip install -r requirements.txt`
-4. **Open the notebook** in your preferred editor
-5. **Update the first cell** with your client ID (and redirect URL if needed)
-6. **Run the authentication cell** - this will open your browser for Bentley ID sign-in
-7. **Select your workspace** using the provided widget
-8. **Continue with the remaining cells** in order
+This section includes tasks that are common across many of the Evo APIs.
 
-## 💡 Tips for Success
+Advanced file processing:
+- Working with Parquet data files
+- Data manipulation
+
+## 🔧 Running a sample
+
+1. **Open the notebook** in your preferred editor
+1. **Update the first cell** with your client ID (and redirect URL if needed)
+1. **Run the authentication cell** - this will open your browser for Bentley ID sign-in
+1. **Select your workspace** using the provided widget
+1. **Continue with the remaining cells** in order
+
+## 💡 Tips for success
 
 - **Always start with authentication**: The auth-and-evo-discovery samples are prerequisite for all others
 - **Check platform requirements**: Some geoscience-objects samples are Windows-specific
@@ -178,14 +200,14 @@ Administrative operations:
 - **Follow notebook order**: Run cells sequentially for best results
 - **Keep credentials secure**: Never commit tokens or credentials to version control
 
-## 📖 Additional Resources
+## 📖 Additional resources
 
 - [Seequent Developer Portal](https://developer.seequent.com/docs/guides/getting-started/quick-start-guide)
 - [Evo SDK Documentation](../README.md)
 - [Seequent Community](https://community.seequent.com/group/19-evo)
 - [API References](https://developer.seequent.com/)
 
-## 🆘 Getting Help
+## 🆘 Getting help
 
 If you encounter issues:
 1. Check that you've completed the authentication setup

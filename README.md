@@ -18,26 +18,29 @@ Evo is powered by Seequent, a Bentley organisation.
 
 Before you get started, make sure you have:
 
+* **A registered Evo app**
+
+    *Evo apps* provide the credentials necessary to generate Evo access tokens, which are in turn used to provide access to your Evo data. An app can be created by you or by a member of your team.
+    
+    Register an Evo app in the [Bentley Developer Portal](https://developer.bentley.com/my-apps).
+
+    For in-depth instructions, follow this [guide](https://developer.seequent.com/docs/guides/getting-started/apps-and-tokens) on the Seequent Developer Portal.
+
+    NOTE: You must have a **Bentley developer account** in order to create apps. If you try to register an app using the link above but find that you don't have permission, contact your account administrator to get access.
+
 * **A local copy of this repository**
 
-    For users who just want to use the code samples or who aren't familiar with Git, download a copy of this repository as a ZIP file:
+    For users who want to focus on the code samples, or who aren't comfortable using Git, download a copy of this repository as a ZIP file:
 
-    <img src="images/download-zip.png" alt="Download ZIP from GitHub" width="400" />
+    <img src="images/download-zip.png" alt="Download ZIP from GitHub" width="350" />
 
-
-    For users who are familiar with Git:
+    For users who are comfortable using Git:
 
     ```shell
     git clone https://github.com/SeequentEvo/evo-python-sdk.git
     ```
 
-* **A Bentley Developer Account**
-
-    Register your Evo application in the [Bentley Developer Portal](https://developer.bentley.com/my-apps) to get your client credentials.
-
-    HINT: For step-by-step instructions, follow this [guide](https://developer.seequent.com/docs/guides/getting-started/apps-and-tokens).
-
-* **(Optional) A Python code editor, eg. VS Code**
+* **A Python code editor, eg. VS Code, PyCharm**
     
     For running and editing the sample notebooks and other source code files.
 
@@ -50,7 +53,6 @@ Before you get started, make sure you have:
 * If you are interested in the underlying SDKs or need to understand the implementation details, explore the [Getting started with Evo SDK development](#getting-started-with-evo-sdk-development) section, which contains the source code for each Evo SDK. 
 
 * To learn about contributing to this repository, take a look at the [Contributing](#contributing) section.
-
 
 ## Getting started with Evo code samples
 
