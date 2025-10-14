@@ -15,6 +15,7 @@ from uuid import UUID
 from data import load_test_data
 from evo.common import ServiceUser
 from evo.common.test_tools import TestWithConnector, TestWithDownloadHandler, TestWithUploadHandler, utc_datetime
+from evo.common.utils import get_metadata_header
 from evo.files import FileAPIDownload, FileAPIUpload, FileMetadata
 
 TEST_DATA = """
@@ -34,6 +35,8 @@ x,y,z
 FILE_ID = UUID(int=5)
 VERSION_ID = "123456"
 INITIAL_URL = "https://unit.test/initial/url"
+
+metadata_header = get_metadata_header("evo-files")
 
 
 class TestFileAPIDownload(TestWithConnector, TestWithDownloadHandler):
@@ -85,7 +88,9 @@ class TestFileAPIDownload(TestWithConnector, TestWithDownloadHandler):
         # Test that a new URL is generated when the initial URL is used up.
         get_file_response = load_test_data("get_file.json")
         with self.transport.set_http_response(
-            status_code=200, content=json.dumps(get_file_response), headers={"Content-Type": "application/json"}
+            status_code=200,
+            content=json.dumps(get_file_response),
+            headers=metadata_header | {"Content-Type": "application/json"},
         ):
             second = await self.download.get_download_url()
         self.assertEqual(get_file_response["download"], second)
@@ -137,7 +142,9 @@ class TestFileAPIUpload(TestWithConnector, TestWithUploadHandler):
         # Test that a new URL is generated when the initial URL is used up.
         update_file_response = load_test_data("update_file.json")
         with self.transport.set_http_response(
-            status_code=200, content=json.dumps(update_file_response), headers={"Content-Type": "application/json"}
+            status_code=200,
+            content=json.dumps(update_file_response),
+            headers=metadata_header | {"Content-Type": "application/json"},
         ):
             second = await self.upload.get_upload_url()
         self.assertEqual(update_file_response["upload"], second)

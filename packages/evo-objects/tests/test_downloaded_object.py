@@ -38,7 +38,7 @@ from evo.objects import DownloadedObject, ObjectReference
 from evo.objects.endpoints import models
 from evo.objects.io import _CACHE_SCOPE
 from evo.objects.parquet import TableInfo
-from evo.objects.utils import KnownTableFormat
+from evo.objects.utils import KnownTableFormat, get_metadata_header
 from helpers import NoImport, UnloadModule, get_sample_table_and_bytes
 
 _OBJECTS_URL = f"{BASE_URL.rstrip('/')}/geoscience-object/orgs/{ORG.id}/workspaces/{WORKSPACE_ID}/objects"
@@ -55,6 +55,8 @@ _TABLE_INFO_VARIANTS: list[tuple[str, TableInfo | str]] = [
     ),
     ("with JMESPath reference", "locations.coordinates"),
 ]
+
+metadata_header = get_metadata_header("evo-objects")
 
 
 class TestDownloadedObject(TestWithConnector, TestWithStorage):
@@ -135,7 +137,7 @@ class TestDownloadedObject(TestWithConnector, TestWithStorage):
         self.assert_request_made(
             method=RequestMethod.GET,
             path=expected_request_path,
-            headers={"Accept": "application/json", "Accept-Encoding": "gzip"},
+            headers=metadata_header | {"Accept": "application/json", "Accept-Encoding": "gzip"},
         )
         # Check metadata.
         actual_metadata = actual_object.metadata
