@@ -19,15 +19,7 @@ from uuid import UUID
 
 from parameterized import parameterized
 
-from evo.common.data import (
-    EmptyResponse,
-    Environment,
-    HTTPHeaderDict,
-    HTTPResponse,
-    Page,
-    ResourceMetadata,
-    get_package_metadata,
-)
+from evo.common.data import EmptyResponse, Environment, HTTPHeaderDict, HTTPResponse, Page, ResourceMetadata
 from evo.common.test_tools import BASE_URL, utc_datetime
 
 SAMPLE_HEADER_DICT = {
@@ -42,7 +34,6 @@ ALTERNATE_HEADER_VALUES = {
     "Cookie": "session=456",
     "Set-Cookie": "session=456",
 }
-METADATA_HEADER_DICT = get_package_metadata()
 
 
 # Uncomment the following import statement to compare header values that are usually hidden.
@@ -50,55 +41,49 @@ METADATA_HEADER_DICT = get_package_metadata()
 
 
 class TestHTTPHeaderDict(unittest.TestCase):
-    def test_init_no_args(self) -> None:
-        """Test that the HTTPHeaderDict only has the metadata when initialized with no arguments."""
+    def test_init_empty(self) -> None:
+        """Test that the HTTPHeaderDict is empty when initialized with no arguments."""
         headers = HTTPHeaderDict()
-        self.assertEqual(len(headers), len(METADATA_HEADER_DICT))
+        self.assertEqual(len(headers), 0)
 
-    def test_init_contains_metadata_versions(self) -> None:
-        """Test that the HTTPHeaderDict contains versions in the metadata header values."""
-        headers = HTTPHeaderDict()
-        for version in headers.values():
-            self.assertRegex(version, "^(\d+\.)?(\d+\.)?(\d+)$")
-
-    def assert_matches_sample_and_metadata_dicts(self, headers: HTTPHeaderDict) -> None:
-        """Assert that the given headers match the sample and metadata dicts."""
-        self.assertEqual(len(METADATA_HEADER_DICT | SAMPLE_HEADER_DICT), len(headers))
+    def assert_matches_sample_dict(self, headers: HTTPHeaderDict) -> None:
+        """Assert that the given headers match the sample dict."""
+        self.assertEqual(len(SAMPLE_HEADER_DICT), len(headers))
         for key, value in SAMPLE_HEADER_DICT.items():
             self.assertEqual(value, headers[key])
 
     def test_init_mapping(self) -> None:
         """Test that the HTTPHeaderDict is initialized correctly with a mapping."""
         headers = HTTPHeaderDict(SAMPLE_HEADER_DICT)
-        self.assert_matches_sample_and_metadata_dicts(headers)
+        self.assert_matches_sample_dict(headers)
 
     def test_init_sequence(self) -> None:
         """Test that the HTTPHeaderDict is initialized correctly with a sequence."""
         headers = HTTPHeaderDict(list(SAMPLE_HEADER_DICT.items()))
-        self.assert_matches_sample_and_metadata_dicts(headers)
+        self.assert_matches_sample_dict(headers)
 
     def test_init_kwargs(self) -> None:
         """Test that the HTTPHeaderDict is initialized correctly with keyword arguments."""
         headers = HTTPHeaderDict(**SAMPLE_HEADER_DICT)
-        self.assert_matches_sample_and_metadata_dicts(headers)
+        self.assert_matches_sample_dict(headers)
 
     def test_update_mapping(self) -> None:
         """Test that updating the headers with a mapping works correctly."""
         headers = HTTPHeaderDict()
         headers.update(SAMPLE_HEADER_DICT)
-        self.assert_matches_sample_and_metadata_dicts(headers)
+        self.assert_matches_sample_dict(headers)
 
     def test_update_sequence(self) -> None:
         """Test that updating the headers with a sequence works correctly."""
         headers = HTTPHeaderDict()
         headers.update(list(SAMPLE_HEADER_DICT.items()))
-        self.assert_matches_sample_and_metadata_dicts(headers)
+        self.assert_matches_sample_dict(headers)
 
     def test_update_kwargs(self) -> None:
         """Test that updating the headers with keyword arguments works correctly."""
         headers = HTTPHeaderDict()
         headers.update(**SAMPLE_HEADER_DICT)
-        self.assert_matches_sample_and_metadata_dicts(headers)
+        self.assert_matches_sample_dict(headers)
 
     def test_update_appends(self) -> None:
         """Test that updating an existing field appends the new value."""
@@ -187,11 +172,11 @@ class TestHTTPHeaderDict(unittest.TestCase):
         """Test that deleting an item works correctly."""
         headers = HTTPHeaderDict(SAMPLE_HEADER_DICT)
         self.assertIn(field, headers)
-        self.assertEqual(len(headers), len(METADATA_HEADER_DICT | SAMPLE_HEADER_DICT))
+        self.assertEqual(len(headers), len(SAMPLE_HEADER_DICT))
 
         del headers[field]
         self.assertNotIn(field, headers)
-        self.assertEqual(len(headers), len(METADATA_HEADER_DICT | SAMPLE_HEADER_DICT) - 1)
+        self.assertEqual(len(headers), len(SAMPLE_HEADER_DICT) - 1)
 
         with self.subTest("Field names are case-insensitive"):
             for key in (field.lower(), field.upper(), field.title()):
@@ -209,27 +194,27 @@ class TestHTTPHeaderDict(unittest.TestCase):
     def test_keys(self) -> None:
         """Test that the keys method returns the keys in lowercase."""
         headers = HTTPHeaderDict(SAMPLE_HEADER_DICT)
-        self.assertListEqual(list((METADATA_HEADER_DICT | SAMPLE_HEADER_DICT).keys()), list(headers.keys()))
+        self.assertListEqual(list(SAMPLE_HEADER_DICT.keys()), list(headers.keys()))
 
     def test_values(self) -> None:
         """Test that the values method returns the correct values."""
         headers = HTTPHeaderDict(SAMPLE_HEADER_DICT)
-        self.assertListEqual(list((METADATA_HEADER_DICT | SAMPLE_HEADER_DICT).values()), list(headers.values()))
+        self.assertListEqual(list(SAMPLE_HEADER_DICT.values()), list(headers.values()))
 
     def test_items(self) -> None:
         """Test that the items method returns the correct items."""
         headers = HTTPHeaderDict(SAMPLE_HEADER_DICT)
-        self.assertListEqual(list((METADATA_HEADER_DICT | SAMPLE_HEADER_DICT).items()), list(headers.items()))
+        self.assertListEqual(list(SAMPLE_HEADER_DICT.items()), list(headers.items()))
 
     def test_iter(self) -> None:
         """Test that the header fieldnames can be iterated over."""
         headers = HTTPHeaderDict(SAMPLE_HEADER_DICT)
-        self.assertListEqual(list(METADATA_HEADER_DICT | SAMPLE_HEADER_DICT), list(headers))
+        self.assertListEqual(list(SAMPLE_HEADER_DICT), list(headers))
 
     def test_clear(self) -> None:
         """Test that the headers can be cleared."""
         headers = HTTPHeaderDict(SAMPLE_HEADER_DICT)
-        self.assertEqual(len(headers), len(METADATA_HEADER_DICT | SAMPLE_HEADER_DICT))
+        self.assertEqual(len(headers), len(SAMPLE_HEADER_DICT))
         headers.clear()
         self.assertEqual(len(headers), 0)
 

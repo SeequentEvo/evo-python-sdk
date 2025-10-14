@@ -30,7 +30,6 @@ test = [
     "evo-files[aiohttp]",
     "parameterized==0.9.0",
     "pytest",
-    "tomli",
 ]
 dev = [
     "evo-files[aiohttp]",

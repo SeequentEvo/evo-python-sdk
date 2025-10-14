@@ -13,8 +13,6 @@ from __future__ import annotations
 
 import copy
 import enum
-import importlib.metadata
-import os.path
 from abc import ABC, abstractmethod
 from collections.abc import ItemsView, Iterator, KeysView, Mapping, MutableMapping, Sequence, ValuesView
 from dataclasses import dataclass, field
@@ -22,11 +20,7 @@ from datetime import datetime
 from typing import Protocol, TypeVar, overload
 from uuid import UUID
 
-import tomli
-
 from .exceptions import ServiceHealthCheckFailed
-
-PYPROJECT_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../../pyproject.toml"))
 
 __all__ = [
     "DependencyStatus",
@@ -74,7 +68,7 @@ class RequestMethod(str, enum.Enum):
 
 class HTTPHeaderDict(MutableMapping[str, str]):
     def __init__(self, seq: Mapping[str, str] | Sequence[tuple[str, str]] | None = None, **kwargs: str) -> None:
-        self.__values: dict[str, str] = get_package_metadata()
+        self.__values: dict[str, str] = {}
         self.update(seq, **kwargs)
 
     def update(self, seq: Mapping[str, str] | Sequence[tuple[str, str]] | None = None, **kwargs: str) -> None:
@@ -95,7 +89,7 @@ class HTTPHeaderDict(MutableMapping[str, str]):
 
     def __setitem__(self, key: str, value: str) -> None:
         lookup = key.title()
-        if lookup in self.__values and lookup != "Set-Cookie" and lookup not in get_package_metadata().keys():
+        if lookup in self.__values and lookup != "Set-Cookie":
             # RFC 7230 section 3.2.2: Field Order.
             # A recipient MAY combine multiple header fields with the same field
             # name into one "field-name: field-value" pair, without changing the
@@ -409,13 +403,3 @@ class OrderByOperatorEnum(str, enum.Enum):
 
     asc = "asc"
     desc = "desc"
-
-
-def get_package_metadata() -> dict[str, str]:
-    try:
-        with open(PYPROJECT_PATH, "rb") as file:
-            toml_dict = tomli.load(file)
-            packages = toml_dict["tool"]["uv"]["sources"]
-            return {package.title(): importlib.metadata.version(package) for package in packages}
-    except Exception:  # noqa
-        return {}

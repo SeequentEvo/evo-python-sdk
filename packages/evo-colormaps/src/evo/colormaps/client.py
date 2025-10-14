@@ -23,7 +23,7 @@ from evo.common import (
     ServiceHealth,
     ServiceUser,
 )
-from evo.common.utils import get_service_health
+from evo.common.utils import get_metadata_header, get_service_health
 
 from .data import (
     Association,
@@ -54,6 +54,8 @@ logger = logging.getLogger("colormap.client")
 __all__ = [
     "ColormapAPIClient",
 ]
+
+metadata_header = get_metadata_header("evo-colormaps")
 
 
 def _colors_from_endpoint_model(
@@ -212,6 +214,7 @@ class ColormapAPIClient(BaseAPIClient):
             org_id=str(self._environment.org_id),
             workspace_id=str(self._environment.workspace_id),
             colormap_data=ColormapData.model_validate(colormap_data),
+            additional_headers=metadata_header,
         )
         return self._colormap_metadata_from_endpoint_model(response.root)
 
@@ -228,6 +231,7 @@ class ColormapAPIClient(BaseAPIClient):
             org_id=str(self._environment.org_id),
             workspace_id=str(self._environment.workspace_id),
             colormap_id=str(colormap_id),
+            additional_headers=metadata_header,
         )
         return self._colormap_metadata_from_endpoint_model(response.root)
 
@@ -241,6 +245,7 @@ class ColormapAPIClient(BaseAPIClient):
         response = await self._colourmaps_api.get_colormap_collection(
             org_id=str(self._environment.org_id),
             workspace_id=str(self._environment.workspace_id),
+            additional_headers=metadata_header,
         )
         return [self._colormap_metadata_from_endpoint_model(model) for model in response.colormaps]
 
@@ -261,6 +266,7 @@ class ColormapAPIClient(BaseAPIClient):
                 {"attribute_id": association.attribute_id, "colormap_id": str(association.colormap_id)}
             ),
             object_id=str(object_id),
+            additional_headers=metadata_header,
         )
         return self._association_metadata_from_endpoint_model(response, object_id)
 
@@ -305,6 +311,7 @@ class ColormapAPIClient(BaseAPIClient):
                 workspace_id=str(self._environment.workspace_id),
                 object_id=str(object_id),
                 attribute_associations_data=attribute_associations_data,
+                additional_headers=metadata_header,
             )
             all_associations_metadata.extend(
                 self._association_metadata_from_endpoint_model(model, object_id) for model in response.associations
@@ -327,6 +334,7 @@ class ColormapAPIClient(BaseAPIClient):
             workspace_id=str(self._environment.workspace_id),
             object_id=str(object_id),
             association_id=str(association_id),
+            additional_headers=metadata_header,
         )
         return self._association_metadata_from_endpoint_model(response, object_id)
 
@@ -343,5 +351,6 @@ class ColormapAPIClient(BaseAPIClient):
             org_id=str(self._environment.org_id),
             workspace_id=str(self._environment.workspace_id),
             object_id=str(object_id),
+            additional_headers=metadata_header,
         )
         return [self._association_metadata_from_endpoint_model(model, object_id) for model in response.associations]

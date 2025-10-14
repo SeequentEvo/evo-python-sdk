@@ -31,7 +31,6 @@ test = [
     "evo-blockmodels[aiohttp,pyarrow]",
     "parameterized==0.9.0",
     "pytest",
-    "tomli",
 ]
 dev = [
     "evo-blockmodels[notebooks]",

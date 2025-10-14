@@ -32,7 +32,6 @@ test = [
     "pandas",
     "parameterized==0.9.0",
     "pytest",
-    "tomli",
 ]
 dev = [
     "evo-objects[aiohttp,utils]",

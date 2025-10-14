@@ -9,18 +9,11 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-import unittest
+__all__ = ["get_metadata_header"]
 
-from evo.oauth.authorizer import AccessTokenAuthorizer
+import importlib.metadata
 
 
-class TestAccessTokenAuthorizer(unittest.IsolatedAsyncioTestCase):
-    def setUp(self) -> None:
-        self.authorizer = AccessTokenAuthorizer(access_token="abc-123")
-
-    async def test_get_default_headers(self) -> None:
-        headers = await self.authorizer.get_default_headers()
-        assert headers == {"Authorization": "Bearer abc-123"}
-
-    async def test_refresh_token(self) -> None:
-        assert not await self.authorizer.refresh_token()
+def get_metadata_header(package: str) -> dict[str, str]:
+    """Get metadata header for the given package, containing its version."""
+    return {package.title(): importlib.metadata.version(package)}

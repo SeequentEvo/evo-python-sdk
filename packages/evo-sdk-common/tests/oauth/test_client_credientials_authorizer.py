@@ -65,9 +65,9 @@ class TestClientCredentialsAuthorizer(TestWithOAuthConnector):
 
         headers = await self.authorizer.get_default_headers()
 
-        self.assertEqual(headers.get("Authorization"), "Bearer first_token")
+        self.assertEqual(headers, {"Authorization": "Bearer first_token"})
 
     async def test_get_default_headers_authorize_not_explicitly_called(self):
         headers = await self.authorizer.get_default_headers()
 
-        self.assertEqual(headers.get("Authorization"), "Bearer first_token")
+        self.assertEqual(headers, {"Authorization": "Bearer first_token"})

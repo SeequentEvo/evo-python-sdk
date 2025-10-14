@@ -18,7 +18,7 @@ from uuid import UUID
 from evo import logging
 from evo.common import APIConnector, BaseAPIClient, Environment, HealthCheckType, ICache, ServiceHealth
 from evo.common.data import ServiceUser
-from evo.common.utils import get_service_health
+from evo.common.utils import get_metadata_header, get_service_health
 
 from ._types import Table
 from ._utils import convert_dtype, extract_payload
@@ -53,6 +53,8 @@ logger = logging.getLogger("blockmodel.client")
 __all__ = [
     "BlockModelAPIClient",
 ]
+
+metadata_header = get_metadata_header("evo-blockmodels")
 
 
 def _job_id_from_url(job_url: AnyUrl) -> UUID:
@@ -144,6 +146,7 @@ class BlockModelAPIClient(BaseAPIClient):
                 workspace_id=str(self._environment.workspace_id),
                 org_id=str(self._environment.org_id),
                 bm_id=str(bm_id),
+                additional_headers=metadata_header,
             )
             if response.job_status == JobStatus.COMPLETE:
                 return response
@@ -189,7 +192,7 @@ class BlockModelAPIClient(BaseAPIClient):
                 size_options=size_option,
             ),
             # We are setting both of the 'object_path' and 'coordinate_reference_system' fields, which are in preview.
-            additional_headers={"API-Preview": "opt-in"},
+            additional_headers=metadata_header | {"API-Preview": "opt-in"},
         )
         job_id = _job_id_from_url(create_result.job_url)
         job_status = await self._poll_job_url(create_result.bm_uuid, job_id)
@@ -214,6 +217,7 @@ class BlockModelAPIClient(BaseAPIClient):
             workspace_id=str(self._environment.workspace_id),
             bm_id=str(bm_id),
             job_id=str(job_id),
+            additional_headers=metadata_header,
         )
 
         # Poll the job URL until it is complete
@@ -312,6 +316,7 @@ class BlockModelAPIClient(BaseAPIClient):
                 columns=columns,
                 update_type=models.UpdateType.replace,
             ),
+            additional_headers=metadata_header,
         )
         version = await self._upload_data(bm_id, update_response.job_uuid, str(update_response.upload_url), data)
         return _version_from_model(version)
@@ -380,6 +385,7 @@ class BlockModelAPIClient(BaseAPIClient):
                 columns=columns,
                 update_type=models.UpdateType.replace,
             ),
+            additional_headers=metadata_header,
         )
         version = await self._upload_data(bm_id, update_response.job_uuid, str(update_response.upload_url), data)
         return _version_from_model(version)
@@ -431,6 +437,7 @@ class BlockModelAPIClient(BaseAPIClient):
                     exclude_null_rows=exclude_null_rows,
                 ),
             ),
+            additional_headers=metadata_header,
         )
 
         # Poll the job URL until it is complete

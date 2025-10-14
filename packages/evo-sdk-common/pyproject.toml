@@ -42,7 +42,6 @@ test = [
     "freezegun",
     "parameterized==0.9.0",
     "pytest",
-    "tomli",
 ]
 dev = [
     "evo-sdk-common[aiohttp,jmespath]",
