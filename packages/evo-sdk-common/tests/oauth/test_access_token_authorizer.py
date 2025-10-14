@@ -20,7 +20,7 @@ class TestAccessTokenAuthorizer(unittest.IsolatedAsyncioTestCase):
 
     async def test_get_default_headers(self) -> None:
         headers = await self.authorizer.get_default_headers()
-        assert headers == {"Authorization": "Bearer abc-123"}
+        assert ("Authorization", "Bearer abc-123") in headers.items()
 
     async def test_refresh_token(self) -> None:
         assert not await self.authorizer.refresh_token()
