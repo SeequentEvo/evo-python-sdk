@@ -23,6 +23,7 @@ from evo.common import HealthCheckType, Page, RequestMethod, ServiceUser
 from evo.common.data import OrderByOperatorEnum
 from evo.common.io.exceptions import DataNotFoundError
 from evo.common.test_tools import MockResponse, TestWithConnector, TestWithStorage
+from evo.common.utils import get_metadata_header
 from evo.objects import (
     ObjectAPIClient,
     ObjectDataDownload,
@@ -34,7 +35,7 @@ from evo.objects import (
 )
 from evo.objects.data import ObjectOrderByEnum, OrgObjectMetadata, Stage
 from evo.objects.exceptions import ObjectAlreadyExistsError, ObjectUUIDError
-from evo.objects.utils import ObjectDataClient, get_metadata_header
+from evo.objects.utils import ObjectDataClient
 from helpers import NoImport, UnloadModule
 
 EMPTY_CONTENT = '{"objects": [], "links": {"next": null, "prev": null}}'

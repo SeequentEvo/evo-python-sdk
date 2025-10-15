@@ -32,13 +32,13 @@ from evo.common.test_tools import (
     TestWithConnector,
     TestWithStorage,
 )
-from evo.common.utils import NoFeedback
+from evo.common.utils import NoFeedback, get_metadata_header
 from evo.jmespath import JMESPathObjectProxy
 from evo.objects import DownloadedObject, ObjectReference
 from evo.objects.endpoints import models
 from evo.objects.io import _CACHE_SCOPE
 from evo.objects.parquet import TableInfo
-from evo.objects.utils import KnownTableFormat, get_metadata_header
+from evo.objects.utils import KnownTableFormat
 from helpers import NoImport, UnloadModule, get_sample_table_and_bytes
 
 _OBJECTS_URL = f"{BASE_URL.rstrip('/')}/geoscience-object/orgs/{ORG.id}/workspaces/{WORKSPACE_ID}/objects"

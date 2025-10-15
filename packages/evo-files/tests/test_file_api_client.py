@@ -551,6 +551,7 @@ class TestFileApiClient(TestWithConnector):
         self.assert_request_made(
             method=RequestMethod.DELETE,
             path=f"{self.base_path}/files/path/{path}",
+            headers=metadata_header | {"Authorization": "***"},
         )
 
     async def test_delete_file_by_id(self) -> None:
@@ -562,4 +563,5 @@ class TestFileApiClient(TestWithConnector):
         self.assert_request_made(
             method=RequestMethod.DELETE,
             path=f"{self.base_path}/files/{file_id}",
+            headers=metadata_header | {"Authorization": "***"},
         )

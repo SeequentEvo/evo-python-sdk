@@ -116,6 +116,7 @@ class TestWorkspaceClient(TestWithConnector):
         self.assert_request_made(
             method=RequestMethod.DELETE,
             path=f"{BASE_PATH}/workspaces/{TEST_WORKSPACE_A.id}",
+            headers=metadata_header | {"Authorization": "***"},
         )
         self.assertIsNone(response, "Delete workspace response should be None")
 
@@ -279,12 +280,12 @@ class TestWorkspaceClient(TestWithConnector):
         self.assert_any_request_made(
             method=RequestMethod.GET,
             path=f"{BASE_PATH}/workspaces?limit=2&offset=0",
-            headers=metadata_header | TestHTTPHeaderDict({"Accept": "application/json"}),
+            headers=TestHTTPHeaderDict({metadata_header | "Accept": "application/json"}),
         )
         self.assert_any_request_made(
             method=RequestMethod.GET,
             path=f"{BASE_PATH}/workspaces?limit=2&offset=2",
-            headers=metadata_header | TestHTTPHeaderDict({"Accept": "application/json"}),
+            headers=TestHTTPHeaderDict(metadata_header | {"Accept": "application/json"}),
         )
         self.assertEqual(expected_workspaces, actual_workspaces)
 
@@ -318,12 +319,12 @@ class TestWorkspaceClient(TestWithConnector):
         self.assert_any_request_made(
             method=RequestMethod.GET,
             path=f"{BASE_PATH}/workspaces?limit=2&offset=0",
-            headers=metadata_header | TestHTTPHeaderDict({"Accept": "application/json"}),
+            headers=TestHTTPHeaderDict({metadata_header | "Accept": "application/json"}),
         )
         self.assert_any_request_made(
             method=RequestMethod.GET,
             path=f"{BASE_PATH}/workspaces?limit=2&offset=2",
-            headers=metadata_header | TestHTTPHeaderDict({"Accept": "application/json"}),
+            headers=TestHTTPHeaderDict({metadata_header | "Accept": "application/json"}),
         )
         self.assertEqual(expected_workspaces, actual_workspaces)
 
