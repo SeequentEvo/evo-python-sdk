@@ -20,7 +20,7 @@
             },
             "etag": "",
             "links": {
-                "download": "http://unittest.localhost/path/geoscience-object/orgs/00000000-0000-0000-0000-0000000004d2/workspaces/00000000-0000-0000-0000-00000000162e/objects/path/A/m.json"
+                "download": "https://unittest.localhost/path/geoscience-object/orgs/00000000-0000-0000-0000-0000000004d2/workspaces/00000000-0000-0000-0000-00000000162e/objects/path/A/m.json"
             },
             "stage": {
               "name": "Approved",
@@ -47,7 +47,7 @@
             },
             "etag": "",
             "links": {
-                "download": "http://unittest.localhost/path/geoscience-object/orgs/00000000-0000-0000-0000-0000000004d2/workspaces/00000000-0000-0000-0000-00000000162e/objects/path/A/n.json"
+                "download": "https://unittest.localhost/path/geoscience-object/orgs/00000000-0000-0000-0000-0000000004d2/workspaces/00000000-0000-0000-0000-00000000162e/objects/path/A/n.json"
             }
         }
     ],
@@ -55,7 +55,7 @@
     "limit": 2,
     "total": 3,
     "links": {
-        "next": "http://unittest.localhost/path/geoscience-object/orgs/00000000-0000-0000-0000-0000000004d2/workspaces/00000000-0000-0000-0000-00000000162e/objects?path=pointset/&limit=2&continuation_token=a_continuation_token",
+        "next": "https://unittest.localhost/path/geoscience-object/orgs/00000000-0000-0000-0000-0000000004d2/workspaces/00000000-0000-0000-0000-00000000162e/objects?path=pointset/&limit=2&continuation_token=a_continuation_token",
         "prev": null
     }
 }

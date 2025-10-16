@@ -13,12 +13,15 @@ import json
 from unittest import mock
 from uuid import UUID
 
+from pandas.testing import assert_frame_equal
+
 from data import load_test_data
 from evo.common import IFeedback, RequestMethod
 from evo.common.io.exceptions import DataExistsError
 from evo.common.test_tools import TestWithConnector, TestWithStorage
 from evo.common.utils import NoFeedback, PartialFeedback
 from evo.objects.utils import KnownTableFormat, ObjectDataClient
+from helpers import NoImport, UnloadModule, get_sample_table_and_bytes
 
 
 class TestObjectDataClient(TestWithConnector, TestWithStorage):
@@ -26,6 +29,10 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
         TestWithConnector.setUp(self)
         TestWithStorage.setUp(self)
         self.data_client = ObjectDataClient(environment=self.environment, connector=self.connector, cache=self.cache)
+
+    def tearDown(self) -> None:
+        # Clear cache between tests to avoid cached files interfering with subsequent tests.
+        self.cache.clear_cache()
 
     @property
     def base_path(self) -> str:
@@ -302,21 +309,28 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
         object_id = UUID(int=2)
         with (
             self.transport.set_http_response(status_code=200, content=json.dumps(get_object_response)),
-            mock.patch("evo.objects.utils.tables.KnownTableFormat") as mock_known_table_format,
             mock.patch("evo.common.io.download.HTTPSource", autospec=True) as mock_source,
         ):
-            mock_table_info = {}
-            mock_table_info["data"] = mock_data_id = "0000000000000000000000000000000000000000000000000000000000000001"
-            mock_known_table_format.load_table = mock_load_table = mock.Mock()
+            mock_table_info = {
+                "data": "0000000000000000000000000000000000000000000000000000000000000001",
+                "length": 1,
+                "width": 3,
+                "data_type": "float64",
+            }
+            mock_data_id: str = mock_table_info["data"]
+            expected_filename = self.data_client.cache_location / mock_data_id
+            sample_table, payload_bytes = get_sample_table_and_bytes(
+                KnownTableFormat.from_table_info(mock_table_info), 1
+            )
 
             async def _mock_download_file_side_effect(*args, **kwargs):
-                expected_filename = self.data_client.cache_location / mock_data_id
                 expected_download_url = get_object_response["links"]["data"][1]["download_url"]
                 actual_download_url = await kwargs["url_generator"]()
                 self.assertEqual(expected_filename, kwargs["filename"])
                 self.assertEqual(expected_download_url, actual_download_url)
                 self.assertIs(self.transport, kwargs["transport"])
                 self.assertIs(NoFeedback, kwargs["fb"])
+                expected_filename.write_bytes(payload_bytes)
 
             mock_source.download_file.side_effect = _mock_download_file_side_effect
             actual_table = await self.data_client.download_table(object_id, None, mock_table_info)
@@ -327,8 +341,7 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
             path=f"{self.base_path}/objects/{object_id}",
             headers={"Accept": "application/json", "Accept-Encoding": "gzip"},
         )
-        mock_load_table.assert_called_once_with(mock_table_info, self.data_client.cache_location)
-        self.assertIs(mock_load_table.return_value, actual_table)
+        self.assertEqual(sample_table, actual_table)
 
     async def test_download_dataframe(self) -> None:
         """Test downloading tabular data using pandas."""
@@ -336,25 +349,31 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
         object_id = UUID(int=2)
         with (
             self.transport.set_http_response(status_code=200, content=json.dumps(get_object_response)),
-            mock.patch("evo.objects.utils.tables.KnownTableFormat") as mock_known_table_format,
             mock.patch("evo.common.io.download.HTTPSource", autospec=True) as mock_source,
         ):
-            mock_table_info = {}
-            mock_table_info["data"] = mock_data_id = "0000000000000000000000000000000000000000000000000000000000000001"
-            mock_known_table_format.load_table = mock_load_table = mock.Mock()
+            mock_table_info = {
+                "data": "0000000000000000000000000000000000000000000000000000000000000001",
+                "length": 1,
+                "width": 3,
+                "data_type": "float64",
+            }
+            mock_data_id: str = mock_table_info["data"]
+            expected_filename = self.data_client.cache_location / mock_data_id
+            sample_table, payload_bytes = get_sample_table_and_bytes(
+                KnownTableFormat.from_table_info(mock_table_info), 1
+            )
 
             async def _mock_download_file_side_effect(*args, **kwargs):
-                expected_filename = self.data_client.cache_location / mock_data_id
                 expected_download_url = get_object_response["links"]["data"][1]["download_url"]
                 actual_download_url = await kwargs["url_generator"]()
                 self.assertEqual(expected_filename, kwargs["filename"])
                 self.assertEqual(expected_download_url, actual_download_url)
                 self.assertIs(self.transport, kwargs["transport"])
                 self.assertIs(NoFeedback, kwargs["fb"])
+                expected_filename.write_bytes(payload_bytes)
 
             mock_source.download_file.side_effect = _mock_download_file_side_effect
-
-            _actual_dataframe = await self.data_client.download_dataframe(object_id, None, mock_table_info)
+            actual_dataframe = await self.data_client.download_dataframe(object_id, None, mock_table_info)
 
         mock_source.download_file.assert_called_once()
         self.assert_request_made(
@@ -362,99 +381,23 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
             path=f"{self.base_path}/objects/{object_id}",
             headers={"Accept": "application/json", "Accept-Encoding": "gzip"},
         )
-        mock_load_table.assert_called_once_with(mock_table_info, self.data_client.cache_location)
+        assert_frame_equal(sample_table.to_pandas(), actual_dataframe)
 
-    async def test_download_dataframe_error(self) -> None:
-        """Test error when trying to download dataframe without pandas installed."""
-        get_object_response = load_test_data("get_object.json")
-        object_id = UUID(int=2)
-        with (
-            self.transport.set_http_response(status_code=200, content=json.dumps(get_object_response)),
-            mock.patch("evo.objects.utils.tables.KnownTableFormat") as mock_known_table_format,
-            mock.patch("evo.common.io.download.HTTPSource", autospec=True),
-        ):
-            mock_table_info = {}
-            mock_table_info["data"] = "0000000000000000000000000000000000000000000000000000000000000001"
+    async def test_download_dataframe_optional(self) -> None:
+        """Test download dataframe is not available if pandas is not installed."""
+        with UnloadModule("evo.objects.utils.data"), NoImport("pandas"):
+            from evo.objects.utils.data import ObjectDataClient
 
-            mock_known_table_format.load_table.return_value = mock_table = mock.Mock()
-            # This is the error that a non-mocked `pyarrow.Table.to_pandas()` would raise.
-            mock_table.to_pandas.side_effect = ModuleNotFoundError("No module named 'pandas'")
-
-            with self.assertRaisesRegex(
-                RuntimeError, "Unable to download dataframe because the `pandas` package is not installed"
-            ):
-                _ = await self.data_client.download_dataframe(object_id, None, mock_table_info)
-
-    async def test_download_table_confusable(self) -> None:
-        """Test downloading tabular data using pyarrow that includes confusable types."""
-        get_object_response = load_test_data("get_object_validator_check.json")
-        object_id = UUID(int=2)
-        with (
-            self.transport.set_http_response(status_code=200, content=json.dumps(get_object_response)),
-            mock.patch("evo.objects.utils.tables.KnownTableFormat") as mock_known_table_format,
-            mock.patch("evo.common.io.download.HTTPSource", autospec=True) as mock_source,
-        ):
-            mock_table_info = {}
-            mock_table_info["data"] = mock_data_name = (
-                "995f2e6cab5ad17147d9c5fddf371189bef4b623f657dde91f175a0734ed17dc"
+            client = ObjectDataClient(environment=self.environment, connector=self.connector, cache=self.cache)
+            self.assertFalse(
+                any(
+                    (
+                        hasattr(ObjectDataClient, "download_dataframe"),
+                        hasattr(client, "download_dataframe"),
+                    )
+                ),
+                "download_dataframe should not be available if pandas is missing",
             )
-            mock_known_table_format.load_table = mock_load_table = mock.Mock()
-
-            async def _mock_download_file_side_effect(*args, **kwargs):
-                expected_filename = self.data_client.cache_location / str(mock_data_name)
-                expected_download_url = get_object_response["links"]["data"][0]["download_url"]
-                actual_download_url = await kwargs["url_generator"]()
-                self.assertEqual(expected_filename, kwargs["filename"])
-                self.assertEqual(expected_download_url, actual_download_url)
-                self.assertIs(self.transport, kwargs["transport"])
-                self.assertIs(NoFeedback, kwargs["fb"])
-
-            mock_source.download_file.side_effect = _mock_download_file_side_effect
-            actual_table = await self.data_client.download_table(object_id, None, mock_table_info)
-
-        mock_source.download_file.assert_called_once()
-        self.assert_request_made(
-            method=RequestMethod.GET,
-            path=f"{self.base_path}/objects/{object_id}",
-            headers={"Accept": "application/json", "Accept-Encoding": "gzip"},
-        )
-        mock_load_table.assert_called_once_with(mock_table_info, self.data_client.cache_location)
-        self.assertIs(mock_load_table.return_value, actual_table)
-
-    async def test_download_dataframe_confusable(self) -> None:
-        """Test downloading tabular data using pandas that includes confusable types."""
-        get_object_response = load_test_data("get_object_validator_check.json")
-        object_id = UUID(int=2)
-        with (
-            self.transport.set_http_response(status_code=200, content=json.dumps(get_object_response)),
-            mock.patch("evo.objects.utils.tables.KnownTableFormat") as mock_known_table_format,
-            mock.patch("evo.common.io.download.HTTPSource", autospec=True) as mock_source,
-        ):
-            mock_table_info = {}
-            mock_table_info["data"] = mock_data_name = (
-                "995f2e6cab5ad17147d9c5fddf371189bef4b623f657dde91f175a0734ed17dc"
-            )
-            mock_known_table_format.load_table = mock_load_table = mock.Mock()
-
-            async def _mock_download_file_side_effect(*args, **kwargs):
-                expected_filename = self.data_client.cache_location / str(mock_data_name)
-                expected_download_url = get_object_response["links"]["data"][0]["download_url"]
-                actual_download_url = await kwargs["url_generator"]()
-                self.assertEqual(expected_filename, kwargs["filename"])
-                self.assertEqual(expected_download_url, actual_download_url)
-                self.assertIs(self.transport, kwargs["transport"])
-                self.assertIs(NoFeedback, kwargs["fb"])
-
-            mock_source.download_file.side_effect = _mock_download_file_side_effect
-            _actual_dataframe = await self.data_client.download_dataframe(object_id, None, mock_table_info)
-
-        mock_source.download_file.assert_called_once()
-        self.assert_request_made(
-            method=RequestMethod.GET,
-            path=f"{self.base_path}/objects/{object_id}",
-            headers={"Accept": "application/json", "Accept-Encoding": "gzip"},
-        )
-        mock_load_table.assert_called_once_with(mock_table_info, self.data_client.cache_location)
 
     async def test_download_table_already_downloaded(self) -> None:
         """Test downloading tabular data using pyarrow or pandas when the table is already downloaded."""
@@ -462,16 +405,21 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
         object_id = UUID(int=2)
         with (
             self.transport.set_http_response(status_code=200, content=json.dumps(get_object_response)),
-            mock.patch("evo.objects.utils.tables.KnownTableFormat") as mock_known_table_format,
             mock.patch("evo.common.io.download.HTTPSource", autospec=True) as mock_source,
         ):
-            mock_table_info = {}
-            mock_table_info["data"] = mock_data_id = "0000000000000000000000000000000000000000000000000000000000000001"
-            mock_known_table_format.load_table = mock_load_table = mock.Mock()
-            expected_file = self.data_client.cache_location / mock_data_id
+            mock_table_info = {
+                "data": "0000000000000000000000000000000000000000000000000000000000000001",
+                "length": 1,
+                "width": 3,
+                "data_type": "float64",
+            }
+            mock_data_id: str = mock_table_info["data"]
+            expected_filename = self.data_client.cache_location / mock_data_id
+            sample_table, payload_bytes = get_sample_table_and_bytes(
+                KnownTableFormat.from_table_info(mock_table_info), 1
+            )
 
             async def _mock_download_file_side_effect(*args, **kwargs):
-                expected_filename = self.data_client.cache_location / mock_data_id
                 expected_download_url = get_object_response["links"]["data"][1]["download_url"]
                 actual_download_url = await kwargs["url_generator"]()
                 self.assertEqual(expected_filename, kwargs["filename"])
@@ -481,17 +429,18 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
 
             mock_source.download_file.side_effect = _mock_download_file_side_effect
 
-            expected_file.touch()
+            expected_filename.write_bytes(payload_bytes)
             actual_table = await self.data_client.download_table(object_id, None, mock_table_info)
 
         mock_source.download_file.assert_not_called()
-        self.transport.assert_no_requests()
-        mock_load_table.assert_called_once_with(mock_table_info, self.data_client.cache_location)
-        self.assertIs(mock_load_table.return_value, actual_table)
-
-        # Otherwise this will interfere with the other "already_download" test, since cache cleanup in TestWithStorage
-        # is in class setup, not individual test setup.
-        expected_file.unlink()
+        # the object metadata is still requested to get the initial download URL and check permissions.
+        self.assert_request_made(
+            method=RequestMethod.GET,
+            path=f"{self.base_path}/objects/{object_id}",
+            headers={"Accept": "application/json", "Accept-Encoding": "gzip"},
+        )
+        self.transport.request.assert_called_once()  # Ensure no other requests were made.
+        self.assertEqual(sample_table, actual_table)
 
     async def test_download_dataframe_already_downloaded(self) -> None:
         """Test downloading tabular data using pandas when the table is already downloaded."""
@@ -499,16 +448,21 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
         object_id = UUID(int=2)
         with (
             self.transport.set_http_response(status_code=200, content=json.dumps(get_object_response)),
-            mock.patch("evo.objects.utils.tables.KnownTableFormat") as mock_known_table_format,
             mock.patch("evo.common.io.download.HTTPSource", autospec=True) as mock_source,
         ):
-            mock_table_info = {}
-            mock_table_info["data"] = mock_data_id = "0000000000000000000000000000000000000000000000000000000000000001"
-            mock_known_table_format.load_table = mock_load_table = mock.Mock()
-            expected_file = self.data_client.cache_location / mock_data_id
+            mock_table_info = {
+                "data": "0000000000000000000000000000000000000000000000000000000000000001",
+                "length": 1,
+                "width": 3,
+                "data_type": "float64",
+            }
+            mock_data_id: str = mock_table_info["data"]
+            expected_filename = self.data_client.cache_location / mock_data_id
+            sample_table, payload_bytes = get_sample_table_and_bytes(
+                KnownTableFormat.from_table_info(mock_table_info), 1
+            )
 
             async def _mock_download_file_side_effect(*args, **kwargs):
-                expected_filename = self.data_client.cache_location / mock_data_id
                 expected_download_url = get_object_response["links"]["data"][1]["download_url"]
                 actual_download_url = await kwargs["url_generator"]()
                 self.assertEqual(expected_filename, kwargs["filename"])
@@ -518,13 +472,15 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
 
             mock_source.download_file.side_effect = _mock_download_file_side_effect
 
-            expected_file.touch()
-            _actual_dataframe = await self.data_client.download_dataframe(object_id, None, mock_table_info)
+            expected_filename.write_bytes(payload_bytes)
+            actual_dataframe = await self.data_client.download_dataframe(object_id, None, mock_table_info)
 
         mock_source.download_file.assert_not_called()
-        self.transport.assert_no_requests()
-        mock_load_table.assert_called_once_with(mock_table_info, self.data_client.cache_location)
-
-        # Otherwise this will interfere with the other "already_download" test, since cache cleanup in TestWithStorage
-        # is in class setup, not individual test setup.
-        expected_file.unlink()
+        # the object metadata is still requested to get the initial download URL and check permissions.
+        self.assert_request_made(
+            method=RequestMethod.GET,
+            path=f"{self.base_path}/objects/{object_id}",
+            headers={"Accept": "application/json", "Accept-Encoding": "gzip"},
+        )
+        self.transport.request.assert_called_once()  # Ensure no other requests were made.
+        assert_frame_equal(sample_table.to_pandas(), actual_dataframe)

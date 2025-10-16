@@ -148,10 +148,16 @@ class RetryHandler:
             yield
         except Exception as exc:
             if excs is None or isinstance(exc, excs):
-                self.__exception = exc
-                self.__iterator.add_error(exc)
+                self.set_exception(exc)
             else:
                 raise
+
+    def set_exception(self, exc: Exception) -> None:
+        """Set the exception handled during the retry attempt.
+        :param exc: The exception to set.
+        """
+        self.__exception = exc
+        self.__iterator.add_error(exc)
 
     @property
     def exception(self) -> Exception | None:

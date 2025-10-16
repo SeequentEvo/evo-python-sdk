@@ -19,12 +19,12 @@ from types import EllipsisType
 
 import pyarrow as pa
 import pyarrow.parquet as pq
+from typing_extensions import deprecated
 
 import evo.logging
 from evo.common.exceptions import StorageFileNotFoundError
 
 from ..exceptions import SchemaValidationError, TableFormatError
-from ._types import DataType, Schema, Table
 
 logger = evo.logging.getLogger("object.tables")
 
@@ -39,7 +39,7 @@ _DIGEST_BLOCK_SIZE = 4 * 1024 * 1024
 
 
 class _ColumnFormat:
-    def __init__(self, format_spec: DataType | str):
+    def __init__(self, format_spec: pa.DataType | str):
         if isinstance(format_spec, str):
             self._type = self._get_data_type(format_spec)
             self._format_id = format_spec
@@ -48,7 +48,7 @@ class _ColumnFormat:
             self._format_id = self._get_format_id(format_spec)
 
     @staticmethod
-    def _get_data_type(format_id: str) -> DataType:
+    def _get_data_type(format_id: str) -> pa.DataType:
         match format_id:
             case "float64":
                 return pa.float64()
@@ -72,7 +72,7 @@ class _ColumnFormat:
                 raise TypeError(f"Unsupported column type '{unknown_format}'")
 
     @staticmethod
-    def _get_format_id(data_type: DataType) -> str:
+    def _get_format_id(data_type: pa.DataType) -> str:
         match str(data_type):
             case "double":
                 return "float64"
@@ -100,14 +100,14 @@ class _ColumnFormat:
         return self._format_id
 
     @property
-    def type(self) -> DataType:
+    def type(self) -> pa.DataType:
         return self._type
 
 
 class BaseTableFormat:
     """Base type for comparing table formats"""
 
-    def __init__(self, name: str, columns: list[DataType | str | EllipsisType]) -> None:
+    def __init__(self, name: str, columns: list[pa.DataType | str | EllipsisType]) -> None:
         """
         :param name: The display name for this format.
         :param columns: A list of column data types in this format. A single column data type followed by Ellipsis
@@ -157,7 +157,7 @@ class ArrowTableFormat(BaseTableFormat):
     """Specialised table format type that can be generated from a pyarrow table"""
 
     @classmethod
-    def from_schema(cls, pa_schema: Schema) -> ArrowTableFormat:
+    def from_schema(cls, pa_schema: pa.Schema) -> ArrowTableFormat:
         """Generate an ArrowTableFormat instance that represents the structure of the provided table schema.
 
         :param pa_schema: Table schema to generate a format representation for.
@@ -170,7 +170,7 @@ class ArrowTableFormat(BaseTableFormat):
 class KnownTableFormat(BaseTableFormat):
     """A definition of a known table format that matches a Geoscience Object Schema model type"""
 
-    def __init__(self, name: str, columns: list[DataType | EllipsisType], field_names: list[str] | None) -> None:
+    def __init__(self, name: str, columns: list[pa.DataType | EllipsisType], field_names: list[str] | None) -> None:
         """
         :param name: The display name for this format.
         :param columns: A list of column data types in this format. A single column data type followed by Ellipsis
@@ -231,7 +231,7 @@ class KnownTableFormat(BaseTableFormat):
         return sha256_digest.hexdigest()
 
     @classmethod
-    def _save_table_as_parquet(cls, table: Table, destination: Path) -> str:
+    def _save_table_as_parquet(cls, table: pa.Table, destination: Path) -> str:
         """Save a table in parquet format.
 
         :param table: The table to save to parquet file.
@@ -270,7 +270,7 @@ class KnownTableFormat(BaseTableFormat):
 
         return data_ref
 
-    def save_table(self, table: Table, destination: Path) -> dict:
+    def save_table(self, table: pa.Table, destination: Path) -> dict:
         """Save a pyarrow table in parquet format and return a GO model of the table metadata.
 
         :param table: The table to save in parquet format.
@@ -346,7 +346,8 @@ class KnownTableFormat(BaseTableFormat):
         return KnownTableFormat(name=type_name, columns=columns, field_names=table_info.get("field_names"))
 
     @classmethod
-    def load_table(cls, table_info: dict, source: Path) -> Table:
+    @deprecated("KnownTableFormat.load_table is deprecated, use evo.objects.parquet.ParquetLoader instead")
+    def load_table(cls, table_info: dict, source: Path) -> pa.Table:
         """Load parquet data as a pyarrow.Table and verify the format against the provided table info.
 
         The parquet metadata will be used to make sure the file contents matches the expected format before the table

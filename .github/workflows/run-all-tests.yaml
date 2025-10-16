@@ -21,10 +21,11 @@ jobs:
           - macos-latest
         package:
           - evo-sdk-common
-          - evo-colormaps
           - evo-blockmodels
+          - evo-colormaps
           - evo-files
           - evo-objects
+          - evo-compute
         python-version:
           - "3.10"
           - "3.11"

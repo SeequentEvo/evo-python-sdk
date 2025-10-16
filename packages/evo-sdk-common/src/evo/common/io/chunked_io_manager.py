@@ -93,6 +93,8 @@ class ChunkedIOTracker:
 
         :return: A float between 0 and 1 representing the progress, rounded to 2 decimal places.
         """
+        if self._n_chunks == 0:
+            return 1.0
         return round(self._n_chunks_completed / self._n_chunks, 2)
 
     def is_complete(self) -> bool:

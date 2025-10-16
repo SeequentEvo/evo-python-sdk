@@ -11,12 +11,12 @@
         "name": "x y",
         "email": "test@example.com"
     },
-    "download": "http://unittest.localhost/path/file/v2/orgs/00000000-0000-0000-0000-0000000004d2/workspaces/00000000-0000-0000-0000-00000000162e/files/path/points.csv",
+    "download": "https://unittest.localhost/path/file/v2/orgs/00000000-0000-0000-0000-0000000004d2/workspaces/00000000-0000-0000-0000-00000000162e/files/path/points.csv",
     "etag": "",
     "file_id": "00000000-0000-0000-0000-000000000006",
     "name": "points.csv",
     "path": "/",
-    "self": "http://unittest.localhost/path/file/v2/orgs/00000000-0000-0000-0000-0000000004d2/workspaces/00000000-0000-0000-0000-00000000162e/files/path/points.csv",
+    "self": "https://unittest.localhost/path/file/v2/orgs/00000000-0000-0000-0000-0000000004d2/workspaces/00000000-0000-0000-0000-00000000162e/files/path/points.csv",
     "size": 14,
     "version_id": "1",
     "versions": [
@@ -28,7 +28,7 @@
                 "email": "test@example.com"
             },
             "file_id": "00000000-0000-0000-0000-000000000006",
-            "link": "http://unittest.localhost/path/file/v2/orgs/00000000-0000-0000-0000-0000000004d2/workspaces/00000000-0000-0000-0000-00000000162e/files/path/points.csv",
+            "link": "https://unittest.localhost/path/file/v2/orgs/00000000-0000-0000-0000-0000000004d2/workspaces/00000000-0000-0000-0000-00000000162e/files/path/points.csv",
             "name": "points.csv",
             "path": "/",
             "size": 14,
@@ -42,7 +42,7 @@
                 "email": "test@example.com"
             },
             "file_id": "00000000-0000-0000-0000-000000000006",
-            "link": "http://unittest.localhost/path/file/v2/orgs/00000000-0000-0000-0000-0000000004d2/workspaces/00000000-0000-0000-0000-00000000162e/files/path/points.csv",
+            "link": "https://unittest.localhost/path/file/v2/orgs/00000000-0000-0000-0000-0000000004d2/workspaces/00000000-0000-0000-0000-00000000162e/files/path/points.csv",
             "name": "points.csv",
             "path": "/",
             "size": 15,
@@ -56,7 +56,7 @@
                 "email": "test@example.com"
             },
             "file_id": "00000000-0000-0000-0000-000000000006",
-            "link": "http://unittest.localhost/path/file/v2/orgs/00000000-0000-0000-0000-0000000004d2/workspaces/00000000-0000-0000-0000-00000000162e/files/path/points.csv",
+            "link": "https://unittest.localhost/path/file/v2/orgs/00000000-0000-0000-0000-0000000004d2/workspaces/00000000-0000-0000-0000-00000000162e/files/path/points.csv",
             "name": "points.csv",
             "path": "/",
             "size": 16,

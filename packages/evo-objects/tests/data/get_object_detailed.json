@@ -1,0 +1,108 @@
+{
+    "object_path": "A/m.json",
+    "object_id": "00000000-0000-0000-0000-000000000002",
+    "object": {
+        "schema": "/objects/pointset/1.0.1/pointset.schema.json",
+        "uuid": "00000000-0000-0000-0000-000000000002",
+        "name": "Sample pointset",
+        "description": "A sample pointset object",
+        "bounding_box": {
+            "min_x": 0.0,
+            "max_x": 1.0,
+            "min_y": 2.0,
+            "max_y": 3.0,
+            "min_z": 4.0,
+            "max_z": 5.0
+        },
+        "coordinate_reference_system": {
+            "epsg_code": 2048
+        },
+        "locations": {
+            "coordinates": {
+                "data": "0000000000000000000000000000000000000000000000000000000000000000",
+                "length": 123,
+                "width": 3,
+                "data_type": "float64"
+            },
+            "attributes": [
+                {
+                    "table": {
+                        "data": "0000000000000000000000000000000000000000000000000000000000000001",
+                        "length": 12,
+                        "keys_data_type": "int32",
+                        "values_data_type": "string"
+                    },
+                    "values": {
+                        "data": "0000000000000000000000000000000000000000000000000000000000000002",
+                        "length": 123,
+                        "width": 1,
+                        "data_type": "int32"
+                    },
+                    "name": "Stn",
+                    "nan_description": {
+                        "values": [
+                            0
+                        ]
+                    },
+                    "attribute_type": "category"
+                },
+                {
+                    "name": "InvRes",
+                    "nan_description": {
+                        "values": []
+                    },
+                    "values": {
+                        "data": "0000000000000000000000000000000000000000000000000000000000000003",
+                        "length": 123,
+                        "width": 1,
+                        "data_type": "float64"
+                    },
+                    "attribute_type": "scalar"
+                }
+            ]
+        }
+    },
+    "version_id": "2023-08-03T05:47:18.3402289Z",
+    "created_at": "2023-08-03T05:47:18Z",
+    "created_by": {
+        "id": "00000000-0000-0000-0000-0000000003e8",
+        "name": "Test User",
+        "email": "t.user@example.com"
+    },
+    "modified_at": "2023-08-04T05:47:18Z",
+    "modified_by": {
+        "id": "00000000-0000-0000-0000-0000000003e8",
+        "name": "Test User",
+        "email": "t.user@example.com"
+    },
+    "etag": "",
+    "links": {
+        "download": "https://unittest.localhost/path/geoscience-object/orgs/00000000-0000-0000-0000-0000000004d2/workspaces/00000000-0000-0000-0000-00000000162e/objects/path/A/m.json",
+        "data": [
+            {
+                "id": "00000000-0000-0000-0000-000000000000",
+                "name": "0000000000000000000000000000000000000000000000000000000000000000",
+                "download_url": "https://storage.unittest.localhost/wheres/my/data/0000000000000000000000000000000000000000000000000000000000000000"
+            },
+            {
+                "id": "00000000-0000-0000-0000-000000000001",
+                "name": "0000000000000000000000000000000000000000000000000000000000000001",
+                "download_url": "https://storage.unittest.localhost/wheres/my/data/0000000000000000000000000000000000000000000000000000000000000001"
+            },
+            {
+                "id": "00000000-0000-0000-0000-000000000002",
+                "name": "0000000000000000000000000000000000000000000000000000000000000002",
+                "download_url": "https://storage.unittest.localhost/wheres/my/data/0000000000000000000000000000000000000000000000000000000000000002"
+            },
+            {
+                "id": "00000000-0000-0000-0000-000000000003",
+                "name": "0000000000000000000000000000000000000000000000000000000000000003",
+                "download_url": "https://storage.unittest.localhost/wheres/my/data/0000000000000000000000000000000000000000000000000000000000000003"
+            }
+        ]
+    },
+    "stage": {
+        "name": "Approved",
+        "stage_id": "00000000-0000-0000-0000-000000000888"
+    }
+}

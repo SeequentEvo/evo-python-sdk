@@ -49,7 +49,7 @@
     "limit": 2,
     "total": 3,
     "links": {
-        "next": "http://unittest.localhost/path/geoscience-object/orgs/00000000-0000-0000-0000-0000000004d2/objects?limit=2&continuation_token=a_continuation_token",
+        "next": "https://unittest.localhost/path/geoscience-object/orgs/00000000-0000-0000-0000-0000000004d2/objects?limit=2&continuation_token=a_continuation_token",
         "prev": null
     }
 }

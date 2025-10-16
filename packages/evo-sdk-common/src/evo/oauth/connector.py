@@ -12,7 +12,7 @@
 from __future__ import annotations
 
 from types import TracebackType
-from typing import Literal, Type, TypeVar
+from typing import Any, Literal, Mapping, Type, TypeVar
 
 from pydantic import ValidationError
 
@@ -20,6 +20,7 @@ from evo import logging
 from evo.common import APIConnector, RequestMethod
 from evo.common.exceptions import EvoAPIException
 from evo.common.interfaces import ITransport
+from evo.common.utils import BackoffIncremental, BackoffMethod, Retry
 
 from .data import AccessToken
 from .exceptions import OAuthError
@@ -45,6 +46,8 @@ class OAuthConnector:
         client_id: str,
         client_secret: str | None = None,
         base_uri: str = DEFAULT_BASE_URI,
+        max_attempts: int = 3,
+        backoff_method: BackoffMethod = BackoffIncremental(2),
     ) -> None:
         """
         :param transport: The transport to use for making requests.
@@ -57,6 +60,7 @@ class OAuthConnector:
         self._connector = APIConnector(base_uri, transport)
         self.__client_id = client_id
         self.__client_secret = client_secret
+        self._retry = Retry(logger=logger, max_attempts=max_attempts, backoff_method=backoff_method)
 
     def endpoint(self, endpoint_type: Literal["authorize", "token"]) -> str:
         """
@@ -86,6 +90,41 @@ class OAuthConnector:
     ) -> None:
         await self._connector.close()
 
+    async def _call_api(
+        self,
+        method: RequestMethod,
+        resource_path: str,
+        path_params: Mapping[str, Any] | None = None,
+        query_params: Mapping[str, Any] | None = None,
+        header_params: Mapping[str, Any] | None = None,
+        post_params: Mapping[str, Any] | None = None,
+        body: object | str | bytes | None = None,
+        collection_formats: Mapping[str, str] | None = None,
+        response_types_map: Mapping[str, type[T]] | None = None,
+        request_timeout: int | float | tuple[int | float, int | float] | None = None,
+    ) -> T:
+        """Wrapper for APIConnector.call_api() with retry on 502 and 504 errors."""
+        async for attempt in self._retry:
+            try:
+                return await self._connector.call_api(
+                    method,
+                    resource_path,
+                    path_params=path_params,
+                    query_params=query_params,
+                    header_params=header_params,
+                    post_params=post_params,
+                    body=body,
+                    collection_formats=collection_formats,
+                    response_types_map=response_types_map,
+                    request_timeout=request_timeout,
+                )
+            except EvoAPIException as e:
+                if e.status in {502, 504}:
+                    logger.warning(f"OAuth {attempt} failed with status {e.status}")
+                    attempt.set_exception(e)
+                else:
+                    raise
+
     async def fetch_token(self, data: dict, expected_response_model: Type[T]) -> T:
         """Fetch an access token from the server.
 
@@ -102,7 +141,7 @@ class OAuthConnector:
         try:
             async with self._connector:
                 try:
-                    response = await self._connector.call_api(
+                    response = await self._call_api(
                         RequestMethod.POST,
                         self.endpoint("token"),
                         header_params={

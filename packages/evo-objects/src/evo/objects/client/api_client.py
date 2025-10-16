@@ -11,110 +11,46 @@
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator, Iterator, Sequence
-from pathlib import PurePosixPath
+from collections.abc import AsyncIterator, Sequence
 from uuid import UUID
 
 from evo import logging
 from evo.common import APIConnector, BaseAPIClient, HealthCheckType, ICache, Page, ServiceHealth
 from evo.common.data import EmptyResponse, Environment, OrderByOperatorEnum
-from evo.common.io.exceptions import DataNotFoundError
 from evo.common.utils import get_service_health, parse_order_by
-from evo.workspaces import ServiceUser
 
-from .data import ObjectMetadata, ObjectOrderByEnum, ObjectSchema, ObjectVersion, OrgObjectMetadata, Stage
-from .endpoints import MetadataApi, ObjectsApi, StagesApi
-from .endpoints.models import (
-    GeoscienceObject,
-    GeoscienceObjectVersion,
-    GetObjectResponse,
-    ListedObject,
-    MetadataUpdateBody,
-    OrgListedObject,
-    PostObjectResponse,
-    UpdateGeoscienceObject,
-)
-from .exceptions import ObjectUUIDError
-from .io import ObjectDataDownload, ObjectDataUpload
-from .utils import ObjectDataClient
+from ..data import ObjectMetadata, ObjectOrderByEnum, ObjectReference, ObjectVersion, OrgObjectMetadata, Stage
+from ..endpoints import MetadataApi, ObjectsApi, StagesApi
+from ..endpoints.models import GeoscienceObject, MetadataUpdateBody, UpdateGeoscienceObject
+from ..exceptions import ObjectUUIDError
+from ..io import ObjectDataDownload, ObjectDataUpload
+from . import parse
+from .object_client import DownloadedObject
+
+try:
+    from ..utils import ObjectDataClient
+except ImportError:
+    _DATA_CLIENT_AVAILABLE = False
+else:
+    _DATA_CLIENT_AVAILABLE = True
 
 logger = logging.getLogger("object.client")
 
-__all__ = [
-    "DownloadedObject",
-    "ObjectAPIClient",
-]
-
-
-def _version_from_listed_version(model: GeoscienceObjectVersion) -> ObjectVersion:
-    """Create an ObjectVersion instance from a generated ListedObject model.
-
-    :param model: The model to create the ObjectVersion instance from.
-
-    :return: An ObjectVersion instance.
-    """
-    created_by = None if model.created_by is None else ServiceUser.from_model(model.created_by)  # type: ignore
-    stage = None if model.stage is None else Stage.from_model(model.stage)
-    return ObjectVersion(
-        version_id=model.version_id,
-        created_at=model.created_at,
-        created_by=created_by,
-        stage=stage,
-    )
-
-
-class DownloadedObject:
-    """A downloaded geoscience object."""
-
-    def __init__(
-        self, object_: GeoscienceObject, metadata: ObjectMetadata, urls_by_name: dict[str, str], connector: APIConnector
-    ) -> None:
-        self._object = object_
-        self._metadata = metadata
-        self._urls_by_name = urls_by_name
-        self._connector = connector
-
-    @property
-    def schema(self) -> ObjectSchema:
-        """The schema of the object."""
-        return self._metadata.schema_id
-
-    @property
-    def metadata(self) -> ObjectMetadata:
-        """The metadata of the object."""
-        return self._metadata
-
-    def as_dict(self) -> dict:
-        """Get this object as a dictionary."""
-        return self._object.model_dump(mode="python", by_alias=True)
-
-    def prepare_data_download(self, data_identifiers: Sequence[str | UUID]) -> Iterator[ObjectDataDownload]:
-        """Prepare to download multiple data files from the geoscience object service, for this object.
-
-        Any data IDs that are not associated with the requested object will raise a DataNotFoundError.
-
-        :param data_identifiers: A list of sha256 digests or UUIDs for the data to be downloaded.
-
-        :return: An iterator of data download contexts that can be used to download the data.
-
-        :raises DataNotFoundError: If any requested data ID is not associated with this object.
-        """
-        try:
-            filtered_urls_by_name = {str(name): self._urls_by_name[str(name)] for name in data_identifiers}
-        except KeyError as exc:
-            raise DataNotFoundError(f"Unable to find the requested data: {exc.args[0]}") from exc
-        for ctx in ObjectDataDownload._create_multiple(
-            connector=self._connector, metadata=self._metadata, urls_by_name=filtered_urls_by_name
-        ):
-            yield ctx
+__all__ = ["ObjectAPIClient"]
 
 
 class ObjectAPIClient(BaseAPIClient):
-    def __init__(self, environment: Environment, connector: APIConnector) -> None:
+    def __init__(self, environment: Environment, connector: APIConnector, cache: ICache | None = None) -> None:
+        """
+        :param environment: The target Evo environment, providing org and workspace IDs.
+        :param connector: The API connector to use for making API calls.
+        :param cache: An optional cache to use for data downloads.
+        """
         super().__init__(environment, connector)
         self._stages_api = StagesApi(connector=connector)
         self._objects_api = ObjectsApi(connector=connector)
         self._metadata_api = MetadataApi(connector=connector)
+        self._cache = cache
 
     async def get_service_health(self, check_type: HealthCheckType = HealthCheckType.FULL) -> ServiceHealth:
         """Get the health of the geoscience object service.
@@ -127,79 +63,6 @@ class ObjectAPIClient(BaseAPIClient):
         :raises ClientValueError: If the response is not a valid service health check response.
         """
         return await get_service_health(self._connector, "geoscience-object", check_type=check_type)
-
-    def _metadata_from_listed_object(self, model: ListedObject) -> ObjectMetadata:
-        """Create an ObjectMetadata instance from a generated ListedObject model.
-
-        :param model: The model to create the ObjectMetadata instance from.
-
-        :return: An ObjectMetadata instance.
-        """
-        created_by = None if model.created_by is None else ServiceUser.from_model(model.created_by)
-        modified_by = None if model.modified_by is None else ServiceUser.from_model(model.modified_by)
-        stage = None if model.stage is None else Stage.from_model(model.stage)
-        return ObjectMetadata(
-            environment=self._environment,
-            id=model.object_id,
-            name=model.name,
-            created_at=model.created_at,
-            created_by=created_by,
-            modified_at=model.modified_at,
-            modified_by=modified_by,
-            parent=model.path.rstrip("/"),
-            schema_id=ObjectSchema.from_id(model.schema_),
-            version_id=model.version_id,
-            stage=stage,
-        )
-
-    def _metadata_from_org_listed_object(self, model: OrgListedObject) -> OrgObjectMetadata:
-        """Create an OrgObjectMetadata instance from a generated OrgListedObject model.
-
-        :param model: The model to create the OrgObjectMetadata instance from.
-
-        :return: An OrgObjectMetadata instance.
-        """
-        created_by = None if model.created_by is None else ServiceUser.from_model(model.created_by)
-        modified_by = None if model.modified_by is None else ServiceUser.from_model(model.modified_by)
-        stage = None if model.stage is None else Stage.from_model(model.stage)
-        return OrgObjectMetadata(
-            environment=self._environment,
-            workspace_id=model.workspace_id,
-            workspace_name=model.workspace_name,
-            id=model.object_id,
-            name=model.name,
-            created_at=model.created_at,
-            created_by=created_by,
-            modified_at=model.modified_at,
-            modified_by=modified_by,
-            schema_id=ObjectSchema.from_id(model.schema_),
-            stage=stage,
-        )
-
-    def _metadata_from_endpoint_model(self, model: GetObjectResponse | PostObjectResponse) -> ObjectMetadata:
-        """Create an ObjectMetadata instance from a generated GetObjectResponse or PostObjectResponse model.
-
-        :param model: The model to create the ObjectMetadata instance from.
-
-        :return: An ObjectMetadata instance.
-        """
-        object_path = PurePosixPath(model.object_path)
-        created_by = None if model.created_by is None else ServiceUser.from_model(model.created_by)
-        modified_by = None if model.modified_by is None else ServiceUser.from_model(model.modified_by)
-        stage = None if model.stage is None else Stage.from_model(model.stage)
-        return ObjectMetadata(
-            environment=self._environment,
-            id=model.object_id,
-            name=object_path.name,
-            created_at=model.created_at,
-            created_by=created_by,
-            modified_at=model.modified_at,
-            modified_by=modified_by,
-            parent=str(object_path.parent),
-            schema_id=ObjectSchema.from_id(model.object.schema_),
-            version_id=model.version_id,
-            stage=stage,
-        )
 
     async def list_objects(
         self,
@@ -238,12 +101,7 @@ class ObjectAPIClient(BaseAPIClient):
             request_timeout=request_timeout,
             deleted=deleted,
         )
-        return Page(
-            offset=offset,
-            limit=limit,
-            total=response.total,
-            items=[self._metadata_from_listed_object(model) for model in response.objects],
-        )
+        return parse.page_of_metadata(response, self._environment)
 
     async def list_all_objects(
         self,
@@ -320,17 +178,7 @@ class ObjectAPIClient(BaseAPIClient):
             permitted_workspaces_only=True,
             deleted=deleted,
         )
-        return Page(
-            offset=offset,
-            limit=limit,
-            total=response.total,
-            items=[self._metadata_from_org_listed_object(model) for model in response.objects],
-        )
-
-    @staticmethod
-    def _get_object_versions(response: GetObjectResponse) -> list[ObjectVersion]:
-        object_versions = [_version_from_listed_version(model) for model in response.versions]
-        return sorted(object_versions, key=lambda v: v.created_at, reverse=True)
+        return parse.page_of_metadata(response, self._environment)
 
     async def list_versions_by_path(
         self, path: str, request_timeout: int | float | tuple[int | float, int | float] | None = None
@@ -350,7 +198,7 @@ class ObjectAPIClient(BaseAPIClient):
             include_versions=True,
             request_timeout=request_timeout,
         )
-        return self._get_object_versions(response)
+        return parse.versions(response)
 
     async def list_versions_by_id(
         self, object_id: UUID, request_timeout: int | float | tuple[int | float, int | float] | None = None
@@ -370,7 +218,7 @@ class ObjectAPIClient(BaseAPIClient):
             include_versions=True,
             request_timeout=request_timeout,
         )
-        return self._get_object_versions(response)
+        return parse.versions(response)
 
     async def prepare_data_upload(self, data_identifiers: Sequence[str | UUID]) -> AsyncIterator[ObjectDataUpload]:
         """Prepare to upload multiple data files to the geoscience object service.
@@ -416,20 +264,23 @@ class ObjectAPIClient(BaseAPIClient):
         for ctx in downloaded_object.prepare_data_download(data_identifiers):
             yield ctx
 
-    def get_data_client(self, cache: ICache) -> ObjectDataClient:
-        """Get a data client for the geoscience object service.
+    if _DATA_CLIENT_AVAILABLE:
+        # Optional data client functionality, enabled if the data client dependencies are installed.
 
-        The data client provides a high-level interface for uploading and downloading data that is referenced in
-        geoscience objects, and caching the data locally. It depends on the optional dependency `pyarrow`, which is
-        not installed by default. This dependency can be installed with `pip install evo-objects[utils]`.
+        def get_data_client(self, cache: ICache) -> ObjectDataClient:
+            """Get a data client for the geoscience object service.
 
-        :param cache: The cache to use for data downloads.
+            The data client provides a high-level interface for uploading and downloading data that is referenced in
+            geoscience objects, and caching the data locally. It depends on the optional dependency `pyarrow`, which is
+            not installed by default. This dependency can be installed with `pip install evo-objects[utils]`.
 
-        :return: An ObjectDataClient instance.
+            :param cache: The cache to use for data downloads.
 
-        :raises RuntimeError: If the `pyarrow` package is not installed.
-        """
-        return ObjectDataClient(environment=self._environment, connector=self._connector, cache=cache)
+            :return: An ObjectDataClient instance.
+
+            :raises RuntimeError: If the `pyarrow` package is not installed.
+            """
+            return ObjectDataClient(environment=self._environment, connector=self._connector, cache=cache)
 
     async def create_geoscience_object(
         self, path: str, object_dict: dict, request_timeout: int | float | tuple[int | float, int | float] | None = None
@@ -461,7 +312,7 @@ class ObjectAPIClient(BaseAPIClient):
             request_timeout=request_timeout,
         )
         object_dict["uuid"] = result.object_id
-        return self._metadata_from_endpoint_model(result)
+        return parse.object_metadata(result, self._environment)
 
     async def move_geoscience_object(
         self, path: str, object_dict: dict, request_timeout: int | float | tuple[int | float, int | float] | None = None
@@ -488,7 +339,7 @@ class ObjectAPIClient(BaseAPIClient):
             geoscience_object=object_for_upload,
             request_timeout=request_timeout,
         )
-        return self._metadata_from_endpoint_model(result)
+        return parse.object_metadata(result, self._environment)
 
     async def update_geoscience_object(
         self, object_dict: dict, request_timeout: int | float | tuple[int | float, int | float] | None = None
@@ -514,18 +365,7 @@ class ObjectAPIClient(BaseAPIClient):
             update_geoscience_object=object_for_upload,
             request_timeout=request_timeout,
         )
-        return self._metadata_from_endpoint_model(result)
-
-    def _downloaded_object_from_response(self, response: GetObjectResponse) -> DownloadedObject:
-        """Parse object metadata and a geoscience object model instance from a get object response
-
-        :param response: The response from one of the get object endpoints.
-
-        :return: A tuple containing the object metadata and a data model of the requested geoscience object.
-        """
-        metadata = self._metadata_from_endpoint_model(response)
-        urls_by_name = {getattr(link, "name", link.id): link.download_url for link in response.links.data}
-        return DownloadedObject(response.object, metadata, urls_by_name, self._connector)
+        return parse.object_metadata(result, self._environment)
 
     async def download_object_by_path(
         self,
@@ -543,15 +383,13 @@ class ObjectAPIClient(BaseAPIClient):
 
         :return: A tuple containing the object metadata and a data model of the requested geoscience object.
         """
-        response = await self._objects_api.get_object(
-            org_id=str(self._environment.org_id),
-            workspace_id=str(self._environment.workspace_id),
-            objects_path=path,
-            version=version,
-            additional_headers={"Accept-Encoding": "gzip"},
+        reference = ObjectReference.new(environment=self._environment, object_path=path, version_id=version)
+        return await DownloadedObject.from_reference(
+            connector=self._connector,
+            reference=reference,
+            cache=self._cache,
             request_timeout=request_timeout,
         )
-        return self._downloaded_object_from_response(response)
 
     async def download_object_by_id(
         self,
@@ -569,15 +407,13 @@ class ObjectAPIClient(BaseAPIClient):
 
         :return: A tuple containing the object metadata and a data model of the requested geoscience object.
         """
-        response = await self._objects_api.get_object_by_id(
-            org_id=str(self._environment.org_id),
-            workspace_id=str(self._environment.workspace_id),
-            object_id=str(object_id),
-            version=version,
-            additional_headers={"Accept-Encoding": "gzip"},
+        reference = ObjectReference.new(environment=self._environment, object_id=object_id, version_id=version)
+        return await DownloadedObject.from_reference(
+            connector=self._connector,
+            reference=reference,
+            cache=self._cache,
             request_timeout=request_timeout,
         )
-        return self._downloaded_object_from_response(response)
 
     async def get_latest_object_versions(
         self,
@@ -668,14 +504,14 @@ class ObjectAPIClient(BaseAPIClient):
         # If the restore happened with a rename, the response will be the metadata of the restored object
         if isinstance(result, EmptyResponse):
             return None
-        return self._metadata_from_endpoint_model(result)
+        return parse.object_metadata(result, self._environment)
 
     async def list_stages(self) -> list[Stage]:
         """List all available stages in the organisation.
 
         :return: A list of all available stages."""
         response = await self._stages_api.list_stages(org_id=str(self._environment.org_id))
-        return [Stage.from_model(model) for model in response.stages]
+        return [parse.stage(model) for model in response.stages]
 
     async def set_stage(self, object_id: UUID, version_id: int, stage_id: UUID) -> None:
         """Set the stage of a specific version of a geoscience object.

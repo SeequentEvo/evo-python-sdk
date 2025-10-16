@@ -19,5 +19,5 @@
     "ml_enabled": false,
     "default_coordinate_system": "",
     "labels": [],
-    "self_link": "http://unittest.localhost/workspace/orgs/00000000-0000-0000-0000-000000000000/workspaces"
+    "self_link": "https://unittest.localhost/workspace/orgs/00000000-0000-0000-0000-000000000000/workspaces"
 }

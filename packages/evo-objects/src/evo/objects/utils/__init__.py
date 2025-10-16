@@ -9,27 +9,33 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from ._types import DataFrame, Table
-from .data import ObjectDataClient
-
-__all__ = [
-    "DataFrame",
-    "ObjectDataClient",
-    "Table",
-]
 
 try:
-    import pyarrow  # noqa: F401
+    # Import the table type for backwards compatibility. This should be removed in a future release.
+    from pyarrow import Table  # noqa: F401
 except ImportError:
-    pass  # Omit the following imports if pyarrow is not installed.
-else:
-    from .table_formats import all_known_formats, get_known_format
-    from .tables import ArrowTableFormat, BaseTableFormat, KnownTableFormat
+    raise ImportError("pyarrow is required to use the utils package in evo-objects")
 
-    __all__ += [
-        "ArrowTableFormat",
-        "BaseTableFormat",
-        "KnownTableFormat",
-        "all_known_formats",
-        "get_known_format",
-    ]
+try:
+    # Import the dataframe type for backwards compatibility. This should be removed in a future release.
+    from pandas import DataFrame  # noqa: F401
+except ImportError:
+    DataFrame = None  # type: ignore
+
+from .data import ObjectDataClient
+from .table_formats import all_known_formats, get_known_format
+from .tables import ArrowTableFormat, BaseTableFormat, KnownTableFormat
+
+# We _used_ to export Table and DataFrame from this package as custom protocols, but we are using the actual
+# pyarrow.Table and pandas.DataFrame types now. We are importing these types here from pyarrow and pandas
+# for backwards compatibility, but they are no longer explicitly exported as the exports should be
+# removed in a future release.
+
+__all__ = [
+    "ArrowTableFormat",
+    "BaseTableFormat",
+    "KnownTableFormat",
+    "ObjectDataClient",
+    "all_known_formats",
+    "get_known_format",
+]

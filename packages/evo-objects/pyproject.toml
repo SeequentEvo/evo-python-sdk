@@ -1,7 +1,7 @@
 [project]
 name = "evo-objects"
 description = "Python SDK for using the Seequent Evo Geoscience Object API"
-version = "0.2.3"
+version = "0.3.1"
 requires-python = ">=3.10"
 license-files = ["LICENSE.md"]
 dynamic = ["readme"]
@@ -10,7 +10,7 @@ authors = [
 ]
 
 dependencies = [
-    "evo-sdk-common>=0.1.0",
+    "evo-sdk-common[jmespath]>=0.5.4",
     "pydantic>=2,<3",
 ]
 
@@ -21,9 +21,9 @@ Homepage = "https://www.seequent.com/"
 Documentation = "https://developer.seequent.com/"
 
 [project.optional-dependencies]
-aiohttp = ["evo-sdk-common[aiohttp]>=0.1.0"]
-notebooks = ["evo-sdk-common[notebooks]>=0.1.0"]
-utils = ["pyarrow", "pandas"]
+aiohttp = ["evo-sdk-common[aiohttp]"]
+notebooks = ["evo-sdk-common[notebooks]"]
+utils = ["pyarrow", "pyarrow-stubs", "pandas", "numpy"]
 
 [dependency-groups]
 # Dev dependencies. The version is left unspecified so the latest is installed.
@@ -51,6 +51,9 @@ line-length = 120
 
 [tool.ruff.lint]
 extend-select = ["I", "RUF022"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["evo"]
 
 [build-system]
 requires = ["hatchling", "hatch-fancy-pypi-readme"]

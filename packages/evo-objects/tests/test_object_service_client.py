@@ -9,6 +9,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import dataclasses
 import datetime
 import json
 from unittest import mock
@@ -34,7 +35,7 @@ from evo.objects import (
 from evo.objects.data import ObjectOrderByEnum, OrgObjectMetadata, Stage
 from evo.objects.exceptions import ObjectAlreadyExistsError, ObjectUUIDError
 from evo.objects.utils import ObjectDataClient
-from helpers import NoImport
+from helpers import NoImport, UnloadModule
 
 EMPTY_CONTENT = '{"objects": [], "links": {"next": null, "prev": null}}'
 MOCK_VERSION_CONTENT = json.dumps(load_test_data("list_versions.json"))
@@ -57,7 +58,7 @@ class TestObjectAPIClient(TestWithConnector, TestWithStorage):
 
     async def test_check_service_health(self) -> None:
         """Test service health check implementation"""
-        with mock.patch("evo.objects.client.get_service_health", spec_set=True) as mock_get_service_health:
+        with mock.patch("evo.objects.client.api_client.get_service_health", spec_set=True) as mock_get_service_health:
             await self.object_client.get_service_health()
         mock_get_service_health.assert_called_once_with(
             self.connector, "geoscience-object", check_type=HealthCheckType.FULL
@@ -243,6 +244,8 @@ class TestObjectAPIClient(TestWithConnector, TestWithStorage):
             ),
         ]
         self.assertIsInstance(page_one, Page)
+        for item in page_one:
+            self.assertEqual(item.environment.workspace_id, item.workspace_id, "workspace_id should match environment")
         self.assertEqual(expected_items_page_one, page_one.items())
         self.assertEqual(0, page_one.offset)
         self.assertEqual(2, page_one.limit)
@@ -257,7 +260,9 @@ class TestObjectAPIClient(TestWithConnector, TestWithStorage):
         page_two = await self.object_client.list_objects_for_instance(offset=page_one.next_offset, limit=page_one.limit)
         expected_items_page_two = [
             OrgObjectMetadata(
-                environment=self.environment,
+                environment=dataclasses.replace(
+                    self.environment, workspace_id=UUID("00000000-0000-0000-0000-0000000004d2")
+                ),
                 workspace_id=UUID("00000000-0000-0000-0000-0000000004d2"),
                 workspace_name="Test Workspace 2",
                 id=UUID("00000000-0000-0000-0000-000000000002"),
@@ -279,6 +284,8 @@ class TestObjectAPIClient(TestWithConnector, TestWithStorage):
             ),
         ]
         self.assertIsInstance(page_two, Page)
+        for item in page_two:
+            self.assertEqual(item.environment.workspace_id, item.workspace_id, "workspace_id should match environment")
         self.assertEqual(expected_items_page_two, page_two.items())
         self.assertEqual(2, page_two.offset)
         self.assertEqual(2, page_two.limit)
@@ -662,8 +669,19 @@ class TestObjectAPIClient(TestWithConnector, TestWithStorage):
 
     def test_get_data_client_missing_dependencies(self) -> None:
         """Test getting a data client with missing dependencies."""
-        with NoImport("pyarrow"), self.assertRaises(RuntimeError):
-            self.object_client.get_data_client(self.cache)
+        with UnloadModule("evo.objects.client.api_client", "evo.objects.utils.data"), NoImport("pyarrow"):
+            from evo.objects.client import ObjectAPIClient
+
+            client = ObjectAPIClient(self.environment, self.connector)
+            self.assertFalse(
+                any(
+                    (
+                        hasattr(ObjectAPIClient, "get_data_client"),
+                        hasattr(client, "get_data_client"),
+                    )
+                ),
+                "get_data_client should not be available if pyarrow is missing",
+            )
 
     async def test_get_latest_object_versions(self) -> None:
         content = json.dumps(

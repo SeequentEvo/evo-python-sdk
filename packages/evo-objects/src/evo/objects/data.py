@@ -16,9 +16,10 @@ import re
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Protocol
+from urllib.parse import parse_qs, urlparse
 from uuid import UUID
 
-from evo.common import ResourceMetadata
+from evo.common import Environment, ResourceMetadata
 from evo.workspaces import ServiceUser
 
 from .exceptions import SchemaIDFormatError
@@ -26,6 +27,7 @@ from .exceptions import SchemaIDFormatError
 __all__ = [
     "ObjectMetadata",
     "ObjectOrderByEnum",
+    "ObjectReference",
     "ObjectSchema",
     "ObjectVersion",
     "SchemaVersion",
@@ -41,6 +43,116 @@ class ObjectOrderByEnum(str, enum.Enum):
     modified_at = "modified_at"
     modified_by = "modified_by"
     object_name = "object_name"
+
+
+class ObjectReference(str):
+    """A structured URL reference to a geoscience object, optionally including a version ID.
+
+    Geoscience Object URL references are the fully qualified HTTPS URLs used to access objects in the
+    Geoscience Object API. The URL may follow the path or UUID format, and may optionally include a version ID.
+
+    In most cases, UUID-based references are preferred, as they are immutable and unambiguous. However, path-based references
+    can be useful in scenarios where the object ID is not known, such as when creating new objects or when working with
+    objects in a more human-readable way.
+    """
+
+    _RE_PATH = re.compile(
+        r"""
+        ^/geoscience-object
+        /orgs/(?P<org_id>[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})
+        /workspaces/(?P<workspace_id>[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})
+        /objects
+        (?:
+            /path/(?P<object_path>[^?]+) | /(?P<object_id>[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})
+        )$
+        """,
+        re.IGNORECASE | re.VERBOSE,
+    )
+
+    hub_url: str
+    """The base URL of the Evo Hub."""
+
+    org_id: UUID
+    """The ID of the Evo Organization the object belongs to."""
+
+    workspace_id: UUID
+    """The ID of the Evo Workspace the object belongs to."""
+
+    object_id: UUID | None
+    """The UUID of the object, if specified in the URL."""
+
+    object_path: str | None
+    """The path of the object, if specified in the URL."""
+
+    version_id: str | None
+    """The version ID of the object, if specified in the URL."""
+
+    def __new__(cls, value: str) -> ObjectReference:
+        inst = str.__new__(cls, value)
+
+        parsed = urlparse(value)
+        if parsed.scheme != "https":
+            raise ValueError("Reference must be a valid HTTPS URL")
+
+        inst.hub_url = f"{parsed.scheme}://{parsed.netloc}/"
+
+        if match := cls._RE_PATH.fullmatch(parsed.path):
+            inst.org_id = UUID(match.group("org_id"))
+            inst.workspace_id = UUID(match.group("workspace_id"))
+
+            if match.group("object_id"):
+                inst.object_id = UUID(match.group("object_id"))
+                inst.object_path = None
+            else:
+                inst.object_id = None
+                inst.object_path = match.group("object_path").lstrip("/")
+        else:
+            raise ValueError("Reference path is not valid")
+
+        query_params = parse_qs(parsed.query)
+        inst.version_id = query_params.get("version", [None])[0]
+        return inst
+
+    @property
+    def environment(self) -> Environment:
+        return Environment(hub_url=self.hub_url, org_id=self.org_id, workspace_id=self.workspace_id)
+
+    @staticmethod
+    def new(
+        environment: Environment,
+        object_id: UUID | None = None,
+        object_path: str | None = None,
+        version_id: str | None = None,
+    ) -> ObjectReference:
+        """Create a new ObjectReference from its components.
+
+        Either object_id or object_path must be provided, but not both.
+
+        :param environment: The Evo environment the object belongs to.
+        :param object_id: The UUID of the object, if known.
+        :param object_path: The path of the object, if known.
+        :param version_id: The version ID of the object, if known.
+
+        :returns: A new ObjectReference instance.
+
+        :raises ValueError: If neither or both of object_id and object_path are provided.
+        """
+        if object_id is None and object_path is None:
+            raise ValueError("Either object_id or object_path must be provided")
+        if object_id is not None and object_path is not None:
+            raise ValueError("Only one of object_id or object_path can be provided")
+
+        if object_id is not None:
+            path = (
+                f"geoscience-object/orgs/{environment.org_id}/workspaces/{environment.workspace_id}/objects/{object_id}"
+            )
+        else:
+            path = f"geoscience-object/orgs/{environment.org_id}/workspaces/{environment.workspace_id}/objects/path/{object_path.lstrip('/')}"
+
+        if version_id is not None:
+            path += f"?version={version_id}"
+
+        return ObjectReference(f"{environment.hub_url.rstrip('/')}/{path}")
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -71,12 +183,10 @@ class ObjectMetadata(ResourceMetadata):
         return f"{self.parent}/{self.name}"
 
     @property
-    def url(self) -> str:
+    def url(self) -> ObjectReference:
         """The url of the object."""
-        return "{hub_url}/geoscience-object/orgs/{org_id}/workspaces/{workspace_id}/objects/{object_id}?version={version_id}".format(
-            hub_url=self.environment.hub_url.rstrip("/"),
-            org_id=self.environment.org_id,
-            workspace_id=self.environment.workspace_id,
+        return ObjectReference.new(
+            environment=self.environment,
             object_id=self.id,
             version_id=self.version_id,
         )
@@ -107,10 +217,8 @@ class OrgObjectMetadata(ResourceMetadata):
     @property
     def url(self) -> str:
         """The url of the object."""
-        return "{hub_url}/geoscience-object/orgs/{org_id}/workspaces/{workspace_id}/objects/{object_id}".format(
-            hub_url=self.environment.hub_url.rstrip("/"),
-            org_id=self.environment.org_id,
-            workspace_id=self.workspace_id,
+        return ObjectReference.new(
+            environment=self.environment,
             object_id=self.id,
         )
 

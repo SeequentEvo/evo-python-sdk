@@ -1,10 +1,10 @@
 {
     "links": {
-        "first": "http://unittest.localhost/workspace/orgs/00000000-0000-0000-0000-000000000000/workspaces/summary",
+        "first": "https://unittest.localhost/workspace/orgs/00000000-0000-0000-0000-000000000000/workspaces/summary",
         "next": null,
         "previous": null,
         "count": 3,
-        "last": "http://unittest.localhost/workspace/orgs/00000000-0000-0000-0000-000000000000/workspaces/summary",
+        "last": "https://unittest.localhost/workspace/orgs/00000000-0000-0000-0000-000000000000/workspaces/summary",
         "total": 3
     },
     "results": [

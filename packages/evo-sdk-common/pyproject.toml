@@ -1,7 +1,7 @@
 [project]
 name = "evo-sdk-common"
 description = "Python package that establishes a common framework for use by client libraries that interact with Seequent Evo APIs"
-version = "0.5.3"
+version = "0.5.7"
 requires-python = ">=3.10"
 license-files = ["LICENSE.md"]
 dynamic = ["readme"]
@@ -31,6 +31,9 @@ notebooks = [
     "ipywidgets",
     "python-dotenv"
 ]
+jmespath = [
+    "jmespath>=1.0.1",
+]
 
 [dependency-groups]
 # Dev dependencies. The version is left unspecified so the latest is installed.
@@ -41,10 +44,10 @@ test = [
     "pytest",
 ]
 dev = [
-    "evo-sdk-common[aiohttp]",
+    "evo-sdk-common[aiohttp,jmespath]",
     "bumpver",
     "coverage[toml]",
-    "ruff==0.9.1", # keep in sync with .pre-commit-config.yaml
+    "ruff==0.14.0", # keep in sync with .pre-commit-config.yaml
     "pre-commit",
     {include-group="test"},
 ]

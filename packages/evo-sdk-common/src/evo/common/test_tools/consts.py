@@ -13,7 +13,7 @@ from uuid import UUID
 
 from evo.discovery import Hub, Organization
 
-BASE_URL = "http://unittest.localhost/"
+BASE_URL = "https://unittest.localhost/"
 ACCESS_TOKEN = "<not-a-real-token>"
 
 HUB = Hub(

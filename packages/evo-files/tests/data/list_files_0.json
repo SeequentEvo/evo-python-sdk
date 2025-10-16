@@ -20,7 +20,7 @@
             },
             "etag": "",
             "links": {
-                "self": "http://unittest.localhost/path/file/v2/orgs/00000000-0000-0000-0000-0000000004d2/workspaces/00000000-0000-0000-0000-00000000162e/files/path/A/m.json"
+                "self": "https://unittest.localhost/path/file/v2/orgs/00000000-0000-0000-0000-0000000004d2/workspaces/00000000-0000-0000-0000-00000000162e/files/path/A/m.json"
             },
             "size": 11
         },
@@ -43,14 +43,14 @@
             },
             "etag": "",
             "links": {
-                "self": "http://unittest.localhost/path/file/v2/orgs/00000000-0000-0000-0000-0000000004d2/workspaces/00000000-0000-0000-0000-00000000162e/files/path/A/n.json"
+                "self": "https://unittest.localhost/path/file/v2/orgs/00000000-0000-0000-0000-0000000004d2/workspaces/00000000-0000-0000-0000-00000000162e/files/path/A/n.json"
             },
             "size": 12
         }
     ],
     "limit": 5000,
     "links": {
-        "next": "http://unittest.localhost/path/file/v2/orgs/00000000-0000-0000-0000-0000000004d2/workspaces/00000000-0000-0000-0000-00000000162e/files?path=pointset/&limit=2&offset=2",
+        "next": "https://unittest.localhost/path/file/v2/orgs/00000000-0000-0000-0000-0000000004d2/workspaces/00000000-0000-0000-0000-00000000162e/files?path=pointset/&limit=2&offset=2",
         "prev": null,
         "self": ""
     },

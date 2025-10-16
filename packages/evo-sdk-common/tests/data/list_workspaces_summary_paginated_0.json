@@ -1,10 +1,10 @@
 {
     "links": {
-        "first": "http://unittest.localhost/workspace/orgs/00000000-0000-0000-0000-000000000000/workspaces/summary?limit=2&offset=0",
-        "next": "http://unittest.localhost/workspace/orgs/00000000-0000-0000-0000-000000000000/workspaces/summary?limit=2&offset=2",
+        "first": "https://unittest.localhost/workspace/orgs/00000000-0000-0000-0000-000000000000/workspaces/summary?limit=2&offset=0",
+        "next": "https://unittest.localhost/workspace/orgs/00000000-0000-0000-0000-000000000000/workspaces/summary?limit=2&offset=2",
         "previous": null,
         "count": 2,
-        "last": "http://unittest.localhost/workspace/orgs/00000000-0000-0000-0000-000000000000/workspaces/summary?limit=2&offset=2",
+        "last": "https://unittest.localhost/workspace/orgs/00000000-0000-0000-0000-000000000000/workspaces/summary?limit=2&offset=2",
         "total": 3
     },
     "results": [

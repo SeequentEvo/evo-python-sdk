@@ -28,5 +28,5 @@
     "modified_by": "00000000-0000-0000-0000-000000000010",
     "name": "discrete colormap 1",
     "schema": "discrete",
-    "self_link": "http://unittest.localhost/colormap/orgs/00000000-0000-0000-0000-0000000004d2/workspaces/00000000-0000-0000-0000-00000000162e/colormaps/00000000-0000-0000-0000-000000000007"
+    "self_link": "https://unittest.localhost/colormap/orgs/00000000-0000-0000-0000-0000000004d2/workspaces/00000000-0000-0000-0000-00000000162e/colormaps/00000000-0000-0000-0000-000000000007"
 }

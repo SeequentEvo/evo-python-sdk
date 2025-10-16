@@ -1,0 +1,11 @@
+{
+    "status": "failed",
+    "progress": 100,
+    "message": "Job failed",
+    "error": {
+        "status": 500,
+        "type": "http://unittest.localhost/some-error-id",
+        "title": "Some error title",
+        "detail": "Some error message"
+    }
+}

@@ -262,3 +262,18 @@ class TestChunkedIOManager(unittest.IsolatedAsyncioTestCase):
 
         # Verify results.
         self.assertFalse(self.manager.is_complete())
+
+    async def test_zero_byte_file(self) -> None:
+        # Create and verify source.
+        source = _TestIO(content=b"", expires_after=self.EXPIRES_AFTER)
+        self.assertEqual(b"", source.get_raw_content())
+
+        # Create and verify destination.
+        destination = _TestIO()
+        self.assertEqual(b"", destination.get_raw_content())
+
+        # Transfer data.
+        await self.manager.run(source, destination)
+
+        # Verify results.
+        self.assertTrue(self.manager.is_complete())

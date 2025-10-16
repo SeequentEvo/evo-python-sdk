@@ -14,7 +14,6 @@ import pyarrow as pa
 from evo import logging
 
 from ..exceptions import TableFormatError
-from ._types import Table
 from .tables import ArrowTableFormat, KnownTableFormat
 
 __all__ = [
@@ -135,7 +134,7 @@ all_known_formats: list[KnownTableFormat] = [
 ]
 
 
-def get_known_format(table: Table) -> KnownTableFormat:
+def get_known_format(table: pa.Table) -> KnownTableFormat:
     """Get the known table format that best matches the provided table.
 
     If both a multidimensional format and a format with fixed dimensions would match, the format with fixed dimensions

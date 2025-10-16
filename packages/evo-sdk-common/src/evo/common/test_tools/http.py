@@ -217,6 +217,13 @@ class TestTransport(mock.AsyncMock):
             request_timeout=request_timeout,
         )
 
+    def assert_n_requests_made(self, n: int) -> None:
+        """Assert that there were a certain number of calls to ITransport.request().
+
+        :param n: Number of expected calls.
+        """
+        assert self.request.await_count == n
+
     def assert_no_requests(self) -> None:
         """Assert that ITransport.request() has not been called."""
         self.request.assert_not_called()

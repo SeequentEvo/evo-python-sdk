@@ -11,12 +11,12 @@
         "name": "x y",
         "email": "test@example.com"
     },
-    "download": "http://unittest.localhost/path/file/v2/orgs/00000000-0000-0000-0000-0000000004d2/workspaces/00000000-0000-0000-0000-00000000162e/files/path/points_0.csv",
+    "download": "https://unittest.localhost/path/file/v2/orgs/00000000-0000-0000-0000-0000000004d2/workspaces/00000000-0000-0000-0000-00000000162e/files/path/points_0.csv",
     "etag": "",
     "file_id": "00000000-0000-0000-0000-000000000006",
     "name": "pointspointspointspointspointspointspointspointspointspointspointspointspointspointspointspointspointspointspointspointspointspointspointspointspointspointspointspointspointspointspointspointspointspointspointspointspointspointspointspointspointspointspointspointspointspointspointspointspointspointspointspointspointspoints.csv",
     "path": "/",
-    "self": "http://unittest.localhost/path/file/v2/orgs/00000000-0000-0000-0000-0000000004d2/workspaces/00000000-0000-0000-0000-00000000162e/files/path/points_0.csv",
+    "self": "https://unittest.localhost/path/file/v2/orgs/00000000-0000-0000-0000-0000000004d2/workspaces/00000000-0000-0000-0000-00000000162e/files/path/points_0.csv",
     "size": 10,
     "version_id": "1",
     "versions": [
@@ -28,7 +28,7 @@
                 "email": "test@example.com"
             },
             "file_id": "00000000-0000-0000-0000-000000000006",
-            "link": "http://unittest.localhost/path/file/v2/orgs/00000000-0000-0000-0000-0000000004d2/workspaces/00000000-0000-0000-0000-00000000162e/files/path/points_0.csv",
+            "link": "https://unittest.localhost/path/file/v2/orgs/00000000-0000-0000-0000-0000000004d2/workspaces/00000000-0000-0000-0000-00000000162e/files/path/points_0.csv",
             "name": "points.csv",
             "path": "/",
             "size": 0,

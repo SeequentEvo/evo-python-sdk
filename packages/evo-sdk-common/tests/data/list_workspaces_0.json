@@ -1,8 +1,8 @@
 {
     "links": {
-        "first": "http://unittest.localhost/workspace/orgs/00000000-0000-0000-0000-000000000000/workspaces?limit=2&offset=0",
-        "last": "http://unittest.localhost/workspace/orgs/00000000-0000-0000-0000-000000000000/workspaces?limit=2&offset=2",
-        "next": "http://unittest.localhost/workspace/orgs/00000000-0000-0000-0000-000000000000/workspaces?limit=2&offset=2",
+        "first": "https://unittest.localhost/workspace/orgs/00000000-0000-0000-0000-000000000000/workspaces?limit=2&offset=0",
+        "last": "https://unittest.localhost/workspace/orgs/00000000-0000-0000-0000-000000000000/workspaces?limit=2&offset=2",
+        "next": "https://unittest.localhost/workspace/orgs/00000000-0000-0000-0000-000000000000/workspaces?limit=2&offset=2",
         "previous": null,
         "count": 2,
         "total": 3
@@ -28,7 +28,7 @@
             },
             "default_coordinate_system": "",
             "labels": [],
-            "self_link": "http://unittest.localhost/workspace/orgs/00000000-0000-0000-0000-000000000000/workspaces/00000000-0000-0000-0000-00000000000a"
+            "self_link": "https://unittest.localhost/workspace/orgs/00000000-0000-0000-0000-000000000000/workspaces/00000000-0000-0000-0000-00000000000a"
         },
         {
             "id": "00000000-0000-0000-0000-00000000000b",
@@ -50,7 +50,7 @@
             },
             "default_coordinate_system": "",
             "labels": [],
-            "self_link": "http://unittest.localhost/workspace/orgs/00000000-0000-0000-0000-000000000000/workspaces/00000000-0000-0000-0000-00000000000b"
+            "self_link": "https://unittest.localhost/workspace/orgs/00000000-0000-0000-0000-000000000000/workspaces/00000000-0000-0000-0000-00000000000b"
         }
     ]
 }

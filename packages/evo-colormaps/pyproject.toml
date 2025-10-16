@@ -50,6 +50,9 @@ line-length = 120
 [tool.ruff.lint]
 extend-select = ["I", "RUF022"]
 
+[tool.ruff.lint.isort]
+known-first-party = ["evo"]
+
 [build-system]
 requires = ["hatchling", "hatch-fancy-pypi-readme"]
 build-backend = "hatchling.build"

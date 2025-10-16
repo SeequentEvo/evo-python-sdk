@@ -39,7 +39,7 @@
     },
     "etag": "",
     "links": {
-        "download": "http://unittest.localhost/path/geoscience-object/orgs/00000000-0000-0000-0000-0000000004d2/workspaces/00000000-0000-0000-0000-00000000162e/objects/path/A/m.json",
+        "download": "https://unittest.localhost/path/geoscience-object/orgs/00000000-0000-0000-0000-0000000004d2/workspaces/00000000-0000-0000-0000-00000000162e/objects/path/A/m.json",
         "data": [
             {
                 "name": "995f2e6cab5ad17147d9c5fddf371189bef4b623f657dde91f175a0734ed17dc",

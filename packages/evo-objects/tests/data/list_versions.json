@@ -21,7 +21,7 @@
     },
     "etag": "",
     "links": {
-        "download": "http://unittest.localhost/path/geoscience-object/orgs/00000000-0000-0000-0000-0000000004d2/workspaces/00000000-0000-0000-0000-00000000162e/objects/path/A/m.json",
+        "download": "https://unittest.localhost/path/geoscience-object/orgs/00000000-0000-0000-0000-0000000004d2/workspaces/00000000-0000-0000-0000-00000000162e/objects/path/A/m.json",
         "data": []
     },
     "versions": [{
@@ -35,11 +35,11 @@
             "etag": "",
             "links": {
                 "data": [{
-                    "download_url": "http://unittest.localhost/geoscience-data/00000000-0000-0000-0000-0000000004d2/00000000-0000-0000-0000-00000000162e/d565a304-a618-4020-a05b-a245f8177d2d?se=2025-03-26T00%3A26%3A11Z&sp=r&sv=2025-01-05&sr=b&skoid=e00b2565-5ef7-46ac-b8fd-b6aff6f93a9d&sktid=067e9632-ea4c-4ed9-9e6d-e294956e284b&skt=2025-03-25T23%3A32%3A48Z&ske=2025-03-26T00%3A32%3A48Z&sks=b&skv=2025-01-05&sig=6HCMQXBZJFvVSNYE%2FdP0E6D9cBTZ1OQfApTR97ccXew%3D",
+                    "download_url": "https://unittest.localhost/geoscience-data/00000000-0000-0000-0000-0000000004d2/00000000-0000-0000-0000-00000000162e/d565a304-a618-4020-a05b-a245f8177d2d?se=2025-03-26T00%3A26%3A11Z&sp=r&sv=2025-01-05&sr=b&skoid=e00b2565-5ef7-46ac-b8fd-b6aff6f93a9d&sktid=067e9632-ea4c-4ed9-9e6d-e294956e284b&skt=2025-03-25T23%3A32%3A48Z&ske=2025-03-26T00%3A32%3A48Z&sks=b&skv=2025-01-05&sig=6HCMQXBZJFvVSNYE%2FdP0E6D9cBTZ1OQfApTR97ccXew%3D",
                     "id": "d565a304-a618-4020-a05b-a245f8177d2d",
                     "name": "35b8b8ba5479a34e905a1b9e212e1cb4a52ec484b969359f2c28f5a00311dbca"
                 }],
-                "download": "http://unittest.localhost/path/geoscience-object/orgs/00000000-0000-0000-0000-0000000004d2/workspaces/00000000-0000-0000-0000-00000000162e/objects/path/A/m.json"
+                "download": "https://unittest.localhost/path/geoscience-object/orgs/00000000-0000-0000-0000-0000000004d2/workspaces/00000000-0000-0000-0000-00000000162e/objects/path/A/m.json"
             },
             "stage": {
                 "name": "Approved",
@@ -57,11 +57,11 @@
             "etag": "",
             "links": {
                 "data": [{
-                    "download_url": "http://unittest.localhost/geoscience-data/00000000-0000-0000-0000-0000000004d2/00000000-0000-0000-0000-00000000162e/d565a304-a618-4020-a05b-a245f8177d2d?se=2025-03-26T00%3A26%3A11Z&sp=r&sv=2025-01-05&sr=b&skoid=e00b2565-5ef7-46ac-b8fd-b6aff6f93a9d&sktid=067e9632-ea4c-4ed9-9e6d-e294956e284b&skt=2025-03-25T23%3A32%3A48Z&ske=2025-03-26T00%3A32%3A48Z&sks=b&skv=2025-01-05&sig=6HCMQXBZJFvVSNYE%2FdP0E6D9cBTZ1OQfApTR97ccXew%3D",
+                    "download_url": "https://unittest.localhost/geoscience-data/00000000-0000-0000-0000-0000000004d2/00000000-0000-0000-0000-00000000162e/d565a304-a618-4020-a05b-a245f8177d2d?se=2025-03-26T00%3A26%3A11Z&sp=r&sv=2025-01-05&sr=b&skoid=e00b2565-5ef7-46ac-b8fd-b6aff6f93a9d&sktid=067e9632-ea4c-4ed9-9e6d-e294956e284b&skt=2025-03-25T23%3A32%3A48Z&ske=2025-03-26T00%3A32%3A48Z&sks=b&skv=2025-01-05&sig=6HCMQXBZJFvVSNYE%2FdP0E6D9cBTZ1OQfApTR97ccXew%3D",
                     "id": "d565a304-a618-4020-a05b-a245f8177d2d",
                     "name": "35b8b8ba5479a34e905a1b9e212e1cb4a52ec484b969359f2c28f5a00311dbca"
                 }],
-                "download": "http://unittest.localhost/path/geoscience-object/orgs/00000000-0000-0000-0000-0000000004d2/workspaces/00000000-0000-0000-0000-00000000162e/objects/path/A/m.json"
+                "download": "https://unittest.localhost/path/geoscience-object/orgs/00000000-0000-0000-0000-0000000004d2/workspaces/00000000-0000-0000-0000-00000000162e/objects/path/A/m.json"
             },
             "stage": {
                 "name": "Approved",
@@ -79,11 +79,11 @@
             "etag": "",
             "links": {
                 "data": [{
-                    "download_url": "http://unittest.localhost/geoscience-data/00000000-0000-0000-0000-0000000004d2/00000000-0000-0000-0000-00000000162e/d565a304-a618-4020-a05b-a245f8177d2d?se=2025-03-26T00%3A26%3A11Z&sp=r&sv=2025-01-05&sr=b&skoid=e00b2565-5ef7-46ac-b8fd-b6aff6f93a9d&sktid=067e9632-ea4c-4ed9-9e6d-e294956e284b&skt=2025-03-25T23%3A32%3A48Z&ske=2025-03-26T00%3A32%3A48Z&sks=b&skv=2025-01-05&sig=6HCMQXBZJFvVSNYE%2FdP0E6D9cBTZ1OQfApTR97ccXew%3D",
+                    "download_url": "https://unittest.localhost/geoscience-data/00000000-0000-0000-0000-0000000004d2/00000000-0000-0000-0000-00000000162e/d565a304-a618-4020-a05b-a245f8177d2d?se=2025-03-26T00%3A26%3A11Z&sp=r&sv=2025-01-05&sr=b&skoid=e00b2565-5ef7-46ac-b8fd-b6aff6f93a9d&sktid=067e9632-ea4c-4ed9-9e6d-e294956e284b&skt=2025-03-25T23%3A32%3A48Z&ske=2025-03-26T00%3A32%3A48Z&sks=b&skv=2025-01-05&sig=6HCMQXBZJFvVSNYE%2FdP0E6D9cBTZ1OQfApTR97ccXew%3D",
                     "id": "d565a304-a618-4020-a05b-a245f8177d2d",
                     "name": "35b8b8ba5479a34e905a1b9e212e1cb4a52ec484b969359f2c28f5a00311dbca"
                 }],
-                "download": "http://unittest.localhost/path/geoscience-object/orgs/00000000-0000-0000-0000-0000000004d2/workspaces/00000000-0000-0000-0000-00000000162e/objects/path/A/m.json"
+                "download": "https://unittest.localhost/path/geoscience-object/orgs/00000000-0000-0000-0000-0000000004d2/workspaces/00000000-0000-0000-0000-00000000162e/objects/path/A/m.json"
             }
         }
     ]

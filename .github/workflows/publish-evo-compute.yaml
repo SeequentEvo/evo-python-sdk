@@ -1,0 +1,39 @@
+name: Build and publish evo-compute
+
+permissions:
+  # Required for publishing release artifacts
+  contents: write
+  # Required for PyPI trusted publishing
+  id-token: write
+
+on:
+  release:
+    types: [released]
+
+env:
+  GH_TOKEN: ${{ github.token }}
+
+jobs:
+  run-tests:
+    if: startsWith(github.event.release.tag_name, 'evo-compute@')
+    uses: ./.github/workflows/run-all-tests.yaml
+
+  build-and-publish:
+    name: Build and publish package
+    needs: run-tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/install-uv
+
+      - name: Build package
+        shell: bash
+        run: uv build --package evo-compute
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+
+      - name: Upload artifact to GitHub Release
+        shell: bash
+        run: gh release upload ${{ github.event.release.tag_name }} dist/*
