@@ -28,4 +28,3 @@ Python package notes:
 
 - The version of `numpy` installed must be **less than 1.24**. This is due to the GX toolkit using some numpy features that have been removed in more recent versions.
 - The version of `pyzmq` installed must be **25.1.2**. This is due to a bug in more recent versions that cause the Jupyter notebook kernel to crash in Windows. NOTE: If you are not using Jupyter you can ignore this requirement.
-- A Python wheel (found in the root `geoscience-objects` folder) will install the geoscience object dataclasses written by the Seequent. These dataclasses are used extensive in all Geoscience Object API notebooks. 
