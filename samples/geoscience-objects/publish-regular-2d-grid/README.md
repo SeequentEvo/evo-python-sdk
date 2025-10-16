@@ -12,7 +12,7 @@ Visit the [Geosoft Github page](https://github.com/GeosoftInc) to learn more abo
 
 Geosoft GX for Python is only compatible with Windows-based computers - users of Linux or macOS will not be able to run this notebook or use the toolkit.
 
-TIP: macOS users with an Apple silicon computer (M1 or higher) can install Windows in a virtual environment by using the **free version** of [VMware Fusion Pro](https://blogs.vmware.com/teamfusion/2024/05/fusion-pro-now-available-free-for-personal-use.html).
+TIP: macOS users with an Apple silicon computer (M1 or higher) can install Windows in a virtual environment by using the **free version** of [VMware Fusion Pro](https://blogs.vmware.com/cloud-foundation/2024/11/11/vmware-fusion-and-workstation-are-now-free-for-all-users/).
 
 ### Python versions
 
