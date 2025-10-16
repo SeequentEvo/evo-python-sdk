@@ -83,7 +83,7 @@ Follow the instructions below for [Windows](#windows), [macOS](#macos) or [Linux
 1. Find the local copy of this repository in **Finder**. It will be called **evo-python-sdk-main** if you downloaded as a ZIP file.
 
 1. Open the folder so that you can see it's contents.
-1. On the *Path bar* at the bottom of the window, right-click on **evo-path-sdk-main**.
+1. On the *Path bar* at the bottom of the window, right-click on **evo-python-sdk-main**.
     
     HINT: If the *Path bar* isn't visible, select **Show Path Bar** from the **View** menu.
 
