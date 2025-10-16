@@ -16,9 +16,7 @@ TIP: macOS users with an Apple silicon computer (M1 or higher) can install Windo
 
 ### Python versions
 
-Geosoft GX is compatible with Python versions 3.8 – 3.11.
-
-NOTE: The GX documentation claims that the toolkit is compatible with Python 3.12, but this is not the case.
+Geosoft GX is compatible with Python versions 3.8 or higher.
 
 Th `requirements.txt` file found in the `2d-grids` folder is unique for these examples. In your Python environment use `pip` to install `requirements.txt`, eg.
 
