@@ -134,6 +134,11 @@ NOTE: This example is based on [Ubuntu](https://ubuntu.com), but other Linux env
 
 ### 4. Run the notebooks
 
+> [!TIP]
+> Before running the notebooks, ensure you have access to at least one Evo workspace. Either ask a colleague to add you to an existing workspace, or create one yourself by signing in to the [Evo portal](https://evo.seequent.com/), opening the Workspaces tab and clicking the **Create a workspace** button.
+>
+> <img src="../docs/img/create-workspace.png" alt="Create a workspace" width="550" />
+
 From the **samples** directory, launch Jupyter.
 
 ```bash
