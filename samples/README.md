@@ -232,34 +232,33 @@ Advanced file processing:
 
 ## 🔧 Running a sample
 
-1. **Open the notebook** in your preferred editor
-1. **Update the first cell** with your client ID (and redirect URL if needed)
-1. **Run the authentication cell** - this will open your browser for Bentley ID sign-in
-1. **Select your workspace** using the provided widget
-1. **Continue with the remaining cells** in order
+1. **Open the notebook** in your preferred editor.
+1. **Update the first cell** with your client ID and callback URL.
+1. **Run the authentication cell** - this will open your browser for Bentley ID sign-in.
+1. **Select your organisation, instance and workspace** using the provided widget.
+1. **Continue with the remaining cells** in order.
 
 ## 💡 Tips for success
 
-- **Always start with authentication**: The auth-and-evo-discovery samples are prerequisite for all others
-- **Check platform requirements**: Some geoscience-objects samples are Windows-specific
-- **Use virtual environments**: Keep dependencies isolated for each project
-- **Follow notebook order**: Run cells sequentially for best results
-- **Keep credentials secure**: Never commit tokens or credentials to version control
+- **Always start with authentication**: The **auth-and-evo-discovery** samples are the best place to get started.
+- **Check platform requirements**: Some geoscience-objects samples are Windows-specific.
+- **Use virtual environments**: Keep dependencies isolated for each project.
+- **Follow notebook order**: Run cells sequentially for best results.
+- **Keep credentials secure**: Never commit tokens or credentials to version control.
 
 ## 📖 Additional resources
 
-- [Seequent Developer Portal](https://developer.seequent.com/docs/guides/getting-started/quick-start-guide)
-- [Evo SDK Documentation](../README.md)
+- [Seequent Developer Portal](https://developer.seequent.com/)
 - [Seequent Community](https://community.seequent.com/group/19-evo)
-- [API References](https://developer.seequent.com/)
+- [Evo Python SDK README](../README.md)
 
 ## 🆘 Getting help
 
 If you encounter issues:
-1. Check that you've completed the authentication setup
-2. Verify your Python version (3.10+)
-3. Ensure all requirements are installed
-4. Visit the [Seequent Community](https://community.seequent.com/group/19-evo) for support
-5. Check the [GitHub issues](https://github.com/SeequentEvo/evo-python-sdk/issues) for known problems
+1. Check that you've completed the authentication setup.
+2. Verify your Python version (3.10+).
+3. Ensure all requirements are installed.
+4. Visit the [Seequent Community](https://community.seequent.com/group/19-evo) for support.
+5. Check the [GitHub issues](https://github.com/SeequentEvo/evo-python-sdk/issues) for known problems.
 
 Happy coding with Evo! 🎉
