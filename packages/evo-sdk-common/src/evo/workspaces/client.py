@@ -16,7 +16,7 @@ from pydantic import ValidationError
 from pydantic.type_adapter import TypeAdapter
 
 from evo.common import APIConnector, HealthCheckType, Page, ServiceHealth, ServiceUser
-from evo.common.utils import get_service_health, parse_order_by
+from evo.common.utils import get_metadata_header, get_service_health, parse_order_by
 
 from .data import (
     BasicWorkspace,
@@ -47,6 +47,8 @@ from .endpoints.models import UserRole as PydanticUserRole
 
 WorkspaceOrderByLiteral: TypeAlias = Literal["name", "created_at", "updated_at", "user_role"]
 OrderByOperatorLiteral: TypeAlias = Literal["asc", "desc"]
+
+metadata_header = get_metadata_header("evo-sdk-common")
 
 
 class WorkspaceAPIClient:
@@ -132,6 +134,7 @@ class WorkspaceAPIClient:
             org_id=str(self._org_id),
             workspace_id=str(workspace_id),
             filter_user_id=str(filter_user_id) if filter_user_id else None,
+            additional_headers=metadata_header,
         )
 
         return [self.__parse_user_model(item) for item in response.results]
@@ -141,8 +144,7 @@ class WorkspaceAPIClient:
         workspace_id: UUID,
     ) -> UserRole:
         response = await self._workspaces_api.get_current_user_role(
-            org_id=str(self._org_id),
-            workspace_id=str(workspace_id),
+            org_id=str(self._org_id), workspace_id=str(workspace_id), additional_headers=metadata_header
         )
 
         return self.__parse_user_role_model(response)
@@ -158,6 +160,7 @@ class WorkspaceAPIClient:
             org_id=str(self._org_id),
             workspace_id=str(workspace_id),
             assign_role_request=assign_role_request,
+            additional_headers=metadata_header,
         )
 
         return self.__parse_user_role_model(response)
@@ -171,6 +174,7 @@ class WorkspaceAPIClient:
             org_id=str(self._org_id),
             workspace_id=str(workspace_id),
             user_id=str(user_id),
+            additional_headers=metadata_header,
         )
 
     async def list_workspaces(
@@ -201,6 +205,7 @@ class WorkspaceAPIClient:
             name=name,
             deleted=deleted,
             filter_user_id=str(filter_user_id) if filter_user_id else None,
+            additional_headers=metadata_header,
         )
 
         return Page(
@@ -280,6 +285,7 @@ class WorkspaceAPIClient:
             name=name,
             deleted=deleted,
             filter_user_id=str(filter_user_id) if filter_user_id else None,
+            additional_headers=metadata_header,
         )
 
         return Page(
@@ -291,7 +297,10 @@ class WorkspaceAPIClient:
 
     async def get_workspace(self, workspace_id: UUID, deleted: bool = False) -> Workspace:
         response = await self._workspaces_api.get_workspace(
-            org_id=str(self._org_id), workspace_id=str(workspace_id), deleted=deleted
+            org_id=str(self._org_id),
+            workspace_id=str(workspace_id),
+            deleted=deleted,
+            additional_headers=metadata_header,
         )
         return self.__parse_workspace_model(response)
 
@@ -306,8 +315,7 @@ class WorkspaceAPIClient:
         :returns: An empty response.
         """
         await self._workspaces_api.delete_workspace(
-            org_id=str(self._org_id),
-            workspace_id=str(workspace_id),
+            org_id=str(self._org_id), workspace_id=str(workspace_id), additional_headers=metadata_header
         )
 
     async def create_workspace(
@@ -358,7 +366,9 @@ class WorkspaceAPIClient:
             labels=labels,
         )
         model = await self._workspaces_api.create_workspace(
-            org_id=str(self._org_id), create_workspace_request=create_workspace_request
+            org_id=str(self._org_id),
+            create_workspace_request=create_workspace_request,
+            additional_headers=metadata_header,
         )
         return self.__parse_workspace_model(model)
 
@@ -409,6 +419,9 @@ class WorkspaceAPIClient:
                     "Invalid bounding box coordinates! Ensure that the bounding box coordinate is in the format of [[longitude, latitude], [longitude, latitude], ...]"
                 ) from e
         model = await self._workspaces_api.update_workspace(
-            org_id=str(self._org_id), workspace_id=str(workspace_id), update_workspace_request=update_workspace_request
+            org_id=str(self._org_id),
+            workspace_id=str(workspace_id),
+            update_workspace_request=update_workspace_request,
+            additional_headers=metadata_header,
         )
         return self.__parse_workspace_model(model)

@@ -17,7 +17,7 @@ from uuid import UUID
 from evo import logging
 from evo.common import APIConnector, BaseAPIClient, HealthCheckType, ICache, Page, ServiceHealth
 from evo.common.data import EmptyResponse, Environment, OrderByOperatorEnum
-from evo.common.utils import get_service_health, parse_order_by
+from evo.common.utils import get_metadata_header, get_service_health, parse_order_by
 
 from ..data import ObjectMetadata, ObjectOrderByEnum, ObjectReference, ObjectVersion, OrgObjectMetadata, Stage
 from ..endpoints import MetadataApi, ObjectsApi, StagesApi
@@ -37,6 +37,8 @@ else:
 logger = logging.getLogger("object.client")
 
 __all__ = ["ObjectAPIClient"]
+
+metadata_header = get_metadata_header("evo-objects")
 
 
 class ObjectAPIClient(BaseAPIClient):
@@ -100,6 +102,7 @@ class ObjectAPIClient(BaseAPIClient):
             schema_id=schema_id,
             request_timeout=request_timeout,
             deleted=deleted,
+            additional_headers=metadata_header,
         )
         return parse.page_of_metadata(response, self._environment)
 
@@ -177,6 +180,7 @@ class ObjectAPIClient(BaseAPIClient):
             request_timeout=request_timeout,
             permitted_workspaces_only=True,
             deleted=deleted,
+            additional_headers=metadata_header,
         )
         return parse.page_of_metadata(response, self._environment)
 
@@ -197,6 +201,7 @@ class ObjectAPIClient(BaseAPIClient):
             objects_path=path,
             include_versions=True,
             request_timeout=request_timeout,
+            additional_headers=metadata_header,
         )
         return parse.versions(response)
 
@@ -217,6 +222,7 @@ class ObjectAPIClient(BaseAPIClient):
             object_id=str(object_id),
             include_versions=True,
             request_timeout=request_timeout,
+            additional_headers=metadata_header,
         )
         return parse.versions(response)
 
@@ -310,6 +316,7 @@ class ObjectAPIClient(BaseAPIClient):
             objects_path=path,
             geoscience_object=object_for_upload,
             request_timeout=request_timeout,
+            additional_headers=metadata_header,
         )
         object_dict["uuid"] = result.object_id
         return parse.object_metadata(result, self._environment)
@@ -338,6 +345,7 @@ class ObjectAPIClient(BaseAPIClient):
             objects_path=path,
             geoscience_object=object_for_upload,
             request_timeout=request_timeout,
+            additional_headers=metadata_header,
         )
         return parse.object_metadata(result, self._environment)
 
@@ -364,6 +372,7 @@ class ObjectAPIClient(BaseAPIClient):
             workspace_id=str(self._environment.workspace_id),
             update_geoscience_object=object_for_upload,
             request_timeout=request_timeout,
+            additional_headers=metadata_header,
         )
         return parse.object_metadata(result, self._environment)
 
@@ -440,6 +449,7 @@ class ObjectAPIClient(BaseAPIClient):
                 workspace_id=str(self._environment.workspace_id),
                 request_body=[str(object_id) for object_id in batch_object_ids],
                 request_timeout=request_timeout,
+                additional_headers=metadata_header,
             )
             latest_ids.update({UUID(latest.object_id): latest.version_id for latest in response})
         return latest_ids
@@ -459,7 +469,7 @@ class ObjectAPIClient(BaseAPIClient):
             org_id=str(self._environment.org_id),
             workspace_id=str(self._environment.workspace_id),
             objects_path=path,
-            additional_headers={"Accept-Encoding": "gzip"},
+            additional_headers=metadata_header | {"Accept-Encoding": "gzip"},
             request_timeout=request_timeout,
         )
 
@@ -478,7 +488,7 @@ class ObjectAPIClient(BaseAPIClient):
             org_id=str(self._environment.org_id),
             workspace_id=str(self._environment.workspace_id),
             object_id=str(object_id),
-            additional_headers={"Accept-Encoding": "gzip"},
+            additional_headers=metadata_header | {"Accept-Encoding": "gzip"},
             request_timeout=request_timeout,
         )
 
@@ -499,6 +509,7 @@ class ObjectAPIClient(BaseAPIClient):
             workspace_id=str(self._environment.workspace_id),
             deleted=False,
             request_timeout=request_timeout,
+            additional_headers=metadata_header,
         )
         # If the restore happened without a rename, the response will be empty
         # If the restore happened with a rename, the response will be the metadata of the restored object
@@ -510,7 +521,9 @@ class ObjectAPIClient(BaseAPIClient):
         """List all available stages in the organisation.
 
         :return: A list of all available stages."""
-        response = await self._stages_api.list_stages(org_id=str(self._environment.org_id))
+        response = await self._stages_api.list_stages(
+            org_id=str(self._environment.org_id), additional_headers=metadata_header
+        )
         return [parse.stage(model) for model in response.stages]
 
     async def set_stage(self, object_id: UUID, version_id: int, stage_id: UUID) -> None:
@@ -529,4 +542,5 @@ class ObjectAPIClient(BaseAPIClient):
             workspace_id=str(self._environment.workspace_id),
             metadata_update_body=MetadataUpdateBody(stage_id=stage_id),
             version_id=version_id,
+            additional_headers=metadata_header,
         )

@@ -15,6 +15,7 @@ from uuid import UUID
 
 from data import load_test_data
 from evo.common.test_tools import TestWithConnector, TestWithDownloadHandler, TestWithUploadHandler
+from evo.common.utils import get_metadata_header
 from evo.objects import ObjectDataDownload, ObjectDataUpload, ObjectMetadata
 
 # The test data for these tests does need to be real parquet data, we just need enough content to test
@@ -25,6 +26,8 @@ OBJECT_ID = UUID(int=5)
 VERSION_ID = "123456"
 DATA_NAME = "0000000000000000000000000000000000000000000000000000000000000001"
 INITIAL_URL = "https://unit.test/initial/url"
+
+metadata_header = get_metadata_header("evo-objects")
 
 
 class TestObjectDataDownload(TestWithConnector, TestWithDownloadHandler):
@@ -71,7 +74,9 @@ class TestObjectDataDownload(TestWithConnector, TestWithDownloadHandler):
         # Test that a new URL is generated when the initial URL is used up.
         get_object_response = load_test_data("get_object.json")
         with self.transport.set_http_response(
-            status_code=200, content=json.dumps(get_object_response), headers={"Content-Type": "application/json"}
+            status_code=200,
+            content=json.dumps(get_object_response),
+            headers=metadata_header | {"Content-Type": "application/json"},
         ):
             second = await self.download.get_download_url()
         self.assertEqual(get_object_response["links"]["data"][1]["download_url"], second)
@@ -122,7 +127,9 @@ class TestObjectDataUpload(TestWithConnector, TestWithUploadHandler):
         # Test that a new URL is generated when the initial URL is used up.
         put_data_response = load_test_data("put_data.json")
         with self.transport.set_http_response(
-            status_code=200, content=json.dumps(put_data_response), headers={"Content-Type": "application/json"}
+            status_code=200,
+            content=json.dumps(put_data_response),
+            headers=metadata_header | {"Content-Type": "application/json"},
         ):
             second = await self.upload.get_upload_url()
         self.assertEqual(put_data_response[0]["upload_url"], second)

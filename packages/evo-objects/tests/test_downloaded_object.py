@@ -32,7 +32,7 @@ from evo.common.test_tools import (
     TestWithConnector,
     TestWithStorage,
 )
-from evo.common.utils import NoFeedback
+from evo.common.utils import NoFeedback, get_metadata_header
 from evo.jmespath import JMESPathObjectProxy
 from evo.objects import DownloadedObject, ObjectReference
 from evo.objects.endpoints import models
@@ -55,6 +55,8 @@ _TABLE_INFO_VARIANTS: list[tuple[str, TableInfo | str]] = [
     ),
     ("with JMESPath reference", "locations.coordinates"),
 ]
+
+metadata_header = get_metadata_header("evo-objects")
 
 
 class TestDownloadedObject(TestWithConnector, TestWithStorage):
@@ -135,7 +137,7 @@ class TestDownloadedObject(TestWithConnector, TestWithStorage):
         self.assert_request_made(
             method=RequestMethod.GET,
             path=expected_request_path,
-            headers={"Accept": "application/json", "Accept-Encoding": "gzip"},
+            headers=metadata_header | {"Accept": "application/json", "Accept-Encoding": "gzip"},
         )
         # Check metadata.
         actual_metadata = actual_object.metadata

@@ -24,6 +24,7 @@ from evo.blockmodels.exceptions import CacheNotConfiguredException, JobFailedExc
 from evo.common import ServiceUser
 from evo.common.data import HTTPHeaderDict, RequestMethod
 from evo.common.test_tools import BASE_URL, MockResponse, TestWithConnector, TestWithStorage
+from evo.common.utils import get_metadata_header
 from utils import JobPollingRequestHandler
 
 BM_UUID = uuid.uuid4()
@@ -32,6 +33,8 @@ GOOSE_VERSION_ID = "2"
 DATE = datetime(2021, 1, 1)
 MODEL_USER = models.UserInfo(email="test@test.com", name="Test User", id=uuid.uuid4())
 USER = ServiceUser.from_model(MODEL_USER)
+
+metadata_header = get_metadata_header("evo-blockmodels")
 
 
 def _mock_version(
@@ -171,7 +174,8 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
                 method=RequestMethod.PATCH,
                 path=f"{self.base_path}/block-models/{BM_UUID}/blocks",
                 body=expected_update_body.model_dump(mode="json", exclude_unset=True),
-                headers={
+                headers=metadata_header
+                | {
                     "Authorization": "Bearer <not-a-real-token>",
                     "Content-Type": "application/json",
                     "Accept": "application/json",
@@ -266,7 +270,8 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
                 method=RequestMethod.PATCH,
                 path=f"{self.base_path}/block-models/{BM_UUID}/blocks",
                 body=expected_update_body.model_dump(mode="json", exclude_unset=True),
-                headers={
+                headers=metadata_header
+                | {
                     "Authorization": "Bearer <not-a-real-token>",
                     "Content-Type": "application/json",
                     "Accept": "application/json",

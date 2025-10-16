@@ -16,7 +16,7 @@ from uuid import UUID
 
 from evo import logging
 from evo.common import APIConnector, BaseAPIClient, Environment, HealthCheckType, Page, ServiceHealth, ServiceUser
-from evo.common.utils import get_service_health
+from evo.common.utils import get_metadata_header, get_service_health
 
 from .data import FileMetadata, FileVersion
 from .endpoints import FileV2Api
@@ -26,6 +26,8 @@ from .io import FileAPIDownload, FileAPIUpload
 logger = logging.getLogger("file.client")
 
 __all__ = ["FileAPIClient"]
+
+metadata_header = get_metadata_header("evo-files")
 
 
 def _user_from_model(model: UserInfo | None) -> ServiceUser | None:
@@ -143,6 +145,7 @@ class FileAPIClient(BaseAPIClient):
             limit=limit,
             offset=offset,
             file_name=name,
+            additional_headers=metadata_header,
         )
         return Page(
             offset=offset,
@@ -183,6 +186,7 @@ class FileAPIClient(BaseAPIClient):
             workspace_id=str(self._environment.workspace_id),
             file_path=path,
             version_id=version_id,
+            additional_headers=metadata_header,
         )
         return self._metadata_from_endpoint_model(file_response)
 
@@ -198,6 +202,7 @@ class FileAPIClient(BaseAPIClient):
             workspace_id=str(self._environment.workspace_id),
             file_id=str(file_id),
             version_id=version_id,
+            additional_headers=metadata_header,
         )
         return self._metadata_from_endpoint_model(file_response)
 
@@ -212,6 +217,7 @@ class FileAPIClient(BaseAPIClient):
             workspace_id=str(self._environment.workspace_id),
             file_path=path,
             include_versions=True,
+            additional_headers=metadata_header,
         )
         return _versions_from_listed_versions(file_response.versions)
 
@@ -226,6 +232,7 @@ class FileAPIClient(BaseAPIClient):
             workspace_id=str(self._environment.workspace_id),
             file_id=str(file_id),
             include_versions=True,
+            additional_headers=metadata_header,
         )
         return _versions_from_listed_versions(file_response.versions)
 
@@ -242,6 +249,7 @@ class FileAPIClient(BaseAPIClient):
             workspace_id=str(self._environment.workspace_id),
             file_path=path,
             version_id=version_id,
+            additional_headers=metadata_header,
         )
         metadata = self._metadata_from_endpoint_model(response)
         return FileAPIDownload(connector=self._connector, metadata=metadata, initial_url=response.download)
@@ -259,6 +267,7 @@ class FileAPIClient(BaseAPIClient):
             workspace_id=str(self._environment.workspace_id),
             file_id=str(file_id),
             version_id=version_id,
+            additional_headers=metadata_header,
         )
         metadata = self._metadata_from_endpoint_model(response)
         return FileAPIDownload(connector=self._connector, metadata=metadata, initial_url=response.download)
@@ -274,6 +283,7 @@ class FileAPIClient(BaseAPIClient):
             organisation_id=str(self._environment.org_id),
             workspace_id=str(self._environment.workspace_id),
             file_path=path,
+            additional_headers=metadata_header,
         )
         return FileAPIUpload(
             connector=self._connector,
@@ -295,6 +305,7 @@ class FileAPIClient(BaseAPIClient):
             organisation_id=str(self._environment.org_id),
             workspace_id=str(self._environment.workspace_id),
             file_id=str(file_id),
+            additional_headers=metadata_header,
         )
         return FileAPIUpload(
             connector=self._connector,
@@ -313,6 +324,7 @@ class FileAPIClient(BaseAPIClient):
             organisation_id=str(self._environment.org_id),
             workspace_id=str(self._environment.workspace_id),
             file_path=path,
+            additional_headers=metadata_header,
         )
 
     async def delete_file_by_id(self, file_id: UUID) -> None:
@@ -324,4 +336,5 @@ class FileAPIClient(BaseAPIClient):
             organisation_id=str(self._environment.org_id),
             workspace_id=str(self._environment.workspace_id),
             file_id=str(file_id),
+            additional_headers=metadata_header,
         )

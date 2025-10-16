@@ -13,6 +13,7 @@ from .cache import Cache
 from .data import parse_order_by
 from .feedback import NoFeedback, PartialFeedback, iter_with_fb
 from .health_check import get_service_health, get_service_status
+from .metadata_header import get_metadata_header
 from .retry import BackoffExponential, BackoffIncremental, BackoffLinear, BackoffMethod, Retry, RetryHandler
 
 __all__ = [
@@ -25,6 +26,7 @@ __all__ = [
     "PartialFeedback",
     "Retry",
     "RetryHandler",
+    "get_metadata_header",
     "get_service_health",
     "get_service_status",
     "iter_with_fb",
