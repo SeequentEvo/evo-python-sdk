@@ -46,7 +46,7 @@ Before you get started, make sure you have:
 
 ## Getting started with Evo code samples
 
-For detailed information about the creating Evo apps, the authentication setup, available code samples, and step-by-step guides for working with the Jupyter notebooks, please refer to the [**samples/README.md**](samples/README.md) file. 
+For detailed information about creating Evo apps, the authentication setup, available code samples, and step-by-step guides for working with the Jupyter notebooks, please refer to the [**samples/README.md**](samples/README.md) file. 
 
 This comprehensive guide will walk you through everything required to get started with Evo APIs. 
 
