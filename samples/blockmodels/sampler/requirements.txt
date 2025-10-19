@@ -1,0 +1,7 @@
+ipywidgets
+jupyterlab
+numpy
+pandas
+pyarrow
+uuid 
+evo-sdk

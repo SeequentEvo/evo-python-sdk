@@ -10,7 +10,7 @@ dependencies = [
     "evo-files[aiohttp,notebooks]",
     "evo-colormaps[aiohttp,notebooks]",
     "evo-compute[aiohttp,notebooks]",
-    "jupyter"
+    "jupyter",
 ]
 dynamic = ["readme"]
 
@@ -46,12 +46,12 @@ known-first-party = ["evo"]
 
 [tool.uv.sources]
 evo-sdk-common = { workspace = true }
-evo-blockmodels = { workspace = true }
 evo-colormaps = { workspace = true }
 evo-files = { workspace = true }
 evo-objects = { workspace = true }
 evo-compute = { workspace = true }
 samples = { path = "samples" }
+evo-blockmodels = { workspace = true }
 
 [tool.uv.workspace]
 members = ["packages/*"]
