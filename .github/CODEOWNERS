@@ -1,1 +1,13 @@
+# CODEOWNERS file for defining who is responsible for code in different parts of the repository.
+# More specific rules override general ones.
+
+# Global fallback - all files not covered by specific rules
 * @SeequentEvo/evo-python-sdk-maintainers
+
+# Package-specific maintainers
+packages/evo-blockmodels/     @seequentEvo/blockmodels-maintainers
+packages/evo-colormaps/       @seequentEvo/colormaps-maintainers
+packages/evo-compute/         @seequentEvo/compute-maintainers
+packages/evo-files/           @seequentEvo/files-maintainers
+packages/evo-objects/         @seequentEvo/objects-maintainers
+packages/evo-sdk-common/      @seequentEvo/python-sdk-common-maintainers
