@@ -35,7 +35,7 @@ Because each project is self-contained, contributors must specify maintainers fo
 
 ```
 # Package maintainers for the new project
-packages/evo-mypackage/  @seequentEvo/mypackage-maintainers
+packages/evo-mypackage/  @SeequentEvo/mypackage-maintainers
 ```
 
 Where possible, assign code ownership to a team rather than individuals.
@@ -48,7 +48,6 @@ To ensure your pull request is merged as quickly as possible, please consider th
 * Try to prevent breaking changes and ensure backwards compatibility. If a breaking change is necessary, please call
   them out in your pull request.
 * Reference issues in your pull request if you're closing one.
-* Check the [CODEOWNERS file](.github/CODEOWNERS) and reach out to the owners of the package you plan on introducing changes to, if needed.
 * Ensure your code has been automatically linted.
 * Verify that all tests pass, and write new tests with appropriate code coverage for new code.
 * Verify that all sample code and example notebooks can be run successfully.
