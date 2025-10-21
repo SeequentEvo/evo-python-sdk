@@ -23,4 +23,4 @@ packages/evo-colormaps/       @seequentEvo/colormaps-maintainers
 packages/evo-compute/         @seequentEvo/compute-maintainers
 packages/evo-files/           @seequentEvo/files-maintainers
 packages/evo-objects/         @seequentEvo/objects-maintainers
-packages/evo-sdk-common/      @seequentEvo/sdk-common-maintainers
+packages/evo-sdk-common/      @seequentEvo/python-sdk-common-maintainers
