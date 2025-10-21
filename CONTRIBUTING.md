@@ -29,7 +29,7 @@ We welcome all forms of pull requests, and strive to ensure contributions are re
 Seequent requires that all commits are signed with verified signatures. Please ensure you configure commit signing before creating a pull request. See [the GitHub documentation](https://docs.github.com/en/authentication/managing-commit-signature-verification) for more information.
 
 ### Adding a new project
-A Project is defined as a self-contained piece of functionality. Each new project is in a sub-folder of the `./packages/` folder in this repository. The folder name should match the package name that will be published and contain the source code for that project.
+A project is defined as a self-contained piece of functionality. Each new project is in a sub-folder of the `./packages/` folder in this repository. The folder name should match the package name that will be published and contain the source code for that project.
 
 Because each project is self-contained, contributors must specify maintainers for each new package. These maintainers are responsible for reviewing pull requests, ensuring code quality, maintaining security standards, and providing ongoing project maintenance. Add an entry to the [CODEOWNERS file](.github/CODEOWNERS) in the root directory, for example:
 
