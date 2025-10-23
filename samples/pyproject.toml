@@ -6,7 +6,8 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "evo-schemas>=2025.9.12",
-    "evo-sdk",
+    "evo-blockmodels>=0.0.2",
+    "evo-sdk>=0.1.11",
     "geosoft>=2025.1.1 ; sys_platform == 'windows'",
     "jupyterlab>=4.3.6",
     "pandas>=2.2.3",
@@ -14,6 +15,7 @@ dependencies = [
     "pyarrow>=19.0.1",
     "requests>=2.32.3",
     "uuid>=1.30",
+    "ruff>=0.14.2",
 ]
 
 [project.urls]
