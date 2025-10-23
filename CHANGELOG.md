@@ -1,5 +1,218 @@
 # Changelog
 
+## evo-compute@v0.0.1rc0
+## What's Changed
+### evo-compute
+* Add compute to SDK by @peterv-bentley in https://github.com/SeequentEvo/evo-python-sdk/pull/110
+
+## evo-sdk-common@v0.5.7
+### What's Changed
+#### evo-sdk-common
+* Enable zero-byte uploads for Chunked IO Manager by @Bill-Johnson-Seequent in https://github.com/SeequentEvo/evo-python-sdk/pull/118
+
+#### New Contributors
+* @Bill-Johnson-Seequent made their first contribution in https://github.com/SeequentEvo/evo-python-sdk/pull/118
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-sdk-common@v0.5.6...evo-sdk-common@v0.5.7
+
+## evo-objects@v0.3.1
+### What's Changed
+#### evo-objects
+* Fix/parquet loader load array by @wordsworthc in https://github.com/SeequentEvo/evo-python-sdk/pull/117
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-objects@v0.3.0...evo-objects@v0.3.1
+
+## evo-sdk-common@v0.5.6
+### What's Changed
+#### evo-sdk-common
+* Feat/jmespath proxy search by @wordsworthc in https://github.com/SeequentEvo/evo-python-sdk/pull/116
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-sdk-common@0.5.5...evo-sdk-common@v0.5.6
+
+## evo-sdk@v0.1.10
+### What's Changed
+#### evo-sdk
+* Update README with evo-blockmodels details by @GriffinBaxterSeequent in https://github.com/SeequentEvo/evo-python-sdk/pull/111
+* Make OAuthConnector retry token requests that respond with 502 or 504 by @jonny-norwine in https://github.com/SeequentEvo/evo-python-sdk/pull/112
+* Bump evo-sdk and evo-sdk-common versions by @GriffinBaxterSeequent in https://github.com/SeequentEvo/evo-python-sdk/pull/115
+
+#### New Contributors
+* @jonny-norwine made their first contribution in https://github.com/SeequentEvo/evo-python-sdk/pull/112
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-sdk@0.1.9...evo-sdk@v0.1.10
+
+## evo-sdk-common@v0.5.5
+### What's Changed
+#### evo-sdk-common
+* Make OAuthConnector retry token requests that respond with 502 or 504 by @jonny-norwine in https://github.com/SeequentEvo/evo-python-sdk/pull/112
+
+#### New Contributors
+* @jonny-norwine made their first contribution in https://github.com/SeequentEvo/evo-python-sdk/pull/112
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-sdk-common@0.5.4...evo-sdk-common@0.5.5
+
+## evo-objects@v0.3.0
+### What's Changed
+#### evo-objects
+* Feat/improving object download by @wordsworthc in https://github.com/SeequentEvo/evo-python-sdk/pull/113
+  * Add `ObjectReference` type for structured URL references
+  * Add `DownloadedObject.from_reference()` constructor
+  * Add `DownloadedObject.search()` method for JMESPath queries
+  * Add `DownloadedObject.download_table()`, `DownloadedObject.download_dataframe()`, and `DownloadedObject.download_array()` methods for downloading parquet data
+  * Deprecate `KnownTableFormat.load_table()` in favor of the `ParquetLoader` utility class
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-objects@v0.2.3...evo-objects@v0.3.0
+
+## evo-sdk@v0.1.9
+### What's Changed
+#### evo-sdk
+* Added a new `evo.jmespath` module to `evo-sdk-common`
+  * `JMESPathArrayProxy` and `JMESPathObjectProxy` - wrappers around `Sequence[T]` and `Mapping[str, T]` objects respecively, adding support for:
+    * JMESPath expressions via `__getitem__()`
+      * `__getitem__()` returns a `JMESPathArrayProxy` instance where the result would be a `Sequence`
+      * `__getitem__()` returns a `JMESPathObjectProxy` instance where the result would be a `Mapping`
+    * a `json_dumps(*args, **kwargs)` method that is `json.dumps(*args, **kwargs)`, except the default encoder also serializes `mappingproxy` and `UUID` instances.
+    * a `__repr__()` method that pretty-prints the data with indentation, via `json_dumps()`
+  * a `proxy()` method that wraps `Sequence` and `Mapping` values in a `JMESPathArrayProxy` or `JMESPathObjectProxy` respectively. All other types are returned unmodified.
+  * a custom `ParsedResult` (extending `jmespath.parser.ParsedResult` that passes the search result through `proxy()`
+  * a `compile()` method that wraps `jmespath.compile()`, transforming the result into an `evo.jmespath.ParsedResult`
+  * a `search()` method that is identical to `jmespath.search()`, except it uses `evo.jmespath.compile().search()`
+  * `JMESPathError` is exposed here as a matter of convenience
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-sdk@v0.1.8...evo-sdk@0.1.9
+
+## evo-sdk-common@v0.5.4
+### What's Changed
+#### evo-sdk-common
+* Added a new `evo.jmespath` module to `evo-sdk-common`
+  * `JMESPathArrayProxy` and `JMESPathObjectProxy` - wrappers around `Sequence[T]` and `Mapping[str, T]` objects respecively, adding support for:
+    * JMESPath expressions via `__getitem__()`
+      * `__getitem__()` returns a `JMESPathArrayProxy` instance where the result would be a `Sequence`
+      * `__getitem__()` returns a `JMESPathObjectProxy` instance where the result would be a `Mapping`
+    * a `json_dumps(*args, **kwargs)` method that is `json.dumps(*args, **kwargs)`, except the default encoder also serializes `mappingproxy` and `UUID` instances.
+    * a `__repr__()` method that pretty-prints the data with indentation, via `json_dumps()`
+  * a `proxy()` method that wraps `Sequence` and `Mapping` values in a `JMESPathArrayProxy` or `JMESPathObjectProxy` respectively. All other types are returned unmodified.
+  * a custom `ParsedResult` (extending `jmespath.parser.ParsedResult` that passes the search result through `proxy()`
+  * a `compile()` method that wraps `jmespath.compile()`, transforming the result into an `evo.jmespath.ParsedResult`
+  * a `search()` method that is identical to `jmespath.search()`, except it uses `evo.jmespath.compile().search()`
+  * `JMESPathError` is exposed here as a matter of convenience
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-sdk-common@v0.5.3...evo-sdk-common@0.5.4
+
+## evo-sdk@v0.1.8
+### What's Changed
+#### evo-sdk
+* Add blockmodel to SDK by @peterv-bentley in https://github.com/SeequentEvo/evo-python-sdk/pull/108
+
+## New Contributors
+* @peterv-bentley made their first contribution in https://github.com/SeequentEvo/evo-python-sdk/pull/108
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-sdk@v0.1.7...evo-sdk@v0.1.8
+
+## evo-blockmodels@v0.0.1
+### What's Changed
+#### evo-blockmodels
+* Add blockmodel to SDK by @peterv-bentley in https://github.com/SeequentEvo/evo-python-sdk/pull/108
+
+#### New Contributors
+* @peterv-bentley made their first contribution in https://github.com/SeequentEvo/evo-python-sdk/pull/108
+
+## evo-sdk@v0.1.7
+### What's Changed
+#### evo-sdk
+* Add ColormapAPIClient by @tim-hamblin-seequent in https://github.com/SeequentEvo/evo-python-sdk/pull/107
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-sdk@v0.1.6...evo-sdk@v0.1.7
+
+## evo-sdk@v0.1.6
+### What's Changed
+#### evo-sdk
+* Extensible oauth scopes by @wordsworthc in https://github.com/SeequentEvo/evo-python-sdk/pull/97
+* Update auto-generated code for workspaces API by @chriscunningham-seequent in https://github.com/SeequentEvo/evo-python-sdk/pull/102
+* Update generated code to use latest workspaces openapi spec by @chriscunningham-seequent in https://github.com/SeequentEvo/evo-python-sdk/pull/103
+* Folders schema update to support 200 response from path create by @chriscunningham-seequent in https://github.com/SeequentEvo/evo-python-sdk/pull/104
+* Minor documentation improvements by @l-macdonald in https://github.com/SeequentEvo/evo-python-sdk/pull/105
+* Stages support by @tim-hamblin-seequent in https://github.com/SeequentEvo/evo-python-sdk/pull/106
+
+#### New Contributors
+* @tim-hamblin-seequent made their first contribution in https://github.com/SeequentEvo/evo-python-sdk/pull/106
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-sdk@v0.1.5...evo-sdk@v0.1.6
+
+## evo-objects@v0.2.3
+### What's Changed
+#### evo-objects
+* Stages support by @tim-hamblin-seequent in https://github.com/SeequentEvo/evo-python-sdk/pull/106
+
+#### New Contributors
+* @tim-hamblin-seequent made their first contribution in https://github.com/SeequentEvo/evo-python-sdk/pull/106
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-objects@v0.2.2...evo-objects@v0.2.3
+
+## evo-colormaps@v0.0.1
+### What's Changed
+#### evo-colormaps
+* Add ColormapAPIClient by @tim-hamblin-seequent in https://github.com/SeequentEvo/evo-python-sdk/pull/107
+
+## evo-sdk-common@v0.5.3
+### What's Changed
+#### evo-sdk-common
+* Folders schema update to support 200 response from path create by @chriscunningham-seequent in https://github.com/SeequentEvo/evo-python-sdk/pull/104
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-sdk-common@v0.5.2...evo-sdk-common@v0.5.3
+
+## evo-sdk-common@v0.5.2
+### What's Changed
+#### evo-sdk-common
+* Update generated code to use latest workspaces openapi spec by @chriscunningham-seequent in https://github.com/SeequentEvo/evo-python-sdk/pull/103
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-sdk-common@v0.5.1...evo-sdk-common@v0.5.2
+
+## evo-sdk-common@v0.5.1
+## What's Changed
+### evo-sdk-common
+* Update auto-generated code for workspaces API by @chriscunningham-seequent in https://github.com/SeequentEvo/evo-python-sdk/pull/102
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-sdk-common@v0.5.0...evo-sdk-common@v0.5.1
+
+## evo-sdk-common@v0.5.0
+### What's Changed
+#### evo-sdk-common
+* Accept custom OAuth scopes by @wordsworthc in https://github.com/SeequentEvo/evo-python-sdk/pull/97
+  * Renamed `OAuthScopes` -> `EvoScopes`
+  * `OAuthScopes` kept as an alias to `EvoScopes` for backwards compatibility
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-sdk-common@v0.4.5...evo-sdk-common@v0.5.0
+
+## evo-sdk@v0.1.5
+### What's Changed
+#### evo-sdk
+* Add support for deleted flag in listings, and specific Gone exception by @chriscunningham-seequent in https://github.com/SeequentEvo/evo-python-sdk/pull/95
+* Add support for configuring the close grace period for AioTransport by @chriscunningham-seequent in https://github.com/SeequentEvo/evo-python-sdk/pull/99
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-sdk@v0.1.4...evo-sdk@v0.1.5
+
+## evo-sdk-common@v0.4.5
+### What's Changed
+#### evo-sdk-common
+* Add support for configuring the close grace period for AioTransport by @chriscunningham-seequent in https://github.com/SeequentEvo/evo-python-sdk/pull/99
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-sdk-common@v0.4.4...evo-sdk-common@v0.4.5
+
+## evo-sdk-common@v0.4.4
+### What's Changed
+#### evo-sdk-common
+* Add support for deleted flag in listings, and specific Gone exception by @chriscunningham-seequent in https://github.com/SeequentEvo/evo-python-sdk/pull/95
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-sdk-common@v0.4.3...evo-sdk-common@v0.4.4
+
+## evo-objects@v0.2.2
+### What's Changed
+#### evo-objects
+* Add support for deleted flag in listings, and specific Gone exception by @chriscunningham-seequent in https://github.com/SeequentEvo/evo-python-sdk/pull/95
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-objects@v0.2.1...evo-objects@v0.2.2
+
 ## evo-sdk@v0.1.4
 ### What's Changed
 #### evo-sdk-common
@@ -163,7 +376,7 @@
 * Add PyPI version badges to readmes by @robbieaverill in https://github.com/SeequentEvo/evo-python-sdk/pull/41
 * Add export for assets in evo.notebooks, bump version by @robbieaverill in https://github.com/SeequentEvo/evo-python-sdk/pull/44
 
-**Full changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-sdk-common@v0.1.1...evo-sdk-comon@v0.1.2
+**Full changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-sdk-common@v0.1.1...evo-sdk-common@v0.1.2
 
 ## evo-sdk-common@v0.1.1
 ### What's changed
