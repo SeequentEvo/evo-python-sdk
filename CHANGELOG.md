@@ -1,5 +1,25 @@
 # Changelog
 
+## evo-sdk@v0.1.11
+### What's changed
+#### evo-sdk
+* Fix model_type parameter being excluded from the API requests and fix the sample notebook by @BenLewis-Seequent in https://github.com/SeequentEvo/evo-python-sdk/pull/124
+
+**Full changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-sdk@v0.1.10...evo-sdk@v0.1.11
+
+#### New Contributors
+* @BenLewis-Seequent made their first contribution in https://github.com/SeequentEvo/evo-python-sdk/pull/124
+
+## evo-blockmodels@v0.0.2
+### What's changed
+#### evo-blockmodels
+* Fix model_type parameter being excluded from the API requests and fix the sample notebook by @BenLewis-Seequent in https://github.com/SeequentEvo/evo-python-sdk/pull/124
+
+**Full changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-blockmodels@v0.0.1...evo-blockmodels@v0.0.2
+
+#### New Contributors
+* @BenLewis-Seequent made their first contribution in https://github.com/SeequentEvo/evo-python-sdk/pull/124
+
 ## evo-compute@v0.0.1rc0
 ## What's Changed
 ### evo-compute

@@ -56,6 +56,7 @@ def _mock_create_result(environment) -> models.BlockModelAndJobURL:
         model_origin=models.Location(x=0, y=0, z=0),
         normalized_rotation=[0, 20, 0],
         size_options=models.SizeOptionsRegular(
+            model_type="regular",
             n_blocks=models.Size3D(nx=10, ny=10, nz=10),
             block_size=models.BlockSize(x=1, y=1, z=1),
         ),

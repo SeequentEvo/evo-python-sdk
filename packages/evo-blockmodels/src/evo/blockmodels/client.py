@@ -164,6 +164,7 @@ class BlockModelAPIClient(BaseAPIClient):
         match grid_definition:
             case RegularGridDefinition(n_blocks=n_blocks, block_size=block_size):
                 size_option = SizeOptionsRegular(
+                    model_type="regular",
                     n_blocks=Size3D(nx=n_blocks[0], ny=n_blocks[1], nz=n_blocks[2]),
                     block_size=BlockSize(x=block_size[0], y=block_size[1], z=block_size[2]),
                 )
@@ -188,8 +189,6 @@ class BlockModelAPIClient(BaseAPIClient):
                 ],
                 size_options=size_option,
             ),
-            # We are setting both of the 'object_path' and 'coordinate_reference_system' fields, which are in preview.
-            additional_headers={"API-Preview": "opt-in"},
         )
         job_id = _job_id_from_url(create_result.job_url)
         job_status = await self._poll_job_url(create_result.bm_uuid, job_id)
@@ -427,6 +426,7 @@ class BlockModelAPIClient(BaseAPIClient):
                 version_uuid=version_uuid,
                 geometry_columns=geometry_columns,
                 output_options=OutputOptionsParquet(
+                    file_format="parquet",
                     column_headers=column_headers,
                     exclude_null_rows=exclude_null_rows,
                 ),

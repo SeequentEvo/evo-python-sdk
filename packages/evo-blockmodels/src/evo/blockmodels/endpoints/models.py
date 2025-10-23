@@ -516,7 +516,7 @@ class Size3D(CustomBaseModel):
 
 
 class SizeOptionsFlexible(CustomBaseModel):
-    model_type: Literal["flexible"] = Field("flexible", title="Model Type")
+    model_type: Literal["flexible"] = Field(title="Model Type")
     """
     Type of sub-blocking
     """
@@ -535,7 +535,7 @@ class SizeOptionsFlexible(CustomBaseModel):
 
 
 class SizeOptionsFullySubBlocked(CustomBaseModel):
-    model_type: Literal["fully-sub-blocked"] = Field("fully-sub-blocked", title="Model Type")
+    model_type: Literal["fully-sub-blocked"] = Field(title="Model Type")
     """
     Type of sub-blocking
     """
@@ -554,7 +554,7 @@ class SizeOptionsFullySubBlocked(CustomBaseModel):
 
 
 class SizeOptionsOctree(CustomBaseModel):
-    model_type: Literal["variable-octree"] = Field("variable-octree", title="Model Type")
+    model_type: Literal["variable-octree"] = Field(title="Model Type")
     """
     Type of sub-blocking
     """
@@ -577,7 +577,7 @@ class SizeOptionsRegular(CustomBaseModel):
     """
     Block size
     """
-    model_type: Literal["regular"] = Field("regular", title="Model Type")
+    model_type: Literal["regular"] = Field(title="Model Type")
     """
     Type of sub-blocking
     """
