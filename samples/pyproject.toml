@@ -3,10 +3,10 @@ name = "samples"
 version = "0.0.1"
 description = "Code samples for the Seequent Evo Python SDK"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.10,<3.13"
 dependencies = [
     "evo-schemas>=2025.9.12",
-    "evo-sdk",
+    "evo-sdk>=0.1.11",
     "geosoft>=2025.1.1 ; sys_platform == 'windows'",
     "jupyterlab>=4.3.6",
     "pandas>=2.2.3",
