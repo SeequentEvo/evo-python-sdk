@@ -70,18 +70,18 @@ Follow the instructions below for [Windows](#windows), [macOS](#macos) or [Linux
     powershell -ExecutionPolicy Bypass -c "irm https://astral.sh/uv/$(Get-Content ./UV_VERSION)/install.ps1 | iex"
     ```
 
-1. Set up your environment by moving to the **samples** directory and installing the Python dependencies.
+1. Move to the **samples** directory.
     ```pwsh
-    # Move to the samples directory
     cd samples
-
-    # Install the dependencies
+    ```
+    
+1. Install the Python dependencies.
+    ```pwsh
     uv sync
     ```
 
 ### macOS
 1. Find the local copy of this repository in **Finder**. It will be called **evo-python-sdk-main** if you downloaded as a ZIP file.
-
 1. Open the folder so that you can see it's contents.
 1. On the *Path bar* at the bottom of the window, right-click on **evo-python-sdk-main**.
     
@@ -93,18 +93,18 @@ Follow the instructions below for [Windows](#windows), [macOS](#macos) or [Linux
 
     <img src="../docs/img/open-terminal-mac2.png" alt="Right-click the folder on macOS" width="400" />
 
-1. Enter the following command to install `uv`.
+1. Enter the following command from the root directory of the repository to install `uv`.
     ```bash
-    # From the root directory of the repository
     ./scripts/install-uv.sh
     ```
 
-1. Set up your environment by moving to the **samples** directory and installing the Python dependencies.
+1. Move to the **samples** directory.
     ```bash
-    # Move to the samples directory
     cd samples
+    ```
 
-    # Install the dependencies
+1. Install the Python dependencies.
+    ```bash
     uv sync
     ```
 
@@ -117,18 +117,18 @@ NOTE: This example is based on [Ubuntu](https://ubuntu.com), but other Linux env
 
     <img src="../docs/img/open-terminal-ubuntu.png" alt="Open a terminal on Windows" width="600" />
 
-1. Enter the following command to install `uv`.
+1. Enter the following command from the root directory of the repository to install `uv`.
     ```bash
-    # From the root directory of the repository
     ./scripts/install-uv.sh
     ```
 
-1. Set up your environment by moving to the **samples** directory and installing the Python dependencies.
+1. Move to the **samples** directory.
     ```bash
-    # Move to the samples directory
     cd samples
+    ```
 
-    # Install the dependencies
+1. Install the Python dependencies
+    ```bash
     uv sync
     ```
 
@@ -146,8 +146,10 @@ From the **samples** directory, launch Jupyter.
 
 ```bash
 uv run jupyter notebook
-# or if using VS Code, simply open the .ipynb files
 ```
+
+> [!TIP]
+> If you are using VS Code or another Python IDE, simply open one of the `.ipynb` files.
 
 Jupyter will list everything in the **samples** directory, and you can click to browse each section.
 
