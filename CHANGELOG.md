@@ -1,5 +1,19 @@
 # Changelog
 
+## evo-sdk@v0.1.12
+### What's changed
+#### evo-sdk
+* Add DownloadedObject.update method to conveniently update an existing geoscience object by @BenLewis-Seequent in https://github.com/SeequentEvo/evo-python-sdk/pull/134
+
+**Full changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-sdk@v0.1.11...evo-sdk@v0.1.12
+
+## evo-objects@v0.3.2
+### What's changed
+#### evo-objects
+* Add DownloadedObject.update method to conveniently update an existing geoscience object by @BenLewis-Seequent in https://github.com/SeequentEvo/evo-python-sdk/pull/134
+
+**Full changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-objects@v0.3.1...evo-objects@v0.3.2
+
 ## evo-sdk@v0.1.11
 ### What's changed
 #### evo-sdk

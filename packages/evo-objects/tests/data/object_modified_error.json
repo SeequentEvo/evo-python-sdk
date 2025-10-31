@@ -1,0 +1,6 @@
+{
+    "status": 412,
+    "title": "Object Modified.",
+    "type": "https://seequent.com/error-codes/geoscienceobject/objects/modified",
+    "detail": "Specified object version is stale."
+}

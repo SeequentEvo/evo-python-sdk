@@ -10,6 +10,7 @@
 #  limitations under the License.
 
 import contextlib
+import copy
 import json
 from collections.abc import Generator
 from typing import cast
@@ -36,6 +37,7 @@ from evo.common.utils import NoFeedback
 from evo.jmespath import JMESPathObjectProxy
 from evo.objects import DownloadedObject, ObjectReference
 from evo.objects.endpoints import models
+from evo.objects.exceptions import ObjectModifiedError
 from evo.objects.io import _CACHE_SCOPE
 from evo.objects.parquet import TableInfo
 from evo.objects.utils import KnownTableFormat
@@ -159,6 +161,65 @@ class TestDownloadedObject(TestWithConnector, TestWithStorage):
         )
         actual_result = self.object.search("bounding_box | {x: [min_x, max_x], y: [min_y, max_y], z: [min_z, max_z]}")
         self.assertEqual(expected_result, actual_result)
+
+    @parameterized.expand(
+        [
+            ("pass UUID", True, False),
+            ("omit UUID", False, False),
+            ("pass UUID with conflict check", True, True),
+        ]
+    )
+    async def test_update(self, _label: str, pass_uuid: bool, check_for_conflict: bool) -> None:
+        """Test updating a geoscience object succeeds."""
+        post_object_response = load_test_data("get_object.json")
+        post_object_response["version_id"] = "2"
+
+        updated_pointset = post_object_response["object"]
+
+        updated_pointset_parameter = copy.deepcopy(updated_pointset)
+        if not pass_uuid:
+            del updated_pointset_parameter["uuid"]
+
+        with self.transport.set_http_response(status_code=201, content=json.dumps(post_object_response)):
+            new_object = await self.object.update(updated_pointset_parameter, check_for_conflict=check_for_conflict)
+
+        headers = {"Accept": "application/json", "Content-Type": "application/json"}
+        if check_for_conflict:
+            headers["If-Match"] = self.object.metadata.version_id
+        self.assert_request_made(
+            method=RequestMethod.POST,
+            path=f"{_OBJECTS_URL}/{self.object.metadata.id}",
+            headers=headers,
+            body=updated_pointset,
+        )
+        # Check metadata.
+        actual_metadata = new_object.metadata
+        self.assertEqual(self.object.metadata.id, actual_metadata.id)
+        self.assertEqual("2", actual_metadata.version_id)
+
+        self.maxDiff = None
+
+        # Check geoscience object.
+        actual_pointset = new_object.as_dict()
+        # Convert UUID in actual_pointset to a string, to make it consistent with updated_pointset
+        actual_pointset["uuid"] = str(actual_pointset["uuid"])
+        self.assertEqual(updated_pointset, actual_pointset)
+
+    async def test_update_wrong_uuid(self):
+        """Test updating a geoscience object fails when the object ID in the new object does not match the current object ID."""
+        updated_pointset = load_test_data("get_object.json")["object"]
+        updated_pointset["uuid"] = "00000000-0000-0000-0000-000000000003"
+        with self.assertRaises(ValueError, msg="The object ID in the new object does not match the current object ID"):
+            await self.object.update(updated_pointset)
+
+    async def test_update_with_conflict(self):
+        """Test updating a geoscience object fails when there is a new version on the server."""
+        updated_pointset = load_test_data("get_object.json")["object"]
+        response = load_test_data("object_modified_error.json")
+
+        with self.transport.set_http_response(status_code=412, content=json.dumps(response)):
+            with self.assertRaises(ObjectModifiedError):
+                await self.object.update(updated_pointset, check_for_conflict=True)
 
     def _assert_optional_method(self, method_name: str, *, unload: list[str], no_import: list[str]) -> None:
         # Verify the method exists before unloading any modules.

@@ -65,3 +65,12 @@ class ObjectAlreadyExistsError(CustomTypedError):
         if existing_id := self.existing_id:
             error_message += f"\nExisting ID: {existing_id}"
         return error_message
+
+
+class ObjectModifiedError(CustomTypedError):
+    """The object has been modified.
+
+    Thia occurs when using the "If-Match" header with an outdated version.
+    """
+
+    TYPE_ID = "/geoscienceobject/objects/modified"
