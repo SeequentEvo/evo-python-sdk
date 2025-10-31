@@ -15,10 +15,12 @@ except ImportError:
     raise ImportError("The 'pyarrow' package is required to use ParquetLoader") from None
 
 from .loader import ParquetDownloader, ParquetLoader
-from .types import ArrayTableInfo, LookupTableInfo, TableInfo
+from .types import ArrayTableInfo, AttributeInfo, CategoryInfo, LookupTableInfo, TableInfo
 
 __all__ = [
     "ArrayTableInfo",
+    "AttributeInfo",
+    "CategoryInfo",
     "LookupTableInfo",
     "ParquetDownloader",
     "ParquetLoader",

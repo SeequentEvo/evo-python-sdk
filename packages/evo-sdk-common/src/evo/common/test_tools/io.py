@@ -130,6 +130,28 @@ class DownloadRequestHandler(AbstractTestRequestHandler):
                 return self.not_found()
 
 
+class MultiDownloadRequestHandler(AbstractTestRequestHandler):
+    """A request handler that can handle multiple download URLs."""
+
+    def __init__(self, data: dict[str, bytes]) -> None:
+        self._handlers: dict[str, DownloadRequestHandler] = {
+            url: DownloadRequestHandler(file_data) for url, file_data in data.items()
+        }
+
+    async def request(
+        self,
+        method: RequestMethod,
+        url: str,
+        headers: HTTPHeaderDict | None = None,
+        post_params: list[tuple[str, str | bytes]] | None = None,
+        body: object | str | bytes | None = None,
+        request_timeout: int | float | tuple[int | float, int | float] | None = None,
+    ) -> MockResponse:
+        if url not in self._handlers:
+            return self.not_found()
+        return await self._handlers[url].request(method, url, headers, post_params, body, request_timeout)
+
+
 class TestWithDownloadHandler(unittest.IsolatedAsyncioTestCase, TestWithStorage):
     def setUp(self) -> None:
         super().setUp()

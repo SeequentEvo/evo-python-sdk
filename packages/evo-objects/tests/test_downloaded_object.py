@@ -12,11 +12,13 @@
 import contextlib
 import json
 from collections.abc import Generator
-from typing import cast
+from typing import Any, cast
 from unittest import mock
 from urllib.parse import quote
 from uuid import UUID
 
+import numpy as np
+import pandas as pd
 import pyarrow as pa
 from numpy.testing import assert_array_equal
 from pandas.testing import assert_frame_equal
@@ -29,6 +31,7 @@ from evo.common.test_tools import (
     ORG,
     WORKSPACE_ID,
     DownloadRequestHandler,
+    MultiDownloadRequestHandler,
     TestWithConnector,
     TestWithStorage,
 )
@@ -39,7 +42,7 @@ from evo.objects.endpoints import models
 from evo.objects.io import _CACHE_SCOPE
 from evo.objects.parquet import TableInfo
 from evo.objects.utils import KnownTableFormat
-from helpers import NoImport, UnloadModule, get_sample_table_and_bytes
+from helpers import NoImport, UnloadModule, assign_property, get_sample_table_and_bytes, write_table_to_bytes
 
 _OBJECTS_URL = f"{BASE_URL.rstrip('/')}/geoscience-object/orgs/{ORG.id}/workspaces/{WORKSPACE_ID}/objects"
 
@@ -55,6 +58,9 @@ _TABLE_INFO_VARIANTS: list[tuple[str, TableInfo | str]] = [
     ),
     ("with JMESPath reference", "locations.coordinates"),
 ]
+
+
+_category_dtype = pd.CategoricalDtype(categories=["NULL", "A", "B", "C"], ordered=False)
 
 
 class TestDownloadedObject(TestWithConnector, TestWithStorage):
@@ -263,6 +269,78 @@ class TestDownloadedObject(TestWithConnector, TestWithStorage):
 
         self.assertEqual(sample_table, actual_table)
 
+    def _set_property(self, expression: str, value: Any) -> None:
+        obj = self.object.as_dict()
+        assign_property(obj, expression, value)
+        self.object._object = models.GeoscienceObject.model_validate(obj)
+
+    def _setup_table(self, expression: str, table: pa.Table):
+        self.object._cache = None  # Disable the cache for this test.
+
+        # Change the number of rows in the object to match the data
+        self._set_property(f"{expression}.length", table.num_rows)
+        url = self.object._urls_by_name[self.object.search(f"{expression}.data")]
+        payload_bytes = write_table_to_bytes(table)
+        download_handler = DownloadRequestHandler(data=payload_bytes)
+        self.transport.set_request_handler(download_handler)
+        return url, payload_bytes
+
+    def _setup_category(self, attribute: str):
+        table = pa.Table.from_pydict(
+            {
+                "key": pa.array([0, 1, 2, 100], type=pa.int32()),
+                "category": pa.array(["NULL", "A", "B", "C"], type=pa.string()),
+            }
+        )
+        values = pa.Table.from_pydict(
+            {
+                "value": pa.array([0, 1, 2, 1, 100, 101, None], type=pa.int32()),
+            }
+        )
+
+        table_url, table_bytes = self._setup_table(f"{attribute}.table", table)
+        values_url, values_bytes = self._setup_table(f"{attribute}.values", values)
+        self.transport.set_request_handler(
+            MultiDownloadRequestHandler(
+                {
+                    table_url: table_bytes,
+                    values_url: values_bytes,
+                }
+            )
+        )
+
+    async def test_download_table_nan_values(self):
+        values_path = "locations.attributes[1].values"
+        values = pa.Table.from_pydict(
+            {
+                "value": pa.array([0.2, None, 3.4, 5.3, 2.0, None], type=pa.float64()),
+            }
+        )
+        self._setup_table(values_path, values)
+
+        actual_table = await self.object.download_table(values_path, nan_values=[3.4, 2.0])
+
+        expected_table = pa.Table.from_pydict(
+            {
+                "value": pa.array([0.2, None, None, 5.3, None, None], type=pa.float64()),
+            }
+        )
+        self.assertEqual(actual_table, expected_table)
+
+    async def test_download_table_column_names(self):
+        with self._patch_downloading_table_in_memory("locations.coordinates") as sample_table:
+            actual_table = await self.object.download_table("locations.coordinates", column_names=["XC", "YC", "ZC"])
+
+        expected_table = sample_table.rename_columns(["XC", "YC", "ZC"])
+        self.assertEqual(expected_table, actual_table)
+
+    async def test_download_attribute_table(self):
+        with self._patch_downloading_table_in_memory("locations.attributes[1].values") as sample_table:
+            actual_table = await self.object.download_attribute_table("locations.attributes[1]")
+
+        expected_table = sample_table.rename_columns(["InvRes"])
+        self.assertEqual(expected_table, actual_table)
+
     def test_download_table_is_optional(self) -> None:
         """Test that the download_table method is not available when pyarrow is not installed."""
         self._assert_optional_method("download_table", unload=["evo.objects.parquet.loader"], no_import=["pyarrow"])
@@ -289,6 +367,133 @@ class TestDownloadedObject(TestWithConnector, TestWithStorage):
 
         expected_dataframe = sample_table.to_pandas()
         assert_frame_equal(expected_dataframe, actual_dataframe)
+
+    async def test_download_dataframe_nan_values(self):
+        values_path = "locations.attributes[1].values"
+        values = pa.Table.from_pydict(
+            {
+                "value": pa.array([0.2, None, 3.4, 5.3, 2.0, None], type=pa.float64()),
+            }
+        )
+        self._setup_table(values_path, values)
+
+        actual_dataframe = await self.object.download_dataframe(values_path, nan_values=[0.2, 0.1, 2.0])
+
+        expected_dataframe = pd.DataFrame({"value": [np.nan, np.nan, 3.4, 5.3, np.nan, np.nan]})
+        assert_frame_equal(expected_dataframe, actual_dataframe)
+
+    async def test_download_dataframe_column_names(self):
+        with self._patch_downloading_table_in_memory("locations.coordinates") as sample_table:
+            actual_dataframe = await self.object.download_dataframe(
+                "locations.coordinates", column_names=["XC", "YC", "ZC"]
+            )
+
+        expected_dataframe = sample_table.to_pandas()
+        expected_dataframe.columns = ["XC", "YC", "ZC"]
+        assert_frame_equal(expected_dataframe, actual_dataframe)
+
+    async def test_download_attribute_dataframe(self):
+        with self._patch_downloading_table_in_memory("locations.attributes[1].values") as sample_table:
+            actual_dataframe = await self.object.download_attribute_dataframe("locations.attributes[1]")
+
+        expected_dataframe = sample_table.to_pandas()
+        expected_dataframe.columns = ["InvRes"]
+        assert_frame_equal(expected_dataframe, actual_dataframe)
+
+    @parameterized.expand(
+        [
+            (
+                "no nan values",
+                None,
+                None,
+                pd.DataFrame({"value": ["NULL", "A", "B", "A", "C", pd.NA, pd.NA]}, dtype=_category_dtype),
+            ),
+            (
+                "list of nan values",
+                [0, 2],
+                None,
+                pd.DataFrame({"value": [pd.NA, "A", pd.NA, "A", "C", pd.NA, pd.NA]}, dtype=_category_dtype),
+            ),
+            (
+                "JMESPath nan description",
+                "locations.attributes[0].nan_description",
+                None,
+                pd.DataFrame({"value": [pd.NA, "A", "B", "A", "C", pd.NA, pd.NA]}, dtype=_category_dtype),
+            ),
+            (
+                "JMESPath nan description predicate",
+                "locations.attributes[?name == 'Stn'].nan_description",
+                None,
+                pd.DataFrame({"value": [pd.NA, "A", "B", "A", "C", pd.NA, pd.NA]}, dtype=_category_dtype),
+            ),
+            (
+                "JMESPath nan value list",
+                "locations.attributes[0].nan_description.values",
+                None,
+                pd.DataFrame({"value": [pd.NA, "A", "B", "A", "C", pd.NA, pd.NA]}, dtype=_category_dtype),
+            ),
+            (
+                "JMESPath nan value list predicate",
+                "locations.attributes[?name == 'Stn'].nan_description.values",
+                None,
+                pd.DataFrame({"value": [pd.NA, "A", "B", "A", "C", pd.NA, pd.NA]}, dtype=_category_dtype),
+            ),
+            (
+                "JMESPath attribute info",
+                [0, 2],
+                "locations.attributes[0]",
+                pd.DataFrame({"value": [pd.NA, "A", pd.NA, "A", "C", pd.NA, pd.NA]}, dtype=_category_dtype),
+            ),
+            (
+                "JMESPath attribute info predicate",
+                [0, 2],
+                "locations.attributes[?name == 'Stn']",
+                pd.DataFrame({"value": [pd.NA, "A", pd.NA, "A", "C", pd.NA, pd.NA]}, dtype=_category_dtype),
+            ),
+        ]
+    )
+    async def test_download_category(
+        self, _label: str, nan_values: str | list[int] | None, attribute_info: str | None, expected: pd.DataFrame
+    ) -> None:
+        attribute_path = "locations.attributes[0]"
+        self._setup_category(attribute_path)
+
+        # None, means pass it as a dictionary from the object.
+        if attribute_info is None:
+            attribute_info_parameter = self.object.search(attribute_path).raw
+        else:
+            attribute_info_parameter = attribute_info
+        actual_dataframe = await self.object.download_category_dataframe(
+            attribute_info_parameter, nan_values=nan_values
+        )
+        assert_frame_equal(expected, actual_dataframe)
+        actual_table = await self.object.download_category_table(attribute_info_parameter, nan_values=nan_values)
+
+        # Ensure the indices are int32, to be consistent with the parquet data.
+        expected_table = pa.Table.from_pandas(
+            expected, schema=pa.schema({"value": pa.dictionary(pa.int32(), pa.string())})
+        )
+        self.assertEqual(expected_table, actual_table)
+
+        # Test loading the table through download_attribute_dataframe as well.
+        if isinstance(nan_values, list):
+            self._set_property(f"{attribute_path}.nan_description.values", nan_values)
+        elif nan_values is None:
+            self._set_property(f"{attribute_path}.nan_description.values", [])
+
+        # None, means pass it as a dictionary from the object.
+        if attribute_info is None:
+            attribute_info_parameter = self.object.search(attribute_path).raw
+        else:
+            attribute_info_parameter = attribute_info
+
+        expected.columns = ["Stn"]
+        expected_table = expected_table.rename_columns(["Stn"])
+
+        attribute_dataframe = await self.object.download_attribute_dataframe(attribute_info_parameter)
+        assert_frame_equal(expected, attribute_dataframe)
+        actual_table = await self.object.download_attribute_table(attribute_info_parameter)
+        self.assertEqual(expected_table, actual_table)
 
     @parameterized.expand(
         [

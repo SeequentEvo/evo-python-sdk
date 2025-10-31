@@ -10,18 +10,14 @@
 #  limitations under the License.
 
 import sys
-from typing import TypeAlias
+from typing import Generic, TypeAlias, TypeVar
 
 if sys.version_info >= (3, 12):
     from typing import NotRequired, TypedDict
 else:
     from typing_extensions import NotRequired, TypedDict
 
-__all__ = [
-    "ArrayTableInfo",
-    "LookupTableInfo",
-    "TableInfo",
-]
+__all__ = ["ArrayTableInfo", "AttributeInfo", "CategoryInfo", "LookupTableInfo", "TableInfo"]
 
 
 class _BaseTableInfo(TypedDict):
@@ -30,13 +26,70 @@ class _BaseTableInfo(TypedDict):
 
 
 class ArrayTableInfo(_BaseTableInfo):
+    """Metadata for a non-lookup table.
+
+    The 'data' field contains the reference to the blob where the table data is stored.
+
+    The 'length', 'width', and 'data_type' fields describe the structure of the table.
+    """
+
     data_type: str
     width: NotRequired[int]
 
 
 class LookupTableInfo(_BaseTableInfo):
+    """Metadata for lookup table, which is used to define categories.
+
+    The 'data' field contains the reference to the blob where the table data is stored.
+
+    The 'length', 'width', and 'data_type' fields describe the structure of the table.
+    """
+
     keys_data_type: str
     values_data_type: str
 
 
 TableInfo: TypeAlias = ArrayTableInfo | LookupTableInfo
+
+
+class CategoryInfo(TypedDict):
+    """Metadata for category tables.
+
+    In Geoscience Object Schemas, categories are defined by an indices array(values) and a lookup table (table).
+    """
+
+    table: LookupTableInfo
+    values: TableInfo
+
+
+T = TypeVar("T")
+
+
+class _Nan(TypedDict, Generic[T]):
+    values: list[T]
+
+
+class NanCategorical(_Nan[int]):
+    """Metadata for representing 'not a number' (NaN) values in categorical/integer attributes.
+
+    In addition to supporting null values within certain tables, additional 'not a number' (NaN) values can be defined,
+    which should be interpreted as 'not a number' (NaN).
+    """
+
+
+class NanContinuous(_Nan[float]):
+    """Metadata for representing 'not a number' (NaN) values in continuous attributes.
+
+    In addition to supporting null values within certain tables, additional 'not a number' (NaN) values can be defined,
+    which should be interpreted as 'not a number' (NaN).
+    """
+
+
+class AttributeInfo(TypedDict):
+    """Metadata for attributes."""
+
+    name: str
+    key: NotRequired[str]
+    nan_description: NotRequired[NanCategorical | NanContinuous]
+    values: ArrayTableInfo
+    table: NotRequired[LookupTableInfo]

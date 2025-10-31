@@ -14,7 +14,9 @@ import sys
 from collections.abc import Iterator
 from datetime import datetime, timezone
 from io import BytesIO
+from typing import Any
 
+import jmespath
 import numpy
 import pyarrow as pa
 import pyarrow.parquet as pq
@@ -162,7 +164,122 @@ def get_sample_table(
 
 
 def get_sample_table_and_bytes(table_format: BaseTableFormat, n_rows: int) -> tuple[pa.Table, bytes]:
-    memory = BytesIO()
     table = get_sample_table(table_format, n_rows)
+    return table, write_table_to_bytes(table)
+
+
+def write_table_to_bytes(table: pa.Table) -> bytes:
+    memory = BytesIO()
     pq.write_table(table, where=memory, version="2.4", compression="gzip")
-    return table, memory.getvalue()
+    return memory.getvalue()
+
+
+# Support for assignment operations using JMESPath expressions.
+# Could be moved to evo.jmespath in the future, if we want to expose this functionality outside of tests.
+class _AssignmentTargetDictEntry:
+    """Represents a dictionary entry that potentially can be assigned to."""
+
+    def __init__(self, key: str, obj: dict):
+        self.key = key
+        self.obj = obj
+
+    @property
+    def value(self) -> Any:
+        """Get the value at this dictionary entry, creating an empty dict if it doesn't exist."""
+        return self.obj.setdefault(self.key, {})
+
+
+class _AssignmentTargetListEntry:
+    """Represents a list entry that potentially can be assigned to."""
+
+    def __init__(self, index: int, obj: list):
+        self.index = index
+        self.obj = obj
+
+    @property
+    def value(self) -> Any:
+        """Get the value at this list entry, or None if the index is out of range."""
+        try:
+            return self.obj[self.index]
+        except IndexError:
+            return None
+
+
+class _AssignInterpreter(jmespath.visitor.Visitor):
+    """A JMESPath visitor used for processing assignment operations.
+
+    This only supports a subset of JMESPath expressions that can be used for assignment.
+
+    This works by lazily evaluating field and index accesses, so that the last operation can be turned into an
+    assignment. If another operation is encountered after a field or index access, the value is evaluated at that
+    point.
+    """
+
+    def default_visit(self, node, *args, **kwargs):
+        raise NotImplementedError(node["type"])
+
+    @staticmethod
+    def _evaluate_value(value):
+        """Lazily evaluate the value if it's an assignment target."""
+        if isinstance(value, (_AssignmentTargetDictEntry, _AssignmentTargetListEntry)):
+            return value.value
+        else:
+            return value
+
+    def visit_field(self, node, value):
+        """Visit a field access node, i.e. foo.bar."""
+        evaluated_value = self._evaluate_value(value)
+        if not isinstance(evaluated_value, dict):
+            return None
+        return _AssignmentTargetDictEntry(node["value"], evaluated_value)
+
+    def visit_index(self, node, value):
+        """Visit an index access node, i.e. foo[0]."""
+        evaluated_value = self._evaluate_value(value)
+        if not isinstance(evaluated_value, list):
+            return None
+        return _AssignmentTargetListEntry(node["value"], evaluated_value)
+
+    def _visit_sub_or_index_expression(self, node, value):
+        """Visit a subexpression or index expression node, i.e. foo.bar.baz or a[0][1]."""
+        result = value
+        for node in node["children"]:
+            result = self.visit(node, result)
+        return result
+
+    visit_subexpression = _visit_sub_or_index_expression
+    visit_index_expression = _visit_sub_or_index_expression
+
+
+def assign_property(obj: dict, expression: str, value: Any) -> None:
+    """Assign a value to a property in a dictionary using a JMESPath expression.
+
+     This only supports a subset of JMESPath expressions that can be used for assignment. In particular, only the following
+    expression types are supported:
+    - Field accesses (e.g. foo.bar)
+    - Index accesses (e.g. foo[0])
+    - Subexpressions combining the above (e.g. foo.bar[0].baz)
+    If the expression is not in that form, a JMESPathError will be raised.
+
+    Also, if the expression attempts to perform an invalid operation like:
+    - Accessing a field on a non-object
+    - Accessing an index on a non-array
+    - Accessing an out-of-bounds index on an array
+    then a JMESPathError will be raised.
+
+    Accessing a non-existent field on an object will create an empty object at that field to allow for nested assignments.
+
+    :param obj: The dictionary to assign the property to.
+    :param expression: The JMESPath expression representing the property to assign to.
+    :param value: The value to assign to the property.
+    """
+    parsed_expression = jmespath.compile(expression)
+    interpreter = _AssignInterpreter()
+    target = interpreter.visit(parsed_expression.parsed, obj)
+
+    if isinstance(target, _AssignmentTargetDictEntry):
+        target.obj[target.key] = value
+    elif isinstance(target, _AssignmentTargetListEntry):
+        target.obj[target.index] = value
+    else:
+        raise TypeError(f"Cannot assign to expression '{expression}'")

@@ -29,6 +29,7 @@ from .http import (
 )
 from .io import (
     DownloadRequestHandler,
+    MultiDownloadRequestHandler,
     StorageDestinationRequestHandler,
     TestWithDownloadHandler,
     TestWithUploadHandler,
@@ -50,6 +51,7 @@ __all__ = [
     "AbstractTestRequestHandler",
     "DownloadRequestHandler",
     "MockResponse",
+    "MultiDownloadRequestHandler",
     "StorageDestinationRequestHandler",
     "TestAuthorizer",
     "TestHTTPHeaderDict",
