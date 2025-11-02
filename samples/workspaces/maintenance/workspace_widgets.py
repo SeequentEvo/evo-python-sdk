@@ -211,12 +211,13 @@ class TargetWorkspaceSelectorWidget:
 
         self.loading_label = widgets.Label(value="")
 
-        # Operation type radio buttons
-        self.operation_radio = widgets.RadioButtons(
-            options=["Copy", "Move"],
-            value="Copy",
-            description="Operation",
-            style={"description_width": "80px"},
+        # Operation section - label and checkbox
+        self.operation_label = widgets.HTML(value="<b>Copy object</b>")
+        self.delete_original_checkbox = widgets.Checkbox(
+            value=False,
+            description="Delete original after copy",
+            indent=False,
+            style={"description_width": "auto"},
         )
 
         # Workspace selector
@@ -235,7 +236,8 @@ class TargetWorkspaceSelectorWidget:
         self.widget = widgets.VBox(
             [
                 widgets.HBox([self.refresh_btn, self.loading_label]),
-                self.operation_radio,
+                self.operation_label,
+                self.delete_original_checkbox,
                 self.workspace_selector,
                 self.info_display,
             ]
@@ -243,6 +245,7 @@ class TargetWorkspaceSelectorWidget:
 
         # Observe selection changes
         self.workspace_selector.observe(self._on_workspace_selected, names="value")
+        self.delete_original_checkbox.observe(self._on_checkbox_changed, names="value")
 
     def _on_refresh_click(self, btn):
         """Handle refresh button click."""
@@ -288,6 +291,10 @@ class TargetWorkspaceSelectorWidget:
         """Handle workspace selection change."""
         self._update_info_display()
 
+    def _on_checkbox_changed(self, change):
+        """Handle delete original checkbox change."""
+        self._update_info_display()
+
     def _update_info_display(self):
         """Update the info display with details about the selected workspace."""
         selected_id = self.workspace_selector.value
@@ -306,7 +313,7 @@ class TargetWorkspaceSelectorWidget:
 
         # Get current workspace info
         current_ws = next((ws for ws in workspaces if ws.id == self.current_workspace_id), None)
-        operation = self.operation_radio.value
+        operation = "Move" if self.delete_original_checkbox.value else "Copy"
 
         # Build info HTML
         info_html = f"""
@@ -332,4 +339,4 @@ class TargetWorkspaceSelectorWidget:
 
     def get_operation(self) -> str:
         """Get the selected operation type ('Copy' or 'Move')."""
-        return self.operation_radio.value
+        return "Move" if self.delete_original_checkbox.value else "Copy"
