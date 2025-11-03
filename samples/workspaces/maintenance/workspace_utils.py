@@ -1,10 +1,31 @@
-"""Custom widgets for workspace maintenance operations."""
-
 from typing import Optional
 from uuid import UUID
 
 import ipywidgets as widgets
 from IPython.display import display
+
+
+def collect_data_references(obj, data_refs=None):
+    """Recursively collect all 'data' field values from the object dictionary."""
+    if data_refs is None:
+        data_refs = set()
+
+    if isinstance(obj, dict):
+        # If this dict has a 'data' key with a string value, it's a data reference
+        if "data" in obj and isinstance(obj["data"], str):
+            data_refs.add(obj["data"])
+        # Recursively search through all values
+        for value in obj.values():
+            collect_data_references(value, data_refs)
+    elif isinstance(obj, list):
+        # Recursively search through all items
+        for item in obj:
+            collect_data_references(item, data_refs)
+
+    return data_refs
+
+
+"""Custom widgets for workspace maintenance operations."""
 
 
 class ObjectSelectorWidget:
