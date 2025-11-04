@@ -1,5 +1,19 @@
 # Changelog
 
+## evo-sdk@v0.1.12
+### What's changed
+#### evo-sdk
+* Expose file_id and version_id properties in the return type of prepare_upload_by_id/prepare_upload_by_path by @BenLewis-Seequent in https://github.com/SeequentEvo/evo-python-sdk/pull/132
+
+**Full changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-sdk@v0.1.11...evo-sdk@v0.1.12
+
+## evo-files@v0.2.2
+### What's changed
+#### evo-files
+* Expose file_id and version_id properties in the return type of prepare_upload_by_id/prepare_upload_by_path by @BenLewis-Seequent in https://github.com/SeequentEvo/evo-python-sdk/pull/132
+
+**Full changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-files@v0.2.1...evo-files@v0.2.2
+
 ## evo-sdk@v0.1.11
 ### What's changed
 #### evo-sdk

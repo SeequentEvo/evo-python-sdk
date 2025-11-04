@@ -126,6 +126,12 @@ class TestFileAPIUpload(TestWithConnector, TestWithUploadHandler):
         expected = f"{FILE_ID}?version_id={VERSION_ID}"
         self.assertEqual(expected, self.upload.label)
 
+    def test_file_id(self) -> None:
+        self.assertEqual(self.upload.file_id, FILE_ID)
+
+    def test_version_id(self) -> None:
+        self.assertEqual(self.upload.version_id, VERSION_ID)
+
     async def test_get_upload_url(self) -> None:
         # Test the initial URL is used first.
         first = await self.upload.get_upload_url()

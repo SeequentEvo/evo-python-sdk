@@ -486,8 +486,8 @@ class TestFileApiClient(TestWithConnector):
             upload = await self.file_api_client.prepare_upload_by_path("points.csv")
 
         self.assertIsInstance(upload, FileAPIUpload)
-        self.assertEqual(upsert_file_response["file_id"], str(upload._id))
-        self.assertEqual(upsert_file_response["version_id"], upload._version_id)
+        self.assertEqual(upsert_file_response["file_id"], str(upload.file_id))
+        self.assertEqual(upsert_file_response["version_id"], upload.version_id)
         self.assert_request_made(
             method=RequestMethod.PUT,
             path=f"{self.base_path}/files/path/points.csv",
@@ -503,8 +503,8 @@ class TestFileApiClient(TestWithConnector):
             upload = await self.file_api_client.prepare_upload_by_id(file_id)
 
         self.assertIsInstance(upload, FileAPIUpload)
-        self.assertEqual(update_file_response["file_id"], str(upload._id))
-        self.assertEqual(update_file_response["version_id"], upload._version_id)
+        self.assertEqual(update_file_response["file_id"], str(upload.file_id))
+        self.assertEqual(update_file_response["version_id"], upload.version_id)
         self.assert_request_made(
             method=RequestMethod.PUT,
             path=f"{self.base_path}/files/{file_id}",

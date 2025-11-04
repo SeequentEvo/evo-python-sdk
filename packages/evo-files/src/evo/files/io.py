@@ -110,8 +110,18 @@ class FileAPIUpload(Upload, _FileIOMixin):
         self._version_id = version_id
 
     @property
+    def file_id(self) -> UUID:
+        """The ID of the file that is being uploaded."""
+        return self._id
+
+    @property
+    def version_id(self) -> str:
+        """The ID of the version that will be created after the upload completes."""
+        return self._version_id
+
+    @property
     def label(self) -> str:
-        """The file and version ID for the file that is being uploaded."""
+        """The file and version ID of the file that is being uploaded."""
         return f"{self._id}?version_id={self._version_id}"
 
     async def get_upload_url(self) -> str:
