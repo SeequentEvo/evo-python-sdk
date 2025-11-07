@@ -226,6 +226,7 @@ Publish and download various geoscience data types:
 Administrative operations:
 - Manage Evo workspaces
 - Handle user roles and permissions
+- Bonus: Move geoscience objects from one workspace to another
 
 ### ✨ Extras
 **📁 [common-tasks](common-tasks/)**
