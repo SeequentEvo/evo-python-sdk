@@ -1,1 +1,5 @@
-requests
+pyarrow
+pandas
+uuid 
+jupyterlab
+evo-sdk

@@ -1,5 +1,5 @@
-# >= Python 3.7
 pyarrow
 pandas
 uuid 
-jupyterlab # or your favorite Jupyter notebook editor, eg. VS Code 
+jupyterlab
+evo-sdk
