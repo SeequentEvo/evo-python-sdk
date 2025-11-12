@@ -18,7 +18,15 @@ from evo.workspaces import ServiceUser
 
 from .endpoints.models import BBox, BBoxXYZ, Column, RotationAxis
 
-__all__ = ["BaseGridDefinition", "BlockModel", "RegularGridDefinition", "Version"]
+__all__ = [
+    "BaseGridDefinition",
+    "BlockModel",
+    "FlexibleGridDefinition",
+    "FullySubBlockedGridDefinition",
+    "OctreeGridDefinition",
+    "RegularGridDefinition",
+    "Version",
+]
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -56,6 +64,56 @@ class RegularGridDefinition(BaseGridDefinition):
             raise ValueError("n_blocks must have 3 elements")
         if len(self.block_size) != 3:
             raise ValueError("block_size must have 3 elements")
+
+
+@dataclass(frozen=True, kw_only=True)
+class SubBlockedGridDefinition(BaseGridDefinition):
+    """A sub-blocked grid definition.
+
+    This represents a grid where each parent block is subdivided into a number of sub-blocks along each axis.
+    """
+
+    n_parent_blocks: list[int]
+    """Number of parent blocks along each axis. This must have 3 elements - `nx, ny, nz`."""
+    n_subblocks_per_parent: list[int]
+    """Number of sub-blocks per parent block along each axis. This must have 3 elements - `nx, ny, nz`."""
+    parent_block_size: list[float]
+    """Size of the parent block along each axis. This must have 3 elements - `x, y, z`."""
+
+    def __post_init__(self):
+        super().__post_init__()
+        if len(self.n_parent_blocks) != 3:
+            raise ValueError("n_parent_blocks must have 3 elements")
+        if len(self.n_subblocks_per_parent) != 3:
+            raise ValueError("n_subblocks_per_parent must have 3 elements")
+        if len(self.parent_block_size) != 3:
+            raise ValueError("parent_block_size must have 3 elements")
+
+
+@dataclass(frozen=True, kw_only=True)
+class FullySubBlockedGridDefinition(SubBlockedGridDefinition):
+    """A fully sub-blocked grid definition.
+
+    This represents a grid where each parent block is subdivided into a fixed number of regular
+    sub-blocks along each axis.
+    """
+
+
+@dataclass(frozen=True, kw_only=True)
+class FlexibleGridDefinition(SubBlockedGridDefinition):
+    """A flexible sub-blocking grid definition.
+
+    Semantically similar to FullySubBlocked but used when the subdivision can vary per parent at runtime.
+    This class currently shares the same representation as FullySubBlocked for convenience.
+    """
+
+
+@dataclass(frozen=True, kw_only=True)
+class OctreeGridDefinition(SubBlockedGridDefinition):
+    """An octree-style (variable-octree) grid definition.
+
+    Represented here by parent block counts and subdivision counts per parent along each axis.
+    """
 
 
 @dataclass(frozen=True, kw_only=True)

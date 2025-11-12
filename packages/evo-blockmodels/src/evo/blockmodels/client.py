@@ -22,9 +22,17 @@ from evo.common.utils import get_service_health
 
 from ._types import Table
 from ._utils import convert_dtype, extract_payload
-from .data import BaseGridDefinition, BlockModel, RegularGridDefinition, Version
+from .data import (
+    BaseGridDefinition,
+    BlockModel,
+    FlexibleGridDefinition,
+    FullySubBlockedGridDefinition,
+    OctreeGridDefinition,
+    RegularGridDefinition,
+    Version,
+)
 from .endpoints import models
-from .endpoints.api import ColumnOperationsApi, JobsApi, OperationsApi, VersionsApi
+from .endpoints.api import ColumnOperationsApi, JobsApi, MetadataApi, OperationsApi, VersionsApi
 from .endpoints.models import (
     AnyUrl,
     BBox,
@@ -43,6 +51,9 @@ from .endpoints.models import (
     Rotation,
     RotationAxis,
     Size3D,
+    SizeOptionsFlexible,
+    SizeOptionsFullySubBlocked,
+    SizeOptionsOctree,
     SizeOptionsRegular,
 )
 from .exceptions import CacheNotConfiguredException, JobFailedException, MissingColumnInTable
@@ -95,6 +106,7 @@ class BlockModelAPIClient(BaseAPIClient):
         self._jobs_api = JobsApi(connector)
         self._operations_api = OperationsApi(connector)
         self._column_operations_api = ColumnOperationsApi(connector)
+        self._metadata_api = MetadataApi(connector)
         self._cache = cache
 
     async def get_service_health(self, check_type: HealthCheckType = HealthCheckType.FULL) -> ServiceHealth:
@@ -118,8 +130,43 @@ class BlockModelAPIClient(BaseAPIClient):
                     n_blocks=[n_blocks.nx, n_blocks.ny, n_blocks.nz],
                     block_size=[block_size.x, block_size.y, block_size.z],
                 )
+
+            case SizeOptionsFullySubBlocked(
+                n_parent_blocks=n_parent_blocks, n_subblocks_per_parent=n_subblocks, parent_block_size=parent_block_size
+            ):
+                grid_definition = FullySubBlockedGridDefinition(
+                    model_origin=[model.model_origin.x, model.model_origin.y, model.model_origin.z],
+                    rotations=[(rotation.axis, rotation.angle) for rotation in model.block_rotation],
+                    n_parent_blocks=[n_parent_blocks.nx, n_parent_blocks.ny, n_parent_blocks.nz],
+                    n_subblocks_per_parent=[n_subblocks.nx, n_subblocks.ny, n_subblocks.nz],
+                    parent_block_size=[parent_block_size.x, parent_block_size.y, parent_block_size.z],
+                )
+
+            case SizeOptionsFlexible(
+                n_parent_blocks=n_parent_blocks, n_subblocks_per_parent=n_subblocks, parent_block_size=parent_block_size
+            ):
+                grid_definition = FlexibleGridDefinition(
+                    model_origin=[model.model_origin.x, model.model_origin.y, model.model_origin.z],
+                    rotations=[(rotation.axis, rotation.angle) for rotation in model.block_rotation],
+                    n_parent_blocks=[n_parent_blocks.nx, n_parent_blocks.ny, n_parent_blocks.nz],
+                    n_subblocks_per_parent=[n_subblocks.nx, n_subblocks.ny, n_subblocks.nz],
+                    parent_block_size=[parent_block_size.x, parent_block_size.y, parent_block_size.z],
+                )
+
+            case SizeOptionsOctree(
+                n_parent_blocks=n_parent_blocks, n_subblocks_per_parent=n_subblocks, parent_block_size=parent_block_size
+            ):
+                grid_definition = OctreeGridDefinition(
+                    model_origin=[model.model_origin.x, model.model_origin.y, model.model_origin.z],
+                    rotations=[(rotation.axis, rotation.angle) for rotation in model.block_rotation],
+                    n_parent_blocks=[n_parent_blocks.nx, n_parent_blocks.ny, n_parent_blocks.nz],
+                    n_subblocks_per_parent=[n_subblocks.nx, n_subblocks.ny, n_subblocks.nz],
+                    parent_block_size=[parent_block_size.x, parent_block_size.y, parent_block_size.z],
+                )
+
             case _:
-                raise NotImplementedError("Only regular models are supported at the moment")
+                # Fall back to an informative error for unknown types
+                raise NotImplementedError(f"Size options type '{type(model.size_options).__name__!r}' is not supported")
 
         return BlockModel(
             environment=self._environment,
@@ -218,6 +265,61 @@ class BlockModelAPIClient(BaseAPIClient):
         # Poll the job URL until it is complete
         job_status = await self._poll_job_url(bm_id, job_id)
         return extract_payload(job_id, job_status, models.Version)
+
+    async def list_block_models(self) -> list[BlockModel]:
+        """List block models in the current workspace.
+
+        Returns a list of `BlockModel`s for the workspace referenced by the client's
+        `Environment`. Limited to the first 100 results.
+        """
+        response = await self._metadata_api.list_block_models(
+            workspace_id=str(self._environment.workspace_id),
+            org_id=str(self._environment.org_id),
+        )
+
+        return [self._bm_from_model(m) for m in response.results]
+
+    async def list_all_block_models(self, page_limit: int | None = 100) -> list[BlockModel]:
+        """Return all block models for the current workspace, following paginated responses.
+
+        This method will page through the `list_block_models` endpoint using `offset` and `limit`
+        until all entries are retrieved. The `page_limit` is clamped to the service maximum (100).
+
+        :param page_limit: Maximum items to request per page (1..100). Defaults to 100.
+        :return: A list of `BlockModel` dataclasses for the workspace.
+        """
+        if page_limit is None:
+            page_limit = 100
+        if page_limit <= 0:
+            raise ValueError("page_limit must be > 0")
+        # Service enforces maximum limit of 100
+        page_limit = min(page_limit, 100)
+
+        offset = 0
+        all_models: list[BlockModel] = []
+
+        while True:
+            page = await self._metadata_api.list_block_models(
+                workspace_id=str(self._environment.workspace_id),
+                org_id=str(self._environment.org_id),
+                offset=offset,
+                limit=page_limit,
+            )
+
+            # Convert and append
+            for m in page.results:
+                all_models.append(self._bm_from_model(m))
+
+            # Determine stopping condition
+            if page.count == 0:
+                break
+            if page.total is not None:
+                if offset + page.count >= page.total:
+                    break
+            # Advance offset
+            offset += page.count
+
+        return all_models
 
     async def create_block_model(
         self,

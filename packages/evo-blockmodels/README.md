@@ -35,7 +35,7 @@ pip install evo-blockmodels
 See [the evo-sdk-common documentation](https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-sdk-common/README.md)
 for information on how to authenticate, then select the organisation, hub and workspace that you would like to use.
 
-### Interacting with the Geoscience Block Model API
+### Interacting with the Evo Block Model API
 
 To get up and running quickly with the Evo Block Models SDK, start by configuring your
 [environment and API connector](https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-sdk-common/docs/quickstart.md).
@@ -49,6 +49,11 @@ service_health.raise_for_status()
 ```
 
 For some interactive Jupyter notebook examples, see the [examples folder](docs/examples).
+
+To run the notebooks in your browser:
+```bash
+uv run --all-groups jupyter notebook
+```
 
 ## Contributing
 
