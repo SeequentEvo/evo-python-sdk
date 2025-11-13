@@ -21,11 +21,12 @@ For more information on using the Geoscience Object API, see the [Geoscience Obj
 
 
 This code is generated from the OpenAPI specification for Geoscience Object API.
-API version: 1.14.0
+API version: 1.21.0
 """
 
 from evo.common.connector import APIConnector
 from evo.common.data import EmptyResponse, RequestMethod
+from evo.common.utils import get_header_metadata
 
 from ..models import *  # noqa: F403
 
@@ -91,7 +92,7 @@ class ObjectsApi:
         }
 
         # Prepare the header parameters.
-        _header_params = {}
+        _header_params = {} | get_header_metadata(__name__)
         if additional_headers is not None:
             _header_params.update(additional_headers)
 
@@ -158,7 +159,7 @@ class ObjectsApi:
         }
 
         # Prepare the header parameters.
-        _header_params = {}
+        _header_params = {} | get_header_metadata(__name__)
         if additional_headers is not None:
             _header_params.update(additional_headers)
 
@@ -203,7 +204,7 @@ class ObjectsApi:
         :param objects_path: Objects path. This parameter was automatically generated from a wildcard path.
             Example: `'objects_path_example'`
         :param version: (optional) The (timestamp) version of the object to retrieve. Defaults to the latest version if not specified.
-            Example: `'2022-08-24T05:43:04.8822793Z'`
+            Example: `'1746593470905878783'`
         :param include_versions: (optional) Whether to return all versions of the object
             Example: `False`
         :param if_none_match: (optional) Optional header used to check if there are any more recent versions of an object than the one specified. Returns 304 (Not Modified) if there are no newer versions.
@@ -242,7 +243,7 @@ class ObjectsApi:
         # Prepare the header parameters.
         _header_params = {
             "Accept": "application/json",
-        }
+        } | get_header_metadata(__name__)
         if if_none_match is not None:
             _header_params["If-None-Match"] = if_none_match
         if additional_headers is not None:
@@ -293,7 +294,7 @@ class ObjectsApi:
             Format: `uuid`
             Example: `'032806a8-dcd7-11ed-8d5c-00155d8f28b5'`
         :param version: (optional) The (timestamp) version of the object to retrieve. Defaults to the latest version if not specified.
-            Example: `'2022-08-24T05:43:04.8822793Z'`
+            Example: `'1746593470905878783'`
         :param include_versions: (optional) Whether to return all versions of the object
             Example: `False`
         :param deleted: (optional) When true, only objects that have been deleted will be returned
@@ -336,7 +337,7 @@ class ObjectsApi:
         # Prepare the header parameters.
         _header_params = {
             "Accept": "application/json",
-        }
+        } | get_header_metadata(__name__)
         if if_none_match is not None:
             _header_params["If-None-Match"] = if_none_match
         if additional_headers is not None:
@@ -408,7 +409,7 @@ class ObjectsApi:
         _header_params = {
             "Content-Type": "application/json",
             "Accept": "application/json",
-        }
+        } | get_header_metadata(__name__)
         if additional_headers is not None:
             _header_params.update(additional_headers)
 
@@ -427,6 +428,80 @@ class ObjectsApi:
             path_params=_path_params,
             header_params=_header_params,
             body=request_body,
+            collection_formats=_collection_formats,
+            response_types_map=_response_types_map,
+            request_timeout=request_timeout,
+        )
+
+    async def list_object_versions(
+        self,
+        object_id: str,
+        org_id: str,
+        workspace_id: str,
+        list_versions_body: ListVersionsBody,  # noqa: F405
+        additional_headers: dict[str, str] | None = None,
+        request_timeout: int | float | tuple[int | float, int | float] | None = None,
+    ) -> ListVersionsResponse:  # noqa: F405
+        """Gets specified versions of a Geoscience Object.
+
+        List specific versions of a Geoscience Object. The response will include all the versions specified in `version_ids` field of the request body. If one or more of the version ids are not found for the geoscience object a 404 error will be returned.
+
+        :param object_id:
+            Format: `uuid`
+            Example: `'object_id_example'`
+        :param org_id: The customer's organisation ID
+            Format: `uuid`
+            Example: `'b208a6c9-6881-4b97-b02d-acb5d81299bb'`
+        :param workspace_id:
+            Format: `uuid`
+            Example: `'032806a8-dcd7-11ed-8d5c-00155d8f28b5'`
+        :param list_versions_body:
+            Example: `endpoints.ListVersionsBody()`
+        :param additional_headers: (optional) Additional headers to send with the request.
+        :param request_timeout: (optional) Timeout setting for this request. If one number is provided, it will be the
+            total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.
+
+        :return: Returns the result object.
+
+        :raise evo.common.exceptions.BadRequestException: If the server responds with HTTP status 400.
+        :raise evo.common.exceptions.UnauthorizedException: If the server responds with HTTP status 401.
+        :raise evo.common.exceptions.ForbiddenException: If the server responds with HTTP status 403.
+        :raise evo.common.exceptions.NotFoundException: If the server responds with HTTP status 404.
+        :raise evo.common.exceptions.BaseTypedError: If the server responds with any other HTTP status between
+            400 and 599, and the body of the response contains a descriptive `type` parameter.
+        :raise evo.common.exceptions.EvoAPIException: If the server responds with any other HTTP status between 400
+            and 599, and the body of the response does not contain a `type` parameter.
+        :raise evo.common.exceptions.UnknownResponseError: For other HTTP status codes with no corresponding response
+            type in `response_types_map`.
+        """
+        # Prepare the path parameters.
+        _path_params = {
+            "object_id": object_id,
+            "org_id": org_id,
+            "workspace_id": workspace_id,
+        }
+
+        # Prepare the header parameters.
+        _header_params = {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        } | get_header_metadata(__name__)
+        if additional_headers is not None:
+            _header_params.update(additional_headers)
+
+        # Define the collection formats.
+        _collection_formats = {}
+
+        _response_types_map = {
+            "200": ListVersionsResponse,  # noqa: F405
+        }
+
+        return await self.connector.call_api(
+            method=RequestMethod.POST,
+            resource_path="/geoscience-object/orgs/{org_id}/workspaces/{workspace_id}/objects/{object_id}/versions",
+            path_params=_path_params,
+            header_params=_header_params,
+            body=list_versions_body,
             collection_formats=_collection_formats,
             response_types_map=_response_types_map,
             request_timeout=request_timeout,
@@ -548,7 +623,7 @@ class ObjectsApi:
         # Prepare the header parameters.
         _header_params = {
             "Accept": "application/json",
-        }
+        } | get_header_metadata(__name__)
         if additional_headers is not None:
             _header_params.update(additional_headers)
 
@@ -692,7 +767,7 @@ class ObjectsApi:
         # Prepare the header parameters.
         _header_params = {
             "Accept": "application/json",
-        }
+        } | get_header_metadata(__name__)
         if additional_headers is not None:
             _header_params.update(additional_headers)
 
@@ -778,7 +853,7 @@ class ObjectsApi:
         _header_params = {
             "Content-Type": "application/json",
             "Accept": "application/json",
-        }
+        } | get_header_metadata(__name__)
         if if_match is not None:
             _header_params["If-Match"] = if_match
         if additional_headers is not None:
@@ -865,7 +940,7 @@ class ObjectsApi:
         _header_params = {
             "Content-Type": "application/json",
             "Accept": "application/json",
-        }
+        } | get_header_metadata(__name__)
         if if_match is not None:
             _header_params["If-Match"] = if_match
         if additional_headers is not None:

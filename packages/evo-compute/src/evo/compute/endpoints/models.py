@@ -13,7 +13,19 @@ from __future__ import annotations
 
 from enum import Enum
 
-from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr
+from pydantic import AnyUrl, BaseModel, ConfigDict, Field, StrictInt, StrictStr
+
+
+class JobStatusCompleted(Enum):
+    failed = "failed"
+    canceled = "canceled"
+    succeeded = "succeeded"
+
+
+class JobStatusOngoing(Enum):
+    requested = "requested"
+    in_progress = "in progress"
+    canceling = "canceling"
 
 
 class JobStatusEnum(Enum):
@@ -27,6 +39,22 @@ class JobStatusEnum(Enum):
     failed = "failed"
     cancelling = "cancelling"
     cancelled = "cancelled"
+
+
+class CompletedJobLinks(BaseModel):
+    results: AnyUrl
+
+
+class OngoingJobLinks(BaseModel):
+    cancel: AnyUrl
+
+
+class ExecuteTaskRequest(BaseModel):
+    parameters: dict[str, StrictStr]
+
+
+class OngoingJobResponse(BaseModel):
+    status: JobStatusOngoing
 
 
 class Error(BaseModel):

@@ -29,7 +29,7 @@ from pydantic import TypeAdapter, ValidationError
 from evo import logging
 
 from .data import JobProgress, JobStatusEnum
-from .endpoints import JobApi, TaskApi
+from .endpoints import JobsApi, TasksApi
 from .endpoints.models import CompletedJobResponse
 from .exceptions import JobError, JobPendingError
 
@@ -174,11 +174,11 @@ class JobClient(Generic[T_Result]):
         :raises UnknownResponseError: If the Location header is missing or invalid.
         """
         async with connector:
-            response = await TaskApi(connector).execute_task(
+            response = await TasksApi(connector).execute_task(
                 org_id=str(org_id),
                 topic=topic,
                 task=task,
-                task_parameters={"parameters": dict(parameters)},
+                execute_task_request={"parameters": dict(parameters)},
             )
 
         # Location header is the status endpoint of the created job.
@@ -198,7 +198,7 @@ class JobClient(Generic[T_Result]):
         :return: The job progress.
         """
         async with self._connector:
-            response = await JobApi(self._connector).get_job_status(
+            response = await JobsApi(self._connector).get_job_status(
                 org_id=self._org_id,
                 topic=self._topic,
                 task=self._task,
@@ -236,7 +236,7 @@ class JobClient(Generic[T_Result]):
             if self._results is None:
                 # Request the results from the API.
                 async with self._connector:
-                    response = await JobApi(self._connector).get_job_results(
+                    response = await JobsApi(self._connector).get_job_results(
                         org_id=self._org_id,
                         topic=self._topic,
                         task=self._task,
@@ -289,7 +289,7 @@ class JobClient(Generic[T_Result]):
     async def cancel(self) -> None:
         """Cancel the job."""
         async with self._connector:
-            await JobApi(self._connector).cancel_job(
+            await JobsApi(self._connector).cancel_job(
                 org_id=self._org_id,
                 topic=self._topic,
                 task=self._task,

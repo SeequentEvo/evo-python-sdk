@@ -19,7 +19,7 @@ from data import load_test_data
 from evo.common import IFeedback, RequestMethod
 from evo.common.io.exceptions import DataExistsError
 from evo.common.test_tools import TestWithConnector, TestWithStorage
-from evo.common.utils import NoFeedback, PartialFeedback
+from evo.common.utils import NoFeedback, PartialFeedback, get_header_metadata
 from evo.objects.utils import KnownTableFormat, ObjectDataClient
 from helpers import NoImport, UnloadModule, get_sample_table_and_bytes
 
@@ -29,6 +29,7 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
         TestWithConnector.setUp(self)
         TestWithStorage.setUp(self)
         self.data_client = ObjectDataClient(environment=self.environment, connector=self.connector, cache=self.cache)
+        self.setup_universal_headers(get_header_metadata(ObjectDataClient.__module__))
 
     def tearDown(self) -> None:
         # Clear cache between tests to avoid cached files interfering with subsequent tests.

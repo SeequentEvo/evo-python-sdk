@@ -16,18 +16,25 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import Enum
-from typing import Literal
+from typing import Annotated, Any, Literal
 from uuid import UUID
 
-from pydantic import AnyUrl, Field, StrictBool, StrictFloat, StrictInt, StrictStr
+from pydantic import (
+    AnyUrl,
+    Field,
+    StrictBool,
+    StrictFloat,
+    StrictInt,
+    StrictStr,
+)
 
 from .._model_config import CustomBaseModel
 
 
 class BlockSize(CustomBaseModel):
-    x: StrictFloat = Field(..., title="X")
-    y: StrictFloat = Field(..., title="Y")
-    z: StrictFloat = Field(..., title="Z")
+    x: Annotated[StrictFloat, Field(title="X")]
+    y: Annotated[StrictFloat, Field(title="Y")]
+    z: Annotated[StrictFloat, Field(title="Z")]
 
 
 class ColumnHeaderType(Enum):
@@ -36,13 +43,18 @@ class ColumnHeaderType(Enum):
 
 
 class ColumnNameMapping(CustomBaseModel):
-    csv_name: StrictStr = Field(..., title="CSV Name")
-    new_title: StrictStr = Field(..., title="New Title")
+    csv_name: Annotated[StrictStr, Field(title="CSV Name")]
+    new_title: Annotated[StrictStr, Field(title="New Title")]
+
+
+class ColumnNameMappingGeneric(CustomBaseModel):
+    column_title: Annotated[StrictStr, Field(title="Title of column in BlockSync")]
+    file_column_name: Annotated[StrictStr, Field(title="Name of column in file")]
 
 
 class ColumnRename(CustomBaseModel):
-    new_title: StrictStr = Field(..., title="New Title")
-    old_title: StrictStr = Field(..., title="Old Title")
+    new_title: Annotated[StrictStr, Field(title="New Title")]
+    old_title: Annotated[StrictStr, Field(title="Old Title")]
 
 
 class DataType(Enum):
@@ -74,11 +86,11 @@ class DataType(Enum):
 
 
 class FloatRange(CustomBaseModel):
-    max: StrictFloat = Field(..., title="Max")
+    max: Annotated[StrictFloat, Field(title="Max")]
     """
     Maximum value for the column
     """
-    min: StrictFloat = Field(..., title="Min")
+    min: Annotated[StrictFloat, Field(title="Min")]
     """
     Minimum value for the column
     """
@@ -90,17 +102,26 @@ class GeometryColumns(Enum):
 
 
 class InputOptionsCSV(CustomBaseModel):
-    column_name_mapping: list[ColumnNameMapping] | None = Field([], title="Column Name Mapping")
-    decimal_char: StrictStr | None = Field(".", max_length=1, min_length=1, title="Decimal Char")
-    delimiter: StrictStr | None = Field(",", max_length=1, min_length=1, title="Delimiter")
-    file_format: Literal["csv"] = Field("csv", title="File Format")
-    quote_char: StrictStr | None = Field('"', max_length=1, min_length=1, title="Quote Char")
-    skip_rows: StrictInt | None = Field(0, ge=0, title="Skip Rows")
-    skip_rows_after_headers: StrictInt | None = Field(0, ge=0, title="Skip Rows After Headers")
+    column_name_mapping: Annotated[
+        list[ColumnNameMapping] | list[ColumnNameMappingGeneric] | None,
+        Field(title="Column Name Mapping"),
+    ] = []
+    decimal_char: Annotated[StrictStr | None, Field(max_length=1, min_length=1, title="Decimal Char")] = "."
+    delimiter: Annotated[StrictStr | None, Field(max_length=1, min_length=1, title="Delimiter")] = ","
+    file_format: Literal["csv"] = Field(title="File Format")
+    quote_char: Annotated[StrictStr | None, Field(max_length=1, min_length=1, title="Quote Char")] = '"'
+    skip_rows: Annotated[StrictInt | None, Field(ge=0, title="Skip Rows")] = 0
+    skip_rows_after_headers: Annotated[StrictInt | None, Field(ge=0, title="Skip Rows After Headers")] = 0
+
+
+class InputOptionsDatamine(CustomBaseModel):
+    column_name_mapping: Annotated[list[ColumnNameMappingGeneric] | None, Field(title="Column Name Mapping")] = []
+    file_format: Literal["datamine"] = Field(title="File Format")
 
 
 class InputOptionsParquet(CustomBaseModel):
-    file_format: Literal["parquet"] = Field("parquet", title="File Format")
+    column_name_mapping: Annotated[list[ColumnNameMappingGeneric] | None, Field(title="Column Name Mapping")] = []
+    file_format: Literal["parquet"] = Field(title="File Format")
 
 
 class IntRange(CustomBaseModel):
@@ -108,49 +129,53 @@ class IntRange(CustomBaseModel):
     Represents a range of whole numbers from min to max inclusive.
     """
 
-    max: StrictInt = Field(..., title="Max")
+    max: Annotated[StrictInt, Field(title="Max")]
     """
     Maximum value for the column
     """
-    min: StrictInt = Field(..., title="Min")
+    min: Annotated[StrictInt, Field(title="Min")]
     """
     Minimum value for the column
     """
 
 
 class JobErrorPayload(CustomBaseModel):
-    detail: StrictStr = Field(
-        ...,
-        examples=["Update file 38e3ca486b3b477db0f99646b0529746 not found."],
-        title="Detail",
-    )
+    detail: Annotated[
+        StrictStr,
+        Field(
+            examples=["Update file 38e3ca486b3b477db0f99646b0529746 not found."],
+            title="Detail",
+        ),
+    ]
     """
     A human-readable explanation specific to this occurrence of the problem.
     """
-    download_url: AnyUrl | None = Field(None, title="Download Url")
+    download_url: Annotated[AnyUrl | None, Field(title="Download Url")] = None
     """
     URL for downloading an errors block model file. Set if the job is for block model update and there were block-specific errors.
     """
-    status: StrictInt = Field(..., examples=[400], title="Status")
+    status: Annotated[StrictInt, Field(examples=[400], title="Status")]
     """
     Status code for the error, equivalent to a HTTP status code.
     """
-    title: StrictStr = Field(..., examples=["Error in Update"], title="Title")
+    title: Annotated[StrictStr, Field(examples=["Error in Update"], title="Title")]
     """
     A short, human-readable summary of the problem type.
     """
-    type: StrictStr = Field(
-        ...,
-        examples=["https://seequent.com/error-codes/block-model-service/job/update-error"],
-        title="Type",
-    )
+    type: Annotated[
+        StrictStr,
+        Field(
+            examples=["https://seequent.com/error-codes/block-model-service/job/update-error"],
+            title="Type",
+        ),
+    ]
     """
     A URI reference that is the primary identifier of the problem type.
     """
 
 
 class JobPendingPayload(CustomBaseModel):
-    upload_url: AnyUrl | None = Field(None, title="Upload Url")
+    upload_url: Annotated[AnyUrl | None, Field(title="Upload Url")] = None
     """
     Upload URL for the job, with an up-to-date SAS token
     """
@@ -164,16 +189,41 @@ class JobStatus(Enum):
     FAILED = "FAILED"
 
 
+class LineageV100RuneventInputdataset(CustomBaseModel):
+    facets: Annotated[dict[str, Any] | None, Field(title="Facets")] = None
+    inputFacets: Annotated[dict[str, Any] | None, Field(title="Inputfacets")] = None
+    name: Annotated[StrictStr, Field(title="Name")]
+    namespace: Annotated[StrictStr, Field(title="Namespace")]
+
+
+class LineageV100RuneventJob(CustomBaseModel):
+    facets: Annotated[dict[str, Any] | None, Field(title="Facets")] = None
+    name: Annotated[StrictStr, Field(title="Name")]
+    namespace: Annotated[StrictStr, Field(title="Namespace")]
+
+
+class LineageV100RuneventOutputdataset(CustomBaseModel):
+    facets: Annotated[dict[str, Any] | None, Field(title="Facets")] = None
+    name: Annotated[StrictStr, Field(title="Name")]
+    namespace: Annotated[StrictStr, Field(title="Namespace")]
+    outputFacets: Annotated[dict[str, Any] | None, Field(title="Outputfacets")] = None
+
+
+class LineageV100RuneventRun(CustomBaseModel):
+    facets: Annotated[dict[str, Any] | None, Field(title="Facets")] = None
+    runId: Annotated[UUID, Field(title="Runid")]
+
+
 class Location(CustomBaseModel):
-    x: StrictFloat = Field(..., title="X")
-    y: StrictFloat = Field(..., title="Y")
-    z: StrictFloat = Field(..., title="Z")
+    x: Annotated[StrictFloat, Field(title="X")]
+    y: Annotated[StrictFloat, Field(title="Y")]
+    z: Annotated[StrictFloat, Field(title="Z")]
 
 
 class OctreeSubblocks(CustomBaseModel):
-    nx: StrictInt = Field(..., title="Nx")
-    ny: StrictInt = Field(..., title="Ny")
-    nz: StrictInt = Field(..., title="Nz")
+    nx: Annotated[StrictInt, Field(title="Nx")]
+    ny: Annotated[StrictInt, Field(title="Ny")]
+    nz: Annotated[StrictInt, Field(title="Nz")]
 
 
 class OutputOptionsCSV(CustomBaseModel):
@@ -181,15 +231,15 @@ class OutputOptionsCSV(CustomBaseModel):
     """
     Header values within the output file for non-system columns, either the column's name or UUID
     """
-    delimiter: StrictStr | None = Field(",", max_length=1, min_length=1, title="Delimiter")
+    delimiter: Annotated[StrictStr | None, Field(max_length=1, min_length=1, title="Delimiter")] = ","
     """
     Delimiter between values
     """
-    exclude_null_rows: StrictBool | None = Field(True, title="Exclude Null Rows")
+    exclude_null_rows: Annotated[StrictBool | None, Field(title="Exclude Null Rows")] = True
     """
     Specifies whether or not the output query file should exclude rows where all values for queried user columns are null.
     """
-    file_format: Literal["csv"] = Field("csv", title="File Format")
+    file_format: Annotated[Literal["csv"], Field(title="File Format")] = "csv"
     """
     CSV file
     """
@@ -200,52 +250,57 @@ class OutputOptionsParquet(CustomBaseModel):
     """
     Header values within the output file for non-system columns, either the column's name or UUID
     """
-    exclude_null_rows: StrictBool | None = Field(True, title="Exclude Null Rows")
+    exclude_null_rows: Annotated[StrictBool | None, Field(title="Exclude Null Rows")] = True
     """
     Specifies whether or not the output query file should exclude rows where all values for queried user columns are null.
     """
-    file_format: Literal["parquet"] = Field("parquet", title="File Format")
+    file_format: Annotated[Literal["parquet"], Field(title="File Format")] = "parquet"
     """
     Apache Parquet file
     """
 
 
 class QueryDownload(CustomBaseModel):
-    download_url: AnyUrl = Field(
-        ...,
-        examples=[
-            "https://au.static.evo.seequent.com/blocksync/169ccde2-4d0f-4a7a-adb7-1ccadc734cdd/query/{criteria hash}.parquet?st=2023-11-09T03%3A05%3A30Z&se=2023-11-10T03%3A06%3A30Z&sp=r&spr=http&sv=2021-08-06&sr=b&sig=ABCDEF0123456789ABCDEF0123456789"
-        ],
-        title="Download Url",
-    )
+    download_url: Annotated[
+        AnyUrl,
+        Field(
+            examples=[
+                "https://au.static.evo.seequent.com/blocksync/169ccde2-4d0f-4a7a-adb7-1ccadc734cdd/query/{criteria hash}.parquet?st=2023-11-09T03%3A05%3A30Z&se=2023-11-10T03%3A06%3A30Z&sp=r&spr=http&sv=2021-08-06&sr=b&sig=ABCDEF0123456789ABCDEF0123456789"
+            ],
+            title="Download Url",
+        ),
+    ]
     """
     Download URL for the results of the query.
     """
 
 
 class RegularSubblocks(CustomBaseModel):
-    nx: StrictInt = Field(..., title="Nx")
-    ny: StrictInt = Field(..., title="Ny")
-    nz: StrictInt = Field(..., title="Nz")
+    nx: Annotated[StrictInt, Field(title="Nx")]
+    ny: Annotated[StrictInt, Field(title="Ny")]
+    nz: Annotated[StrictInt, Field(title="Nz")]
 
 
 class Rename(CustomBaseModel):
-    col_id: StrictStr = Field(..., examples=["618d6339-2fa7-4dfd-9c7f-c0b12016639e"], title="Col Id")
+    col_id: Annotated[
+        StrictStr,
+        Field(examples=["618d6339-2fa7-4dfd-9c7f-c0b12016639e"], title="Col Id"),
+    ]
     """
     The ID of the column, a UUID for non-system columns
     """
-    new_title: StrictStr = Field(..., title="New Title")
+    new_title: Annotated[StrictStr, Field(title="New Title")]
     """
     The new human-readable label for the column identified by `col_id`
     """
 
 
 class RenameLite(CustomBaseModel):
-    new_title: StrictStr = Field(..., title="New Title")
+    new_title: Annotated[StrictStr, Field(title="New Title")]
     """
     The new human-readable label for the column identified by `title`
     """
-    title: StrictStr = Field(..., title="Title")
+    title: Annotated[StrictStr, Field(title="Title")]
     """
     The original human-readable label used to identify the column
     """
@@ -257,123 +312,131 @@ class ReportAggregation(Enum):
 
 
 class ReportCategory(CustomBaseModel):
-    col_id: UUID = Field(..., examples=["13c277c2-edc6-4a7a-8380-251dd19231f2"], title="Col Id")
+    col_id: Annotated[UUID, Field(examples=["13c277c2-edc6-4a7a-8380-251dd19231f2"], title="Col Id")]
     """
     ID of the category column in the block model
     """
-    label: StrictStr = Field(..., title="Label")
+    label: Annotated[StrictStr, Field(title="Label")]
     """
     The human-readable label used to identify the column
     """
-    values: list[StrictStr] | None = Field(
-        None,
-        examples=[["low", "medium", "high"]],
-        max_length=100,
-        min_length=1,
-        title="Values",
-    )
+    values: Annotated[
+        list[StrictStr] | None,
+        Field(
+            examples=[["low", "medium", "high"]],
+            max_length=100,
+            min_length=1,
+            title="Values",
+        ),
+    ] = None
     """
     Values to use for category filtering. If null the report will contain a row for each distinct non-empty value in this column.
     """
 
 
 class ReportColumn(CustomBaseModel):
-    aggregation: ReportAggregation = Field(..., examples=["SUM"])
+    aggregation: Annotated[ReportAggregation, Field(examples=["SUM"])]
     """
     The aggregation method to use for the column
     """
-    col_id: UUID = Field(..., examples=["13c277c2-edc6-4a7a-8380-251dd19231f2"], title="Col Id")
+    col_id: Annotated[UUID, Field(examples=["13c277c2-edc6-4a7a-8380-251dd19231f2"], title="Col Id")]
     """
     ID of the column in the block model
     """
-    label: StrictStr = Field(..., examples=["Au Content"], title="Label")
+    label: Annotated[StrictStr, Field(examples=["Au Content"], title="Label")]
     """
     The human-readable label used to identify the column
     """
-    output_unit_id: StrictStr = Field(..., examples=["kg"], title="Output Unit Id")
+    output_unit_id: Annotated[StrictStr, Field(examples=["kg"], title="Output Unit Id")]
     """
     ID of the unit to use for the column output
     """
 
 
 class ReportComparisonJobResult(CustomBaseModel):
-    from_result_uuid: UUID | None = Field(
-        None,
-        examples=["e3c277c2-edc6-4a7a-8380-251dd19231f2"],
-        title="From Result Uuid",
-    )
+    from_result_uuid: Annotated[
+        UUID | None,
+        Field(examples=["e3c277c2-edc6-4a7a-8380-251dd19231f2"], title="From Result Uuid"),
+    ] = None
     """
     ID of the Report Result for the baseline version.
     """
-    from_version_uuid: UUID | None = Field(
-        None,
-        examples=["e3c277c2-edc6-4a7a-8380-251dd19231f2"],
-        title="From Version Uuid",
-    )
+    from_version_uuid: Annotated[
+        UUID | None,
+        Field(examples=["e3c277c2-edc6-4a7a-8380-251dd19231f2"], title="From Version Uuid"),
+    ] = None
     """
     ID of the block model version to use as the baseline for the comparison.
     """
-    report_specification_uuid: UUID = Field(
-        ...,
-        examples=["e3c277c2-edc6-4a7a-8380-251dd19231f2"],
-        title="Report Specification Uuid",
-    )
+    report_specification_uuid: Annotated[
+        UUID,
+        Field(
+            examples=["e3c277c2-edc6-4a7a-8380-251dd19231f2"],
+            title="Report Specification Uuid",
+        ),
+    ]
     """
     ID of the Report Specification that the comparison is for
     """
-    to_result_uuid: UUID | None = Field(None, examples=["e3c277c2-edc6-4a7a-8380-251dd19231f2"], title="To Result Uuid")
+    to_result_uuid: Annotated[
+        UUID | None,
+        Field(examples=["e3c277c2-edc6-4a7a-8380-251dd19231f2"], title="To Result Uuid"),
+    ] = None
     """
     ID of the Report Result for the version to compare.
     """
-    to_version_uuid: UUID | None = Field(
-        None, examples=["e3c277c2-edc6-4a7a-8380-251dd19231f2"], title="To Version Uuid"
-    )
+    to_version_uuid: Annotated[
+        UUID | None,
+        Field(examples=["e3c277c2-edc6-4a7a-8380-251dd19231f2"], title="To Version Uuid"),
+    ] = None
     """
     ID of the block model version to compare.
     """
 
 
 class ReportComparisonRequestResult(CustomBaseModel):
-    from_result_uuid: UUID | None = Field(
-        None,
-        examples=["e3c277c2-edc6-4a7a-8380-251dd19231f2"],
-        title="From Result Uuid",
-    )
+    from_result_uuid: Annotated[
+        UUID | None,
+        Field(examples=["e3c277c2-edc6-4a7a-8380-251dd19231f2"], title="From Result Uuid"),
+    ] = None
     """
     ID of the Report Result for the baseline version, or null if the result does not yet exist (and a job was created).
     """
-    job_url: AnyUrl | None = Field(None, title="Job Url")
+    job_url: Annotated[AnyUrl | None, Field(title="Job Url")] = None
     """
     URL to the Report Comparison Job, if created. If both results already exist, no job will be created and this will be null.
     """
-    to_result_uuid: UUID | None = Field(None, examples=["e3c277c2-edc6-4a7a-8380-251dd19231f2"], title="To Result Uuid")
+    to_result_uuid: Annotated[
+        UUID | None,
+        Field(examples=["e3c277c2-edc6-4a7a-8380-251dd19231f2"], title="To Result Uuid"),
+    ] = None
     """
     ID of the Report Result for the version to compare, or null if the result does not yet exist (and a job was created).
     """
 
 
 class ReportComparisonSpec(CustomBaseModel):
-    from_version_uuid: UUID | None = Field(
-        None,
-        examples=["e3c277c2-edc6-4a7a-8380-251dd19231f2"],
-        title="From Version Uuid",
-    )
+    from_version_uuid: Annotated[
+        UUID | None,
+        Field(examples=["e3c277c2-edc6-4a7a-8380-251dd19231f2"], title="From Version Uuid"),
+    ] = None
     """
     ID of the block model version to use as the baseline for the comparison.
     """
-    to_version_uuid: UUID | None = Field(
-        None, examples=["e3c277c2-edc6-4a7a-8380-251dd19231f2"], title="To Version Uuid"
-    )
+    to_version_uuid: Annotated[
+        UUID | None,
+        Field(examples=["e3c277c2-edc6-4a7a-8380-251dd19231f2"], title="To Version Uuid"),
+    ] = None
     """
     ID of the block model version to compare.
     """
 
 
 class ReportComparisonValue(CustomBaseModel):
-    difference: StrictFloat | StrictInt = Field(..., title="Difference")
-    from_value: StrictFloat | StrictInt = Field(..., title="From Value")
-    percent: StrictFloat | None = Field(None, title="Percent")
-    to_value: StrictFloat | StrictInt = Field(..., title="To Value")
+    difference: Annotated[StrictFloat | StrictInt, Field(title="Difference")]
+    from_value: Annotated[StrictFloat | StrictInt, Field(title="From Value")]
+    percent: Annotated[StrictFloat | None, Field(title="Percent")] = None
+    to_value: Annotated[StrictFloat | StrictInt, Field(title="To Value")]
 
 
 class ReportNegativeValuesPolicy(Enum):
@@ -388,77 +451,83 @@ class ReportNullValuesPolicy(Enum):
 
 
 class ReportResultCategory(CustomBaseModel):
-    col_id: UUID = Field(..., examples=["ddd277c2-edc6-4a7a-8380-251dd19231f2"], title="Col Id")
+    col_id: Annotated[UUID, Field(examples=["ddd277c2-edc6-4a7a-8380-251dd19231f2"], title="Col Id")]
     """
     ID of the block model column
     """
-    label: StrictStr = Field(..., examples=["Rock type"], title="Label")
+    label: Annotated[StrictStr, Field(examples=["Rock type"], title="Label")]
     """
     Label of the column
     """
 
 
 class ReportResultColumn(CustomBaseModel):
-    col_id: UUID | None = Field(None, examples=["eee277c2-edc6-4a7a-8380-251dd19231f2"], title="Col Id")
+    col_id: Annotated[
+        UUID | None,
+        Field(examples=["eee277c2-edc6-4a7a-8380-251dd19231f2"], title="Col Id"),
+    ] = None
     """
     ID of the block model column, if applicable. This will be null for system-calculated columns such as 'Mass'
     """
-    label: StrictStr = Field(..., examples=["Average gold content"], title="Label")
+    label: Annotated[StrictStr, Field(examples=["Average gold content"], title="Label")]
     """
     Label of the column
     """
-    unit_id: StrictStr = Field(..., examples=["ppm[mass]"], title="Unit Id")
+    unit_id: Annotated[StrictStr, Field(examples=["ppm[mass]"], title="Unit Id")]
     """
     ID of the unit of the column
     """
 
 
 class ReportResultReferencedColumn(CustomBaseModel):
-    col_id: UUID = Field(..., examples=["eee277c2-edc6-4a7a-8380-251dd19231f2"], title="Col Id")
+    col_id: Annotated[UUID, Field(examples=["eee277c2-edc6-4a7a-8380-251dd19231f2"], title="Col Id")]
     """
     ID of the block model column
     """
-    data_type: StrictStr = Field(..., examples=["Utf8"], title="Data Type")
+    data_type: Annotated[StrictStr, Field(examples=["Utf8"], title="Data Type")]
     """
     Data type of the referenced column in the Report Result
     """
-    title: StrictStr = Field(..., examples=["Something"], title="Title")
+    title: Annotated[StrictStr, Field(examples=["Something"], title="Title")]
     """
     Title of the referenced column
     """
-    unit_id: StrictStr | None = Field(None, examples=["ppm[mass]"], title="Unit Id")
+    unit_id: Annotated[StrictStr | None, Field(examples=["ppm[mass]"], title="Unit Id")] = None
     """
     ID of the unit of the column
     """
-    unit_id_from_version: UUID | None = Field(
-        None,
-        examples=["ccc277c2-edc6-4a7a-8380-251dd19231f2"],
-        title="Unit Id From Version",
-    )
+    unit_id_from_version: Annotated[
+        UUID | None,
+        Field(
+            examples=["ccc277c2-edc6-4a7a-8380-251dd19231f2"],
+            title="Unit Id From Version",
+        ),
+    ] = None
     """
     Version UUID of the version of block model that the unid was from
     """
 
 
 class ReportRow(CustomBaseModel):
-    categories: list[StrictStr | StrictInt | StrictFloat | StrictBool | None] = Field(
-        ..., examples=[["Granite"]], title="Categories"
-    )
+    categories: Annotated[
+        list[StrictStr | StrictInt | StrictFloat | StrictBool | None],
+        Field(examples=[["Granite"]], title="Categories"),
+    ]
     """
     List of category values. `null` indicates a total for that category column.
     """
-    values: list[StrictInt | StrictFloat] = Field(..., examples=[[2.7, 0.3]], title="Values")
+    values: Annotated[list[StrictInt | StrictFloat], Field(examples=[[2.7, 0.3]], title="Values")]
     """
     List of values for the value columns
     """
 
 
 class ReportRunResult(CustomBaseModel):
-    bm_uuid: UUID = Field(..., title="Bm Uuid")
-    report_result_uuid: UUID = Field(..., title="Report Result Uuid")
-    report_specification_uuid: UUID = Field(..., title="Report Specification Uuid")
-    version_id: StrictInt = Field(..., title="Version Id")
-    version_uuid: UUID = Field(..., title="Version Uuid")
+    bm_uuid: Annotated[UUID, Field(title="Bm Uuid")]
+    report_result_uuid: Annotated[UUID, Field(title="Report Result Uuid")]
+    report_specification_uuid: Annotated[UUID, Field(title="Report Specification Uuid")]
+    version_id: Annotated[StrictInt, Field(title="Version Id")]
+    version_uuid: Annotated[UUID, Field(title="Version Uuid")]
 
 
 class ReportWarningType(Enum):
@@ -475,29 +544,35 @@ class ReportWarningType(Enum):
 
 
 class ReportingJobResult(CustomBaseModel):
-    bm_uuid: UUID = Field(..., examples=["e3c277c2-edc6-4a7a-8380-251dd19231f2"], title="Bm Uuid")
+    bm_uuid: Annotated[UUID, Field(examples=["e3c277c2-edc6-4a7a-8380-251dd19231f2"], title="Bm Uuid")]
     """
     ID of the block model
     """
-    job_url: AnyUrl = Field(..., title="Job Url")
-    job_uuid: UUID = Field(..., examples=["e3c277c2-edc6-4a7a-8380-251dd19231f2"], title="Job Uuid")
+    job_url: Annotated[AnyUrl, Field(title="Job Url")]
+    job_uuid: Annotated[UUID, Field(examples=["e3c277c2-edc6-4a7a-8380-251dd19231f2"], title="Job Uuid")]
     """
     ID of the Reporting Job.
     """
-    report_specification_uuid: UUID = Field(..., title="Report Specification Uuid")
-    version_id: StrictInt = Field(..., examples=[5], title="Version Id")
+    report_specification_uuid: Annotated[UUID, Field(title="Report Specification Uuid")]
+    version_id: Annotated[StrictInt, Field(examples=[5], title="Version Id")]
     """
     Identifier for the version within a block model as a monotonically increasing integer, where 1 is
     the `version_id` for the version created upon creation of the block model.
     """
-    version_uuid: UUID = Field(..., examples=["3e9ce8de-f6ba-4920-8c6e-0882e90f0ed7"], title="Version Uuid")
+    version_uuid: Annotated[
+        UUID,
+        Field(examples=["3e9ce8de-f6ba-4920-8c6e-0882e90f0ed7"], title="Version Uuid"),
+    ]
     """
     A universally unique identifier for the version
     """
 
 
 class ReportingJobSpec(CustomBaseModel):
-    version_uuid: UUID | None = Field(None, examples=["e3c277c2-edc6-4a7a-8380-251dd19231f2"], title="Version Uuid")
+    version_uuid: Annotated[
+        UUID | None,
+        Field(examples=["e3c277c2-edc6-4a7a-8380-251dd19231f2"], title="Version Uuid"),
+    ] = None
     """
     ID of the block model version to run the report against. If not provided, the latest will be used.
     """
@@ -510,13 +585,13 @@ class RotationAxis(Enum):
 
 
 class Size3D(CustomBaseModel):
-    nx: StrictInt = Field(..., title="Nx")
-    ny: StrictInt = Field(..., title="Ny")
-    nz: StrictInt = Field(..., title="Nz")
+    nx: Annotated[StrictInt, Field(title="Nx")]
+    ny: Annotated[StrictInt, Field(title="Ny")]
+    nz: Annotated[StrictInt, Field(title="Nz")]
 
 
 class SizeOptionsFlexible(CustomBaseModel):
-    model_type: Literal["flexible"] = Field(title="Model Type")
+    model_type: Annotated[Literal["flexible"], Field(title="Model Type")]
     """
     Type of sub-blocking
     """
@@ -535,7 +610,7 @@ class SizeOptionsFlexible(CustomBaseModel):
 
 
 class SizeOptionsFullySubBlocked(CustomBaseModel):
-    model_type: Literal["fully-sub-blocked"] = Field(title="Model Type")
+    model_type: Annotated[Literal["fully-sub-blocked"], Field(title="Model Type")]
     """
     Type of sub-blocking
     """
@@ -554,7 +629,7 @@ class SizeOptionsFullySubBlocked(CustomBaseModel):
 
 
 class SizeOptionsOctree(CustomBaseModel):
-    model_type: Literal["variable-octree"] = Field(title="Model Type")
+    model_type: Annotated[Literal["variable-octree"], Field(title="Model Type")]
     """
     Type of sub-blocking
     """
@@ -577,7 +652,7 @@ class SizeOptionsRegular(CustomBaseModel):
     """
     Block size
     """
-    model_type: Literal["regular"] = Field(title="Model Type")
+    model_type: Annotated[Literal["regular"], Field(title="Model Type")]
     """
     Type of sub-blocking
     """
@@ -598,40 +673,12 @@ class UnitType(Enum):
     VALUE_PER_MASS = "VALUE_PER_MASS"
 
 
-class UpdateBlockModel(CustomBaseModel):
-    coordinate_reference_system: StrictStr | None = Field(
-        None,
-        examples=["EPSG:3395"],
-        max_length=10000,
-        title="Coordinate Reference System",
-    )
-    """
-
-    Coordinate reference system used in the block model.
-
-    This may be an EPSG code, signified by the prefix 'EPSG:', or a coordinate system definition in WKT format.
-
-    """
-    description: StrictStr | None = Field(None, max_length=500, title="Description")
-    """
-    Block model description
-    """
-    name: StrictStr | None = Field(None, max_length=100, min_length=3, title="Name")
-    r"""
-    Name of the block model. This may not contain `/` nor `\`.
-    """
-    size_unit_id: StrictStr | None = Field(None, title="Size Unit ID")
-    """
-    Unit ID denoting the length unit used for the block model's blocks.
-    """
-
-
 class UpdateMetadataValues(CustomBaseModel):
-    title: StrictStr | None = Field(None, title="Title")
+    title: Annotated[StrictStr | None, Field(title="Title")] = None
     """
     The new human-readable label for the column
     """
-    unit_id: StrictStr | None = Field(None, title="Unit Id")
+    unit_id: Annotated[StrictStr | None, Field(title="Unit Id")] = None
     """
     The new unit ID for the column
     """
@@ -643,19 +690,19 @@ class UpdateType(Enum):
 
 
 class UpdatedResponse(CustomBaseModel):
-    job_url: AnyUrl = Field(..., title="Job Url")
+    job_url: Annotated[AnyUrl, Field(title="Job Url")]
 
 
 class UserInfo(CustomBaseModel):
-    email: StrictStr | None = Field(None, examples=["kim@example.test"], title="Email Address")
+    email: Annotated[StrictStr | None, Field(examples=["kim@example.test"], title="Email Address")] = None
     """
     The primary email address of the user. Can be null if an error occurred while retrieving this information.
     """
-    id: UUID = Field(..., examples=["59b73891-5538-4e45-ae67-f8c5b00d7405"], title="User ID")
+    id: Annotated[UUID, Field(examples=["59b73891-5538-4e45-ae67-f8c5b00d7405"], title="User ID")]
     """
     The ID of the user
     """
-    name: StrictStr | None = Field(None, examples=["Kim Paul"], title="Full Name")
+    name: Annotated[StrictStr | None, Field(examples=["Kim Kim"], title="Full Name")] = None
     """
     The full name of the user. Can be null if an error occurred while retrieving this information.
     """
@@ -692,16 +739,19 @@ class BBoxXYZ(CustomBaseModel):
 
 
 class Column(CustomBaseModel):
-    col_id: StrictStr = Field(..., examples=["618d6339-2fa7-4dfd-9c7f-c0b12016639e"], title="Col Id")
+    col_id: Annotated[
+        StrictStr,
+        Field(examples=["618d6339-2fa7-4dfd-9c7f-c0b12016639e"], title="Col Id"),
+    ]
     """
     The ID of the column, a UUID for non-system columns
     """
     data_type: DataType
-    title: StrictStr = Field(..., title="Title")
+    title: Annotated[StrictStr, Field(title="Title")]
     """
     The human-readable label used to identify the column
     """
-    unit_id: StrictStr | None = Field(None, title="Unit Id")
+    unit_id: Annotated[StrictStr | None, Field(title="Unit Id")] = None
     """
     The ID of the column's unit
     """
@@ -709,150 +759,172 @@ class Column(CustomBaseModel):
 
 class ColumnLite(CustomBaseModel):
     data_type: DataType
-    title: StrictStr = Field(..., title="Title")
+    title: Annotated[StrictStr, Field(title="Title")]
     """
     The human-readable label used to identify the column
     """
-    unit_id: StrictStr | None = Field(None, title="Unit Id")
+    unit_id: Annotated[StrictStr | None, Field(title="Unit Id")] = None
     """
     The ID of the column's unit
     """
 
 
 class CreateReportSpecification(CustomBaseModel):
-    autorun: StrictBool = Field(True, title="Autorun")
+    autorun: Annotated[StrictBool, Field(title="Autorun")] = True
     """
     Whether to automatically run this Report Specification when a new version is published
     """
-    bbox: BBox | BBoxXYZ | None = Field(
-        None,
-        examples=[
-            {
-                "i_minmax": {"max": 1, "min": 0},
-                "j_minmax": {"max": 1, "min": 0},
-                "k_minmax": {"max": 1, "min": 0},
-            }
-        ],
-        title="Bbox",
-    )
+    bbox: Annotated[
+        BBox | BBoxXYZ | None,
+        Field(
+            examples=[
+                {
+                    "i_minmax": {"max": 1, "min": 0},
+                    "j_minmax": {"max": 1, "min": 0},
+                    "k_minmax": {"max": 1, "min": 0},
+                }
+            ],
+            title="Bbox",
+        ),
+    ] = None
     """
     Bounding box for the report
     """
-    categories: list[ReportCategory] | None = Field(
-        None,
-        examples=[
-            [
-                {
-                    "col_id": "11c277c2-edc6-4a7a-8380-251dd19231f2",
-                    "label": "Grade",
-                    "values": ["low", "medium", "high"],
-                }
-            ]
-        ],
-        max_length=1,
-        min_length=0,
-        title="Categories",
-    )
+    categories: Annotated[
+        list[ReportCategory] | None,
+        Field(
+            examples=[
+                [
+                    {
+                        "col_id": "11c277c2-edc6-4a7a-8380-251dd19231f2",
+                        "label": "Grade",
+                        "values": ["low", "medium", "high"],
+                    }
+                ]
+            ],
+            max_length=5,
+            min_length=0,
+            title="Categories",
+        ),
+    ] = None
     """
     Category columns within this Report Specification. If null or empty, the report will have a single total row for each cut-off.
     """
-    columns: list[ReportColumn] = Field(
-        ...,
-        examples=[
-            [
-                {
-                    "aggregation": "SUM",
-                    "col_id": "abc277c2-edc6-4a7a-8380-251dd19231f2",
-                    "label": "Au content",
-                    "output_unit_id": "kg",
-                }
-            ]
-        ],
-        title="Columns",
-    )
+    columns: Annotated[
+        list[ReportColumn],
+        Field(
+            examples=[
+                [
+                    {
+                        "aggregation": "SUM",
+                        "col_id": "abc277c2-edc6-4a7a-8380-251dd19231f2",
+                        "label": "Au content",
+                        "output_unit_id": "kg",
+                    }
+                ]
+            ],
+            title="Columns",
+        ),
+    ]
     """
     Columns within this Report Specification
     """
-    cutoff_col_id: UUID | None = Field(None, examples=["13c277c2-edc6-4a7a-8380-251dd19231f2"], title="Cutoff Col Id")
+    cutoff_col_id: Annotated[
+        UUID | None,
+        Field(examples=["13c277c2-edc6-4a7a-8380-251dd19231f2"], title="Cutoff Col Id"),
+    ] = None
     """
     ID of the column to use for cut-off evaluation
     """
-    cutoff_values: list[StrictFloat] | None = Field(
-        None,
-        examples=[[0.5, 1.5, 5]],
-        max_length=20,
-        min_length=1,
-        title="Cutoff Values",
-    )
+    cutoff_values: Annotated[
+        list[StrictFloat] | None,
+        Field(examples=[[0.5, 1.5, 5]], max_length=20, min_length=1, title="Cutoff Values"),
+    ] = None
     """
     Values to use for cut-off evaluation
     """
-    density_col_id: UUID | None = Field(None, examples=["24c277c2-edc6-4a7a-8380-251dd19231f2"], title="Density Col Id")
+    density_col_id: Annotated[
+        UUID | None,
+        Field(examples=["24c277c2-edc6-4a7a-8380-251dd19231f2"], title="Density Col Id"),
+    ] = None
     """
     ID of the column to use for block density
     """
-    density_unit_id: StrictStr | None = Field(None, examples=["kg/m3"], title="Density Unit Id")
+    density_unit_id: Annotated[StrictStr | None, Field(examples=["kg/m3"], title="Density Unit Id")] = None
     """
     ID of the unit to use for block density. The unit must be of type `MASS_PER_VOLUME`.
     """
-    density_value: StrictFloat | None = Field(None, examples=[2.5], gt=1, title="Density Value")
+    density_value: Annotated[StrictFloat | None, Field(examples=[2.5], gt=1, title="Density Value")] = None
     """
     Value to use for block density
     """
-    description: StrictStr | None = Field(
-        None,
-        examples=["Gold resource report for test purposes"],
-        max_length=1000,
-        title="Description",
-    )
+    description: Annotated[
+        StrictStr | None,
+        Field(
+            examples=["Gold resource report for test purposes"],
+            max_length=1000,
+            title="Description",
+        ),
+    ] = None
     """
     User-supplied description of the report
     """
-    mass_unit_id: StrictStr = Field(..., examples=["t"], title="Mass Unit Id")
+    mass_unit_id: Annotated[StrictStr, Field(examples=["t"], title="Mass Unit Id")]
     """
     ID of the unit to use for total mass. The unit must be of type `MASS`
     """
-    name: StrictStr = Field(..., title="Name")
+    name: Annotated[StrictStr, Field(title="Name")]
     """
     The human-readable label used to identify the report
     """
-    negative_values_policy: ReportNegativeValuesPolicy | None = Field("IGNORE_BLOCK", examples=["USE"])
+    negative_values_policy: Annotated[ReportNegativeValuesPolicy | None, Field(examples=["USE"])] = "IGNORE_BLOCK"
     """
     Policy for handling negative values in the report's cut-off or value columns
     """
-    null_values_policy: ReportNullValuesPolicy | None = Field("IGNORE_BLOCK", examples=["ZERO"])
+    null_values_policy: Annotated[ReportNullValuesPolicy | None, Field(examples=["ZERO"])] = "IGNORE_BLOCK"
     """
     Policy for handling null values in the report's cut-off or value columns
     """
 
 
 class DeltaRequestData(CustomBaseModel):
-    bbox: BBox | BBoxXYZ = Field(..., title="Bbox")
+    bbox: Annotated[BBox | BBoxXYZ, Field(title="Bbox")]
     """
     Bounding box within which changes are searched for.
     """
-    columns: list[StrictStr] = Field(..., examples=[["*"]], title="Columns")
+    columns: Annotated[list[StrictStr], Field(examples=[["*"]], title="Columns")]
     """
     List of column IDs to consider when checking for column updates or deletions. Also accepts `['*']`, which will consider all columns.
     """
-    end_version_uuid: UUID | None = Field(None, title="End Version Uuid")
+    end_version_uuid: Annotated[UUID | None, Field(title="End Version Uuid")] = None
     """
     Last version to search for changes in. Any versions newer than this are not searched for changes. If not supplied, changes are searched for within all version beyond the start version, up to and including the latest version of the block model.
     """
-    verbose: StrictBool = Field(False, title="Verbose")
+    verbose: Annotated[StrictBool, Field(title="Verbose")] = False
     """
     If there are changes, whether to return details about such changes or not.
     """
 
 
+class LineageV100Runevent(CustomBaseModel):
+    eventTime: Annotated[StrictStr, Field(title="Eventtime")]
+    eventType: Annotated[StrictStr | None, Field(title="Eventtype")] = None
+    inputs: Annotated[list[LineageV100RuneventInputdataset] | None, Field(title="Inputs")] = None
+    job: LineageV100RuneventJob
+    outputs: Annotated[list[LineageV100RuneventOutputdataset] | None, Field(title="Outputs")] = None
+    producer: Annotated[StrictStr, Field(title="Producer")]
+    run: LineageV100RuneventRun
+    schemaURL: Annotated[StrictStr, Field(title="Schemaurl")]
+
+
 class Mapping(CustomBaseModel):
-    columns: list[Column] = Field(..., title="Columns")
+    columns: Annotated[list[Column], Field(title="Columns")]
 
 
 class QueryCriteria(CustomBaseModel):
-    bbox: BBox | BBoxXYZ | None = Field(None, title="Bbox")
+    bbox: Annotated[BBox | BBoxXYZ | None, Field(title="Bbox")] = None
     """
-
+    
     Bounding box of the search area as integer indexes or model aligned coordinates. If not provided, this is set to the entire block model.
         If using integer indexes, they must be `>=` zero and `<=` the number of blocks - 1.
         For example, if a block model has:
@@ -870,9 +942,9 @@ class QueryCriteria(CustomBaseModel):
 
 
     """
-    columns: list[StrictStr] = Field(..., examples=[["*"]], title="Columns")
+    columns: Annotated[list[StrictStr], Field(examples=[["*"]], title="Columns")]
     """
-
+    
     List of columns, in addition to the "geometry" columns, that will be included in the output file.
     The `columns` field supports selecting columns by either their title or ID, and can also include a wildcard (`"*"`) placeholder, which will expand to all user columns, ordered alphabetically by title in a case-insensitive manner.
     Please note that the wildcard does not cover the system column `version_id`. To include `version_id` in the output file, it must also be explicitly specified in the `columns` field alongside the wildcard.
@@ -881,7 +953,7 @@ class QueryCriteria(CustomBaseModel):
     """
     geometry_columns: GeometryColumns = "indices"
     """
-
+    
     Determines whether the blocks in the output file will be primarily identified by their coordinates or their block
     indices.
 
@@ -889,22 +961,23 @@ class QueryCriteria(CustomBaseModel):
     If `geometry_columns` is set to "coordinates", then the output file will contain the columns `x`, `y`, `z` for regular block models and `x`, `y`, `z`, `dx`, `dy`, `dz` for sub-blocked block models. These columns are referred to as the "geometry" columns, and will appear before any others columns specified in the `columns` field.
 
     """
-    output_options: OutputOptionsParquet | OutputOptionsCSV | None = Field(
-        None, discriminator="file_format", title="Output Options"
-    )
+    output_options: Annotated[
+        OutputOptionsParquet | OutputOptionsCSV | None,
+        Field(discriminator="file_format", title="Output Options"),
+    ] = None
     """
     Format of the output file
     """
-    version_uuid: UUID | None = Field(None, title="Version Uuid")
+    version_uuid: Annotated[UUID | None, Field(title="Version Uuid")] = None
     """
     Version UUID of the version of the block model to query, or the latest version if not provided
     """
 
 
 class QueryResult(CustomBaseModel):
-    bbox: BBox | BBoxXYZ = Field(..., title="Bbox")
+    bbox: Annotated[BBox | BBoxXYZ, Field(title="Bbox")]
     """
-
+    
     Bounding box of the search area as integer indexes or model aligned coordinates. If not provided, this is set to the entire block model.
         If using integer indexes, they must be `>=` zero and `<=` the number of blocks - 1.
         For example, if a block model has:
@@ -922,62 +995,73 @@ class QueryResult(CustomBaseModel):
 
 
     """
-    bm_uuid: UUID = Field(..., examples=["e3c277c2-edc6-4a7a-8380-251dd19231f2"], title="Bm Uuid")
+    bm_uuid: Annotated[UUID, Field(examples=["e3c277c2-edc6-4a7a-8380-251dd19231f2"], title="Bm Uuid")]
     """
     ID of the block model
     """
-    columns: list[StrictStr] = Field(..., title="Columns")
+    columns: Annotated[list[StrictStr], Field(title="Columns")]
     """
-
+    
     List of columns, in addition to the "geometry" columns, that will be included in the output file.
     The `columns` field supports selecting columns by either their title or ID, and can also include a wildcard (`"*"`) placeholder, which will expand to all user columns, ordered alphabetically by title in a case-insensitive manner.
     Please note that the wildcard does not cover the system column `version_id`. To include `version_id` in the output file, it must also be explicitly specified in the `columns` field alongside the wildcard.
     The order of columns in the output file will match the order in the `columns` field. Columns that are part of the initial "geometry" columns will be ignored if specified.
 
     """
-    job_url: AnyUrl = Field(..., title="Job Url")
+    job_url: Annotated[AnyUrl, Field(title="Job Url")]
     """
     Pollable job URL for this query
     """
     mapping: Mapping
     """
-
+    
     List of columns, in addition to the "geometry" columns, that will be included in the output file.
     The `columns` field supports selecting columns by either their title or ID, and can also include a wildcard (`"*"`) placeholder, which will expand to all user columns, ordered alphabetically by title in a case-insensitive manner.
     Please note that the wildcard does not cover the system column `version_id`. To include `version_id` in the output file, it must also be explicitly specified in the `columns` field alongside the wildcard.
     The order of columns in the output file will match the order in the `columns` field. Columns that are part of the initial "geometry" columns will be ignored if specified.
 
     """
-    version_id: StrictInt = Field(..., examples=[5], title="Version Id")
+    version_id: Annotated[StrictInt, Field(examples=[5], title="Version Id")]
     """
     Identifier for the version within a block model as a monotonically increasing integer, where 1 is
     the `version_id` for the version created upon creation of the block model.
     """
-    version_uuid: UUID = Field(..., examples=["3e9ce8de-f6ba-4920-8c6e-0882e90f0ed7"], title="Version Uuid")
+    version_uuid: Annotated[
+        UUID,
+        Field(examples=["3e9ce8de-f6ba-4920-8c6e-0882e90f0ed7"], title="Version Uuid"),
+    ]
     """
     A universally unique identifier for the version
     """
 
 
 class ReportComparisonResultInfo(CustomBaseModel):
-    referenced_columns: list[ReportResultReferencedColumn] = Field(..., title="Referenced Columns")
-    report_result_created_at: datetime = Field(..., examples=["2021-01-01T00:00:00Z"], title="Report Result Created At")
+    referenced_columns: Annotated[list[ReportResultReferencedColumn], Field(title="Referenced Columns")]
+    report_result_created_at: Annotated[
+        datetime,
+        Field(examples=["2021-01-01T00:00:00Z"], title="Report Result Created At"),
+    ]
     """
     Creation date of the Report Result
     """
-    report_result_uuid: UUID = Field(
-        ...,
-        examples=["ccc277c2-edc6-4a7a-8380-251dd19231f2"],
-        title="Report Result Uuid",
-    )
+    report_result_uuid: Annotated[
+        UUID,
+        Field(
+            examples=["ccc277c2-edc6-4a7a-8380-251dd19231f2"],
+            title="Report Result Uuid",
+        ),
+    ]
     """
     ID of the Report Result
     """
-    version_comment: StrictStr | None = Field(None, examples=["Updated density"], title="Version Comment")
+    version_comment: Annotated[StrictStr | None, Field(examples=["Updated density"], title="Version Comment")] = None
     """
     Comment of the version of the block model that the report was run on
     """
-    version_created_at: datetime = Field(..., examples=["2021-01-01T00:00:00Z"], title="Version Created At")
+    version_created_at: Annotated[
+        datetime,
+        Field(examples=["2021-01-01T00:00:00Z"], title="Version Created At"),
+    ]
     """
     Creation date of the version of the block model that the report was run on
     """
@@ -985,62 +1069,76 @@ class ReportComparisonResultInfo(CustomBaseModel):
     """
     User who created the version of the block model that the report was run on
     """
-    version_id: StrictInt = Field(..., examples=[2], title="Version Id")
+    version_id: Annotated[StrictInt, Field(examples=[2], title="Version Id")]
     """
     Version ID of the version of the block model that the report was run on
     """
-    version_uuid: UUID | None = Field(None, examples=["ccc277c2-edc6-4a7a-8380-251dd19231f2"], title="Version Uuid")
+    version_uuid: Annotated[
+        UUID | None,
+        Field(examples=["ccc277c2-edc6-4a7a-8380-251dd19231f2"], title="Version Uuid"),
+    ] = None
     """
     Version UUID of the version of block model that the report was run on
     """
 
 
 class ReportComparisonRow(CustomBaseModel):
-    categories: list[StrictStr | StrictInt | StrictFloat | StrictBool | None] = Field(
-        ..., examples=[["Granite"]], title="Categories"
-    )
+    categories: Annotated[
+        list[StrictStr | StrictInt | StrictFloat | StrictBool | None],
+        Field(examples=[["Granite"]], title="Categories"),
+    ]
     """
     List of category values. `null` indicates a total for that category column.
     """
-    values: list[ReportComparisonValue] = Field(..., examples=[[2.7, 0.3]], title="Values")
+    values: Annotated[list[ReportComparisonValue], Field(examples=[[2.7, 0.3]], title="Values")]
     """
     List of values for the value columns
     """
 
 
 class ReportResultSet(CustomBaseModel):
-    cutoff_value: StrictFloat | None = Field(None, examples=[0.5], title="Cutoff Value")
+    cutoff_value: Annotated[StrictFloat | None, Field(examples=[0.5], title="Cutoff Value")] = None
     """
     Cut-off value for this set
     """
-    rows: list[ReportRow] = Field(..., title="Rows")
+    rows: Annotated[list[ReportRow], Field(title="Rows")]
     """
     List of rows in this result set
     """
 
 
 class ReportResultSummary(CustomBaseModel):
-    report_result_created_at: datetime = Field(..., examples=["2021-01-01T00:00:00Z"], title="Report Result Created At")
+    report_result_created_at: Annotated[
+        datetime,
+        Field(examples=["2021-01-01T00:00:00Z"], title="Report Result Created At"),
+    ]
     """
     Creation date of the Report Result
     """
-    report_result_uuid: UUID = Field(
-        ...,
-        examples=["ccc277c2-edc6-4a7a-8380-251dd19231f2"],
-        title="Report Result Uuid",
-    )
+    report_result_uuid: Annotated[
+        UUID,
+        Field(
+            examples=["ccc277c2-edc6-4a7a-8380-251dd19231f2"],
+            title="Report Result Uuid",
+        ),
+    ]
     """
     ID of the Report Result
     """
-    report_specification_uuid: UUID = Field(
-        ...,
-        examples=["e3c277c2-edc6-4a7a-8380-251dd19231f2"],
-        title="Report Specification Uuid",
-    )
+    report_specification_uuid: Annotated[
+        UUID,
+        Field(
+            examples=["e3c277c2-edc6-4a7a-8380-251dd19231f2"],
+            title="Report Specification Uuid",
+        ),
+    ]
     """
     ID of the report specification that was run
     """
-    version_created_at: datetime = Field(..., examples=["2021-01-01T00:00:00Z"], title="Version Created At")
+    version_created_at: Annotated[
+        datetime,
+        Field(examples=["2021-01-01T00:00:00Z"], title="Version Created At"),
+    ]
     """
     Creation date of the version of the block model that the report was run on
     """
@@ -1048,297 +1146,329 @@ class ReportResultSummary(CustomBaseModel):
     """
     User who created the version of the block model that the report was run on
     """
-    version_id: StrictInt = Field(..., examples=[2], title="Version Id")
+    version_id: Annotated[StrictInt, Field(examples=[2], title="Version Id")]
     """
     Version ID of the version of block model that the report was run on
     """
-    version_uuid: UUID | None = Field(None, examples=["ccc277c2-edc6-4a7a-8380-251dd19231f2"], title="Version Uuid")
+    version_uuid: Annotated[
+        UUID | None,
+        Field(examples=["ccc277c2-edc6-4a7a-8380-251dd19231f2"], title="Version Uuid"),
+    ] = None
     """
     Version UUID of the version of block model that the report was run on
     """
 
 
 class ReportSpecificationWithJobUrl(CustomBaseModel):
-    autorun: StrictBool = Field(True, title="Autorun")
+    autorun: Annotated[StrictBool, Field(title="Autorun")] = True
     """
     Whether to automatically run this Report Specification when a new version is published
     """
-    bbox: BBox | BBoxXYZ | None = Field(
-        None,
-        examples=[
-            {
-                "i_minmax": {"max": 1, "min": 0},
-                "j_minmax": {"max": 1, "min": 0},
-                "k_minmax": {"max": 1, "min": 0},
-            }
-        ],
-        title="Bbox",
-    )
+    bbox: Annotated[
+        BBox | BBoxXYZ | None,
+        Field(
+            examples=[
+                {
+                    "i_minmax": {"max": 1, "min": 0},
+                    "j_minmax": {"max": 1, "min": 0},
+                    "k_minmax": {"max": 1, "min": 0},
+                }
+            ],
+            title="Bbox",
+        ),
+    ] = None
     """
     Bounding box for the report
     """
-    bm_uuid: UUID = Field(..., examples=["e3c277c2-edc6-4a7a-8380-251dd19231f2"], title="Bm Uuid")
+    bm_uuid: Annotated[UUID, Field(examples=["e3c277c2-edc6-4a7a-8380-251dd19231f2"], title="Bm Uuid")]
     """
     ID of the block model this Report Specification is associated with
     """
-    categories: list[ReportCategory] | None = Field(
-        None,
-        examples=[
-            [
-                {
-                    "col_id": "11c277c2-edc6-4a7a-8380-251dd19231f2",
-                    "label": "Grade",
-                    "values": ["low", "medium", "high"],
-                }
-            ]
-        ],
-        max_length=1,
-        min_length=0,
-        title="Categories",
-    )
+    categories: Annotated[
+        list[ReportCategory] | None,
+        Field(
+            examples=[
+                [
+                    {
+                        "col_id": "11c277c2-edc6-4a7a-8380-251dd19231f2",
+                        "label": "Grade",
+                        "values": ["low", "medium", "high"],
+                    }
+                ]
+            ],
+            max_length=5,
+            min_length=0,
+            title="Categories",
+        ),
+    ] = None
     """
     Category columns within this Report Specification. If null or empty, the report will have a single total row for each cut-off.
     """
-    columns: list[ReportColumn] = Field(
-        ...,
-        examples=[
-            [
-                {
-                    "aggregation": "SUM",
-                    "col_id": "abc277c2-edc6-4a7a-8380-251dd19231f2",
-                    "label": "Au content",
-                    "output_unit_id": "kg",
-                }
-            ]
-        ],
-        title="Columns",
-    )
+    columns: Annotated[
+        list[ReportColumn],
+        Field(
+            examples=[
+                [
+                    {
+                        "aggregation": "SUM",
+                        "col_id": "abc277c2-edc6-4a7a-8380-251dd19231f2",
+                        "label": "Au content",
+                        "output_unit_id": "kg",
+                    }
+                ]
+            ],
+            title="Columns",
+        ),
+    ]
     """
     Columns within this Report Specification
     """
-    cutoff_col_id: UUID | None = Field(None, examples=["13c277c2-edc6-4a7a-8380-251dd19231f2"], title="Cutoff Col Id")
+    cutoff_col_id: Annotated[
+        UUID | None,
+        Field(examples=["13c277c2-edc6-4a7a-8380-251dd19231f2"], title="Cutoff Col Id"),
+    ] = None
     """
     ID of the column to use for cut-off evaluation
     """
-    cutoff_values: list[StrictFloat] | None = Field(
-        None,
-        examples=[[0.5, 1.5, 5]],
-        max_length=20,
-        min_length=1,
-        title="Cutoff Values",
-    )
+    cutoff_values: Annotated[
+        list[StrictFloat] | None,
+        Field(examples=[[0.5, 1.5, 5]], max_length=20, min_length=1, title="Cutoff Values"),
+    ] = None
     """
     Values to use for cut-off evaluation
     """
-    density_col_id: UUID | None = Field(None, examples=["24c277c2-edc6-4a7a-8380-251dd19231f2"], title="Density Col Id")
+    density_col_id: Annotated[
+        UUID | None,
+        Field(examples=["24c277c2-edc6-4a7a-8380-251dd19231f2"], title="Density Col Id"),
+    ] = None
     """
     ID of the column to use for block density
     """
-    density_unit_id: StrictStr | None = Field(None, examples=["kg/m3"], title="Density Unit Id")
+    density_unit_id: Annotated[StrictStr | None, Field(examples=["kg/m3"], title="Density Unit Id")] = None
     """
     ID of the unit to use for block density. The unit must be of type `MASS_PER_VOLUME`.
     """
-    density_value: StrictFloat | None = Field(None, examples=[2.5], gt=1, title="Density Value")
+    density_value: Annotated[StrictFloat | None, Field(examples=[2.5], gt=1, title="Density Value")] = None
     """
     Value to use for block density
     """
-    description: StrictStr | None = Field(
-        None,
-        examples=["Gold resource report for test purposes"],
-        max_length=1000,
-        title="Description",
-    )
+    description: Annotated[
+        StrictStr | None,
+        Field(
+            examples=["Gold resource report for test purposes"],
+            max_length=1000,
+            title="Description",
+        ),
+    ] = None
     """
     User-supplied description of the report
     """
-    job_url: AnyUrl | None = Field(None, title="Job Url")
+    job_url: Annotated[AnyUrl | None, Field(title="Job Url")] = None
     """
     URL for the Reporting Job, if `run_now` was requested
     """
-    mass_unit_id: StrictStr = Field(..., examples=["t"], title="Mass Unit Id")
+    mass_unit_id: Annotated[StrictStr, Field(examples=["t"], title="Mass Unit Id")]
     """
     ID of the unit to use for total mass. The unit must be of type `MASS`
     """
-    name: StrictStr = Field(..., title="Name")
+    name: Annotated[StrictStr, Field(title="Name")]
     """
     The human-readable label used to identify the report
     """
-    negative_values_policy: ReportNegativeValuesPolicy | None = Field("IGNORE_BLOCK", examples=["USE"])
+    negative_values_policy: Annotated[ReportNegativeValuesPolicy | None, Field(examples=["USE"])] = "IGNORE_BLOCK"
     """
     Policy for handling negative values in the report's cut-off or value columns
     """
-    null_values_policy: ReportNullValuesPolicy | None = Field("IGNORE_BLOCK", examples=["ZERO"])
+    null_values_policy: Annotated[ReportNullValuesPolicy | None, Field(examples=["ZERO"])] = "IGNORE_BLOCK"
     """
     Policy for handling null values in the report's cut-off or value columns
     """
-    report_specification_uuid: UUID = Field(
-        ...,
-        examples=["e3c277c2-edc6-4a7a-8380-251dd19231f2"],
-        title="Report Specification Uuid",
-    )
+    report_specification_uuid: Annotated[
+        UUID,
+        Field(
+            examples=["e3c277c2-edc6-4a7a-8380-251dd19231f2"],
+            title="Report Specification Uuid",
+        ),
+    ]
     """
     ID of the Report Specification
     """
-    revision: StrictInt = Field(0, title="Revision")
+    revision: Annotated[StrictInt, Field(title="Revision")] = 0
     """
     Revision number of this Report Specification
     """
 
 
 class ReportSpecificationWithLastRunInfo(CustomBaseModel):
-    autorun: StrictBool = Field(True, title="Autorun")
+    autorun: Annotated[StrictBool, Field(title="Autorun")] = True
     """
     Whether to automatically run this Report Specification when a new version is published
     """
-    bbox: BBox | BBoxXYZ | None = Field(
-        None,
-        examples=[
-            {
-                "i_minmax": {"max": 1, "min": 0},
-                "j_minmax": {"max": 1, "min": 0},
-                "k_minmax": {"max": 1, "min": 0},
-            }
-        ],
-        title="Bbox",
-    )
+    bbox: Annotated[
+        BBox | BBoxXYZ | None,
+        Field(
+            examples=[
+                {
+                    "i_minmax": {"max": 1, "min": 0},
+                    "j_minmax": {"max": 1, "min": 0},
+                    "k_minmax": {"max": 1, "min": 0},
+                }
+            ],
+            title="Bbox",
+        ),
+    ] = None
     """
     Bounding box for the report
     """
-    bm_uuid: UUID = Field(..., examples=["e3c277c2-edc6-4a7a-8380-251dd19231f2"], title="Bm Uuid")
+    bm_uuid: Annotated[UUID, Field(examples=["e3c277c2-edc6-4a7a-8380-251dd19231f2"], title="Bm Uuid")]
     """
     ID of the block model this Report Specification is associated with
     """
-    categories: list[ReportCategory] | None = Field(
-        None,
-        examples=[
-            [
-                {
-                    "col_id": "11c277c2-edc6-4a7a-8380-251dd19231f2",
-                    "label": "Grade",
-                    "values": ["low", "medium", "high"],
-                }
-            ]
-        ],
-        max_length=1,
-        min_length=0,
-        title="Categories",
-    )
+    categories: Annotated[
+        list[ReportCategory] | None,
+        Field(
+            examples=[
+                [
+                    {
+                        "col_id": "11c277c2-edc6-4a7a-8380-251dd19231f2",
+                        "label": "Grade",
+                        "values": ["low", "medium", "high"],
+                    }
+                ]
+            ],
+            max_length=5,
+            min_length=0,
+            title="Categories",
+        ),
+    ] = None
     """
     Category columns within this Report Specification. If null or empty, the report will have a single total row for each cut-off.
     """
-    columns: list[ReportColumn] = Field(
-        ...,
-        examples=[
-            [
-                {
-                    "aggregation": "SUM",
-                    "col_id": "abc277c2-edc6-4a7a-8380-251dd19231f2",
-                    "label": "Au content",
-                    "output_unit_id": "kg",
-                }
-            ]
-        ],
-        title="Columns",
-    )
+    columns: Annotated[
+        list[ReportColumn],
+        Field(
+            examples=[
+                [
+                    {
+                        "aggregation": "SUM",
+                        "col_id": "abc277c2-edc6-4a7a-8380-251dd19231f2",
+                        "label": "Au content",
+                        "output_unit_id": "kg",
+                    }
+                ]
+            ],
+            title="Columns",
+        ),
+    ]
     """
     Columns within this Report Specification
     """
-    cutoff_col_id: UUID | None = Field(None, examples=["13c277c2-edc6-4a7a-8380-251dd19231f2"], title="Cutoff Col Id")
+    cutoff_col_id: Annotated[
+        UUID | None,
+        Field(examples=["13c277c2-edc6-4a7a-8380-251dd19231f2"], title="Cutoff Col Id"),
+    ] = None
     """
     ID of the column to use for cut-off evaluation
     """
-    cutoff_values: list[StrictFloat] | None = Field(
-        None,
-        examples=[[0.5, 1.5, 5]],
-        max_length=20,
-        min_length=1,
-        title="Cutoff Values",
-    )
+    cutoff_values: Annotated[
+        list[StrictFloat] | None,
+        Field(examples=[[0.5, 1.5, 5]], max_length=20, min_length=1, title="Cutoff Values"),
+    ] = None
     """
     Values to use for cut-off evaluation
     """
-    density_col_id: UUID | None = Field(None, examples=["24c277c2-edc6-4a7a-8380-251dd19231f2"], title="Density Col Id")
+    density_col_id: Annotated[
+        UUID | None,
+        Field(examples=["24c277c2-edc6-4a7a-8380-251dd19231f2"], title="Density Col Id"),
+    ] = None
     """
     ID of the column to use for block density
     """
-    density_unit_id: StrictStr | None = Field(None, examples=["kg/m3"], title="Density Unit Id")
+    density_unit_id: Annotated[StrictStr | None, Field(examples=["kg/m3"], title="Density Unit Id")] = None
     """
     ID of the unit to use for block density. The unit must be of type `MASS_PER_VOLUME`.
     """
-    density_value: StrictFloat | None = Field(None, examples=[2.5], gt=1, title="Density Value")
+    density_value: Annotated[StrictFloat | None, Field(examples=[2.5], gt=1, title="Density Value")] = None
     """
     Value to use for block density
     """
-    description: StrictStr | None = Field(
-        None,
-        examples=["Gold resource report for test purposes"],
-        max_length=1000,
-        title="Description",
-    )
+    description: Annotated[
+        StrictStr | None,
+        Field(
+            examples=["Gold resource report for test purposes"],
+            max_length=1000,
+            title="Description",
+        ),
+    ] = None
     """
     User-supplied description of the report
     """
-    last_result_created_at: datetime | None = Field(
-        None, examples=["2021-01-01T00:00:00Z"], title="Last Result Created At"
-    )
+    last_result_created_at: Annotated[
+        datetime | None,
+        Field(examples=["2021-01-01T00:00:00Z"], title="Last Result Created At"),
+    ] = None
     """
     Creation date of the Report Result
     """
-    last_result_version_id: StrictInt | None = Field(None, examples=[2], title="Last Result Version Id")
+    last_result_version_id: Annotated[StrictInt | None, Field(examples=[2], title="Last Result Version Id")] = None
     """
     Version ID of the version of the block model that the report was run on
     """
-    mass_unit_id: StrictStr = Field(..., examples=["t"], title="Mass Unit Id")
+    mass_unit_id: Annotated[StrictStr, Field(examples=["t"], title="Mass Unit Id")]
     """
     ID of the unit to use for total mass. The unit must be of type `MASS`
     """
-    name: StrictStr = Field(..., title="Name")
+    name: Annotated[StrictStr, Field(title="Name")]
     """
     The human-readable label used to identify the report
     """
-    negative_values_policy: ReportNegativeValuesPolicy | None = Field("IGNORE_BLOCK", examples=["USE"])
+    negative_values_policy: Annotated[ReportNegativeValuesPolicy | None, Field(examples=["USE"])] = "IGNORE_BLOCK"
     """
     Policy for handling negative values in the report's cut-off or value columns
     """
-    null_values_policy: ReportNullValuesPolicy | None = Field("IGNORE_BLOCK", examples=["ZERO"])
+    null_values_policy: Annotated[ReportNullValuesPolicy | None, Field(examples=["ZERO"])] = "IGNORE_BLOCK"
     """
     Policy for handling null values in the report's cut-off or value columns
     """
-    report_specification_uuid: UUID = Field(
-        ...,
-        examples=["e3c277c2-edc6-4a7a-8380-251dd19231f2"],
-        title="Report Specification Uuid",
-    )
+    report_specification_uuid: Annotated[
+        UUID,
+        Field(
+            examples=["e3c277c2-edc6-4a7a-8380-251dd19231f2"],
+            title="Report Specification Uuid",
+        ),
+    ]
     """
     ID of the Report Specification
     """
-    revision: StrictInt = Field(0, title="Revision")
+    revision: Annotated[StrictInt, Field(title="Revision")] = 0
     """
     Revision number of this Report Specification
     """
 
 
 class ReportWarning(CustomBaseModel):
-    message: StrictStr = Field(
-        ...,
-        examples=["Density value was null, or less than or equal to 0. The default density value of 2.7 was used."],
-        title="Message",
-    )
+    message: Annotated[
+        StrictStr,
+        Field(
+            examples=["Density value was null, or less than or equal to 0. The default density value of 2.7 was used."],
+            title="Message",
+        ),
+    ]
     """
     Warning message
     """
-    occurrences: StrictInt = Field(..., examples=[1], title="Occurrences")
+    occurrences: Annotated[StrictInt, Field(examples=[1], title="Occurrences")]
     """
     Number of occurrences of the warning
     """
-    warning_type: ReportWarningType = Field(..., examples=["INVALID_DENSITY_VALUE"])
+    warning_type: Annotated[ReportWarningType, Field(examples=["INVALID_DENSITY_VALUE"])]
     """
     Type of warning
     """
 
 
 class Rotation(CustomBaseModel):
-    angle: StrictFloat = Field(..., title="Angle")
+    angle: Annotated[StrictFloat, Field(title="Angle")]
     """
     Angle of rotation in degrees
     """
@@ -1349,30 +1479,33 @@ class Rotation(CustomBaseModel):
 
 
 class Unit(CustomBaseModel):
-    conversion_factor: StrictFloat = Field(..., examples=[1], title="Conversion Factor")
+    conversion_factor: Annotated[StrictFloat, Field(examples=[1], title="Conversion Factor")]
     """
     Conversion factor to convert to the reference unit for this unit type
     """
-    description: StrictStr = Field(..., examples=["Metres"], title="Description")
+    description: Annotated[StrictStr, Field(examples=["Metres"], title="Description")]
     """
     Description of the unit
     """
-    symbol: StrictStr = Field(..., examples=["m"], title="Symbol")
+    symbol: Annotated[StrictStr, Field(examples=["m"], title="Symbol")]
     """
     Display symbol for the unit
     """
-    unit_id: StrictStr = Field(..., examples=["m"], title="Unit Id")
+    unit_id: Annotated[StrictStr, Field(examples=["m"], title="Unit Id")]
     """
     ID of the unit
     """
-    unit_type: UnitType = Field(..., examples=["LENGTH"])
+    unit_type: Annotated[UnitType, Field(examples=["LENGTH"])]
     """
     Type of the unit
     """
 
 
 class UpdateMetadata(CustomBaseModel):
-    col_id: StrictStr = Field(..., examples=["618d6339-2fa7-4dfd-9c7f-c0b12016639e"], title="Col Id")
+    col_id: Annotated[
+        StrictStr,
+        Field(examples=["618d6339-2fa7-4dfd-9c7f-c0b12016639e"], title="Col Id"),
+    ]
     """
     The ID of the column, a UUID for non-system columns
     """
@@ -1380,7 +1513,7 @@ class UpdateMetadata(CustomBaseModel):
 
 
 class UpdateMetadataLite(CustomBaseModel):
-    title: StrictStr = Field(..., title="Title")
+    title: Annotated[StrictStr, Field(title="Title")]
     """
     The original human-readable label used to identify the column
     """
@@ -1392,7 +1525,7 @@ class Version(CustomBaseModel):
     API output
     """
 
-    base_version_id: StrictInt | None = Field(None, examples=[4], title="Base Version Id")
+    base_version_id: Annotated[StrictInt | None, Field(examples=[4], title="Base Version Id")] = None
     """
     Version the update was applied to. This will be the same as `parent_version_id`, except for
     updates made by Leapfrog, where it is the current local version when the block model is published. This is null if this
@@ -1400,16 +1533,16 @@ class Version(CustomBaseModel):
     """
     bbox: BBox | None = None
     """
-
+    
     Bounding box of data updated between this version and last version. Will be None for the initial version, and updates
     that only delete and rename columns.
 
     """
-    bm_uuid: UUID = Field(..., examples=["e3c277c2-edc6-4a7a-8380-251dd19231f2"], title="Bm Uuid")
+    bm_uuid: Annotated[UUID, Field(examples=["e3c277c2-edc6-4a7a-8380-251dd19231f2"], title="Bm Uuid")]
     """
     ID of the block model
     """
-    comment: StrictStr = Field("", title="Comment")
+    comment: Annotated[StrictStr, Field(title="Comment")] = ""
     """
     User-supplied comment
     """
@@ -1421,7 +1554,9 @@ class Version(CustomBaseModel):
     """
     User who performed the action that created the version
     """
-    geoscience_version_id: StrictStr | None = Field(None, examples=["1234567890"], title="Geoscience Version Id")
+    geoscience_version_id: Annotated[
+        StrictStr | None, Field(examples=["1234567890"], title="Geoscience Version Id")
+    ] = None
     """
     ID of the Geoscience Object Service object version associated with this block model version
     """
@@ -1429,42 +1564,45 @@ class Version(CustomBaseModel):
     """
     Columns within this version
     """
-    parent_version_id: StrictInt | None = Field(None, examples=[4], title="Parent Version Id")
+    parent_version_id: Annotated[StrictInt | None, Field(examples=[4], title="Parent Version Id")] = None
     """
     Previous version. 0 if this is the first version.
     """
-    version_id: StrictInt = Field(..., examples=[5], title="Version Id")
+    version_id: Annotated[StrictInt, Field(examples=[5], title="Version Id")]
     """
     Identifier for the version within a block model as a monotonically increasing integer, where 1 is
     the `version_id` for the version created upon creation of the block model.
     """
-    version_uuid: UUID = Field(..., examples=["3e9ce8de-f6ba-4920-8c6e-0882e90f0ed7"], title="Version Uuid")
+    version_uuid: Annotated[
+        UUID,
+        Field(examples=["3e9ce8de-f6ba-4920-8c6e-0882e90f0ed7"], title="Version Uuid"),
+    ]
     """
     A universally unique identifier for the version
     """
 
 
 class VersionColumnChanges(CustomBaseModel):
-    deleted: list[StrictStr] = Field([], title="Deleted")
-    metadata_updated: list[UpdateMetadataLite] | None = Field([], title="Metadata Updated")
-    new: list[StrictStr] = Field([], title="New")
-    renamed: list[ColumnRename] = Field([], title="Renamed")
-    updated: list[StrictStr] = Field([], title="Updated")
+    deleted: Annotated[list[StrictStr], Field(title="Deleted")] = []
+    metadata_updated: Annotated[list[UpdateMetadataLite] | None, Field(title="Metadata Updated")] = []
+    new: Annotated[list[StrictStr], Field(title="New")] = []
+    renamed: Annotated[list[ColumnRename], Field(title="Renamed")] = []
+    updated: Annotated[list[StrictStr], Field(title="Updated")] = []
 
 
 class BlockModel(CustomBaseModel):
     bbox: BBoxXYZ
     """
-
+    
     Axis-aligned bounding box of the block model.
 
     This is the smallest box that fully contains all blocks within the block model, regardless of whether they contain data.
     It is defined by the minimum and maximum coordinates along each axis.
 
     """
-    block_rotation: list[Rotation] = Field(..., title="Block Rotation")
+    block_rotation: Annotated[list[Rotation], Field(title="Block Rotation")]
     """
-
+    
     The rotation of the block model. Defined by a list of clockwise rotations around given axes.
 
     The combined equation for the rotation is given by:
@@ -1478,18 +1616,20 @@ class BlockModel(CustomBaseModel):
     Two rotations around the same axis cannot be consecutive items within the list of rotations.
 
     """
-    bm_uuid: UUID = Field(..., title="Block model ID")
+    bm_uuid: Annotated[UUID, Field(title="Block model ID")]
     """
     ID of the block model
     """
-    coordinate_reference_system: StrictStr | None = Field(
-        None, examples=["EPSG:3395"], title="Coordinate Reference System"
-    )
+    coordinate_reference_system: Annotated[
+        StrictStr | None,
+        Field(examples=["EPSG:3395"], title="Coordinate Reference System"),
+    ] = None
     """
-
+    
     Coordinate reference system used in the block model.
 
     This may be an EPSG code, signified by the prefix 'EPSG:', or a coordinate system definition in WKT format.
+    If an EPSG code is provided, it must be for a coordinate reference system with a length unit type (e.g. `metre`, or `foot`).
 
     """
     created_at: datetime = Field(..., title="Created At")
@@ -1500,15 +1640,21 @@ class BlockModel(CustomBaseModel):
     """
     User who created the block model
     """
-    description: StrictStr | None = Field(None, title="Description")
+    description: Annotated[StrictStr | None, Field(title="Description")] = None
     """
     User-supplied description of the block model
     """
-    geoscience_object_id: UUID | None = Field(
-        None,
-        examples=["f1230d69-c779-4736-9eb6-f82d49aafa9a"],
-        title="Geoscience Object Id",
-    )
+    fill_subblocks: Annotated[StrictBool, Field(title="Fill Subblocks")] = False
+    """
+    Indicates that updates for this block model should default to filling sub-blocks
+    """
+    geoscience_object_id: Annotated[
+        UUID | None,
+        Field(
+            examples=["f1230d69-c779-4736-9eb6-f82d49aafa9a"],
+            title="Geoscience Object Id",
+        ),
+    ] = None
     """
     UUID of the Geoscience Object Service object associated with the block model
     """
@@ -1524,29 +1670,36 @@ class BlockModel(CustomBaseModel):
     """
     Origin of the block model
     """
-    name: StrictStr = Field(..., title="Name")
+    name: Annotated[StrictStr, Field(title="Name")]
     """
     The human-readable label used to identify the block model
     """
-    normalized_rotation: list = Field(..., max_length=3, min_length=3, title="Normalized Rotation")
+    normalized_rotation: Annotated[list, Field(max_length=3, min_length=3, title="Normalized Rotation")]
     """
     Normalised rotation of the block model, represented as intrinsic rotations around the Z axis, then X axis, then Z axis.
     """
-    org_uuid: UUID = Field(..., examples=["e6230d69-c779-4736-9eb6-f82d49aafa06"], title="Organisation ID")
+    org_uuid: Annotated[
+        UUID,
+        Field(examples=["e6230d69-c779-4736-9eb6-f82d49aafa06"], title="Organisation ID"),
+    ]
     """
     Organisation the block model belongs to.
     """
-    size_options: SizeOptionsRegular | SizeOptionsOctree | SizeOptionsFullySubBlocked | SizeOptionsFlexible = Field(
-        ..., discriminator="model_type", title="Size Options"
-    )
+    size_options: Annotated[
+        SizeOptionsRegular | SizeOptionsOctree | SizeOptionsFullySubBlocked | SizeOptionsFlexible,
+        Field(discriminator="model_type", title="Size Options"),
+    ]
     """
     Size of the block model
     """
-    size_unit_id: StrictStr | None = Field(None, title="Size Unit Id")
+    size_unit_id: Annotated[StrictStr | None, Field(title="Size Unit Id")] = None
     """
     Unit ID denoting the length unit used for the block model's blocks.
     """
-    workspace_id: UUID = Field(..., examples=["860be2f5-fe06-4c1b-ac8b-7d34d2b6d2ef"], title="Workspace ID")
+    workspace_id: Annotated[
+        UUID,
+        Field(examples=["860be2f5-fe06-4c1b-ac8b-7d34d2b6d2ef"], title="Workspace ID"),
+    ]
     """
     Workspace the block model belongs to.
     """
@@ -1555,16 +1708,16 @@ class BlockModel(CustomBaseModel):
 class BlockModelAndJobURL(CustomBaseModel):
     bbox: BBoxXYZ
     """
-
+    
     Axis-aligned bounding box of the block model.
 
     This is the smallest box that fully contains all blocks within the block model, regardless of whether they contain data.
     It is defined by the minimum and maximum coordinates along each axis.
 
     """
-    block_rotation: list[Rotation] = Field(..., title="Block Rotation")
+    block_rotation: Annotated[list[Rotation], Field(title="Block Rotation")]
     """
-
+    
     The rotation of the block model. Defined by a list of clockwise rotations around given axes.
 
     The combined equation for the rotation is given by:
@@ -1578,18 +1731,20 @@ class BlockModelAndJobURL(CustomBaseModel):
     Two rotations around the same axis cannot be consecutive items within the list of rotations.
 
     """
-    bm_uuid: UUID = Field(..., title="Block model ID")
+    bm_uuid: Annotated[UUID, Field(title="Block model ID")]
     """
     ID of the block model
     """
-    coordinate_reference_system: StrictStr | None = Field(
-        None, examples=["EPSG:3395"], title="Coordinate Reference System"
-    )
+    coordinate_reference_system: Annotated[
+        StrictStr | None,
+        Field(examples=["EPSG:3395"], title="Coordinate Reference System"),
+    ] = None
     """
-
+    
     Coordinate reference system used in the block model.
 
     This may be an EPSG code, signified by the prefix 'EPSG:', or a coordinate system definition in WKT format.
+    If an EPSG code is provided, it must be for a coordinate reference system with a length unit type (e.g. `metre`, or `foot`).
 
     """
     created_at: datetime = Field(..., title="Created At")
@@ -1600,19 +1755,25 @@ class BlockModelAndJobURL(CustomBaseModel):
     """
     User who created the block model
     """
-    description: StrictStr | None = Field(None, title="Description")
+    description: Annotated[StrictStr | None, Field(title="Description")] = None
     """
     User-supplied description of the block model
     """
-    geoscience_object_id: UUID | None = Field(
-        None,
-        examples=["f1230d69-c779-4736-9eb6-f82d49aafa9a"],
-        title="Geoscience Object Id",
-    )
+    fill_subblocks: Annotated[StrictBool, Field(title="Fill Subblocks")] = False
+    """
+    Indicates that updates for this block model should default to filling sub-blocks
+    """
+    geoscience_object_id: Annotated[
+        UUID | None,
+        Field(
+            examples=["f1230d69-c779-4736-9eb6-f82d49aafa9a"],
+            title="Geoscience Object Id",
+        ),
+    ] = None
     """
     UUID of the Geoscience Object Service object associated with the block model
     """
-    job_url: AnyUrl = Field(..., title="Job Url")
+    job_url: Annotated[AnyUrl, Field(title="Job Url")]
     last_updated_at: datetime = Field(..., title="Last Updated At")
     """
     Date and time of the last block model update, including metadata updates
@@ -1625,116 +1786,66 @@ class BlockModelAndJobURL(CustomBaseModel):
     """
     Origin of the block model
     """
-    name: StrictStr = Field(..., title="Name")
+    name: Annotated[StrictStr, Field(title="Name")]
     """
     The human-readable label used to identify the block model
     """
-    normalized_rotation: list = Field(..., max_length=3, min_length=3, title="Normalized Rotation")
+    normalized_rotation: Annotated[list, Field(max_length=3, min_length=3, title="Normalized Rotation")]
     """
     Normalised rotation of the block model, represented as intrinsic rotations around the Z axis, then X axis, then Z axis.
     """
-    org_uuid: UUID = Field(..., examples=["e6230d69-c779-4736-9eb6-f82d49aafa06"], title="Organisation ID")
+    org_uuid: Annotated[
+        UUID,
+        Field(examples=["e6230d69-c779-4736-9eb6-f82d49aafa06"], title="Organisation ID"),
+    ]
     """
     Organisation the block model belongs to.
     """
-    size_options: SizeOptionsRegular | SizeOptionsOctree | SizeOptionsFullySubBlocked | SizeOptionsFlexible = Field(
-        ..., discriminator="model_type", title="Size Options"
-    )
+    size_options: Annotated[
+        SizeOptionsRegular | SizeOptionsOctree | SizeOptionsFullySubBlocked | SizeOptionsFlexible,
+        Field(discriminator="model_type", title="Size Options"),
+    ]
     """
     Size of the block model
     """
-    size_unit_id: StrictStr | None = Field(None, title="Size Unit Id")
+    size_unit_id: Annotated[StrictStr | None, Field(title="Size Unit Id")] = None
     """
     Unit ID denoting the length unit used for the block model's blocks.
     """
-    workspace_id: UUID = Field(..., examples=["860be2f5-fe06-4c1b-ac8b-7d34d2b6d2ef"], title="Workspace ID")
+    workspace_id: Annotated[
+        UUID,
+        Field(examples=["860be2f5-fe06-4c1b-ac8b-7d34d2b6d2ef"], title="Workspace ID"),
+    ]
     """
     Workspace the block model belongs to.
     """
 
 
-class CreateData(CustomBaseModel):
-    block_rotation: list[Rotation] = Field(..., max_length=3, title="Block Rotation")
-    """
-
-    The rotation of the block model. Defined by a list of clockwise rotations around given axes.
-
-    The combined equation for the rotation is given by:
-
-        R_1 ... R_n A = B
-
-    where `A` is the location in the IJK space, `B` is the location in coordinate space, and `R_i` is the rotation matrix for the `i`th rotation.
-
-    For example, if the first rotation is a rotation of 15 degrees clockwise around the X axis, `R_1` would be `[[1, 0, 0], [0, cos(15), sin(15)], [0, -sin(15), cos(15)]]`.
-
-    Two rotations around the same axis cannot be consecutive items within the list of rotations.
-
-    """
-    comment: StrictStr | None = Field(None, max_length=250, title="Comment")
-    coordinate_reference_system: StrictStr | None = Field(
-        None,
-        examples=["EPSG:3395"],
-        max_length=10000,
-        title="Coordinate Reference System",
-    )
-    """
-
-    Coordinate reference system used in the block model.
-
-    This may be an EPSG code, signified by the prefix 'EPSG:', or a coordinate system definition in WKT format.
-
-    """
-    description: StrictStr | None = Field(None, max_length=500, title="Description")
-    """
-    Description of the block model
-    """
-    model_origin: Location
-    name: StrictStr = Field(..., title="Name")
-    r"""
-    Name of the block model. This may not contain `/` nor `\`.
-    """
-    object_path: StrictStr | None = Field(None, examples=["/path/to/folder"], title="Object Path")
-    r"""
-
-    Path of the folder in Geoscience Object Service to create the reference object in.
-
-    This may not contain relative elements like `.` or `..`. It may not contain double slashes `//`, nor backslashes `\`,
-    nor elements ending in `.`.
-
-    """
-    size_options: SizeOptionsRegular | SizeOptionsOctree | SizeOptionsFullySubBlocked | SizeOptionsFlexible = Field(
-        ..., discriminator="model_type", title="Size Options"
-    )
-    size_unit_id: StrictStr | None = Field(None, examples=["m"], title="Size Unit Id")
-    """
-    Unit ID denoting the length unit used for the block model's blocks.
-    """
-
-
 class JobResponse(CustomBaseModel):
-    job_status: JobStatus = Field(..., examples=["COMPLETE"])
+    job_status: Annotated[JobStatus, Field(examples=["COMPLETE"])]
     """
-
+    
     Status of this job. The statuses have the following meanings:
      - `PENDING_UPLOAD`: This is a model update job, and is awaiting notification that file upload has
        completed before proceeding any further.
      - `QUEUED`: The job is ready for processing, and is queued waiting for a worker process to become available.
      - `PROCESSING`: The job is actively being processed by a worker.
-     - `COMPLETE`: The job completed successfully.
+     - `COMPLETE`: The job completed succesfully.
      - `FAILED`: The job failed. No further processing of this job will be attempted.
 
     """
-    payload: (
+    payload: Annotated[
         Version
         | QueryDownload
         | JobErrorPayload
         | ReportRunResult
         | ReportComparisonJobResult
         | JobPendingPayload
-        | None
-    ) = Field(None, title="Payload")
+        | None,
+        Field(title="Payload"),
+    ] = None
     """
-
+    
     The payload describes the outcome of the job, and is set for completed or failed jobs. This property will not appear if the
     job is not yet `COMPLETE` or `FAILED`.
      - For all failed jobs, this will be a `JobErrorPayload`.
@@ -1744,199 +1855,231 @@ class JobResponse(CustomBaseModel):
     """
 
 
+class LineageV100Input(CustomBaseModel):
+    events: Annotated[list[LineageV100Runevent], Field(title="Events")]
+    self_link: Annotated[StrictStr | None, Field(title="Self Link")] = None
+
+
+class LineageV100Output(CustomBaseModel):
+    events: Annotated[list[LineageV100Runevent], Field(title="Events")]
+    self_link: Annotated[StrictStr | None, Field(title="Self Link")] = None
+
+
 class PaginatedResponseWithUnitsReportSpecificationWithLastRunInfo(CustomBaseModel):
-    count: StrictInt = Field(..., title="Count")
+    count: Annotated[StrictInt, Field(title="Count")]
     """
     Number of results returned in `results`
     """
-    limit: StrictInt = Field(..., title="Limit")
+    limit: Annotated[StrictInt, Field(title="Limit")]
     """
     Maximum number of items requested
     """
-    offset: StrictInt = Field(..., title="Offset")
+    offset: Annotated[StrictInt, Field(title="Offset")]
     """
     Index of the first item in `results` with respect to the full list without pagination
     """
-    referenced_units: list[Unit] = Field(..., title="Referenced Units")
+    referenced_units: Annotated[list[Unit], Field(title="Referenced Units")]
     """
     List of all units referenced in the results
     """
-    results: list[ReportSpecificationWithLastRunInfo] = Field(..., title="Results")
+    results: Annotated[list[ReportSpecificationWithLastRunInfo], Field(title="Results")]
     """
     List of results
     """
-    total: StrictInt = Field(..., title="Total")
+    total: Annotated[StrictInt, Field(title="Total")]
     """
     Total number of items within the full list without pagination
     """
 
 
 class PaginatedResponseWithUnitsVersion(CustomBaseModel):
-    count: StrictInt = Field(..., title="Count")
+    count: Annotated[StrictInt, Field(title="Count")]
     """
     Number of results returned in `results`
     """
-    limit: StrictInt = Field(..., title="Limit")
+    limit: Annotated[StrictInt, Field(title="Limit")]
     """
     Maximum number of items requested
     """
-    offset: StrictInt = Field(..., title="Offset")
+    offset: Annotated[StrictInt, Field(title="Offset")]
     """
     Index of the first item in `results` with respect to the full list without pagination
     """
-    referenced_units: list[Unit] = Field(..., title="Referenced Units")
+    referenced_units: Annotated[list[Unit], Field(title="Referenced Units")]
     """
     List of all units referenced in the results
     """
-    results: list[Version] = Field(..., title="Results")
+    results: Annotated[list[Version], Field(title="Results")]
     """
     List of results
     """
-    total: StrictInt = Field(..., title="Total")
+    total: Annotated[StrictInt, Field(title="Total")]
     """
     Total number of items within the full list without pagination
     """
 
 
 class PaginatedResponseBlockModel(CustomBaseModel):
-    count: StrictInt = Field(..., title="Count")
+    count: Annotated[StrictInt, Field(title="Count")]
     """
     Number of results returned in `results`
     """
-    limit: StrictInt = Field(..., title="Limit")
+    limit: Annotated[StrictInt, Field(title="Limit")]
     """
     Maximum number of items requested
     """
-    offset: StrictInt = Field(..., title="Offset")
+    offset: Annotated[StrictInt, Field(title="Offset")]
     """
     Index of the first item in `results` with respect to the full list without pagination
     """
-    results: list[BlockModel] = Field(..., title="Results")
+    results: Annotated[list[BlockModel], Field(title="Results")]
     """
     List of results
     """
-    total: StrictInt = Field(..., title="Total")
+    total: Annotated[StrictInt, Field(title="Total")]
     """
     Total number of items within the full list without pagination
     """
 
 
 class PaginatedResponseReportResultSummary(CustomBaseModel):
-    count: StrictInt = Field(..., title="Count")
+    count: Annotated[StrictInt, Field(title="Count")]
     """
     Number of results returned in `results`
     """
-    limit: StrictInt = Field(..., title="Limit")
+    limit: Annotated[StrictInt, Field(title="Limit")]
     """
     Maximum number of items requested
     """
-    offset: StrictInt = Field(..., title="Offset")
+    offset: Annotated[StrictInt, Field(title="Offset")]
     """
     Index of the first item in `results` with respect to the full list without pagination
     """
-    results: list[ReportResultSummary] = Field(..., title="Results")
+    results: Annotated[list[ReportResultSummary], Field(title="Results")]
     """
     List of results
     """
-    total: StrictInt = Field(..., title="Total")
+    total: Annotated[StrictInt, Field(title="Total")]
     """
     Total number of items within the full list without pagination
     """
 
 
 class ReportComparisonResultSet(CustomBaseModel):
-    cutoff_value: StrictFloat | None = Field(None, examples=[1], title="Cutoff Value")
+    cutoff_value: Annotated[StrictFloat | None, Field(examples=[1], title="Cutoff Value")] = None
     """
     Cut-off value used in the report
     """
-    rows: list[ReportComparisonRow] = Field(
-        ..., examples=[{"categories": ["Granite"], "values": [2.7, 0.3]}], title="Rows"
-    )
+    rows: Annotated[
+        list[ReportComparisonRow],
+        Field(examples=[{"categories": ["Granite"], "values": [2.7, 0.3]}], title="Rows"),
+    ]
     """
     List of rows in the Report Result
     """
 
 
 class ReportComparisonWarnings(CustomBaseModel):
-    comparison: list[ReportWarning] = Field(..., title="Comparison")
-    from_result: list[ReportWarning] = Field(..., title="From Result")
-    to_result: list[ReportWarning] = Field(..., title="To Result")
+    comparison: Annotated[list[ReportWarning], Field(title="Comparison")]
+    from_result: Annotated[list[ReportWarning], Field(title="From Result")]
+    to_result: Annotated[list[ReportWarning], Field(title="To Result")]
 
 
 class ReportResult(CustomBaseModel):
-    bm_uuid: UUID = Field(..., examples=["bbb277c2-edc6-4a7a-8380-251dd19231f2"], title="Bm Uuid")
+    bm_uuid: Annotated[UUID, Field(examples=["bbb277c2-edc6-4a7a-8380-251dd19231f2"], title="Bm Uuid")]
     """
     ID of the block model that the report was run on
     """
-    categories: list[ReportResultCategory] = Field(
-        ...,
-        examples=[{"col_id": "ddd277c2-edc6-4a7a-8380-251dd19231f2", "label": "Rock type"}],
-        title="Categories",
-    )
+    categories: Annotated[
+        list[ReportResultCategory],
+        Field(
+            examples=[{"col_id": "ddd277c2-edc6-4a7a-8380-251dd19231f2", "label": "Rock type"}],
+            title="Categories",
+        ),
+    ]
     """
     List of categories used in the report
     """
-    cutoff_col_id: UUID | None = Field(None, examples=["ccc277c2-edc6-4a7a-8380-251dd19231f2"], title="Cutoff Col Id")
+    cutoff_col_id: Annotated[
+        UUID | None,
+        Field(examples=["ccc277c2-edc6-4a7a-8380-251dd19231f2"], title="Cutoff Col Id"),
+    ] = None
     """
     ID of the column that was used for cut-off evaluation
     """
-    referenced_columns: list[ReportResultReferencedColumn] = Field(..., title="Referenced Columns")
-    report_result_created_at: datetime = Field(..., examples=["2021-01-01T00:00:00Z"], title="Report Result Created At")
+    referenced_columns: Annotated[list[ReportResultReferencedColumn], Field(title="Referenced Columns")]
+    report_result_created_at: Annotated[
+        datetime,
+        Field(examples=["2021-01-01T00:00:00Z"], title="Report Result Created At"),
+    ]
     """
     Creation date of the Report Result
     """
-    report_result_uuid: UUID = Field(
-        ...,
-        examples=["ccc277c2-edc6-4a7a-8380-251dd19231f2"],
-        title="Report Result Uuid",
-    )
+    report_result_uuid: Annotated[
+        UUID,
+        Field(
+            examples=["ccc277c2-edc6-4a7a-8380-251dd19231f2"],
+            title="Report Result Uuid",
+        ),
+    ]
     """
     ID of the Report Result
     """
-    report_specification_description: StrictStr | None = Field(
-        None,
-        examples=["A report to show the density of the block model"],
-        title="Report Specification Description",
-    )
+    report_specification_description: Annotated[
+        StrictStr | None,
+        Field(
+            examples=["A report to show the density of the block model"],
+            title="Report Specification Description",
+        ),
+    ] = None
     """
     Description of the report specification that was run
     """
-    report_specification_name: StrictStr = Field(..., examples=["Density Report"], title="Report Specification Name")
+    report_specification_name: Annotated[
+        StrictStr, Field(examples=["Density Report"], title="Report Specification Name")
+    ]
     """
     Name of the report specification that was run
     """
-    report_specification_revision: StrictInt = Field(..., examples=[1], title="Report Specification Revision")
+    report_specification_revision: Annotated[StrictInt, Field(examples=[1], title="Report Specification Revision")]
     """
     Revision of the report specification that was run
     """
-    report_specification_uuid: UUID = Field(
-        ...,
-        examples=["e3c277c2-edc6-4a7a-8380-251dd19231f2"],
-        title="Report Specification Uuid",
-    )
+    report_specification_uuid: Annotated[
+        UUID,
+        Field(
+            examples=["e3c277c2-edc6-4a7a-8380-251dd19231f2"],
+            title="Report Specification Uuid",
+        ),
+    ]
     """
     ID of the report specification that was run
     """
-    result_sets: list[ReportResultSet] = Field(..., title="Result Sets")
-    value_columns: list[ReportResultColumn] = Field(
-        ...,
-        examples=[
-            {
-                "col_id": "eee277c2-edc6-4a7a-8380-251dd19231f2",
-                "label": "Average gold content",
-                "unit_id": "ppm[mass]",
-            }
-        ],
-        title="Value Columns",
-    )
+    result_sets: Annotated[list[ReportResultSet], Field(title="Result Sets")]
+    value_columns: Annotated[
+        list[ReportResultColumn],
+        Field(
+            examples=[
+                {
+                    "col_id": "eee277c2-edc6-4a7a-8380-251dd19231f2",
+                    "label": "Average gold content",
+                    "unit_id": "ppm[mass]",
+                }
+            ],
+            title="Value Columns",
+        ),
+    ]
     """
     List of value columns used in the report
     """
-    version_comment: StrictStr | None = Field(None, examples=["Updated density"], title="Version Comment")
+    version_comment: Annotated[StrictStr | None, Field(examples=["Updated density"], title="Version Comment")] = None
     """
     Comment of the version of the block model that the report was run on
     """
-    version_created_at: datetime = Field(..., examples=["2021-01-01T00:00:00Z"], title="Version Created At")
+    version_created_at: Annotated[
+        datetime,
+        Field(examples=["2021-01-01T00:00:00Z"], title="Version Created At"),
+    ]
     """
     Creation date of the version of the block model that the report was run on
     """
@@ -1944,65 +2087,118 @@ class ReportResult(CustomBaseModel):
     """
     User who created the version of the block model that the report was run on
     """
-    version_id: StrictInt = Field(..., examples=[2], title="Version Id")
+    version_id: Annotated[StrictInt, Field(examples=[2], title="Version Id")]
     """
     Version ID of the version of block model that the report was run on
     """
-    version_uuid: UUID | None = Field(None, examples=["ccc277c2-edc6-4a7a-8380-251dd19231f2"], title="Version Uuid")
+    version_uuid: Annotated[
+        UUID | None,
+        Field(examples=["ccc277c2-edc6-4a7a-8380-251dd19231f2"], title="Version Uuid"),
+    ] = None
     """
     Version UUID of the version of block model that the report was run on
     """
-    warnings: list[ReportWarning] = Field(..., title="Warnings")
+    warnings: Annotated[list[ReportWarning], Field(title="Warnings")]
+
+
+class UpdateBlockModel(CustomBaseModel):
+    coordinate_reference_system: Annotated[
+        StrictStr | None,
+        Field(
+            examples=["EPSG:3395"],
+            max_length=10000,
+            title="Coordinate Reference System",
+        ),
+    ] = None
+    """
+    
+    Coordinate reference system used in the block model.
+
+    This may be an EPSG code, signified by the prefix 'EPSG:', or a coordinate system definition in WKT format.
+    If an EPSG code is provided, it must be for a coordinate reference system with a length unit type (e.g. `metre`, or `foot`).
+
+    """
+    description: Annotated[StrictStr | None, Field(max_length=500, title="Description")] = None
+    """
+    Block model description
+    """
+    fill_subblocks: Annotated[StrictBool | None, Field(title="Fill Subblocks")] = False
+    """
+    
+    Sets the default fill_subblocks value for this block model. It can be overridden at the time of an update.
+    If this flag is `true`, then updates to a fully subblocked-model with `update_type`=`merge`, and `geometry_change`=`true`
+    with missing sub-blocks will fill the missing sub-blocks with data from the parent block.
+
+    """
+    lineage: LineageV100Input | None = None
+    """
+    Lineage of the block model
+    """
+    name: Annotated[StrictStr | None, Field(max_length=100, min_length=3, title="Name")] = None
+    """
+    Name of the block model. This may not contain `/` nor `\`. If the name is changed, leading and trailing whitespace will be automatically removed.
+    """
+    size_unit_id: Annotated[StrictStr | None, Field(title="Size Unit ID")] = None
+    """
+    Unit ID denoting the length unit used for the block model's blocks.
+    """
 
 
 class UpdateColumns(CustomBaseModel):
-    delete: list[StrictStr] = Field(..., title="Delete")
+    delete: Annotated[list[StrictStr], Field(title="Delete")]
     """
     The list of column IDs for deletion
     """
-    new: list[Column] = Field(..., title="New")
-    rename: list[Rename] = Field(..., title="Rename")
-    update: list[StrictStr] = Field(..., title="Update")
+    new: Annotated[list[Column], Field(title="New")]
+    rename: Annotated[list[Rename], Field(title="Rename")]
+    update: Annotated[list[StrictStr], Field(title="Update")]
     """
     The list of column IDs for update
     """
-    update_metadata: list[UpdateMetadata] | None = Field(None, title="Update Metadata")
+    update_metadata: Annotated[list[UpdateMetadata] | None, Field(title="Update Metadata")] = None
 
 
 class UpdateColumnsLiteInput(CustomBaseModel):
-    delete: list[StrictStr] = Field(..., title="Delete")
+    delete: Annotated[list[StrictStr], Field(title="Delete")]
     """
     The list of column titles for deletion
     """
-    new: list[ColumnLite] = Field(..., title="New")
-    rename: list[RenameLite] = Field(..., title="Rename")
-    update: list[StrictStr] = Field(..., title="Update")
+    new: Annotated[list[ColumnLite], Field(title="New")]
+    rename: Annotated[list[RenameLite], Field(title="Rename")]
+    update: Annotated[list[StrictStr], Field(title="Update")]
     """
     The list of column titles for update
     """
-    update_metadata: list[UpdateMetadataLite] | None = Field(None, title="Update Metadata")
+    update_metadata: Annotated[list[UpdateMetadataLite] | None, Field(title="Update Metadata")] = None
 
 
 class UpdateColumnsLiteOutput(CustomBaseModel):
-    delete: list[StrictStr] = Field(..., title="Delete")
+    delete: Annotated[list[StrictStr], Field(title="Delete")]
     """
     The list of column titles for deletion
     """
-    new: list[ColumnLite] = Field(..., title="New")
-    rename: list[RenameLite] = Field(..., title="Rename")
-    update: list[StrictStr] = Field(..., title="Update")
+    new: Annotated[list[ColumnLite], Field(title="New")]
+    rename: Annotated[list[RenameLite], Field(title="Rename")]
+    update: Annotated[list[StrictStr], Field(title="Update")]
     """
     The list of column titles for update
     """
-    update_metadata: list[UpdateMetadataLite] | None = Field(None, title="Update Metadata")
+    update_metadata: Annotated[list[UpdateMetadataLite] | None, Field(title="Update Metadata")] = None
 
 
 class UpdateDataLiteInput(CustomBaseModel):
     columns: UpdateColumnsLiteInput
-    comment: StrictStr | None = Field(None, max_length=250, title="Comment")
-    geometry_change: StrictBool | None = Field(None, title="Geometry Change")
+    comment: Annotated[StrictStr | None, Field(max_length=250, title="Comment")] = None
+    fill_subblocks: Annotated[StrictBool | None, Field(title="Fill Subblocks")] = None
     """
+    
+    If set to true, any missing sub-blocks will be filled with data from the parent block.
+    This is only available for fully sub-blocked models, when `update_type` is `merge`, and `geometry_change` is `true`.
 
+    """
+    geometry_change: Annotated[StrictBool | None, Field(title="Geometry Change")] = None
+    """
+    
     Whether the update will create or destroy sub-blocks.
     - If set to `false`, no sub-blocks can be created nor destroyed, only sub-blocks that exist in the latest version can be updated.
     - If set to `true`:
@@ -2012,12 +2208,17 @@ class UpdateDataLiteInput(CustomBaseModel):
         - If `update_type` is set to `merge`, then all sub-blocks within a parent block must be provided.
 
     """
-    input_options: InputOptionsParquet | InputOptionsCSV | None = Field(
-        None, discriminator="file_format", title="Input Options"
-    )
+    input_options: Annotated[
+        InputOptionsParquet | InputOptionsCSV | InputOptionsDatamine | None,
+        Field(discriminator="file_format", title="Input Options"),
+    ] = None
+    lineage: LineageV100Input | None = None
+    """
+    Lineage of the block model update
+    """
     update_type: UpdateType = "merge"
     """
-
+    
     Behaviour of the update, for blocks that are omitted from the update file.
     - If set to `replace`, the values for blocks that are omitted will be set to null, for the selected columns. If `geometry_change` is true, the geometry of any parent block that has no blocks in the update file will be reset to an un-subdivided state.
     - If set to `merge`, blocks that are omitted will be left unchanged, the values within those blocks will be the same as within the previous version.
@@ -2027,10 +2228,17 @@ class UpdateDataLiteInput(CustomBaseModel):
 
 class UpdateDataLiteOutput(CustomBaseModel):
     columns: UpdateColumnsLiteOutput
-    comment: StrictStr | None = Field(None, max_length=250, title="Comment")
-    geometry_change: StrictBool | None = Field(None, title="Geometry Change")
+    comment: Annotated[StrictStr | None, Field(max_length=250, title="Comment")] = None
+    fill_subblocks: Annotated[StrictBool | None, Field(title="Fill Subblocks")] = None
     """
+    
+    If set to true, any missing sub-blocks will be filled with data from the parent block.
+    This is only available for fully sub-blocked models, when `update_type` is `merge`, and `geometry_change` is `true`.
 
+    """
+    geometry_change: Annotated[StrictBool | None, Field(title="Geometry Change")] = None
+    """
+    
     Whether the update will create or destroy sub-blocks.
     - If set to `false`, no sub-blocks can be created nor destroyed, only sub-blocks that exist in the latest version can be updated.
     - If set to `true`:
@@ -2040,12 +2248,17 @@ class UpdateDataLiteOutput(CustomBaseModel):
         - If `update_type` is set to `merge`, then all sub-blocks within a parent block must be provided.
 
     """
-    input_options: InputOptionsParquet | InputOptionsCSV | None = Field(
-        None, discriminator="file_format", title="Input Options"
-    )
-    update_type: UpdateType = UpdateType.merge
+    input_options: Annotated[
+        InputOptionsParquet | InputOptionsCSV | InputOptionsDatamine | None,
+        Field(discriminator="file_format", title="Input Options"),
+    ] = None
+    lineage: LineageV100Output | None = None
     """
-
+    Lineage of the block model update
+    """
+    update_type: UpdateType = "merge"
+    """
+    
     Behaviour of the update, for blocks that are omitted from the update file.
     - If set to `replace`, the values for blocks that are omitted will be set to null, for the selected columns. If `geometry_change` is true, the geometry of any parent block that has no blocks in the update file will be reset to an un-subdivided state.
     - If set to `merge`, blocks that are omitted will be left unchanged, the values within those blocks will be the same as within the previous version.
@@ -2054,13 +2267,20 @@ class UpdateDataLiteOutput(CustomBaseModel):
 
 
 class UpdateDataWithVersion(CustomBaseModel):
-    base_version_uuid: UUID = Field(..., title="Base Version Uuid")
-    bbox: BBox | BBoxXYZ | None = Field(None, title="Bbox")
+    base_version_uuid: Annotated[UUID, Field(title="Base Version Uuid")]
+    bbox: Annotated[BBox | BBoxXYZ | None, Field(title="Bbox")] = None
     columns: UpdateColumns
-    comment: StrictStr | None = Field(None, max_length=250, title="Comment")
-    geometry_change: StrictBool | None = Field(None, title="Geometry Change")
+    comment: Annotated[StrictStr | None, Field(max_length=250, title="Comment")] = None
+    fill_subblocks: Annotated[StrictBool | None, Field(title="Fill Subblocks")] = None
     """
+    
+    If set to true, any missing sub-blocks will be filled with data from the parent block.
+    This is only available for fully sub-blocked models, when `update_type` is `merge`, and `geometry_change` is `true`.
 
+    """
+    geometry_change: Annotated[StrictBool | None, Field(title="Geometry Change")] = None
+    """
+    
     Whether the update will create or destroy sub-blocks.
     - If set to `false`, no sub-blocks can be created nor destroyed, only sub-blocks that exist in the latest version can be updated.
     - If set to `true`:
@@ -2070,9 +2290,13 @@ class UpdateDataWithVersion(CustomBaseModel):
         - If `update_type` is set to `merge`, then all sub-blocks within a parent block must be provided.
 
     """
+    lineage: LineageV100Output | None = None
+    """
+    Lineage of the block model update
+    """
     update_type: UpdateType = "merge"
     """
-
+    
     Behaviour of the update, for blocks that are omitted from the update file.
     - If set to `replace`, the values for blocks that are omitted will be set to null, for the selected columns. If `geometry_change` is true, the geometry of any parent block that has no blocks in the update file will be reset to an un-subdivided state.
     - If set to `merge`, blocks that are omitted will be left unchanged, the values within those blocks will be the same as within the previous version.
@@ -2081,20 +2305,20 @@ class UpdateDataWithVersion(CustomBaseModel):
 
 
 class UpdateWithUrl(CustomBaseModel):
-    changes: UpdateDataWithVersion | UpdateDataLiteOutput = Field(..., title="Changes")
-    job_url: AnyUrl = Field(..., title="Job Url")
-    job_uuid: UUID = Field(..., title="Job Uuid")
-    upload_url: AnyUrl | None = Field(None, title="Upload Url")
-    version_uuid: UUID = Field(..., title="Version Uuid")
+    changes: Annotated[UpdateDataWithVersion | UpdateDataLiteOutput, Field(title="Changes")]
+    job_url: Annotated[AnyUrl, Field(title="Job Url")]
+    job_uuid: Annotated[UUID, Field(title="Job Uuid")]
+    upload_url: Annotated[AnyUrl | None, Field(title="Upload Url")] = None
+    version_uuid: Annotated[UUID, Field(title="Version Uuid")]
 
 
 class VersionChanges(CustomBaseModel):
-    blocks_uploaded: StrictInt | None = Field(None, title="Blocks Uploaded")
+    blocks_uploaded: Annotated[StrictInt | None, Field(title="Blocks Uploaded")] = None
     columns: VersionColumnChanges
-    total_blocks: StrictInt = Field(..., title="Total Blocks")
+    total_blocks: Annotated[StrictInt, Field(title="Total Blocks")]
     update_type: UpdateType | None = None
     """
-
+    
     Behaviour of the update, for blocks that are omitted from the update file.
     - If set to `replace`, the values for blocks that are omitted will be set to null, for the selected columns. If `geometry_change` is true, the geometry of any parent block that has no blocks in the update file will be reset to an un-subdivided state.
     - If set to `merge`, blocks that are omitted will be left unchanged, the values within those blocks will be the same as within the previous version.
@@ -2105,7 +2329,7 @@ class VersionChanges(CustomBaseModel):
 
 
 class VersionWithChanges(CustomBaseModel):
-    base_version_id: StrictInt | None = Field(None, examples=[4], title="Base Version Id")
+    base_version_id: Annotated[StrictInt | None, Field(examples=[4], title="Base Version Id")] = None
     """
     Version the update was applied to. This will be the same as `parent_version_id`, except for
     updates made by Leapfrog, where it is the current local version when the block model is published. This is null if this
@@ -2113,17 +2337,17 @@ class VersionWithChanges(CustomBaseModel):
     """
     bbox: BBox | None = None
     """
-
+    
     Bounding box of data updated between this version and last version. Will be None for the initial version, and updates
     that only delete and rename columns.
 
     """
-    bm_uuid: UUID = Field(..., examples=["e3c277c2-edc6-4a7a-8380-251dd19231f2"], title="Bm Uuid")
+    bm_uuid: Annotated[UUID, Field(examples=["e3c277c2-edc6-4a7a-8380-251dd19231f2"], title="Bm Uuid")]
     """
     ID of the block model
     """
     changes: VersionChanges
-    comment: StrictStr = Field("", title="Comment")
+    comment: Annotated[StrictStr, Field(title="Comment")] = ""
     """
     User-supplied comment
     """
@@ -2135,7 +2359,9 @@ class VersionWithChanges(CustomBaseModel):
     """
     User who performed the action that created the version
     """
-    geoscience_version_id: StrictStr | None = Field(None, examples=["1234567890"], title="Geoscience Version Id")
+    geoscience_version_id: Annotated[
+        StrictStr | None, Field(examples=["1234567890"], title="Geoscience Version Id")
+    ] = None
     """
     ID of the Geoscience Object Service object version associated with this block model version
     """
@@ -2143,18 +2369,95 @@ class VersionWithChanges(CustomBaseModel):
     """
     Columns within this version
     """
-    parent_version_id: StrictInt | None = Field(None, examples=[4], title="Parent Version Id")
+    parent_version_id: Annotated[StrictInt | None, Field(examples=[4], title="Parent Version Id")] = None
     """
     Previous version. 0 if this is the first version.
     """
-    version_id: StrictInt = Field(..., examples=[5], title="Version Id")
+    version_id: Annotated[StrictInt, Field(examples=[5], title="Version Id")]
     """
     Identifier for the version within a block model as a monotonically increasing integer, where 1 is
     the `version_id` for the version created upon creation of the block model.
     """
-    version_uuid: UUID = Field(..., examples=["3e9ce8de-f6ba-4920-8c6e-0882e90f0ed7"], title="Version Uuid")
+    version_uuid: Annotated[
+        UUID,
+        Field(examples=["3e9ce8de-f6ba-4920-8c6e-0882e90f0ed7"], title="Version Uuid"),
+    ]
     """
     A universally unique identifier for the version
+    """
+
+
+class CreateData(CustomBaseModel):
+    block_rotation: Annotated[list[Rotation], Field(max_length=3, title="Block Rotation")]
+    """
+    
+    The rotation of the block model. Defined by a list of clockwise rotations around given axes.
+
+    The combined equation for the rotation is given by:
+
+        R_1 ... R_n A = B
+
+    where `A` is the location in the IJK space, `B` is the location in coordinate space, and `R_i` is the rotation matrix for the `i`th rotation.
+
+    For example, if the first rotation is a rotation of 15 degrees clockwise around the X axis, `R_1` would be `[[1, 0, 0], [0, cos(15), sin(15)], [0, -sin(15), cos(15)]]`.
+
+    Two rotations around the same axis cannot be consecutive items within the list of rotations.
+
+    """
+    comment: Annotated[StrictStr | None, Field(max_length=250, title="Comment")] = None
+    coordinate_reference_system: Annotated[
+        StrictStr | None,
+        Field(
+            examples=["EPSG:3395"],
+            max_length=10000,
+            title="Coordinate Reference System",
+        ),
+    ] = None
+    """
+    
+    Coordinate reference system used in the block model.
+
+    This may be an EPSG code, signified by the prefix 'EPSG:', or a coordinate system definition in WKT format.
+    If an EPSG code is provided, it must be for a coordinate reference system with a length unit type (e.g. `metre`, or `foot`).
+
+    """
+    description: Annotated[StrictStr | None, Field(max_length=500, title="Description")] = None
+    """
+    Description of the block model
+    """
+    fill_subblocks: Annotated[StrictBool, Field(title="Fill Subblocks")] = False
+    """
+    
+    Sets the default fill_subblocks value for this block model. It can be overridden at the time of an update.
+    If this flag is `true`, then updates to a fully subblocked-model with `update_type`=`merge`, and `geometry_change`=`true`
+    with missing sub-blocks will fill the missing sub-blocks with data from the parent block.
+
+    """
+    lineage: LineageV100Input | None = None
+    """
+    Lineage of the block model
+    """
+    model_origin: Location
+    name: Annotated[StrictStr, Field(title="Name")]
+    """
+    Name of the block model. This may not contain `/` nor `\`. Leading and trailing whitespace will be automatically removed.
+    """
+    object_path: Annotated[StrictStr | None, Field(examples=["/path/to/folder"], title="Object Path")] = None
+    """
+    
+    Path of the folder in Geoscience Object Service to create the reference object in.
+
+    This may not contain relative elements like `.` or `..`. It may not contain double slashes `//`, nor backslashes `\`,
+    nor elements ending in `.`.
+
+    """
+    size_options: Annotated[
+        SizeOptionsRegular | SizeOptionsOctree | SizeOptionsFullySubBlocked | SizeOptionsFlexible,
+        Field(discriminator="model_type", title="Size Options"),
+    ]
+    size_unit_id: Annotated[StrictStr | None, Field(examples=["m"], title="Size Unit Id")] = None
+    """
+    Unit ID denoting the length unit used for the block model's blocks.
     """
 
 
@@ -2171,72 +2474,88 @@ class DeltaVersionData(CustomBaseModel):
     """
     Columns added, updated, or deleted in this version
     """
-    version_id: StrictInt = Field(..., examples=[5], title="Version Id")
+    version_id: Annotated[StrictInt, Field(examples=[5], title="Version Id")]
     """
     Identifier for the version within a block model as a monotonically increasing integer, where 1 is
     the `version_id` for the version created upon creation of the block model.
     """
-    version_uuid: UUID = Field(..., examples=["3e9ce8de-f6ba-4920-8c6e-0882e90f0ed7"], title="Version Uuid")
+    version_uuid: Annotated[
+        UUID,
+        Field(examples=["3e9ce8de-f6ba-4920-8c6e-0882e90f0ed7"], title="Version Uuid"),
+    ]
     """
     A universally unique identifier for the version
     """
 
 
 class ReportComparison(CustomBaseModel):
-    bm_uuid: UUID = Field(..., examples=["bbb277c2-edc6-4a7a-8380-251dd19231f2"], title="Bm Uuid")
+    bm_uuid: Annotated[UUID, Field(examples=["bbb277c2-edc6-4a7a-8380-251dd19231f2"], title="Bm Uuid")]
     """
     ID of the block model that the report was run on
     """
-    categories: list[ReportResultCategory] = Field(
-        ...,
-        examples=[{"col_id": "ddd277c2-edc6-4a7a-8380-251dd19231f2", "label": "Rock type"}],
-        title="Categories",
-    )
+    categories: Annotated[
+        list[ReportResultCategory],
+        Field(
+            examples=[{"col_id": "ddd277c2-edc6-4a7a-8380-251dd19231f2", "label": "Rock type"}],
+            title="Categories",
+        ),
+    ]
     """
     List of categories used in the report
     """
-    cutoff_col_id: UUID | None = Field(None, examples=["ccc277c2-edc6-4a7a-8380-251dd19231f2"], title="Cutoff Col Id")
+    cutoff_col_id: Annotated[
+        UUID | None,
+        Field(examples=["ccc277c2-edc6-4a7a-8380-251dd19231f2"], title="Cutoff Col Id"),
+    ] = None
     """
     ID of the column that was used for cut-off evaluation
     """
     from_result: ReportComparisonResultInfo
-    report_specification_description: StrictStr | None = Field(
-        None,
-        examples=["A report to show the density of the block model"],
-        title="Report Specification Description",
-    )
+    report_specification_description: Annotated[
+        StrictStr | None,
+        Field(
+            examples=["A report to show the density of the block model"],
+            title="Report Specification Description",
+        ),
+    ] = None
     """
     Description of the Report Specification that was run
     """
-    report_specification_name: StrictStr = Field(..., examples=["Density Report"], title="Report Specification Name")
+    report_specification_name: Annotated[
+        StrictStr, Field(examples=["Density Report"], title="Report Specification Name")
+    ]
     """
     Name of the Report Specification that was run
     """
-    report_specification_revision: StrictInt = Field(..., examples=[1], title="Report Specification Revision")
+    report_specification_revision: Annotated[StrictInt, Field(examples=[1], title="Report Specification Revision")]
     """
     Revision of the Report Specification that was run
     """
-    report_specification_uuid: UUID = Field(
-        ...,
-        examples=["e3c277c2-edc6-4a7a-8380-251dd19231f2"],
-        title="Report Specification Uuid",
-    )
+    report_specification_uuid: Annotated[
+        UUID,
+        Field(
+            examples=["e3c277c2-edc6-4a7a-8380-251dd19231f2"],
+            title="Report Specification Uuid",
+        ),
+    ]
     """
     ID of the Report Specification that was run
     """
-    result_sets: list[ReportComparisonResultSet] = Field(..., title="Result Sets")
+    result_sets: Annotated[list[ReportComparisonResultSet], Field(title="Result Sets")]
     to_result: ReportComparisonResultInfo
-    value_columns: list[ReportResultColumn] = Field(
-        ...,
-        examples=[
-            {
-                "col_id": "eee277c2-edc6-4a7a-8380-251dd19231f2",
-                "label": "Average gold content",
-                "unit_id": "ppm[mass]",
-            }
-        ],
-        title="Value Columns",
-    )
+    value_columns: Annotated[
+        list[ReportResultColumn],
+        Field(
+            examples=[
+                {
+                    "col_id": "eee277c2-edc6-4a7a-8380-251dd19231f2",
+                    "label": "Average gold content",
+                    "unit_id": "ppm[mass]",
+                }
+            ],
+            title="Value Columns",
+        ),
+    ]
     """
     List of value columns used in the report
     """
@@ -2248,19 +2567,19 @@ class DeltaResponseData(CustomBaseModel):
     Details about changes that occurred between two versions, within the specified bounding box.
     """
 
-    delete_deltas: list[UUID] = Field(..., title="Delete Deltas")
+    delete_deltas: Annotated[list[UUID], Field(title="Delete Deltas")]
     """
     List of versions that deleted specified columns
     """
-    new_deltas: list[UUID] = Field(..., title="New Deltas")
+    new_deltas: Annotated[list[UUID], Field(title="New Deltas")]
     """
     List of versions that added new columns
     """
-    update_deltas: list[UUID] = Field(..., title="Update Deltas")
+    update_deltas: Annotated[list[UUID], Field(title="Update Deltas")]
     """
     List of versions that contain updates within the specified bounding box, to the specified columns
     """
-    version_data: list[DeltaVersionData] = Field(..., title="Version Data")
+    version_data: Annotated[list[DeltaVersionData], Field(title="Version Data")]
     """
     Details about the changes per version
     """

@@ -8,7 +8,6 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-
 """
 Block Model API
 =============
@@ -22,11 +21,11 @@ Block Model API
     reporting on the material content of current or previous versions, and comparing the content between versions of
     a block model.
 
-    For more information on the Block Model API, see [Overview](/docs/blockmodel/overview), or the API references here.
+    For more information on the Block Model API, see [Overview](/docs/guides/blockmodel/), or the API references here.
 
 
 This code is generated from the OpenAPI specification for Block Model API.
-API version: 1.16.1
+API version: 1.41.3
 """
 
 # Import endpoint apis.

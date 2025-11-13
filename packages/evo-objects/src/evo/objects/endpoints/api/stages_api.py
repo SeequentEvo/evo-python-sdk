@@ -21,11 +21,12 @@ For more information on using the Geoscience Object API, see the [Geoscience Obj
 
 
 This code is generated from the OpenAPI specification for Geoscience Object API.
-API version: 1.14.0
+API version: 1.21.0
 """
 
 from evo.common.connector import APIConnector
-from evo.common.data import EmptyResponse, RequestMethod  # noqa: F401
+from evo.common.data import RequestMethod
+from evo.common.utils import get_header_metadata
 
 from ..models import *  # noqa: F403
 
@@ -84,7 +85,7 @@ class StagesApi:
         # Prepare the header parameters.
         _header_params = {
             "Accept": "application/json",
-        }
+        } | get_header_metadata(__name__)
         if additional_headers is not None:
             _header_params.update(additional_headers)
 

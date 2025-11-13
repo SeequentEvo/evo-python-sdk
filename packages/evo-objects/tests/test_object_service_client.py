@@ -23,6 +23,7 @@ from evo.common import HealthCheckType, Page, RequestMethod, ServiceUser
 from evo.common.data import OrderByOperatorEnum
 from evo.common.io.exceptions import DataNotFoundError
 from evo.common.test_tools import MockResponse, TestWithConnector, TestWithStorage
+from evo.common.utils import get_header_metadata
 from evo.objects import (
     ObjectAPIClient,
     ObjectDataDownload,
@@ -47,6 +48,7 @@ class TestObjectAPIClient(TestWithConnector, TestWithStorage):
         TestWithConnector.setUp(self)
         TestWithStorage.setUp(self)
         self.object_client = ObjectAPIClient(connector=self.connector, environment=self.environment)
+        self.setup_universal_headers(get_header_metadata(ObjectAPIClient.__module__))
 
     @property
     def instance_base_path(self) -> str:
@@ -90,8 +92,16 @@ class TestObjectAPIClient(TestWithConnector, TestWithStorage):
         content_0 = load_test_data("list_objects_0.json")
         content_1 = load_test_data("list_objects_1.json")
         responses = [
-            MockResponse(status_code=200, content=json.dumps(content_0), headers={"Content-Type": "application/json"}),
-            MockResponse(status_code=200, content=json.dumps(content_1), headers={"Content-Type": "application/json"}),
+            MockResponse(
+                status_code=200,
+                content=json.dumps(content_0),
+                headers={"Content-Type": "application/json"},
+            ),
+            MockResponse(
+                status_code=200,
+                content=json.dumps(content_1),
+                headers={"Content-Type": "application/json"},
+            ),
         ]
         self.transport.request.side_effect = responses
         page_one = await self.object_client.list_objects(
@@ -192,8 +202,16 @@ class TestObjectAPIClient(TestWithConnector, TestWithStorage):
         content_0 = load_test_data("list_objects_for_instance_0.json")
         content_1 = load_test_data("list_objects_for_instance_1.json")
         responses = [
-            MockResponse(status_code=200, content=json.dumps(content_0), headers={"Content-Type": "application/json"}),
-            MockResponse(status_code=200, content=json.dumps(content_1), headers={"Content-Type": "application/json"}),
+            MockResponse(
+                status_code=200,
+                content=json.dumps(content_0),
+                headers={"Content-Type": "application/json"},
+            ),
+            MockResponse(
+                status_code=200,
+                content=json.dumps(content_1),
+                headers={"Content-Type": "application/json"},
+            ),
         ]
         self.transport.request.side_effect = responses
         page_one = await self.object_client.list_objects_for_instance(
@@ -300,8 +318,16 @@ class TestObjectAPIClient(TestWithConnector, TestWithStorage):
         content_0 = load_test_data("list_objects_0.json")
         content_1 = load_test_data("list_objects_1.json")
         responses = [
-            MockResponse(status_code=200, content=json.dumps(content_0), headers={"Content-Type": "application/json"}),
-            MockResponse(status_code=200, content=json.dumps(content_1), headers={"Content-Type": "application/json"}),
+            MockResponse(
+                status_code=200,
+                content=json.dumps(content_0),
+                headers={"Content-Type": "application/json"},
+            ),
+            MockResponse(
+                status_code=200,
+                content=json.dumps(content_1),
+                headers={"Content-Type": "application/json"},
+            ),
         ]
         self.transport.request.side_effect = responses
         all_objects = await self.object_client.list_all_objects(
@@ -480,7 +506,9 @@ class TestObjectAPIClient(TestWithConnector, TestWithStorage):
         put_data_response = load_test_data("put_data.json")
         expected_name = put_data_response[0]["name"]
         with self.transport.set_http_response(
-            status_code=200, content=json.dumps(put_data_response), headers={"Content-Type": "application/json"}
+            status_code=200,
+            content=json.dumps(put_data_response),
+            headers={"Content-Type": "application/json"},
         ):
             (upload,) = [upload async for upload in self.object_client.prepare_data_upload([expected_name])]
 
@@ -581,7 +609,9 @@ class TestObjectAPIClient(TestWithConnector, TestWithStorage):
         expected_name = get_object_response["links"]["data"][0]["name"]
 
         with self.transport.set_http_response(
-            status_code=200, content=json.dumps(get_object_response), headers={"Content-Type": "application/json"}
+            status_code=200,
+            content=json.dumps(get_object_response),
+            headers={"Content-Type": "application/json"},
         ):
             (download,) = [
                 download
@@ -611,7 +641,9 @@ class TestObjectAPIClient(TestWithConnector, TestWithStorage):
 
         aiter_downloads = self.object_client.prepare_data_download(expected_id, expected_version, expected_names)
         with self.transport.set_http_response(
-            status_code=200, content=json.dumps(get_object_response), headers={"Content-Type": "application/json"}
+            status_code=200,
+            content=json.dumps(get_object_response),
+            headers={"Content-Type": "application/json"},
         ):
             self.transport.assert_no_requests()
 
@@ -655,7 +687,9 @@ class TestObjectAPIClient(TestWithConnector, TestWithStorage):
         expected_version = get_object_response["version_id"]
 
         with self.transport.set_http_response(
-            status_code=200, content=json.dumps(get_object_response), headers={"Content-Type": "application/json"}
+            status_code=200,
+            content=json.dumps(get_object_response),
+            headers={"Content-Type": "application/json"},
         ):
             aiter_downloads = self.object_client.prepare_data_download(expected_id, expected_version, ["missing"])
 

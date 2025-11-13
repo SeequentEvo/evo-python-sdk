@@ -20,6 +20,7 @@ from evo.common import RequestMethod
 from evo.common.exceptions import UnknownResponseError
 from evo.common.test_tools import ORG as TEST_ORG
 from evo.common.test_tools import MockResponse, TestWithConnector
+from evo.common.utils import get_header_metadata
 from parameterized import parameterized
 from pydantic import BaseModel
 
@@ -53,6 +54,7 @@ class TestJobClient(TestWithConnector):
             task=TEST_TASK,
             job_id=TEST_JOB_ID,
         )
+        self.setup_universal_headers(get_header_metadata(JobClient.__module__))
 
     @property
     def task_path(self) -> str:
@@ -137,7 +139,9 @@ class TestJobClient(TestWithConnector):
 
         response_json = json.dumps(response_data)
         with self.transport.set_http_response(
-            status_code=http_status, content=response_json, headers={"Content-Type": "application/json"}
+            status_code=http_status,
+            content=response_json,
+            headers={"Content-Type": "application/json"},
         ):
             yield expected_status
 
@@ -198,7 +202,9 @@ class TestJobClient(TestWithConnector):
         response_data = load_test_data(data_file)
         response_json = json.dumps(response_data)
         with self.transport.set_http_response(
-            status_code=http_status, content=response_json, headers={"Content-Type": "application/json"}
+            status_code=http_status,
+            content=response_json,
+            headers={"Content-Type": "application/json"},
         ):
             yield response_data.get("results")
             self.assert_request_made(
@@ -268,10 +274,7 @@ class TestJobClient(TestWithConnector):
         """Test that a job can be cancelled."""
         with self.transport.set_http_response(status_code=204):
             await self.job.cancel()
-        self.assert_request_made(
-            RequestMethod.DELETE,
-            self.task_path + f"/{self.job.id}",
-        )
+        self.assert_request_made(RequestMethod.DELETE, self.task_path + f"/{self.job.id}")
 
     @contextmanager
     def set_job_states(self, *data_files: str) -> Iterator[dict | None]:

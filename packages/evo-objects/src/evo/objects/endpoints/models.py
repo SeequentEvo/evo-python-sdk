@@ -19,26 +19,15 @@ from enum import Enum
 from typing import Annotated
 from uuid import UUID
 
-from pydantic import Field, RootModel, StrictBool, StrictFloat, StrictInt, StrictStr
+from pydantic import (
+    Field,
+    StrictBool,
+    StrictFloat,
+    StrictInt,
+    StrictStr,
+)
 
 from .._model_config import CustomBaseModel
-
-
-class CoordinateItem(RootModel[list[StrictFloat]]):
-    root: Annotated[list[StrictFloat], Field(max_length=2, min_length=2, title="GeoJSON Point")]
-    """
-    A WGS84 coordinate pair [longitude, latitude]. The longitude must come before the latitude, in order to be considered a valid GeoJSON Point
-    """
-
-
-class Coordinate(RootModel[list[CoordinateItem]]):
-    root: Annotated[
-        list[CoordinateItem],
-        Field(max_length=5, min_length=5, title="GeoJSON LinearRing"),
-    ]
-    """
-    A list of GeoJSON points defining a closed linear ring. In order for the ring to be closed, the last point must be the same as the first point. Only a rectangle is supported, so the ring must be defined by 5 points.
-    """
 
 
 class DataDownloadUrl(CustomBaseModel):
@@ -79,10 +68,6 @@ class GeoscienceObject(CustomBaseModel):
     There are some default, required values listed here explicitly.
     """
 
-    name: Annotated[StrictStr, Field(title="Name")]
-    """
-    The name of the geoscience object.
-    """
     schema_: Annotated[StrictStr, Field(alias="schema", title="Schema")]
     """
     The geoscience object schema.
@@ -101,6 +86,10 @@ class LatestObjectVersionIdResponse(CustomBaseModel):
 class ListObjectsResponseLinks(CustomBaseModel):
     next: Annotated[StrictStr | None, Field(title="Next")] = None
     prev: Annotated[StrictStr | None, Field(title="Prev")] = None
+
+
+class ListVersionsBody(CustomBaseModel):
+    version_ids: Annotated[list[StrictStr], Field(max_length=100, min_length=1, title="Version Ids")]
 
 
 class ListedObjectLinks(CustomBaseModel):
@@ -145,10 +134,6 @@ class UpdateGeoscienceObject(CustomBaseModel):
     There are some default, required values listed here explicitly.
     """
 
-    name: Annotated[StrictStr, Field(title="Name")]
-    """
-    The name of the geoscience object.
-    """
     schema_: Annotated[StrictStr, Field(alias="schema", title="Schema")]
     """
     The geoscience object schema.
@@ -175,7 +160,12 @@ class BoundingBox(CustomBaseModel):
     """
 
     coordinates: Annotated[
-        list[Coordinate],
+        list[
+            Annotated[
+                list[Annotated[list[StrictFloat], Field(max_length=2, min_length=2, title="GeoJSON Point")]],
+                Field(max_length=5, min_length=5, title="GeoJSON LinearRing"),
+            ]
+        ],
         Field(max_length=1, min_length=1, title="GeoJSON Polygon Coordinates"),
     ]
     """
@@ -204,6 +194,9 @@ class GetObjectResponse(CustomBaseModel):
     deleted_by: User | None = None
     etag: Annotated[StrictStr, Field(title="Etag")]
     geojson_bounding_box: BoundingBox | None = None
+    geojson_bounding_box_from_workspace_crs: Annotated[
+        StrictBool | None, Field(title="Geojson Bounding Box From Workspace Crs")
+    ] = None
     links: ObjectResponseLinks
     modified_at: Annotated[datetime, Field(title="Modified At")]
     modified_by: User | None = None
@@ -219,6 +212,10 @@ class ListStagesResponse(CustomBaseModel):
     stages: Annotated[list[StageListItem], Field(title="Stages")]
 
 
+class ListVersionsResponse(CustomBaseModel):
+    versions: Annotated[list[GeoscienceObjectVersion], Field(title="Versions")]
+
+
 class ListedObject(CustomBaseModel):
     created_at: Annotated[datetime, Field(title="Created At")]
     created_by: User | None = None
@@ -226,6 +223,9 @@ class ListedObject(CustomBaseModel):
     deleted_by: User | None = None
     etag: Annotated[StrictStr, Field(title="Etag")]
     geojson_bounding_box: BoundingBox | None = None
+    geojson_bounding_box_from_workspace_crs: Annotated[
+        StrictBool | None, Field(title="Geojson Bounding Box From Workspace Crs")
+    ] = None
     links: ListedObjectLinks
     modified_at: Annotated[datetime, Field(title="Modified At")]
     modified_by: User | None = None
@@ -264,6 +264,9 @@ class PostObjectResponse(CustomBaseModel):
     deleted_by: User | None = None
     etag: Annotated[StrictStr, Field(title="Etag")]
     geojson_bounding_box: BoundingBox | None = None
+    geojson_bounding_box_from_workspace_crs: Annotated[
+        StrictBool | None, Field(title="Geojson Bounding Box From Workspace Crs")
+    ] = None
     links: ObjectResponseLinks
     modified_at: Annotated[datetime, Field(title="Modified At")]
     modified_by: User | None = None

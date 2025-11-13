@@ -34,6 +34,7 @@ API version: 1.0
 
 from evo.common.connector import APIConnector
 from evo.common.data import EmptyResponse, RequestMethod
+from evo.common.utils import get_header_metadata
 
 from ..models import *  # noqa: F403
 
@@ -87,7 +88,7 @@ class HubsApi:
         _header_params = {
             "Content-Type": "application/json",
             "Accept": "application/json",
-        }
+        } | get_header_metadata(__name__)
         if additional_headers is not None:
             _header_params.update(additional_headers)
 
@@ -144,7 +145,7 @@ class HubsApi:
         }
 
         # Prepare the header parameters.
-        _header_params = {}
+        _header_params = {} | get_header_metadata(__name__)
         if additional_headers is not None:
             _header_params.update(additional_headers)
 
@@ -202,7 +203,7 @@ class HubsApi:
         # Prepare the header parameters.
         _header_params = {
             "Accept": "application/json",
-        }
+        } | get_header_metadata(__name__)
         if additional_headers is not None:
             _header_params.update(additional_headers)
 
@@ -252,7 +253,7 @@ class HubsApi:
         # Prepare the header parameters.
         _header_params = {
             "Accept": "application/json",
-        }
+        } | get_header_metadata(__name__)
         if additional_headers is not None:
             _header_params.update(additional_headers)
 

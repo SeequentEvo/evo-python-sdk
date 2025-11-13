@@ -24,6 +24,7 @@ from evo.blockmodels.exceptions import CacheNotConfiguredException, JobFailedExc
 from evo.common import ServiceUser
 from evo.common.data import HTTPHeaderDict, RequestMethod
 from evo.common.test_tools import BASE_URL, MockResponse, TestWithConnector, TestWithStorage
+from evo.common.utils import get_header_metadata
 from utils import JobPollingRequestHandler
 
 BM_UUID = uuid.uuid4()
@@ -148,6 +149,7 @@ class TestCreateBlockModel(TestWithConnector, TestWithStorage):
         TestWithStorage.setUp(self)
         self.bms_client = BlockModelAPIClient(connector=self.connector, environment=self.environment, cache=self.cache)
         self.bms_client_without_cache = BlockModelAPIClient(connector=self.connector, environment=self.environment)
+        self.setup_universal_headers(get_header_metadata(BlockModelAPIClient.__module__))
 
     @property
     def base_path(self) -> str:
@@ -267,7 +269,7 @@ class TestCreateBlockModel(TestWithConnector, TestWithStorage):
                 ),
                 update_type=models.UpdateType.replace,
             )
-            self.transport.assert_any_request_made(
+            self.assert_any_request_made(
                 method=RequestMethod.PATCH,
                 path=f"{self.base_path}/block-models/{BM_UUID}/blocks",
                 body=expected_update_body.model_dump(mode="json", exclude_unset=True),

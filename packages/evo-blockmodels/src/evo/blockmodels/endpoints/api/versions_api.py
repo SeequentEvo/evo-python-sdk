@@ -8,7 +8,6 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-
 """
 Block Model API
 =============
@@ -22,15 +21,16 @@ Block Model API
     reporting on the material content of current or previous versions, and comparing the content between versions of
     a block model.
 
-    For more information on the Block Model API, see [Overview](/docs/blockmodel/overview), or the API references here.
+    For more information on the Block Model API, see [Overview](/docs/guides/blockmodel/), or the API references here.
 
 
 This code is generated from the OpenAPI specification for Block Model API.
-API version: 1.16.1
+API version: 1.41.3
 """
 
 from evo.common.connector import APIConnector
 from evo.common.data import EmptyResponse, RequestMethod
+from evo.common.utils import get_header_metadata
 
 from ..models import *  # noqa: F403
 
@@ -108,7 +108,7 @@ class VersionsApi:
         _header_params = {
             "Content-Type": "application/json",
             "Accept": "application/json",
-        }
+        } | get_header_metadata(__name__)
         if additional_headers is not None:
             _header_params.update(additional_headers)
 
@@ -197,7 +197,7 @@ class VersionsApi:
         # Prepare the header parameters.
         _header_params = {
             "Accept": "application/json",
-        }
+        } | get_header_metadata(__name__)
         if additional_headers is not None:
             _header_params.update(additional_headers)
 
@@ -230,7 +230,7 @@ class VersionsApi:
     ) -> QueryResult:  # noqa: F405
         """Start a block model data query
 
-        Starts a query job against the block model identified by `bm_id`. This will produce a file that contains block model data for selected columns, and within the bounding box if provided.  This request will respond with a reflection of the query criteria, as well as a pollable `job_url`. The `job_url` should be polled with a GET request to wait for the `job_status` field of the job to become either `FAILED` or `COMPLETE`. When the `job_status` becomes `COMPLETE`, the response will look like this:  ``` {     \"job_status\": \"COMPLETE\",     \"payload\": {         \"download_url\": \"<download url>\"     } } ```  The `download_url` points to the output file of the query job, and can be downloaded using either a GET request or using the Azure SDK. The download URL that is generated every time the completed `job_url` is polled has a 30 minute time-to-live (TTL), so the download process must be started within 30 minutes. The download  itself can take longer than 30 minutes, as long as the connection remains open.  The downloaded file will either be an Apache Parquet file or a CSV file, depending on the value specified in the `file_format` field under `output_options`. The columns included within the file depend on the type of sub-blocking and the values specified in the `geometry_columns` and `columns` fields. The `geometry_columns` field determines whether the blocks within the output file are primarily identified by their coordinates or by their block indices.  If `geometry_columns` is set to \"indices\" (the default), then the first columns in the output file will be `i`, `j`, `k` followed by the sub-block index columns (if applicable). If `geometry_columns` is set to \"coordinates\", then the output file will contain the columns `x`, `y`, `z` for regular block models and `x`, `y`, `z`, `dx`, `dy`, `dz` for sub-blocked block models. These columns are referred to as the \"geometry\" columns.  The remaining columns within the output file are determined by the `columns` field. The `columns` field supports selecting columns by either their title or ID, and can also include a wildcard (`\"*\"`) placeholder, which will expand to all user columns, ordered alphabetically by title, in a case-insensitive manner. Please note that the wildcard does not cover the system column `version_id`. To include `version_id` in the output file, it must also be explicitly specified in the `columns` field alongside the wildcard. The order of columns in the output file will match the order in the `columns` field. Columns that are part of the initial \"geometry\" columns will be ignored if specified.  Examples: Given a model has the following user columns: `A`(with a column ID of `d718abe4-56a5-4e27-ad51-813e69eb8aac`), `B`, and `C`. The table below shows the output file columns for different model types and parameters:  | Model Type | `geometry_columns` field | `columns` field | Output File Columns | |------------|--------------------------|-----------------|---------------------| | Regular           | \"indices\"         | `[\"d718abe4-56a5-4e27-ad51-813e69eb8aac\", \"B\"]`        | `i`, `j`, `k`, `A`, `B` | | Regular           | \"coordinates\"     | `[]`                | `x`, `y`, `z` | | Fully sub-blocked | \"indices\"         | `[\"*\"]`             | `i`, `j`, `k`, `sidx`, `A`, `B`, `C` | | Flexible          | \"coordinates\"     | `[\"*\", \"start_si\"]` | `x`, `y`, `z`, `dx`, `dy`, `dz`, `A`, `B`, `C`, `start_si` |   The column headers (header row values in CSV files and schema field names in Parquet files) will either be the name of the columns or the column ID, depending on the value specified in the `column_headers` field.  Example: for a fully sub-blocked model with a `columns` field: `[\"col_1\", \"dx\", \"x\", \"z\", \"d635868c-24ae-4ebe-9358-acb433b3c8cb\"]` (where `d635868c-24ae-4ebe-9358-acb433b3c8cb` is the column ID of `col_2`) and `column_headers`: `name`, the output file will contain the following columns in order: [`i`, `j`, `k`, `sidx`, `col_1`, `dx`, `x`, `z`, `col_2`].  For CSV files, the delimiter that separate values in the output file can also be configured using the `delimiter` field.  For Parquet files, the output file will have the following characteristics: - Row group size of 100,000 - Compressed using Zstd - Parquet data page version set to 1.0 and Parquet version set to 2.6  This request may be cached, so the `job_url` may point to an already completed job.  All workspace roles can use this endpoint.
+        Starts a query job against the block model identified by `bm_id`. This will produce a file that contains block model data for selected columns, and within the bounding box if provided.  This request will respond with a reflection of the query criteria, as well as a pollable `job_url`. The `job_url` should be polled with a GET request to wait for the `job_status` field of the job to become either `FAILED` or `COMPLETE`. When the `job_status` becomes `COMPLETE`, the response will look like this:  ``` {     \"job_status\": \"COMPLETE\",     \"payload\": {         \"download_url\": \"<download url>\"     } } ```  The `download_url` points to the output file of the query job, and can be downloaded using either a GET request or using the Azure SDK. The download URL that is generated every time the completed `job_url` is polled has a 30 minute time-to-live (TTL), so the download process must be started within 30 minutes. The download  itself can take longer than 30 minutes, as long as the connection remains open.  The downloaded file will either be an Apache Parquet file or a CSV file, depending on the value specified in the `file_format` field under `output_options`. The columns included within the file depend on the type of sub-blocking and the values specified in the `geometry_columns` and `columns` fields. The `geometry_columns` field determines whether the blocks within the output file are primarily identified by their coordinates or by their block indices.  If `geometry_columns` is set to \"indices\" (the default), then the first columns in the output file will be `i`, `j`, `k` followed by the sub-block index columns (if applicable). If `geometry_columns` is set to \"coordinates\", then the output file will contain the columns `x`, `y`, `z` for regular block models and `x`, `y`, `z`, `dx`, `dy`, `dz` for sub-blocked block models. These columns are referred to as the \"geometry\" columns.  The remaining columns within the output file are determined by the `columns` field. The `columns` field supports selecting columns by either their title or ID, and can also include a wildcard (`\"*\"`) placeholder, which will expand to all user columns, ordered alphabetically by title, in a case-insensitive manner. Please note that the wildcard does not cover the system column `version_id` and `sub_block_derivation`. To include `version_id` and `sub_block_derivation` in the output file, they must also be explicitly specified in the `columns` field alongside the wildcard. The order of columns in the output file will match the order in the `columns` field. Columns that are part of the initial \"geometry\" columns will be ignored if specified.  The `sub_block_derivation` column indicates the source of the block values with one of the following statuses: - `\"user specified\"`: Column values come directly from uploaded file, or the block has no data available. - `\"derived from parent\"`: Column values were calculated entirely by the system based on parent block values, with no corresponding data in the original uploaded file. - `\"some columns derived\"`: Column values are a mix of original data and system-calculated values.  Examples: Given a model has the following user columns: `A`(with a column ID of `d718abe4-56a5-4e27-ad51-813e69eb8aac`), `B`, and `C`. The table below shows the output file columns for different model types and parameters:  | Model Type | `geometry_columns` field | `columns` field | Output File Columns | |------------|--------------------------|-----------------|---------------------| | Regular           | \"indices\"         | `[\"d718abe4-56a5-4e27-ad51-813e69eb8aac\", \"B\"]`        | `i`, `j`, `k`, `A`, `B` | | Regular           | \"coordinates\"     | `[]`                | `x`, `y`, `z` | | Fully sub-blocked | \"indices\"         | `[\"*\"]`             | `i`, `j`, `k`, `sidx`, `A`, `B`, `C` | | Flexible          | \"coordinates\"     | `[\"*\", \"start_si\"]` | `x`, `y`, `z`, `dx`, `dy`, `dz`, `A`, `B`, `C`, `start_si` |   The column headers (header row values in CSV files and schema field names in Parquet files) will either be the name of the columns or the column ID, depending on the value specified in the `column_headers` field.  Example: for a fully sub-blocked model with a `columns` field: `[\"col_1\", \"dx\", \"x\", \"z\", \"d635868c-24ae-4ebe-9358-acb433b3c8cb\"]` (where `d635868c-24ae-4ebe-9358-acb433b3c8cb` is the column ID of `col_2`) and `column_headers`: `name`, the output file will contain the following columns in order: [`i`, `j`, `k`, `sidx`, `col_1`, `dx`, `x`, `z`, `col_2`].  For CSV files, the delimiter that separate values in the output file can also be configured using the `delimiter` field.  For Parquet files, the output file will have the following characteristics: - Row group size of 100,000 - Compressed using Zstd - Parquet data page version set to 1.0 and Parquet version set to 2.6  This request may be cached, so the `job_url` may point to an already completed job.  All workspace roles can use this endpoint.
 
         :param bm_id: ID of the block model this call is scoped to. Represented as a v4 UUID.
             Format: `uuid`
@@ -271,7 +271,7 @@ class VersionsApi:
         _header_params = {
             "Content-Type": "application/json",
             "Accept": "application/json",
-        }
+        } | get_header_metadata(__name__)
         if additional_headers is not None:
             _header_params.update(additional_headers)
 
@@ -354,7 +354,7 @@ class VersionsApi:
         # Prepare the header parameters.
         _header_params = {
             "Accept": "application/json",
-        }
+        } | get_header_metadata(__name__)
         if additional_headers is not None:
             _header_params.update(additional_headers)
 

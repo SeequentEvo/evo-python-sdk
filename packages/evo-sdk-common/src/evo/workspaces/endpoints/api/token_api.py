@@ -33,7 +33,8 @@ API version: 1.0
 """
 
 from evo.common.connector import APIConnector
-from evo.common.data import EmptyResponse, RequestMethod  # noqa: F401
+from evo.common.data import RequestMethod
+from evo.common.utils import get_header_metadata
 
 from ..models import *  # noqa: F403
 
@@ -54,7 +55,7 @@ class TokenApi:
     def __init__(self, connector: APIConnector):
         self.connector = connector
 
-    async def v1_token_workspace_evo_identity_v1_token_get(
+    async def v1_token_evo_identity_v1_token_get(
         self,
         service: str | None = None,
         hub: list[str] | None = None,
@@ -100,7 +101,7 @@ class TokenApi:
         # Prepare the header parameters.
         _header_params = {
             "Accept": "application/json",
-        }
+        } | get_header_metadata(__name__)
         if additional_headers is not None:
             _header_params.update(additional_headers)
 

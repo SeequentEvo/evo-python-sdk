@@ -14,7 +14,7 @@ from .data import parse_order_by
 from .feedback import NoFeedback, PartialFeedback, iter_with_fb
 from .health_check import get_service_health, get_service_status
 from .retry import BackoffExponential, BackoffIncremental, BackoffLinear, BackoffMethod, Retry, RetryHandler
-from .verison import get_package_details
+from .version import get_header_metadata
 
 __all__ = [
     "BackoffExponential",
@@ -26,7 +26,7 @@ __all__ = [
     "PartialFeedback",
     "Retry",
     "RetryHandler",
-    "get_package_details",
+    "get_header_metadata",
     "get_service_health",
     "get_service_status",
     "iter_with_fb",

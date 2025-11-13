@@ -33,7 +33,8 @@ API version: 1.0
 """
 
 from evo.common.connector import APIConnector
-from evo.common.data import EmptyResponse, RequestMethod  # noqa: F401
+from evo.common.data import RequestMethod
+from evo.common.utils import get_header_metadata
 
 from ..models import *  # noqa: F403
 
@@ -54,7 +55,7 @@ class DiscoveryApi:
     def __init__(self, connector: APIConnector):
         self.connector = connector
 
-    async def v1_discovery_workspace_evo_identity_v1_discovery_get(
+    async def v1_discovery_evo_identity_v1_discovery_get(
         self,
         service: list[str] | None = None,
         user_agent: str | None = None,
@@ -96,7 +97,7 @@ class DiscoveryApi:
         # Prepare the header parameters.
         _header_params = {
             "Accept": "application/json",
-        }
+        } | get_header_metadata(__name__)
         if user_agent is not None:
             _header_params["user-agent"] = user_agent
         if origin is not None:
@@ -123,7 +124,7 @@ class DiscoveryApi:
             request_timeout=request_timeout,
         )
 
-    async def v2_discovery_workspace_evo_identity_v2_discovery_get(
+    async def v2_discovery_evo_identity_v2_discovery_get(
         self,
         service: list[str] | None = None,
         cache_control: str | None = None,
@@ -168,7 +169,7 @@ class DiscoveryApi:
         # Prepare the header parameters.
         _header_params = {
             "Accept": "application/json",
-        }
+        } | get_header_metadata(__name__)
         if cache_control is not None:
             _header_params["Cache-Control"] = cache_control
         if user_agent is not None:

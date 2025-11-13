@@ -33,7 +33,8 @@ API version: 1.0
 """
 
 from evo.common.connector import APIConnector
-from evo.common.data import EmptyResponse, RequestMethod  # noqa: F401
+from evo.common.data import RequestMethod
+from evo.common.utils import get_header_metadata
 
 from ..models import *  # noqa: F403
 
@@ -54,7 +55,7 @@ class LicenseAccessApi:
     def __init__(self, connector: APIConnector):
         self.connector = connector
 
-    async def v2_license_access_workspace_evo_identity_v2_license_access_get(
+    async def v2_license_access_evo_identity_v2_license_access_get(
         self,
         service: list[str] | None = None,
         hub: str | None = None,
@@ -109,7 +110,7 @@ class LicenseAccessApi:
         # Prepare the header parameters.
         _header_params = {
             "Accept": "application/json",
-        }
+        } | get_header_metadata(__name__)
         if tx_uuid is not None:
             _header_params["tx-uuid"] = tx_uuid
         if additional_headers is not None:

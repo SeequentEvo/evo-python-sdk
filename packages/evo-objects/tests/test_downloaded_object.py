@@ -36,7 +36,7 @@ from evo.common.test_tools import (
     TestWithConnector,
     TestWithStorage,
 )
-from evo.common.utils import NoFeedback
+from evo.common.utils import NoFeedback, get_header_metadata
 from evo.jmespath import JMESPathObjectProxy
 from evo.objects import DownloadedObject, ObjectReference
 from evo.objects.endpoints import models
@@ -80,6 +80,7 @@ class TestDownloadedObject(TestWithConnector, TestWithStorage):
             connector=self.connector,
             cache=self.cache,
         )
+        self.setup_universal_headers(get_header_metadata(DownloadedObject.__module__))
 
     def tearDown(self) -> None:
         # Clear cache between tests to avoid cached files interfering with subsequent tests.

@@ -71,7 +71,9 @@ class TestObjectDataDownload(TestWithConnector, TestWithDownloadHandler):
         # Test that a new URL is generated when the initial URL is used up.
         get_object_response = load_test_data("get_object.json")
         with self.transport.set_http_response(
-            status_code=200, content=json.dumps(get_object_response), headers={"Content-Type": "application/json"}
+            status_code=200,
+            content=json.dumps(get_object_response),
+            headers={"Content-Type": "application/json"},
         ):
             second = await self.download.get_download_url()
         self.assertEqual(get_object_response["links"]["data"][1]["download_url"], second)
@@ -122,7 +124,9 @@ class TestObjectDataUpload(TestWithConnector, TestWithUploadHandler):
         # Test that a new URL is generated when the initial URL is used up.
         put_data_response = load_test_data("put_data.json")
         with self.transport.set_http_response(
-            status_code=200, content=json.dumps(put_data_response), headers={"Content-Type": "application/json"}
+            status_code=200,
+            content=json.dumps(put_data_response),
+            headers={"Content-Type": "application/json"},
         ):
             second = await self.upload.get_upload_url()
         self.assertEqual(put_data_response[0]["upload_url"], second)

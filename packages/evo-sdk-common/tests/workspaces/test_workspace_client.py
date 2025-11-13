@@ -15,6 +15,7 @@ from uuid import UUID
 
 from evo.common import HealthCheckType, RequestMethod
 from evo.common.test_tools import BASE_URL, MockResponse, TestHTTPHeaderDict, TestWithConnector, utc_datetime
+from evo.common.utils import get_header_metadata
 from evo.workspaces import (
     BasicWorkspace,
     OrderByOperatorEnum,
@@ -72,6 +73,7 @@ class TestWorkspaceClient(TestWithConnector):
     def setUp(self) -> None:
         super().setUp()
         self.workspace_client = WorkspaceAPIClient(connector=self.connector, org_id=ORG_UUID)
+        self.setup_universal_headers(get_header_metadata(WorkspaceAPIClient.__module__))
 
     async def test_get_service_health(self) -> None:
         with mock.patch("evo.workspaces.client.get_service_health") as mock_get_service_health:
@@ -106,10 +108,7 @@ class TestWorkspaceClient(TestWithConnector):
     async def test_delete_workspace_call(self):
         with self.transport.set_http_response(204):
             response = await self.workspace_client.delete_workspace(workspace_id=TEST_WORKSPACE_A.id)
-        self.assert_request_made(
-            method=RequestMethod.DELETE,
-            path=f"{BASE_PATH}/workspaces/{TEST_WORKSPACE_A.id}",
-        )
+        self.assert_request_made(method=RequestMethod.DELETE, path=f"{BASE_PATH}/workspaces/{TEST_WORKSPACE_A.id}")
         self.assertIsNone(response, "Delete workspace response should be None")
 
     async def test_create_workspace(self):

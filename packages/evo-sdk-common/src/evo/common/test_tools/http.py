@@ -254,6 +254,26 @@ class TestWithConnector(unittest.IsolatedAsyncioTestCase):
         self.transport = TestTransport()
         self.authorizer = TestAuthorizer()
         self.connector = APIConnector(BASE_URL, self.transport, self.authorizer)
+        self.universal_headers = TestHTTPHeaderDict({})
+
+    def setup_universal_headers(self, headers: Mapping[str, str]) -> None:
+        """Set universal headers that are expected to be sent with every request.
+
+        This method should only be called during test setup (i.e., in setUp method).
+
+        :param headers: The headers to be added to every request.
+        """
+        self.universal_headers = TestHTTPHeaderDict(headers)
+
+    def _get_expected_headers(self, headers: Mapping[str, str] | None) -> TestHTTPHeaderDict:
+        return TestHTTPHeaderDict(
+            {
+                **self.authorizer.default_headers,
+                **self.universal_headers,
+                **(self.connector._additional_headers or {}),
+                **(headers or {}),
+            }
+        )
 
     def assert_request_made(
         self,
@@ -274,11 +294,10 @@ class TestWithConnector(unittest.IsolatedAsyncioTestCase):
         :param request_timeout: Timeout setting for this request. If one number provided, it will be total request
             timeout. It can also be a pair (tuple) of (connection, read) timeouts.
         """
-        headers = {**self.authorizer.default_headers, **(self.connector._additional_headers or {}), **(headers or {})}
         self.transport.assert_request_made(
             method=method,
             path=path,
-            headers=headers,
+            headers=self._get_expected_headers(headers),
             post_params=post_params,
             body=body,
             request_timeout=request_timeout,
@@ -303,11 +322,10 @@ class TestWithConnector(unittest.IsolatedAsyncioTestCase):
         :param request_timeout: Timeout setting for this request. If one number provided, it will be total request
             timeout. It can also be a pair (tuple) of (connection, read) timeouts.
         """
-        headers = {**self.authorizer.default_headers, **(headers or {})}
         self.transport.assert_any_request_made(
             method=method,
             path=path,
-            headers=headers,
+            headers=self._get_expected_headers(headers),
             post_params=post_params,
             body=body,
             request_timeout=request_timeout,

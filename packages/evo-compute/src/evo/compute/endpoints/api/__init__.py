@@ -9,5 +9,5 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from .job_api import JobApi  # noqa: F401
-from .task_api import TaskApi  # noqa: F401
+from .jobs_api import JobsApi  # noqa: F401
+from .tasks_api import TasksApi  # noqa: F401

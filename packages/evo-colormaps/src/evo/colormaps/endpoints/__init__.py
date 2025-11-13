@@ -8,7 +8,6 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-
 """
 Colormap API
 =============
@@ -22,9 +21,10 @@ API version: 1.0
 """
 
 # Import endpoint apis.
-from .api import AssociationsApi, ColormapsApi
+from .api import AssociationsApi, ColormapsApi, WorkspaceApi
 
 __all__ = [
     "AssociationsApi",
     "ColormapsApi",
+    "WorkspaceApi",
 ]

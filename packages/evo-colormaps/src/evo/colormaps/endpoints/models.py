@@ -16,6 +16,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import Enum
+from typing import Annotated, Any
 from uuid import UUID
 
 from pydantic import (
@@ -32,29 +33,32 @@ from .._model_config import CustomBaseModel
 
 
 class AttributeAssociationData(CustomBaseModel):
-    attribute_id: StrictStr = Field(..., title="Attribute Id")
-    colormap_id: UUID = Field(..., title="Colormap Id")
+    attribute_id: Annotated[StrictStr, Field(title="Attribute Id")]
+    colormap_id: Annotated[UUID, Field(title="Colormap Id")]
 
 
 class AttributeAssociationsData(CustomBaseModel):
-    associations: list[AttributeAssociationData] = Field(..., max_length=128, min_length=1, title="Associations")
+    associations: Annotated[
+        list[AttributeAssociationData],
+        Field(max_length=128, min_length=1, title="Associations"),
+    ]
 
 
 class AttributeColormapAssociation(CustomBaseModel):
-    attribute_id: StrictStr = Field(..., title="Attribute ID")
-    colormap_id: UUID = Field(..., title="Colormap ID")
-    colormap_uri: AnyUrl = Field(..., title="Colormap URI")
+    attribute_id: Annotated[StrictStr, Field(title="Attribute ID")]
+    colormap_id: Annotated[UUID, Field(title="Colormap ID")]
+    colormap_uri: Annotated[AnyUrl, Field(title="Colormap URI")]
     created_at: datetime = Field(..., title="Created at")
-    created_by: UUID = Field(..., title="Created by")
-    id: UUID = Field(..., title="ID")
+    created_by: Annotated[UUID, Field(title="Created by")]
+    id: Annotated[UUID, Field(title="ID")]
     modified_at: datetime = Field(..., title="Modified at")
-    modified_by: UUID = Field(..., title="Modified by")
-    self_link: AnyUrl = Field(..., title="Self link")
-    workspace_id: UUID = Field(..., title="Workspace ID")
+    modified_by: Annotated[UUID, Field(title="Modified by")]
+    self_link: Annotated[AnyUrl, Field(title="Self link")]
+    workspace_id: Annotated[UUID, Field(title="Workspace ID")]
 
 
 class AttributeColormapAssociationList(CustomBaseModel):
-    associations: list[AttributeColormapAssociation] = Field(..., title="Associations")
+    associations: Annotated[list[AttributeColormapAssociation], Field(title="Associations")]
 
 
 class ColorItem(RootModel[StrictInt]):
@@ -62,7 +66,7 @@ class ColorItem(RootModel[StrictInt]):
 
 
 class Color(RootModel[list[ColorItem]]):
-    root: list[ColorItem] = Field(..., max_length=3, min_length=3)
+    root: Annotated[list[ColorItem], Field(max_length=3, min_length=3)]
 
 
 class ColormapTypeEnum(Enum):
@@ -71,101 +75,109 @@ class ColormapTypeEnum(Enum):
     discrete = "discrete"
 
 
+class CategoryColormapData(CustomBaseModel):
+    colors: Annotated[list[Color], Field(max_length=16384, min_length=1, title="Colors")]
+    """
+    An ordered list of RGB colors, containing between 1 and 16384 colors. Each color is represented by three integer values (for Red, Green, and Blue) ranging from 0 to 255.
+    """
+    dtype: ColormapTypeEnum = ColormapTypeEnum.category
+    map: Annotated[list[StrictStr], Field(title="Map")]
+    name: Annotated[StrictStr, Field(title="Name")]
+
+
 class ContinuousColormapData(CustomBaseModel):
-    attribute_controls: list[StrictFloat] = Field(..., min_length=2, title="Attribute Controls")
-    colors: list[Color] = Field(..., max_length=1024, min_length=2, title="Colors")
+    attribute_controls: Annotated[list[StrictFloat], Field(min_length=2, title="Attribute Controls")]
+    colors: Annotated[list[Color], Field(max_length=1024, min_length=2, title="Colors")]
     """
     An ordered list of RGB colors, containing between 2 and 1024 colors. Each color is represented by three integer values (for Red, Green, and Blue) ranging from 0 to 255.
     """
     dtype: ColormapTypeEnum = ColormapTypeEnum.continuous
-    gradient_controls: list[StrictFloat] = Field(..., min_length=2, title="Gradient Controls")
-    name: StrictStr = Field(..., title="Name")
+    gradient_controls: Annotated[list[StrictFloat], Field(min_length=2, title="Gradient Controls")]
+    name: Annotated[StrictStr, Field(title="Name")]
 
 
 class ContinuousColormapResponse(CustomBaseModel):
-    attribute_controls: list[StrictFloat] = Field(..., min_length=1, title="Attribute controls")
+    attribute_controls: Annotated[list[StrictFloat], Field(min_length=1, title="Attribute controls")]
     """
     List of ordered attribute values for gradient curve
     """
-    colors: list[Color] = Field(..., max_length=1024, min_length=2, title="Colors")
+    colors: Annotated[list[Color], Field(max_length=1024, min_length=2, title="Colors")]
     """
     An ordered list of RGB colors, containing between 2 and 1024 colors. Each color is represented by three integer values (for Red, Green, and Blue) ranging from 0 to 255.
     """
     created_at: datetime = Field(..., title="Created at")
-    created_by: UUID = Field(..., title="Created by")
-    gradient_controls: list[StrictFloat] = Field(..., min_length=1, title="Gradient controls")
+    created_by: Annotated[UUID, Field(title="Created by")]
+    gradient_controls: Annotated[list[StrictFloat], Field(min_length=1, title="Gradient controls")]
     """
     List of gradient positions for gradient curve, floats between 0 and 1
     """
-    id: UUID = Field(..., title="ID")
+    id: Annotated[UUID, Field(title="ID")]
     modified_at: datetime = Field(..., title="Modified at")
-    modified_by: UUID = Field(..., title="Modified by")
-    name: StrictStr = Field(..., title="Name")
-    schema_: ColormapTypeEnum = Field(..., alias="schema")
-    self_link: AnyUrl = Field(..., title="Self link")
+    modified_by: Annotated[UUID, Field(title="Modified by")]
+    name: Annotated[StrictStr, Field(title="Name")]
+    schema_: Annotated[ColormapTypeEnum, Field(alias="schema")]
+    self_link: Annotated[AnyUrl, Field(title="Self link")]
 
 
 class DiscreteColormapData(CustomBaseModel):
-    colors: list[Color] = Field(..., max_length=1024, min_length=1, title="Colors")
+    colors: Annotated[list[Color], Field(max_length=1024, min_length=1, title="Colors")]
     """
     An ordered list of RGB colors, containing between 1 and 1024 colors. Each color is represented by three integer values (for Red, Green, and Blue) ranging from 0 to 255.
     """
     dtype: ColormapTypeEnum = ColormapTypeEnum.discrete
-    end_inclusive: list[StrictBool] = Field(..., title="End Inclusive")
-    end_points: list[StrictFloat] = Field(..., title="End Points")
-    name: StrictStr = Field(..., title="Name")
+    end_inclusive: Annotated[list[StrictBool], Field(title="End Inclusive")]
+    end_points: Annotated[list[StrictFloat], Field(title="End Points")]
+    name: Annotated[StrictStr, Field(title="Name")]
 
 
 class DiscreteColormapResponse(CustomBaseModel):
-    colors: list[Color] = Field(..., max_length=1024, min_length=1, title="Colors")
+    colors: Annotated[list[Color], Field(max_length=1024, min_length=1, title="Colors")]
     """
     An ordered list of RGB colors, containing between 1 and 1024 colors. Each color is represented by three integer values (for Red, Green, and Blue) ranging from 0 to 255.
     """
     created_at: datetime = Field(..., title="Created at")
-    created_by: UUID = Field(..., title="Created by")
-    end_inclusive: list[StrictBool] = Field(..., title="End inclusive")
+    created_by: Annotated[UUID, Field(title="Created by")]
+    end_inclusive: Annotated[list[StrictBool], Field(title="End inclusive")]
     """
     Boolean array indicating whether to include the endpoint in the bucket or not
     """
-    end_points: list[StrictFloat] = Field(..., title="End points")
+    end_points: Annotated[list[StrictFloat], Field(title="End points")]
     """
     List of colormap bucket endpoints, must be one fewer than the number of colors
     """
-    id: UUID = Field(..., title="ID")
+    id: Annotated[UUID, Field(title="ID")]
     modified_at: datetime = Field(..., title="Modified at")
-    modified_by: UUID = Field(..., title="Modified by")
-    name: StrictStr = Field(..., title="Name")
-    schema_: ColormapTypeEnum = Field(..., alias="schema")
-    self_link: AnyUrl = Field(..., title="Self link")
+    modified_by: Annotated[UUID, Field(title="Modified by")]
+    name: Annotated[StrictStr, Field(title="Name")]
+    schema_: Annotated[ColormapTypeEnum, Field(alias="schema")]
+    self_link: Annotated[AnyUrl, Field(title="Self link")]
 
 
-class CategoryColormapData(CustomBaseModel):
-    colors: list[Color] = Field(..., max_length=10000, min_length=1, title="Colors")
+class WorkspaceMetadataResponse(CustomBaseModel):
+    objects_metadata: Annotated[dict[str, Any], Field(title="Object metadata")]
     """
-    An ordered list of RGB colors, containing between 1 and 1024 colors. Each color is represented by three integer values (for Red, Green, and Blue) ranging from 0 to 255.
+    Mapping of objects to their respective metadata
     """
-    dtype: ColormapTypeEnum = ColormapTypeEnum.category
-    map: list[StrictStr] = Field(..., title="Map")
-    name: StrictStr = Field(..., title="Name")
+    workspace_id: Annotated[UUID, Field(title="Workspace ID")]
 
 
 class CategoryColormapResponse(CustomBaseModel):
-    colors: list[Color] = Field(..., max_length=10000, min_length=1, title="Colors")
+    colors: Annotated[list[Color], Field(max_length=16384, min_length=1, title="Colors")]
     """
-    An ordered list of RGB colors, containing between 1 and 10000 colors. Each color is represented by three integer values (for Red, Green, and Blue) ranging from 0 to 255.
+    An ordered list of RGB colors, containing between 1 and 16384 colors. Each color is represented by three integer values (for Red, Green, and Blue) ranging from 0 to 255.
     """
     created_at: datetime = Field(..., title="Created at")
-    created_by: UUID = Field(..., title="Created by")
-    id: UUID = Field(..., title="ID")
-    map: list[StrictStr] = Field(..., title="Map")
+    created_by: Annotated[UUID, Field(title="Created by")]
+    id: Annotated[UUID, Field(title="ID")]
+    map: Annotated[list[StrictStr], Field(title="Map")]
     """
     String array mapping arbitrary strings to colors
     """
     modified_at: datetime = Field(..., title="Modified at")
-    modified_by: UUID = Field(..., title="Modified by")
-    name: StrictStr = Field(..., title="Name")
-    schema_: ColormapTypeEnum = Field(..., alias="schema")
-    self_link: AnyUrl = Field(..., title="Self link")
+    modified_by: Annotated[UUID, Field(title="Modified by")]
+    name: Annotated[StrictStr, Field(title="Name")]
+    schema_: Annotated[ColormapTypeEnum, Field(alias="schema")]
+    self_link: Annotated[AnyUrl, Field(title="Self link")]
 
 
 class ColormapData(RootModel[ContinuousColormapData | DiscreteColormapData | CategoryColormapData]):

@@ -27,6 +27,7 @@ from evo.colormaps.exceptions import UnknownColormapType
 from evo.common import Environment, HealthCheckType, RequestMethod, ServiceUser
 from evo.common.exceptions import NotFoundException
 from evo.common.test_tools import BASE_URL, ORG, WORKSPACE_ID, TestWithConnector, utc_datetime
+from evo.common.utils import get_header_metadata
 
 
 class TestColormapApiClient(TestWithConnector):
@@ -34,6 +35,7 @@ class TestColormapApiClient(TestWithConnector):
         TestWithConnector.setUp(self)
         self.environment = Environment(hub_url=BASE_URL, org_id=ORG.id, workspace_id=WORKSPACE_ID)
         self.colormap_api_client = ColormapAPIClient(connector=self.connector, environment=self.environment)
+        self.setup_universal_headers(get_header_metadata(ColormapAPIClient.__module__))
 
     @property
     def base_path(self) -> str:
@@ -67,7 +69,9 @@ class TestColormapApiClient(TestWithConnector):
             id=UUID(int=6),
         )
         with self.transport.set_http_response(
-            status_code=201, content=json.dumps(post_colormap_response), headers={"Content-Type": "application/json"}
+            status_code=201,
+            content=json.dumps(post_colormap_response),
+            headers={"Content-Type": "application/json"},
         ):
             colormap_metadata = await self.colormap_api_client.create_colormap(colormap=colormap, name=colormap_name)
 
@@ -106,7 +110,9 @@ class TestColormapApiClient(TestWithConnector):
             id=UUID(int=7),
         )
         with self.transport.set_http_response(
-            status_code=201, content=json.dumps(post_colormap_response), headers={"Content-Type": "application/json"}
+            status_code=201,
+            content=json.dumps(post_colormap_response),
+            headers={"Content-Type": "application/json"},
         ):
             colormap_metadata = await self.colormap_api_client.create_colormap(colormap=colormap, name=colormap_name)
 
@@ -144,7 +150,9 @@ class TestColormapApiClient(TestWithConnector):
             id=UUID(int=8),
         )
         with self.transport.set_http_response(
-            status_code=201, content=json.dumps(post_colormap_response), headers={"Content-Type": "application/json"}
+            status_code=201,
+            content=json.dumps(post_colormap_response),
+            headers={"Content-Type": "application/json"},
         ):
             colormap_metadata = await self.colormap_api_client.create_colormap(colormap=colormap, name=colormap_name)
 
@@ -182,7 +190,9 @@ class TestColormapApiClient(TestWithConnector):
             id=UUID(int=6),
         )
         with self.transport.set_http_response(
-            status_code=201, content=json.dumps(post_colormap_response), headers={"Content-Type": "application/json"}
+            status_code=201,
+            content=json.dumps(post_colormap_response),
+            headers={"Content-Type": "application/json"},
         ):
             colormap_metadata = await self.colormap_api_client.create_colormap(colormap=colormap, name=colormap_name)
 
@@ -208,7 +218,9 @@ class TestColormapApiClient(TestWithConnector):
 
     async def assert_get_colormap_by_id(self, colormap_id, expected_colormap_metadata, get_colormap_response):
         with self.transport.set_http_response(
-            status_code=200, content=json.dumps(get_colormap_response), headers={"Content-Type": "application/json"}
+            status_code=200,
+            content=json.dumps(get_colormap_response),
+            headers={"Content-Type": "application/json"},
         ):
             colormap_metadata = await self.colormap_api_client.get_colormap_by_id(colormap_id)
         self.assertIsInstance(colormap_metadata, ColormapMetadata)

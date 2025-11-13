@@ -21,7 +21,7 @@ For more information on using the Geoscience Object API, see the [Geoscience Obj
 
 
 This code is generated from the OpenAPI specification for Geoscience Object API.
-API version: 1.14.0
+API version: 1.21.0
 """
 
 # Import endpoint apis.

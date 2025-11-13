@@ -8,26 +8,29 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-
 """
-Compute Task API
+Task API
 =============
 
-Normally this code would be generated from an OpenAPI specification. However, the API specification for
-the Compute Task API is new and not yet finalized. Therefore, this code is written against the intended API,
-with some customisation as needed to make it work.
 
-The client implementation should still abstract these details away from the user, so that the user can interact
-with the API in a more user-friendly way, and so that this implementation can be changed without affecting the user.
+    The Task API provides the ability to execute computation tasks in Evo that require variable, on-demand
+    processing power. Building the Task API into your application can enable fast processing of long
+    running, or resource intensive operations, without depending on the end user's physical hardware.
 
-This code is based on the OpenAPI specification for Compute Task API.
-API version: 0.0.1
+    Tasks are created, triggering a job to be executed asynchronously within a specific topic for your organization,
+    and can be monitored throughout their execution lifecycle.
+
+    For more information on using the Task API, see [Overview](/docs/guides/tasks), or the API
+    references here.
+
+This code is generated from the OpenAPI specification for Task API.
+API version: 0.0.2
 """
 
 # Import endpoint apis.
-from .api import JobApi, TaskApi
+from .api import JobsApi, TasksApi
 
 __all__ = [
-    "JobApi",
-    "TaskApi",
+    "JobsApi",
+    "TasksApi",
 ]
