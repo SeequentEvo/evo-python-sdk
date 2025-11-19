@@ -11,19 +11,26 @@
 
 from collections.abc import Iterator
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterable, cast
 from uuid import UUID
+
+import numpy as np
 
 from evo import logging
 from evo.common import APIConnector, Environment, ICache, IFeedback
 from evo.common.exceptions import StorageFileNotFoundError
 from evo.common.io.exceptions import DataExistsError
-from evo.common.utils import NoFeedback, PartialFeedback
+from evo.common.utils import NoFeedback, PartialFeedback, split_feedback
 
+from ..exceptions import TableFormatError
 from ..io import _CACHE_SCOPE, ObjectDataUpload
+from .table_formats import INTEGER_ARRAY_1_INT32, INTEGER_ARRAY_MD_INT32, LOOKUP_TABLE_INT32
+from .tables import KnownTableFormat
+from .types import ArrayTableInfo, CategoryInfo, LookupTableInfo
 
 try:
     import pyarrow as pa
+    import pyarrow.compute as pc
 except ImportError:
     raise ImportError("ObjectDataClient requires the `pyarrow` package to be installed")
 
@@ -124,33 +131,50 @@ class ObjectDataClient:
         )
         fb.progress(1)
 
-    def save_table(self, table: pa.Table) -> dict:
+    def save_table(
+        self, table: pa.Table, table_format: KnownTableFormat | Iterable[KnownTableFormat] | None = None
+    ) -> dict:
         """Save a pyarrow table to a file, returning the table info as a dictionary.
 
-        :param table: The pyarrow table to save.
-
+        :param table: The pyarrow table to save
+        :param table_format: The table format to use for saving the table.
+            If a single KnownTableFormat is provided, that format will be used.
+            Otherwise, the format will be inferred from the table, either by checking against the provided formats or by
+            checking against all known formats.
         :return: Information about the saved table.
 
-        :raises TableFormatError: If the provided table does not match this format.
+        :raises TableFormatError: If the provided table does not match any of the specified formats. If
+            no table formats are specified, raised when the table does not match any known format.
         :raises StorageFileNotFoundError: If the destination does not exist or is not a directory.
         """
         from .table_formats import get_known_format
 
-        known_format = get_known_format(table)
-        table_info = known_format.save_table(table=table, destination=self.cache_location)
+        if not isinstance(table_format, KnownTableFormat):
+            table_format = get_known_format(table, table_formats=table_format)
+        table_info = table_format.save_table(table=table, destination=self.cache_location)
         return table_info
 
-    async def upload_table(self, table: pa.Table, fb: IFeedback = NoFeedback) -> dict:
+    async def upload_table(
+        self,
+        table: pa.Table,
+        fb: IFeedback = NoFeedback,
+        table_format: KnownTableFormat | Iterable[KnownTableFormat] | None = None,
+    ) -> dict:
         """Upload pyarrow table to the geoscience object service, returning a GO model of the uploaded data.
 
         :param table: The table to be uploaded.
         :param fb: A feedback object for tracking upload progress.
+        :param table_format: The table format to use for saving the table.
+            If a single KnownTableFormat is provided, that format will be used.
+            Otherwise, the format will be inferred from the table, either by checking against the provided formats or by
+            checking against all known formats.
 
         :return: A description of the uploaded data.
 
-        :raises TableFormatError: If the table does not match a known format.
+        :raises TableFormatError: If the provided table does not match any of the specified formats. If
+            no table formats are specified, raised when the table does not match any known format.
         """
-        table_info = self.save_table(table)
+        table_info = self.save_table(table, table_format)
         upload = ObjectDataUpload(connector=self._connector, environment=self._environment, name=table_info["data"])
         try:
             await upload.upload_from_cache(cache=self._cache, transport=self._connector.transport, fb=fb)
@@ -158,6 +182,64 @@ class ObjectDataClient:
             logger.debug(f"Data not uploaded because data already exists (label: {table_info['data']})")
             fb.progress(1)
         return table_info
+
+    async def upload_category_table(self, table: pa.Table, fb: IFeedback = NoFeedback) -> CategoryInfo:
+        """Upload a pyarrow table with category data to the geoscience object service, returning the reference to
+        both the value and lookup tables.
+
+        :param table: The table to be uploaded.
+        :param fb: A feedback object for tracking upload progress.
+
+        :return: A description of the uploaded data.
+
+        :raises TableFormatError: If the table isn't a valid category table, or if the number of categories exceeds
+            what int32 type can represent.
+        """
+
+        all_chunks = []
+        columns_chunk_range = []
+        for column in table.itercolumns():
+            column = column.dictionary_encode()
+            if not pa.types.is_string(column.type.value_type):
+                raise TableFormatError("Category columns must be of type string")
+            if not pa.types.is_int32(column.type.index_type):
+                # Currently, we only support int32 indices
+                column = pc.cast(column, pa.dictionary(pa.int32(), column.type.value_type))
+            start_chunk = len(all_chunks)
+            if isinstance(column, pa.ChunkedArray):
+                all_chunks.extend(column.chunks)
+                n_chunks = len(column.chunks)
+            else:
+                all_chunks.append(column)
+                n_chunks = 1
+            columns_chunk_range.append((start_chunk, start_chunk + n_chunks))
+        chunked_array = pa.chunked_array(all_chunks)
+        # Ensure all chunks are dictionary encoded with the same dictionary.
+        chunked_array = chunked_array.dictionary_encode().unify_dictionaries()
+        if not pa.types.is_int32(chunked_array.type.index_type):
+            raise TableFormatError("All categories must fit in int32 indices")
+        all_chunks = chunked_array.chunks
+        all_chunk_indices = [chunk.indices for chunk in all_chunks]
+
+        # Build indices for each column, based on the chunks for that column.
+        values = pa.Table.from_arrays(
+            [pa.chunked_array(all_chunk_indices[start:end]) for start, end in columns_chunk_range],
+            names=table.column_names,
+        )
+
+        dictionary_values = all_chunks[0].dictionary
+        lookup = pa.Table.from_arrays(
+            [np.arange(len(dictionary_values), dtype=np.int32), dictionary_values], names=["key", "value"]
+        )
+
+        v_size = values.num_rows * values.num_columns
+        t_size = lookup.num_rows * lookup.num_columns
+        values_fb, lookup_fb = split_feedback(fb, [v_size, t_size])
+
+        value_table_format = INTEGER_ARRAY_1_INT32 if values.num_columns == 1 else INTEGER_ARRAY_MD_INT32
+        value_table = await self.upload_table(values, fb=values_fb, table_format=value_table_format)
+        lookup_table = await self.upload_table(lookup, fb=lookup_fb, table_format=LOOKUP_TABLE_INT32)
+        return CategoryInfo(values=cast(ArrayTableInfo, value_table), table=cast(LookupTableInfo, lookup_table))
 
     async def download_table(
         self, object_id: UUID, version_id: str, table_info: dict, fb: IFeedback = NoFeedback
@@ -196,30 +278,62 @@ class ObjectDataClient:
     if _PD_AVAILABLE:
         # Optional support for pandas dataframes. Depends on both pyarrow and pandas.
 
-        def save_dataframe(self, dataframe: pd.DataFrame) -> dict:
+        def save_dataframe(
+            self, dataframe: pd.DataFrame, table_format: KnownTableFormat | Iterable[KnownTableFormat] | None = None
+        ) -> dict:
             """Save a pandas dataframe to a file, returning the table info as a dictionary.
 
             :param dataframe: The pandas dataframe to save.
+            :param table_format: The table format to use for saving the table.
+                If a single KnownTableFormat is provided, that format will be used.
+                Otherwise, the format will be inferred from the table, either by checking against the provided formats or by
+                checking against all known formats.
 
             :return: Information about the saved table.
 
-            :raises TableFormatError: If the provided table does not match this format.
+            :raises TableFormatError: If the provided table does not match any of the specified formats. If
+                no table formats are specified, raised when the table does not match any known format.
             :raises StorageFileNotFoundError: If the destination does not exist or is not a directory.
             """
-            return self.save_table(pa.Table.from_pandas(dataframe))
+            return self.save_table(pa.Table.from_pandas(dataframe), table_format=table_format)
 
-        async def upload_dataframe(self, dataframe: pd.DataFrame, fb: IFeedback = NoFeedback) -> dict:
+        async def upload_dataframe(
+            self,
+            dataframe: pd.DataFrame,
+            fb: IFeedback = NoFeedback,
+            table_format: KnownTableFormat | Iterable[KnownTableFormat] | None = None,
+        ) -> dict:
             """Upload pandas dataframe to the geoscience object service, returning a GO model of the uploaded data.
+
+            :param dataframe: The pandas dataframe to be uploaded.
+            :param fb: A feedback object for tracking upload progress.
+            :param table_format: The table format to use for saving the table.
+                If a single KnownTableFormat is provided, that format will be used.
+                Otherwise, the format will be inferred from the table, either by checking against the provided formats or by
+                checking against all known formats.
+
+            :return: A description of the uploaded data.
+
+            :raises TableFormatError: If the provided table does not match any of the specified formats. If
+                no table formats are specified, raised when the table does not match any known format.
+            """
+            table_info = await self.upload_table(pa.Table.from_pandas(dataframe), table_format=table_format, fb=fb)
+            return table_info
+
+        async def upload_category_dataframe(self, dataframe: pd.DataFrame, fb: IFeedback = NoFeedback) -> CategoryInfo:
+            """Upload a pandas dataframe with category data to the geoscience object service, returning the reference to
+            both the value and lookup tables.
 
             :param dataframe: The pandas dataframe to be uploaded.
             :param fb: A feedback object for tracking upload progress.
 
             :return: A description of the uploaded data.
 
-            :raises TableFormatError: If the table does not match a known format.
+            :raises TableFormatError: If the table isn't a valid category table, or if the number of categories exceeds
+                what int32 type can represent.
             """
-            table_info = await self.upload_table(pa.Table.from_pandas(dataframe), fb=fb)
-            return table_info
+            category_info = await self.upload_category_table(pa.Table.from_pandas(dataframe), fb=fb)
+            return category_info
 
         async def download_dataframe(
             self, object_id: UUID, version_id: str, table_info: dict, fb: IFeedback = NoFeedback

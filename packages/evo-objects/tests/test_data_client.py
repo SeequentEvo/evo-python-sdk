@@ -13,14 +13,18 @@ import json
 from unittest import mock
 from uuid import UUID
 
+import pandas as pd
+import pyarrow as pa
 from pandas.testing import assert_frame_equal
+from parameterized import parameterized
 
 from data import load_test_data
 from evo.common import IFeedback, RequestMethod
 from evo.common.io.exceptions import DataExistsError
 from evo.common.test_tools import TestWithConnector, TestWithStorage
 from evo.common.utils import NoFeedback, PartialFeedback, get_header_metadata
-from evo.objects.utils import KnownTableFormat, ObjectDataClient
+from evo.objects.exceptions import TableFormatError
+from evo.objects.utils import KnownTableFormat, ObjectDataClient, table_formats
 from helpers import NoImport, UnloadModule, get_sample_table_and_bytes
 
 
@@ -39,7 +43,13 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
     def base_path(self) -> str:
         return f"geoscience-object/orgs/{self.environment.org_id}/workspaces/{self.environment.workspace_id}"
 
-    def test_save_table(self) -> None:
+    @parameterized.expand(
+        [
+            ("with_explicit_table_format", True),
+            ("with_implicit_table_format", False),
+        ]
+    )
+    def test_save_table(self, _name: str, pass_table_format: bool) -> None:
         """Test saving tabular data using pyarrow."""
         with (
             mock.patch("evo.objects.utils.table_formats.get_known_format") as mock_get_known_format,
@@ -49,9 +59,15 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
             mock_get_known_format.return_value = mock_known_format = mock.Mock(spec=KnownTableFormat)
             mock_known_format.save_table.return_value = mock_table_info = {}
 
-            actual_table_info = self.data_client.save_table(mock_table)
+            if pass_table_format:
+                actual_table_info = self.data_client.save_table(mock_table, table_format=mock_known_format)
+            else:
+                actual_table_info = self.data_client.save_table(mock_table)
 
-        mock_get_known_format.assert_called_once_with(mock_table)
+        if pass_table_format:
+            mock_get_known_format.assert_not_called()
+        else:
+            mock_get_known_format.assert_called_once_with(mock_table, table_formats=None)
         mock_known_format.save_table.assert_called_once_with(
             table=mock_table, destination=self.data_client.cache_location
         )
@@ -59,7 +75,39 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
         self.transport.assert_no_requests()
         self.assertIs(mock_table_info, actual_table_info)
 
-    def test_save_dataframe(self) -> None:
+    def save_table_with_table_format_list(self) -> None:
+        """Test saving tabular data using pyarrow with specified table format."""
+        with (
+            mock.patch("evo.objects.utils.table_formats.get_known_format") as mock_get_known_format,
+            mock.patch("evo.common.io.upload.StorageDestination") as mock_destination,
+        ):
+            sample_table, _ = get_sample_table_and_bytes(table_formats.FLOAT_ARRAY_2, 1)
+
+            mock_known_format = mock.Mock(wraps=table_formats.FLOAT_ARRAY_2)
+            mock_known_format.save_table.return_value = mock_table_info = {}
+            mock_get_known_format.return_value = mock_known_format
+            actual_table_info = self.data_client.save_table(
+                sample_table, table_format=[table_formats.FLOAT_ARRAY_2, mock_known_format]
+            )
+
+            mock_get_known_format.assert_called_once_with(
+                table_formats=[table_formats.FLOAT_ARRAY_2, mock_known_format]
+            )
+
+        mock_known_format.save_table.assert_called_once_with(
+            table=sample_table, destination=self.data_client.cache_location
+        )
+        mock_destination.upload_file.assert_not_called()
+        self.transport.assert_no_requests()
+        self.assertIs(mock_table_info, actual_table_info)
+
+    @parameterized.expand(
+        [
+            ("with_explicit_table_format", True),
+            ("with_implicit_table_format", False),
+        ]
+    )
+    def test_save_dataframe(self, _name: str, pass_table_format: bool) -> None:
         """Test saving tabular data using pandas."""
         with (
             mock.patch("evo.objects.utils.table_formats.get_known_format") as mock_get_known_format,
@@ -71,9 +119,15 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
             mock_known_format.save_table.return_value = mock_table_info = {}
 
             mock_dataframe = mock.Mock()
-            actual_table_info = self.data_client.save_dataframe(mock_dataframe)
+            if pass_table_format:
+                actual_table_info = self.data_client.save_dataframe(mock_dataframe, table_format=mock_known_format)
+            else:
+                actual_table_info = self.data_client.save_dataframe(mock_dataframe)
 
-        mock_get_known_format.assert_called_once_with(mock_table)
+        if pass_table_format:
+            mock_get_known_format.assert_not_called()
+        else:
+            mock_get_known_format.assert_called_once_with(mock_table, table_formats=None)
         mock_known_format.save_table.assert_called_once_with(
             table=mock_table, destination=self.data_client.cache_location
         )
@@ -143,7 +197,13 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
             body=[{"name": data["name"]} for data in put_data_response[1:]] + [{"name": put_data_response[0]["name"]}],
         )
 
-    async def test_upload_table(self) -> None:
+    @parameterized.expand(
+        [
+            ("with_explicit_table_format", True),
+            ("with_implicit_table_format", False),
+        ]
+    )
+    async def test_upload_table(self, _name: str, pass_table_format: bool) -> None:
         """Test uploading tabular data using pyarrow or pandas."""
         put_data_response = load_test_data("put_data.json")
         with (
@@ -166,9 +226,16 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
                 self.assertIs(NoFeedback, kwargs["fb"])
 
             mock_destination.upload_file.side_effect = _mock_upload_file_side_effect
-            actual_table_info = await self.data_client.upload_table(mock_table)
 
-        mock_get_known_format.assert_called_once_with(mock_table)
+            if pass_table_format:
+                actual_table_info = await self.data_client.upload_table(mock_table, table_format=mock_known_format)
+            else:
+                actual_table_info = await self.data_client.upload_table(mock_table)
+
+        if pass_table_format:
+            mock_get_known_format.assert_not_called()
+        else:
+            mock_get_known_format.assert_called_once_with(mock_table, table_formats=None)
         mock_known_format.save_table.assert_called_once_with(
             table=mock_table, destination=self.data_client.cache_location
         )
@@ -181,7 +248,13 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
         )
         self.assertIs(mock_table_info, actual_table_info)
 
-    async def test_upload_dataframe(self) -> None:
+    @parameterized.expand(
+        [
+            ("with_explicit_table_format", True),
+            ("with_implicit_table_format", False),
+        ]
+    )
+    async def test_upload_dataframe(self, _name: str, pass_table_format: bool) -> None:
         """Test uploading tabular data using pyarrow or pandas."""
         put_data_response = load_test_data("put_data.json")
         with (
@@ -207,9 +280,17 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
             mock_destination.upload_file.side_effect = _mock_upload_file_side_effect
 
             mock_dataframe = mock.Mock()
-            actual_table_info = await self.data_client.upload_dataframe(mock_dataframe)
+            if pass_table_format:
+                actual_table_info = await self.data_client.upload_dataframe(
+                    mock_dataframe, table_format=mock_known_format
+                )
+            else:
+                actual_table_info = await self.data_client.upload_dataframe(mock_dataframe)
 
-        mock_get_known_format.assert_called_once_with(mock_table)
+        if pass_table_format:
+            mock_get_known_format.assert_not_called()
+        else:
+            mock_get_known_format.assert_called_once_with(mock_table, table_formats=None)
         mock_known_format.save_table.assert_called_once_with(
             table=mock_table, destination=self.data_client.cache_location
         )
@@ -248,7 +329,7 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
             mock_destination.upload_file.side_effect = _mock_upload_file_side_effect
             actual_table_info = await self.data_client.upload_table(mock_table)
 
-        mock_get_known_format.assert_called_once_with(mock_table)
+        mock_get_known_format.assert_called_once_with(mock_table, table_formats=None)
         mock_known_format.save_table.assert_called_once_with(
             table=mock_table, destination=self.data_client.cache_location
         )
@@ -289,9 +370,8 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
 
             mock_dataframe = mock.Mock()
             actual_table_info = await self.data_client.upload_dataframe(mock_dataframe)
-            print(actual_table_info)
 
-        mock_get_known_format.assert_called_once_with(mock_table)
+        mock_get_known_format.assert_called_once_with(mock_table, table_formats=None)
         mock_known_format.save_table.assert_called_once_with(
             table=mock_table, destination=self.data_client.cache_location
         )
@@ -303,6 +383,172 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
             body=[{"name": mock_data_id}],
         )
         self.assertIs(mock_table_info, actual_table_info)
+
+    @parameterized.expand(
+        [
+            (
+                "dictionary",
+                pa.table({"Category": pa.array(["A", "B", "A", "C"], type=pa.dictionary(pa.int32(), pa.string()))}),
+                pa.table(
+                    {"key": pa.array([0, 1, 2], type=pa.int32()), "value": pa.array(["A", "B", "C"], type=pa.string())}
+                ),
+                pa.table({"Category": pa.array([0, 1, 0, 2], type=pa.int32())}),
+                table_formats.INTEGER_ARRAY_1_INT32,
+            ),
+            (
+                "string",
+                pa.table({"Category": pa.array(["A", "B", "A", "C"], type=pa.string())}),
+                pa.table(
+                    {"key": pa.array([0, 1, 2], type=pa.int32()), "value": pa.array(["A", "B", "C"], type=pa.string())}
+                ),
+                pa.table({"Category": pa.array([0, 1, 0, 2], type=pa.int32())}),
+                table_formats.INTEGER_ARRAY_1_INT32,
+            ),
+            (
+                "multiple_columns",
+                pa.table(
+                    {
+                        "Category": pa.array(["A", "B", "A", "C"], type=pa.string()),
+                        "Other": pa.array(["B", "C", "B", "D"], type=pa.string()),
+                    }
+                ),
+                pa.table(
+                    {
+                        "key": pa.array([0, 1, 2, 3], type=pa.int32()),
+                        "value": pa.array(["A", "B", "C", "D"], type=pa.string()),
+                    }
+                ),
+                pa.table(
+                    {
+                        "Category": pa.array([0, 1, 0, 2], type=pa.int32()),
+                        "Other": pa.array([1, 2, 1, 3], type=pa.int32()),
+                    }
+                ),
+                table_formats.INTEGER_ARRAY_MD_INT32,
+            ),
+            (
+                "multiple_columns_chunked",
+                pa.table(
+                    {
+                        "Category": pa.chunked_array(
+                            [["A", "B"], ["A", "C"]], type=pa.dictionary(pa.int8(), pa.string())
+                        ),
+                        "Other": pa.array(["B", "C", "B", "D"], type=pa.string()),
+                        "Extra": pa.chunked_array([["A"], ["B", "C"], ["A"]], type=pa.string()),
+                    }
+                ),
+                pa.table(
+                    {
+                        "key": pa.array([0, 1, 2, 3], type=pa.int32()),
+                        "value": pa.array(["A", "B", "C", "D"], type=pa.string()),
+                    }
+                ),
+                pa.table(
+                    {
+                        "Category": pa.array([0, 1, 0, 2], type=pa.int32()),
+                        "Other": pa.array([1, 2, 1, 3], type=pa.int32()),
+                        "Extra": pa.array([0, 1, 2, 0], type=pa.int32()),
+                    }
+                ),
+                table_formats.INTEGER_ARRAY_MD_INT32,
+            ),
+        ]
+    )
+    async def test_upload_category_table(
+        self,
+        _name: str,
+        table: pa.Table,
+        lookup_table: pa.Table,
+        values_table: pa.Table,
+        values_table_format: KnownTableFormat,
+    ) -> None:
+        """Test uploading categorical data using pandas."""
+        with (
+            mock.patch("evo.objects.utils.ObjectDataClient.upload_table") as mock_upload_table,
+        ):
+
+            def side_effect(table_to_upload, table_format=None, fb=None):
+                return {"table": table_to_upload, "table_format": table_format}
+
+            mock_upload_table.side_effect = side_effect
+            category_info = await self.data_client.upload_category_table(table)
+
+        self.assertEqual(mock_upload_table.call_count, 2)
+        self.assertEqual(category_info["table"]["table"], lookup_table)
+        self.assertEqual(category_info["table"]["table_format"], table_formats.LOOKUP_TABLE_INT32)
+        self.assertEqual(category_info["values"]["table"], values_table)
+        self.assertEqual(category_info["values"]["table_format"], values_table_format)
+
+    async def test_upload_category_table_error(self) -> None:
+        """Test uploading categorical data raises error for unsupported types."""
+        table = pa.table({"Category": pa.array([1.0, 2.0, 1.0, 3.0], type=pa.float64())})
+        with self.assertRaises(TableFormatError) as cm:
+            await self.data_client.upload_category_table(table)
+        assert "Category columns must be of type string" in str(cm.exception)
+
+    @parameterized.expand(
+        [
+            (
+                "category",
+                pd.DataFrame({"Category": pd.Categorical(["A", "B", "A", "C"])}),
+                pa.table(
+                    {"key": pa.array([0, 1, 2], type=pa.int32()), "value": pa.array(["A", "B", "C"], type=pa.string())}
+                ),
+                pa.table({"Category": pa.array([0, 1, 0, 2], type=pa.int32())}),
+                table_formats.INTEGER_ARRAY_1_INT32,
+            ),
+            (
+                "string",
+                pd.DataFrame({"Category": ["A", "B", "A", "C"]}),
+                pa.table(
+                    {"key": pa.array([0, 1, 2], type=pa.int32()), "value": pa.array(["A", "B", "C"], type=pa.string())}
+                ),
+                pa.table({"Category": pa.array([0, 1, 0, 2], type=pa.int32())}),
+                table_formats.INTEGER_ARRAY_1_INT32,
+            ),
+            (
+                "multiple_columns",
+                pd.DataFrame({"Category": ["A", "B", "A", "C"], "Other": ["B", "C", "B", "D"]}),
+                pa.table(
+                    {
+                        "key": pa.array([0, 1, 2, 3], type=pa.int32()),
+                        "value": pa.array(["A", "B", "C", "D"], type=pa.string()),
+                    }
+                ),
+                pa.table(
+                    {
+                        "Category": pa.array([0, 1, 0, 2], type=pa.int32()),
+                        "Other": pa.array([1, 2, 1, 3], type=pa.int32()),
+                    }
+                ),
+                table_formats.INTEGER_ARRAY_MD_INT32,
+            ),
+        ]
+    )
+    async def test_upload_category_dataframe(
+        self,
+        _name: str,
+        dataframe: pd.DataFrame,
+        lookup_table: pa.Table,
+        values_table: pa.Table,
+        values_table_format: KnownTableFormat,
+    ) -> None:
+        """Test uploading categorical data using pandas."""
+        with (
+            mock.patch("evo.objects.utils.ObjectDataClient.upload_table") as mock_upload_table,
+        ):
+
+            def side_effect(table, table_format=None, fb=None):
+                return {"table": table, "table_format": table_format}
+
+            mock_upload_table.side_effect = side_effect
+            category_info = await self.data_client.upload_category_dataframe(dataframe)
+
+        self.assertEqual(mock_upload_table.call_count, 2)
+        self.assertEqual(category_info["table"]["table"], lookup_table)
+        self.assertEqual(category_info["table"]["table_format"], table_formats.LOOKUP_TABLE_INT32)
+        self.assertEqual(category_info["values"]["table"], values_table)
+        self.assertEqual(category_info["values"]["table_format"], values_table_format)
 
     async def test_download_table(self) -> None:
         """Test downloading tabular data using pyarrow."""
