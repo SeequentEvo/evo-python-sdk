@@ -9,9 +9,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import functools
 from collections.abc import Iterator, Sequence
 from threading import Lock
-from typing import TypeVar
+from typing import Callable, TypeVar
 
 from ..interfaces import IFeedback
 
@@ -19,6 +20,7 @@ __all__ = [
     "NoFeedback",
     "PartialFeedback",
     "iter_with_fb",
+    "split_feedback",
 ]
 
 _N_DIGITS = 4  # Let's maintain a user-friendly number of dp.
@@ -82,3 +84,73 @@ def iter_with_fb(elements: Sequence[T], feedback: IFeedback | None = None) -> It
             end = round((i + 1) * fb_part_size, ndigits=_N_DIGITS)
             yield element, PartialFeedback(feedback, start, end)
             feedback.progress(end)
+
+
+class _ConcurrentFeedback(IFeedback):
+    """A feedback object that reports progress to a ConcurrentFeedbackGroup, allowing aggregation of progress from
+    multiple sources concurrently.
+    """
+
+    def __init__(self, callback: Callable[[float, str | None], None]) -> None:
+        self.__callback = callback
+        self.__progress = 0.0
+
+    def progress(self, progress: float, message: str | None = None) -> None:
+        """Update the progress of the feedback object.
+
+        :param progress: The progress value, between 0 and 1.
+        :param message: An optional message to display.
+        """
+        diff = progress - self.__progress
+        self.__progress = progress
+        self.__callback(diff, message)
+
+
+class _ConcurrentFeedbackGroup:
+    """A group of feedbacks that can be updated concurrently, aggregating their progress."""
+
+    def __init__(self, parent: IFeedback) -> None:
+        self.__lock = Lock()
+        self.__parent = parent
+        self.__total_weight = 0.0
+        self.__progress = 0.0
+        self.__n_feedbacks = 0
+
+    def _update(self, message: str | None = None) -> None:
+        if self.__total_weight == 0:
+            progress = self.__progress / self.__n_feedbacks
+        else:
+            progress = self.__progress / self.__total_weight
+        self.__parent.progress(round(progress, _N_DIGITS), message)
+
+    def _progress(self, weight: float, progress_change: float, message: str | None) -> None:
+        with self.__lock:
+            if self.__total_weight == 0:
+                self.__progress += progress_change
+            else:
+                self.__progress += weight * progress_change
+            self._update(message)
+
+    def create_feedback(self, weight: float) -> IFeedback:
+        with self.__lock:
+            if self.__progress > 0:
+                raise RuntimeError("Cannot create new feedback after progress has been reported.")
+            self.__total_weight += weight
+            self.__n_feedbacks += 1
+
+        return _ConcurrentFeedback(functools.partial(self._progress, weight))
+
+
+def split_feedback(feedback: IFeedback, weights: Sequence[float]) -> list[IFeedback]:
+    """Split a feedback object into multiple feedback objects based on weights.
+
+    Each of them can be updated concurrently, and their progress will be aggregated into the parent feedback object.
+
+    Note, if all weights are zero, all feedback objects will be uniformly weighted.
+
+    :param feedback: The parent feedback object to subdivide.
+    :param weights: Weights for each partial feedback object.
+    :returns: A list of ConcurrentFeedback objects.
+    """
+    group = _ConcurrentFeedbackGroup(feedback)
+    return [group.create_feedback(weight) for weight in weights]
