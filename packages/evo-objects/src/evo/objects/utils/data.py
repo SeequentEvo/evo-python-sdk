@@ -187,6 +187,9 @@ class ObjectDataClient:
         """Upload a pyarrow table with category data to the geoscience object service, returning the reference to
         both the value and lookup tables.
 
+        The table columns must be string columns, but can be dictionary encoded. If they are dictionary encoded, this
+        method takes advantage of that, when building the value and lookup tables.
+
         :param table: The table to be uploaded.
         :param fb: A feedback object for tracking upload progress.
 
@@ -323,6 +326,11 @@ class ObjectDataClient:
         async def upload_category_dataframe(self, dataframe: pd.DataFrame, fb: IFeedback = NoFeedback) -> CategoryInfo:
             """Upload a pandas dataframe with category data to the geoscience object service, returning the reference to
             both the value and lookup tables.
+
+            The data types of the dataframe columns must either be a string or category type(with string categories).
+            Using 'category' dtype is more efficient, as it avoids unnecessary duplication of string values, which this
+            method is designed to handle. For more information on pandas categorical data types, see:
+            https://pandas.pydata.org/docs/user_guide/categorical.html.
 
             :param dataframe: The pandas dataframe to be uploaded.
             :param fb: A feedback object for tracking upload progress.
