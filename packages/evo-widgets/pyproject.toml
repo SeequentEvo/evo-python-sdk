@@ -1,0 +1,29 @@
+[project]
+name = "evo-widgets"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "anywidget>=0.9.21",
+    "traitlets>=5.14.3",
+    "evo-sdk-common>=0.1.0",
+]
+
+[project.optional-dependencies]
+aiohttp = [
+    "evo-sdk-common[aiohttp]>=0.1.0",
+]
+notebooks = [
+    "evo-sdk-common[notebooks]>=0.1.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv.sources]
+evo-sdk-common = { workspace = true }
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/evo"]
