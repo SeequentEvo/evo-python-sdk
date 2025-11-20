@@ -12,14 +12,14 @@
 from importlib.abc import Traversable
 from importlib.resources import files
 
-_ROOT = files(__name__)
+_IMAGES = files(__name__) / "images"
 
 
 def get(filename: str) -> Traversable:
-    """Get the path to a file in this directory.
+    """Get the path to a file in the images directory.
 
     :param filename: The name of the file.
 
     :return: A Traversable object representing the file.
     """
-    return _ROOT / filename
+    return _IMAGES / filename

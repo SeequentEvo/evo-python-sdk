@@ -1,0 +1,175 @@
+/* Service Manager Widget Styles */
+
+/* Seequent EVO Theme - Inline for anywidget compatibility */
+:root {
+  --evo-primary: #265C7F;
+  --evo-primary-hover: #1e4a63;
+  --evo-primary-light: #3a7ba3;
+  --evo-secondary: #2C3E50;
+  --evo-accent: #00A9E0;
+  --evo-success: #10b981;
+  --evo-success-dark: #047857;
+  --evo-error: #dc2626;
+  --evo-error-light: #f87171;
+  --evo-error-bg: #fef2f2;
+  --evo-error-bg-dark: #2d1616;
+  --evo-text-primary: #333;
+  --evo-text-secondary: #555;
+  --evo-text-tertiary: #666;
+  --evo-text-muted: #9ca3af;
+  --evo-text-dark: #6b7280;
+  --evo-border: #ccc;
+  --evo-border-light: #e1e4e8;
+  --evo-bg-disabled: #f5f5f5;
+  --evo-bg-hover: #f6f8fa;
+  --evo-bg-progress: #f0f0f0;
+  --evo-bg-highlight: #e3f2fd;
+}
+
+.evo-button {
+  background-color: var(--evo-primary);
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 0;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.evo-button:hover:not(:disabled) {
+  background-color: var(--evo-primary-hover);
+}
+
+.evo-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.evo-spinner {
+  width: 25px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 4px solid var(--evo-primary);
+  animation:
+    l20-1 0.8s infinite linear alternate,
+    l20-2 1.6s infinite linear;
+}
+
+@keyframes l20-1 {
+  0%    {clip-path: polygon(50% 50%,0       0,  50%   0%,  50%    0%, 50%    0%, 50%    0%, 50%    0% )}
+  12.5% {clip-path: polygon(50% 50%,0       0,  50%   0%,  100%   0%, 100%   0%, 100%   0%, 100%   0% )}
+  25%   {clip-path: polygon(50% 50%,0       0,  50%   0%,  100%   0%, 100% 100%, 100% 100%, 100% 100% )}
+  50%   {clip-path: polygon(50% 50%,0       0,  50%   0%,  100%   0%, 100% 100%, 50%  100%, 0%   100% )}
+  62.5% {clip-path: polygon(50% 50%,100%    0, 100%   0%,  100%   0%, 100% 100%, 50%  100%, 0%   100% )}
+  75%   {clip-path: polygon(50% 50%,100% 100%, 100% 100%,  100% 100%, 100% 100%, 50%  100%, 0%   100% )}
+  100%  {clip-path: polygon(50% 50%,50%  100%,  50% 100%,   50% 100%,  50% 100%, 50%  100%, 0%   100% )}
+}
+
+@keyframes l20-2 { 
+  0%    {transform:scaleY(1)  rotate(0deg)}
+  49.99%{transform:scaleY(1)  rotate(135deg)}
+  50%   {transform:scaleY(-1) rotate(0deg)}
+  100%  {transform:scaleY(-1) rotate(-135deg)}
+}
+
+.evo-dropdown {
+  padding: 6px 10px;
+  border: 1px solid var(--evo-border);
+  border-radius: 1x;
+  font-size: 13px;
+  background-color: white;
+  cursor: pointer;
+}
+
+.evo-dropdown:disabled {
+  background-color: var(--evo-bg-disabled);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.evo-dropdown:focus {
+  outline: none;
+  border-color: var(--evo-primary);
+  box-shadow: 0 0 0 2px rgba(38, 92, 127, 0.1);
+}
+
+.evo-label {
+  font-weight: 500;
+  font-size: 13px;
+  color: var(--evo-text-primary);
+}
+
+/* Service Manager Specific Styles */
+
+.service-manager-container {
+  padding: 10px;
+}
+
+.service-manager-container,
+.sign-in-button,
+.selector-label,
+.selector-dropdown {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.main-layout {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.left-column {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 400px;
+}
+
+.right-column {
+  flex: 1;
+}
+
+.header-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.evo-logo {
+  padding: 5px;
+  border-radius: 4px;
+}
+
+.sign-in-button {
+  margin: 5px;
+}
+
+.loading-spinner {
+  margin: 3px;
+  align-self: center;
+}
+
+.selector-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 5px 5px;
+}
+
+.selector-label {
+  min-width: 90px;
+}
+
+.selector-dropdown {
+  flex: 1;
+  min-width: 200px;
+}
+
+.selector-dropdown option {
+  padding: 5px;
+}

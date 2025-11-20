@@ -10,6 +10,7 @@ dependencies = [
     "evo-files[aiohttp,notebooks]",
     "evo-colormaps[aiohttp,notebooks]",
     "evo-compute[aiohttp,notebooks]",
+    "evo-widgets[aiohttp, notebooks]",
     "jupyter",
 ]
 dynamic = ["readme"]
@@ -53,6 +54,7 @@ evo-colormaps = { workspace = true }
 evo-files = { workspace = true }
 evo-objects = { workspace = true }
 evo-compute = { workspace = true }
+evo-widgets = { workspace = true }
 samples = { path = "samples" }
 evo-blockmodels = { workspace = true }
 
