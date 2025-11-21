@@ -208,6 +208,7 @@ Basic unstructured file management operations:
 - Download files from Evo
 - List and organize files
 - Delete files
+- Bonus: Sample Python scripts for file Input-Output in Evo
 
 ### 🌍 Geoscience objects
 **📁 [geoscience-objects](geoscience-objects/)**

@@ -1,11 +1,17 @@
 # Jupyter notebooks
 
-This directory contains a number of Jupyter notebook examples for using the Evo File API, in particular:
+This directory contains a number of Jupyter notebook and python script examples for using the Evo File API, in particular:
 
+### Jupyter notebook
 * Uploading a file
 * Downloading a file
 * Listing files
 * Deleting a file
+
+### Python script
+* Evo File Input Script
+* Evo File Input-Output Script
+* MX Deposit File to Evo File Script
 
 ## Requirements
 
