@@ -1,7 +1,7 @@
 [project]
 name = "evo-sdk-common"
 description = "Python package that establishes a common framework for use by client libraries that interact with Seequent Evo APIs"
-version = "0.5.10"
+version = "0.5.11"
 requires-python = ">=3.10"
 license-files = ["LICENSE.md"]
 dynamic = ["readme"]

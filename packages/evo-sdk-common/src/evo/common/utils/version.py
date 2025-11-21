@@ -27,10 +27,10 @@ def get_header_metadata(candidate: str) -> dict[str, str]:
 
     :param candidate: The module __name__ to start searching from.
 
-    :return: A dictionary containing the package name and version in a single entry.
+    :return: A dictionary with a value containing the package name and version.
     """
     package_details = get_package_details(candidate)
-    return {package_details.name: package_details.version}
+    return {"Evo-SDK-Source": f"{package_details.name}@v{package_details.version}"}
 
 
 @functools.cache
