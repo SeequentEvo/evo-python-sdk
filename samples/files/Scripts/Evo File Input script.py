@@ -9,13 +9,14 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-import uuid
 import asyncio
+import uuid
 from pathlib import Path
-from evo.common import APIConnector, Environment
+
 from evo.aio import AioTransport
-from evo.oauth import OAuthConnector, ClientCredentialsAuthorizer, EvoScopes
+from evo.common import APIConnector, Environment
 from evo.files import FileAPIClient
+from evo.oauth import ClientCredentialsAuthorizer, EvoScopes, OAuthConnector
 
 # Configuration
 CONFIG = {
@@ -26,9 +27,10 @@ CONFIG = {
         "service_host": "<hub_url>",
         "org_id": "<org_id>",
         "workspace_id": "<workspace_id>",
-        "file_path": "C:\\Documents\\drilling_data" # Path to the directory containing CSV files
+        "file_path": "C:\\Documents\\drilling_data",  # Path to the directory containing CSV files
     }
 }
+
 
 async def upload_csv_files(script_dir, file_client, connector):
     success = True
@@ -44,6 +46,7 @@ async def upload_csv_files(script_dir, file_client, connector):
         print("All CSV files uploaded successfully.")
     return success
 
+
 def main():
     evo_cfg = CONFIG["evo"]
     script_dir = Path(evo_cfg["file_path"])
@@ -51,22 +54,21 @@ def main():
     environment = Environment(
         hub_url=evo_cfg["service_host"],
         org_id=uuid.UUID(evo_cfg["org_id"]),
-        workspace_id=uuid.UUID(evo_cfg["workspace_id"])
+        workspace_id=uuid.UUID(evo_cfg["workspace_id"]),
     )
     transport = AioTransport(user_agent=evo_cfg["USER_AGENT"])
     authorizer = ClientCredentialsAuthorizer(
         oauth_connector=OAuthConnector(
-            transport=transport,
-            client_id=evo_cfg["CLIENT_ID"],
-            client_secret=evo_cfg["CLIENT_SECRET"]
+            transport=transport, client_id=evo_cfg["CLIENT_ID"], client_secret=evo_cfg["CLIENT_SECRET"]
         ),
-        scopes=EvoScopes.all_evo
+        scopes=EvoScopes.all_evo,
     )
     connector = APIConnector(environment.hub_url, transport, authorizer)
     file_client = FileAPIClient(connector=connector, environment=environment)
 
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
     asyncio.run(upload_csv_files(script_dir, file_client, connector))
+
 
 if __name__ == "__main__":
     main()

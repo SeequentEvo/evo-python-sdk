@@ -9,19 +9,21 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-import requests
-import json
-import datetime
-import time
-import zipfile
-import uuid
 import asyncio
+import datetime
+import json
 import tempfile
+import time
+import uuid
+import zipfile
 from pathlib import Path
-from evo.common import APIConnector, Environment
+
+import requests
+
 from evo.aio import AioTransport
-from evo.oauth import OAuthConnector, ClientCredentialsAuthorizer, EvoScopes
+from evo.common import APIConnector, Environment
 from evo.files import FileAPIClient
+from evo.oauth import ClientCredentialsAuthorizer, EvoScopes, OAuthConnector
 
 # Configuration
 CONFIG = {
@@ -30,7 +32,7 @@ CONFIG = {
         "project_id": "<project_id>",
         "template_code": "<template_code>",
         "auth_token": "<api_key>",
-        "client_id": "<client_id>"
+        "client_id": "<client_id>",
     },
     "evo": {
         "USER_AGENT": "MXDepositToEvoScript",
@@ -38,19 +40,22 @@ CONFIG = {
         "CLIENT_SECRET": "<client_secret>",
         "service_host": "<hub_url>",
         "org_id": "<org_id>",
-        "workspace_id": "<workspace_id>"
-    }
+        "workspace_id": "<workspace_id>",
+    },
 }
 
+
 def export_collars(config):
-    payload = json.dumps({
-        "project": config["project_id"],
-        "template_code": config["template_code"],
-    })
+    payload = json.dumps(
+        {
+            "project": config["project_id"],
+            "template_code": config["template_code"],
+        }
+    )
     headers = {
-        'Content-Type': 'application/json',
-        'Authorization': config["auth_token"],
-        'Client-ID': config["client_id"]
+        "Content-Type": "application/json",
+        "Authorization": config["auth_token"],
+        "Client-ID": config["client_id"],
     }
     print("Request made at (UTC):", datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S"))
     response = requests.post(config["url"], headers=headers, data=payload)
@@ -67,13 +72,14 @@ def export_collars(config):
         print("Could not extract operation_uid:", e)
         return None
 
-def poll_export_status(operation_uid, config, interval=30, timeout=8*60*60):
+
+def poll_export_status(operation_uid, config, interval=30, timeout=8 * 60 * 60):
     headers = {
-        'Content-Type': 'application/json',
-        'Authorization': config["auth_token"],
-        'Client-ID': config["client_id"]
+        "Content-Type": "application/json",
+        "Authorization": config["auth_token"],
+        "Client-ID": config["client_id"],
     }
-    status_url = f'https://app.mxdeposit.net/export-status/{operation_uid}'
+    status_url = f"https://app.mxdeposit.net/export-status/{operation_uid}"
     start_time = time.time()
     while True:
         response = requests.get(status_url, headers=headers)
@@ -89,13 +95,15 @@ def poll_export_status(operation_uid, config, interval=30, timeout=8*60*60):
             return None
         time.sleep(interval)
 
+
 def download_and_extract_zip(download_url, temp_dir):
     export_file = temp_dir / "export.zip"
     response = requests.get(download_url)
     export_file.write_bytes(response.content)
-    with zipfile.ZipFile(export_file, 'r') as zip_ref:
+    with zipfile.ZipFile(export_file, "r") as zip_ref:
         zip_ref.extractall(temp_dir)
     print(f"Files extracted to: {temp_dir}")
+
 
 async def upload_csv_files(temp_dir, file_client, connector):
     success = True
@@ -109,6 +117,7 @@ async def upload_csv_files(temp_dir, file_client, connector):
     if success:
         print("All CSV files uploaded successfully.")
     return success
+
 
 def main():
     mx_cfg = CONFIG["mx"]
@@ -125,7 +134,7 @@ def main():
     environment = Environment(
         hub_url=evo_cfg["service_host"],
         org_id=uuid.UUID(evo_cfg["org_id"]),
-        workspace_id=uuid.UUID(evo_cfg["workspace_id"])
+        workspace_id=uuid.UUID(evo_cfg["workspace_id"]),
     )
     transport = AioTransport(user_agent=evo_cfg["USER_AGENT"])
     authorizer = ClientCredentialsAuthorizer(
@@ -134,18 +143,19 @@ def main():
             client_id=evo_cfg["CLIENT_ID"],
             client_secret=evo_cfg["CLIENT_SECRET"],
         ),
-        scopes=EvoScopes.all_evo
+        scopes=EvoScopes.all_evo,
     )
     connector = APIConnector(environment.hub_url, transport, authorizer)
     file_client = FileAPIClient(connector=connector, environment=environment)
 
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-    
+
     script_dir = Path(__file__).parent
     with tempfile.TemporaryDirectory(dir=script_dir) as temp_dir:
         temp_path = Path(temp_dir)
         download_and_extract_zip(download_url, temp_path)
         asyncio.run(upload_csv_files(temp_path, file_client, connector))
+
 
 if __name__ == "__main__":
     main()

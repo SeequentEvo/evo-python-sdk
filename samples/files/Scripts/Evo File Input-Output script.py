@@ -10,15 +10,17 @@
 #  limitations under the License.
 
 
-import requests
-import uuid
 import asyncio
-from pathlib import Path
 import tempfile
-from evo.common import APIConnector, Environment
+import uuid
+from pathlib import Path
+
+import requests
+
 from evo.aio import AioTransport
-from evo.oauth import OAuthConnector, ClientCredentialsAuthorizer, EvoScopes
+from evo.common import APIConnector, Environment
 from evo.files import FileAPIClient
+from evo.oauth import ClientCredentialsAuthorizer, EvoScopes, OAuthConnector
 
 # Configuration
 CONFIG = {
@@ -30,9 +32,10 @@ CONFIG = {
         "org_id": "<org_id>",
         "workspace_id": "<workspace_id>",
         "evo_input_file_path": "<input_file>.csv",
-        "evo_output_file_path": "<output_file>.csv"
+        "evo_output_file_path": "<output_file>.csv",
     }
 }
+
 
 async def download_csv_file(temp_dir, source_csv_filename, file_client):
     """
@@ -42,8 +45,8 @@ async def download_csv_file(temp_dir, source_csv_filename, file_client):
     success = True
     try:
         ctx = await file_client.prepare_download_by_path(source_csv_filename)
-        download_url = await ctx.get_download_url() 
-        
+        download_url = await ctx.get_download_url()
+
         response = requests.get(download_url)
         if response.status_code == 200:
             output_file = Path(temp_dir) / source_csv_filename
@@ -52,13 +55,14 @@ async def download_csv_file(temp_dir, source_csv_filename, file_client):
         else:
             print(f"Failed to download file. Status code: {response.status_code}")
             success = False
-            
+
     except Exception as e:
         print(f"Error downloading {source_csv_filename}: {e}")
         success = False
     if success:
         print(f"{source_csv_filename} file downloaded successfully.")
     return success
+
 
 async def upload_csv_files(temp_dir, processed_csv_filename, file_client, connector):
     """
@@ -76,13 +80,14 @@ async def upload_csv_files(temp_dir, processed_csv_filename, file_client, connec
         success = False
     return success
 
+
 def main():
     evo_cfg = CONFIG["evo"]
 
     environment = Environment(
         hub_url=evo_cfg["service_host"],
         org_id=uuid.UUID(evo_cfg["org_id"]),
-        workspace_id=uuid.UUID(evo_cfg["workspace_id"])
+        workspace_id=uuid.UUID(evo_cfg["workspace_id"]),
     )
     transport = AioTransport(user_agent=evo_cfg["USER_AGENT"])
     authorizer = ClientCredentialsAuthorizer(
@@ -91,7 +96,7 @@ def main():
             client_id=evo_cfg["CLIENT_ID"],
             client_secret=evo_cfg["CLIENT_SECRET"],
         ),
-        scopes=EvoScopes.all_evo
+        scopes=EvoScopes.all_evo,
     )
     connector = APIConnector(environment.hub_url, transport, authorizer)
     file_client = FileAPIClient(connector=connector, environment=environment)
@@ -99,7 +104,7 @@ def main():
     processed_csv_filename = evo_cfg["evo_output_file_path"]
 
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-    
+
     script_dir = Path(__file__).parent
     with tempfile.TemporaryDirectory(dir=script_dir) as temp_dir:
         asyncio.run(download_csv_file(temp_dir, source_csv_filename, file_client))
@@ -107,6 +112,7 @@ def main():
         # Process the file downloaded from Evo and generate a new output file to be uploaded to Evo.
 
         asyncio.run(upload_csv_files(temp_dir, processed_csv_filename, file_client, connector))
+
 
 if __name__ == "__main__":
     main()
