@@ -1,6 +1,6 @@
 # Jupyter notebooks
 
-This directory contains a number of Jupyter notebook and python script examples for using the Evo File API, in particular:
+This directory contains a number of Jupyter notebook and Python script examples for using the Evo File API, in particular:
 
 ### Jupyter notebook
 * Uploading a file
