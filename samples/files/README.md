@@ -2,7 +2,7 @@
 
 This directory contains a number of Jupyter notebook and Python script examples for using the Evo File API, in particular:
 
-### Jupyter notebook
+## Jupyter notebooks
 * Uploading a file
 * Downloading a file
 * Listing files
