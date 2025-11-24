@@ -8,10 +8,10 @@ This directory contains a number of Jupyter notebook and Python script examples 
 * Listing files
 * Deleting a file
 
-### Python script
-* Evo File Input Script
-* Evo File Input-Output Script
-* MX Deposit File to Evo File Script
+## Python script
+* [File Input Script](https://github.com/SeequentEvo/evo-python-sdk/blob/main/samples/files/scripts/file-input-script.py)
+* [File Input-Output Script](https://github.com/SeequentEvo/evo-python-sdk/blob/main/samples/files/scripts/file-input-output-script.py)
+* [MX Deposit File to Evo File Script](https://github.com/SeequentEvo/evo-python-sdk/blob/main/samples/files/scripts/MX-Deposit-file-to-evo-file-script.py)
 
 ## Requirements
 
