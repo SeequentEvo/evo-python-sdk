@@ -11,7 +11,7 @@
 
 from .cache import Cache
 from .data import parse_order_by
-from .feedback import NoFeedback, PartialFeedback, iter_with_fb
+from .feedback import NoFeedback, PartialFeedback, iter_with_fb, split_feedback
 from .health_check import get_service_health, get_service_status
 from .retry import BackoffExponential, BackoffIncremental, BackoffLinear, BackoffMethod, Retry, RetryHandler
 from .version import get_header_metadata
@@ -31,4 +31,5 @@ __all__ = [
     "get_service_status",
     "iter_with_fb",
     "parse_order_by",
+    "split_feedback",
 ]
