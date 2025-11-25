@@ -15,7 +15,7 @@ from unittest import mock
 from parameterized import parameterized
 
 from evo.common.interfaces import IFeedback
-from evo.common.utils import NoFeedback, PartialFeedback, iter_with_fb
+from evo.common.utils import NoFeedback, PartialFeedback, iter_with_fb, split_feedback
 
 
 class TestFeedback(unittest.TestCase):
@@ -84,3 +84,42 @@ class TestFeedback(unittest.TestCase):
             raise AssertionError("Unreachable")
 
         self.parent_fb.progress.assert_not_called()
+
+    def test_split_feedback_no_elements(self) -> None:
+        self.assertEqual(split_feedback(self.parent_fb, []), [])
+
+    @parameterized.expand(
+        [
+            ("weighted", [1, 2, 3], [0.0, 0.1667, 0.6667, 9 / 12, 0.8333]),
+            ("equal weights", [1, 1, 1], [0.0, 0.1667, 1 / 2, 0.6667, 9 / 12]),
+            ("zero weight", [0, 0, 0], [0.0, 0.1667, 1 / 2, 0.6667, 9 / 12]),
+            ("mixed weights", [12, 0, 3], [0.0, 0.0, 1 / 5, 3 / 5, 3 / 5]),
+        ]
+    )
+    def test_split_feedback(
+        self,
+        _name: str,
+        weights: list[float],
+        expected_progress_values: list[float],
+    ) -> None:
+        fb_1, fb_2, fb_3 = split_feedback(self.parent_fb, weights)
+
+        fb_1.progress(0.0)
+        self.parent_fb.progress.assert_called_once_with(expected_progress_values[0], None)
+        self.parent_fb.reset_mock()
+
+        fb_2.progress(0.5, "halfway")
+        self.parent_fb.progress.assert_called_once_with(expected_progress_values[1], "halfway")
+        self.parent_fb.reset_mock()
+
+        fb_3.progress(1.0)
+        self.parent_fb.progress.assert_called_once_with(expected_progress_values[2], None)
+        self.parent_fb.reset_mock()
+
+        fb_1.progress(0.5, "halfway in first")
+        self.parent_fb.progress.assert_called_once_with(expected_progress_values[3], "halfway in first")
+        self.parent_fb.reset_mock()
+
+        fb_2.progress(0.75)
+        self.parent_fb.progress.assert_called_once_with(expected_progress_values[4], None)
+        self.parent_fb.reset_mock()
