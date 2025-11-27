@@ -35,6 +35,58 @@ logger = logging.getLogger("oauth")
 __all__ = ["OAuthRedirectHandler"]
 
 
+_SUCCESS_SVG = """
+<svg width="84" height="84" viewBox="0 0 84 84" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M22.5159 49.8778C21.7023 49.0642 21.7023 47.7451 22.5159 46.9315L25.4621 43.9852C26.2757 43.1716 27.5948 43.1716 28.4084 43.9852L32.8278 48.4046L54.9249 26.3075C55.7385 25.4939 57.0576 25.4939 57.8712 26.3075L60.8175 29.2538C61.6311 30.0674 61.6311 31.3865 60.8175 32.2001L34.301 58.7166C33.4874 59.5302 32.1683 59.5302 31.3547 58.7166L22.5159 49.8778Z" fill="#477B5E"/>
+  <path fill-rule="evenodd" clip-rule="evenodd" d="M83.3333 41.6667C83.3333 64.6785 64.6785 83.3333 41.6667 83.3333C18.6548 83.3333 0 64.6785 0 41.6667C0 18.6548 18.6548 0 41.6667 0C64.6785 0 83.3333 18.6548 83.3333 41.6667ZM75 41.6667C75 60.0762 60.0762 75 41.6667 75C23.2572 75 8.33333 60.0762 8.33333 41.6667C8.33333 23.2572 23.2572 8.33333 41.6667 8.33333C60.0762 8.33333 75 23.2572 75 41.6667Z" fill="#477B5E"/>
+</svg>
+"""
+
+_DECLINED_SVG = """
+<svg width="84" height="84" viewBox="0 0 84 84" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M28.4084 34.301C27.5948 33.4874 27.5948 32.1683 28.4084 31.3547L31.3547 28.4084C32.1683 27.5948 33.4874 27.5948 34.301 28.4084L41.6667 35.7741L49.0324 28.4084C49.846 27.5948 51.1651 27.5948 51.9786 28.4084L54.9249 31.3547C55.7385 32.1683 55.7385 33.4874 54.9249 34.301L47.5592 41.6667L54.9249 49.0324C55.7385 49.846 55.7385 51.1651 54.9249 51.9786L51.9786 54.9249C51.1651 55.7385 49.846 55.7385 49.0324 54.9249L41.6667 47.5592L34.301 54.9249C33.4874 55.7385 32.1683 55.7385 31.3547 54.9249L28.4084 51.9786C27.5948 51.1651 27.5948 49.846 28.4084 49.0324L35.7741 41.6667L28.4084 34.301Z" fill="#D32F2F"/>
+  <path fill-rule="evenodd" clip-rule="evenodd" d="M83.3333 41.6667C83.3333 64.6785 64.6785 83.3333 41.6667 83.3333C18.6548 83.3333 0 64.6785 0 41.6667C0 18.6548 18.6548 0 41.6667 0C64.6785 0 83.3333 18.6548 83.3333 41.6667ZM75 41.6667C75 60.0762 60.0762 75 41.6667 75C23.2572 75 8.33333 60.0762 8.33333 41.6667C8.33333 23.2572 23.2572 8.33333 41.6667 8.33333C60.0762 8.33333 75 23.2572 75 41.6667Z" fill="#D32F2F"/>
+</svg>
+"""
+
+
+def _build_redirect_html(title: str, success: bool, heading: str, paragraph: str) -> bytes:
+    return f"""
+<html lang="en">
+  <head>
+    <title>{title}</title>
+    <style>
+      body {{
+        font-family: sans-serif;
+        background: #eaeaea;
+        color: #1a1a1a;
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }}
+      .container {{
+        background: #f3f3f3;
+        padding: 80px;
+        text-align: center;
+      }}
+      h1 {{ font-size: 48px; }}
+      p  {{ font-size: 14px; }}
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      {_SUCCESS_SVG if success else _DECLINED_SVG}
+      <h1>{heading}</h1>
+      <p>{paragraph}</p>
+    </div>
+    <script>setTimeout("window.close()", 2500);</script>
+  </body>
+</html>
+""".encode("UTF-8")
+
+
 class OAuthRedirectHandler:
     """An asynchronous context manager for handling OAuth authorisation redirects. Not thread-safe.
 
@@ -43,15 +95,19 @@ class OAuthRedirectHandler:
     authorisation to complete and then fetches the access token.
     """
 
-    _REDIRECT_HTML = """
-<html>
-  <body>
-    <h1>Authorization request to Seequent has been completed.</h1>
-    <p>You may close this tab or window now.</p>
-    <script>setTimeout("window.close()", 2500);</script>
-  </body>
-</html>
-""".encode("UTF-8")
+    _REDIRECT_HTML_SUCCESSFUL = _build_redirect_html(
+        "Seequent Evo - Authorisation successful",
+        True,
+        "Authorisation successful",
+        "Seequent Evo authorisation successful. Close this window.",
+    )
+
+    _REDIRECT_HTML_DECLINED = _build_redirect_html(
+        "Seequent Evo - Authorisation declined",
+        False,
+        "Authorisation declined",
+        "You declined to accept Bentley's terms of service. Close this window.",
+    )
 
     def __init__(self, oauth_connector: OAuthConnector, redirect_url: str) -> None:
         """
@@ -127,13 +183,14 @@ class OAuthRedirectHandler:
         # This request is already successful. Any further errors will be raised in application code.
         response = web.StreamResponse(status=200, headers={"Content-Type": "text/html"})
         await response.prepare(request)
-        await response.write(self._REDIRECT_HTML)
         try:  # Broad exception handling to ensure any errors are logged and stored in the context.
             if "error" in request.query:  # Check for an error response from the OAuth provider.
+                await response.write(self._REDIRECT_HTML_DECLINED)
                 title = request.query.getone("error")  # Raises KeyError if `error` is missing.
                 detail = request.query.getone("error_description", None)
                 raise OAuthError(detail or title)  # Report the more detailed error message if it is available.
 
+            await response.write(self._REDIRECT_HTML_SUCCESSFUL)
             token = await self.get_token(
                 request.query.getone("state"),  # Raises KeyError if `state` is missing.
                 request.query.getone("code"),  # Raises KeyError if `code` is missing.
