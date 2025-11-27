@@ -99,14 +99,14 @@ class OAuthRedirectHandler:
         "Seequent Evo - Authorisation successful",
         True,
         "Authorisation successful",
-        "Seequent Evo authorisation successful. Close this window.",
+        "You may now close this window.",
     )
 
     _REDIRECT_HTML_DECLINED = _build_redirect_html(
         "Seequent Evo - Authorisation declined",
         False,
         "Authorisation declined",
-        "You declined to accept Bentley's terms of service. Close this window.",
+        "You must accept Bentley's terms of service. You may now close this window.",
     )
 
     def __init__(self, oauth_connector: OAuthConnector, redirect_url: str) -> None:
