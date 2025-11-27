@@ -44,7 +44,7 @@ class TestOAuthRedirectHandlerWithMockOAuth(TestWithMockOAuthConnector):
             response_text = await get_redirect(state=STATE_TOKEN, code=AUTHORIZATION_CODE)
 
         self.handler.get_token.assert_called_once_with(STATE_TOKEN, AUTHORIZATION_CODE)
-        self.assertEqual(OAuthRedirectHandler._REDIRECT_HTML.decode("utf-8"), response_text)
+        self.assertEqual(OAuthRedirectHandler._REDIRECT_HTML_SUCCESSFUL.decode("utf-8"), response_text)
 
     async def test_pending_with_success(self) -> None:
         """Test that the handler is pending until authentication is successful"""
@@ -64,6 +64,20 @@ class TestOAuthRedirectHandlerWithMockOAuth(TestWithMockOAuthConnector):
 
         with self.assertRaises(OAuthError):
             await self.handler.get_result()
+
+    async def test_redirect_declined_with_error(self) -> None:
+        """Test that the declined HTML is returned when OAuth returns an error"""
+        async with self.handler:
+            # Simulate OAuth server returning an error response
+            response_text = await get_redirect(error="error")
+
+        self.assertEqual(OAuthRedirectHandler._REDIRECT_HTML_DECLINED.decode("utf-8"), response_text)
+        self.assertFalse(self.handler.pending)
+        self.handler.get_token.assert_not_called()
+
+        with self.assertRaises(OAuthError) as context:
+            await self.handler.get_result()
+        self.assertIn("error", str(context.exception))
 
     async def test_get_result(self) -> None:
         """Test that the handler returns the access token"""
