@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import html
 import secrets
 import webbrowser
 from base64 import urlsafe_b64encode
@@ -71,14 +72,12 @@ def _build_redirect_html(title: str, success: bool, heading: str, paragraph: str
         padding: 80px;
         text-align: center;
       }}
-      h3 {{ font-size: 48px; }}
-      p  {{ font-size: 14px; }}
     </style>
   </head>
   <body>
     <div class="container">
       {_SUCCESS_SVG if success else _DECLINED_SVG}
-      <h3>{heading}</h3>
+      <h1>{heading}</h1>
       <p>{paragraph}</p>
     </div>
     <script>setTimeout("window.close()", 2500);</script>
@@ -92,16 +91,17 @@ def _build_redirect_html_success() -> bytes:
         "Seequent Evo - Authorisation successful",
         True,
         "Authorisation successful!",
-        "You have successfully authenticated with Seequent Evo. You may now close this window and return to your terminal or application.",
+        "You have successfully authenticated with Seequent Evo.<br><br>You may now close this window and return to your terminal or application.",
     )
 
 
 def _build_redirect_html_failed(error: str) -> bytes:
+    escaped_error = html.escape(error) if error else error
     return _build_redirect_html(
         "Seequent Evo - Authorisation failed",
         False,
         "Authorisation failed",
-        f"Error: {error}. You may now close this window.",
+        f"Error: {escaped_error}.<br><br>You may now close this window.",
     )
 
 
