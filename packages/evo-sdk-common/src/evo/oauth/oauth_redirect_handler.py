@@ -71,20 +71,38 @@ def _build_redirect_html(title: str, success: bool, heading: str, paragraph: str
         padding: 80px;
         text-align: center;
       }}
-      h1 {{ font-size: 48px; }}
+      h3 {{ font-size: 48px; }}
       p  {{ font-size: 14px; }}
     </style>
   </head>
   <body>
     <div class="container">
       {_SUCCESS_SVG if success else _DECLINED_SVG}
-      <h1>{heading}</h1>
+      <h3>{heading}</h3>
       <p>{paragraph}</p>
     </div>
     <script>setTimeout("window.close()", 2500);</script>
   </body>
 </html>
 """.encode("UTF-8")
+
+
+def _build_redirect_html_success() -> bytes:
+    return _build_redirect_html(
+        "Seequent Evo - Authorisation successful",
+        True,
+        "Authorisation successful!",
+        "You have successfully authenticated with Seequent Evo. You may now close this window and return to your terminal or application.",
+    )
+
+
+def _build_redirect_html_failed(error: str) -> bytes:
+    return _build_redirect_html(
+        "Seequent Evo - Authorisation failed",
+        False,
+        "Authorisation failed",
+        f"Error: {error}. You may now close this window.",
+    )
 
 
 class OAuthRedirectHandler:
@@ -94,20 +112,6 @@ class OAuthRedirectHandler:
     redirected to the local server to complete the authorisation process. The context manager waits for the
     authorisation to complete and then fetches the access token.
     """
-
-    _REDIRECT_HTML_SUCCESSFUL = _build_redirect_html(
-        "Seequent Evo - Authorisation successful",
-        True,
-        "Authorisation successful",
-        "You may now close this window.",
-    )
-
-    _REDIRECT_HTML_DECLINED = _build_redirect_html(
-        "Seequent Evo - Authorisation declined",
-        False,
-        "Authorisation declined",
-        "You must accept Bentley's terms of service. You may now close this window.",
-    )
 
     def __init__(self, oauth_connector: OAuthConnector, redirect_url: str) -> None:
         """
@@ -185,12 +189,12 @@ class OAuthRedirectHandler:
         await response.prepare(request)
         try:  # Broad exception handling to ensure any errors are logged and stored in the context.
             if "error" in request.query:  # Check for an error response from the OAuth provider.
-                await response.write(self._REDIRECT_HTML_DECLINED)
                 title = request.query.getone("error")  # Raises KeyError if `error` is missing.
                 detail = request.query.getone("error_description", None)
+                await response.write(_build_redirect_html_failed(detail or title))
                 raise OAuthError(detail or title)  # Report the more detailed error message if it is available.
 
-            await response.write(self._REDIRECT_HTML_SUCCESSFUL)
+            await response.write(_build_redirect_html_success())
             token = await self.get_token(
                 request.query.getone("state"),  # Raises KeyError if `state` is missing.
                 request.query.getone("code"),  # Raises KeyError if `code` is missing.
