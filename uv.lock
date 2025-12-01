@@ -738,7 +738,7 @@ wheels = [
 
 [[package]]
 name = "evo-blockmodels"
-version = "0.0.3"
+version = "0.1.0"
 source = { editable = "packages/evo-blockmodels" }
 dependencies = [
     { name = "evo-sdk-common" },
@@ -1071,7 +1071,7 @@ test = [
 
 [[package]]
 name = "evo-sdk"
-version = "0.1.15"
+version = "0.1.17"
 source = { editable = "." }
 dependencies = [
     { name = "evo-blockmodels", extra = ["aiohttp", "notebooks", "pyarrow"] },
