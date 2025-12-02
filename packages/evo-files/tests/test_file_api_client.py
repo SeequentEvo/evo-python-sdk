@@ -14,7 +14,7 @@ from unittest import mock
 from uuid import UUID
 
 from data import load_test_data
-from evo.common import Environment, HealthCheckType, Page, RequestMethod, ServiceUser
+from evo.common import Environment, EvoContext, HealthCheckType, Page, RequestMethod, ServiceUser
 from evo.common.test_tools import BASE_URL, ORG, WORKSPACE_ID, MockResponse, TestWithConnector, utc_datetime
 from evo.common.utils import get_header_metadata
 from evo.files import FileAPIClient, FileAPIDownload, FileAPIUpload, FileMetadata, FileVersion
@@ -30,6 +30,12 @@ class TestFileApiClient(TestWithConnector):
     @property
     def base_path(self) -> str:
         return f"file/v2/orgs/{self.environment.org_id}/workspaces/{self.environment.workspace_id}"
+
+    def test_from_context(self) -> None:
+        client = FileAPIClient.from_context(
+            EvoContext.from_environment(environment=self.environment, connector=self.connector)
+        )
+        self.assertIsInstance(client, FileAPIClient)
 
     async def test_check_service_health(self) -> None:
         """Test service health check implementation"""

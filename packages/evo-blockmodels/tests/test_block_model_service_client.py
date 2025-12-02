@@ -26,7 +26,7 @@ from evo.blockmodels.endpoints.models import (
     QueryResult,
 )
 from evo.blockmodels.exceptions import CacheNotConfiguredException, JobFailedException
-from evo.common import HealthCheckType
+from evo.common import EvoContext, HealthCheckType
 from evo.common.data import HTTPHeaderDict, RequestMethod
 from evo.common.test_tools import BASE_URL, AbstractTestRequestHandler, MockResponse, TestWithConnector, TestWithStorage
 from evo.common.utils import NoFeedback
@@ -78,6 +78,12 @@ class TestBlockModelAPIClient(TestWithConnector, TestWithStorage):
     @property
     def base_path(self) -> str:
         return f"blockmodel/orgs/{self.environment.org_id}/workspaces/{self.environment.workspace_id}"
+
+    def test_from_context(self) -> None:
+        client = BlockModelAPIClient.from_context(
+            EvoContext.from_environment(environment=self.environment, connector=self.connector)
+        )
+        self.assertIsInstance(client, BlockModelAPIClient)
 
     async def test_check_service_health(self) -> None:
         """Test service health check implementation"""
