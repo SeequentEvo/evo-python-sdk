@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.10,<3.13"
 dependencies = [
     "evo-schemas>=2025.9.12",
-    "evo-sdk>=0.1.11",
+    "evo-sdk>=0.1.17",
     "geosoft>=2025.1.1 ; sys_platform == 'windows'",
     "jupyterlab>=4.3.6",
     "pandas[excel]>=2.2.3",
