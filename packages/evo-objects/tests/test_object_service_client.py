@@ -19,7 +19,7 @@ from uuid import UUID
 from dateutil.parser import parse as dateutil_parse
 
 from data import load_test_data
-from evo.common import HealthCheckType, Page, RequestMethod, ServiceUser
+from evo.common import EvoContext, HealthCheckType, Page, RequestMethod, ServiceUser
 from evo.common.data import OrderByOperatorEnum
 from evo.common.io.exceptions import DataNotFoundError
 from evo.common.test_tools import MockResponse, TestWithConnector, TestWithStorage
@@ -49,6 +49,12 @@ class TestObjectAPIClient(TestWithConnector, TestWithStorage):
         TestWithStorage.setUp(self)
         self.object_client = ObjectAPIClient(connector=self.connector, environment=self.environment)
         self.setup_universal_headers(get_header_metadata(ObjectAPIClient.__module__))
+
+    def test_from_context(self) -> None:
+        client = ObjectAPIClient.from_context(
+            EvoContext.from_environment(environment=self.environment, connector=self.connector)
+        )
+        self.assertIsInstance(client, ObjectAPIClient)
 
     @property
     def instance_base_path(self) -> str:

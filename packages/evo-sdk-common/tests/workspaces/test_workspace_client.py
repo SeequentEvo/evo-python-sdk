@@ -13,7 +13,8 @@ import json
 from unittest import mock
 from uuid import UUID
 
-from evo.common import HealthCheckType, RequestMethod
+from evo.common import EvoContext, HealthCheckType, RequestMethod
+from evo.common.exceptions import ContextError
 from evo.common.test_tools import BASE_URL, MockResponse, TestHTTPHeaderDict, TestWithConnector, utc_datetime
 from evo.common.utils import get_header_metadata
 from evo.workspaces import (
@@ -74,6 +75,14 @@ class TestWorkspaceClient(TestWithConnector):
         super().setUp()
         self.workspace_client = WorkspaceAPIClient(connector=self.connector, org_id=ORG_UUID)
         self.setup_universal_headers(get_header_metadata(WorkspaceAPIClient.__module__))
+
+    def test_from_context(self):
+        client = WorkspaceAPIClient.from_context(EvoContext(connector=self.connector, org_id=ORG_UUID))
+        self.assertIsInstance(client, WorkspaceAPIClient)
+
+    def test_from_context_missing_org_id(self):
+        with self.assertRaises(ContextError):
+            WorkspaceAPIClient.from_context(EvoContext(connector=self.connector))
 
     async def test_get_service_health(self) -> None:
         with mock.patch("evo.workspaces.client.get_service_health") as mock_get_service_health:

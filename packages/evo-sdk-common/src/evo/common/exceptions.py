@@ -474,3 +474,7 @@ class GoneException(GeneralizedTypedError):
 
 class SelectionError(EvoClientException):
     """Raised when a selection error occurs."""
+
+
+class ContextError(EvoClientException):
+    """Raised when the context lacks required information."""
