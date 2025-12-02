@@ -12,7 +12,7 @@
 import functools
 from collections.abc import Callable, Iterator, Sequence
 from threading import Lock
-from typing import Callable, TypeVar
+from typing import TypeVar
 
 from ..interfaces import IFeedback
 
