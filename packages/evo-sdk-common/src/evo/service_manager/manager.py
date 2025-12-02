@@ -16,7 +16,7 @@ from typing import Any, TypeVar
 from uuid import UUID
 
 from evo import logging
-from evo.common import APIConnector, BaseAPIClient, Environment
+from evo.common import APIConnector, BaseAPIClient, Environment, EvoContext
 from evo.common.exceptions import SelectionError
 from evo.common.interfaces import IAuthorizer, ITransport
 from evo.discovery import DiscoveryAPIClient, Hub, Organization
@@ -414,6 +414,18 @@ class ServiceManager:
         if not isinstance(ws := self.get_current_workspace(), Workspace):
             raise SelectionError("No workspace is currently selected.")
         return Environment(hub_url=hub.url, org_id=org.id, workspace_id=ws.id)
+
+    def get_context(self) -> EvoContext:
+        """Get the context for the currently selected organization, hub, and workspace.
+
+        :returns: The context.
+
+        :raises SelectionError: If no organization, hub, or workspace is currently selected.
+        """
+        return EvoContext.from_environment(
+            self.get_environment(),
+            self.get_connector(),
+        )
 
     def create_client(self, client_class: type[T_client], *args: Any, **kwargs: Any) -> T_client:
         """Create a client for the currently selected workspace.

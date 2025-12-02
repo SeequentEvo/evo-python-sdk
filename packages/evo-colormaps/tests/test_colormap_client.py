@@ -24,7 +24,7 @@ from evo.colormaps.data import (
     DiscreteColormap,
 )
 from evo.colormaps.exceptions import UnknownColormapType
-from evo.common import Environment, HealthCheckType, RequestMethod, ServiceUser
+from evo.common import Environment, EvoContext, HealthCheckType, RequestMethod, ServiceUser
 from evo.common.exceptions import NotFoundException
 from evo.common.test_tools import BASE_URL, ORG, WORKSPACE_ID, TestWithConnector, utc_datetime
 from evo.common.utils import get_header_metadata
@@ -40,6 +40,12 @@ class TestColormapApiClient(TestWithConnector):
     @property
     def base_path(self) -> str:
         return f"colormap/orgs/{self.environment.org_id}/workspaces/{self.environment.workspace_id}"
+
+    def test_from_context(self) -> None:
+        client = ColormapAPIClient.from_context(
+            EvoContext.from_environment(environment=self.environment, connector=self.connector)
+        )
+        self.assertIsInstance(client, ColormapAPIClient)
 
     async def test_check_service_health(self) -> None:
         """Test service health check implementation."""
