@@ -738,7 +738,7 @@ wheels = [
 
 [[package]]
 name = "evo-blockmodels"
-version = "0.0.3"
+version = "0.1.0"
 source = { editable = "packages/evo-blockmodels" }
 dependencies = [
     { name = "evo-sdk-common" },
@@ -871,7 +871,7 @@ test = [
 
 [[package]]
 name = "evo-compute"
-version = "0.0.1rc1"
+version = "0.0.1rc2"
 source = { editable = "packages/evo-compute" }
 dependencies = [
     { name = "evo-sdk-common" },
@@ -992,7 +992,7 @@ test = [
 
 [[package]]
 name = "evo-objects"
-version = "0.3.2"
+version = "0.3.3"
 source = { editable = "packages/evo-objects" }
 dependencies = [
     { name = "evo-sdk-common", extra = ["jmespath"] },
@@ -1071,7 +1071,7 @@ test = [
 
 [[package]]
 name = "evo-sdk"
-version = "0.1.13"
+version = "0.1.17"
 source = { editable = "." }
 dependencies = [
     { name = "evo-blockmodels", extra = ["aiohttp", "notebooks", "pyarrow"] },
@@ -1132,7 +1132,7 @@ test = [
 
 [[package]]
 name = "evo-sdk-common"
-version = "0.5.8"
+version = "0.5.12"
 source = { editable = "packages/evo-sdk-common" }
 dependencies = [
     { name = "pure-interface" },

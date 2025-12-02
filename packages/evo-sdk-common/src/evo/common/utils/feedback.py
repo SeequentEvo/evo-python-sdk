@@ -10,7 +10,7 @@
 #  limitations under the License.
 
 import functools
-from collections.abc import Iterator, Sequence
+from collections.abc import Callable, Iterator, Sequence
 from threading import Lock
 from typing import Callable, TypeVar
 
