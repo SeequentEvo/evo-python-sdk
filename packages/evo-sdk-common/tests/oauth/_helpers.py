@@ -92,9 +92,9 @@ def patch_urlsafe_tokens(state: str = STATE_TOKEN, verifier: str = VERIFIER_TOKE
         yield
 
 
-async def get_redirect(state: str = STATE_TOKEN, code: str = AUTHORIZATION_CODE) -> str:
+async def get_redirect(state: str = STATE_TOKEN, code: str = AUTHORIZATION_CODE, error_dict: dict | None = None) -> str:
     async with ClientSession() as session:
-        async with session.get(REDIRECT_URL, params={"state": state, "code": code}) as response:
+        async with session.get(REDIRECT_URL, params={"code": code, "state": state} | (error_dict or {})) as response:
             response.raise_for_status()
             return await response.text()
 

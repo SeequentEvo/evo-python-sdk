@@ -11,6 +11,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import contextlib
 from collections.abc import AsyncGenerator, Iterator, Sequence
 from typing import Any, TypeVar
@@ -21,7 +22,7 @@ from pydantic import ConfigDict, TypeAdapter
 from evo import jmespath, logging
 from evo.common import APIConnector, ICache, IFeedback
 from evo.common.io.exceptions import DataNotFoundError
-from evo.common.utils import NoFeedback, PartialFeedback
+from evo.common.utils import NoFeedback, split_feedback
 
 from ..data import ObjectMetadata, ObjectReference, ObjectSchema
 from ..endpoints import ObjectsApi, models
@@ -71,27 +72,6 @@ __all__ = ["DownloadedObject"]
 logger = logging.getLogger("object.client")
 
 _T = TypeVar("_T")
-
-
-def _split_feedback(left: int, right: int) -> float:
-    """Helper to split feedback range into two parts based on left and right sizes.
-
-    :param left: Number of parts for the left side of the split.
-    :param right: Number of parts for the right side of the split.
-
-    :return: Proportion of feedback to allocate to the left side (between 0.0 and 1.0).
-        The right side will be the remainder (1.0 - proportion).
-
-    :raises ValueError: If left or right is negative.
-    """
-    if left < 0 or right < 0:
-        raise ValueError("Left and right sizes must be non-negative")
-    elif left >= 0 and right == 0:
-        return 1.0  # Left gets all feedback if right is zero
-    elif right > 0 and left == 0:
-        return 0.0  # Right gets all feedback if left is zero
-    else:
-        return left / (left + right)  # Proportion of feedback for left
 
 
 class DownloadedObject:
@@ -384,15 +364,17 @@ class DownloadedObject:
                 category_info["values"]["length"] * category_info["values"]["width"]
             )  # Total number of cells in values
             t_size = category_info["table"]["length"] * 2  # Lookup tables always have 2 columns
-            split = _split_feedback(v_size, t_size)
+            values_fb, table_fb = split_feedback(fb, [v_size, t_size])
 
-            values_table = await self.download_table(
+            # Download both tables concurrently
+            values_table_coro = self.download_table(
                 category_info["values"],
                 nan_values=nan_values,
                 column_names=column_names,
-                fb=PartialFeedback(fb, start=0, end=split),
+                fb=values_fb,
             )
-            lookup_table = await self.download_table(category_info["table"], fb=PartialFeedback(fb, start=split, end=1))
+            lookup_table_coro = self.download_table(category_info["table"], fb=table_fb)
+            values_table, lookup_table = await asyncio.gather(values_table_coro, lookup_table_coro)
 
             arrays = []
             for array in values_table.columns:

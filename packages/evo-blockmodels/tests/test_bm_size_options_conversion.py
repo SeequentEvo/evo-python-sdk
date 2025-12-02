@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 from evo.blockmodels import BlockModelAPIClient
 from evo.blockmodels.data import (
@@ -21,7 +21,7 @@ class TestBMSizeOptionsConversion(TestWithConnector, TestWithStorage):
         self.client = BlockModelAPIClient(connector=self.connector, environment=self.environment)
 
     def _create_bm(self, name: str, size_options: object) -> api_models.BlockModel:
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         return api_models.BlockModel(
             bbox=api_models.BBoxXYZ(
                 x_minmax=api_models.FloatRange(min=0.0, max=1.0),

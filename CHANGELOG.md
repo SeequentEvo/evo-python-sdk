@@ -1,5 +1,17 @@
 # Changelog
 
+## evo-blockmodels@v0.1.0
+### What's changed
+#### evo-blockmodels
+New methods on the Blockmodel SDK 🎉 
+* Blockmodel list models by @rachelcarpenterseequent in https://github.com/SeequentEvo/evo-python-sdk/pull/148
+* Add a method to update column metadata ie units by @rachelcarpenterseequent in https://github.com/SeequentEvo/evo-python-sdk/pull/149
+* Add a method to rename blockmodel columns to the SDK by @rachelcarpenterseequent in https://github.com/SeequentEvo/evo-python-sdk/pull/150
+* Add a method for deleting columns by @rachelcarpenterseequent in https://github.com/SeequentEvo/evo-python-sdk/pull/152
+* Add methods for listing blockmodel versions. by @rachelcarpenterseequent in https://github.com/SeequentEvo/evo-python-sdk/pull/153
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-blockmodels@v0.0.3...evo-blockmodels@v0.1.0
+
 ## evo-sdk@v0.1.14
 ### What's changed
 #### evo-sdk

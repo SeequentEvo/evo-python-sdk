@@ -328,3 +328,252 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
                     new_columns=["col2"],
                 )
             mock_destination.upload_file.assert_called_once()
+
+    async def test_update_column_metadata(self) -> None:
+        self.transport.set_request_handler(
+            UpdateRequestHandler(
+                update_result=UPDATE_RESULT,
+                job_response=JobResponse(
+                    job_status=JobStatus.COMPLETE,
+                    payload=UPDATED_VERSION,
+                ),
+            )
+        )
+        version = await self.bms_client_without_cache.update_column_metadata(
+            BM_UUID,
+            column_updates={"col1": "%[mass]", "col2": None},
+        )
+
+        # Verify the returned version object
+        self.assertEqual(version.bm_uuid, BM_UUID)
+        self.assertEqual(version.version_id, 2)
+        self.assertEqual(version.version_uuid, UPDATED_VERSION.version_uuid)
+        self.assertEqual(version.parent_version_id, 1)
+        self.assertEqual(version.base_version_id, 1)
+        self.assertEqual(version.geoscience_version_id, "3")
+
+    async def test_update_column_metadata_job_failed(self) -> None:
+        self.transport.set_request_handler(
+            UpdateRequestHandler(
+                update_result=UPDATE_RESULT,
+                job_response=JobResponse(
+                    job_status=JobStatus.FAILED,
+                    payload=models.JobErrorPayload(
+                        detail="Update Job failed",
+                        status=500,
+                        title="Update Job failed",
+                        type="https://seequent.com/error-codes/block-model-service/job/internal-error",
+                    ),
+                ),
+            )
+        )
+        with self.assertRaises(JobFailedException):
+            await self.bms_client_without_cache.update_column_metadata(
+                BM_UUID,
+                column_updates={"col1": "%[mass]"},
+            )
+
+    async def test_update_column_metadata_with_comment(self) -> None:
+        self.transport.set_request_handler(
+            UpdateRequestHandler(
+                update_result=UPDATE_RESULT,
+                job_response=JobResponse(
+                    job_status=JobStatus.COMPLETE,
+                    payload=UPDATED_VERSION,
+                ),
+            )
+        )
+        version = await self.bms_client_without_cache.update_column_metadata(
+            BM_UUID,
+            column_updates={"col1": "%[mass]", "col2": None},
+            comment="Updated column units for analysis",
+        )
+
+        # Assert that the correct metadata update with comment is part of the request
+        expected_update_body = models.UpdateDataLiteInput(
+            columns=models.UpdateColumnsLiteInput(
+                new=[],
+                update=[],
+                rename=[],
+                delete=[],
+                update_metadata=[
+                    models.UpdateMetadataLite(
+                        title="col1",
+                        values=models.UpdateMetadataValues(unit_id="%[mass]"),
+                    ),
+                    models.UpdateMetadataLite(
+                        title="col2",
+                        values=models.UpdateMetadataValues(unit_id=None),
+                    ),
+                ],
+            ),
+            comment="Updated column units for analysis",
+        )
+        self.assert_any_request_made(
+            method=RequestMethod.PATCH,
+            path=f"{self.base_path}/block-models/{BM_UUID}/blocks",
+            body=expected_update_body.model_dump(mode="json", exclude_unset=True),
+            headers={
+                "Authorization": "Bearer <not-a-real-token>",
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            },
+        )
+        self.assertEqual(version.bm_uuid, BM_UUID)
+        self.assertEqual(version.version_id, 2)
+
+    async def test_rename_block_model_columns(self) -> None:
+        self.transport.set_request_handler(
+            UpdateRequestHandler(
+                update_result=UPDATE_RESULT,
+                job_response=JobResponse(
+                    job_status=JobStatus.COMPLETE,
+                    payload=UPDATED_VERSION,
+                ),
+            )
+        )
+        version = await self.bms_client_without_cache.rename_block_model_columns(
+            BM_UUID,
+            column_renames={"col1": "col1_renamed", "col2": "col2_renamed"},
+        )
+
+        # Verify the returned version object
+        self.assertEqual(version.bm_uuid, BM_UUID)
+        self.assertEqual(version.version_uuid, UPDATED_VERSION.version_uuid)
+
+    async def test_rename_block_model_columns_with_comment(self) -> None:
+        self.transport.set_request_handler(
+            UpdateRequestHandler(
+                update_result=UPDATE_RESULT,
+                job_response=JobResponse(
+                    job_status=JobStatus.COMPLETE,
+                    payload=UPDATED_VERSION,
+                ),
+            )
+        )
+        version = await self.bms_client_without_cache.rename_block_model_columns(
+            BM_UUID,
+            column_renames={"col1": "col1_renamed", "col2": "col2_renamed"},
+            comment="Renamed columns for clarity",
+        )
+
+        # Assert that the correct rename request with comment was made
+        expected_update_body = models.UpdateDataLiteInput(
+            columns=models.UpdateColumnsLiteInput(
+                new=[],
+                update=[],
+                delete=[],
+                rename=[
+                    models.RenameLite(title="col1", new_title="col1_renamed"),
+                    models.RenameLite(title="col2", new_title="col2_renamed"),
+                ],
+            ),
+            comment="Renamed columns for clarity",
+        )
+        self.assert_any_request_made(
+            method=RequestMethod.PATCH,
+            path=f"{self.base_path}/block-models/{BM_UUID}/blocks",
+            body=expected_update_body.model_dump(mode="json", exclude_unset=True),
+            headers={
+                "Authorization": "Bearer <not-a-real-token>",
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            },
+        )
+        self.assertEqual(version.bm_uuid, BM_UUID)
+        self.assertEqual(version.version_id, 2)
+        self.assertEqual(version.version_uuid, UPDATED_VERSION.version_uuid)
+        self.assertEqual(version.parent_version_id, 1)
+        self.assertEqual(version.base_version_id, 1)
+        self.assertEqual(version.geoscience_version_id, "3")
+
+    async def test_rename_block_model_columns_job_failed(self) -> None:
+        self.transport.set_request_handler(
+            UpdateRequestHandler(
+                update_result=UPDATE_RESULT,
+                job_response=JobResponse(
+                    job_status=JobStatus.FAILED,
+                    payload=models.JobErrorPayload(
+                        detail="Rename Job failed",
+                        status=500,
+                        title="Rename Job failed",
+                        type="https://seequent.com/error-codes/block-model-service/job/internal-error",
+                    ),
+                ),
+            )
+        )
+        with self.assertRaises(JobFailedException):
+            await self.bms_client_without_cache.rename_block_model_columns(
+                BM_UUID,
+                column_renames={"col1": "col1_renamed"},
+            )
+
+    async def test_delete_block_model_columns(self) -> None:
+        self.transport.set_request_handler(
+            UpdateRequestHandler(
+                update_result=UPDATE_RESULT,
+                job_response=JobResponse(
+                    job_status=JobStatus.COMPLETE,
+                    payload=UPDATED_VERSION,
+                ),
+            )
+        )
+        version = await self.bms_client_without_cache.delete_block_model_columns(BM_UUID, ["col1", "col2"])
+
+        # Verify the returned version object
+        self.assertEqual(version.bm_uuid, BM_UUID)
+        self.assertEqual(version.version_uuid, UPDATED_VERSION.version_uuid)
+
+    async def test_delete_block_model_columns_with_comment(self) -> None:
+        self.transport.set_request_handler(
+            UpdateRequestHandler(
+                update_result=UPDATE_RESULT,
+                job_response=JobResponse(
+                    job_status=JobStatus.COMPLETE,
+                    payload=UPDATED_VERSION,
+                ),
+            )
+        )
+        version = await self.bms_client_without_cache.delete_block_model_columns(
+            BM_UUID, ["col1", "col2"], comment="Remove unused columns"
+        )
+
+        expected_update_body = models.UpdateDataLiteInput(
+            columns=models.UpdateColumnsLiteInput(
+                new=[],
+                update=[],
+                delete=["col1", "col2"],
+                rename=[],
+            ),
+            comment="Remove unused columns",
+        )
+        self.assert_any_request_made(
+            method=RequestMethod.PATCH,
+            path=f"{self.base_path}/block-models/{BM_UUID}/blocks",
+            body=expected_update_body.model_dump(mode="json", exclude_unset=True),
+            headers={
+                "Authorization": "Bearer <not-a-real-token>",
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            },
+        )
+        self.assertEqual(version.bm_uuid, BM_UUID)
+        self.assertEqual(version.version_id, 2)
+
+    async def test_delete_block_model_columns_job_failed(self) -> None:
+        self.transport.set_request_handler(
+            UpdateRequestHandler(
+                update_result=UPDATE_RESULT,
+                job_response=JobResponse(
+                    job_status=JobStatus.FAILED,
+                    payload=models.JobErrorPayload(
+                        detail="Delete Job failed",
+                        status=500,
+                        title="Delete Job failed",
+                        type="https://seequent.com/error-codes/block-model-service/job/internal-error",
+                    ),
+                ),
+            )
+        )
+        with self.assertRaises(JobFailedException):
+            await self.bms_client_without_cache.delete_block_model_columns(BM_UUID, ["col1"])

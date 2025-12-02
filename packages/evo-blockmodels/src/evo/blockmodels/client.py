@@ -281,6 +281,33 @@ class BlockModelAPIClient(BaseAPIClient):
         job_status = await self._poll_job_url(bm_id, job_id)
         return extract_payload(job_id, job_status, models.Version)
 
+    async def _update_model_no_data(
+        self, bm_id: UUID, columns: models.UpdateColumnsLiteInput, comment: str | None = None
+    ) -> Version:
+        """Helper to apply an UpdateColumnsLiteInput and return the resulting Version.
+        This is for column operations where new data is not required.
+        """
+        update_response = await self._column_operations_api.update_block_model_from_latest_version(
+            org_id=str(self._environment.org_id),
+            workspace_id=str(self._environment.workspace_id),
+            bm_id=str(bm_id),
+            update_data_lite_input=models.UpdateDataLiteInput(
+                columns=columns,
+                comment=comment,
+            ),
+        )
+
+        job_id = _job_id_from_url(update_response.job_url)
+        await self._column_operations_api.notify_upload_complete(
+            org_id=str(self._environment.org_id),
+            workspace_id=str(self._environment.workspace_id),
+            bm_id=str(bm_id),
+            job_id=str(job_id),
+        )
+        job_status = await self._poll_job_url(bm_id, job_id)
+        version = extract_payload(job_id, job_status, models.Version)
+        return _version_from_model(version)
+
     async def list_block_models(self) -> list[BlockModel]:
         """List block models in the current workspace.
 
@@ -335,6 +362,71 @@ class BlockModelAPIClient(BaseAPIClient):
             offset += page.count
 
         return all_models
+
+    async def list_versions(self, bm_id: UUID) -> list[Version]:
+        """List versions of a block model.
+
+        Returns a list of `Version`s for the block model referenced by `bm_id`,
+        limited to the first 100 results (or the service maximum).
+
+        Versions are ordered from newest to oldest.
+
+        :param bm_id: The ID of the block model.
+        :return: A list of `Version` dataclasses for the block model, ordered newest to oldest.
+        """
+        response = await self._versions_api.list_block_model_versions(
+            workspace_id=str(self._environment.workspace_id),
+            org_id=str(self._environment.org_id),
+            bm_id=str(bm_id),
+        )
+
+        return [_version_from_model(v) for v in response.results]
+
+    async def list_all_versions(self, bm_id: UUID, page_limit: int | None = 100) -> list[Version]:
+        """Return all versions of a block model, following paginated responses.
+
+        This method will page through the `list_block_model_versions` endpoint using `offset` and `limit`
+        until all entries are retrieved. The `page_limit` is clamped to the service maximum (100).
+
+        Versions are ordered from newest to oldest.
+
+        :param bm_id: The ID of the block model.
+        :param page_limit: Maximum items to request per page (1..100). Defaults to 100.
+        :return: A list of `Version` dataclasses for the block model, ordered newest to oldest.
+        """
+        if page_limit is None:
+            page_limit = 100
+        if page_limit <= 0:
+            raise ValueError("page_limit must be > 0")
+        # Service enforces maximum limit of 100
+        page_limit = min(page_limit, 100)
+
+        offset = 0
+        all_versions: list[Version] = []
+
+        while True:
+            page = await self._versions_api.list_block_model_versions(
+                workspace_id=str(self._environment.workspace_id),
+                org_id=str(self._environment.org_id),
+                bm_id=str(bm_id),
+                offset=offset,
+                limit=page_limit,
+            )
+
+            # Convert and append
+            for v in page.results:
+                all_versions.append(_version_from_model(v))
+
+            # Determine stopping condition
+            if page.count == 0:
+                break
+            if page.total is not None:
+                if offset + page.count >= page.total:
+                    break
+            # Advance offset
+            offset += page.count
+
+        return all_versions
 
     async def create_block_model(
         self,
@@ -499,6 +591,91 @@ class BlockModelAPIClient(BaseAPIClient):
         )
         version = await self._upload_data(bm_id, update_response.job_uuid, str(update_response.upload_url), data)
         return _version_from_model(version)
+
+    async def update_column_metadata(
+        self,
+        bm_id: UUID,
+        column_updates: dict[str, str | None],
+        comment: str | None = None,
+    ) -> Version:
+        """Update metadata (e.g., units) for existing block model columns.
+
+        This method updates column properties without requiring data upload or cache configuration.
+
+        :param bm_id: The ID of the block model to update.
+        :param column_updates: A dictionary mapping column titles to their new unit IDs.
+                               Set the unit ID to None to remove the unit.
+                               Example: {"Cu": "%[mass]", "Au": None}
+        :param comment: An optional comment describing the metadata changes. This is max 250 characters.
+        :return: The new version of the block model with updated metadata.
+        """
+        update_metadata_list = [
+            models.UpdateMetadataLite(title=col_title, values=models.UpdateMetadataValues(unit_id=unit_id))
+            for col_title, unit_id in column_updates.items()
+        ]
+
+        columns = models.UpdateColumnsLiteInput(
+            new=[],
+            update=[],
+            delete=[],
+            rename=[],
+            update_metadata=update_metadata_list,
+        )
+
+        return await self._update_model_no_data(bm_id, columns, comment=comment)
+
+    async def rename_block_model_columns(
+        self,
+        bm_id: UUID,
+        column_renames: dict[str, str],
+        comment: str | None = None,
+    ) -> Version:
+        """Rename existing block model columns.
+
+        This method renames columns without requiring data upload or cache configuration.
+
+        :param bm_id: The ID of the block model to update.
+        :param column_renames: A dictionary mapping current column titles to their new titles.
+                               Example: {"Cu": "Copper", "Au": "Gold"}
+        :param comment: An optional comment describing the rename operation. This is max 250 characters.
+        :return: The new version of the block model with renamed columns.
+        """
+        rename_list = [
+            models.RenameLite(title=old_title, new_title=new_title) for old_title, new_title in column_renames.items()
+        ]
+
+        columns = models.UpdateColumnsLiteInput(
+            new=[],
+            update=[],
+            delete=[],
+            rename=rename_list,
+        )
+
+        return await self._update_model_no_data(bm_id, columns, comment=comment)
+
+    async def delete_block_model_columns(
+        self,
+        bm_id: UUID,
+        column_titles: list[str],
+        comment: str | None = None,
+    ) -> Version:
+        """Delete existing columns from a block model.
+
+        This method deletes columns without requiring data upload or cache configuration.
+
+        :param bm_id: The ID of the block model to update.
+        :param column_titles: The titles of the columns to delete.
+        :param comment: An optional comment describing the rename operation. This is max 250 characters.
+        :return: The new version of the block model with renamed columns.
+        """
+        columns = models.UpdateColumnsLiteInput(
+            new=[],
+            update=[],
+            delete=column_titles,
+            rename=[],
+        )
+
+        return await self._update_model_no_data(bm_id, columns, comment=comment)
 
     async def query_block_model_as_table(
         self,
