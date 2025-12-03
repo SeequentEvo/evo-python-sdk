@@ -113,8 +113,11 @@ async def create_geoscience_object(context: EvoContext, object_dict: dict[str, A
 
     name = object_dict["name"]
 
-    # TODO Smarter path handling, i.e. URL encode the name to handle arbitrary characters
-    path = parent + name + ".json" if parent else name + ".json"
+    if parent is None:
+        parent = ""
+    elif not parent.endswith("/"):
+        parent += "/"
+    path = parent + name + ".json"
     object_for_upload = models.GeoscienceObject.model_validate(object_dict)
     response = await objects_api.post_objects(
         org_id=str(environment.org_id),

@@ -14,6 +14,7 @@ from __future__ import annotations
 import contextlib
 import copy
 import dataclasses
+import json
 import uuid
 from unittest import TestCase
 from unittest.mock import Mock, patch
@@ -24,9 +25,13 @@ import pandas as pd
 from parameterized import parameterized
 from pydantic import TypeAdapter
 
+from data import load_test_data
 from evo.common import Environment, EvoContext
+from evo.common.data import RequestMethod
 from evo.common.test_tools import BASE_URL, ORG, WORKSPACE_ID, TestWithConnector
+from evo.common.utils.version import get_header_metadata
 from evo.objects import ObjectReference, ObjectSchema
+from evo.objects.client.api_client import ObjectAPIClient
 from evo.objects.typed import (
     BoundingBox,
     CoordinateReferenceSystem,
@@ -38,6 +43,8 @@ from evo.objects.typed import (
     Size3d,
     Size3i,
 )
+from evo.objects.typed._utils import create_geoscience_object
+from evo.objects.typed.dataset import DataLoaderError
 from evo.objects.typed.grid import SizeChangeError
 
 test_environment = Environment(hub_url=BASE_URL, org_id=ORG.id, workspace_id=WORKSPACE_ID)
@@ -89,6 +96,61 @@ class TestTypes(TestCase):
         self.assertEqual(type_adapter.dump_python(crs3), "unspecified")
 
 
+class TestCreateGeoscienceObject(TestWithConnector):
+    def setUp(self) -> None:
+        TestWithConnector.setUp(self)
+        self.environment = Environment(hub_url=BASE_URL, org_id=ORG.id, workspace_id=WORKSPACE_ID)
+        self.context = EvoContext.from_environment(
+            environment=self.environment,
+            connector=self.connector,
+        )
+        self.setup_universal_headers(get_header_metadata(ObjectAPIClient.__module__))
+
+    @property
+    def instance_base_path(self) -> str:
+        return f"geoscience-object/orgs/{self.environment.org_id}"
+
+    @property
+    def base_path(self) -> str:
+        return f"{self.instance_base_path}/workspaces/{self.environment.workspace_id}"
+
+    @parameterized.expand(
+        [
+            (None, "Sample%20pointset.json"),
+            ("path/to/parent", "path/to/parent/Sample%20pointset.json"),
+            ("path/to/parent/", "path/to/parent/Sample%20pointset.json"),
+        ]
+    )
+    async def test_create_geoscience_object(self, parent: str | None, expected_object_path: str):
+        get_object_response = load_test_data("get_object.json")
+        new_pointset = {
+            "name": "Sample pointset",
+            "uuid": None,
+            "description": "A sample pointset object",
+            "bounding_box": {"min_x": 0.0, "max_x": 0.0, "min_y": 0.0, "max_y": 0.0, "min_z": 0.0, "max_z": 0.0},
+            "coordinate_reference_system": {"epsg_code": 2048},
+            "locations": {
+                "coordinates": {
+                    "data": "0000000000000000000000000000000000000000000000000000000000000001",
+                    "length": 1,
+                    "width": 3,
+                    "data_type": "float64",
+                }
+            },
+            "schema": "/objects/pointset/1.0.1/pointset.schema.json",
+        }
+        new_pointset_without_uuid = new_pointset.copy()
+        with self.transport.set_http_response(status_code=201, content=json.dumps(get_object_response)):
+            await create_geoscience_object(self.context, new_pointset, parent=parent)
+
+        self.assert_request_made(
+            method=RequestMethod.POST,
+            path=f"{self.base_path}/objects/path/{expected_object_path}",
+            headers={"Content-Type": "application/json", "Accept": "application/json"},
+            body=new_pointset_without_uuid,
+        )
+
+
 class MockDownloadedObject:
     def __init__(self, mock_client: MockClient, object_dict: dict, version_id: str = "1"):
         self.mock_client = mock_client
@@ -105,7 +167,9 @@ class MockDownloadedObject:
         return self.object_dict
 
     async def download_attribute_dataframe(self, data: dict, fb) -> pd.DataFrame:
-        return self.mock_client.get_dataframe(data)
+        if "category_data" in data:
+            return self.mock_client.get_dataframe(data["category_data"])
+        return self.mock_client.get_dataframe(data["values"])
 
     async def update(self, object_dict):
         new_version_id = str(int(self.metadata.version_id) + 1)
@@ -126,7 +190,8 @@ class MockClient:
         self.data[data_id] = df
         return {"data_id": data_id}
 
-    upload_category_dataframe = upload_dataframe
+    async def upload_category_dataframe(self, df: pd.DataFrame, *args, **kwargs) -> dict:
+        return {"category_data": await self.upload_dataframe(df)}
 
     async def create_geoscience_object(self, evo_context: EvoContext, object_dict: dict, parent: str):
         object_dict = object_dict.copy()
@@ -160,7 +225,7 @@ class TestRegularGrid(TestWithConnector):
     def _mock_geoscience_objects(self):
         mock_client = MockClient(self.environment)
         with (
-            patch("evo.objects.typed._store.get_data_client", lambda _: mock_client),
+            patch("evo.objects.typed.dataset.get_data_client", lambda _: mock_client),
             patch("evo.objects.typed.base.create_geoscience_object", mock_client.create_geoscience_object),
             patch("evo.objects.typed.base.replace_geoscience_object", mock_client.replace_geoscience_object),
             patch("evo.objects.typed.base.download_geoscience_object", mock_client.from_reference),
@@ -253,7 +318,7 @@ class TestRegularGrid(TestWithConnector):
                 )
             )
 
-            with self.assertRaises(ValueError):
+            with self.assertRaises(DataLoaderError):
                 await obj.cells.as_dataframe()
 
             await obj.update()

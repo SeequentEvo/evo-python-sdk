@@ -35,11 +35,22 @@ from ._adapters import AttributesAdapter, BaseAdapter, CategoryTableAdapter, Dat
 from ._utils import assign_jmespath_value, get_data_client
 
 __all__ = [
+    "Attribute",
+    "Attributes",
+    "DataLoaderError",
     "Dataset",
 ]
 
 
-class ValuesStore:
+class DataLoaderError(Exception):
+    """An error occurred while loading data from a Geoscience Object."""
+
+
+class UnSupportedDataTypeError(Exception):
+    """An unsupported data type was encountered while processing data."""
+
+
+class _ValuesStore:
     """A store for loading and uploading values for a given dataset"""
 
     def __init__(
@@ -81,7 +92,7 @@ class ValuesStore:
             The column name(s) will be updated to match the provided column names, if any.
         """
         if self._obj is None:
-            raise ValueError("No object configured for downloading values")
+            raise DataLoaderError("Values were changed since the object was downloaded")
         if len(self._value_adapters) == 0:
             return pd.DataFrame()
 
@@ -136,8 +147,7 @@ def _infer_attribute_type_from_series(series: pd.Series) -> str:
     elif pd.api.types.is_string_dtype(series):
         return "string"
     else:
-        # TODO: DateTime, Timeseries, and indices
-        raise ValueError(f"Unsupported dtype for attribute: {series.dtype}")
+        raise UnSupportedDataTypeError(f"Unsupported dtype for attribute: {series.dtype}")
 
 
 _attribute_table_formats = {
@@ -197,7 +207,7 @@ class Attribute:
             The column name will be updated to match the attribute name.
         """
         if self._obj is None:
-            raise ValueError("Can't load attribute values without a loader.")
+            raise DataLoaderError("Attribute values was changed since the object was downloaded")
         return await self._obj.download_attribute_dataframe(self.as_dict(), fb=fb)
 
     async def set_attribute_values(
@@ -221,7 +231,7 @@ class Attribute:
             self._attribute.update(await data_client.upload_category_dataframe(df))
         else:
             table_formats = _attribute_table_formats.get(attribute_type)
-            self._attribute.update(await data_client.upload_dataframe(df, table_format=table_formats))
+            self._attribute["values"] = await data_client.upload_dataframe(df, table_format=table_formats)
 
         if attribute_type in ["scalar", "integer", "category"]:
             self._attribute["nan_description"] = {"values": []}
@@ -361,7 +371,7 @@ class Dataset:
         evo_context: EvoContext,
         obj: DownloadedObject | None = None,
     ):
-        self.values = ValuesStore(document, dataset_adapter.value_adapters, obj=obj, evo_context=evo_context)
+        self._values = _ValuesStore(document, dataset_adapter.value_adapters, obj=obj, evo_context=evo_context)
         if dataset_adapter.attributes_adapter is not None:
             self.attributes = Attributes(document, dataset_adapter.attributes_adapter, obj=obj, evo_context=evo_context)
         else:
@@ -384,7 +394,7 @@ class Dataset:
             and NaN values as specified. The column name(s) will be updated to match the column names provided in the
             ValuesAdapters and the attribute names.
         """
-        values = await self.values.as_dataframe(fb=fb)
+        values = await self._values.as_dataframe(fb=fb)
         if self.attributes is None:
             return values
         attributes = await self.attributes.as_dataframe(*keys, fb=fb)
@@ -404,15 +414,15 @@ class Dataset:
         value_columns = []
         attribute_columns = []
         for column in df.columns:
-            if column in self.values.column_names:
+            if column in self._values.column_names:
                 value_columns.append(column)
             else:
                 attribute_columns.append(column)
 
-        await self.values.set_dataframe(df[value_columns], fb)
+        await self._values.set_dataframe(df[value_columns], fb)
         if self.attributes is None:
             if attribute_columns:
-                raise ValueError("Cannot set attributes on a dataset without an attributes adapter")
+                raise DataLoaderError("Object can't store attributes, but additional columns were provided.")
         else:
             await self.attributes.set_attributes(df[attribute_columns], fb)
 

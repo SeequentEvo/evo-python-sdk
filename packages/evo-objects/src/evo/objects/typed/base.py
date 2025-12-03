@@ -24,7 +24,6 @@ from evo.common import EvoContext
 from evo.objects import DownloadedObject, ObjectMetadata, ObjectReference, ObjectSchema, SchemaVersion
 
 from ._adapters import AttributesAdapter, CategoryTableAdapter, DatasetAdapter, TableAdapter
-from ._store import Dataset
 from ._utils import (
     assign_jmespath_value,
     create_geoscience_object,
@@ -32,6 +31,7 @@ from ._utils import (
     download_geoscience_object,
     replace_geoscience_object,
 )
+from .dataset import Dataset
 from .types import BoundingBox, CoordinateReferenceSystem, EpsgCode
 
 if sys.version_info >= (3, 11):

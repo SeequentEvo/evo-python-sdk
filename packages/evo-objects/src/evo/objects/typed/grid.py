@@ -23,8 +23,8 @@ from evo.common.utils import NoFeedback
 from evo.objects import SchemaVersion
 
 from ._adapters import AttributesAdapter
-from ._store import Dataset
 from .base import BaseSpatialObject, BaseSpatialObjectData, DatasetProperty, SchemaProperty
+from .dataset import Dataset
 from .types import BoundingBox, Point3, Rotation, Size3d, Size3i
 
 if sys.version_info >= (3, 11):
@@ -64,9 +64,6 @@ def _calculate_bounding_box(
         ]
     )
     rotated_corners = rotation_matrix @ corners.T
-    print(rotated_corners)
-    print(corners)
-    print(rotation_matrix)
     return BoundingBox.from_points(
         rotated_corners[0, :] + origin.x, rotated_corners[1, :] + origin.y, rotated_corners[2, :] + origin.z
     )
