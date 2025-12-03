@@ -9,20 +9,17 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-try:
-    import pyarrow  # noqa: F401
-except ImportError:
-    raise ImportError("The 'pyarrow' package is required to use ParquetLoader") from None
-
-from ..utils.types import ArrayTableInfo, AttributeInfo, CategoryInfo, LookupTableInfo, TableInfo
-from .loader import ParquetDownloader, ParquetLoader
+from .grid import Regular3DGrid, Regular3DGridData
+from .types import BoundingBox, CoordinateReferenceSystem, EpsgCode, Point3, Rotation, Size3d, Size3i
 
 __all__ = [
-    "ArrayTableInfo",
-    "AttributeInfo",
-    "CategoryInfo",
-    "LookupTableInfo",
-    "ParquetDownloader",
-    "ParquetLoader",
-    "TableInfo",
+    "BoundingBox",
+    "CoordinateReferenceSystem",
+    "EpsgCode",
+    "Point3",
+    "Regular3DGrid",
+    "Regular3DGridData",
+    "Rotation",
+    "Size3d",
+    "Size3i",
 ]

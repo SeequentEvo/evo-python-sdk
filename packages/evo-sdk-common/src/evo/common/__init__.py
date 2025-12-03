@@ -10,6 +10,7 @@
 #  limitations under the License.
 
 from .connector import APIConnector, NoAuth
+from .context import EvoContext
 from .data import (
     DependencyStatus,
     EmptyResponse,
@@ -33,6 +34,7 @@ __all__ = [
     "DependencyStatus",
     "EmptyResponse",
     "Environment",
+    "EvoContext",
     "HTTPHeaderDict",
     "HTTPResponse",
     "HealthCheckType",

@@ -23,7 +23,7 @@ from IPython.display import display
 
 from evo import logging
 from evo.aio import AioTransport
-from evo.common import APIConnector, BaseAPIClient, Environment
+from evo.common import APIConnector, BaseAPIClient, Environment, EvoContext
 from evo.common.exceptions import UnauthorizedException
 from evo.common.interfaces import IAuthorizer, ICache, IFeedback, ITransport
 from evo.discovery import Hub, Organization
@@ -449,6 +449,15 @@ class ServiceManagerWidget(widgets.HBox):
         :raises SelectionError: If no organization, hub, or workspace is currently selected.
         """
         return self._service_manager.get_environment()
+
+    def get_context(self) -> EvoContext:
+        """Get the context for the currently selected organization, hub, and workspace.
+
+        :returns: The context.
+
+        :raises SelectionError: If no organization, hub, or workspace is currently selected.
+        """
+        return self._service_manager.get_context().with_cache(self._cache)
 
     def create_client(self, client_class: type[T_client], *args: Any, **kwargs: Any) -> T_client:
         """Create a client for the currently selected workspace.

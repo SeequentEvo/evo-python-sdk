@@ -93,3 +93,4 @@ class AttributeInfo(TypedDict):
     nan_description: NotRequired[NanCategorical | NanContinuous]
     values: ArrayTableInfo
     table: NotRequired[LookupTableInfo]
+    attribute_type: str
