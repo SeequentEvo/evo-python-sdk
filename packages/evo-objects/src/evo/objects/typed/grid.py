@@ -134,13 +134,13 @@ class Vertices(Dataset):
         grid_size = self._grid_size
         return Size3i(nx=grid_size.nx + 1, ny=grid_size.ny + 1, nz=grid_size.nz + 1)
 
-    def set_dataframe(self, df: pd.DataFrame, fb: IFeedback = NoFeedback) -> None:
+    async def set_dataframe(self, df: pd.DataFrame, fb: IFeedback = NoFeedback) -> None:
         expected_length = self.size.total_size
         if df.shape[0] != expected_length:
             raise ObjectValidationError(
                 f"The number of rows in the dataframe ({df.shape[0]}) does not match the number of vertices in the grid ({expected_length})."
             )
-        super().set_dataframe(df, fb=fb)
+        await super().set_dataframe(df, fb=fb)
 
     def validate(self) -> None:
         self._check_length(self.size.total_size)
@@ -312,6 +312,7 @@ class MaskedCells(Dataset):
             number_active = np.sum(mask)
         else:
             number_active = self.number_active
+
         if df.shape[0] != number_active:
             raise ObjectValidationError(
                 f"The number of rows in the dataframe ({df.shape[0]}) does not match the number of valid cells in the grid ({number_active})."
@@ -347,7 +348,7 @@ class MaskedCells(Dataset):
 
         values, mask = data
         if values is None:
-            values = pd.DataFrame()
+            values = pd.DataFrame(index=range(np.sum(mask)))
         await dataset.set_dataframe(values, mask)
 
         # Add additional mask metadata to the document
