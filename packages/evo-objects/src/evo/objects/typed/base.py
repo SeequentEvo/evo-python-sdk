@@ -15,7 +15,7 @@ import copy
 import sys
 import weakref
 from dataclasses import dataclass
-from typing import Any, ClassVar, Generic, TypeVar, overload
+from typing import Any, Callable, ClassVar, Generic, TypeVar, overload
 
 from pydantic import TypeAdapter
 
@@ -58,13 +58,13 @@ class DatasetProperty(Generic[_T]):
         dataset_class: type[Dataset],
         value_adapters: list[TableAdapter | CategoryTableAdapter],
         attributes_adapters: list[AttributesAdapter],
-        data_attribute: str | None = None,
+        extract_data: Callable[[Any], Any] | None = None,
     ) -> None:
         self._name = None
         self.dataset_class = dataset_class
         self._value_adapters = value_adapters
         self._attributes_adapters = attributes_adapters
-        self._data_attribute = data_attribute
+        self._extract_data = extract_data
 
     def __set_name__(self, owner: type[BaseObject], name: str):
         self._name = name
@@ -87,10 +87,10 @@ class DatasetProperty(Generic[_T]):
             self._attributes_adapters,
         )
 
-    def get_data_attribute(self) -> str:
-        if self._data_attribute is not None:
-            return self._data_attribute
-        return self._name
+    def extract_data(self, data: Any) -> Any:
+        if self._extract_data is not None:
+            return self._extract_data(data)
+        return None
 
 
 class _BaseObject:
@@ -175,13 +175,12 @@ class _BaseObject:
             prop.apply_to(result, getattr(data, key))
         for key, prop in cls._dataset_properties.items():
             adapter = prop.get_adapter(schema_id)
-            dataset = Dataset.create_empty(document=result, dataset_adapter=adapter, evo_context=evo_context)
-            data_value = getattr(data, prop.get_data_attribute())
-            if data_value is not None:
-                await dataset.set_dataframe(getattr(data, prop.get_data_attribute()))
-                # Ensure the object_dict is updated with any changes made during set_dataframe
-                dataset.update_document()
-
+            dataset_data = prop.extract_data(data)
+            dataset = await prop.dataset_class.create_from_data(
+                document=result, data=dataset_data, dataset_adapter=adapter, evo_context=evo_context
+            )
+            # Ensure the object_dict is updated with any changes made during set_dataframe
+            dataset.update_document()
         return result
 
     @classmethod

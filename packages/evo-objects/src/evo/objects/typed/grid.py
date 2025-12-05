@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 import sys
+import uuid
 from dataclasses import dataclass
 from typing import Any
 
@@ -163,7 +164,7 @@ class Regular3DGrid(BaseSpatialObject):
         attributes_adapters=[
             AttributesAdapter(min_major_version=1, max_major_version=1, attribute_list_path="cell_attributes")
         ],
-        data_attribute="cell_data",
+        extract_data=lambda data: data.cell_data,
     )
     vertices: Vertices = DatasetProperty(
         Vertices,
@@ -171,7 +172,7 @@ class Regular3DGrid(BaseSpatialObject):
         attributes_adapters=[
             AttributesAdapter(min_major_version=1, max_major_version=1, attribute_list_path="vertex_attributes")
         ],
-        data_attribute="vertex_data",
+        extract_data=lambda data: data.vertex_data,
     )
     origin: Point3 = SchemaProperty(
         "origin",
@@ -338,6 +339,25 @@ class MaskedCells(Dataset):
                 f"The length of the mask ({mask_length}) does not match the number of cells in the grid ({self.size.total_size})."
             )
 
+    @classmethod
+    async def create_from_data(
+        cls, document: dict, data: Any, dataset_adapter: DatasetAdapter, evo_context: EvoContext
+    ) -> Self:
+        dataset = await super().create_from_data(document, None, dataset_adapter, evo_context)
+
+        values, mask = data
+        if values is None:
+            values = pd.DataFrame()
+        await dataset.set_dataframe(values, mask)
+
+        # Add additional mask metadata to the document
+        document["mask"] |= {
+            "name": "mask",
+            "key": str(uuid.uuid4()),
+            "attribute_type": "bool",
+        }
+        return dataset
+
 
 class RegularMasked3DGrid(BaseSpatialObject):
     """A GeoscienceObject representing a regular masked 3D grid.
@@ -354,7 +374,7 @@ class RegularMasked3DGrid(BaseSpatialObject):
         attributes_adapters=[
             AttributesAdapter(min_major_version=1, max_major_version=1, attribute_list_path="cell_attributes")
         ],
-        data_attribute="cell_data",
+        extract_data=lambda data: (data.cell_data, data.mask),
     )
     origin: Point3 = SchemaProperty(
         "origin",
@@ -417,13 +437,3 @@ class RegularMasked3DGrid(BaseSpatialObject):
 
     def compute_bounding_box(self) -> BoundingBox:
         return _calculate_bounding_box(self.origin, self.size, self.cell_size, self.rotation)
-
-    @classmethod
-    async def _data_to_dict(cls, data: RegularMasked3DGridData, evo_context: EvoContext) -> dict[str, Any]:
-        data_dict = await super()._data_to_dict(data, evo_context)
-        data_dict["mask"] |= {
-            "name": "mask",
-            "key": "mask",
-            "attribute_type": "bool",
-        }
-        return data_dict

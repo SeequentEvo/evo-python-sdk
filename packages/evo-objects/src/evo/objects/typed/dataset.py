@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 import asyncio
+import sys
 import uuid
 from collections.abc import Sequence
 from typing import cast
@@ -34,6 +35,11 @@ from evo.objects.utils.types import AttributeInfo
 from ._adapters import AttributesAdapter, BaseAdapter, CategoryTableAdapter, DatasetAdapter, TableAdapter
 from ._utils import assign_jmespath_value, get_data_client
 from .exceptions import ObjectValidationError
+
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    from typing_extensions import Self
 
 __all__ = [
     "Attribute",
@@ -389,10 +395,16 @@ class Dataset:
         return jmespath.search(jmespath_expr, self._document)
 
     @classmethod
-    def create_empty(cls, document: dict, dataset_adapter: DatasetAdapter, evo_context: EvoContext) -> Dataset:
+    async def create_from_data(
+        cls, document: dict, data: pd.DataFrame | None, dataset_adapter: DatasetAdapter, evo_context: EvoContext
+    ) -> Self:
         # Create an empty attribute list
         assign_jmespath_value(document, dataset_adapter.attributes_adapter.attribute_list_path, [])
-        return cls(document, dataset_adapter, evo_context)
+
+        dataset = cls(document, dataset_adapter, evo_context)
+        if data is not None:
+            await dataset.set_dataframe(data)
+        return dataset
 
     def validate(self) -> None:
         """Validate that the dataset is valid.
