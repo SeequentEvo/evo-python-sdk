@@ -13,18 +13,25 @@ from __future__ import annotations
 
 import sys
 from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 import pandas as pd
+import pyarrow as pa
 from pydantic import TypeAdapter
 
+from evo import jmespath
 from evo.common import EvoContext, IFeedback
 from evo.common.utils import NoFeedback
-from evo.objects import SchemaVersion
+from evo.objects import DownloadedObject, SchemaVersion
+from evo.objects.utils.table_formats import BOOL_ARRAY_1
 
-from ._adapters import AttributesAdapter
-from .base import BaseSpatialObject, BaseSpatialObjectData, DatasetProperty, SchemaProperty
-from .dataset import Dataset
+from ._adapters import AttributesAdapter, DatasetAdapter
+from ._property import SchemaProperty
+from ._utils import assign_jmespath_value, get_data_client
+from .base import BaseSpatialObject, BaseSpatialObjectData, DatasetProperty
+from .dataset import DataLoaderError, Dataset
+from .exceptions import ObjectValidationError
 from .types import BoundingBox, Point3, Rotation, Size3d, Size3i
 
 if sys.version_info >= (3, 11):
@@ -32,13 +39,7 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import Self
 
-__all__ = [
-    "Cells",
-    "Regular3DGrid",
-    "Regular3DGridData",
-    "SizeChangeError",
-    "Vertices",
-]
+__all__ = ["Cells", "MaskedCells", "Regular3DGrid", "Regular3DGridData", "RegularMasked3DGrid", "Vertices"]
 
 
 def _calculate_bounding_box(
@@ -79,25 +80,18 @@ class Regular3DGridData(BaseSpatialObjectData):
     rotation: Rotation | None = None
 
     def __post_init__(self):
-        if self.cell_data is not None and self.cell_data.shape[0] != self.size.nx * self.size.ny * self.size.nz:
-            raise ValueError(
+        if self.cell_data is not None and self.cell_data.shape[0] != self.size.total_size:
+            raise ObjectValidationError(
                 f"The number of rows in the cell_data dataframe ({self.cell_data.shape[0]}) does not match the number of cells in the grid ({self.size.nx * self.size.ny * self.size.nz})."
             )
-        if self.vertex_data is not None and self.vertex_data.shape[0] != (self.size.nx + 1) * (self.size.ny + 1) * (
-            self.size.nz + 1
-        ):
-            raise ValueError(
+        vertices_expected_length = (self.size.nx + 1) * (self.size.ny + 1) * (self.size.nz + 1)
+        if self.vertex_data is not None and self.vertex_data.shape[0] != vertices_expected_length:
+            raise ObjectValidationError(
                 f"The number of rows in the vertex_data dataframe ({self.vertex_data.shape[0]}) does not match the number of vertices in the grid ({self.size.nx * self.size.ny * self.size.nz})."
             )
 
     def compute_bounding_box(self) -> BoundingBox:
         return _calculate_bounding_box(self.origin, self.size, self.cell_size, self.rotation)
-
-
-class SizeChangeError(Exception):
-    """Exception raised when the size of the grid cannot be changed due to existing attributes in the datasets."""
-
-    pass
 
 
 class Cells(Dataset):
@@ -106,14 +100,21 @@ class Cells(Dataset):
     The order of the cells is assumed to be in z-fastest order.
     """
 
-    size: Size3i
+    size: Size3i = SchemaProperty(
+        "size",
+        TypeAdapter(Size3i),
+    )
 
     async def set_dataframe(self, df: pd.DataFrame, fb: IFeedback = NoFeedback) -> None:
-        if df.shape[0] != self.size.nx * self.size.ny * self.size.nz:
-            raise SizeChangeError(
-                f"The number of rows in the dataframe ({df.shape[0]}) does not match the number of cells in the grid ({self.size.nx * self.size.ny * self.size.nz})."
+        expected_length = self.size.total_size
+        if df.shape[0] != expected_length:
+            raise ObjectValidationError(
+                f"The number of rows in the dataframe ({df.shape[0]}) does not match the number of cells in the grid ({expected_length})."
             )
-        await super().set_dataframe(df, fb)
+        await super().set_dataframe(df, fb=fb)
+
+    def validate(self) -> None:
+        self._check_length(self.size.total_size)
 
 
 class Vertices(Dataset):
@@ -122,14 +123,26 @@ class Vertices(Dataset):
     The order of the cells is assumed to be in z-fastest order.
     """
 
-    size: Size3i
+    _grid_size: Size3i = SchemaProperty(
+        "size",
+        TypeAdapter(Size3i),
+    )
+
+    @property
+    def size(self) -> Size3i:
+        grid_size = self._grid_size
+        return Size3i(nx=grid_size.nx + 1, ny=grid_size.ny + 1, nz=grid_size.nz + 1)
 
     def set_dataframe(self, df: pd.DataFrame, fb: IFeedback = NoFeedback) -> None:
-        if df.shape[0] != self.size.nx * self.size.ny * self.size.nz:
-            raise SizeChangeError(
-                f"The number of rows in the dataframe ({df.shape[0]}) does not match the number of vertices in the grid ({self.size.nx * self.size.ny * self.size.nz})."
+        expected_length = self.size.total_size
+        if df.shape[0] != expected_length:
+            raise ObjectValidationError(
+                f"The number of rows in the dataframe ({df.shape[0]}) does not match the number of vertices in the grid ({expected_length})."
             )
-        super().set_dataframe(df, fb)
+        super().set_dataframe(df, fb=fb)
+
+    def validate(self) -> None:
+        self._check_length(self.size.total_size)
 
 
 class Regular3DGrid(BaseSpatialObject):
@@ -168,21 +181,6 @@ class Regular3DGrid(BaseSpatialObject):
         "size",
         TypeAdapter(Size3i),
     )
-
-    @size.pre_set
-    def _check_size_on_datasets(self, value: Size3i) -> None:
-        if value != self.cells.size and self.cells.has_attributes():
-            raise SizeChangeError("The size property can only be changed if the cells dataset has no attributes.")
-        if (
-            value != Size3i(nx=self.vertices.size.nx - 1, ny=self.vertices.size.ny - 1, nz=self.vertices.size.nz - 1)
-            and self.vertices.has_attributes()
-        ):
-            raise SizeChangeError("The size property can only be changed if the vertices dataset has no attributes.")
-
-    @size.post_set
-    def _set_size_on_datasets(self, value: Size3i) -> None:
-        self.cells.size = value
-        self.vertices.size = Size3i(nx=value.nx + 1, ny=value.ny + 1, nz=value.nz + 1)
 
     cell_size: Size3d = SchemaProperty(
         "cell_size",
@@ -238,7 +236,194 @@ class Regular3DGrid(BaseSpatialObject):
     def compute_bounding_box(self) -> BoundingBox:
         return _calculate_bounding_box(self.origin, self.size, self.cell_size, self.rotation)
 
-    def _reset_from_object(self) -> None:
-        super()._reset_from_object()
-        self.cells.size = self.size
-        self.vertices.size = Size3i(nx=self.size.nx + 1, ny=self.size.ny + 1, nz=self.size.nz + 1)
+
+@dataclass(kw_only=True, frozen=True)
+class RegularMasked3DGridData(BaseSpatialObjectData):
+    origin: Point3
+    size: Size3i
+    cell_size: Size3d
+    cell_data: pd.DataFrame | None = None
+    mask: np.ndarray
+    rotation: Rotation | None = None
+
+    def __post_init__(self):
+        if self.mask.shape[0] != self.size.total_size:
+            raise ObjectValidationError(
+                f"The number of rows in the mask ({self.mask.shape[0]}) does not match the number of cells in the grid ({self.size.nx * self.size.ny * self.size.nz})."
+            )
+        number_active = np.sum(self.mask)
+        if self.cell_data is not None and self.cell_data.shape[0] != number_active:
+            raise ObjectValidationError(
+                f"The number of rows in the cell_data dataframe ({self.cell_data.shape[0]}) does not match the number of active cells in the grid ({number_active})."
+            )
+
+    def compute_bounding_box(self) -> BoundingBox:
+        return _calculate_bounding_box(self.origin, self.size, self.cell_size, self.rotation)
+
+
+class MaskedCells(Dataset):
+    """A dataset representing the cells of a masked regular 3D grid.
+
+    The order of the cells is assumed to be in z-fastest order.
+    """
+
+    size: Size3i = SchemaProperty(
+        "size",
+        TypeAdapter(Size3i),
+    )
+    number_active: int = SchemaProperty(
+        "number_of_active_cells",
+        TypeAdapter(int),
+    )
+
+    def __init__(
+        self,
+        document: dict,
+        dataset_adapter: DatasetAdapter,
+        evo_context: EvoContext,
+        obj: DownloadedObject | None = None,
+    ):
+        super().__init__(document, dataset_adapter, evo_context, obj)
+        self._evo_context = evo_context
+        self._obj = obj
+
+    async def get_mask(self, *, fb: IFeedback = NoFeedback) -> np.ndarray:
+        """Get the mask for the grid cells.
+
+        :return: A boolean numpy array representing the mask for the grid cells.
+        """
+        if self._obj is None:
+            raise DataLoaderError("Cannot get mask data without an associated DownloadedObject.")
+        array = await self._obj.download_array("mask.values", fb=fb)
+        if array.dtype != np.bool_:
+            raise DataLoaderError(f"Expected mask array to have dtype 'bool', but got '{array.dtype}'")
+        return array
+
+    async def set_dataframe(
+        self, df: pd.DataFrame, mask: np.ndarray | None = None, *, fb: IFeedback = NoFeedback
+    ) -> None:
+        if mask is not None:
+            expected_length = self.size.total_size
+            if mask.shape[0] != expected_length:
+                raise ObjectValidationError(
+                    f"The length of the mask ({mask.shape[0]}) does not match the number of cells in the grid ({expected_length})."
+                )
+            number_active = np.sum(mask)
+        else:
+            number_active = self.number_active
+        if df.shape[0] != number_active:
+            raise ObjectValidationError(
+                f"The number of rows in the dataframe ({df.shape[0]}) does not match the number of valid cells in the grid ({number_active})."
+            )
+        self.number_active = number_active
+
+        if mask is not None:
+            # Upload the mask
+            data_client = get_data_client(self._evo_context)
+            table_info = await data_client.upload_table(
+                table=pa.table({"mask": pa.array(mask)}),
+                table_format=BOOL_ARRAY_1,
+                fb=fb,
+            )
+            assign_jmespath_value(self._document, "mask.values", table_info)
+            self._obj = None  # Invalidate the DownloadedObject since data has changed
+
+        await super().set_dataframe(df, fb=fb)
+
+    def validate(self) -> None:
+        self._check_length(self.number_active)
+        mask_length = jmespath.search("mask.values.length", self._document)
+        if self.size.total_size != mask_length:
+            raise DataLoaderError(
+                f"The length of the mask ({mask_length}) does not match the number of cells in the grid ({self.size.total_size})."
+            )
+
+
+class RegularMasked3DGrid(BaseSpatialObject):
+    """A GeoscienceObject representing a regular masked 3D grid.
+
+    The object contains a dataset for the cells of the grid.
+    """
+
+    sub_classification = "regular-masked-3d-grid"
+    creation_schema_version = SchemaVersion(major=1, minor=3, patch=0)
+
+    cells: MaskedCells = DatasetProperty(
+        MaskedCells,
+        value_adapters=[],
+        attributes_adapters=[
+            AttributesAdapter(min_major_version=1, max_major_version=1, attribute_list_path="cell_attributes")
+        ],
+        data_attribute="cell_data",
+    )
+    origin: Point3 = SchemaProperty(
+        "origin",
+        TypeAdapter(Point3),
+    )
+    size: Size3i = SchemaProperty(
+        "size",
+        TypeAdapter(Size3i),
+    )
+    cell_size: Size3d = SchemaProperty(
+        "cell_size",
+        TypeAdapter(Size3d),
+    )
+    rotation: Rotation | None = SchemaProperty(
+        "rotation",
+        TypeAdapter(Rotation | None),
+    )
+
+    @classmethod
+    async def create(
+        cls,
+        evo_context: EvoContext,
+        data: RegularMasked3DGridData,
+        parent: str | None = None,
+    ) -> Self:
+        """Create a new Regular3DGrid object.
+
+        :param evo_context: The context to use to call Evo APIs.
+        :param data: The data for the Regular3DGrid object.
+        :param parent: The parent path for the object.
+
+        :return: The created Regular3DGrid object.
+        """
+        return await cls._create(
+            evo_context=evo_context,
+            parent=parent,
+            data=data,
+        )
+
+    @classmethod
+    async def replace(
+        cls,
+        evo_context: EvoContext,
+        reference: str,
+        data: RegularMasked3DGridData,
+    ) -> Self:
+        """Replace an existing Regular3DGrid object.
+
+        :param evo_context: The context to use to call Evo APIs.
+        :param reference: The reference of the object to replace.
+        :param data: The data for the Regular3DGrid object.
+
+        :return: The new version of the Regular3DGrid object.
+        """
+        return await cls._replace(
+            evo_context=evo_context,
+            reference=reference,
+            data=data,
+        )
+
+    def compute_bounding_box(self) -> BoundingBox:
+        return _calculate_bounding_box(self.origin, self.size, self.cell_size, self.rotation)
+
+    @classmethod
+    async def _data_to_dict(cls, data: RegularMasked3DGridData, evo_context: EvoContext) -> dict[str, Any]:
+        data_dict = await super()._data_to_dict(data, evo_context)
+        data_dict["mask"] |= {
+            "name": "mask",
+            "key": "mask",
+            "attribute_type": "bool",
+        }
+        return data_dict

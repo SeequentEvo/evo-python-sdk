@@ -33,6 +33,7 @@ from evo.objects.utils.types import AttributeInfo
 
 from ._adapters import AttributesAdapter, BaseAdapter, CategoryTableAdapter, DatasetAdapter, TableAdapter
 from ._utils import assign_jmespath_value, get_data_client
+from .exceptions import ObjectValidationError
 
 __all__ = [
     "Attribute",
@@ -371,17 +372,46 @@ class Dataset:
         evo_context: EvoContext,
         obj: DownloadedObject | None = None,
     ):
+        self._document = document
         self._values = _ValuesStore(document, dataset_adapter.value_adapters, obj=obj, evo_context=evo_context)
         if dataset_adapter.attributes_adapter is not None:
             self.attributes = Attributes(document, dataset_adapter.attributes_adapter, obj=obj, evo_context=evo_context)
         else:
             self.attributes = None
 
+    def search(self, jmespath_expr: str):
+        """Search the document that this dataset is based on using a JMESPath expression.
+
+        :param jmespath_expr: The JMESPath expression to search with.
+
+        :return: The result of the JMESPath search.
+        """
+        return jmespath.search(jmespath_expr, self._document)
+
     @classmethod
     def create_empty(cls, document: dict, dataset_adapter: DatasetAdapter, evo_context: EvoContext) -> Dataset:
         # Create an empty attribute list
         assign_jmespath_value(document, dataset_adapter.attributes_adapter.attribute_list_path, [])
         return cls(document, dataset_adapter, evo_context)
+
+    def validate(self) -> None:
+        """Validate that the dataset is valid.
+
+        Subclasses implement this to perform specific validation, like checking the attributes lengths match the expected length.
+
+        :raises ObjectValidationError: If the dataset is not valid.
+        """
+
+    def _check_length(self, length: int) -> None:
+        if self.attributes is not None:
+            for attribute in self.attributes:
+                attribute_length = jmespath.search("values.length", attribute.as_dict())
+                if attribute_length is None:
+                    raise ObjectValidationError(f"Can't determine length of attribute '{attribute.name}'")
+                if attribute_length != length:
+                    raise ObjectValidationError(
+                        f"Attribute '{attribute.name}' length ({attribute_length}) does not match dataset length ({length})"
+                    )
 
     async def as_dataframe(self, *keys: str, fb: IFeedback = NoFeedback) -> pd.DataFrame:
         """Load a DataFrame containing the datasets base values and the values from the specified attributes.
@@ -390,17 +420,25 @@ class Dataset:
             attributes will be loaded.
         :param fb: Optional feedback object to report download progress.
 
+        :raise DataLoaderError: If the dataset can't be loaded, either due to the dataset being invalid or the
+            data has already been changed since the object was downloaded.
+
         :return: The loaded DataFrame with values from all sources and the specified attributes, applying lookup tables
             and NaN values as specified. The column name(s) will be updated to match the column names provided in the
             ValuesAdapters and the attribute names.
         """
+        # First validate the dataset is valid before loading any data
+        try:
+            self.validate()
+        except ObjectValidationError as e:
+            raise DataLoaderError(f"Dataset is not valid: {e}") from e
         values = await self._values.as_dataframe(fb=fb)
         if self.attributes is None:
             return values
         attributes = await self.attributes.as_dataframe(*keys, fb=fb)
         return pd.concat([values, attributes], axis=1)
 
-    async def set_dataframe(self, df: pd.DataFrame, fb: IFeedback = NoFeedback) -> None:
+    async def set_dataframe(self, df: pd.DataFrame, *, fb: IFeedback = NoFeedback) -> None:
         """Replaces the dataset with the data from the provided DataFrame.
 
         Any attributes that are not present in the DataFrame but exist on the object, will be deleted.
@@ -424,7 +462,7 @@ class Dataset:
             if attribute_columns:
                 raise DataLoaderError("Object can't store attributes, but additional columns were provided.")
         else:
-            await self.attributes.set_attributes(df[attribute_columns], fb)
+            await self.attributes.set_attributes(df[attribute_columns], fb=fb)
 
     def update_document(self) -> None:
         """Update the underlying document with any changes made to the attributes."""

@@ -15,7 +15,7 @@ import copy
 import sys
 import weakref
 from dataclasses import dataclass
-from typing import Any, Callable, ClassVar, Generic, TypeVar, overload
+from typing import Any, ClassVar, Generic, TypeVar, overload
 
 from pydantic import TypeAdapter
 
@@ -24,10 +24,9 @@ from evo.common import EvoContext
 from evo.objects import DownloadedObject, ObjectMetadata, ObjectReference, ObjectSchema, SchemaVersion
 
 from ._adapters import AttributesAdapter, CategoryTableAdapter, DatasetAdapter, TableAdapter
+from ._property import SchemaProperty
 from ._utils import (
-    assign_jmespath_value,
     create_geoscience_object,
-    delete_jmespath_value,
     download_geoscience_object,
     replace_geoscience_object,
 )
@@ -49,67 +48,6 @@ __all__ = [
 ]
 
 _T = TypeVar("_T")
-
-
-class SchemaProperty(Generic[_T]):
-    """Descriptor for data within a Geoscience Object schema."""
-
-    def __init__(
-        self, jmespath_expr: str, typed_adapter: TypeAdapter[_T], default_factory: Callable[[], _T] | None = None
-    ) -> None:
-        self._jmespath_expr = jmespath_expr
-        self._typed_adapter = typed_adapter
-        self._default_factory = default_factory
-        self._pre_set_callbacks = []
-        self._post_set_callbacks = []
-
-    @overload
-    def __get__(self, instance: None, owner: type[BaseObject]) -> SchemaProperty[_T]: ...
-
-    @overload
-    def __get__(self, instance: BaseObject, owner: type[BaseObject]) -> _T: ...
-
-    def __get__(self, instance: BaseObject | None, owner: type[BaseObject]) -> Any:
-        if instance is None:
-            return self
-
-        value = instance.search(self._jmespath_expr)
-        if value is None and self._default_factory is not None:
-            return self._default_factory()
-        if isinstance(value, (jmespath.JMESPathArrayProxy, jmespath.JMESPathObjectProxy)):
-            value = value.raw
-        return self._typed_adapter.validate_python(value)
-
-    def __set__(self, instance: BaseObject, value: Any) -> None:
-        for callback in self._pre_set_callbacks:
-            callback(instance, value)
-        self.apply_to(instance._document, value)
-        for callback in self._post_set_callbacks:
-            callback(instance, value)
-
-    def apply_to(self, document: dict[str, Any], value: _T) -> None:
-        dumped_value = self._typed_adapter.dump_python(value)
-
-        if dumped_value is None:
-            # Remove the property from the document if the value is None
-            delete_jmespath_value(document, self._jmespath_expr)
-        else:
-            # Update the document with the new value
-            assign_jmespath_value(document, self._jmespath_expr, dumped_value)
-
-    def post_set(self, callback: Callable[[BaseObject], None]) -> None:
-        """Register a callback to be called after the property is set.
-
-        :param callback: The callback function to register.
-        """
-        self._post_set_callbacks.append(callback)
-
-    def pre_set(self, callback: Callable[[BaseObject], None]) -> None:
-        """Register a callback to be called before the property is set.
-
-        :param callback: The callback function to register.
-        """
-        self._pre_set_callbacks.append(callback)
 
 
 class DatasetProperty(Generic[_T]):
@@ -186,6 +124,9 @@ class _BaseObject:
         self._document = obj.as_dict()
         self._datasets = {}
         self._reset_from_object()
+
+        # Check whether the object that was loaded is valid
+        self.validate()
 
     @classmethod
     def __init_subclass__(cls, **kwargs):
@@ -354,8 +295,11 @@ class _BaseObject:
         return jmespath.search(expression, self._document)
 
     async def update(self):
-        """Update the object on the geoscience object service"""
+        """Update the object on the geoscience object service
 
+        :raise ObjectValidationError: If the object isn't valid.
+        """
+        self.validate()
         for dataset in self._datasets.values():
             dataset.update_document()
         self._obj = await self._obj.update(self._document)
@@ -382,6 +326,14 @@ class _BaseObject:
             )
             for key, prop in self._dataset_properties.items()
         }
+
+    def validate(self) -> None:
+        """Validate the object to check if it is in a valid state.
+
+        :raises ObjectValidationError: If the object isn't valid.
+        """
+        for dataset in self._datasets.values():
+            dataset.validate()
 
 
 @dataclass(kw_only=True, frozen=True)
