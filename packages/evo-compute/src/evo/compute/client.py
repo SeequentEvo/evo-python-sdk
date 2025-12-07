@@ -84,6 +84,7 @@ class JobClient(Generic[T_Result]):
         task: str,
         job_id: UUID,
         result_type: type[T_Result] = dict,
+        additional_headers: Mapping[str, str] | None = None,
     ) -> None:
         """
         :param connector: The API connector to use.
@@ -92,6 +93,7 @@ class JobClient(Generic[T_Result]):
         :param task: The task to be executed.
         :param job_id: The job ID.
         :param result_type: The type to validate the result against.
+        :param additional_headers: Additional headers to include in the request.
         """
         self._connector = connector
         self._org_id = org_id
@@ -102,6 +104,7 @@ class JobClient(Generic[T_Result]):
         self._type_adapter = TypeAdapter(result_type)
         self._mutex = asyncio.Lock()
         self._results: T_Result | JobError | None = None
+        self._additional_headers: Mapping[str, str] | None = additional_headers
 
     @property
     def id(self) -> UUID:
@@ -127,7 +130,7 @@ class JobClient(Generic[T_Result]):
         return self.url
 
     @staticmethod
-    def from_url(connector: APIConnector, url: str, result_type: type[T_Result] = dict) -> JobClient[T_Result]:
+    def from_url(connector: APIConnector, url: str, result_type: type[T_Result] = dict, additional_headers: Mapping[str, str] | None = None) -> JobClient[T_Result]:
         """Create a job client from a status URL.
 
         The URL hostname must match the connector base URL.
@@ -135,6 +138,7 @@ class JobClient(Generic[T_Result]):
         :param connector: The API connector to use.
         :param url: The status URL of a submitted job.
         :param result_type: The type to validate the result against.
+        :param additional_headers: Additional headers to include in the request.
 
         :return: A client for managing the referenced job.
         """
@@ -150,7 +154,7 @@ class JobClient(Generic[T_Result]):
                     except ValueError:
                         raise ValueError(f"Invalid {key.removesuffix('_id')} ID in URL: {url}") from None
 
-        return JobClient(connector=connector, **path_params, result_type=result_type)
+        return JobClient(connector=connector, **path_params, result_type=result_type, additional_headers=additional_headers)
 
     @staticmethod
     async def submit(
@@ -160,6 +164,7 @@ class JobClient(Generic[T_Result]):
         task: str,
         parameters: Mapping[str, Any],
         result_type: type[T_Result] = dict,
+        additional_headers: Mapping[str, str] | None = None,
     ) -> JobClient[T_Result]:
         """Trigger an asynchronous task within a specific topic with the given parameters.
 
@@ -168,6 +173,7 @@ class JobClient(Generic[T_Result]):
         :param task: The task to be executed.
         :param parameters: The parameters for the task.
         :param result_type: The type to validate the result against.
+        :param additional_headers: Additional headers to include in the request.
 
         :return: The job that was created.
 
@@ -179,6 +185,7 @@ class JobClient(Generic[T_Result]):
                 topic=topic,
                 task=task,
                 execute_task_request={"parameters": dict(parameters)},
+                additional_headers=dict(additional_headers or {}),
             )
 
         # Location header is the status endpoint of the created job.
@@ -186,7 +193,7 @@ class JobClient(Generic[T_Result]):
         try:
             job_url = response.headers["Location"]
             job_url = connector.base_url + job_url.removeprefix(connector.base_url).removeprefix("/")
-            return JobClient.from_url(connector, job_url, result_type)
+            return JobClient.from_url(connector, job_url, result_type, additional_headers=additional_headers)
         except (KeyError, ValueError):
             raise UnknownResponseError(
                 status=response.status, reason=response.reason, content=None, headers=response.headers
@@ -203,6 +210,7 @@ class JobClient(Generic[T_Result]):
                 topic=self._topic,
                 task=self._task,
                 job_id=self._job_id,
+                additional_headers=dict(self._additional_headers or {}),
             )
 
         if response.error:
@@ -210,7 +218,7 @@ class JobClient(Generic[T_Result]):
                 status=response.error.status,
                 reason=None,
                 content=response.error.model_dump(by_alias=True, exclude_unset=True, exclude_defaults=True),
-                headers=None,
+                headers=dict(self._additional_headers or {}),
             )
         else:
             error = None
@@ -241,6 +249,7 @@ class JobClient(Generic[T_Result]):
                         topic=self._topic,
                         task=self._task,
                         job_id=self._job_id,
+                        additional_headers=dict(self._additional_headers or {}),
                     )
 
                 with _validating_pydantic_model(response):
@@ -251,7 +260,7 @@ class JobClient(Generic[T_Result]):
                     raise JobPendingError(url=self.url, status=job.status.value)
 
                 if error := job.error:
-                    # The job failed, save the error.
+                    # The job failed, save the error.   
                     self._results = JobError(
                         status=error.status,
                         reason=None,
@@ -294,6 +303,7 @@ class JobClient(Generic[T_Result]):
                 topic=self._topic,
                 task=self._task,
                 job_id=self._job_id,
+                headers=dict(self._additional_headers or {}),
             )
 
     async def wait_for_results(
