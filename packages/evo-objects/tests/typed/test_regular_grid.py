@@ -18,11 +18,13 @@ from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
+from parameterized import parameterized
 
 from evo.common import Environment, EvoContext
 from evo.common.test_tools import BASE_URL, ORG, WORKSPACE_ID, TestWithConnector
 from evo.objects import ObjectReference
 from evo.objects.typed import Point3, Regular3DGrid, Regular3DGridData, Rotation, Size3d, Size3i
+from evo.objects.typed.base import BaseObject
 from evo.objects.typed.dataset import DataLoaderError
 from evo.objects.typed.exceptions import ObjectValidationError
 
@@ -68,9 +70,11 @@ class TestRegularGrid(TestWithConnector):
         rotation=Rotation(90, 0, 0),
     )
 
-    async def test_create(self):
+    @parameterized.expand([BaseObject, Regular3DGrid])
+    async def test_create(self, class_to_call):
         with self._mock_geoscience_objects():
-            result = await Regular3DGrid.create(evo_context=self.context, data=self.example_grid)
+            result = await class_to_call.create(evo_context=self.context, data=self.example_grid)
+        self.assertIsInstance(result, Regular3DGrid)
         self.assertEqual(result.name, "Test Grid")
         self.assertEqual(result.origin, Point3(0, 0, 0))
         self.assertEqual(result.size, Size3i(10, 10, 5))
@@ -82,10 +86,11 @@ class TestRegularGrid(TestWithConnector):
         vertices_df = await result.vertices.as_dataframe()
         pd.testing.assert_frame_equal(vertices_df, self.example_grid.vertex_data)
 
-    async def test_replace(self):
+    @parameterized.expand([BaseObject, Regular3DGrid])
+    async def test_replace(self, class_to_call):
         data = dataclasses.replace(self.example_grid, vertex_data=None)
         with self._mock_geoscience_objects():
-            result = await Regular3DGrid.replace(
+            result = await class_to_call.replace(
                 evo_context=self.context,
                 reference=ObjectReference.new(
                     environment=self.context.get_environment(),
@@ -93,6 +98,7 @@ class TestRegularGrid(TestWithConnector):
                 ),
                 data=data,
             )
+        self.assertIsInstance(result, Regular3DGrid)
         self.assertEqual(result.name, "Test Grid")
         self.assertEqual(result.origin, Point3(0, 0, 0))
         self.assertEqual(result.size, Size3i(10, 10, 5))
@@ -103,6 +109,29 @@ class TestRegularGrid(TestWithConnector):
         pd.testing.assert_frame_equal(cell_df, data.cell_data)
         vertices_df = await result.vertices.as_dataframe()
         self.assertEqual(vertices_df.shape[0], 0)  # No vertex data provided
+
+    @parameterized.expand([BaseObject, Regular3DGrid])
+    async def test_create_or_replace(self, class_to_call):
+        with self._mock_geoscience_objects():
+            result = await class_to_call.create_or_replace(
+                evo_context=self.context,
+                reference=ObjectReference.new(
+                    environment=self.context.get_environment(),
+                    object_id=uuid.uuid4(),
+                ),
+                data=self.example_grid,
+            )
+        self.assertIsInstance(result, Regular3DGrid)
+        self.assertEqual(result.name, "Test Grid")
+        self.assertEqual(result.origin, Point3(0, 0, 0))
+        self.assertEqual(result.size, Size3i(10, 10, 5))
+        self.assertEqual(result.cell_size, Size3d(2.5, 5, 5))
+        self.assertEqual(result.rotation, Rotation(90, 0, 0))
+
+        cell_df = await result.cells.as_dataframe()
+        pd.testing.assert_frame_equal(cell_df, self.example_grid.cell_data)
+        vertices_df = await result.vertices.as_dataframe()
+        pd.testing.assert_frame_equal(vertices_df, self.example_grid.vertex_data)
 
     async def test_from_reference(self):
         with self._mock_geoscience_objects():

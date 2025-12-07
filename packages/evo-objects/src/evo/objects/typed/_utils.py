@@ -9,14 +9,16 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import uuid
 from logging import getLogger
 from typing import Any
 
 from evo import jmespath
-from evo.common import Environment, EvoContext, ICache
+from evo.common import APIConnector, Environment, EvoContext, ICache
 from evo.objects import DownloadedObject, ObjectReference
 from evo.objects.client import parse
 from evo.objects.endpoints import ObjectsApi, models
+from evo.objects.exceptions import ObjectAlreadyExistsError
 from evo.objects.utils import ObjectDataClient
 
 logger = getLogger(__name__)
@@ -92,7 +94,7 @@ def get_data_client(context: EvoContext) -> ObjectDataClient:
 
 
 def _response_to_downloaded_object(
-    response: models.PostObjectResponse, environment: Environment, connector, cache: ICache | None
+    response: models.PostObjectResponse, environment: Environment, connector: APIConnector, cache: ICache | None
 ) -> DownloadedObject:
     metadata = parse.object_metadata(response, environment)
     urls_by_name = {getattr(link, "name", link.id): link.download_url for link in response.links.data}
@@ -128,26 +130,52 @@ async def create_geoscience_object(context: EvoContext, object_dict: dict[str, A
     return _response_to_downloaded_object(response, environment, connector, context.cache)
 
 
-async def replace_geoscience_object(
-    context: EvoContext, reference: ObjectReference, object_dict: dict[str, Any]
-) -> DownloadedObject:
-    if reference.object_id is not None:
-        object_dict["uuid"] = reference.object_id
-    else:
-        # Need to perform a GET request to get the existing object's UUID
-        existing_obj = await download_geoscience_object(context, reference)
-        object_dict["uuid"] = existing_obj.metadata.id
-
-    connector = context.get_connector()
-    environment = context.get_environment()
-    objects_api = ObjectsApi(connector=connector)
+async def _update_geoscience_object(
+    environment: Environment, objects_api: ObjectsApi, object_id: uuid.UUID, object_dict: dict[str, Any]
+) -> models.PostObjectResponse:
+    object_dict["uuid"] = str(object_id)
     object_for_upload = models.UpdateGeoscienceObject.model_validate(object_dict)
-    response = await objects_api.update_objects_by_id(
+    return await objects_api.update_objects_by_id(
         object_id=str(object_dict["uuid"]),
         org_id=str(environment.org_id),
         workspace_id=str(environment.workspace_id),
         update_geoscience_object=object_for_upload,
     )
+
+
+async def replace_geoscience_object(
+    context: EvoContext,
+    reference: ObjectReference,
+    object_dict: dict[str, Any],
+    create_if_missing: bool = False,
+) -> DownloadedObject:
+    connector = context.get_connector()
+    environment = context.get_environment()
+    objects_api = ObjectsApi(connector=connector)
+    if reference.object_id is not None:
+        # Directly update by ID
+        response = await _update_geoscience_object(environment, objects_api, reference.object_id, object_dict)
+    elif create_if_missing:
+        # Try to create, if it already exists then update by ID of the existing object
+        object_for_upload = models.GeoscienceObject.model_validate(object_dict)
+        try:
+            response = await objects_api.post_objects(
+                org_id=str(environment.org_id),
+                workspace_id=str(environment.workspace_id),
+                objects_path=reference.object_path,
+                geoscience_object=object_for_upload,
+            )
+        except ObjectAlreadyExistsError as e:
+            response = await _update_geoscience_object(environment, objects_api, e.existing_id, object_dict)
+    else:
+        # Get by path to find the ID, then update by ID
+        get_response = await objects_api.get_object(
+            org_id=str(environment.org_id),
+            workspace_id=str(environment.workspace_id),
+            objects_path=reference.object_path,
+        )
+        response = await _update_geoscience_object(environment, objects_api, get_response.object.uuid, object_dict)
+
     return _response_to_downloaded_object(response, environment, connector, context.cache)
 
 

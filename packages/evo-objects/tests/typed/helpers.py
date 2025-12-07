@@ -80,7 +80,9 @@ class MockClient:
         self.objects[object_dict["uuid"]] = copy.deepcopy(object_dict)
         return MockDownloadedObject(self, object_dict)
 
-    async def replace_geoscience_object(self, evo_context: EvoContext, reference: ObjectReference, object_dict: dict):
+    async def replace_geoscience_object(
+        self, evo_context: EvoContext, reference: ObjectReference, object_dict: dict, create_if_missing=False
+    ):
         object_dict = object_dict.copy()
         assert reference.object_id is not None, "Reference must have an object ID"
         object_dict["uuid"] = str(reference.object_id)

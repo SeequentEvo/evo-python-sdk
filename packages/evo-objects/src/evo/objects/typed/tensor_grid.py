@@ -19,20 +19,19 @@ import numpy as np
 import pandas as pd
 from pydantic import AfterValidator, PlainSerializer, TypeAdapter
 
-from evo.common import EvoContext
 from evo.objects import SchemaVersion
 
 from ._adapters import AttributesAdapter
 from ._property import SchemaProperty
-from .base import BaseSpatialObject, BaseSpatialObjectData, DatasetProperty
+from .base import BaseSpatialObject, BaseSpatialObjectData, ConstructableObject, DatasetProperty
 from .exceptions import ObjectValidationError
 from .regular_grid import Cells, Vertices
 from .types import BoundingBox, Point3, Rotation, Size3i
 
 if sys.version_info >= (3, 11):
-    from typing import Self
+    pass
 else:
-    from typing_extensions import Self
+    pass
 
 __all__ = [
     "Tensor3DGrid",
@@ -156,13 +155,15 @@ NumpyFloat1D = Annotated[
 ]
 
 
-class Tensor3DGrid(BaseSpatialObject):
+class Tensor3DGrid(BaseSpatialObject, ConstructableObject[Tensor3DGridData]):
     """A GeoscienceObject representing a tensor 3D grid.
 
     A tensor grid is a 3D grid where cells may have different sizes. The grid is defined
     by an origin, the number of cells in each direction, and arrays of cell sizes along
     each axis. The grid contains datasets for both cells and vertices.
     """
+
+    _data_class = Tensor3DGridData
 
     sub_classification = "tensor-3d-grid"
     creation_schema_version = SchemaVersion(major=1, minor=3, patch=0)
@@ -198,48 +199,6 @@ class Tensor3DGrid(BaseSpatialObject):
     cell_sizes_x: np.ndarray = SchemaProperty("grid_cells_3d.cell_sizes_x", TypeAdapter(NumpyFloat1D))
     cell_sizes_y: np.ndarray = SchemaProperty("grid_cells_3d.cell_sizes_y", TypeAdapter(NumpyFloat1D))
     cell_sizes_z: np.ndarray = SchemaProperty("grid_cells_3d.cell_sizes_z", TypeAdapter(NumpyFloat1D))
-
-    @classmethod
-    async def create(
-        cls,
-        evo_context: EvoContext,
-        data: Tensor3DGridData,
-        parent: str | None = None,
-    ) -> Self:
-        """Create a new Tensor3DGrid object.
-
-        :param evo_context: The context to use to call Evo APIs.
-        :param data: The data for the Tensor3DGrid object.
-        :param parent: The parent path for the object.
-
-        :return: The created Tensor3DGrid object.
-        """
-        return await cls._create(
-            evo_context=evo_context,
-            parent=parent,
-            data=data,
-        )
-
-    @classmethod
-    async def replace(
-        cls,
-        evo_context: EvoContext,
-        reference: str,
-        data: Tensor3DGridData,
-    ) -> Self:
-        """Replace an existing Tensor3DGrid object.
-
-        :param evo_context: The context to use to call Evo APIs.
-        :param reference: The reference of the object to replace.
-        :param data: The data for the Tensor3DGrid object.
-
-        :return: The new version of the Tensor3DGrid object.
-        """
-        return await cls._replace(
-            evo_context=evo_context,
-            reference=reference,
-            data=data,
-        )
 
     def compute_bounding_box(self) -> BoundingBox:
         """Compute the bounding box from the grid properties."""

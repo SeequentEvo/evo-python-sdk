@@ -30,7 +30,7 @@ from evo.objects.utils.table_formats import BOOL_ARRAY_1
 from ._adapters import AttributesAdapter, DatasetAdapter
 from ._property import SchemaProperty
 from ._utils import assign_jmespath_value, get_data_client
-from .base import BaseSpatialObject, BaseSpatialObjectData, DatasetProperty
+from .base import BaseSpatialObject, BaseSpatialObjectData, ConstructableObject, DatasetProperty
 from .dataset import DataLoaderError, Dataset
 from .exceptions import ObjectValidationError
 from .types import BoundingBox, Point3, Rotation, Size3d, Size3i
@@ -197,11 +197,13 @@ class MaskedCells(Dataset):
         return dataset
 
 
-class RegularMasked3DGrid(BaseSpatialObject):
+class RegularMasked3DGrid(BaseSpatialObject, ConstructableObject[RegularMasked3DGridData]):
     """A GeoscienceObject representing a regular masked 3D grid.
 
     The object contains a dataset for the cells of the grid.
     """
+
+    _data_class = RegularMasked3DGridData
 
     sub_classification = "regular-masked-3d-grid"
     creation_schema_version = SchemaVersion(major=1, minor=3, patch=0)
@@ -230,48 +232,6 @@ class RegularMasked3DGrid(BaseSpatialObject):
         "rotation",
         TypeAdapter(Rotation | None),
     )
-
-    @classmethod
-    async def create(
-        cls,
-        evo_context: EvoContext,
-        data: RegularMasked3DGridData,
-        parent: str | None = None,
-    ) -> Self:
-        """Create a new Regular3DGrid object.
-
-        :param evo_context: The context to use to call Evo APIs.
-        :param data: The data for the Regular3DGrid object.
-        :param parent: The parent path for the object.
-
-        :return: The created Regular3DGrid object.
-        """
-        return await cls._create(
-            evo_context=evo_context,
-            parent=parent,
-            data=data,
-        )
-
-    @classmethod
-    async def replace(
-        cls,
-        evo_context: EvoContext,
-        reference: str,
-        data: RegularMasked3DGridData,
-    ) -> Self:
-        """Replace an existing Regular3DGrid object.
-
-        :param evo_context: The context to use to call Evo APIs.
-        :param reference: The reference of the object to replace.
-        :param data: The data for the Regular3DGrid object.
-
-        :return: The new version of the Regular3DGrid object.
-        """
-        return await cls._replace(
-            evo_context=evo_context,
-            reference=reference,
-            data=data,
-        )
 
     def compute_bounding_box(self) -> BoundingBox:
         return _calculate_bounding_box(self.origin, self.size, self.cell_size, self.rotation)

@@ -18,21 +18,21 @@ import numpy as np
 import pandas as pd
 from pydantic import TypeAdapter
 
-from evo.common import EvoContext, IFeedback
+from evo.common import IFeedback
 from evo.common.utils import NoFeedback
 from evo.objects import SchemaVersion
 
 from ._adapters import AttributesAdapter
 from ._property import SchemaProperty
-from .base import BaseSpatialObject, BaseSpatialObjectData, DatasetProperty
+from .base import BaseSpatialObject, BaseSpatialObjectData, ConstructableObject, DatasetProperty
 from .dataset import Dataset
 from .exceptions import ObjectValidationError
 from .types import BoundingBox, Point3, Rotation, Size3d, Size3i
 
 if sys.version_info >= (3, 11):
-    from typing import Self
+    pass
 else:
-    from typing_extensions import Self
+    pass
 
 __all__ = [
     "Cells",
@@ -145,7 +145,7 @@ class Vertices(Dataset):
         self._check_length(self.size.total_size)
 
 
-class Regular3DGrid(BaseSpatialObject):
+class Regular3DGrid(BaseSpatialObject, ConstructableObject[Regular3DGridData]):
     """A GeoscienceObject representing a regular 3D grid.
 
     The object contains a dataset for both the cells and the vertices of the grid.
@@ -153,6 +153,8 @@ class Regular3DGrid(BaseSpatialObject):
     Each of these datasets only contain attribute columns. The actual geometry of the grid is defined by
     the properties: origin, size, cell_size, and rotation.
     """
+
+    _data_class = Regular3DGridData
 
     sub_classification = "regular-3d-grid"
     creation_schema_version = SchemaVersion(major=1, minor=3, patch=0)
@@ -190,48 +192,6 @@ class Regular3DGrid(BaseSpatialObject):
         "rotation",
         TypeAdapter(Rotation | None),
     )
-
-    @classmethod
-    async def create(
-        cls,
-        evo_context: EvoContext,
-        data: Regular3DGridData,
-        parent: str | None = None,
-    ) -> Self:
-        """Create a new Regular3DGrid object.
-
-        :param evo_context: The context to use to call Evo APIs.
-        :param data: The data for the Regular3DGrid object.
-        :param parent: The parent path for the object.
-
-        :return: The created Regular3DGrid object.
-        """
-        return await cls._create(
-            evo_context=evo_context,
-            parent=parent,
-            data=data,
-        )
-
-    @classmethod
-    async def replace(
-        cls,
-        evo_context: EvoContext,
-        reference: str,
-        data: Regular3DGridData,
-    ) -> Self:
-        """Replace an existing Regular3DGrid object.
-
-        :param evo_context: The context to use to call Evo APIs.
-        :param reference: The reference of the object to replace.
-        :param data: The data for the Regular3DGrid object.
-
-        :return: The new version of the Regular3DGrid object.
-        """
-        return await cls._replace(
-            evo_context=evo_context,
-            reference=reference,
-            data=data,
-        )
 
     def compute_bounding_box(self) -> BoundingBox:
         return _calculate_bounding_box(self.origin, self.size, self.cell_size, self.rotation)
