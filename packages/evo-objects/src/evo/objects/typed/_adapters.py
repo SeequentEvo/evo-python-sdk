@@ -36,14 +36,14 @@ class TableAdapter(BaseAdapter):
     column_names: tuple[str, ...]
     values_path: str
     table_formats: list[KnownTableFormat]
-    nan_values_path: str | None
+    nan_values_path: str | None = None
 
 
 @dataclass
 class CategoryTableAdapter(BaseAdapter):
     column_names: tuple[str, ...]
     category_data_path: str
-    nan_values_path: str | None
+    nan_values_path: str | None = None
 
 
 @dataclass

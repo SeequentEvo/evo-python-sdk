@@ -104,6 +104,11 @@ class Size3i(NamedTuple):
     ny: int
     nz: int
 
+    @property
+    def total_size(self) -> int:
+        """The total size (number of elements) represented by this Size3i."""
+        return self.nx * self.ny * self.nz
+
 
 @dataclass(frozen=True)
 class BoundingBox:

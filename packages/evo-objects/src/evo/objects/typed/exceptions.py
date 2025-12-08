@@ -9,20 +9,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from .regular_grid import (
-    Regular3DGrid,
-    Regular3DGridData,
-)
-from .types import BoundingBox, CoordinateReferenceSystem, EpsgCode, Point3, Rotation, Size3d, Size3i
 
-__all__ = [
-    "BoundingBox",
-    "CoordinateReferenceSystem",
-    "EpsgCode",
-    "Point3",
-    "Regular3DGrid",
-    "Regular3DGridData",
-    "Rotation",
-    "Size3d",
-    "Size3i",
-]
+class ObjectValidationError(ValueError):
+    """Raised when a Geoscience Object fails validation.
+
+    This can either occur during loading from the service, loading data from a dataset,
+    or while updating the object.
+    """

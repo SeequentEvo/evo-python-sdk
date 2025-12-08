@@ -24,10 +24,9 @@ from evo.common import IContext, StaticContext
 from evo.objects import DownloadedObject, ObjectMetadata, ObjectReference, ObjectSchema, SchemaVersion
 
 from ._adapters import AttributesAdapter, CategoryTableAdapter, DatasetAdapter, TableAdapter
+from ._property import SchemaProperty
 from ._utils import (
-    assign_jmespath_value,
     create_geoscience_object,
-    delete_jmespath_value,
     download_geoscience_object,
     replace_geoscience_object,
 )
@@ -44,72 +43,12 @@ __all__ = [
     "BaseObjectData",
     "BaseSpatialObject",
     "BaseSpatialObjectData",
+    "ConstructableObject",
     "DatasetProperty",
     "SchemaProperty",
 ]
 
 _T = TypeVar("_T")
-
-
-class SchemaProperty(Generic[_T]):
-    """Descriptor for data within a Geoscience Object schema."""
-
-    def __init__(
-        self, jmespath_expr: str, typed_adapter: TypeAdapter[_T], default_factory: Callable[[], _T] | None = None
-    ) -> None:
-        self._jmespath_expr = jmespath_expr
-        self._typed_adapter = typed_adapter
-        self._default_factory = default_factory
-        self._pre_set_callbacks = []
-        self._post_set_callbacks = []
-
-    @overload
-    def __get__(self, instance: None, owner: type[BaseObject]) -> SchemaProperty[_T]: ...
-
-    @overload
-    def __get__(self, instance: BaseObject, owner: type[BaseObject]) -> _T: ...
-
-    def __get__(self, instance: BaseObject | None, owner: type[BaseObject]) -> Any:
-        if instance is None:
-            return self
-
-        value = instance.search(self._jmespath_expr)
-        if value is None and self._default_factory is not None:
-            return self._default_factory()
-        if isinstance(value, (jmespath.JMESPathArrayProxy, jmespath.JMESPathObjectProxy)):
-            value = value.raw
-        return self._typed_adapter.validate_python(value)
-
-    def __set__(self, instance: BaseObject, value: Any) -> None:
-        for callback in self._pre_set_callbacks:
-            callback(instance, value)
-        self.apply_to(instance._document, value)
-        for callback in self._post_set_callbacks:
-            callback(instance, value)
-
-    def apply_to(self, document: dict[str, Any], value: _T) -> None:
-        dumped_value = self._typed_adapter.dump_python(value)
-
-        if dumped_value is None:
-            # Remove the property from the document if the value is None
-            delete_jmespath_value(document, self._jmespath_expr)
-        else:
-            # Update the document with the new value
-            assign_jmespath_value(document, self._jmespath_expr, dumped_value)
-
-    def post_set(self, callback: Callable[[BaseObject], None]) -> None:
-        """Register a callback to be called after the property is set.
-
-        :param callback: The callback function to register.
-        """
-        self._post_set_callbacks.append(callback)
-
-    def pre_set(self, callback: Callable[[BaseObject], None]) -> None:
-        """Register a callback to be called before the property is set.
-
-        :param callback: The callback function to register.
-        """
-        self._pre_set_callbacks.append(callback)
 
 
 class DatasetProperty(Generic[_T]):
@@ -120,13 +59,13 @@ class DatasetProperty(Generic[_T]):
         dataset_class: type[Dataset],
         value_adapters: list[TableAdapter | CategoryTableAdapter],
         attributes_adapters: list[AttributesAdapter],
-        data_attribute: str | None = None,
+        extract_data: Callable[[Any], Any] | None = None,
     ) -> None:
         self._name = None
         self.dataset_class = dataset_class
         self._value_adapters = value_adapters
         self._attributes_adapters = attributes_adapters
-        self._data_attribute = data_attribute
+        self._extract_data = extract_data
 
     def __set_name__(self, owner: type[BaseObject], name: str):
         self._name = name
@@ -149,10 +88,10 @@ class DatasetProperty(Generic[_T]):
             self._attributes_adapters,
         )
 
-    def get_data_attribute(self) -> str:
-        if self._data_attribute is not None:
-            return self._data_attribute
-        return self._name
+    def extract_data(self, data: Any) -> Any:
+        if self._extract_data is not None:
+            return self._extract_data(data)
+        return None
 
 
 class _BaseObject:
@@ -163,6 +102,11 @@ class _BaseObject:
     )
     _schema_properties: ClassVar[dict[str, SchemaProperty[Any]]] = {}
     _dataset_properties: ClassVar[dict[str, DatasetProperty[Any]]] = {}
+
+    _data_class: ClassVar[type[BaseObjectData] | None] = None
+    _data_class_lookup: ClassVar[weakref.WeakValueDictionary[type[BaseObjectData], type[_BaseObject]]] = (
+        weakref.WeakValueDictionary()
+    )
 
     sub_classification: ClassVar[str | None] = None
     """The sub-classification of the Geoscience Object schema.
@@ -187,6 +131,9 @@ class _BaseObject:
         self._datasets = {}
         self._reset_from_object()
 
+        # Check whether the object that was loaded is valid
+        self.validate()
+
     @classmethod
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__()
@@ -198,6 +145,14 @@ class _BaseObject:
                     f"already registered by {existing_cls.__name__}"
                 )
             cls._sub_classification_lookup[cls.sub_classification] = cls
+        if cls._data_class is not None:
+            existing_cls = cls._data_class_lookup.get(cls._data_class)
+            if existing_cls is not None:
+                raise ValueError(
+                    f"Duplicate data class '{cls._data_class.__name__}' for {cls.__name__}; "
+                    f"already registered by {existing_cls.__name__}"
+                )
+            cls._data_class_lookup[cls._data_class] = cls
 
         # Gather schema and dataset properties, both from this class and parent classes
         cls._schema_properties = {}
@@ -234,13 +189,12 @@ class _BaseObject:
             prop.apply_to(result, getattr(data, key))
         for key, prop in cls._dataset_properties.items():
             adapter = prop.get_adapter(schema_id)
-            dataset = Dataset.create_empty(document=result, dataset_adapter=adapter, context=context)
-            data_value = getattr(data, prop.get_data_attribute())
-            if data_value is not None:
-                await dataset.set_dataframe(getattr(data, prop.get_data_attribute()))
-                # Ensure the object_dict is updated with any changes made during set_dataframe
-                dataset.update_document()
-
+            dataset_data = prop.extract_data(data)
+            dataset = await prop.dataset_class.create_from_data(
+                document=result, data=dataset_data, dataset_adapter=adapter, context=context
+            )
+            # Ensure the object_dict is updated with any changes made during set_dataframe
+            dataset.update_document()
         return result
 
     @classmethod
@@ -249,19 +203,23 @@ class _BaseObject:
         context: IContext,
         data: BaseObjectData,
         parent: str | None = None,
+        path: str | None = None,
     ) -> Self:
         """Create a new object.
 
         :param context: The context containing the environment, connector, and cache to use.
         :param data: The data that will be used to create the object.
         :param parent: Optional parent path for the object.
+        :param path: Full path to the object, can't be used with parent.
         """
+        if type(data) is not cls._data_class:
+            raise TypeError(f"Data must be of type '{cls._data_class.__name__}' to create a '{cls.__name__}' object.")
 
         # Take a copy to avoid the context changes affecting the object
         context = StaticContext.create_copy(context)
         object_dict = await cls._data_to_dict(data, context)
         object_dict["uuid"] = None  # New UUID is generated by the service
-        obj = await create_geoscience_object(context, object_dict, parent)
+        obj = await create_geoscience_object(context, object_dict, parent, path)
         return cls(context, obj)
 
     @classmethod
@@ -270,6 +228,7 @@ class _BaseObject:
         context: IContext,
         reference: str,
         data: BaseObjectData,
+        create_if_missing: bool = False,
     ) -> Self:
         """Replace an existing object.
 
@@ -277,6 +236,9 @@ class _BaseObject:
         :param reference: The reference of the object to replace.
         :param data: The data that will be used to create the object.
         """
+        if type(data) is not cls._data_class:
+            raise TypeError(f"Data must be of type '{cls._data_class.__name__}' to replace a '{cls.__name__}' object.")
+
         reference = ObjectReference(reference)
         # Context for the reference's workspace
         reference_context = StaticContext(
@@ -287,8 +249,19 @@ class _BaseObject:
         )
 
         object_dict = await cls._data_to_dict(data, reference_context)
-        obj = await replace_geoscience_object(reference_context, reference, object_dict)
+        obj = await replace_geoscience_object(
+            reference_context, reference, object_dict, create_if_missing=create_if_missing
+        )
         return cls(reference_context, obj)
+
+    @classmethod
+    def _get_object_type_from_data(cls, data: BaseObjectData) -> type[Self]:
+        object_type = cls._data_class_lookup.get(type(data))
+        if object_type is None:
+            raise TypeError(f"No Typed Geoscience Object class found for data of type '{type(data).__name__}'")
+        if not issubclass(object_type, cls):
+            raise TypeError(f"Data of type '{type(data).__name__}' cannot be used to create a '{cls.__name__}' object")
+        return object_type
 
     @classmethod
     def _adapt(cls, context: IContext, obj: DownloadedObject) -> Self:
@@ -356,8 +329,11 @@ class _BaseObject:
         return jmespath.search(expression, self._document)
 
     async def update(self):
-        """Update the object on the geoscience object service"""
+        """Update the object on the geoscience object service
 
+        :raise ObjectValidationError: If the object isn't valid.
+        """
+        self.validate()
         for dataset in self._datasets.values():
             dataset.update_document()
         self._obj = await self._obj.update(self._document)
@@ -385,6 +361,14 @@ class _BaseObject:
             for key, prop in self._dataset_properties.items()
         }
 
+    def validate(self) -> None:
+        """Validate the object to check if it is in a valid state.
+
+        :raises ObjectValidationError: If the object isn't valid.
+        """
+        for dataset in self._datasets.values():
+            dataset.validate()
+
 
 @dataclass(kw_only=True, frozen=True)
 class BaseObjectData:
@@ -401,6 +385,120 @@ class BaseObject(_BaseObject):
     description: str | None = SchemaProperty("description", TypeAdapter(str | None))
     tags: dict[str, str] = SchemaProperty("tags", TypeAdapter(dict[str, str]), default_factory=dict)
     extensions: dict = SchemaProperty("extensions", TypeAdapter(dict), default_factory=dict)
+
+    @classmethod
+    def create(
+        cls,
+        context: IContext,
+        data: BaseObjectData,
+        parent: str | None = None,
+        path: str | None = None,
+    ) -> BaseObject:
+        """Create a new object.
+
+        The type of Geoscience Object created is determined by the type of `data` provided.
+
+        :param context: The context containing the environment, connector, and cache to use.
+        :param data: The data that will be used to create the object.
+        :param parent: Optional parent path for the object.
+        :param path: Full path to the object, can't be used with parent.
+        """
+        object_type = cls._get_object_type_from_data(data)
+        return object_type._create(context, data, parent, path)
+
+    @classmethod
+    async def replace(
+        cls,
+        context: IContext,
+        reference: str,
+        data: BaseObjectData,
+    ) -> BaseObject:
+        """Replace an existing object.
+
+        The type of Geoscience Object that will be replaced is determined by the type of `data` provided. This must match
+        the type of the existing object.
+
+        :param context: The context containing the environment, connector, and cache to use.
+        :param reference: The reference of the object to replace.
+        :param data: The data that will be used to create the object.
+        """
+        object_type = cls._get_object_type_from_data(data)
+        return await object_type._replace(context, reference, data)
+
+    @classmethod
+    async def create_or_replace(
+        cls,
+        context: IContext,
+        reference: str,
+        data: BaseObjectData,
+    ) -> BaseObject:
+        """Create or replace an existing object.
+
+        If the object identified by `reference` exists, it will be replaced. Otherwise, a new object will be created.
+
+        The type of Geoscience Object that will be created or replaced is determined by the type of `data` provided. This
+        must match the type of the existing object if it already exists.
+
+        :param context: The context containing the environment, connector, and cache to use.
+        :param reference: The reference of the object to create or replace.
+        :param data: The data that will be used to create the object.
+        """
+        object_type = cls._get_object_type_from_data(data)
+        return await object_type._replace(context, reference, data, create_if_missing=True)
+
+
+class ConstructableObject(BaseObject, Generic[_T]):
+    # The class methods in this class technically violate Liskov Substitution Principle,
+    # as they narrow the type of the 'data' parameter.
+    #
+    @classmethod
+    async def create(
+        cls,
+        context: IContext,
+        data: _T,
+        parent: str | None = None,
+        path: str | None = None,
+    ) -> Self:
+        """Create a new object.
+
+        :param context: The context containing the environment, connector, and cache to use.
+        :param data: The data that will be used to create the object.
+        :param parent: Optional parent path for the object.
+        :param path: Full path to the object, can't be used with parent.
+        """
+        return await cls._create(context, data, parent, path)
+
+    @classmethod
+    async def replace(
+        cls,
+        context: IContext,
+        reference: str,
+        data: _T,
+    ) -> Self:
+        """Replace an existing object.
+
+        :param context: The context containing the environment, connector, and cache to use.
+        :param reference: The reference of the object to replace.
+        :param data: The data that will be used to create the object.
+        """
+        return await cls._replace(context, reference, data)
+
+    @classmethod
+    async def create_or_replace(
+        cls,
+        context: IContext,
+        reference: str,
+        data: _T,
+    ) -> Self:
+        """Create or replace an existing object.
+
+        If the object identified by `reference` exists, it will be replaced. Otherwise, a new object will be created.
+
+        :param context: The context containing the environment, connector, and cache to use.
+        :param reference: The reference of the object to create or replace.
+        :param data: The data that will be used to create the object.
+        """
+        return await cls._replace(context, reference, data, create_if_missing=True)
 
 
 @dataclass(kw_only=True, frozen=True)
