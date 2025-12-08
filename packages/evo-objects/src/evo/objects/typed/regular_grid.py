@@ -11,7 +11,6 @@
 
 from __future__ import annotations
 
-import sys
 from dataclasses import dataclass
 
 import numpy as np
@@ -28,11 +27,6 @@ from .base import BaseSpatialObject, BaseSpatialObjectData, ConstructableObject,
 from .dataset import Dataset
 from .exceptions import ObjectValidationError
 from .types import BoundingBox, Point3, Rotation, Size3d, Size3i
-
-if sys.version_info >= (3, 11):
-    pass
-else:
-    pass
 
 __all__ = [
     "Cells",

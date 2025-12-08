@@ -74,7 +74,9 @@ class MockClient:
             "category_data": True,
         }
 
-    async def create_geoscience_object(self, context: IContext, object_dict: dict, parent: str):
+    async def create_geoscience_object(
+        self, context: IContext, object_dict: dict, parent: str | None = None, path: str | None = None
+    ):
         object_dict = object_dict.copy()
         object_dict["uuid"] = str(uuid.uuid4())
         self.objects[object_dict["uuid"]] = copy.deepcopy(object_dict)

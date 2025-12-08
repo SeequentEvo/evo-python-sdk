@@ -107,19 +107,27 @@ def _response_to_downloaded_object(
     )
 
 
-async def create_geoscience_object(context: IContext, object_dict: dict[str, Any], parent: str) -> DownloadedObject:
+async def create_geoscience_object(
+    context: IContext, object_dict: dict[str, Any], parent: str | None = None, path: str | None = None
+) -> DownloadedObject:
     connector = context.get_connector()
     environment = context.get_environment()
 
     objects_api = ObjectsApi(connector=connector)
 
-    name = object_dict["name"]
+    if path is not None:
+        if parent is not None:
+            raise ValueError("Cannot specify both 'parent' and 'path'.")
+        if not path.endswith(".json"):
+            path += ".json"
+    else:
+        name = object_dict["name"]
 
-    if parent is None:
-        parent = ""
-    elif not parent.endswith("/"):
-        parent += "/"
-    path = parent + name + ".json"
+        if parent is None:
+            parent = ""
+        elif not parent.endswith("/"):
+            parent += "/"
+        path = parent + name + ".json"
     object_for_upload = models.GeoscienceObject.model_validate(object_dict)
     response = await objects_api.post_objects(
         org_id=str(environment.org_id),
