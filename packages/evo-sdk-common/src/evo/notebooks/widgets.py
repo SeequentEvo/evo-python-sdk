@@ -239,12 +239,13 @@ class ServiceManagerWidget(widgets.HBox, IContext, metaclass=_ServiceManagerWidg
         :param cache: The cache to use for storing tokens and other data.
         """
         self._authorizer = authorizer
+        self._cache = cache
         self._service_manager = ServiceManager(
             transport=transport,
             authorizer=authorizer,
             discovery_url=discovery_url,
+            cache=cache,
         )
-        self._cache = cache
         env = DotEnv(cache)
 
         self._btn = build_button_widget("Sign In")

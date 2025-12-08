@@ -11,10 +11,10 @@
 
 from __future__ import annotations
 
-import uuid
 from pathlib import Path
 from types import TracebackType
 from typing import TYPE_CHECKING
+from uuid import UUID
 
 from pure_interface import Interface
 
@@ -197,7 +197,7 @@ class IContext(Interface):
         :raises ContextError: If the context does not have sufficient information to create an Environment.
         """
 
-    def get_org_id(self) -> uuid.UUID:
+    def get_org_id(self) -> UUID:
         """Gets the organization ID associated with this context.
 
         :return: The organization ID.

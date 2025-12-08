@@ -9,6 +9,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+from __future__ import annotations
+
 from typing import Literal, TypeAlias
 from uuid import UUID
 
@@ -63,7 +65,7 @@ class WorkspaceAPIClient:
         self._thumbnails_api = ThumbnailsApi(connector)
 
     @classmethod
-    def from_context(cls, context: IContext) -> "WorkspaceAPIClient":
+    def from_context(cls, context: IContext) -> WorkspaceAPIClient:
         """Create a WorkspaceAPIClient from the given context.
 
         The context must have a hub_url and org_id set.
