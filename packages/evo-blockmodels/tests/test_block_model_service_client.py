@@ -26,7 +26,7 @@ from evo.blockmodels.endpoints.models import (
     QueryResult,
 )
 from evo.blockmodels.exceptions import CacheNotConfiguredException, JobFailedException
-from evo.common import EvoContext, HealthCheckType
+from evo.common import HealthCheckType, StaticContext
 from evo.common.data import HTTPHeaderDict, RequestMethod
 from evo.common.test_tools import BASE_URL, AbstractTestRequestHandler, MockResponse, TestWithConnector, TestWithStorage
 from evo.common.utils import NoFeedback
@@ -81,7 +81,7 @@ class TestBlockModelAPIClient(TestWithConnector, TestWithStorage):
 
     def test_from_context(self) -> None:
         client = BlockModelAPIClient.from_context(
-            EvoContext.from_environment(environment=self.environment, connector=self.connector)
+            StaticContext.from_environment(environment=self.environment, connector=self.connector)
         )
         self.assertIsInstance(client, BlockModelAPIClient)
 

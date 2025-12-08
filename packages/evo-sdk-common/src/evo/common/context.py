@@ -17,20 +17,20 @@ from typing import Any, Mapping, overload
 from .connector import APIConnector
 from .data import Environment
 from .exceptions import ContextError
-from .interfaces import IAuthorizer, ICache, ITransport
+from .interfaces import IAuthorizer, ICache, IContext, ITransport
 
 if sys.version_info >= (3, 11):
     from typing import Self
 else:
     from typing_extensions import Self
 
-__all__ = ["EvoContext"]
+__all__ = ["StaticContext"]
 
 logger = getLogger(__name__)
 
 
-class EvoContext:
-    """Context for Evo SDKs.
+class StaticContext(IContext):
+    """Static context for Evo SDKs.
 
     This class includes the following information:
     - Transport and authorizer, required to connect to Evo APIs.
@@ -113,25 +113,33 @@ class EvoContext:
         self._org_id = org_id
         self._workspace_id = workspace_id
 
-    @property
-    def cache(self) -> ICache | None:
-        """The cache used by this context, if any."""
-        return self._cache
+    @classmethod
+    def create_copy(cls, context: IContext) -> Self:
+        """Creates a static copy of the given context.
 
-    @property
-    def hub_url(self) -> str | None:
-        """The hub URL of this context, if set."""
-        return self._hub_url
+        This requires that an APIConnector can be retrieved from the provided context.
 
-    @property
-    def org_id(self) -> uuid.UUID | None:
-        """The organization ID of this context, if set."""
-        return self._org_id
-
-    @property
-    def workspace_id(self) -> uuid.UUID | None:
-        """The workspace ID of this context, if set."""
-        return self._workspace_id
+        :param context: The context to copy.
+        :return: A new StaticContext with the specified cache.
+        :raises ContextError: If the connector cannot be retrieved from the provided context.
+        """
+        try:
+            environment = context.get_environment()
+        except ContextError:
+            try:
+                org_id = context.get_org_id()
+            except ContextError:
+                org_id = None
+            workspace_id = None
+        else:
+            org_id = environment.org_id
+            workspace_id = environment.workspace_id
+        return StaticContext(
+            connector=context.get_connector(),
+            cache=context.get_cache(),
+            org_id=org_id,
+            workspace_id=workspace_id,
+        )
 
     def get_connector(self) -> APIConnector:
         """Gets the APIConnector for this context."""
@@ -147,8 +155,16 @@ class EvoContext:
             additional_headers=self._additional_headers,
         )
 
+    def get_cache(self) -> ICache | None:
+        """Gets the cache of this context, if any."""
+        return self._cache
+
     def get_environment(self) -> Environment:
-        """Gets the Environment of this context."""
+        """Gets the Environment of this context.
+
+        :return: The Environment.
+        :raises ContextError: If the context does not have sufficient information to create an Environment.
+        """
         if self._hub_url is None:
             raise ContextError("Can't determine hub URL for the environment. Context must have a hub URL set.")
         if self._org_id is None:
@@ -162,6 +178,16 @@ class EvoContext:
             org_id=self._org_id,
             workspace_id=self._workspace_id,
         )
+
+    def get_org_id(self) -> uuid.UUID:
+        """Gets the organization ID associated with this context.
+
+        :return: The organization ID.
+        :raises ContextError: If the context does not have an organization ID.
+        """
+        if self._org_id is None:
+            raise ContextError("Can't determine organization ID. Context must have an organization ID set.")
+        return self._org_id
 
     @classmethod
     def from_environment(
@@ -179,27 +205,3 @@ class EvoContext:
             org_id=environment.org_id,
             workspace_id=environment.workspace_id,
         )
-
-    def with_cache(self, cache: ICache | None) -> Self:
-        """Creates a copy of this context with the specified cache.
-
-        :param cache: The cache to use in the new context.
-        :return: A new EvoContext with the specified cache.
-        """
-        if self._connector is None:
-            return EvoContext(
-                transport=self._transport,
-                authorizer=self._authorizer,
-                additional_headers=self._additional_headers,
-                cache=cache,
-                hub_url=self._hub_url,
-                org_id=self._org_id,
-                workspace_id=self._workspace_id,
-            )
-        else:
-            return EvoContext(
-                connector=self._connector,
-                cache=cache,
-                org_id=self._org_id,
-                workspace_id=self._workspace_id,
-            )

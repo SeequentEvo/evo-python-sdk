@@ -10,7 +10,7 @@
 #  limitations under the License.
 
 from .connector import APIConnector, NoAuth
-from .context import EvoContext
+from .context import StaticContext
 from .data import (
     DependencyStatus,
     EmptyResponse,
@@ -25,7 +25,7 @@ from .data import (
     ServiceStatus,
     ServiceUser,
 )
-from .interfaces import IAuthorizer, ICache, IFeedback, ITransport
+from .interfaces import IAuthorizer, ICache, IContext, IFeedback, ITransport
 from .service import BaseAPIClient
 
 __all__ = [
@@ -40,6 +40,7 @@ __all__ = [
     "HealthCheckType",
     "IAuthorizer",
     "ICache",
+    "IContext",
     "IFeedback",
     "ITransport",
     "NoAuth",
@@ -49,4 +50,5 @@ __all__ = [
     "ServiceHealth",
     "ServiceStatus",
     "ServiceUser",
+    "StaticContext",
 ]

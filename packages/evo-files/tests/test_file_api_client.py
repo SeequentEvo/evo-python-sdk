@@ -14,7 +14,7 @@ from unittest import mock
 from uuid import UUID
 
 from data import load_test_data
-from evo.common import Environment, EvoContext, HealthCheckType, Page, RequestMethod, ServiceUser
+from evo.common import Environment, HealthCheckType, Page, RequestMethod, ServiceUser, StaticContext
 from evo.common.test_tools import BASE_URL, ORG, WORKSPACE_ID, MockResponse, TestWithConnector, utc_datetime
 from evo.common.utils import get_header_metadata
 from evo.files import FileAPIClient, FileAPIDownload, FileAPIUpload, FileMetadata, FileVersion
@@ -33,7 +33,7 @@ class TestFileApiClient(TestWithConnector):
 
     def test_from_context(self) -> None:
         client = FileAPIClient.from_context(
-            EvoContext.from_environment(environment=self.environment, connector=self.connector)
+            StaticContext.from_environment(environment=self.environment, connector=self.connector)
         )
         self.assertIsInstance(client, FileAPIClient)
 

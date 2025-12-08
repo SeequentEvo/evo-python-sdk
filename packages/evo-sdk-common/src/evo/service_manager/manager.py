@@ -16,7 +16,8 @@ from typing import Any, TypeVar
 from uuid import UUID
 
 from evo import logging
-from evo.common import APIConnector, BaseAPIClient, Environment, EvoContext
+from evo.common import APIConnector, BaseAPIClient, Environment
+from evo.common.context import IContext
 from evo.common.exceptions import SelectionError
 from evo.common.interfaces import IAuthorizer, ITransport
 from evo.discovery import DiscoveryAPIClient, Hub, Organization
@@ -247,7 +248,7 @@ class _State:
         )
 
 
-class ServiceManager:
+class ServiceManager(IContext):
     """A simple service manager for managing the current selection of organizations, hubs, and workspaces."""
 
     def __init__(self, transport: ITransport, authorizer: IAuthorizer, discovery_url: str) -> None:
@@ -415,17 +416,22 @@ class ServiceManager:
             raise SelectionError("No workspace is currently selected.")
         return Environment(hub_url=hub.url, org_id=org.id, workspace_id=ws.id)
 
-    def get_context(self) -> EvoContext:
-        """Get the context for the currently selected organization, hub, and workspace.
+    def get_org_id(self) -> UUID:
+        """Gets the organization ID associated with this context.
 
-        :returns: The context.
-
-        :raises SelectionError: If no organization, hub, or workspace is currently selected.
+        :return: The organization ID.
+        :raises SelectionError: If no organization is currently selected.
         """
-        return EvoContext.from_environment(
-            self.get_environment(),
-            self.get_connector(),
-        )
+        if not isinstance(org := self.get_current_organization(), Organization):
+            raise SelectionError("No organization is currently selected.")
+        return org.id
+
+    def get_cache(self) -> None:
+        """Gets the cache of this context.
+
+        Always None, as ServiceManager does not have a cache.
+        """
+        return None
 
     def create_client(self, client_class: type[T_client], *args: Any, **kwargs: Any) -> T_client:
         """Create a client for the currently selected workspace.
