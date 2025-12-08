@@ -13,17 +13,17 @@ from __future__ import annotations
 
 from pathlib import Path
 from types import TracebackType
+from typing import TYPE_CHECKING
+from uuid import UUID
 
 from pure_interface import Interface
 
 from .data import Environment, HTTPHeaderDict, HTTPResponse, RequestMethod
 
-__all__ = [
-    "IAuthorizer",
-    "ICache",
-    "IFeedback",
-    "ITransport",
-]
+if TYPE_CHECKING:
+    from .connector import APIConnector
+
+__all__ = ["IAuthorizer", "ICache", "IContext", "IFeedback", "ITransport"]
 
 
 class ITransport(Interface):
@@ -185,3 +185,34 @@ class ICache(Interface):
         :raises ValueError: If either environment or scope is None, but not both.
         """
         ...
+
+
+class IContext(Interface):
+    """An interface for providing context information for service clients."""
+
+    def get_environment(self) -> Environment:
+        """Gets the Environment associated with this context.
+
+        :return: The Environment.
+        :raises ContextError: If the context does not have sufficient information to create an Environment.
+        """
+
+    def get_org_id(self) -> UUID:
+        """Gets the organization ID associated with this context.
+
+        :return: The organization ID.
+        :raises ContextError: If the context does not have an organization ID.
+        """
+
+    def get_connector(self) -> APIConnector:
+        """Gets the APIConnector associated with this context.
+
+        :return: The APIConnector.
+        :raises ContextError: If the context does not have sufficient information to create an APIConnector.
+        """
+
+    def get_cache(self) -> ICache | None:
+        """Gets the ICache associated with this context, if any.
+
+        :return: The ICache, or None if no cache is associated with this context.
+        """

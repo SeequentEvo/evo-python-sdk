@@ -23,9 +23,9 @@ from IPython.display import display
 
 from evo import logging
 from evo.aio import AioTransport
-from evo.common import APIConnector, BaseAPIClient, Environment, EvoContext
+from evo.common import APIConnector, BaseAPIClient, Environment
 from evo.common.exceptions import UnauthorizedException
-from evo.common.interfaces import IAuthorizer, ICache, IFeedback, ITransport
+from evo.common.interfaces import IAuthorizer, ICache, IContext, IFeedback, ITransport
 from evo.discovery import Hub, Organization
 from evo.oauth import AnyScopes, EvoScopes, OAuthConnector
 from evo.service_manager import ServiceManager
@@ -224,7 +224,13 @@ class WorkspaceSelectorWidget(_UUIDSelectorWidget):
 T_client = TypeVar("T_client", bound=BaseAPIClient)
 
 
-class ServiceManagerWidget(widgets.HBox):
+class _ServiceManagerWidgetMeta(type(widgets.HBox), type(IContext)):
+    """Metaclass that combines ipywidgets and pure interfaces metaclasses."""
+
+    pass
+
+
+class ServiceManagerWidget(widgets.HBox, IContext, metaclass=_ServiceManagerWidgetMeta):
     def __init__(self, transport: ITransport, authorizer: IAuthorizer, discovery_url: str, cache: ICache) -> None:
         """
         :param transport: The transport to use for API requests.
@@ -233,12 +239,13 @@ class ServiceManagerWidget(widgets.HBox):
         :param cache: The cache to use for storing tokens and other data.
         """
         self._authorizer = authorizer
+        self._cache = cache
         self._service_manager = ServiceManager(
             transport=transport,
             authorizer=authorizer,
             discovery_url=discovery_url,
+            cache=cache,
         )
-        self._cache = cache
         env = DotEnv(cache)
 
         self._btn = build_button_widget("Sign In")
@@ -450,14 +457,21 @@ class ServiceManagerWidget(widgets.HBox):
         """
         return self._service_manager.get_environment()
 
-    def get_context(self) -> EvoContext:
-        """Get the context for the currently selected organization, hub, and workspace.
+    def get_org_id(self) -> UUID:
+        """Gets the ID of the currently selected organization.
 
-        :returns: The context.
-
-        :raises SelectionError: If no organization, hub, or workspace is currently selected.
+        :return: The organization ID.
+        :raises SelectionError: If no organization is currently selected.
         """
-        return self._service_manager.get_context().with_cache(self._cache)
+        return self._service_manager.get_org_id()
+
+    def get_cache(self) -> ICache:
+        """
+        Gets the cache for this context.
+
+        :returns: The cache.
+        """
+        return self._cache
 
     def create_client(self, client_class: type[T_client], *args: Any, **kwargs: Any) -> T_client:
         """Create a client for the currently selected workspace.

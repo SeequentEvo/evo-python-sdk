@@ -15,7 +15,7 @@ from collections.abc import AsyncIterator, Sequence
 from uuid import UUID
 
 from evo import logging
-from evo.common import APIConnector, BaseAPIClient, EvoContext, HealthCheckType, ICache, Page, ServiceHealth
+from evo.common import APIConnector, BaseAPIClient, HealthCheckType, ICache, IContext, Page, ServiceHealth
 from evo.common.data import EmptyResponse, Environment, OrderByOperatorEnum
 from evo.common.utils import get_service_health, parse_order_by
 
@@ -53,18 +53,18 @@ class ObjectAPIClient(BaseAPIClient):
         self._cache = cache
 
     @classmethod
-    def from_context(cls, context: EvoContext) -> ObjectAPIClient:
-        """Create a ObjectAPIClient from an EvoContext.
+    def from_context(cls, context: IContext) -> ObjectAPIClient:
+        """Create a ObjectAPIClient from the given context.
 
         The context must have a hub_url, org_id, and workspace_id set.
 
-        :param context: The EvoContext to create the client from.
+        :param context: The context to create the client from.
         :return: A ObjectAPIClient instance.
         """
         return cls(
             environment=context.get_environment(),
             connector=context.get_connector(),
-            cache=context.cache,
+            cache=context.get_cache(),
         )
 
     async def get_service_health(self, check_type: HealthCheckType = HealthCheckType.FULL) -> ServiceHealth:

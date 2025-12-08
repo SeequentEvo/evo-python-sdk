@@ -19,7 +19,6 @@ from evo.common import (
     APIConnector,
     BaseAPIClient,
     Environment,
-    EvoContext,
     HealthCheckType,
     Page,
     ServiceHealth,
@@ -73,20 +72,6 @@ class FileAPIClient(BaseAPIClient):
         """
         super().__init__(environment, connector)
         self._api = FileV2Api(connector=connector)
-
-    @classmethod
-    def from_context(cls, context: EvoContext) -> FileAPIClient:
-        """Create a FileAPIClient from an EvoContext.
-
-        The context must have a hub_url, org_id, and workspace_id set.
-
-        :param context: The EvoContext to create the client from.
-        :return: A FileAPIClient instance.
-        """
-        return cls(
-            environment=context.get_environment(),
-            connector=context.get_connector(),
-        )
 
     async def get_service_health(self, check_type: HealthCheckType = HealthCheckType.FULL) -> ServiceHealth:
         """Get the health of the file service.

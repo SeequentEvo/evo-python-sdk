@@ -472,9 +472,9 @@ class GoneException(GeneralizedTypedError):
     STATUS_CODE = 410
 
 
-class SelectionError(EvoClientException):
-    """Raised when a selection error occurs."""
-
-
 class ContextError(EvoClientException):
     """Raised when the context lacks required information."""
+
+
+class SelectionError(ContextError):
+    """Raised when a selection error occurs."""

@@ -9,24 +9,21 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-import uuid
 from unittest import TestCase
 from unittest.mock import Mock
 
-from evo.common import Environment, EvoContext
+from evo.common import Environment, StaticContext
 from evo.common.exceptions import ContextError
-
-test_org_id = uuid.uuid4()
-test_workspace_id = uuid.uuid4()
+from evo.common.test_tools import BASE_URL, ORG, WORKSPACE_ID
 
 
-class TestEvoContext(TestCase):
+class TestStaticContext(TestCase):
     def test_from_parts_minimal(self):
-        evo_context = EvoContext(
+        evo_context = StaticContext(
             transport=Mock(),
             authorizer=Mock(),
         )
-        self.assertIsNone(evo_context.cache)
+        self.assertIsNone(evo_context.get_cache())
 
         with self.assertRaises(ContextError):
             evo_context.get_connector()
@@ -36,47 +33,46 @@ class TestEvoContext(TestCase):
 
     def test_from_parts_only_org(self):
         cache = Mock()
-        evo_context = EvoContext(
+        evo_context = StaticContext(
             transport=Mock(),
             authorizer=Mock(),
             cache=cache,
-            hub_url="https://example.com",
+            hub_url=BASE_URL,
         )
-        self.assertIs(evo_context.cache, cache)
+        self.assertIs(evo_context.get_cache(), cache)
         connector = evo_context.get_connector()
-        self.assertEqual(connector.base_url, "https://example.com/")
-
+        self.assertEqual(connector.base_url, BASE_URL)
         with self.assertRaises(ContextError):
             evo_context.get_environment()
 
     def test_from_parts_full(self):
         cache = Mock()
-        evo_context = EvoContext(
+        evo_context = StaticContext(
             transport=Mock(),
             authorizer=Mock(),
             cache=cache,
-            hub_url="https://example.com",
-            org_id=test_org_id,
-            workspace_id=test_workspace_id,
+            hub_url=BASE_URL,
+            org_id=ORG.id,
+            workspace_id=WORKSPACE_ID,
         )
-        self.assertIs(evo_context.cache, cache)
+        self.assertIs(evo_context.get_cache(), cache)
         connector = evo_context.get_connector()
-        self.assertEqual(connector.base_url, "https://example.com/")
+        self.assertEqual(connector.base_url, BASE_URL)
 
         environment = evo_context.get_environment()
-        self.assertEqual(environment.hub_url, "https://example.com")
-        self.assertEqual(environment.org_id, test_org_id)
-        self.assertEqual(environment.workspace_id, test_workspace_id)
+        self.assertEqual(environment.hub_url, BASE_URL)
+        self.assertEqual(environment.org_id, ORG.id)
+        self.assertEqual(environment.workspace_id, WORKSPACE_ID)
 
     def test_from_connector(self):
         connector = Mock()
-        connector.base_url = "https://example.com/"
+        connector.base_url = BASE_URL
         cache = Mock()
-        evo_context = EvoContext(
+        evo_context = StaticContext(
             connector=connector,
             cache=cache,
         )
-        self.assertIs(evo_context.cache, cache)
+        self.assertIs(evo_context.get_cache(), cache)
         self.assertIs(evo_context.get_connector(), connector)
 
         with self.assertRaises(ContextError):
@@ -84,7 +80,7 @@ class TestEvoContext(TestCase):
 
     def test_constructor_mixed(self):
         with self.assertRaises(ValueError):
-            EvoContext(
+            StaticContext(
                 transport=Mock(),
                 authorizer=Mock(),
                 connector=Mock(),
@@ -92,55 +88,85 @@ class TestEvoContext(TestCase):
 
     def test_constructor_empty(self):
         with self.assertRaises(ValueError):
-            EvoContext()
+            StaticContext()
 
     def test_from_environment(self):
         environment = Environment(
-            hub_url="https://example.com/",
-            org_id=test_org_id,
-            workspace_id=test_workspace_id,
+            hub_url=BASE_URL,
+            org_id=ORG.id,
+            workspace_id=WORKSPACE_ID,
         )
         connector = Mock()
-        connector.base_url = "https://example.com/"
+        connector.base_url = BASE_URL
         cache = Mock()
-        evo_context = EvoContext.from_environment(environment, connector, cache)
-        self.assertIs(evo_context.cache, cache)
+        evo_context = StaticContext.from_environment(environment, connector, cache)
+        self.assertIs(evo_context.get_cache(), cache)
         self.assertIs(evo_context.get_connector(), connector)
         self.assertEqual(evo_context.get_environment(), environment)
 
     def test_from_environment_wrong_hub(self):
         environment = Environment(
-            hub_url="https://hub.com/",
-            org_id=test_org_id,
-            workspace_id=test_workspace_id,
+            hub_url="https://wrong-hub.com/",
+            org_id=ORG.id,
+            workspace_id=WORKSPACE_ID,
         )
         connector = Mock()
-        connector.base_url = "https://example.com/"
+        connector.base_url = BASE_URL
         with self.assertRaises(ContextError):
-            EvoContext.from_environment(environment, connector)
+            StaticContext.from_environment(environment, connector)
 
-    def test_with_cache(self):
-        evo_context = EvoContext(
-            transport=Mock(),
-            authorizer=Mock(),
-            hub_url="https://example.com",
-            org_id=test_org_id,
-            workspace_id=test_workspace_id,
+    def test_copy_context(self):
+        context = Mock()
+        context.get_connector.return_value = Mock()
+        context.get_connector.return_value.base_url = BASE_URL
+        context.get_cache.return_value = Mock()
+        context.get_environment.return_value = Environment(
+            hub_url=BASE_URL,
+            org_id=ORG.id,
+            workspace_id=WORKSPACE_ID,
         )
-        self.assertIsNone(evo_context.cache)
 
-        cache = Mock()
-        evo_context_with_cache = evo_context.with_cache(cache)
-        self.assertIs(evo_context_with_cache.cache, cache)
-        self.assertIsNot(evo_context, evo_context_with_cache)
+        copied = StaticContext.create_copy(context)
+        self.assertIs(copied.get_connector(), context.get_connector.return_value)
+        self.assertIs(copied.get_cache(), context.get_cache.return_value)
+        environment = copied.get_environment()
+        self.assertEqual(environment.hub_url, BASE_URL)
+        self.assertEqual(environment.org_id, ORG.id)
+        self.assertEqual(environment.workspace_id, WORKSPACE_ID)
+        self.assertEqual(copied.get_org_id(), ORG.id)
 
-    def test_with_cache_connector(self):
-        connector = Mock()
-        connector.base_url = "https://example.com/"
-        evo_context = EvoContext(
-            connector=Mock(),
-        )
-        cache = Mock()
-        evo_context_with_cache = evo_context.with_cache(cache)
-        self.assertIs(evo_context_with_cache.cache, cache)
-        self.assertIsNot(evo_context, evo_context_with_cache)
+    def test_copy_context_no_workspace(self):
+        context = Mock()
+        context.get_connector.return_value = Mock()
+        context.get_cache.return_value = Mock()
+        context.get_environment.side_effect = ContextError()
+        context.get_org_id.return_value = ORG.id
+
+        copied = StaticContext.create_copy(context)
+        self.assertIs(copied.get_connector(), context.get_connector.return_value)
+        self.assertIs(copied.get_cache(), context.get_cache.return_value)
+        with self.assertRaises(ContextError):
+            copied.get_environment()
+        self.assertEqual(copied.get_org_id(), ORG.id)
+
+    def test_copy_context_no_org(self):
+        context = Mock()
+        context.get_connector.return_value = Mock()
+        context.get_cache.return_value = Mock()
+        context.get_environment.side_effect = ContextError()
+        context.get_org_id.side_effect = ContextError()
+
+        copied = StaticContext.create_copy(context)
+        self.assertIs(copied.get_connector(), context.get_connector.return_value)
+        self.assertIs(copied.get_cache(), context.get_cache.return_value)
+        with self.assertRaises(ContextError):
+            copied.get_environment()
+        with self.assertRaises(ContextError):
+            copied.get_org_id()
+
+    def test_copy_context_no_connector(self):
+        context = Mock()
+        context.get_connector.side_effect = ContextError()
+
+        with self.assertRaises(ContextError):
+            StaticContext.create_copy(context)
