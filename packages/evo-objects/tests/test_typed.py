@@ -26,7 +26,7 @@ from parameterized import parameterized
 from pydantic import TypeAdapter
 
 from data import load_test_data
-from evo.common import Environment, EvoContext
+from evo.common import Environment, IContext, StaticContext
 from evo.common.data import RequestMethod
 from evo.common.test_tools import BASE_URL, ORG, WORKSPACE_ID, TestWithConnector
 from evo.common.utils.version import get_header_metadata
@@ -100,7 +100,7 @@ class TestCreateGeoscienceObject(TestWithConnector):
     def setUp(self) -> None:
         TestWithConnector.setUp(self)
         self.environment = Environment(hub_url=BASE_URL, org_id=ORG.id, workspace_id=WORKSPACE_ID)
-        self.context = EvoContext.from_environment(
+        self.context = StaticContext.from_environment(
             environment=self.environment,
             connector=self.connector,
         )
@@ -193,20 +193,20 @@ class MockClient:
     async def upload_category_dataframe(self, df: pd.DataFrame, *args, **kwargs) -> dict:
         return {"category_data": await self.upload_dataframe(df)}
 
-    async def create_geoscience_object(self, evo_context: EvoContext, object_dict: dict, parent: str):
+    async def create_geoscience_object(self, context: IContext, object_dict: dict, parent: str):
         object_dict = object_dict.copy()
         object_dict["uuid"] = str(uuid.uuid4())
         self.objects[object_dict["uuid"]] = copy.deepcopy(object_dict)
         return MockDownloadedObject(self, object_dict)
 
-    async def replace_geoscience_object(self, evo_context: EvoContext, reference: ObjectReference, object_dict: dict):
+    async def replace_geoscience_object(self, context: IContext, reference: ObjectReference, object_dict: dict):
         object_dict = object_dict.copy()
         assert reference.object_id is not None, "Reference must have an object ID"
         object_dict["uuid"] = str(reference.object_id)
         self.objects[object_dict["uuid"]] = copy.deepcopy(object_dict)
         return MockDownloadedObject(self, object_dict)
 
-    async def from_reference(self, evo_context: EvoContext, reference: ObjectReference):
+    async def from_reference(self, context: IContext, reference: ObjectReference):
         assert reference.object_id is not None, "Reference must have an object ID"
         object_dict = copy.deepcopy(self.objects[str(reference.object_id)])
         return MockDownloadedObject(self, object_dict)
@@ -216,7 +216,7 @@ class TestRegularGrid(TestWithConnector):
     def setUp(self) -> None:
         TestWithConnector.setUp(self)
         self.environment = Environment(hub_url=BASE_URL, org_id=ORG.id, workspace_id=WORKSPACE_ID)
-        self.context = EvoContext.from_environment(
+        self.context = StaticContext.from_environment(
             environment=self.environment,
             connector=self.connector,
         )
@@ -253,7 +253,7 @@ class TestRegularGrid(TestWithConnector):
 
     async def test_create(self):
         with self._mock_geoscience_objects():
-            result = await Regular3DGrid.create(evo_context=self.context, data=self.example_grid)
+            result = await Regular3DGrid.create(context=self.context, data=self.example_grid)
         self.assertEqual(result.name, "Test Grid")
         self.assertEqual(result.origin, Point3(0, 0, 0))
         self.assertEqual(result.size, Size3i(10, 10, 5))
@@ -269,7 +269,7 @@ class TestRegularGrid(TestWithConnector):
         data = dataclasses.replace(self.example_grid, vertex_data=None)
         with self._mock_geoscience_objects():
             result = await Regular3DGrid.replace(
-                evo_context=self.context,
+                context=self.context,
                 reference=ObjectReference.new(
                     environment=self.context.get_environment(),
                     object_id=uuid.uuid4(),
@@ -289,9 +289,9 @@ class TestRegularGrid(TestWithConnector):
 
     async def test_from_reference(self):
         with self._mock_geoscience_objects():
-            original = await Regular3DGrid.create(evo_context=self.context, data=self.example_grid)
+            original = await Regular3DGrid.create(context=self.context, data=self.example_grid)
 
-            result = await Regular3DGrid.from_reference(evo_context=self.context, reference=original.metadata.url)
+            result = await Regular3DGrid.from_reference(context=self.context, reference=original.metadata.url)
             self.assertEqual(result.name, "Test Grid")
             self.assertEqual(result.origin, Point3(0, 0, 0))
             self.assertEqual(result.size, Size3i(10, 10, 5))
@@ -305,7 +305,7 @@ class TestRegularGrid(TestWithConnector):
 
     async def test_update(self):
         with self._mock_geoscience_objects():
-            obj = await Regular3DGrid.create(evo_context=self.context, data=self.example_grid)
+            obj = await Regular3DGrid.create(context=self.context, data=self.example_grid)
 
             self.assertEqual(obj.metadata.version_id, "1")
             obj.name = "Updated Grid"
@@ -342,7 +342,7 @@ class TestRegularGrid(TestWithConnector):
             dataclasses.replace(self.example_grid, size=Size3i(15, 10, 6))
 
         with self._mock_geoscience_objects():
-            obj = await Regular3DGrid.create(evo_context=self.context, data=self.example_grid)
+            obj = await Regular3DGrid.create(context=self.context, data=self.example_grid)
             with self.assertRaises(SizeChangeError):
                 await obj.cells.set_dataframe(
                     pd.DataFrame(
@@ -364,7 +364,7 @@ class TestRegularGrid(TestWithConnector):
 
     async def test_bounding_box(self):
         with self._mock_geoscience_objects() as mock_client:
-            obj = await Regular3DGrid.create(evo_context=self.context, data=self.example_grid)
+            obj = await Regular3DGrid.create(context=self.context, data=self.example_grid)
 
             bbox = obj.bounding_box
             self.assertAlmostEqual(bbox.min_x, 0.0)

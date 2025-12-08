@@ -13,7 +13,7 @@ from logging import getLogger
 from typing import Any
 
 from evo import jmespath
-from evo.common import Environment, EvoContext, ICache
+from evo.common import Environment, ICache, IContext
 from evo.objects import DownloadedObject, ObjectReference
 from evo.objects.client import parse
 from evo.objects.endpoints import ObjectsApi, models
@@ -84,11 +84,11 @@ def delete_jmespath_value(document: dict[str, Any], path: jmespath.ParsedResult 
     document.pop(last_field_name, None)
 
 
-def get_data_client(context: EvoContext) -> ObjectDataClient:
+def get_data_client(context: IContext) -> ObjectDataClient:
     """Get an ObjectDataClient for the current context."""
     connector = context.get_connector()
     environment = context.get_environment()
-    return ObjectDataClient(connector=connector, environment=environment, cache=context.cache)
+    return ObjectDataClient(connector=connector, environment=environment, cache=context.get_cache())
 
 
 def _response_to_downloaded_object(
@@ -105,7 +105,7 @@ def _response_to_downloaded_object(
     )
 
 
-async def create_geoscience_object(context: EvoContext, object_dict: dict[str, Any], parent: str) -> DownloadedObject:
+async def create_geoscience_object(context: IContext, object_dict: dict[str, Any], parent: str) -> DownloadedObject:
     connector = context.get_connector()
     environment = context.get_environment()
 
@@ -125,11 +125,11 @@ async def create_geoscience_object(context: EvoContext, object_dict: dict[str, A
         objects_path=path,
         geoscience_object=object_for_upload,
     )
-    return _response_to_downloaded_object(response, environment, connector, context.cache)
+    return _response_to_downloaded_object(response, environment, connector, context.get_cache())
 
 
 async def replace_geoscience_object(
-    context: EvoContext, reference: ObjectReference, object_dict: dict[str, Any]
+    context: IContext, reference: ObjectReference, object_dict: dict[str, Any]
 ) -> DownloadedObject:
     if reference.object_id is not None:
         object_dict["uuid"] = reference.object_id
@@ -148,12 +148,12 @@ async def replace_geoscience_object(
         workspace_id=str(environment.workspace_id),
         update_geoscience_object=object_for_upload,
     )
-    return _response_to_downloaded_object(response, environment, connector, context.cache)
+    return _response_to_downloaded_object(response, environment, connector, context.get_cache())
 
 
-async def download_geoscience_object(context: EvoContext, reference: ObjectReference) -> DownloadedObject:
+async def download_geoscience_object(context: IContext, reference: ObjectReference) -> DownloadedObject:
     return await DownloadedObject.from_reference(
         connector=context.get_connector(),
         reference=reference,
-        cache=context.cache,
+        cache=context.get_cache(),
     )

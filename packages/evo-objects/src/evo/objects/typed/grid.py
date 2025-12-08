@@ -18,7 +18,7 @@ import numpy as np
 import pandas as pd
 from pydantic import TypeAdapter
 
-from evo.common import EvoContext, IFeedback
+from evo.common import IContext, IFeedback
 from evo.common.utils import NoFeedback
 from evo.objects import SchemaVersion
 
@@ -196,20 +196,20 @@ class Regular3DGrid(BaseSpatialObject):
     @classmethod
     async def create(
         cls,
-        evo_context: EvoContext,
+        context: IContext,
         data: Regular3DGridData,
         parent: str | None = None,
     ) -> Self:
         """Create a new Regular3DGrid object.
 
-        :param evo_context: The context to use to call Evo APIs.
+        :param context: The context to use to call Evo APIs.
         :param data: The data for the Regular3DGrid object.
         :param parent: The parent path for the object.
 
         :return: The created Regular3DGrid object.
         """
         return await cls._create(
-            evo_context=evo_context,
+            context=context,
             parent=parent,
             data=data,
         )
@@ -217,20 +217,20 @@ class Regular3DGrid(BaseSpatialObject):
     @classmethod
     async def replace(
         cls,
-        evo_context: EvoContext,
+        context: IContext,
         reference: str,
         data: Regular3DGridData,
     ) -> Self:
         """Replace an existing Regular3DGrid object.
 
-        :param evo_context: The context to use to call Evo APIs.
+        :param context: The context to use to call Evo APIs.
         :param reference: The reference of the object to replace.
         :param data: The data for the Regular3DGrid object.
 
         :return: The new version of the Regular3DGrid object.
         """
         return await cls._replace(
-            evo_context=evo_context,
+            context=context,
             reference=reference,
             data=data,
         )

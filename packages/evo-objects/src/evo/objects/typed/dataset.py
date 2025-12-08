@@ -19,7 +19,7 @@ from typing import cast
 import pandas as pd
 
 from evo import jmespath
-from evo.common import EvoContext, IFeedback
+from evo.common import IContext, IFeedback
 from evo.common.utils import NoFeedback, iter_with_fb, split_feedback
 from evo.objects import DownloadedObject
 from evo.objects.utils.table_formats import (
@@ -57,13 +57,13 @@ class _ValuesStore:
         self,
         document: dict,
         value_adapters: Sequence[TableAdapter | CategoryTableAdapter],
-        evo_context: EvoContext,
+        context: IContext,
         obj: DownloadedObject | None = None,
     ):
         self._document = document
         self._value_adapters = value_adapters
         self._obj = obj
-        self._evo_context = evo_context
+        self._context = context
         self.column_names = [name for adapter in value_adapters for name in adapter.column_names]
 
     async def _load_values(self, adapter: BaseAdapter, fb: IFeedback = NoFeedback) -> pd.DataFrame:
@@ -101,7 +101,7 @@ class _ValuesStore:
         return pd.concat(await asyncio.gather(*parts), axis=1)
 
     async def _store_value(self, adapter: BaseAdapter, df: pd.DataFrame, fb: IFeedback = NoFeedback) -> None:
-        data_client = get_data_client(self._evo_context)
+        data_client = get_data_client(self._context)
         if isinstance(adapter, TableAdapter):
             table_info = await data_client.upload_dataframe(
                 df[adapter.column_names], table_format=adapter.table_formats
@@ -164,14 +164,16 @@ class Attribute:
     def __init__(
         self,
         attribute: dict,
-        evo_context: EvoContext,
+        context: IContext,
         obj: DownloadedObject | None = None,
     ) -> None:
         """
+        :param attribute: The dictionary containing the attribute information.
+        :param context: The context for uploading data to the Geoscience Object Service.
         :param obj: The DownloadedObject containing the attribute.
         """
         self._attribute = attribute
-        self._evo_context = evo_context
+        self._context = context
         self._obj = obj
 
     @property
@@ -226,7 +228,7 @@ class Attribute:
         else:
             attribute_type = self.attribute_type
 
-        data_client = get_data_client(self._evo_context)
+        data_client = get_data_client(self._context)
         if attribute_type == "category":
             self._attribute.update(await data_client.upload_category_dataframe(df))
         else:
@@ -254,27 +256,27 @@ class Attributes(Sequence[Attribute]):
         self,
         document: dict,
         attribute_adapter: AttributesAdapter,
-        evo_context: EvoContext,
+        context: IContext,
         obj: DownloadedObject | None = None,
     ) -> None:
         """
         :param document: The document containing the attributes.
         :param attribute_adapter: The AttributesAdapter to extract attributes from the document.
-        :param evo_context: The context for uploading data to the Geoscience Object Service.
+        :param context: The context for uploading data to the Geoscience Object Service.
         :param obj: The DownloadedObject, representing the object containing the attributes.
         """
         self._document = document
         self._attribute_adapter = attribute_adapter
-        self._evo_context = evo_context
+        self._context = context
 
         attribute_list = jmespath.search(self._attribute_adapter.attribute_list_path, document)
         if not isinstance(attribute_list, jmespath.JMESPathArrayProxy):
             raise ValueError("Attribute list path did not resolve to a list")
         attribute_list = attribute_list.raw
         if obj is None:
-            self._attributes = [Attribute(attr, evo_context) for attr in attribute_list]
+            self._attributes = [Attribute(attr, context) for attr in attribute_list]
         else:
-            self._attributes = [Attribute(attr, evo_context, obj) for attr in attribute_list]
+            self._attributes = [Attribute(attr, context, obj) for attr in attribute_list]
 
     def __getitem__(self, index: int) -> Attribute:
         return self._attributes[index]
@@ -312,7 +314,7 @@ class Attributes(Sequence[Attribute]):
                 "name": str(df.columns[0]),
                 "key": str(uuid.uuid4()),
             },
-            self._evo_context,
+            self._context,
         )
         await attribute.set_attribute_values(df, infer_attribute_type=True, fb=fb)
         self._attributes.append(attribute)
@@ -368,20 +370,20 @@ class Dataset:
         self,
         document: dict,
         dataset_adapter: DatasetAdapter,
-        evo_context: EvoContext,
+        context: IContext,
         obj: DownloadedObject | None = None,
     ):
-        self._values = _ValuesStore(document, dataset_adapter.value_adapters, obj=obj, evo_context=evo_context)
+        self._values = _ValuesStore(document, dataset_adapter.value_adapters, obj=obj, context=context)
         if dataset_adapter.attributes_adapter is not None:
-            self.attributes = Attributes(document, dataset_adapter.attributes_adapter, obj=obj, evo_context=evo_context)
+            self.attributes = Attributes(document, dataset_adapter.attributes_adapter, obj=obj, context=context)
         else:
             self.attributes = None
 
     @classmethod
-    def create_empty(cls, document: dict, dataset_adapter: DatasetAdapter, evo_context: EvoContext) -> Dataset:
+    def create_empty(cls, document: dict, dataset_adapter: DatasetAdapter, context: IContext) -> Dataset:
         # Create an empty attribute list
         assign_jmespath_value(document, dataset_adapter.attributes_adapter.attribute_list_path, [])
-        return cls(document, dataset_adapter, evo_context)
+        return cls(document, dataset_adapter, context)
 
     async def as_dataframe(self, *keys: str, fb: IFeedback = NoFeedback) -> pd.DataFrame:
         """Load a DataFrame containing the datasets base values and the values from the specified attributes.
