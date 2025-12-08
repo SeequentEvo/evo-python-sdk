@@ -22,7 +22,7 @@ import pyarrow as pa
 from pydantic import TypeAdapter
 
 from evo import jmespath
-from evo.common import EvoContext, IFeedback
+from evo.common import IContext, IFeedback
 from evo.common.utils import NoFeedback
 from evo.objects import DownloadedObject, SchemaVersion
 from evo.objects.utils.table_formats import BOOL_ARRAY_1
@@ -118,11 +118,11 @@ class MaskedCells(Dataset):
         self,
         document: dict,
         dataset_adapter: DatasetAdapter,
-        evo_context: EvoContext,
+        context: IContext,
         obj: DownloadedObject | None = None,
     ):
-        super().__init__(document, dataset_adapter, evo_context, obj)
-        self._evo_context = evo_context
+        super().__init__(document, dataset_adapter, context, obj)
+        self._context = context
         self._obj = obj
 
     async def get_mask(self, *, fb: IFeedback = NoFeedback) -> np.ndarray:
@@ -158,7 +158,7 @@ class MaskedCells(Dataset):
 
         if mask is not None:
             # Upload the mask
-            data_client = get_data_client(self._evo_context)
+            data_client = get_data_client(self._context)
             table_info = await data_client.upload_table(
                 table=pa.table({"mask": pa.array(mask)}),
                 table_format=BOOL_ARRAY_1,
@@ -179,9 +179,9 @@ class MaskedCells(Dataset):
 
     @classmethod
     async def create_from_data(
-        cls, document: dict, data: Any, dataset_adapter: DatasetAdapter, evo_context: EvoContext
+        cls, document: dict, data: Any, dataset_adapter: DatasetAdapter, context: IContext
     ) -> Self:
-        dataset = await super().create_from_data(document, None, dataset_adapter, evo_context)
+        dataset = await super().create_from_data(document, None, dataset_adapter, context)
 
         values, mask = data
         if values is None:

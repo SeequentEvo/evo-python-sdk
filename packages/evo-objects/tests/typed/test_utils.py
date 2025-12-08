@@ -16,7 +16,7 @@ import json
 from parameterized import parameterized
 
 from data import load_test_data
-from evo.common import Environment, EvoContext
+from evo.common import Environment, StaticContext
 from evo.common.data import RequestMethod
 from evo.common.test_tools import BASE_URL, ORG, WORKSPACE_ID, TestWithConnector
 from evo.common.utils.version import get_header_metadata
@@ -28,7 +28,7 @@ class TestCreateGeoscienceObject(TestWithConnector):
     def setUp(self) -> None:
         TestWithConnector.setUp(self)
         self.environment = Environment(hub_url=BASE_URL, org_id=ORG.id, workspace_id=WORKSPACE_ID)
-        self.context = EvoContext.from_environment(
+        self.context = StaticContext.from_environment(
             environment=self.environment,
             connector=self.connector,
         )

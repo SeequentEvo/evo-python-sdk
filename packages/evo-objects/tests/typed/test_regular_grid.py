@@ -20,7 +20,7 @@ import numpy as np
 import pandas as pd
 from parameterized import parameterized
 
-from evo.common import Environment, EvoContext
+from evo.common import Environment, StaticContext
 from evo.common.test_tools import BASE_URL, ORG, WORKSPACE_ID, TestWithConnector
 from evo.objects import ObjectReference
 from evo.objects.typed import Point3, Regular3DGrid, Regular3DGridData, Rotation, Size3d, Size3i
@@ -35,7 +35,7 @@ class TestRegularGrid(TestWithConnector):
     def setUp(self) -> None:
         TestWithConnector.setUp(self)
         self.environment = Environment(hub_url=BASE_URL, org_id=ORG.id, workspace_id=WORKSPACE_ID)
-        self.context = EvoContext.from_environment(
+        self.context = StaticContext.from_environment(
             environment=self.environment,
             connector=self.connector,
         )
@@ -73,7 +73,7 @@ class TestRegularGrid(TestWithConnector):
     @parameterized.expand([BaseObject, Regular3DGrid])
     async def test_create(self, class_to_call):
         with self._mock_geoscience_objects():
-            result = await class_to_call.create(evo_context=self.context, data=self.example_grid)
+            result = await class_to_call.create(context=self.context, data=self.example_grid)
         self.assertIsInstance(result, Regular3DGrid)
         self.assertEqual(result.name, "Test Grid")
         self.assertEqual(result.origin, Point3(0, 0, 0))
@@ -91,7 +91,7 @@ class TestRegularGrid(TestWithConnector):
         data = dataclasses.replace(self.example_grid, vertex_data=None)
         with self._mock_geoscience_objects():
             result = await class_to_call.replace(
-                evo_context=self.context,
+                context=self.context,
                 reference=ObjectReference.new(
                     environment=self.context.get_environment(),
                     object_id=uuid.uuid4(),
@@ -114,7 +114,7 @@ class TestRegularGrid(TestWithConnector):
     async def test_create_or_replace(self, class_to_call):
         with self._mock_geoscience_objects():
             result = await class_to_call.create_or_replace(
-                evo_context=self.context,
+                context=self.context,
                 reference=ObjectReference.new(
                     environment=self.context.get_environment(),
                     object_id=uuid.uuid4(),
@@ -135,9 +135,9 @@ class TestRegularGrid(TestWithConnector):
 
     async def test_from_reference(self):
         with self._mock_geoscience_objects():
-            original = await Regular3DGrid.create(evo_context=self.context, data=self.example_grid)
+            original = await Regular3DGrid.create(context=self.context, data=self.example_grid)
 
-            result = await Regular3DGrid.from_reference(evo_context=self.context, reference=original.metadata.url)
+            result = await Regular3DGrid.from_reference(context=self.context, reference=original.metadata.url)
             self.assertEqual(result.name, "Test Grid")
             self.assertEqual(result.origin, Point3(0, 0, 0))
             self.assertEqual(result.size, Size3i(10, 10, 5))
@@ -151,7 +151,7 @@ class TestRegularGrid(TestWithConnector):
 
     async def test_update(self):
         with self._mock_geoscience_objects():
-            obj = await Regular3DGrid.create(evo_context=self.context, data=self.example_grid)
+            obj = await Regular3DGrid.create(context=self.context, data=self.example_grid)
 
             self.assertEqual(obj.metadata.version_id, "1")
             obj.name = "Updated Grid"
@@ -188,7 +188,7 @@ class TestRegularGrid(TestWithConnector):
             dataclasses.replace(self.example_grid, size=Size3i(15, 10, 6))
 
         with self._mock_geoscience_objects():
-            obj = await Regular3DGrid.create(evo_context=self.context, data=self.example_grid)
+            obj = await Regular3DGrid.create(context=self.context, data=self.example_grid)
             with self.assertRaises(ObjectValidationError):
                 await obj.cells.set_dataframe(
                     pd.DataFrame(
@@ -219,7 +219,7 @@ class TestRegularGrid(TestWithConnector):
 
     async def test_bounding_box(self):
         with self._mock_geoscience_objects() as mock_client:
-            obj = await Regular3DGrid.create(evo_context=self.context, data=self.example_grid)
+            obj = await Regular3DGrid.create(context=self.context, data=self.example_grid)
 
             bbox = obj.bounding_box
             self.assertAlmostEqual(bbox.min_x, 0.0)

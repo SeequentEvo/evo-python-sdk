@@ -19,7 +19,7 @@ from unittest.mock import patch
 import numpy as np
 import pandas as pd
 
-from evo.common import Environment, EvoContext
+from evo.common import Environment, StaticContext
 from evo.common.test_tools import BASE_URL, ORG, WORKSPACE_ID, TestWithConnector
 from evo.objects import ObjectReference
 from evo.objects.typed import Point3, RegularMasked3DGrid, RegularMasked3DGridData, Rotation, Size3d, Size3i
@@ -32,7 +32,7 @@ class TestRegularMaskedGrid(TestWithConnector):
     def setUp(self) -> None:
         TestWithConnector.setUp(self)
         self.environment = Environment(hub_url=BASE_URL, org_id=ORG.id, workspace_id=WORKSPACE_ID)
-        self.context = EvoContext.from_environment(
+        self.context = StaticContext.from_environment(
             environment=self.environment,
             connector=self.connector,
         )
@@ -69,7 +69,7 @@ class TestRegularMaskedGrid(TestWithConnector):
 
     async def test_create(self):
         with self._mock_geoscience_objects():
-            result = await RegularMasked3DGrid.create(evo_context=self.context, data=self.example_grid)
+            result = await RegularMasked3DGrid.create(context=self.context, data=self.example_grid)
 
         self.assertEqual(result.name, "Test Masked Grid")
         self.assertEqual(result.origin, Point3(0, 0, 0))
@@ -84,7 +84,7 @@ class TestRegularMaskedGrid(TestWithConnector):
     async def test_create_with_no_cell_data(self):
         data = dataclasses.replace(self.example_grid, cell_data=None)
         with self._mock_geoscience_objects():
-            result = await RegularMasked3DGrid.create(evo_context=self.context, data=data)
+            result = await RegularMasked3DGrid.create(context=self.context, data=data)
 
         self.assertEqual(result.name, "Test Masked Grid")
         self.assertEqual(result.cells.number_active, np.sum(self.example_mask))
@@ -96,7 +96,7 @@ class TestRegularMaskedGrid(TestWithConnector):
         data = dataclasses.replace(self.example_grid)
         with self._mock_geoscience_objects():
             result = await RegularMasked3DGrid.replace(
-                evo_context=self.context,
+                context=self.context,
                 reference=ObjectReference.new(
                     environment=self.context.get_environment(),
                     object_id=uuid.uuid4(),
@@ -115,9 +115,9 @@ class TestRegularMaskedGrid(TestWithConnector):
 
     async def test_from_reference(self):
         with self._mock_geoscience_objects():
-            original = await RegularMasked3DGrid.create(evo_context=self.context, data=self.example_grid)
+            original = await RegularMasked3DGrid.create(context=self.context, data=self.example_grid)
 
-            result = await RegularMasked3DGrid.from_reference(evo_context=self.context, reference=original.metadata.url)
+            result = await RegularMasked3DGrid.from_reference(context=self.context, reference=original.metadata.url)
 
             self.assertEqual(result.name, "Test Masked Grid")
             self.assertEqual(result.origin, Point3(0, 0, 0))
@@ -131,7 +131,7 @@ class TestRegularMaskedGrid(TestWithConnector):
 
     async def test_update_with_new_mask(self):
         with self._mock_geoscience_objects():
-            obj = await RegularMasked3DGrid.create(evo_context=self.context, data=self.example_grid)
+            obj = await RegularMasked3DGrid.create(context=self.context, data=self.example_grid)
 
             # Create a new mask with different number of active cells
             new_mask = np.array([True, True, False, False, True] * 100, dtype=bool)
@@ -164,7 +164,7 @@ class TestRegularMaskedGrid(TestWithConnector):
 
     async def test_update_without_new_mask(self):
         with self._mock_geoscience_objects():
-            obj = await RegularMasked3DGrid.create(evo_context=self.context, data=self.example_grid)
+            obj = await RegularMasked3DGrid.create(context=self.context, data=self.example_grid)
 
             original_active_count = obj.cells.number_active
 
@@ -232,7 +232,7 @@ class TestRegularMaskedGrid(TestWithConnector):
 
     async def test_set_dataframe_wrong_size(self):
         with self._mock_geoscience_objects():
-            obj = await RegularMasked3DGrid.create(evo_context=self.context, data=self.example_grid)
+            obj = await RegularMasked3DGrid.create(context=self.context, data=self.example_grid)
 
             # Try to set dataframe with wrong size (no new mask)
             with self.assertRaises(ObjectValidationError):
@@ -258,7 +258,7 @@ class TestRegularMaskedGrid(TestWithConnector):
 
     async def test_set_dataframe_wrong_mask_size(self):
         with self._mock_geoscience_objects():
-            obj = await RegularMasked3DGrid.create(evo_context=self.context, data=self.example_grid)
+            obj = await RegularMasked3DGrid.create(context=self.context, data=self.example_grid)
 
             # Try to set new mask with wrong size
             bad_mask = np.array([True, False] * 100, dtype=bool)  # 200 elements instead of 500
@@ -274,7 +274,7 @@ class TestRegularMaskedGrid(TestWithConnector):
 
     async def test_bounding_box(self):
         with self._mock_geoscience_objects() as mock_client:
-            obj = await RegularMasked3DGrid.create(evo_context=self.context, data=self.example_grid)
+            obj = await RegularMasked3DGrid.create(context=self.context, data=self.example_grid)
 
             bbox = obj.bounding_box
             self.assertAlmostEqual(bbox.min_x, 0.0)
@@ -309,7 +309,7 @@ class TestRegularMaskedGrid(TestWithConnector):
         )
 
         with self._mock_geoscience_objects():
-            result = await RegularMasked3DGrid.create(evo_context=self.context, data=data)
+            result = await RegularMasked3DGrid.create(context=self.context, data=data)
 
         self.assertEqual(result.cells.number_active, 500)
         cell_df = await result.cells.as_dataframe()
@@ -328,7 +328,7 @@ class TestRegularMaskedGrid(TestWithConnector):
         )
 
         with self._mock_geoscience_objects():
-            result = await RegularMasked3DGrid.create(evo_context=self.context, data=data)
+            result = await RegularMasked3DGrid.create(context=self.context, data=data)
 
         self.assertEqual(result.cells.number_active, 0)
         cell_df = await result.cells.as_dataframe()

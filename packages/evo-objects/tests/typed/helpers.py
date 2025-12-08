@@ -19,7 +19,7 @@ from unittest.mock import Mock
 
 import pandas as pd
 
-from evo.common import Environment, EvoContext
+from evo.common import Environment, IContext
 from evo.objects import ObjectReference, ObjectSchema
 
 
@@ -74,14 +74,14 @@ class MockClient:
             "category_data": True,
         }
 
-    async def create_geoscience_object(self, evo_context: EvoContext, object_dict: dict, parent: str):
+    async def create_geoscience_object(self, context: IContext, object_dict: dict, parent: str):
         object_dict = object_dict.copy()
         object_dict["uuid"] = str(uuid.uuid4())
         self.objects[object_dict["uuid"]] = copy.deepcopy(object_dict)
         return MockDownloadedObject(self, object_dict)
 
     async def replace_geoscience_object(
-        self, evo_context: EvoContext, reference: ObjectReference, object_dict: dict, create_if_missing=False
+        self, context: IContext, reference: ObjectReference, object_dict: dict, create_if_missing=False
     ):
         object_dict = object_dict.copy()
         assert reference.object_id is not None, "Reference must have an object ID"
@@ -89,7 +89,7 @@ class MockClient:
         self.objects[object_dict["uuid"]] = copy.deepcopy(object_dict)
         return MockDownloadedObject(self, object_dict)
 
-    async def from_reference(self, evo_context: EvoContext, reference: ObjectReference):
+    async def from_reference(self, context: IContext, reference: ObjectReference):
         assert reference.object_id is not None, "Reference must have an object ID"
         object_dict = copy.deepcopy(self.objects[str(reference.object_id)])
         return MockDownloadedObject(self, object_dict)

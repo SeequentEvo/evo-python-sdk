@@ -20,7 +20,7 @@ import numpy as np
 import numpy.testing as npt
 import pandas as pd
 
-from evo.common import Environment, EvoContext
+from evo.common import Environment, StaticContext
 from evo.common.test_tools import BASE_URL, ORG, WORKSPACE_ID, TestWithConnector
 from evo.objects import ObjectReference
 from evo.objects.typed import Point3, Rotation, Size3i, Tensor3DGrid, Tensor3DGridData
@@ -33,7 +33,7 @@ class TestTensor3DGrid(TestWithConnector):
     def setUp(self) -> None:
         TestWithConnector.setUp(self)
         self.environment = Environment(hub_url=BASE_URL, org_id=ORG.id, workspace_id=WORKSPACE_ID)
-        self.context = EvoContext.from_environment(
+        self.context = StaticContext.from_environment(
             environment=self.environment,
             connector=self.connector,
         )
@@ -72,7 +72,7 @@ class TestTensor3DGrid(TestWithConnector):
 
     async def test_create(self):
         with self._mock_geoscience_objects():
-            result = await Tensor3DGrid.create(evo_context=self.context, data=self.example_grid)
+            result = await Tensor3DGrid.create(context=self.context, data=self.example_grid)
 
         self.assertEqual(result.name, "Test Tensor Grid")
         self.assertEqual(result.origin, Point3(0, 0, 0))
@@ -92,7 +92,7 @@ class TestTensor3DGrid(TestWithConnector):
     async def test_create_without_cell_data(self):
         data = dataclasses.replace(self.example_grid, cell_data=None, vertex_data=None)
         with self._mock_geoscience_objects():
-            result = await Tensor3DGrid.create(evo_context=self.context, data=data)
+            result = await Tensor3DGrid.create(context=self.context, data=data)
 
         self.assertEqual(result.name, "Test Tensor Grid")
         cell_df = await result.cells.as_dataframe()
@@ -102,7 +102,7 @@ class TestTensor3DGrid(TestWithConnector):
         data = dataclasses.replace(self.example_grid, vertex_data=None)
         with self._mock_geoscience_objects():
             result = await Tensor3DGrid.replace(
-                evo_context=self.context,
+                context=self.context,
                 reference=ObjectReference.new(
                     environment=self.context.get_environment(),
                     object_id=uuid.uuid4(),
@@ -119,9 +119,9 @@ class TestTensor3DGrid(TestWithConnector):
 
     async def test_from_reference(self):
         with self._mock_geoscience_objects():
-            original = await Tensor3DGrid.create(evo_context=self.context, data=self.example_grid)
+            original = await Tensor3DGrid.create(context=self.context, data=self.example_grid)
 
-            result = await Tensor3DGrid.from_reference(evo_context=self.context, reference=original.metadata.url)
+            result = await Tensor3DGrid.from_reference(context=self.context, reference=original.metadata.url)
 
             self.assertEqual(result.name, "Test Tensor Grid")
             self.assertEqual(result.origin, Point3(0, 0, 0))
@@ -137,7 +137,7 @@ class TestTensor3DGrid(TestWithConnector):
 
     async def test_update(self):
         with self._mock_geoscience_objects():
-            obj = await Tensor3DGrid.create(evo_context=self.context, data=self.example_grid)
+            obj = await Tensor3DGrid.create(context=self.context, data=self.example_grid)
 
             obj.name = "Updated Tensor Grid"
             await obj.cells.set_dataframe(
@@ -247,7 +247,7 @@ class TestTensor3DGrid(TestWithConnector):
 
     async def test_bounding_box(self):
         with self._mock_geoscience_objects() as mock_client:
-            obj = await Tensor3DGrid.create(evo_context=self.context, data=self.example_grid)
+            obj = await Tensor3DGrid.create(context=self.context, data=self.example_grid)
 
             bbox = obj.bounding_box
             # The bbox will be rotated, so we just check it exists and has reasonable values
@@ -272,7 +272,7 @@ class TestTensor3DGrid(TestWithConnector):
         )
 
         with self._mock_geoscience_objects():
-            obj = await Tensor3DGrid.create(evo_context=self.context, data=data)
+            obj = await Tensor3DGrid.create(context=self.context, data=data)
 
             bbox = obj.bounding_box
             # Origin at (10, 20, 30)
