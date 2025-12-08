@@ -19,7 +19,6 @@ from evo.common import (
     APIConnector,
     BaseAPIClient,
     Environment,
-    EvoContext,
     HealthCheckType,
     ServiceHealth,
     ServiceUser,
@@ -80,20 +79,6 @@ class ColormapAPIClient(BaseAPIClient):
         super().__init__(environment, connector)
         self._colourmaps_api = ColormapsApi(connector=connector)
         self._associations_api = AssociationsApi(connector=connector)
-
-    @classmethod
-    def from_context(cls, context: EvoContext) -> ColormapAPIClient:
-        """Create a ColormapAPIClient from an EvoContext.
-
-        The context must have a hub_url, org_id, and workspace_id set.
-
-        :param context: The EvoContext to create the client from.
-        :return: A ColormapAPIClient instance.
-        """
-        return cls(
-            environment=context.get_environment(),
-            connector=context.get_connector(),
-        )
 
     def _colormap_metadata_from_endpoint_model(
         self, model: ContinuousColormapResponse | DiscreteColormapResponse | CategoryColormapResponse

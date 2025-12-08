@@ -9,8 +9,16 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import sys
+
 from .connector import APIConnector
 from .data import Environment
+from .interfaces import IContext
+
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    from typing_extensions import Self
 
 __all__ = ["BaseAPIClient"]
 
@@ -28,3 +36,12 @@ class BaseAPIClient:
         """
         self._environment = environment
         self._connector = connector
+
+    @classmethod
+    def from_context(cls, context: IContext) -> Self:
+        """Creates an API client from the given context.
+
+        :param context: The context to create the client from.
+        :return: The created API client.
+        """
+        return cls(environment=context.get_environment(), connector=context.get_connector())

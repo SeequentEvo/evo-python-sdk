@@ -9,14 +9,15 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+from __future__ import annotations
+
 from typing import Literal, TypeAlias
 from uuid import UUID
 
 from pydantic import ValidationError
 from pydantic.type_adapter import TypeAdapter
 
-from evo.common import APIConnector, EvoContext, HealthCheckType, Page, ServiceHealth, ServiceUser
-from evo.common.exceptions import ContextError
+from evo.common import APIConnector, HealthCheckType, IContext, Page, ServiceHealth, ServiceUser
 from evo.common.utils import get_service_health, parse_order_by
 
 from .data import (
@@ -64,17 +65,15 @@ class WorkspaceAPIClient:
         self._thumbnails_api = ThumbnailsApi(connector)
 
     @classmethod
-    def from_context(cls, context: EvoContext) -> "WorkspaceAPIClient":
-        """Create a WorkspaceAPIClient from an EvoContext.
+    def from_context(cls, context: IContext) -> WorkspaceAPIClient:
+        """Create a WorkspaceAPIClient from the given context.
 
         The context must have a hub_url and org_id set.
 
-        :param context: The EvoContext to create the client from.
+        :param context: The context to create the client from.
         :return: A WorkspaceAPIClient instance.
         """
-        if context.org_id is None:
-            raise ContextError("EvoContext must have an org_id to create a WorkspaceAPIClient.")
-        return cls(connector=context.get_connector(), org_id=context.org_id)
+        return cls(connector=context.get_connector(), org_id=context.get_org_id())
 
     async def get_service_health(self, check_type: HealthCheckType = HealthCheckType.FULL) -> ServiceHealth:
         """Get the health of the workspace service.
