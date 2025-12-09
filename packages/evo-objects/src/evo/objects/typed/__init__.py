@@ -9,6 +9,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+from .base import BaseObject, BaseSpatialObject
 from .regular_grid import (
     Regular3DGrid,
     Regular3DGridData,
@@ -16,6 +17,8 @@ from .regular_grid import (
 from .types import BoundingBox, CoordinateReferenceSystem, EpsgCode, Point3, Rotation, Size3d, Size3i
 
 __all__ = [
+    "BaseObject",
+    "BaseSpatialObject",
     "BoundingBox",
     "CoordinateReferenceSystem",
     "EpsgCode",

@@ -91,7 +91,7 @@ class Regular3DGridData(BaseSpatialObjectData):
 class Cells(Dataset):
     """A dataset representing the cells of a regular 3D grid.
 
-    The order of the cells is assumed to be in z-fastest order.
+    The order of the cells are in column-major order, i.e. for a unrotated grid: x changes fastest, then y, then z.
     """
 
     size: Size3i = SchemaProperty(
@@ -114,7 +114,7 @@ class Cells(Dataset):
 class Vertices(Dataset):
     """A dataset representing the vertices of a regular 3D grid.
 
-    The order of the cells is assumed to be in z-fastest order.
+    The order of the cells are in column-major order, i.e. for a unrotated grid: x changes fastest, then y, then z.
     """
 
     _grid_size: Size3i = SchemaProperty(
