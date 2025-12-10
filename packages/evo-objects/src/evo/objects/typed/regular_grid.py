@@ -23,7 +23,7 @@ from evo.objects import SchemaVersion
 
 from ._adapters import AttributesAdapter
 from ._property import SchemaProperty
-from .base import BaseSpatialObject, BaseSpatialObjectData, ConstructableObject, DatasetProperty
+from .base import BaseSpatialObjectData, ConstructableObject, DatasetProperty, DynamicBoundingBoxSpatialObject
 from .dataset import Dataset
 from .exceptions import ObjectValidationError
 from .types import BoundingBox, Point3, Rotation, Size3d, Size3i
@@ -107,8 +107,8 @@ class Cells(Dataset):
             )
         await super().set_dataframe(df, fb=fb)
 
-    def validate(self) -> None:
-        self._check_length(self.size.total_size)
+    def _expected_length(self) -> int:
+        return self.size.total_size
 
 
 class Vertices(Dataset):
@@ -135,11 +135,11 @@ class Vertices(Dataset):
             )
         await super().set_dataframe(df, fb=fb)
 
-    def validate(self) -> None:
-        self._check_length(self.size.total_size)
+    def _expected_length(self) -> int:
+        return self.size.total_size
 
 
-class Regular3DGrid(BaseSpatialObject, ConstructableObject[Regular3DGridData]):
+class Regular3DGrid(DynamicBoundingBoxSpatialObject, ConstructableObject[Regular3DGridData]):
     """A GeoscienceObject representing a regular 3D grid.
 
     The object contains a dataset for both the cells and the vertices of the grid.

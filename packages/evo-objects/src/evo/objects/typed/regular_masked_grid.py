@@ -30,7 +30,7 @@ from evo.objects.utils.table_formats import BOOL_ARRAY_1
 from ._adapters import AttributesAdapter, DatasetAdapter
 from ._property import SchemaProperty
 from ._utils import assign_jmespath_value, get_data_client
-from .base import BaseSpatialObject, BaseSpatialObjectData, ConstructableObject, DatasetProperty
+from .base import BaseSpatialObjectData, ConstructableObject, DatasetProperty, DynamicBoundingBoxSpatialObject
 from .dataset import DataLoaderError, Dataset
 from .exceptions import ObjectValidationError
 from .types import BoundingBox, Point3, Rotation, Size3d, Size3i
@@ -169,8 +169,11 @@ class MaskedCells(Dataset):
 
         await super().set_dataframe(df, fb=fb)
 
+    def _expected_length(self) -> int:
+        return self.number_active
+
     def validate(self) -> None:
-        self._check_length(self.number_active)
+        super().validate()
         mask_length = jmespath.search("mask.values.length", self._document)
         if self.size.total_size != mask_length:
             raise DataLoaderError(
@@ -197,7 +200,7 @@ class MaskedCells(Dataset):
         return dataset
 
 
-class RegularMasked3DGrid(BaseSpatialObject, ConstructableObject[RegularMasked3DGridData]):
+class RegularMasked3DGrid(DynamicBoundingBoxSpatialObject, ConstructableObject[RegularMasked3DGridData]):
     """A GeoscienceObject representing a regular masked 3D grid.
 
     The object contains a dataset for the cells of the grid.

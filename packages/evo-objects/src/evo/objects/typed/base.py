@@ -45,6 +45,7 @@ __all__ = [
     "BaseSpatialObjectData",
     "ConstructableObject",
     "DatasetProperty",
+    "DynamicBoundingBoxSpatialObject",
     "SchemaProperty",
 ]
 
@@ -514,21 +515,30 @@ class BaseSpatialObjectData(BaseObjectData):
         """
         raise NotImplementedError("Subclasses must implement compute_bounding_box to derive bounding box from data.")
 
+    @property
+    def bounding_box(self) -> BoundingBox:
+        return self.compute_bounding_box()
+
 
 class BaseSpatialObject(BaseObject):
     """Base class for all Geoscience Objects with spatial data."""
 
     _bbox_typed_adapter: ClassVar[TypeAdapter[BoundingBox]] = TypeAdapter(BoundingBox)
+    bounding_box: BoundingBox = SchemaProperty(
+        "bounding_box",
+        TypeAdapter(BoundingBox),
+    )
     coordinate_reference_system: EpsgCode | str | None = SchemaProperty(
         "coordinate_reference_system", TypeAdapter(CoordinateReferenceSystem)
     )
 
-    @classmethod
-    async def _data_to_dict(cls, data: BaseSpatialObjectData, context: IContext) -> dict[str, Any]:
-        """Create a object dictionary suitable for creating a new Geoscience Object."""
-        object_dict = await super()._data_to_dict(data, context)
-        object_dict["bounding_box"] = cls._bbox_typed_adapter.dump_python(data.compute_bounding_box())
-        return object_dict
+
+class DynamicBoundingBoxSpatialObject(BaseSpatialObject):
+    """Base class for Geoscience Objects those bounding box is derived from its properties.
+
+    Note, for objects those bounding box is derived from the data iiself, using BaseSpatialObject is often
+    preferable as the data may not be loaded.
+    """
 
     def compute_bounding_box(self) -> BoundingBox:
         """Compute the bounding box for the object based on its datasets.
@@ -550,6 +560,6 @@ class BaseSpatialObject(BaseObject):
     async def update(self):
         """Update the object on the geoscience object service, including recomputing the bounding box."""
 
-        # Update the bounding box in the document
-        self._document["bounding_box"] = self._bbox_typed_adapter.dump_python(self.compute_bounding_box())
+        # Update the bounding box in the document using the parent class's descriptor
+        BaseSpatialObject.bounding_box.__set__(self, self.compute_bounding_box())
         await super().update()

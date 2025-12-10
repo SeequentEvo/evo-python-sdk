@@ -38,6 +38,15 @@ class MockDownloadedObject:
     def as_dict(self):
         return self.object_dict
 
+    async def download_dataframe(self, table_info: dict | str, column_names, nan_values=None, fb=None) -> pd.DataFrame:
+        """Download a dataframe from table info (used for coordinates and other value arrays)."""
+        if isinstance(table_info, str):
+            # It's a JMESPath expression, need to resolve it
+            from evo import jmespath
+
+            table_info = jmespath.search(table_info, self.object_dict)
+        return self.mock_client.get_dataframe(table_info)
+
     async def download_attribute_dataframe(self, data: dict, fb) -> pd.DataFrame:
         return self.mock_client.get_dataframe(data["values"])
 

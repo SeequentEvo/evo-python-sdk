@@ -111,12 +111,12 @@ class _ValuesStore:
         data_client = get_data_client(self._context)
         if isinstance(adapter, TableAdapter):
             table_info = await data_client.upload_dataframe(
-                df[adapter.column_names], table_format=adapter.table_formats
+                df[list(adapter.column_names)], table_format=adapter.table_formats
             )
             assign_jmespath_value(self._document, adapter.values_path, table_info)
         elif isinstance(adapter, CategoryTableAdapter):
             category_info = await data_client.upload_category_dataframe(
-                df[adapter.column_names],
+                df[list(adapter.column_names)],
             )
             assign_jmespath_value(self._document, adapter.category_data_path, category_info)
         else:
@@ -134,6 +134,28 @@ class _ValuesStore:
 
         # Clear the reference to the object after upload, as that is now stale
         self._obj = None
+
+    def validate(self) -> int | None:
+        """Validate that the values are of a consistent length.
+
+        :return: The length of the values, or None if there are no values.
+        """
+
+        lengths = []
+        for adapter in self._value_adapters:
+            if isinstance(adapter, CategoryTableAdapter):
+                length_path = adapter.category_data_path + ".values.length"
+            else:
+                length_path = adapter.values_path + ".length"
+            length = jmespath.search(length_path, self._document)
+            if not isinstance(length, int):
+                raise ObjectValidationError("Can't determine length of values")
+            lengths.append(length)
+        if len(lengths) == 0:
+            return None
+        if not all(length == lengths[0] for length in lengths):
+            raise ObjectValidationError("Values have inconsistent lengths")
+        return lengths[0]
 
 
 def _infer_attribute_type_from_series(series: pd.Series) -> str:
@@ -408,6 +430,13 @@ class Dataset:
             await dataset.set_dataframe(data)
         return dataset
 
+    def _expected_length(self) -> int | None:
+        """Get the expected length of the dataset based on other properties of the object.
+
+        :return: The expected length of the dataset, or None if there is no expected length.
+        """
+        return None
+
     def validate(self) -> None:
         """Validate that the dataset is valid.
 
@@ -415,13 +444,22 @@ class Dataset:
 
         :raises ObjectValidationError: If the dataset is not valid.
         """
+        length = self._expected_length()
+        values_length = self._values.validate()
+        if values_length is not None and length is not None and values_length != length:
+            raise ObjectValidationError(
+                f"Values length ({values_length}) does not match the expected length ({length})"
+            )
+        if length is None:
+            length = values_length
 
-    def _check_length(self, length: int) -> None:
         if self.attributes is not None:
             for attribute in self.attributes:
                 attribute_length = jmespath.search("values.length", attribute.as_dict())
-                if attribute_length is None:
+                if not isinstance(attribute_length, int):
                     raise ObjectValidationError(f"Can't determine length of attribute '{attribute.name}'")
+                if length is None:
+                    length = attribute_length
                 if attribute_length != length:
                     raise ObjectValidationError(
                         f"Attribute '{attribute.name}' length ({attribute_length}) does not match dataset length ({length})"

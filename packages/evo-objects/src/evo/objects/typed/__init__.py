@@ -9,6 +9,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+from .pointset import PointSet, PointSetData
 from .regular_grid import (
     Regular3DGrid,
     Regular3DGridData,
@@ -22,6 +23,8 @@ __all__ = [
     "CoordinateReferenceSystem",
     "EpsgCode",
     "Point3",
+    "PointSet",
+    "PointSetData",
     "Regular3DGrid",
     "Regular3DGridData",
     "RegularMasked3DGrid",

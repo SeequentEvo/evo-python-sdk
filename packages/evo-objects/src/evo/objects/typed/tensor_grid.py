@@ -23,7 +23,7 @@ from evo.objects import SchemaVersion
 
 from ._adapters import AttributesAdapter
 from ._property import SchemaProperty
-from .base import BaseSpatialObject, BaseSpatialObjectData, ConstructableObject, DatasetProperty
+from .base import BaseSpatialObjectData, ConstructableObject, DatasetProperty, DynamicBoundingBoxSpatialObject
 from .exceptions import ObjectValidationError
 from .regular_grid import Cells, Vertices
 from .types import BoundingBox, Point3, Rotation, Size3i
@@ -155,7 +155,7 @@ NumpyFloat1D = Annotated[
 ]
 
 
-class Tensor3DGrid(BaseSpatialObject, ConstructableObject[Tensor3DGridData]):
+class Tensor3DGrid(DynamicBoundingBoxSpatialObject, ConstructableObject[Tensor3DGridData]):
     """A GeoscienceObject representing a tensor 3D grid.
 
     A tensor grid is a 3D grid where cells may have different sizes. The grid is defined
