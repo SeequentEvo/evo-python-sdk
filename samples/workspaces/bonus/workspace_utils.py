@@ -218,7 +218,14 @@ class TargetWorkspaceSelectorWidget:
 
     def __init__(self, manager_widget):
         self.manager_widget = manager_widget
-        self.current_workspace_id = manager_widget.workspaces[0].id if manager_widget.workspaces else None
+        # Get the selected workspace ID
+        selected_id = manager_widget._workspace_selector.selected
+
+        _NULL_UUID = UUID(int=0)
+        if selected_id != _NULL_UUID:
+            self.current_workspace_id = selected_id
+        else:
+            raise ValueError("No source workspace is currently selected.")
 
         # Create widgets
         self.refresh_btn = widgets.Button(
