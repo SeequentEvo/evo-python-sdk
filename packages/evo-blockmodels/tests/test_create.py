@@ -17,7 +17,13 @@ from unittest import mock
 import pyarrow
 
 from evo.blockmodels import BlockModelAPIClient
-from evo.blockmodels.data import RegularGridDefinition
+from evo.blockmodels.data import (
+    BaseGridDefinition,
+    FlexibleGridDefinition,
+    FullySubBlockedGridDefinition,
+    OctreeGridDefinition,
+    RegularGridDefinition,
+)
 from evo.blockmodels.endpoints import models
 from evo.blockmodels.endpoints.models import JobResponse, JobStatus, RotationAxis
 from evo.blockmodels.exceptions import CacheNotConfiguredException, JobFailedException
@@ -41,9 +47,22 @@ BM_BBOX = models.BBoxXYZ(
 GRID_DEFINITION = RegularGridDefinition(
     model_origin=[0, 0, 0], rotations=[(RotationAxis.x, 20)], n_blocks=[10, 10, 10], block_size=[1, 1, 1]
 )
+SUBBLOCKED_GRID_DEFINITION = FullySubBlockedGridDefinition(
+    model_origin=[0, 0, 0],
+    rotations=[],
+    n_parent_blocks=[10, 10, 10],
+    parent_block_size=[1, 1, 1],
+    n_subblocks_per_parent=[5, 1, 2],
+)
 
 
-def _mock_create_result(environment) -> models.BlockModelAndJobURL:
+def _mock_create_result(environment, size_option=None) -> models.BlockModelAndJobURL:
+    if size_option is None:
+        size_option = models.SizeOptionsRegular(
+            model_type="regular",
+            n_blocks=models.Size3D(nx=10, ny=10, nz=10),
+            block_size=models.BlockSize(x=1, y=1, z=1),
+        )
     return models.BlockModelAndJobURL(
         bbox=BM_BBOX,
         block_rotation=[models.Rotation(axis=RotationAxis.x, angle=20)],
@@ -56,11 +75,7 @@ def _mock_create_result(environment) -> models.BlockModelAndJobURL:
         org_uuid=environment.org_id,
         model_origin=models.Location(x=0, y=0, z=0),
         normalized_rotation=[0, 20, 0],
-        size_options=models.SizeOptionsRegular(
-            model_type="regular",
-            n_blocks=models.Size3D(nx=10, ny=10, nz=10),
-            block_size=models.BlockSize(x=1, y=1, z=1),
-        ),
+        size_options=size_option,
         geoscience_object_id=GOOSE_UUID,
         created_at=DATE,
         created_by=MODEL_USER,
@@ -103,6 +118,18 @@ UPDATE_RESULT = models.UpdateWithUrl(
 
 INITIAL_DATA = pyarrow.table(
     {"i": [1, 2, 3], "j": [4, 5, 6], "k": [7, 8, 9], "col1": ["A", "B", "B"], "col2": [4.5, 5.3, 6.2]}
+)
+SUBBLOICKED_INITIAL_DATA = pyarrow.table(
+    {
+        "x": [0.5, 1.3, 1.5],
+        "y": [1.5, 2.5, 2.5],
+        "z": [4.5, 2.25, 2.25],
+        "dx": [1.0, 0.2, 0.2],
+        "dy": [1.0, 1.0, 1.0],
+        "dz": [1.0, 0.5, 0.5],
+        "col1": ["A", "B", "B"],
+        "col2": [4.5, 5.3, 6.2],
+    }
 )
 
 
@@ -155,6 +182,102 @@ class TestCreateBlockModel(TestWithConnector, TestWithStorage):
     def base_path(self) -> str:
         return f"blockmodel/orgs/{self.environment.org_id}/workspaces/{self.environment.workspace_id}"
 
+    def _assert_create_request(self, definition: BaseGridDefinition) -> None:
+        match definition:
+            case RegularGridDefinition():
+                size_option = models.SizeOptionsRegular(
+                    model_type="regular",
+                    n_blocks=models.Size3D(
+                        nx=definition.n_blocks[0], ny=definition.n_blocks[1], nz=definition.n_blocks[2]
+                    ),
+                    block_size=models.BlockSize(
+                        x=definition.block_size[0], y=definition.block_size[1], z=definition.block_size[2]
+                    ),
+                )
+            case FullySubBlockedGridDefinition():
+                size_option = models.SizeOptionsFullySubBlocked(
+                    model_type="fully-sub-blocked",
+                    n_parent_blocks=models.Size3D(
+                        nx=definition.n_parent_blocks[0],
+                        ny=definition.n_parent_blocks[1],
+                        nz=definition.n_parent_blocks[2],
+                    ),
+                    n_subblocks_per_parent=models.RegularSubblocks(
+                        nx=definition.n_subblocks_per_parent[0],
+                        ny=definition.n_subblocks_per_parent[1],
+                        nz=definition.n_subblocks_per_parent[2],
+                    ),
+                    parent_block_size=models.BlockSize(
+                        x=definition.parent_block_size[0],
+                        y=definition.parent_block_size[1],
+                        z=definition.parent_block_size[2],
+                    ),
+                )
+            case FlexibleGridDefinition():
+                size_option = models.SizeOptionsFlexible(
+                    model_type="flexible",
+                    n_parent_blocks=models.Size3D(
+                        nx=definition.n_parent_blocks[0],
+                        ny=definition.n_parent_blocks[1],
+                        nz=definition.n_parent_blocks[2],
+                    ),
+                    n_subblocks_per_parent=models.RegularSubblocks(
+                        nx=definition.n_subblocks_per_parent[0],
+                        ny=definition.n_subblocks_per_parent[1],
+                        nz=definition.n_subblocks_per_parent[2],
+                    ),
+                    parent_block_size=models.BlockSize(
+                        x=definition.parent_block_size[0],
+                        y=definition.parent_block_size[1],
+                        z=definition.parent_block_size[2],
+                    ),
+                )
+            case OctreeGridDefinition():
+                size_option = models.SizeOptionsOctree(
+                    model_type="variable-octree",
+                    n_parent_blocks=models.Size3D(
+                        nx=definition.n_parent_blocks[0],
+                        ny=definition.n_parent_blocks[1],
+                        nz=definition.n_parent_blocks[2],
+                    ),
+                    n_subblocks_per_parent=models.OctreeSubblocks(
+                        nx=definition.n_subblocks_per_parent[0],
+                        ny=definition.n_subblocks_per_parent[1],
+                        nz=definition.n_subblocks_per_parent[2],
+                    ),
+                    parent_block_size=models.BlockSize(
+                        x=definition.parent_block_size[0],
+                        y=definition.parent_block_size[1],
+                        z=definition.parent_block_size[2],
+                    ),
+                )
+            case _:
+                raise ValueError("Unexpected grid definition type")
+
+        self.assert_any_request_made(
+            method=RequestMethod.POST,
+            path=f"{self.base_path}/block-models",
+            body=models.CreateData(
+                name="Test BM",
+                description="Test Block Model",
+                size_options=size_option,
+                block_rotation=[models.Rotation(axis=axis, angle=angle) for axis, angle in definition.rotations],
+                model_origin=models.Location(
+                    x=definition.model_origin[0],
+                    y=definition.model_origin[1],
+                    z=definition.model_origin[2],
+                ),
+                coordinate_reference_system="EPSG:4326",
+                size_unit_id="m",
+                object_path="test/path",
+            ).model_dump(mode="json", exclude_unset=True),
+            headers={
+                "Authorization": "Bearer <not-a-real-token>",
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            },
+        )
+
     async def test_create_block_model(self) -> None:
         self.transport.set_request_handler(
             CreateRequestHandler(
@@ -201,6 +324,8 @@ class TestCreateBlockModel(TestWithConnector, TestWithStorage):
         self.assertEqual(version.created_at, DATE)
         self.assertEqual(version.created_by, USER)
         self.assertEqual(version.columns, [])
+
+        self._assert_create_request(GRID_DEFINITION)
 
     async def test_create_block_model_with_data(self) -> None:
         second_version = _mock_version(
@@ -268,6 +393,7 @@ class TestCreateBlockModel(TestWithConnector, TestWithStorage):
                     delete=[],
                 ),
                 update_type=models.UpdateType.replace,
+                geometry_change=None,
             )
             self.assert_any_request_made(
                 method=RequestMethod.PATCH,
@@ -292,6 +418,115 @@ class TestCreateBlockModel(TestWithConnector, TestWithStorage):
         self.assertEqual(version.created_at, DATE)
         self.assertEqual(version.created_by, USER)
         self.assertEqual(version.columns, second_version.mapping.columns)
+
+        self._assert_create_request(GRID_DEFINITION)
+
+    async def test_create_subblocked_model_with_data(self) -> None:
+        second_version = _mock_version(
+            2,
+            uuid.uuid4(),
+            "3",
+            models.BBox(
+                i_minmax=models.IntRange(min=1, max=3),
+                j_minmax=models.IntRange(min=4, max=6),
+                k_minmax=models.IntRange(min=7, max=9),
+            ),
+            columns=[
+                models.Column(col_id=str(uuid.uuid4()), title="col1", data_type=models.DataType.Utf8),
+                models.Column(col_id=str(uuid.uuid4()), title="col2", data_type=models.DataType.Float64),
+            ],
+        )
+
+        self.transport.set_request_handler(
+            CreateRequestHandler(
+                create_result=_mock_create_result(
+                    self.environment,
+                    size_option=models.SizeOptionsFullySubBlocked(
+                        model_type="fully-sub-blocked",
+                        n_parent_blocks=models.Size3D(nx=10, ny=10, nz=10),
+                        n_subblocks_per_parent=models.RegularSubblocks(nx=5, ny=1, nz=2),
+                        parent_block_size=models.BlockSize(x=1, y=1, z=1),
+                    ),
+                ),
+                job_response=JobResponse(
+                    job_status=JobStatus.COMPLETE,
+                    payload=FIRST_VERSION,
+                ),
+                update_result=UPDATE_RESULT,
+                update_job_response=JobResponse(
+                    job_status=JobStatus.COMPLETE,
+                    payload=second_version,
+                ),
+            )
+        )
+        with (
+            mock.patch("evo.common.io.upload.StorageDestination") as mock_destination,
+        ):
+            mock_destination.upload_file = mock.AsyncMock()
+            bm, version = await self.bms_client.create_block_model(
+                name="Test BM",
+                description="Test Block Model",
+                grid_definition=SUBBLOCKED_GRID_DEFINITION,
+                object_path="test/path",
+                coordinate_reference_system="EPSG:4326",
+                size_unit_id="m",
+                initial_data=INITIAL_DATA,
+                units={"col2": "g/t"},
+            )
+            mock_destination.upload_file.assert_called_once()
+
+            # Assert that the correct columns are part of the update
+            expected_update_body = models.UpdateDataLiteInput(
+                columns=models.UpdateColumnsLiteInput(
+                    new=[
+                        models.ColumnLite(
+                            title="col1",
+                            data_type=models.DataType.Utf8,
+                            unit_id=None,
+                        ),
+                        models.ColumnLite(
+                            title="col2",
+                            data_type=models.DataType.Float64,
+                            unit_id="g/t",
+                        ),
+                    ],
+                    update=[],
+                    rename=[],
+                    delete=[],
+                ),
+                update_type=models.UpdateType.replace,
+                geometry_change=True,
+            )
+            self.assert_any_request_made(
+                method=RequestMethod.PATCH,
+                path=f"{self.base_path}/block-models/{BM_UUID}/blocks",
+                body=expected_update_body.model_dump(mode="json", exclude_unset=True),
+                headers={
+                    "Authorization": "Bearer <not-a-real-token>",
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                },
+            )
+        self.assertEqual(bm.id, BM_UUID)
+
+        self.assertEqual(version.bm_uuid, BM_UUID)
+        self.assertEqual(version.version_id, 2)
+        self.assertEqual(version.version_uuid, second_version.version_uuid)
+        self.assertEqual(version.parent_version_id, 1)
+        self.assertEqual(version.base_version_id, 1)
+        self.assertEqual(version.geoscience_version_id, "3")
+        self.assertEqual(version.bbox, second_version.bbox)
+        self.assertEqual(version.comment, "")
+        self.assertEqual(version.created_at, DATE)
+        self.assertEqual(version.created_by, USER)
+        self.assertEqual(version.columns, second_version.mapping.columns)
+
+        self.assertIsInstance(bm.grid_definition, FullySubBlockedGridDefinition)
+        self.assertEqual(bm.grid_definition.n_parent_blocks, [10, 10, 10])
+        self.assertEqual(bm.grid_definition.parent_block_size, [1, 1, 1])
+        self.assertEqual(bm.grid_definition.n_subblocks_per_parent, [5, 1, 2])
+
+        self._assert_create_request(SUBBLOCKED_GRID_DEFINITION)
 
     async def test_create_block_model_no_cache(self) -> None:
         with self.assertRaises(CacheNotConfiguredException):
@@ -340,3 +575,86 @@ class TestCreateBlockModel(TestWithConnector, TestWithStorage):
                     initial_data=INITIAL_DATA,
                 )
             mock_destination.upload_file.assert_called_once()
+
+    async def test_create_flexible_block_model(self) -> None:
+        self.transport.set_request_handler(
+            CreateRequestHandler(
+                create_result=_mock_create_result(
+                    self.environment,
+                    size_option=models.SizeOptionsFlexible(
+                        model_type="flexible",
+                        n_parent_blocks=models.Size3D(nx=10, ny=10, nz=10),
+                        n_subblocks_per_parent=models.RegularSubblocks(nx=5, ny=1, nz=2),
+                        parent_block_size=models.BlockSize(x=1, y=1, z=1),
+                    ),
+                ),
+                job_response=JobResponse(
+                    job_status=JobStatus.COMPLETE,
+                    payload=FIRST_VERSION,
+                ),
+            )
+        )
+        grid_definition = FlexibleGridDefinition(
+            model_origin=[0, 0, 0],
+            rotations=[],
+            n_parent_blocks=[10, 10, 10],
+            parent_block_size=[1, 1, 1],
+            n_subblocks_per_parent=[5, 1, 2],
+        )
+        bm, version = await self.bms_client.create_block_model(
+            name="Test BM",
+            description="Test Block Model",
+            grid_definition=grid_definition,
+            object_path="test/path",
+            coordinate_reference_system="EPSG:4326",
+            size_unit_id="m",
+        )
+        self.assertEqual(bm.id, BM_UUID)
+        self.assertIsInstance(bm.grid_definition, FlexibleGridDefinition)
+        self.assertEqual(bm.grid_definition.n_parent_blocks, [10, 10, 10])
+        self.assertEqual(bm.grid_definition.parent_block_size, [1, 1, 1])
+        self.assertEqual(bm.grid_definition.n_subblocks_per_parent, [5, 1, 2])
+
+        self._assert_create_request(grid_definition)
+
+    async def test_create_octree_block_model(self) -> None:
+        self.transport.set_request_handler(
+            CreateRequestHandler(
+                create_result=_mock_create_result(
+                    self.environment,
+                    size_option=models.SizeOptionsOctree(
+                        model_type="variable-octree",
+                        n_parent_blocks=models.Size3D(nx=10, ny=10, nz=10),
+                        n_subblocks_per_parent=models.OctreeSubblocks(nx=2, ny=8, nz=4),
+                        parent_block_size=models.BlockSize(x=1, y=1, z=1),
+                    ),
+                ),
+                job_response=JobResponse(
+                    job_status=JobStatus.COMPLETE,
+                    payload=FIRST_VERSION,
+                ),
+            )
+        )
+        grid_definition = OctreeGridDefinition(
+            model_origin=[0, 0, 0],
+            rotations=[],
+            n_parent_blocks=[10, 10, 10],
+            parent_block_size=[1, 1, 1],
+            n_subblocks_per_parent=[2, 8, 4],
+        )
+        bm, version = await self.bms_client.create_block_model(
+            name="Test BM",
+            description="Test Block Model",
+            grid_definition=grid_definition,
+            object_path="test/path",
+            coordinate_reference_system="EPSG:4326",
+            size_unit_id="m",
+        )
+
+        self.assertEqual(bm.id, BM_UUID)
+        self.assertIsInstance(bm.grid_definition, OctreeGridDefinition)
+        self.assertEqual(bm.grid_definition.n_parent_blocks, [10, 10, 10])
+        self.assertEqual(bm.grid_definition.parent_block_size, [1, 1, 1])
+        self.assertEqual(bm.grid_definition.n_subblocks_per_parent, [2, 8, 4])
+
+        self._assert_create_request(grid_definition)
