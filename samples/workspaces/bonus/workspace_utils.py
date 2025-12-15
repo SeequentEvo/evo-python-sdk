@@ -221,8 +221,7 @@ class TargetWorkspaceSelectorWidget:
         # Get the selected workspace ID
         selected_id = manager_widget._workspace_selector.selected
 
-        _NULL_UUID = UUID(int=0)
-        if selected_id != _NULL_UUID:
+        if selected_id != manager_widget._workspace_selector.UNSELECTED[1]:
             self.current_workspace_id = selected_id
         else:
             raise ValueError("No source workspace is currently selected.")
