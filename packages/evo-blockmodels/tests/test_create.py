@@ -119,7 +119,7 @@ UPDATE_RESULT = models.UpdateWithUrl(
 INITIAL_DATA = pyarrow.table(
     {"i": [1, 2, 3], "j": [4, 5, 6], "k": [7, 8, 9], "col1": ["A", "B", "B"], "col2": [4.5, 5.3, 6.2]}
 )
-SUBBLOICKED_INITIAL_DATA = pyarrow.table(
+SUBBLOCKED_INITIAL_DATA = pyarrow.table(
     {
         "x": [0.5, 1.3, 1.5],
         "y": [1.5, 2.5, 2.5],
@@ -470,7 +470,7 @@ class TestCreateBlockModel(TestWithConnector, TestWithStorage):
                 object_path="test/path",
                 coordinate_reference_system="EPSG:4326",
                 size_unit_id="m",
-                initial_data=INITIAL_DATA,
+                initial_data=SUBBLOCKED_INITIAL_DATA,
                 units={"col2": "g/t"},
             )
             mock_destination.upload_file.assert_called_once()
