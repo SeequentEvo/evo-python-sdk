@@ -16,6 +16,7 @@ from typing import Iterable
 from unittest import mock
 
 import pyarrow
+from parameterized import parameterized
 
 from evo.blockmodels import BlockModelAPIClient
 from evo.blockmodels.endpoints import models
@@ -64,10 +65,10 @@ UPDATE_RESULT = models.UpdateWithUrl(
     upload_url=f"{BASE_URL}/upload/{uuid.uuid4()}",
 )
 
-NEW_DATA = pyarrow.table(
+REGULAR_DATA = pyarrow.table(
     {"i": [1, 2, 3], "j": [4, 5, 6], "k": [7, 8, 9], "col1": ["A", "B", "B"], "col2": [4.5, 5.3, 6.2]}
 )
-SUBBLOCKED_INITIAL_DATA = pyarrow.table(
+SUBBLOCKED_DATA = pyarrow.table(
     {
         "x": [0.5, 1.3, 1.5],
         "y": [1.5, 2.5, 2.5],
@@ -156,7 +157,7 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
             mock_destination.upload_file = mock.AsyncMock()
             version = await self.bms_client.add_new_columns(
                 BM_UUID,
-                NEW_DATA,
+                REGULAR_DATA,
                 units={"col2": "g/t"},
             )
             mock_destination.upload_file.assert_called_once()
@@ -221,7 +222,7 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
             mock_destination.upload_file = mock.AsyncMock()
             version = await self.bms_client.add_new_subblocked_columns(
                 BM_UUID,
-                SUBBLOCKED_INITIAL_DATA,
+                SUBBLOCKED_DATA,
                 units={"col2": "g/t"},
             )
             mock_destination.upload_file.assert_called_once()
@@ -274,7 +275,7 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
         with self.assertRaises(CacheNotConfiguredException):
             await self.bms_client_without_cache.add_new_columns(
                 BM_UUID,
-                NEW_DATA,
+                REGULAR_DATA,
             )
 
     async def test_add_new_columns_job_failed(self) -> None:
@@ -299,7 +300,7 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
             with self.assertRaises(JobFailedException):
                 await self.bms_client.add_new_columns(
                     BM_UUID,
-                    NEW_DATA,
+                    REGULAR_DATA,
                 )
             mock_destination.upload_file.assert_called_once()
 
@@ -319,7 +320,7 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
             mock_destination.upload_file = mock.AsyncMock()
             version = await self.bms_client.update_block_model_columns(
                 BM_UUID,
-                NEW_DATA,
+                REGULAR_DATA,
                 new_columns=["col2"],
                 update_columns={"col1"},
                 delete_columns={"col3"},
@@ -342,6 +343,7 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
                     delete=["col3"],
                 ),
                 update_type=models.UpdateType.replace,
+                geometry_change=None,
             )
             self.assert_any_request_made(
                 method=RequestMethod.PATCH,
@@ -369,7 +371,7 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
         with self.assertRaises(CacheNotConfiguredException):
             await self.bms_client_without_cache.update_block_model_columns(
                 BM_UUID,
-                NEW_DATA,
+                REGULAR_DATA,
                 new_columns=["col2"],
             )
 
@@ -377,7 +379,7 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
         with self.assertRaises(MissingColumnInTable):
             await self.bms_client.update_block_model_columns(
                 BM_UUID,
-                NEW_DATA,
+                REGULAR_DATA,
                 new_columns=["non_existent_column"],
             )
 
@@ -403,10 +405,80 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
             with self.assertRaises(JobFailedException):
                 await self.bms_client.update_block_model_columns(
                     BM_UUID,
-                    NEW_DATA,
+                    REGULAR_DATA,
                     new_columns=["col2"],
                 )
             mock_destination.upload_file.assert_called_once()
+
+    @parameterized.expand(
+        [
+            (True,),
+            (False,),
+        ]
+    )
+    async def test_update_subblocked_columns(self, geometry_change: bool) -> None:
+        self.transport.set_request_handler(
+            UpdateRequestHandler(
+                update_result=UPDATE_RESULT,
+                job_response=JobResponse(
+                    job_status=JobStatus.COMPLETE,
+                    payload=UPDATED_VERSION,
+                ),
+            )
+        )
+        with (
+            mock.patch("evo.common.io.upload.StorageDestination") as mock_destination,
+        ):
+            mock_destination.upload_file = mock.AsyncMock()
+            version = await self.bms_client.update_subblocked_columns(
+                BM_UUID,
+                SUBBLOCKED_DATA,
+                new_columns=["col2"],
+                update_columns={"col1"},
+                delete_columns={"col3"},
+                units={"col2": "g/t"},
+                geometry_change=geometry_change,
+            )
+            mock_destination.upload_file.assert_called_once()
+
+            # Assert that the correct columns are part of the update
+            expected_update_body = models.UpdateDataLiteInput(
+                columns=models.UpdateColumnsLiteInput(
+                    new=[
+                        models.ColumnLite(
+                            title="col2",
+                            data_type=models.DataType.Float64,
+                            unit_id="g/t",
+                        ),
+                    ],
+                    update=["col1"],
+                    rename=[],
+                    delete=["col3"],
+                ),
+                update_type=models.UpdateType.replace,
+                geometry_change=geometry_change,
+            )
+            self.assert_any_request_made(
+                method=RequestMethod.PATCH,
+                path=f"{self.base_path}/block-models/{BM_UUID}/blocks",
+                body=expected_update_body.model_dump(mode="json", exclude_unset=True),
+                headers={
+                    "Authorization": "Bearer <not-a-real-token>",
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                },
+            )
+        self.assertEqual(version.bm_uuid, BM_UUID)
+        self.assertEqual(version.version_id, 2)
+        self.assertEqual(version.version_uuid, UPDATED_VERSION.version_uuid)
+        self.assertEqual(version.parent_version_id, 1)
+        self.assertEqual(version.base_version_id, 1)
+        self.assertEqual(version.geoscience_version_id, "3")
+        self.assertEqual(version.bbox, UPDATED_VERSION.bbox)
+        self.assertEqual(version.comment, "")
+        self.assertEqual(version.created_at, DATE)
+        self.assertEqual(version.created_by, USER)
+        self.assertEqual(version.columns, UPDATED_VERSION.mapping.columns)
 
     async def test_update_column_metadata(self) -> None:
         self.transport.set_request_handler(
