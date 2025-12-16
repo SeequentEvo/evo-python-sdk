@@ -41,6 +41,9 @@ packages/evo-mypackage/  @SeequentEvo/mypackage-maintainers
 Where possible, assign code ownership to a team rather than individuals.
 Remember that more specific rules override general ones, so package-specific entries will take precedence over the global fallback rule.
 
+### Publishing a new release
+See [Release.md](RELEASE.md) for instructions on how to publish a new GitHub and PyPi release of a package.
+
 ### Checklist
 
 To ensure your pull request is merged as quickly as possible, please consider the following:
