@@ -14,8 +14,8 @@ try:
 except ImportError:
     raise ImportError("The 'pyarrow' package is required to use ParquetLoader") from None
 
+from ..utils.types import ArrayTableInfo, AttributeInfo, CategoryInfo, LookupTableInfo, TableInfo
 from .loader import ParquetDownloader, ParquetLoader
-from .types import ArrayTableInfo, AttributeInfo, CategoryInfo, LookupTableInfo, TableInfo
 
 __all__ = [
     "ArrayTableInfo",

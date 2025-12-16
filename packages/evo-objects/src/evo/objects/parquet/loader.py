@@ -27,8 +27,7 @@ from evo.common.io import BytesDestination, ChunkedIOManager, Download, HTTPSour
 from evo.common.utils import NoFeedback
 
 from ..exceptions import SchemaValidationError, TableFormatError
-from ..utils import ArrowTableFormat, KnownTableFormat
-from .types import TableInfo
+from ..utils import ArrowTableFormat, KnownTableFormat, TableInfo
 
 try:
     import pandas as pd
