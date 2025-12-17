@@ -45,10 +45,10 @@ class SchemaProperty(Generic[_T]):
     """
 
     def __init__(
-        self, jmespath_expr: str, typed_adapter: TypeAdapter[_T], default_factory: Callable[[], _T] | None = None
+        self, jmespath_expr: str, type_adapter: TypeAdapter[_T], default_factory: Callable[[], _T] | None = None
     ) -> None:
         self._jmespath_expr = jmespath_expr
-        self._typed_adapter = typed_adapter
+        self._type_adapter = type_adapter
         self._default_factory = default_factory
 
     @overload
@@ -66,13 +66,13 @@ class SchemaProperty(Generic[_T]):
             return self._default_factory()
         if isinstance(value, (jmespath.JMESPathArrayProxy, jmespath.JMESPathObjectProxy)):
             value = value.raw
-        return self._typed_adapter.validate_python(value)
+        return self._type_adapter.validate_python(value)
 
     def __set__(self, instance: WithDocument, value: Any) -> None:
         self.apply_to(instance._document, value)
 
     def apply_to(self, document: dict[str, Any], value: _T) -> None:
-        dumped_value = self._typed_adapter.dump_python(value)
+        dumped_value = self._type_adapter.dump_python(value)
 
         if dumped_value is None:
             # Remove the property from the document if the value is None

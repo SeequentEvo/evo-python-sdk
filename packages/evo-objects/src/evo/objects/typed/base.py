@@ -31,7 +31,6 @@ from ._utils import (
     replace_geoscience_object,
 )
 from .dataset import Dataset
-from .types import BoundingBox, CoordinateReferenceSystem, EpsgCode
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -41,8 +40,6 @@ else:
 __all__ = [
     "BaseObject",
     "BaseObjectData",
-    "BaseSpatialObject",
-    "BaseSpatialObjectData",
     "ConstructableObject",
     "DatasetProperty",
     "SchemaProperty",
@@ -387,7 +384,7 @@ class BaseObject(_BaseObject):
     extensions: dict = SchemaProperty("extensions", TypeAdapter(dict), default_factory=dict)
 
     @classmethod
-    def create(
+    async def create(
         cls,
         context: IContext,
         data: BaseObjectData,
@@ -404,7 +401,7 @@ class BaseObject(_BaseObject):
         :param path: Full path to the object, can't be used with parent.
         """
         object_type = cls._get_object_type_from_data(data)
-        return object_type._create(context, data, parent, path)
+        return await object_type._create(context, data, parent, path)
 
     @classmethod
     async def replace(
@@ -499,57 +496,3 @@ class ConstructableObject(BaseObject, Generic[_T]):
         :param data: The data that will be used to create the object.
         """
         return await cls._replace(context, reference, data, create_if_missing=True)
-
-
-@dataclass(kw_only=True, frozen=True)
-class BaseSpatialObjectData(BaseObjectData):
-    coordinate_reference_system: EpsgCode | str | None = None
-
-    def compute_bounding_box(self) -> BoundingBox:
-        """Compute the bounding box for the object based on its datasets.
-
-        :return: The computed bounding box.
-
-        :raises ValueError: If the bounding box cannot be computed from the datasets.
-        """
-        raise NotImplementedError("Subclasses must implement compute_bounding_box to derive bounding box from data.")
-
-
-class BaseSpatialObject(BaseObject):
-    """Base class for all Geoscience Objects with spatial data."""
-
-    _bbox_typed_adapter: ClassVar[TypeAdapter[BoundingBox]] = TypeAdapter(BoundingBox)
-    coordinate_reference_system: EpsgCode | str | None = SchemaProperty(
-        "coordinate_reference_system", TypeAdapter(CoordinateReferenceSystem)
-    )
-
-    @classmethod
-    async def _data_to_dict(cls, data: BaseSpatialObjectData, context: IContext) -> dict[str, Any]:
-        """Create a object dictionary suitable for creating a new Geoscience Object."""
-        object_dict = await super()._data_to_dict(data, context)
-        object_dict["bounding_box"] = cls._bbox_typed_adapter.dump_python(data.compute_bounding_box())
-        return object_dict
-
-    def compute_bounding_box(self) -> BoundingBox:
-        """Compute the bounding box for the object based on its datasets.
-
-        :return: The computed bounding box.
-
-        :raises ValueError: If the bounding box cannot be computed from the datasets.
-        """
-        raise NotImplementedError("Subclasses must implement compute_bounding_box to derive bounding box from data.")
-
-    @property
-    def bounding_box(self) -> BoundingBox:
-        return self.compute_bounding_box()
-
-    @bounding_box.setter
-    def bounding_box(self, value: BoundingBox) -> None:
-        raise AttributeError("Cannot set bounding_box on this object, as it is dynamically derived from the data.")
-
-    async def update(self):
-        """Update the object on the geoscience object service, including recomputing the bounding box."""
-
-        # Update the bounding box in the document
-        self._document["bounding_box"] = self._bbox_typed_adapter.dump_python(self.compute_bounding_box())
-        await super().update()

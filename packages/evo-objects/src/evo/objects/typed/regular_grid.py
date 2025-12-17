@@ -23,9 +23,10 @@ from evo.objects import SchemaVersion
 
 from ._adapters import AttributesAdapter
 from ._property import SchemaProperty
-from .base import BaseSpatialObject, BaseSpatialObjectData, ConstructableObject, DatasetProperty
+from .base import ConstructableObject, DatasetProperty
 from .dataset import Dataset
 from .exceptions import ObjectValidationError
+from .spatial import BaseSpatialObject, BaseSpatialObjectData
 from .types import BoundingBox, Point3, Rotation, Size3d, Size3i
 
 __all__ = [
