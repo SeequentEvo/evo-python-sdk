@@ -33,7 +33,7 @@ The convention followed for package versioning is:
 4. Click **“Generate release notes”** and review:
    - Where appropriate, remove change details unrelated to the package you’re releasing.
    - If notes look wrong, it usually means the **previous tag selection** was incorrect. You can re-select the correct tag and regenerate to fix.
-7. Click **“Publish release”**.
+5. Click **“Publish release”**.
 
 ---
 
