@@ -51,7 +51,7 @@ After publishing:
 
 ## Updating the changelog
 
-When updating the **`CHANGELOG.md`** it is recommended to use the generated release notes.
+Use the generated release notes to update the **`CHANGELOG.md`**.
 
 ---
 
