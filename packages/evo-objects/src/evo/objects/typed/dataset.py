@@ -192,6 +192,7 @@ class Attribute:
 
     def __init__(
         self,
+        parent: Attributes,
         attribute: dict,
         context: IContext,
         obj: DownloadedObject | None = None,
@@ -201,9 +202,15 @@ class Attribute:
         :param context: The context for uploading data to the Geoscience Object Service.
         :param obj: The DownloadedObject containing the attribute.
         """
+        self._parent = parent
         self._attribute = attribute
         self._context = context
         self._obj = obj
+
+    @property
+    def expression(self) -> str:
+        """The JMESPath expression to access this attribute from the object."""
+        return f"{self._parent._attribute_adapter.attribute_list_path}[?key=='{self.key}']"
 
     @property
     def key(self) -> str:
@@ -303,12 +310,17 @@ class Attributes(Sequence[Attribute]):
             raise ValueError("Attribute list path did not resolve to a list")
         attribute_list = attribute_list.raw
         if obj is None:
-            self._attributes = [Attribute(attr, context) for attr in attribute_list]
+            self._attributes = [Attribute(self, attr, context) for attr in attribute_list]
         else:
-            self._attributes = [Attribute(attr, context, obj) for attr in attribute_list]
+            self._attributes = [Attribute(self, attr, context, obj) for attr in attribute_list]
 
-    def __getitem__(self, index: int) -> Attribute:
-        return self._attributes[index]
+    def __getitem__(self, index_or_name: int | str) -> Attribute:
+        if isinstance(index_or_name, str):
+            for attribute in self._attributes:
+                if attribute.name == index_or_name:
+                    return attribute
+            raise KeyError(f"Attribute with name '{index_or_name}' not found")
+        return self._attributes[index_or_name]
 
     def __len__(self) -> int:
         return len(self._attributes)
@@ -339,6 +351,7 @@ class Attributes(Sequence[Attribute]):
             raise ValueError("DataFrame must contain exactly one column to append as an attribute.")
 
         attribute = Attribute(
+            self,
             {
                 "name": str(df.columns[0]),
                 "key": str(uuid.uuid4()),
