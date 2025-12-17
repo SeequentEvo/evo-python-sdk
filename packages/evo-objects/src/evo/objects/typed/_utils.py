@@ -119,7 +119,7 @@ async def create_geoscience_object(
         if parent is not None:
             raise ValueError("Cannot specify both 'parent' and 'path'.")
         if not path.endswith(".json"):
-            path += ".json"
+            raise ValueError("`path` must end in `.json`.")
     else:
         name = object_dict["name"]
 

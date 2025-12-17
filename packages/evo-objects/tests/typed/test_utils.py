@@ -44,12 +44,13 @@ class TestCreateGeoscienceObject(TestWithConnector):
 
     @parameterized.expand(
         [
-            (None, "Sample%20pointset.json"),
-            ("path/to/parent", "path/to/parent/Sample%20pointset.json"),
-            ("path/to/parent/", "path/to/parent/Sample%20pointset.json"),
+            (None, None, "Sample%20pointset.json"),
+            ("path/to/parent", None, "path/to/parent/Sample%20pointset.json"),
+            ("path/to/parent/", None, "path/to/parent/Sample%20pointset.json"),
+            (None, "path/to/object.json", "path/to/object.json"),
         ]
     )
-    async def test_create_geoscience_object(self, parent: str | None, expected_object_path: str):
+    async def test_create_geoscience_object(self, parent: str | None, path: str | None, expected_object_path: str):
         get_object_response = load_test_data("get_object.json")
         new_pointset = {
             "name": "Sample pointset",
@@ -69,7 +70,7 @@ class TestCreateGeoscienceObject(TestWithConnector):
         }
         new_pointset_without_uuid = new_pointset.copy()
         with self.transport.set_http_response(status_code=201, content=json.dumps(get_object_response)):
-            await create_geoscience_object(self.context, new_pointset, parent=parent)
+            await create_geoscience_object(self.context, new_pointset, parent=parent, path=path)
 
         self.assert_request_made(
             method=RequestMethod.POST,
@@ -77,3 +78,29 @@ class TestCreateGeoscienceObject(TestWithConnector):
             headers={"Content-Type": "application/json", "Accept": "application/json"},
             body=new_pointset_without_uuid,
         )
+
+    @parameterized.expand(
+        [
+            (None, "path/to/object"),
+            ("path/to/parent", "path/to/object.json"),
+        ]
+    )
+    async def test_create_geoscience_object_error(self, parent: str | None, path: str | None):
+        new_pointset = {
+            "name": "Sample pointset",
+            "uuid": None,
+            "description": "A sample pointset object",
+            "bounding_box": {"min_x": 0.0, "max_x": 0.0, "min_y": 0.0, "max_y": 0.0, "min_z": 0.0, "max_z": 0.0},
+            "coordinate_reference_system": {"epsg_code": 2048},
+            "locations": {
+                "coordinates": {
+                    "data": "0000000000000000000000000000000000000000000000000000000000000001",
+                    "length": 1,
+                    "width": 3,
+                    "data_type": "float64",
+                }
+            },
+            "schema": "/objects/pointset/1.0.1/pointset.schema.json",
+        }
+        with self.assertRaises(ValueError):
+            await create_geoscience_object(self.context, new_pointset, parent=parent, path=path)
