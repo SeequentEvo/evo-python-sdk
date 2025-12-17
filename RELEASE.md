@@ -16,21 +16,9 @@ The convention followed for package versioning is:
 
 ---
 
-## Cut a release branch
-
-1. **Create a fork** in your GitHub account (if you don’t maintain a direct clone).
-2. **Create a branch** on that fork for the release work.
-3. Update `pyproject.toml` version(s) according to the conventions above.
-4. Open a PR to **merge your branch** into `main` of the origin repo after appropriate reviews.
-
-> There is no automatic version bump in CI; version numbers are authored in the source (`pyproject.toml`) before release.
-
----
-
 ## Tagging & drafting the GitHub release
 
-1. Go to the repo **Releases** tab and click **“Draft a new release.”**  
-   You must have **write** permission to draft releases.
+1. Go to the repo **Releases** tab and click **“Draft a new release”**.
 2. **Create or choose a new tag** to publish using the convention: `<package>@v<major>.<minor>.<patch>`.
 
     - **Create a new tag** if the version you’re releasing does **not** already exist as a Git tag in the repository.  
@@ -43,11 +31,9 @@ The convention followed for package versioning is:
 3. **Select the previous tag**:
    - Pick the previous tag **for the specific package** being released (not just any repo tag).
 4. Click **“Generate release notes”** and review:
-   - Where appropriate, remove change details unrelated to the package you’re releasing
+   - Where appropriate, remove change details unrelated to the package you’re releasing.
    - If notes look wrong, it usually means the **previous tag selection** was incorrect. You can re-select the correct tag and regenerate to fix.
-5. Before publishing, update the repo’s **`CHANGELOG.md`** using the generated notes.
-6. Use **“Save draft”** if you need to pause while you update the changelog.
-7. Return to the release and **click “Publish release.”**
+7. Click **“Publish release”**.
 
 ---
 
@@ -75,5 +61,3 @@ After publishing:
 
 - Repository structure and maintainer docs: see `README.md`, `CONTRIBUTING.md`, `CHANGELOG.md`.  
 - PyPI (metapackage and sub-packages) for visibility of published versions.
-
-``
