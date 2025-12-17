@@ -49,6 +49,12 @@ After publishing:
 
 ---
 
+## Updating the changelog
+
+When updating the **`CHANGELOG.md`** it is recommended to use the generated release notes.
+
+---
+
 ## Troubleshooting
 
 - **Incorrect release notes**: Recheck the *previous tag* selection and regenerate notes.
