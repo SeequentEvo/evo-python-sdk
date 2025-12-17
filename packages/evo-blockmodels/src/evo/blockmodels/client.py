@@ -245,7 +245,7 @@ class BlockModelAPIClient(BaseAPIClient):
     ):
         match grid_definition:
             case RegularGridDefinition(n_blocks=n_blocks, block_size=block_size):
-                size_option = SizeOptionsRegular(
+                size_options = SizeOptionsRegular(
                     model_type="regular",
                     n_blocks=Size3D(nx=n_blocks[0], ny=n_blocks[1], nz=n_blocks[2]),
                     block_size=BlockSize(x=block_size[0], y=block_size[1], z=block_size[2]),
@@ -253,7 +253,7 @@ class BlockModelAPIClient(BaseAPIClient):
             case FullySubBlockedGridDefinition(
                 n_parent_blocks=n_parent_blocks, n_subblocks_per_parent=n_subblocks, parent_block_size=parent_block_size
             ):
-                size_option = SizeOptionsFullySubBlocked(
+                size_options = SizeOptionsFullySubBlocked(
                     model_type="fully-sub-blocked",
                     n_parent_blocks=Size3D(nx=n_parent_blocks[0], ny=n_parent_blocks[1], nz=n_parent_blocks[2]),
                     n_subblocks_per_parent=RegularSubblocks(nx=n_subblocks[0], ny=n_subblocks[1], nz=n_subblocks[2]),
@@ -262,7 +262,7 @@ class BlockModelAPIClient(BaseAPIClient):
             case FlexibleGridDefinition(
                 n_parent_blocks=n_parent_blocks, n_subblocks_per_parent=n_subblocks, parent_block_size=parent_block_size
             ):
-                size_option = SizeOptionsFlexible(
+                size_options = SizeOptionsFlexible(
                     model_type="flexible",
                     n_parent_blocks=Size3D(nx=n_parent_blocks[0], ny=n_parent_blocks[1], nz=n_parent_blocks[2]),
                     n_subblocks_per_parent=RegularSubblocks(nx=n_subblocks[0], ny=n_subblocks[1], nz=n_subblocks[2]),
@@ -271,7 +271,7 @@ class BlockModelAPIClient(BaseAPIClient):
             case OctreeGridDefinition(
                 n_parent_blocks=n_parent_blocks, n_subblocks_per_parent=n_subblocks, parent_block_size=parent_block_size
             ):
-                size_option = SizeOptionsOctree(
+                size_options = SizeOptionsOctree(
                     model_type="variable-octree",
                     n_parent_blocks=Size3D(nx=n_parent_blocks[0], ny=n_parent_blocks[1], nz=n_parent_blocks[2]),
                     n_subblocks_per_parent=OctreeSubblocks(nx=n_subblocks[0], ny=n_subblocks[1], nz=n_subblocks[2]),
@@ -296,7 +296,7 @@ class BlockModelAPIClient(BaseAPIClient):
                 block_rotation=[
                     Rotation(axis=RotationAxis(axis), angle=angle) for axis, angle in grid_definition.rotations
                 ],
-                size_options=size_option,
+                size_options=size_options,
             ),
         )
         job_id = _job_id_from_url(create_result.job_url)

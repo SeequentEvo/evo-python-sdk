@@ -56,9 +56,9 @@ SUBBLOCKED_GRID_DEFINITION = FullySubBlockedGridDefinition(
 )
 
 
-def _mock_create_result(environment, size_option=None) -> models.BlockModelAndJobURL:
-    if size_option is None:
-        size_option = models.SizeOptionsRegular(
+def _mock_create_result(environment, size_options=None) -> models.BlockModelAndJobURL:
+    if size_options is None:
+        size_options = models.SizeOptionsRegular(
             model_type="regular",
             n_blocks=models.Size3D(nx=10, ny=10, nz=10),
             block_size=models.BlockSize(x=1, y=1, z=1),
@@ -75,7 +75,7 @@ def _mock_create_result(environment, size_option=None) -> models.BlockModelAndJo
         org_uuid=environment.org_id,
         model_origin=models.Location(x=0, y=0, z=0),
         normalized_rotation=[0, 20, 0],
-        size_options=size_option,
+        size_options=size_options,
         geoscience_object_id=GOOSE_UUID,
         created_at=DATE,
         created_by=MODEL_USER,
@@ -185,7 +185,7 @@ class TestCreateBlockModel(TestWithConnector, TestWithStorage):
     def _assert_create_request(self, definition: BaseGridDefinition) -> None:
         match definition:
             case RegularGridDefinition():
-                size_option = models.SizeOptionsRegular(
+                size_options = models.SizeOptionsRegular(
                     model_type="regular",
                     n_blocks=models.Size3D(
                         nx=definition.n_blocks[0], ny=definition.n_blocks[1], nz=definition.n_blocks[2]
@@ -195,7 +195,7 @@ class TestCreateBlockModel(TestWithConnector, TestWithStorage):
                     ),
                 )
             case FullySubBlockedGridDefinition():
-                size_option = models.SizeOptionsFullySubBlocked(
+                size_options = models.SizeOptionsFullySubBlocked(
                     model_type="fully-sub-blocked",
                     n_parent_blocks=models.Size3D(
                         nx=definition.n_parent_blocks[0],
@@ -214,7 +214,7 @@ class TestCreateBlockModel(TestWithConnector, TestWithStorage):
                     ),
                 )
             case FlexibleGridDefinition():
-                size_option = models.SizeOptionsFlexible(
+                size_options = models.SizeOptionsFlexible(
                     model_type="flexible",
                     n_parent_blocks=models.Size3D(
                         nx=definition.n_parent_blocks[0],
@@ -233,7 +233,7 @@ class TestCreateBlockModel(TestWithConnector, TestWithStorage):
                     ),
                 )
             case OctreeGridDefinition():
-                size_option = models.SizeOptionsOctree(
+                size_options = models.SizeOptionsOctree(
                     model_type="variable-octree",
                     n_parent_blocks=models.Size3D(
                         nx=definition.n_parent_blocks[0],
@@ -260,7 +260,7 @@ class TestCreateBlockModel(TestWithConnector, TestWithStorage):
             body=models.CreateData(
                 name="Test BM",
                 description="Test Block Model",
-                size_options=size_option,
+                size_options=size_options,
                 block_rotation=[models.Rotation(axis=axis, angle=angle) for axis, angle in definition.rotations],
                 model_origin=models.Location(
                     x=definition.model_origin[0],
@@ -441,7 +441,7 @@ class TestCreateBlockModel(TestWithConnector, TestWithStorage):
             CreateRequestHandler(
                 create_result=_mock_create_result(
                     self.environment,
-                    size_option=models.SizeOptionsFullySubBlocked(
+                    size_options=models.SizeOptionsFullySubBlocked(
                         model_type="fully-sub-blocked",
                         n_parent_blocks=models.Size3D(nx=10, ny=10, nz=10),
                         n_subblocks_per_parent=models.RegularSubblocks(nx=5, ny=1, nz=2),
@@ -581,7 +581,7 @@ class TestCreateBlockModel(TestWithConnector, TestWithStorage):
             CreateRequestHandler(
                 create_result=_mock_create_result(
                     self.environment,
-                    size_option=models.SizeOptionsFlexible(
+                    size_options=models.SizeOptionsFlexible(
                         model_type="flexible",
                         n_parent_blocks=models.Size3D(nx=10, ny=10, nz=10),
                         n_subblocks_per_parent=models.RegularSubblocks(nx=5, ny=1, nz=2),
@@ -622,7 +622,7 @@ class TestCreateBlockModel(TestWithConnector, TestWithStorage):
             CreateRequestHandler(
                 create_result=_mock_create_result(
                     self.environment,
-                    size_option=models.SizeOptionsOctree(
+                    size_options=models.SizeOptionsOctree(
                         model_type="variable-octree",
                         n_parent_blocks=models.Size3D(nx=10, ny=10, nz=10),
                         n_subblocks_per_parent=models.OctreeSubblocks(nx=2, ny=8, nz=4),
