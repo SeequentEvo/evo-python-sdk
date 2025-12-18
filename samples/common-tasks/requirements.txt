@@ -1,4 +1,0 @@
-pyarrow
-pandas
-uuid 
-jupyterlab
