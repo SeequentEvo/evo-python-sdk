@@ -24,9 +24,9 @@ class TestGetPackageDetails(unittest.TestCase):
     def test_get_package_details_with_valid_package(self) -> None:
         """Test that get_package_details returns correct details for a valid package."""
         # Mock the metadata to return a valid package
-        mock_metadata = {  
-            "name": "test-package",  
-            "version": "1.2.3",  
+        mock_metadata = {
+            "name": "test-package",
+            "version": "1.2.3",
         }
 
         with patch("evo.common.utils.version.metadata.metadata", return_value=mock_metadata):
