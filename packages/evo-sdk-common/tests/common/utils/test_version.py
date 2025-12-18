@@ -62,7 +62,7 @@ class TestGetPackageDetails(unittest.TestCase):
         with patch("evo.common.utils.version.metadata.metadata", return_value=mock_metadata):
             result = get_package_details("missing.both")
 
-        self.assertEqual(result.name, "evo-sdk-common")
+        self.assertEqual(result.name, "evo-sdk")
         self.assertEqual(result.version, "0.0.0")
 
 
