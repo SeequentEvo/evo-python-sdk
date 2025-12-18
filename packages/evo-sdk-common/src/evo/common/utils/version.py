@@ -50,8 +50,8 @@ def get_package_details(candidate: str) -> PackageDetails:
             candidate, *_ = candidate.rpartition(".")
         else:
             return PackageDetails(
-                name=package_metadata["name"],
-                version=package_metadata["version"],
+                name=package_metadata["name"] if "name" in package_metadata else "unknown",
+                version=package_metadata["version"] if "version" in package_metadata else "unknown",
             )
 
     return get_package_details("evo-sdk-common")
