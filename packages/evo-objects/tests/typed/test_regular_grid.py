@@ -279,3 +279,57 @@ class TestRegularGrid(TestWithConnector):
 
             # Verify validation passes with correct data
             obj.validate()  # Should not raise
+
+    async def test_from_reference_with_base_object(self):
+        """Test that from_reference works when called on BaseObject."""
+        with self._mock_geoscience_objects():
+            original = await Regular3DGrid.create(context=self.context, data=self.example_grid)
+
+            # Download using BaseObject.from_reference
+            result = await BaseObject.from_reference(context=self.context, reference=original.metadata.url)
+
+            # Should return a Regular3DGrid instance
+            self.assertIsInstance(result, Regular3DGrid)
+            self.assertEqual(result.name, "Test Grid")
+
+    async def test_description_and_tags(self):
+        """Test setting and getting description and tags."""
+        data = dataclasses.replace(
+            self.example_grid,
+            description="A test grid for testing",
+            tags={"category": "test", "priority": "high"},
+        )
+        with self._mock_geoscience_objects():
+            result = await Regular3DGrid.create(context=self.context, data=data)
+
+        self.assertEqual(result.description, "A test grid for testing")
+        self.assertEqual(result.tags, {"category": "test", "priority": "high"})
+
+    async def test_append_attribute_after_creation(self):
+        """Test appending an attribute after grid creation."""
+        with self._mock_geoscience_objects():
+            obj = await Regular3DGrid.create(context=self.context, data=self.example_grid)
+
+            # Append a new attribute
+            new_attr = pd.DataFrame({"new_value": np.random.rand(10 * 10 * 5)})
+            await obj.cells.attributes.append_attribute(new_attr)
+
+            # Verify the attribute was added
+            self.assertEqual(len(obj.cells.attributes), 3)  # Original 2 + 1 new
+            self.assertEqual(obj.cells.attributes[-1].name, "new_value")
+
+    async def test_set_cell_size(self):
+        """Test modifying cell_size property."""
+        # Use a grid without rotation for simpler bounding box calculation
+        data = dataclasses.replace(self.example_grid, rotation=None)
+        with self._mock_geoscience_objects():
+            obj = await Regular3DGrid.create(context=self.context, data=data)
+
+            obj.cell_size = Size3d(5.0, 10.0, 10.0)
+            self.assertEqual(obj.cell_size, Size3d(5.0, 10.0, 10.0))
+
+            # Bounding box should reflect new cell size (no rotation)
+            bbox = obj.bounding_box
+            self.assertAlmostEqual(bbox.max_x - bbox.min_x, 50.0)  # 10 * 5.0
+            self.assertAlmostEqual(bbox.max_y - bbox.min_y, 100.0)  # 10 * 10.0
+            self.assertAlmostEqual(bbox.max_z - bbox.min_z, 50.0)  # 5 * 10.0
