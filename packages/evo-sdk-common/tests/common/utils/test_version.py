@@ -11,7 +11,7 @@
 
 import unittest
 from importlib import metadata
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from evo.common.utils.version import PackageDetails, get_package_details
 
@@ -24,12 +24,10 @@ class TestGetPackageDetails(unittest.TestCase):
     def test_get_package_details_with_valid_package(self) -> None:
         """Test that get_package_details returns correct details for a valid package."""
         # Mock the metadata to return a valid package
-        mock_metadata = MagicMock()
-        mock_metadata.__getitem__.side_effect = lambda key: {
-            "name": "test-package",
-            "version": "1.2.3",
-        }[key]
-        mock_metadata.__contains__.side_effect = lambda key: key in {"name", "version"}
+        mock_metadata = {  
+            "name": "test-package",  
+            "version": "1.2.3",  
+        }
 
         with patch("evo.common.utils.version.metadata.metadata", return_value=mock_metadata):
             result = get_package_details("test.module")
@@ -41,14 +39,12 @@ class TestGetPackageDetails(unittest.TestCase):
     def test_get_package_details_falls_back_to_evo_sdk_common(self) -> None:
         """Test that get_package_details falls back to evo-sdk-common when no package is found."""
 
-        def mock_metadata_side_effect(candidate: str) -> MagicMock:
+        def mock_metadata_side_effect(candidate: str) -> dict[str, str]:
             if candidate == "evo-sdk-common":
-                mock_meta = MagicMock()
-                mock_meta.__getitem__.side_effect = lambda key: {
+                mock_meta = {
                     "name": "evo-sdk-common",
                     "version": "0.1.0",
-                }[key]
-                mock_meta.__contains__.side_effect = lambda key: key in {"name", "version"}
+                }
                 return mock_meta
             else:
                 raise metadata.PackageNotFoundError
@@ -61,16 +57,13 @@ class TestGetPackageDetails(unittest.TestCase):
 
     def test_get_package_details_with_no_metadata(self) -> None:
         """Test that get_package_details returns 'unknown' for both when both keys are missing."""
-        mock_metadata = MagicMock()
-        # Simulate metadata without 'name' or 'version' keys
-        mock_metadata.__getitem__.side_effect = KeyError
-        mock_metadata.__contains__.return_value = False
+        mock_metadata = {}
 
         with patch("evo.common.utils.version.metadata.metadata", return_value=mock_metadata):
             result = get_package_details("missing.both")
 
-        self.assertEqual(result.name, "unknown")
-        self.assertEqual(result.version, "unknown")
+        self.assertEqual(result.name, "evo-sdk-common")
+        self.assertEqual(result.version, "0.0.0")
 
 
 if __name__ == "__main__":
