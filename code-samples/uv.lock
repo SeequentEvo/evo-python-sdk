@@ -505,7 +505,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "evo-schemas", specifier = ">=2025.9.12" },
+    { name = "evo-schemas", specifier = ">=2025.12.15" },
     { name = "evo-sdk", specifier = ">=0.1.17" },
     { name = "geosoft", marker = "sys_platform == 'windows'", specifier = ">=2025.1.1" },
     { name = "pandas", extras = ["excel"], specifier = ">=2.2.3" },
@@ -517,7 +517,7 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "nbstripout", specifier = ">=0.5.0" },
+    { name = "nbstripout", specifier = ">=0.8.2" },
     { name = "pre-commit", specifier = ">=4" },
     { name = "ruff", specifier = ">=0.14.2" },
 ]
@@ -615,14 +615,14 @@ utils = [
 
 [[package]]
 name = "evo-schemas"
-version = "2025.9.12"
+version = "2025.12.15"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "jsonpointer" },
     { name = "rfc3986-validator" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/cd/a1/c63b098e8e20a0572dfc7971fa26ced78567b1c5f708a5ba7c0f91c07d63/evo_schemas-2025.9.12-py3-none-any.whl", hash = "sha256:e183c0c2efb772c8b7e645557c9eabedb4747082f06c3342842d5dc4515cafbf", size = 490710, upload-time = "2025-09-11T22:22:35.818Z" },
+    { url = "https://files.pythonhosted.org/packages/f6/47/76ed5353dc433a4d0e263a3df32b804a2b7418461f1f297733d16670181c/evo_schemas-2025.12.15-py3-none-any.whl", hash = "sha256:1eac7a784a54f9d1584302468baf6e537163c13665b26f14b30a183daae59e44", size = 534117, upload-time = "2025-12-15T22:00:30.808Z" },
 ]
 
 [[package]]

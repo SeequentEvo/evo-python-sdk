@@ -38,7 +38,7 @@ Before you get started, make sure you have:
 
 `evo-python-sdk` is designed for developers, data scientists, and technical users who want to work with Seequent Evo APIs and geoscience data. 
 
-* To quickly learn how to use Evo APIs, start with the [Getting started with Evo samples](#getting-started-with-evo-code-samples) section, which contains practical, end-to-end Jupyter notebook examples for common workflows. Most new users should begin with this section.
+* To quickly learn how to use Evo APIs, start with the [Getting started with Evo code samples](#getting-started-with-evo-code-samples) section, which contains practical, end-to-end Jupyter notebook examples for common workflows. Most new users should begin with this section.
 
 * If you are interested in the underlying SDKs or need to understand the implementation details, explore the [Getting started with Evo SDK development](#getting-started-with-evo-sdk-development) section, which contains the source code for each Evo SDK. 
 
@@ -46,7 +46,7 @@ Before you get started, make sure you have:
 
 ## Getting started with Evo code samples
 
-For detailed information about creating Evo apps, the authentication setup, available code samples, and step-by-step guides for working with the Jupyter notebooks, please refer to the [**samples/README.md**](samples/README.md) file. 
+For detailed information about creating Evo apps, the authentication setup, available code samples, and step-by-step guides for working with the Jupyter notebooks, please refer to the [**code-samples/README.md**](code-samples/README.md) file. 
 
 This comprehensive guide will walk you through everything required to get started with Evo APIs. 
 
