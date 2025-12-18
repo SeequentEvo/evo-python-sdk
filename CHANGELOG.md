@@ -1,5 +1,18 @@
 # Changelog
 
+## evo-sdk-common@v0.5.13
+## What's Changed
+### evo-sdk-common
+* Add support for feedback that can be updated concurrently. by @BenLewis-Seequent in https://github.com/SeequentEvo/evo-python-sdk/pull/151
+* Add IContext class to encapsulate all configurations required for Evo SDK clients by @BenLewis-Seequent in https://github.com/SeequentEvo/evo-python-sdk/pull/163
+* Add fallback to unknown and add test by @AdamFreemanSeequent in https://github.com/SeequentEvo/evo-python-sdk/pull/173
+* Minor increment to evo-sdk-common from previous merge by @AdamFreemanSeequent in https://github.com/SeequentEvo/evo-python-sdk/pull/174
+
+## New Contributors
+* @AdamFreemanSeequent made their first contribution in https://github.com/SeequentEvo/evo-python-sdk/pull/173
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-sdk-common@v0.5.12...evo-sdk-common@v0.5.13
+
 ## evo-blockmodels@v0.1.0
 ### What's changed
 #### evo-blockmodels
