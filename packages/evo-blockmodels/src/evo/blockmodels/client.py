@@ -713,8 +713,7 @@ class BlockModelAPIClient(BaseAPIClient):
         units: dict[str, str] | None = None,
         geometry_change: bool = False,
     ) -> Version:
-        """
-        Add, update, or delete sub-blocked block model columns.
+        """Add, update, or delete sub-blocked block model columns.
 
         Whether the sub-blocking structure changes can be specified with the `geometry_change` parameter.
 
