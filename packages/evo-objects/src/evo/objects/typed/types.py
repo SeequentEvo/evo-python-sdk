@@ -17,6 +17,7 @@ from typing import Annotated, Any, NamedTuple, overload
 import numpy as np
 import numpy.typing as npt
 import pydantic
+from pydantic_core import core_schema
 
 __all__ = [
     "BoundingBox",
@@ -49,6 +50,14 @@ class EpsgCode(int):
 
     def __str__(self):
         return f"EPSG:{int(self)}"
+
+    @classmethod
+    def __get_pydantic_core_schema__(cls, source_type: Any, handler: Any) -> core_schema.CoreSchema:
+        return core_schema.no_info_after_validator_function(
+            cls,
+            core_schema.int_schema(),
+            serialization=core_schema.plain_serializer_function_ser_schema(int),
+        )
 
 
 def _dump_crs(value: EpsgCode | str | None) -> Any:

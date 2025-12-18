@@ -157,6 +157,28 @@ class TestDownloadedObject(TestWithConnector, TestWithStorage):
         # Check geoscience object.
         self.assertEqual(expected_object_dict, actual_object.as_dict())
 
+    async def test_from_context(self) -> None:
+        """Test downloading a geoscience object using a context."""
+        from evo.common import StaticContext
+
+        reference = f"{_OBJECTS_URL}/00000000-0000-0000-0000-000000000002"
+        get_object_response = load_test_data("get_object.json")
+        expected_uuid = UUID(int=2)
+
+        context = StaticContext.from_environment(
+            environment=self.environment,
+            connector=self.connector,
+            cache=self.cache,
+        )
+
+        with self.transport.set_http_response(status_code=200, content=json.dumps(get_object_response)):
+            actual_object = await DownloadedObject.from_context(context, reference)
+
+        # Verify the object was downloaded correctly
+        actual_metadata = actual_object.metadata
+        self.assertEqual(expected_uuid, actual_metadata.id)
+        self.assertEqual("A/m.json", actual_metadata.path)
+
     def test_search(self) -> None:
         """Test the JMESPath search implementation."""
         expected_result = JMESPathObjectProxy(

@@ -9,18 +9,24 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+from .attributes import Attribute, Attributes
 from .base import BaseObject
 from .regular_grid import (
+    Cells,
     Regular3DGrid,
     Regular3DGridData,
+    Vertices,
 )
 from .spatial import BaseSpatialObject
 from .types import BoundingBox, CoordinateReferenceSystem, EpsgCode, Point3, Rotation, Size3d, Size3i
 
 __all__ = [
+    "Attribute",
+    "Attributes",
     "BaseObject",
     "BaseSpatialObject",
     "BoundingBox",
+    "Cells",
     "CoordinateReferenceSystem",
     "EpsgCode",
     "Point3",
@@ -29,4 +35,5 @@ __all__ = [
     "Rotation",
     "Size3d",
     "Size3i",
+    "Vertices",
 ]

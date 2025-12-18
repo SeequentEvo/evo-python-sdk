@@ -11,14 +11,15 @@
 
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, ClassVar
+from typing import Annotated, Any, ClassVar
 
 from pydantic import TypeAdapter
 
 from evo.common import IContext
 
-from ._property import SchemaProperty
+from ._model import SchemaLocation
 from .base import BaseObject, BaseObjectData
 from .types import BoundingBox, CoordinateReferenceSystem, EpsgCode
 
@@ -29,9 +30,10 @@ __all__ = [
 
 
 @dataclass(kw_only=True, frozen=True)
-class BaseSpatialObjectData(BaseObjectData):
+class BaseSpatialObjectData(BaseObjectData, ABC):
     coordinate_reference_system: EpsgCode | str | None = None
 
+    @abstractmethod
     def compute_bounding_box(self) -> BoundingBox:
         """Compute the bounding box for the object based on its datasets.
 
@@ -42,21 +44,20 @@ class BaseSpatialObjectData(BaseObjectData):
         raise NotImplementedError("Subclasses must implement compute_bounding_box to derive bounding box from data.")
 
 
-class BaseSpatialObject(BaseObject):
+class BaseSpatialObject(BaseObject, ABC):
     """Base class for all Geoscience Objects with spatial data."""
 
     _bbox_type_adapter: ClassVar[TypeAdapter[BoundingBox]] = TypeAdapter(BoundingBox)
-    coordinate_reference_system: EpsgCode | str | None = SchemaProperty(
-        "coordinate_reference_system", TypeAdapter(CoordinateReferenceSystem)
-    )
+    coordinate_reference_system: Annotated[CoordinateReferenceSystem, SchemaLocation("coordinate_reference_system")]
 
     @classmethod
-    async def _data_to_dict(cls, data: BaseSpatialObjectData, context: IContext) -> dict[str, Any]:
+    async def _data_to_schema(cls, data: BaseSpatialObjectData, context: IContext) -> dict[str, Any]:
         """Create a object dictionary suitable for creating a new Geoscience Object."""
-        object_dict = await super()._data_to_dict(data, context)
+        object_dict = await super()._data_to_schema(data, context)
         object_dict["bounding_box"] = cls._bbox_type_adapter.dump_python(data.compute_bounding_box())
         return object_dict
 
+    @abstractmethod
     def compute_bounding_box(self) -> BoundingBox:
         """Compute the bounding box for the object based on its datasets.
 

@@ -24,8 +24,8 @@ from evo.common import Environment, StaticContext
 from evo.common.test_tools import BASE_URL, ORG, WORKSPACE_ID, TestWithConnector
 from evo.objects import ObjectReference
 from evo.objects.typed import Point3, Regular3DGrid, Regular3DGridData, Rotation, Size3d, Size3i
+from evo.objects.typed.attributes import DataLoaderError
 from evo.objects.typed.base import BaseObject
-from evo.objects.typed.dataset import DataLoaderError
 from evo.objects.typed.exceptions import ObjectValidationError
 
 from .helpers import MockClient
@@ -44,7 +44,7 @@ class TestRegularGrid(TestWithConnector):
     def _mock_geoscience_objects(self):
         mock_client = MockClient(self.environment)
         with (
-            patch("evo.objects.typed.dataset.get_data_client", lambda _: mock_client),
+            patch("evo.objects.typed.attributes.get_data_client", lambda _: mock_client),
             patch("evo.objects.typed.base.create_geoscience_object", mock_client.create_geoscience_object),
             patch("evo.objects.typed.base.replace_geoscience_object", mock_client.replace_geoscience_object),
             patch("evo.objects.typed.base.download_geoscience_object", mock_client.from_reference),
@@ -245,3 +245,37 @@ class TestRegularGrid(TestWithConnector):
             self.assertAlmostEqual(bbox.max_x, 51.0)
             self.assertAlmostEqual(bbox.max_y, 1.0)
             self.assertAlmostEqual(bbox.max_z, 26.0)
+
+    async def test_validate_cell_attribute_length(self):
+        """Test that validation fails when a cell attribute has incorrect length."""
+        with self._mock_geoscience_objects():
+            obj = await Regular3DGrid.create(context=self.context, data=self.example_grid)
+
+            # Manually modify the attribute length in the document to simulate incorrect data
+            obj._document["cell_attributes"][0]["values"]["length"] = 100  # Wrong length
+            obj._rebuild_models()
+
+            with self.assertRaises(ObjectValidationError) as cm:
+                obj.validate()
+            self.assertIn("does not match expected length", str(cm.exception))
+
+    async def test_validate_vertex_attribute_length(self):
+        """Test that validation fails when a vertex attribute has incorrect length."""
+        with self._mock_geoscience_objects():
+            obj = await Regular3DGrid.create(context=self.context, data=self.example_grid)
+
+            # Manually modify the attribute length in the document to simulate incorrect data
+            obj._document["vertex_attributes"][0]["values"]["length"] = 100  # Wrong length
+            obj._rebuild_models()
+
+            with self.assertRaises(ObjectValidationError) as cm:
+                obj.validate()
+            self.assertIn("does not match expected length", str(cm.exception))
+
+    async def test_validate_multiple_attributes_same_length(self):
+        """Test that validation passes when all cell attributes have correct length."""
+        with self._mock_geoscience_objects():
+            obj = await Regular3DGrid.create(context=self.context, data=self.example_grid)
+
+            # Verify validation passes with correct data
+            obj.validate()  # Should not raise

@@ -86,11 +86,17 @@ def delete_jmespath_value(document: dict[str, Any], path: jmespath.ParsedResult 
     document.pop(last_field_name, None)
 
 
-def get_data_client(context: IContext) -> ObjectDataClient:
+def get_data_client(context: IContext | DownloadedObject) -> ObjectDataClient:
     """Get an ObjectDataClient for the current context."""
-    connector = context.get_connector()
-    environment = context.get_environment()
-    return ObjectDataClient(connector=connector, environment=environment, cache=context.get_cache())
+    if isinstance(context, DownloadedObject):
+        connector = context._connector
+        environment = context.metadata.environment
+        cache = context._cache
+    else:
+        connector = context.get_connector()
+        environment = context.get_environment()
+        cache = context.get_cache()
+    return ObjectDataClient(connector=connector, environment=environment, cache=cache)
 
 
 def _response_to_downloaded_object(

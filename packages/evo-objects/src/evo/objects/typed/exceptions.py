@@ -10,6 +10,10 @@
 #  limitations under the License.
 
 
+class DataLoaderError(Exception):
+    """An error occurred while loading data from a Geoscience Object."""
+
+
 class ObjectValidationError(ValueError):
     """Raised when a Geoscience Object fails validation.
 

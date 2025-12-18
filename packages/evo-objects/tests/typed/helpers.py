@@ -53,12 +53,12 @@ class MockClient:
         self.objects = {}
 
     def get_dataframe(self, data: dict) -> pd.DataFrame:
-        return self.data[data["data_id"]]
+        return self.data[data["data"]]
 
     async def upload_dataframe(self, df: pd.DataFrame, *args, **kwargs) -> dict:
         data_id = str(uuid.uuid4())
         self.data[data_id] = df
-        return {"data_id": data_id, "length": df.shape[0]}
+        return {"data": data_id, "length": df.shape[0]}
 
     async def upload_table(self, table, *args, **kwargs) -> dict:
         """Upload a PyArrow table (used for masks and other array data)."""
@@ -66,7 +66,7 @@ class MockClient:
         # Convert PyArrow table to pandas for storage
         self.data[data_id] = table.to_pandas()
         # Return table info with length
-        return {"data_id": data_id, "length": len(table)}
+        return {"data": data_id, "length": len(table)}
 
     async def upload_category_dataframe(self, df: pd.DataFrame, *args, **kwargs) -> dict:
         return {
