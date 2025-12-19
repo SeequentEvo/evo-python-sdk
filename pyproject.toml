@@ -53,7 +53,7 @@ evo-colormaps = { workspace = true }
 evo-files = { workspace = true }
 evo-objects = { workspace = true }
 evo-compute = { workspace = true }
-samples = { path = "samples" }
+code-samples = { path = "code-samples" }
 evo-blockmodels = { workspace = true }
 
 [tool.uv.workspace]
