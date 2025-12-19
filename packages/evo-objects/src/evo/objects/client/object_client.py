@@ -20,7 +20,7 @@ from uuid import UUID
 from pydantic import ConfigDict, TypeAdapter
 
 from evo import jmespath, logging
-from evo.common import APIConnector, ICache, IFeedback
+from evo.common import APIConnector, ICache, IContext, IFeedback
 from evo.common.io.exceptions import DataNotFoundError
 from evo.common.utils import NoFeedback, split_feedback
 
@@ -150,6 +150,25 @@ class DownloadedObject:
             urls_by_name=urls_by_name,
             connector=connector,
             cache=cache,
+        )
+
+    @staticmethod
+    async def from_context(
+        context: IContext,
+        reference: ObjectReference | str,
+    ) -> DownloadedObject:
+        """Download a geoscience object from the service using a context.
+
+        :param context: The context providing the connector and cache.
+        :param reference: The reference to the object to download, or a URL as a string that can be parsed into
+            a reference.
+
+        :raises ValueError: If the reference is invalid, or if the connector base URL does not match the reference hub URL.
+        """
+        return await DownloadedObject.from_reference(
+            connector=context.get_connector(),
+            reference=reference,
+            cache=context.get_cache(),
         )
 
     @property
