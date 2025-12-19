@@ -269,8 +269,7 @@ class Attributes(SchemaList[Attribute]):
         for attribute in self:
             attribute_length = jmespath.search("values.length", attribute.as_dict())
             if attribute_length is None:
-                # Skip attributes without length info (e.g., newly created ones)
-                continue
+                raise ObjectValidationError(f"Can't determine length of attribute '{attribute.name}'")
             if attribute_length != expected_length:
                 raise ObjectValidationError(
                     f"Attribute '{attribute.name}' length ({attribute_length}) does not match expected length ({expected_length})"

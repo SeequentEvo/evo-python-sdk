@@ -333,3 +333,41 @@ class TestRegularGrid(TestWithConnector):
             self.assertAlmostEqual(bbox.max_x - bbox.min_x, 50.0)  # 10 * 5.0
             self.assertAlmostEqual(bbox.max_y - bbox.min_y, 100.0)  # 10 * 10.0
             self.assertAlmostEqual(bbox.max_z - bbox.min_z, 50.0)  # 5 * 10.0
+
+    async def test_json(self):
+        with self._mock_geoscience_objects() as mock_client:
+            # Create an object
+            obj = await Regular3DGrid.create(context=self.context, data=self.example_grid)
+
+            # Get the JSON that was stored (would be sent to the API)
+            object_json = mock_client.objects[str(obj.metadata.url.object_id)]
+
+            # Verify all required properties from the schemas are present
+            # From /objects/regular-3d-grid/1.3.0/regular-3d-grid.schema.json
+            self.assertEqual(object_json["schema"], "/objects/regular-3d-grid/1.3.0/regular-3d-grid.schema.json")
+            self.assertEqual(object_json["origin"], (0, 0, 0))
+            self.assertEqual(object_json["size"], (10, 10, 5))
+            self.assertEqual(object_json["cell_size"], (2.5, 5, 5))
+
+            # From /components/base-spatial-data-properties/1.1.0/base-spatial-data-properties.schema.json
+            self.assertIn("bounding_box", object_json)
+            self.assertEqual(object_json["coordinate_reference_system"], "unspecified")
+
+            # From /components/base-object-properties/1.1.0/base-object-properties.schema.json
+            self.assertEqual(object_json["name"], "Test Grid")
+            self.assertIn("uuid", object_json)
+
+            # Verify optional properties that were provided
+            self.assertEqual(object_json["rotation"], {"dip": 0, "dip_azimuth": 90, "pitch": 0})
+
+            # Verify cell_attributes structure
+            self.assertEqual(len(object_json["cell_attributes"]), 2)
+            self.assertEqual(object_json["cell_attributes"][0]["name"], "value")
+            self.assertEqual(object_json["cell_attributes"][0]["attribute_type"], "scalar")
+            self.assertEqual(object_json["cell_attributes"][1]["name"], "cat")
+            self.assertEqual(object_json["cell_attributes"][1]["attribute_type"], "category")
+
+            # Verify vertex_attributes structure
+            self.assertEqual(len(object_json["vertex_attributes"]), 1)
+            self.assertEqual(object_json["vertex_attributes"][0]["name"], "elevation")
+            self.assertEqual(object_json["vertex_attributes"][0]["attribute_type"], "scalar")

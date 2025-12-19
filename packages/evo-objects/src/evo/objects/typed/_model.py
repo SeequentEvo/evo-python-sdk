@@ -160,21 +160,12 @@ class SchemaModel:
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
 
-        def _is_submodel_type(base_type: Any) -> bool:
-            """Check if a type is a SchemaModel or SchemaList subclass."""
-            try:
-                return isinstance(base_type, type) and issubclass(base_type, (SchemaModel, SchemaList))
-            except TypeError:
-                # issubclass can raise TypeError for some generic types
-                return False
-
         # Initialize with inherited values (copy to avoid mutating parent)
         schema_properties: dict[str, SchemaProperty[Any]] = {}
         sub_models: dict[str, SubModelMetadata] = {}
         for base in cls.__mro__[1:]:
-            if hasattr(base, "_schema_properties"):
+            if issubclass(base, SchemaModel):
                 schema_properties.update(base._schema_properties)
-            if hasattr(base, "_sub_models"):
                 sub_models.update(base._sub_models)
 
         # Resolve string annotations using get_type_hints
@@ -195,7 +186,9 @@ class SchemaModel:
             if schema_location is None:
                 continue
 
-            if _is_submodel_type(base_type):
+            # To robustly check for SchemaModel/SchemaList, we need to strip any generic or Annotated wrappers
+            bare_base_type = get_origin(base_type) or base_type
+            if issubclass(bare_base_type, (SchemaModel, SchemaList)):
                 data_field = data_location.field_path if data_location else None
                 sub_models[field_name] = SubModelMetadata(
                     model_type=base_type,
@@ -220,10 +213,10 @@ class SchemaModel:
     def __init__(self, context: ModelContext | DownloadedObject, document: dict[str, Any]) -> None:
         """Initialize the SchemaModel.
 
-        :param context: Either a ModelContext or a source (DownloadedObject/IContext) to wrap in one.
+        :param context: Either a ModelContext or a DownloadedObject this model is associated with.
         :param document: The document dictionary representing the Geoscience Object.
         """
-        if hasattr(context, "metadata"):
+        if isinstance(context, DownloadedObject):
             self._context = ModelContext(obj=context)
         else:
             self._context = context
@@ -279,8 +272,7 @@ class SchemaModel:
         result: dict[str, Any] = {}
         for key, prop in cls._schema_properties.items():
             value = getattr(data, key, None)
-            if value is not None:
-                prop.apply_to(result, value)
+            prop.apply_to(result, value)
         for metadata in cls._sub_models.values():
             if metadata.data_field:
                 sub_data = getattr(data, metadata.data_field, None)

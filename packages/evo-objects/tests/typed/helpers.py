@@ -20,20 +20,24 @@ from unittest.mock import Mock
 import pandas as pd
 
 from evo.common import Environment, IContext
-from evo.objects import ObjectReference, ObjectSchema
+from evo.objects import DownloadedObject, ObjectReference, ObjectSchema
 
 
-class MockDownloadedObject:
+class MockDownloadedObject(DownloadedObject):
     def __init__(self, mock_client: MockClient, object_dict: dict, version_id: str = "1"):
         self.mock_client = mock_client
         self.object_dict = object_dict
-        self.metadata = Mock()
-        self.metadata.schema_id = ObjectSchema.from_id(object_dict["schema"])
-        self.metadata.url = ObjectReference.new(
+        self._metadata = Mock()
+        self._metadata.schema_id = ObjectSchema.from_id(object_dict["schema"])
+        self._metadata.url = ObjectReference.new(
             environment=mock_client.environment,
             object_id=uuid.UUID(object_dict["uuid"]),
         )
-        self.metadata.version_id = version_id
+        self._metadata.version_id = version_id
+
+    @property
+    def metadata(self):
+        return self._metadata
 
     def as_dict(self):
         return self.object_dict
