@@ -13,6 +13,48 @@
 
 **Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-sdk-common@v0.5.12...evo-sdk-common@v0.5.13
 
+## evo-sdk@v0.1.17
+## What's Changed
+### evo-sdk
+* Sample script for file service by @shivangj10 in https://github.com/SeequentEvo/evo-python-sdk/pull/159
+* Redesign OAuth success/decline pages by @GriffinBaxterSeequent in https://github.com/SeequentEvo/evo-python-sdk/pull/160
+
+## New Contributors
+* @shivangj10 made their first contribution in https://github.com/SeequentEvo/evo-python-sdk/pull/159
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-sdk@v0.1.16...evo-sdk@v0.1.17
+
+## evo-sdk-common@v0.5.12
+## What's Changed
+### evo-sdk-common
+* Redesign OAuth success/decline pages by @GriffinBaxterSeequent in https://github.com/SeequentEvo/evo-python-sdk/pull/160
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-sdk-common@v0.5.11...evo-sdk-common@v0.5.12
+
+## evo-sdk@v0.1.16
+## What's Changed
+### evo-sdk
+* Colourmaps by @davidknight-seequent in https://github.com/SeequentEvo/evo-python-sdk/pull/147
+* Blockmodel list models by @rachelcarpenterseequent in https://github.com/SeequentEvo/evo-python-sdk/pull/148
+* Add a method to update column metadata ie units by @rachelcarpenterseequent in https://github.com/SeequentEvo/evo-python-sdk/pull/149
+* Add a method to rename blockmodel columns to the SDK by @rachelcarpenterseequent in https://github.com/SeequentEvo/evo-python-sdk/pull/150
+* Add a method for deleting columns by @rachelcarpenterseequent in https://github.com/SeequentEvo/evo-python-sdk/pull/152
+* Add methods for listing blockmodel versions. by @rachelcarpenterseequent in https://github.com/SeequentEvo/evo-python-sdk/pull/153
+* New release of the blockmodel sdk by @rachelcarpenterseequent in https://github.com/SeequentEvo/evo-python-sdk/pull/155
+* Refactor code structure for improved readability and maintainability by @davidknight-seequent in https://github.com/SeequentEvo/evo-python-sdk/pull/156
+* Update metadata headers to a more standardised format by @GriffinBaxterSeequent in https://github.com/SeequentEvo/evo-python-sdk/pull/158
+
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-sdk@v0.1.15...evo-sdk@v0.1.16
+
+## evo-sdk-common@v0.5.11
+## What's Changed
+### evo-sdk-common
+* Update metadata headers to a more standardised format by @GriffinBaxterSeequent in https://github.com/SeequentEvo/evo-python-sdk/pull/158
+
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-sdk-common@v0.5.10...evo-sdk-common@v0.5.11
+
 ## evo-blockmodels@v0.1.0
 ### What's changed
 #### evo-blockmodels
