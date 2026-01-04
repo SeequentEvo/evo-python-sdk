@@ -191,8 +191,9 @@ class OAuthRedirectHandler:
                 title = request.query.getone("error")  # Raises KeyError if `error` is missing.
                 detail = request.query.getone("error_description", None)
                 error_message = detail or title
-                escaped_error_message = html.escape(error_message) if error_message else error_message
-                await response.write(_build_redirect_html_failed(escaped_error_message))
+                await response.write(
+                    _build_redirect_html_failed(html.escape(error_message) if error_message else error_message)
+                )
                 raise OAuthError(error_message)  # Report the more detailed error message if it is available.
 
             await response.write(_build_redirect_html_success())
