@@ -723,6 +723,7 @@ class BlockModelAPIClient(BaseAPIClient):
         Units for the columns can be provided in the `units` dictionary.
 
         This method requires the `pyarrow` package to be installed, and the 'cache' parameter to be set in the constructor.
+
         :param bm_id: The ID of the block model to add columns to.
         :param data: The data containing the new columns to add.
         :param new_columns: A list of new column names to add to the block model.
