@@ -31,7 +31,7 @@ from .data import (
     WorkspaceOrderByEnum,
     WorkspaceRole,
 )
-from .endpoints.api import AdminApi, GeneralApi, ThumbnailsApi, WorkspacesApi
+from .endpoints.api import AdminApi, GeneralApi, ThumbnailsApi, WorkspacesApi, InstanceUsersApi
 from .endpoints.models import (
     BasicWorkspaceResponse,
     CreateWorkspaceRequest,
@@ -41,6 +41,13 @@ from .endpoints.models import (
     UpdateWorkspaceRequest,
     WorkspaceRoleOptionalResponse,
     WorkspaceRoleRequiredResponse,
+    ListInstanceUsersResponse,
+    AddInstanceUsersRequest,
+    AddInstanceUsersResponse,
+    UserRoleMapping,
+    UpdateInstanceUserRolesRequest,
+    ListInstanceUserInvitationsResponse,
+    ListInstanceRolesResponse,
 )
 from .endpoints.models import BoundingBox as PydanticBoundingBox
 from .endpoints.models import Coordinate as PydanticCoordinate
@@ -63,6 +70,7 @@ class WorkspaceAPIClient:
         self._admin_api = AdminApi(connector)
         self._general_api = GeneralApi(connector)
         self._thumbnails_api = ThumbnailsApi(connector)
+        self._instance_users_api = InstanceUsersApi(connector)
 
     @classmethod
     def from_context(cls, context: IContext) -> WorkspaceAPIClient:
@@ -425,3 +433,40 @@ class WorkspaceAPIClient:
             org_id=str(self._org_id), workspace_id=str(workspace_id), update_workspace_request=update_workspace_request
         )
         return self.__parse_workspace_model(model)
+
+
+    async def list_instance_users(self, limit: int | None = None, offset: int | None = None) -> ListInstanceUsersResponse:
+
+        return await self._instance_users_api.list_instance_users(org_id=str(self._org_id), limit=limit, offset=offset)
+
+    async def add_user_to_instance(self, user_id: UUID, roles: list[UUID]) -> AddInstanceUsersResponse:
+
+        add_instance_users_request = AddInstanceUsersRequest(
+            users = [UserRoleMapping(
+                user_id=user_id,
+                role=roles
+            )]
+        )
+
+        response = await self._instance_users_api.add_instance_users(org_id=str(self._org_id), add_instance_users_request=add_instance_users_request)
+
+        return response
+
+    async def list_instance_user_invitations(self) -> ListInstanceUserInvitationsResponse:
+        return await self._instance_users_api.list_instance_user_invitations(org_id=str(self._org_id))
+
+    async def delete_instance_user_invitation(self, invitation_id: UUID) -> None:
+        await self._instance_users_api.delete_instance_user_invitation(org_id=str(self._org_id), invitation_id=str(invitation_id))
+
+    async def list_instance_user_roles(self) -> ListInstanceRolesResponse:
+        return await self._instance_users_api.list_instance_user_roles(org_id=str(self._org_id))
+
+    async def remove_instance_user(self, user_id: UUID) -> None:
+        await self._instance_users_api.remove_instance_user(org_id=str(self._org_id), user_id=str(user_id))
+
+    async def update_instance_user_roles(self, user_id: UUID, roles: list[UUID]):
+        update_instance_user_roles_request = UpdateInstanceUserRolesRequest(
+            user_id=user_id,
+            roles=roles
+        )
+        return await self._instance_users_api.update_instance_user_roles(org_id=str(self._org_id), user_id=str(user_id), update_instance_user_roles_request=update_instance_user_roles_request)
