@@ -30,6 +30,11 @@ from .data import (
     Workspace,
     WorkspaceOrderByEnum,
     WorkspaceRole,
+    InstanceUserWithEmail,
+    InstanceUserRole,
+    InstanceUserInvitation,
+    InstanceUserRoleWithPermissions,
+    InstanceUser,
 )
 from .endpoints.api import AdminApi, GeneralApi, ThumbnailsApi, WorkspacesApi, InstanceUsersApi
 from .endpoints.models import (
@@ -48,6 +53,8 @@ from .endpoints.models import (
     UpdateInstanceUserRolesRequest,
     ListInstanceUserInvitationsResponse,
     ListInstanceRolesResponse,
+    BaseInstanceUserResponse,
+
 )
 from .endpoints.models import BoundingBox as PydanticBoundingBox
 from .endpoints.models import Coordinate as PydanticCoordinate
@@ -435,38 +442,185 @@ class WorkspaceAPIClient:
         return self.__parse_workspace_model(model)
 
 
-    async def list_instance_users(self, limit: int | None = None, offset: int | None = None) -> ListInstanceUsersResponse:
+    async def _parse_instance_user_model(self, model: BaseInstanceUserResponse) -> InstanceUser:
+        return InstanceUser(
+            user_id=model.id,
+            roles=[InstanceUserRole(
+                role_id=role.id,
+                name=role.name,
+                description=role.description
+            ) for role in model.roles]
+        )
 
-        return await self._instance_users_api.list_instance_users(org_id=str(self._org_id), limit=limit, offset=offset)
+    async def _parse_instance_user_with_email_model(self, model: BaseInstanceUserResponse) -> InstanceUserWithEmail:
+        return InstanceUserWithEmail(
+            email=model.email,
+            full_name=model.full_name,
+            user_id=model.id,
+            roles=[InstanceUserRole(
+                role_id=role.id,
+                name=role.name,
+                description=role.description
+            ) for role in model.roles]
+        )
 
-    async def add_user_to_instance(self, user_id: UUID, roles: list[UUID]) -> AddInstanceUsersResponse:
+    async def list_instance_users(self, limit: int | None = None, offset: int | None = None) -> Page[InstanceUserWithEmail]:
+
+        if offset is None:
+            offset = 0
+        if limit is None:
+            limit = 50
+
+        response = await self._instance_users_api.list_instance_users(org_id=str(self._org_id), limit=limit, offset=offset)
+
+        if response.links.next:
+            total = -1
+        else:
+            total = len(response.results) + offset
+
+        return Page(
+            offset=offset,
+            limit=limit,
+            total=total,
+            items=[await self._parse_instance_user_with_email_model(item) for item in response.results],
+        )
+
+    async def list_all_instance_users(self, limit: int | None = None, offset: int | None = None) -> list[InstanceUserWithEmail]:
+        instance_users: list[InstanceUserWithEmail] = []
+        if offset is None:
+            offset = 0
+        if limit is None:
+            limit = 50
+
+        while True:
+            instance_user_page = await self.list_instance_users(
+                limit=limit,
+                offset=offset,
+            )
+            instance_users += instance_user_page.items()
+            offset += limit
+            if instance_user_page.total != -1:
+                break
+
+        return sorted(instance_users, key=lambda x: x.email)
+
+    async def add_users_to_instance(self, users: dict[str, list[UUID]]) -> list[InstanceUserWithEmail | InstanceUserInvitation]:
 
         add_instance_users_request = AddInstanceUsersRequest(
-            users = [UserRoleMapping(
-                user_id=user_id,
-                role=roles
-            )]
+            users=[UserRoleMapping(
+                email=email,
+                roles=roles
+            ) for email, roles in users.items()]
         )
 
         response = await self._instance_users_api.add_instance_users(org_id=str(self._org_id), add_instance_users_request=add_instance_users_request)
 
-        return response
+        result: list[InstanceUserWithEmail | InstanceUserInvitation] = []
 
-    async def list_instance_user_invitations(self) -> ListInstanceUserInvitationsResponse:
-        return await self._instance_users_api.list_instance_user_invitations(org_id=str(self._org_id))
+        for item in response.invitations:
+            result.append(InstanceUserInvitation(
+                email=item.email,
+                invitation_id=item.id,
+                roles=[InstanceUserRole(
+                    role_id=role.id,
+                    name=role.name,
+                    description=role.description
+                ) for role in item.roles],
+                invited_at=item.created_date,
+                invited_by=item.invited_by_email,
+                status=item.status
+            ))
+
+        for item in response.members:
+            result.append(InstanceUserWithEmail(
+                email=item.email,
+                full_name=item.full_name,
+                user_id=item.id,
+                roles=[InstanceUserRole(
+                    role_id=role.id,
+                    name=role.name,
+                    description=role.description
+                ) for role in item.roles]
+            ))
+
+        return result
+
+
+    async def _parse_instance_user_invitation_model(self, model: ListInstanceUserInvitationsResponse) -> InstanceUserInvitation:
+        return InstanceUserInvitation(
+            email=model.email,
+            invitation_id=model.id,
+            roles=[InstanceUserRole(
+                role_id=role.id,
+                name=role.name,
+                description=role.description
+            ) for role in model.roles],
+            invited_at=model.created_date,
+            invited_by=model.invited_by_email,
+            status=model.status
+        )
+
+    async def list_instance_user_invitations(self, limit: int | None = None, offset: int | None = None) -> Page[InstanceUserInvitation]:
+
+        if offset is None:
+            offset = 0
+        if limit is None:
+            limit = 50
+        response = await self._instance_users_api.list_instance_user_invitations(org_id=str(self._org_id), limit=limit, offset=offset)
+
+        if response.links.next:
+            total = -1
+        else:
+            total = len(response.results) + offset
+
+        return Page(
+            offset=offset,
+            limit=limit,
+            total=total,
+            items=[await self._parse_instance_user_invitation_model(item) for item in response.results],
+        )
+
+    async def list_all_instance_user_invitations(self, limit: int | None = None, offset: int | None = None) -> list[InstanceUserInvitation]:
+        instance_user_invitations: list[InstanceUserInvitation] = []
+        if offset is None:
+            offset = 0
+        if limit is None:
+            limit = 50
+
+        while True:
+            instance_user_invitation_page = await self.list_instance_user_invitations(
+                limit=limit,
+                offset=offset,
+            )
+            instance_user_invitations += instance_user_invitation_page.items()
+            offset += limit
+            if instance_user_invitation_page.total != -1:
+                break
+
+        return sorted(instance_user_invitations, key=lambda x: x.email)
 
     async def delete_instance_user_invitation(self, invitation_id: UUID) -> None:
         await self._instance_users_api.delete_instance_user_invitation(org_id=str(self._org_id), invitation_id=str(invitation_id))
 
-    async def list_instance_user_roles(self) -> ListInstanceRolesResponse:
-        return await self._instance_users_api.list_instance_user_roles(org_id=str(self._org_id))
+    async def _parse_instance_user_role_model(self, model: ListInstanceRolesResponse) -> InstanceUserRoleWithPermissions:
+        return InstanceUserRoleWithPermissions(
+            role_id=model.id,
+            name=model.name,
+            description=model.description,
+            permissions=model.permissions
+        )
+
+    async def list_instance_user_roles(self) -> list[InstanceUserRoleWithPermissions]:
+        response =  await self._instance_users_api.list_instance_user_roles(org_id=str(self._org_id))
+        return [await self._parse_instance_user_role_model(item) for item in response.roles]
 
     async def remove_instance_user(self, user_id: UUID) -> None:
         await self._instance_users_api.remove_instance_user(org_id=str(self._org_id), user_id=str(user_id))
 
-    async def update_instance_user_roles(self, user_id: UUID, roles: list[UUID]):
+    async def update_instance_user_roles(self, user_id: UUID, roles: list[UUID]) -> InstanceUser:
         update_instance_user_roles_request = UpdateInstanceUserRolesRequest(
             user_id=user_id,
             roles=roles
         )
-        return await self._instance_users_api.update_instance_user_roles(org_id=str(self._org_id), user_id=str(user_id), update_instance_user_roles_request=update_instance_user_roles_request)
+        response =  await self._instance_users_api.update_instance_user_roles(org_id=str(self._org_id), user_id=str(user_id), update_instance_user_roles_request=update_instance_user_roles_request)
+        return await self._parse_instance_user_model(response)
