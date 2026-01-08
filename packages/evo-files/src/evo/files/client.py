@@ -199,6 +199,7 @@ class FileAPIClient(BaseAPIClient):
 
         :param file_id: UUID of a file
         :param version_id: ID of the desired file version. By default, the response will return the latest version.
+        :param deleted: Optional flag to include deleted files.
         :return: A FileMetadata representation of the file on the service
         """
         file_response = await self._api.get_file_by_id(
@@ -224,10 +225,11 @@ class FileAPIClient(BaseAPIClient):
         )
         return _versions_from_listed_versions(file_response.versions)
 
-    async def list_versions_by_id(self, file_id: UUID) -> list[FileVersion]:
+    async def list_versions_by_id(self, file_id: UUID, deleted: bool = False) -> list[FileVersion]:
         """List the versions of a file by ID
 
         :param file_id: UUID of the file.
+        :param deleted: Optional flag to include deleted files.
         :return: A sorted list of file versions. The latest version is the first element of the list.
         """
         file_response = await self._api.get_file_by_id(
@@ -235,6 +237,7 @@ class FileAPIClient(BaseAPIClient):
             workspace_id=str(self._environment.workspace_id),
             file_id=str(file_id),
             include_versions=True,
+            deleted=deleted,
         )
         return _versions_from_listed_versions(file_response.versions)
 
@@ -255,12 +258,12 @@ class FileAPIClient(BaseAPIClient):
         metadata = self._metadata_from_endpoint_model(response)
         return FileAPIDownload(connector=self._connector, metadata=metadata, initial_url=response.download)
 
-    async def prepare_download_by_id(self, file_id: UUID, version_id: str | None = None) -> FileAPIDownload:
+    async def prepare_download_by_id(self, file_id: UUID, version_id: str | None = None, deleted: bool = False) -> FileAPIDownload:
         """Prepares a file for download by ID.
 
         :param file_id: UUID of the file.
         :param version_id: Version of the file.
-
+        :param deleted: Optional flag to include deleted files.
         :return: A FileAPIDownload object.
         """
         response = await self._api.get_file_by_id(
@@ -268,6 +271,7 @@ class FileAPIClient(BaseAPIClient):
             workspace_id=str(self._environment.workspace_id),
             file_id=str(file_id),
             version_id=version_id,
+            deleted=deleted,
         )
         metadata = self._metadata_from_endpoint_model(response)
         return FileAPIDownload(connector=self._connector, metadata=metadata, initial_url=response.download)

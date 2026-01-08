@@ -382,7 +382,7 @@ class TestFileApiClient(TestWithConnector):
 
         self.assert_request_made(
             method=RequestMethod.GET,
-            path=f"{self.base_path}/files/{file_id}",
+            path=f"{self.base_path}/files/{file_id}?deleted=False",
             headers={"Accept": "application/json"},
         )
         self.assertEqual(expected_metadata, actual_metadata)
@@ -422,7 +422,7 @@ class TestFileApiClient(TestWithConnector):
         self.assertEqual(expected_metadata, download.metadata)
         self.assert_request_made(
             method=RequestMethod.GET,
-            path=f"{self.base_path}/files/{file_id}",
+            path=f"{self.base_path}/files/{file_id}?deleted=False",
             headers={"Accept": "application/json"},
         )
 
@@ -514,7 +514,7 @@ class TestFileApiClient(TestWithConnector):
         self.assertEqual(versions, expected_versions)
         self.assert_request_made(
             method=RequestMethod.GET,
-            path=f"{self.base_path}/files/{file_id}?include_versions=True",
+            path=f"{self.base_path}/files/{file_id}?include_versions=True&deleted=False",
             headers={"Accept": "application/json"},
         )
 
@@ -579,4 +579,18 @@ class TestFileApiClient(TestWithConnector):
         self.assert_request_made(
             method=RequestMethod.DELETE,
             path=f"{self.base_path}/files/{file_id}",
+        )
+
+    async def test_restore_file_by_id(self) -> None:
+        file_id = UUID(int=7)
+        with self.transport.set_http_response(
+            status_code=204,
+            content="",
+            headers={"Content-Type": "application/json"},
+        ):
+            await self.file_api_client.restore_file_by_id(file_id)
+        self.assert_request_made(
+            method=RequestMethod.PUT,
+            path=f"{self.base_path}/files/{file_id}?deleted=False",
+            headers={"Accept": "application/json"},
         )
