@@ -12,6 +12,7 @@
 import contextlib
 import json
 import warnings
+import os
 from collections.abc import AsyncIterator
 from typing import Generic, TypeVar
 
@@ -28,7 +29,80 @@ logger = logging.getLogger("notebooks.oauth")
 
 _TOKEN_KEY = "NotebookOAuth.token"
 
+_LOCAL_HOSTNAMES = {"127.0.0.1", "localhost"}
+
 _T_token = TypeVar("_T_token", bound=oauth.AccessToken)
+
+
+def _is_notebook_definitely_remote() -> bool:
+    """Best-effort heuristic to detect obviously remote / hosted notebook environments.
+
+    The goal here is *not* to be perfect, but to avoid warning users who are
+    clearly running on a local Jupyter instance (typically bound to
+    http://127.0.0.1 or http://localhost).
+
+    We treat the following as *remote*:
+    - Presence of well-known JupyterHub / cloud notebook env vars.
+
+    Anything not clearly identified as remote is treated as "local/unknown"
+    and will not trigger the warning.
+    """
+
+    env = os.environ
+
+    # Common JupyterHub / cloud indicators. This list is intentionally small
+    # and conservative; we only want to flag cases that are very likely to be
+    # remote or multi-user.
+    cloud_indicators = [
+        "JUPYTERHUB_API_URL",  # JupyterHub deployments
+        "JUPYTERHUB_SERVICE_PREFIX",
+        "JUPYTERHUB_HOST",
+        "COLAB_GPU",  # Google Colab
+        "VSCODE_CWD",  # VS Code remote / web contexts
+        "PAPERMILL_EXECUTION_ENV",  # Some managed notebook runners
+    ]
+
+    if any(key in env for key in cloud_indicators):
+        return True
+
+    # If the user has explicitly configured a public host, assume remote.
+    # These env vars are not standardised across all Jupyter frontends, but
+    # are used in several deployments; we only treat them as remote when the
+    # host clearly isn't a localhost alias.
+    candidate_hosts = []
+    for var in ("JUPYTERHUB_BIND_URL", "JUPYTER_SERVER_URL", "JUPYTER_BASE_URL"):
+        value = env.get(var)
+        if not value:
+            continue
+        candidate_hosts.append(value)
+
+    # A very small and conservative hostname check: if the configured URL
+    # string contains something that looks non-local, treat it as remote.
+    for value in candidate_hosts:
+        lower = value.lower()
+        if not any(local in lower for local in _LOCAL_HOSTNAMES):
+            return True
+
+    return False
+
+
+def _should_warn_insecure_notebook_usage() -> bool:
+    """Return True if we should emit the insecure-usage warning.
+
+    The user requested that we only warn when *not* running a local Jupyter
+    notebook. Because detecting the actual notebook URL/host is unreliable
+    without additional heavy dependencies (and highly environment-specific),
+    we use the following conservative policy:
+
+    - If we can clearly see indicators of a remote / hosted notebook
+      environment, we return True (emit the warning).
+    - Otherwise (local or unknown), we return False and suppress the warning.
+
+    This means we might *not* warn in some edge cases that are actually
+    remote, but we will avoid spamming users of typical local notebooks.
+    """
+
+    return _is_notebook_definitely_remote()
 
 
 class _OAuthEnv(Generic[_T_token]):
@@ -105,10 +179,11 @@ class AuthorizationCodeAuthorizer(_NotebookAuthorizerMixin[oauth.AccessToken], o
         :param scopes: The OAuth scopes to request.
         :param env: The environment to store the OAuth token in.
         """
-        warnings.warn(
-            "The evo.notebooks.AuthorizationCodeAuthorizer is not secure, and should only ever be used in Jupyter"
-            " notebooks in a private environment."
-        )
+        if _should_warn_insecure_notebook_usage():
+            warnings.warn(
+                "The evo.notebooks.AuthorizationCodeAuthorizer is not secure, and should only ever be used in Jupyter"
+                " notebooks in a private environment."
+            )
         super().__init__(oauth_connector=oauth_connector, redirect_url=redirect_url, scopes=scopes)
         self._env = _OAuthEnv(env)
 
