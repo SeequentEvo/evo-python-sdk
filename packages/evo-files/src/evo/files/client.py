@@ -194,7 +194,7 @@ class FileAPIClient(BaseAPIClient):
         )
         return self._metadata_from_endpoint_model(file_response)
 
-    async def get_file_by_id(self, file_id: UUID, version_id: str | None = None) -> FileMetadata:
+    async def get_file_by_id(self, file_id: UUID, version_id: str | None = None, deleted: bool = False) -> FileMetadata:
         """Get a file by its ID.
 
         :param file_id: UUID of a file
@@ -206,6 +206,7 @@ class FileAPIClient(BaseAPIClient):
             workspace_id=str(self._environment.workspace_id),
             file_id=str(file_id),
             version_id=version_id,
+            deleted=deleted,
         )
         return self._metadata_from_endpoint_model(file_response)
 
@@ -310,6 +311,18 @@ class FileAPIClient(BaseAPIClient):
             file_id=file_id,
             version_id=response.version_id,
             initial_url=response.upload,
+        )
+
+    async def restore_file_by_id(self, file_id: UUID) -> None:
+        """Restore a deleted file by ID.
+
+        :param file_id: UUID of the file.
+        """
+        await self._api.update_file_by_id(
+            organisation_id=str(self._environment.org_id),
+            workspace_id=str(self._environment.workspace_id),
+            file_id=str(file_id),
+            deleted=False,
         )
 
     async def delete_file_by_path(self, path: str) -> None:
