@@ -9,6 +9,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+from .block_model_ref import (
+    BlockModelAttribute,
+    BlockModelGeometry,
+    BlockModelRef,
+    BlockModelRefData,
+)
 from .pointset import PointSet, PointSetData
 from .regular_grid import (
     Regular3DGrid,
@@ -19,6 +25,10 @@ from .tensor_grid import Tensor3DGrid, Tensor3DGridData
 from .types import BoundingBox, CoordinateReferenceSystem, EpsgCode, Point3, Rotation, Size3d, Size3i
 
 __all__ = [
+    "BlockModelAttribute",
+    "BlockModelGeometry",
+    "BlockModelRef",
+    "BlockModelRefData",
     "BoundingBox",
     "CoordinateReferenceSystem",
     "EpsgCode",
