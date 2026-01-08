@@ -151,6 +151,53 @@ class WorkspaceAPIClient:
             full_name=model.full_name,
         )
 
+    @staticmethod
+    async def _parse_instance_user_model(model: BaseInstanceUserResponse) -> InstanceUser:
+        return InstanceUser(
+            user_id=model.id,
+            roles=[InstanceUserRole(
+                role_id=role.id,
+                name=role.name,
+                description=role.description
+            ) for role in model.roles]
+        )
+
+    @staticmethod
+    async def _parse_instance_user_with_email_model(model: BaseInstanceUserResponse) -> InstanceUserWithEmail:
+        return InstanceUserWithEmail(
+            email=model.email,
+            full_name=model.full_name,
+            user_id=model.id,
+            roles=[InstanceUserRole(
+                role_id=role.id,
+                name=role.name,
+                description=role.description
+            ) for role in model.roles]
+        )
+
+
+    async def _parse_instance_user_invitation_model(self, model: ListInstanceUserInvitationsResponse) -> InstanceUserInvitation:
+        return InstanceUserInvitation(
+            email=model.email,
+            invitation_id=model.id,
+            roles=[InstanceUserRole(
+                role_id=role.id,
+                name=role.name,
+                description=role.description
+            ) for role in model.roles],
+            invited_at=model.created_date,
+            invited_by=model.invited_by_email,
+            status=model.status
+        )
+
+    async def _parse_instance_user_role_model(self, model: ListInstanceRolesResponse) -> InstanceUserRoleWithPermissions:
+        return InstanceUserRoleWithPermissions(
+            role_id=model.id,
+            name=model.name,
+            description=model.description,
+            permissions=model.permissions
+        )
+
     async def list_user_roles(
         self,
         workspace_id: UUID,
@@ -441,30 +488,15 @@ class WorkspaceAPIClient:
         )
         return self.__parse_workspace_model(model)
 
-
-    async def _parse_instance_user_model(self, model: BaseInstanceUserResponse) -> InstanceUser:
-        return InstanceUser(
-            user_id=model.id,
-            roles=[InstanceUserRole(
-                role_id=role.id,
-                name=role.name,
-                description=role.description
-            ) for role in model.roles]
-        )
-
-    async def _parse_instance_user_with_email_model(self, model: BaseInstanceUserResponse) -> InstanceUserWithEmail:
-        return InstanceUserWithEmail(
-            email=model.email,
-            full_name=model.full_name,
-            user_id=model.id,
-            roles=[InstanceUserRole(
-                role_id=role.id,
-                name=role.name,
-                description=role.description
-            ) for role in model.roles]
-        )
-
     async def list_instance_users(self, limit: int | None = None, offset: int | None = None) -> Page[InstanceUserWithEmail]:
+        """
+        Returns a page of the list of instance users.
+
+        :param limit: The maximum number of users to return.
+        :param offset: The offset for pagination.
+
+        :returns: A page of instance users with email addresses.
+        """
 
         if offset is None:
             offset = 0
@@ -486,6 +518,13 @@ class WorkspaceAPIClient:
         )
 
     async def list_all_instance_users(self, limit: int | None = None, offset: int | None = None) -> list[InstanceUserWithEmail]:
+        """
+        Returns the complete list of instance users.
+        :param limit: The maximum number of users to return.
+        :param offset: The offset for pagination.
+
+        :returns: A list of instance users with email addresses.
+        """
         instance_users: list[InstanceUserWithEmail] = []
         if offset is None:
             offset = 0
@@ -505,6 +544,12 @@ class WorkspaceAPIClient:
         return sorted(instance_users, key=lambda x: x.email)
 
     async def add_users_to_instance(self, users: dict[str, list[UUID]]) -> list[InstanceUserWithEmail | InstanceUserInvitation]:
+        """
+        Adds users to the instance.
+
+        :param users: A dictionary mapping of user emails to their roles.
+        :returns: A list of the users that were added and/or the invitations that were sent.
+        """
 
         add_instance_users_request = AddInstanceUsersRequest(
             users=[UserRoleMapping(
@@ -546,21 +591,14 @@ class WorkspaceAPIClient:
         return result
 
 
-    async def _parse_instance_user_invitation_model(self, model: ListInstanceUserInvitationsResponse) -> InstanceUserInvitation:
-        return InstanceUserInvitation(
-            email=model.email,
-            invitation_id=model.id,
-            roles=[InstanceUserRole(
-                role_id=role.id,
-                name=role.name,
-                description=role.description
-            ) for role in model.roles],
-            invited_at=model.created_date,
-            invited_by=model.invited_by_email,
-            status=model.status
-        )
-
     async def list_instance_user_invitations(self, limit: int | None = None, offset: int | None = None) -> Page[InstanceUserInvitation]:
+        """
+        Returns a page of the list of instance user invitations.
+
+        :param limit: The maximum number of invitations to return.
+        :param offset: The offset for pagination.
+        :returns: A page of instance user invitations.
+        """
 
         if offset is None:
             offset = 0
@@ -581,6 +619,13 @@ class WorkspaceAPIClient:
         )
 
     async def list_all_instance_user_invitations(self, limit: int | None = None, offset: int | None = None) -> list[InstanceUserInvitation]:
+        """
+        Returns the complete list of instance user invitations.
+
+        :param limit: The maximum number of invitations to fetch per request.
+        :param offset: The offset for pagination.
+        :returns: A list of instance user invitations.
+        """
         instance_user_invitations: list[InstanceUserInvitation] = []
         if offset is None:
             offset = 0
@@ -600,24 +645,36 @@ class WorkspaceAPIClient:
         return sorted(instance_user_invitations, key=lambda x: x.email)
 
     async def delete_instance_user_invitation(self, invitation_id: UUID) -> None:
+        """
+        Deletes an instance user invitation.
+        :param invitation_id: The ID of the invitation to delete.
+        """
         await self._instance_users_api.delete_instance_user_invitation(org_id=str(self._org_id), invitation_id=str(invitation_id))
 
-    async def _parse_instance_user_role_model(self, model: ListInstanceRolesResponse) -> InstanceUserRoleWithPermissions:
-        return InstanceUserRoleWithPermissions(
-            role_id=model.id,
-            name=model.name,
-            description=model.description,
-            permissions=model.permissions
-        )
-
     async def list_instance_user_roles(self) -> list[InstanceUserRoleWithPermissions]:
+        """
+        Returns the list of roles available in the instance.
+        :returns: A list of instance user roles with their permissions.
+        """
+
         response =  await self._instance_users_api.list_instance_user_roles(org_id=str(self._org_id))
         return [await self._parse_instance_user_role_model(item) for item in response.roles]
 
     async def remove_instance_user(self, user_id: UUID) -> None:
+        """
+        Removes a user from the instance.
+        :param user_id: The ID of the user to remove.
+        """
         await self._instance_users_api.remove_instance_user(org_id=str(self._org_id), user_id=str(user_id))
 
     async def update_instance_user_roles(self, user_id: UUID, roles: list[UUID]) -> InstanceUser:
+        """
+        Updates the roles of an instance user.
+
+        :param user_id: The ID of the user to update.
+        :param roles: The new roles to assign to the user.
+        :returns: The updated instance user.
+        """
         update_instance_user_roles_request = UpdateInstanceUserRolesRequest(
             user_id=user_id,
             roles=roles
