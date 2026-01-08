@@ -258,7 +258,9 @@ class FileAPIClient(BaseAPIClient):
         metadata = self._metadata_from_endpoint_model(response)
         return FileAPIDownload(connector=self._connector, metadata=metadata, initial_url=response.download)
 
-    async def prepare_download_by_id(self, file_id: UUID, version_id: str | None = None, deleted: bool = False) -> FileAPIDownload:
+    async def prepare_download_by_id(
+        self, file_id: UUID, version_id: str | None = None, deleted: bool = False
+    ) -> FileAPIDownload:
         """Prepares a file for download by ID.
 
         :param file_id: UUID of the file.
