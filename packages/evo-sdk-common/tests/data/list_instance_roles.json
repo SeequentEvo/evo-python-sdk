@@ -1,0 +1,20 @@
+{
+    "roles": [
+        {
+            "id": "00000000-0000-0000-0000-000000000001",
+            "name": "Evo User",
+            "description": "evo user",
+            "permissions": [
+                "evo user permission"
+            ]
+        },
+        {
+            "id": "00000000-0000-0000-0000-000000000002",
+            "name": "Evo Admin",
+            "description": "evo admin",
+            "permissions": [
+                "evo admin permission"
+            ]
+        }
+    ]
+}
