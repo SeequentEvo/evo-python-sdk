@@ -14,8 +14,8 @@ from unittest import TestCase
 
 from evo.objects.typed import (
     BlockModelAttribute,
+    BlockModelData,
     BlockModelGeometry,
-    BlockModelRefData,
     Point3,
     Size3d,
     Size3i,
@@ -85,9 +85,9 @@ class TestBlockModelAttribute(TestCase):
         self.assertIsNone(attr.unit)
 
 
-class TestBlockModelRefData(TestCase):
+class TestBlockModelData(TestCase):
     def test_create_data(self):
-        """Test creating BlockModelRefData."""
+        """Test creating BlockModelData."""
         geom = BlockModelGeometry(
             model_type="regular",
             origin=Point3(0, 0, 0),
@@ -96,7 +96,7 @@ class TestBlockModelRefData(TestCase):
         )
         bm_uuid = uuid.uuid4()
 
-        data = BlockModelRefData(
+        data = BlockModelData(
             name="Test Block Model",
             block_model_uuid=bm_uuid,
             geometry=geom,
@@ -117,7 +117,7 @@ class TestBlockModelRefData(TestCase):
             block_size=Size3d(1.0, 2.0, 3.0),
         )
 
-        data = BlockModelRefData(
+        data = BlockModelData(
             name="Test",
             block_model_uuid=uuid.uuid4(),
             geometry=geom,

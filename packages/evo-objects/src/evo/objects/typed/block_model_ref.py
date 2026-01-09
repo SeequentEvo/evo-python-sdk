@@ -9,9 +9,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-"""Typed access for block model references.
+"""Typed access for block models.
 
-A BlockModelRef is a Geoscience Object that references a block model stored in the
+A BlockModel is a Geoscience Object that references a block model stored in the
 Block Model Service. It acts as a proxy, providing typed access to the block model's
 geometry, attributes, and data through the Block Model Service API.
 """
@@ -33,7 +33,7 @@ from evo.objects import SchemaVersion
 
 from .base import BaseSpatialObject, BaseSpatialObjectData, ConstructableObject
 from ._property import SchemaProperty
-from .types import BoundingBox, CoordinateReferenceSystem, EpsgCode, Point3, Size3d, Size3i
+from .types import BoundingBox, EpsgCode, Point3, Size3d, Size3i
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -45,10 +45,11 @@ if TYPE_CHECKING:
     from evo.blockmodels.data import BlockModel as BlockModelMetadata, Version
 
 __all__ = [
+    "BlockModel",
     "BlockModelAttribute",
-    "BlockModelRef",
-    "BlockModelRefData",
+    "BlockModelData",
     "BlockModelGeometry",
+    "RegularBlockModelData",
 ]
 
 
@@ -74,10 +75,39 @@ class BlockModelAttribute:
 
 
 @dataclass(frozen=True, kw_only=True)
-class BlockModelRefData(BaseSpatialObjectData):
-    """Data for creating a BlockModelRef.
+class RegularBlockModelData:
+    """Data for creating a regular block model.
 
-    A BlockModelRef is a reference to a block model stored in the Block Model Service.
+    This creates a new block model in the Block Model Service and a corresponding
+    Geoscience Object reference.
+
+    :param name: The name of the block model.
+    :param origin: The origin point (x, y, z) of the block model.
+    :param n_blocks: The number of blocks in each dimension (nx, ny, nz).
+    :param block_size: The size of each block (dx, dy, dz).
+    :param cell_data: DataFrame with block data. Must contain (x, y, z) or (i, j, k) columns.
+    :param description: Optional description.
+    :param crs: Coordinate reference system (e.g., "EPSG:28354").
+    :param size_unit_id: Unit for block sizes (e.g., "m").
+    :param units: Dictionary mapping column names to unit IDs.
+    """
+
+    name: str
+    origin: Point3
+    n_blocks: Size3i
+    block_size: Size3d
+    cell_data: pd.DataFrame | None = None
+    description: str | None = None
+    crs: str | None = None
+    size_unit_id: str | None = None
+    units: dict[str, str] = field(default_factory=dict)
+
+
+@dataclass(frozen=True, kw_only=True)
+class BlockModelData(BaseSpatialObjectData):
+    """Data for creating a BlockModel reference.
+
+    A BlockModel is a reference to a block model stored in the Block Model Service.
     This creates a Geoscience Object that points to an existing block model.
 
     :param name: The name of the block model reference object.
@@ -180,29 +210,39 @@ def _serialize_attributes(attributes: list[BlockModelAttribute]) -> list[dict]:
     return result
 
 
-class BlockModelRef(BaseSpatialObject, ConstructableObject[BlockModelRefData]):
-    """A GeoscienceObject representing a reference to a block model in the Block Model Service.
+class BlockModel(BaseSpatialObject, ConstructableObject[BlockModelData]):
+    """A GeoscienceObject representing a block model.
 
     This object acts as a proxy, allowing you to access block model data and attributes
     through the Block Model Service while the reference itself is stored as a Geoscience Object.
 
     Example usage:
 
-        # Get an existing block model reference
-        bm_ref = await BlockModelRef.from_reference(context, reference)
+        # Create a new regular block model
+        data = RegularBlockModelData(
+            name="My Block Model",
+            origin=Point3(x=0, y=0, z=0),
+            n_blocks=Size3i(nx=10, ny=10, nz=5),
+            block_size=Size3d(dx=2.5, dy=5.0, dz=5.0),
+            cell_data=my_dataframe,
+        )
+        bm = await BlockModel.create_regular(context, data)
+
+        # Get an existing block model
+        bm = await BlockModel.from_reference(context, reference)
 
         # Access geometry
-        print(f"Origin: {bm_ref.geometry.origin}")
-        print(f"Size: {bm_ref.geometry.n_blocks}")
+        print(f"Origin: {bm.geometry.origin}")
+        print(f"Size: {bm.geometry.n_blocks}")
 
         # Access data through the Block Model Service
-        df = await bm_ref.get_data(columns=["*"])
+        df = await bm.get_data(columns=["*"])
 
         # Create a new attribute on the block model
-        await bm_ref.add_attribute(data_df, "new_attribute", fb=feedback)
+        await bm.add_attribute(data_df, "new_attribute")
     """
 
-    _data_class = BlockModelRefData
+    _data_class = BlockModelData
 
     sub_classification = "block-model"
     creation_schema_version = SchemaVersion(major=1, minor=0, patch=0)
@@ -396,8 +436,8 @@ class BlockModelRef(BaseSpatialObject, ConstructableObject[BlockModelRefData]):
         return version
 
     @classmethod
-    async def _data_to_dict(cls, data: BlockModelRefData, context: IContext) -> dict[str, Any]:
-        """Convert BlockModelRefData to a dictionary for creating the Geoscience Object."""
+    async def _data_to_dict(cls, data: BlockModelData, context: IContext) -> dict[str, Any]:
+        """Convert BlockModelData to a dictionary for creating the Geoscience Object."""
         if cls.creation_schema_version is None:
             raise NotImplementedError("creation_schema_version must be defined")
 
@@ -437,6 +477,65 @@ class BlockModelRef(BaseSpatialObject, ConstructableObject[BlockModelRefData]):
         return result
 
     @classmethod
+    async def create_regular(
+        cls,
+        context: IContext,
+        data: RegularBlockModelData,
+        path: str | None = None,
+        fb: IFeedback = NoFeedback,
+    ) -> Self:
+        """Create a new regular block model.
+
+        This creates a block model in the Block Model Service and a corresponding
+        Geoscience Object reference.
+
+        :param context: The context containing environment, connector, and cache.
+        :param data: The data defining the regular block model to create.
+        :param path: Optional path for the Geoscience Object.
+        :param fb: Optional feedback interface for progress reporting.
+        :return: A new BlockModel instance.
+        """
+        from evo.blockmodels import RegularBlockModel as BMRegularBlockModel
+        from evo.blockmodels import RegularBlockModelData as BMRegularBlockModelData
+        from evo.blockmodels.typed import Point3 as BMPoint3, Size3i as BMSize3i, Size3d as BMSize3d
+        from evo.objects import ObjectReference
+
+        fb.progress(0.0, "Creating block model...")
+
+        # Convert to evo-blockmodels data format
+        bm_data = BMRegularBlockModelData(
+            name=data.name,
+            description=data.description,
+            origin=BMPoint3(data.origin.x, data.origin.y, data.origin.z),
+            n_blocks=BMSize3i(data.n_blocks.nx, data.n_blocks.ny, data.n_blocks.nz),
+            block_size=BMSize3d(data.block_size.dx, data.block_size.dy, data.block_size.dz),
+            cell_data=data.cell_data,
+            crs=data.crs,
+            size_unit_id=data.size_unit_id,
+            units=data.units,
+        )
+
+        # Create the block model via Block Model Service
+        bm = await BMRegularBlockModel.create(context, bm_data, path=path)
+
+        fb.progress(0.6, "Loading block model reference...")
+
+        # Load the Geoscience Object that was created
+        goose_id = bm.metadata.geoscience_object_id
+        if goose_id is None:
+            raise RuntimeError("Block model was created but geoscience_object_id is not set")
+
+        object_ref = ObjectReference.new(
+            environment=context.get_environment(),
+            object_id=goose_id,
+        )
+
+        result = await cls.from_reference(context, object_ref)
+
+        fb.progress(1.0, "Block model created")
+        return result
+
+    @classmethod
     async def from_block_model(
         cls,
         context: IContext,
@@ -446,7 +545,7 @@ class BlockModelRef(BaseSpatialObject, ConstructableObject[BlockModelRefData]):
         path: str | None = None,
         fb: IFeedback = NoFeedback,
     ) -> Self:
-        """Create a BlockModelRef from an existing block model in the Block Model Service.
+        """Create a BlockModel from an existing block model in the Block Model Service.
 
         This fetches the block model metadata from the Block Model Service and creates
         a corresponding Geoscience Object reference.
@@ -457,7 +556,7 @@ class BlockModelRef(BaseSpatialObject, ConstructableObject[BlockModelRefData]):
         :param version_uuid: Optional specific version to reference.
         :param path: Optional path for the Geoscience Object.
         :param fb: Optional feedback interface for progress reporting.
-        :return: A new BlockModelRef instance.
+        :return: A new BlockModel instance.
         """
         from evo.blockmodels import BlockModelAPIClient
         from evo.blockmodels.data import RegularGridDefinition
@@ -504,11 +603,19 @@ class BlockModelRef(BaseSpatialObject, ConstructableObject[BlockModelRefData]):
             version = next((v for v in versions if v.version_uuid == version_uuid), None)
             if version and version.columns:
                 for col in version.columns:
+                    # Try to parse col_id as UUID, but it might not be valid for system columns
+                    col_uuid = None
+                    if col.col_id:
+                        try:
+                            col_uuid = UUID(col.col_id)
+                        except ValueError:
+                            # Not a valid UUID (e.g., system column), skip
+                            pass
                     attributes.append(
                         BlockModelAttribute(
                             name=col.title,
                             attribute_type=col.data_type.value if col.data_type else "Float64",
-                            block_model_column_uuid=UUID(col.col_id) if col.col_id else None,
+                            block_model_column_uuid=col_uuid,
                         )
                     )
 
@@ -523,7 +630,7 @@ class BlockModelRef(BaseSpatialObject, ConstructableObject[BlockModelRefData]):
             else:
                 crs = bm.coordinate_reference_system
 
-        data = BlockModelRefData(
+        ref_data = BlockModelData(
             name=name or bm.name,
             block_model_uuid=block_model_uuid,
             block_model_version_uuid=version_uuid,
@@ -534,7 +641,7 @@ class BlockModelRef(BaseSpatialObject, ConstructableObject[BlockModelRefData]):
 
         fb.progress(0.8, "Saving reference...")
 
-        result = await cls.create(context, data, path=path)
+        result = await cls.create(context, ref_data, path=path)
 
         fb.progress(1.0, "Block model reference created")
         return result
