@@ -1,0 +1,40 @@
+{
+    "links": {
+        "first": "https://unittest.localhost/workspace/orgs/00000000-0000-0000-0000-000000000000/members/invitations?limit=2&offset=0",
+        "next": "https://unittest.localhost/workspace/orgs/00000000-0000-0000-0000-000000000000/members/invitations?limit=2&offset=2",
+        "previous": null,
+        "count": 2
+    },
+    "results": [
+        {
+            "id": "00000000-0000-0000-0000-000000000001",
+            "email": "external.user1@gmail.com",
+            "invited_by_email": "admin.user@bentley.com",
+            "status": "Pending",
+            "created_date": "2026-01-01T12:00:00.000000Z",
+            "expiration_date": "2026-01-15T12:00:00.000000Z",
+            "roles": [
+                {
+                    "id": "00000000-0000-0000-0000-000000000001",
+                    "name": "Evo User",
+                    "description": "evo user"
+                }
+            ]
+        },
+        {
+            "id": "00000000-0000-0000-0000-000000000002",
+            "email": "external.user2@gmail.com",
+            "invited_by_email": "admin.user@bentley.com",
+            "status": "Accepted",
+            "created_date": "2026-01-01T12:00:00.000000Z",
+            "expiration_date": "2026-01-15T12:00:00.000000Z",
+            "roles": [
+                {
+                    "id": "00000000-0000-0000-0000-000000000002",
+                    "name": "Evo Admin",
+                    "description": "evo admin"
+                }
+            ]
+        }
+    ]
+}
