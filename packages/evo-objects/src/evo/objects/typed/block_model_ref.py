@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import sys
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 from uuid import UUID
 
 import pandas as pd
@@ -315,14 +315,14 @@ class BlockModel(BaseSpatialObject, ConstructableObject[BlockModelData]):
     async def get_data(
         self,
         columns: list[str] | None = None,
-        version_uuid: UUID | None = None,
+        version_uuid: UUID | None | Literal["latest"] = "latest",
         fb: IFeedback = NoFeedback,
     ) -> pd.DataFrame:
         """Get block model data as a DataFrame.
 
         :param columns: List of column names to retrieve. Defaults to all columns ["*"].
-        :param version_uuid: Specific version to query. Defaults to the referenced version
-            or latest if no version is referenced.
+        :param version_uuid: Specific version to query. Use "latest" (default) to get the latest version,
+            or None to use the version referenced by this object.
         :param fb: Optional feedback interface for progress reporting.
         :return: DataFrame containing the block model data with user-friendly column names.
         """
@@ -332,9 +332,17 @@ class BlockModel(BaseSpatialObject, ConstructableObject[BlockModelData]):
 
         fb.progress(0.0, "Querying block model data...")
 
-        # Use referenced version if no specific version requested
-        if version_uuid is None:
-            version_uuid = self.block_model_version_uuid
+        # Determine which version to query
+        query_version: UUID | None = None
+        if version_uuid == "latest":
+            # Get the latest version (pass None to block model service)
+            query_version = None
+        elif version_uuid is None:
+            # Use the referenced version
+            query_version = self.block_model_version_uuid
+        else:
+            # Use the explicitly provided version
+            query_version = version_uuid
 
         # Default to all columns
         if columns is None:
@@ -343,7 +351,7 @@ class BlockModel(BaseSpatialObject, ConstructableObject[BlockModelData]):
         table = await client.query_block_model_as_table(
             bm_id=self.block_model_uuid,
             columns=columns,
-            version_uuid=version_uuid,
+            version_uuid=query_version,
             column_headers=ColumnHeaderType.name,  # Use column titles, not UUIDs
         )
 
