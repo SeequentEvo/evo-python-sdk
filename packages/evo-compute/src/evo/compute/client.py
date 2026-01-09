@@ -131,13 +131,15 @@ class JobClient(Generic[T_Result]):
 
     def _get_headers(self) -> dict[str, str]:
         """Get the headers dictionary for API requests.
-        
+
         :return: Headers dictionary with preview header if enabled.
         """
         return {"API-Preview": "opt-in"} if self._preview else {}
 
     @staticmethod
-    def from_url(connector: APIConnector, url: str, result_type: type[T_Result] = dict, preview: bool = False) -> JobClient[T_Result]:
+    def from_url(
+        connector: APIConnector, url: str, result_type: type[T_Result] = dict, preview: bool = False
+    ) -> JobClient[T_Result]:
         """Create a job client from a status URL.
 
         The URL hostname must match the connector base URL.
@@ -218,7 +220,7 @@ class JobClient(Generic[T_Result]):
                 topic=self._topic,
                 task=self._task,
                 job_id=self._job_id,
-                additional_headers= self._get_headers(),
+                additional_headers=self._get_headers(),
             )
 
         if response.error:
@@ -268,7 +270,7 @@ class JobClient(Generic[T_Result]):
                     raise JobPendingError(url=self.url, status=job.status.value)
 
                 if error := job.error:
-                    # The job failed, save the error.   
+                    # The job failed, save the error.
                     self._results = JobError(
                         status=error.status,
                         reason=None,
