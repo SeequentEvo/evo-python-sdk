@@ -129,6 +129,13 @@ class JobClient(Generic[T_Result]):
     def __repr__(self) -> str:
         return self.url
 
+    def _get_headers(self) -> dict[str, str]:
+        """Get the headers dictionary for API requests.
+        
+        :return: Headers dictionary with preview header if enabled.
+        """
+        return {"API-Preview": "opt-in"} if self._preview else {}
+
     @staticmethod
     def from_url(connector: APIConnector, url: str, result_type: type[T_Result] = dict, preview: bool = False) -> JobClient[T_Result]:
         """Create a job client from a status URL.
@@ -219,7 +226,7 @@ class JobClient(Generic[T_Result]):
                 status=response.error.status,
                 reason=None,
                 content=response.error.model_dump(by_alias=True, exclude_unset=True, exclude_defaults=True),
-                headers=self._get_headers(),
+                headers=None,
             )
         else:
             error = None
@@ -304,7 +311,7 @@ class JobClient(Generic[T_Result]):
                 topic=self._topic,
                 task=self._task,
                 job_id=self._job_id,
-                headers={"API-Preview": "opt-in"} if self._preview else {},
+                additional_headers=self._get_headers(),
             )
 
     async def wait_for_results(
