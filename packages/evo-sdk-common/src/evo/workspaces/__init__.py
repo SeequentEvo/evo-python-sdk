@@ -22,6 +22,11 @@ from .data import (
     Workspace,
     WorkspaceOrderByEnum,
     WorkspaceRole,
+    InstanceUserRole,
+    InstanceUser,
+    InstanceUserWithEmail,
+    InstanceUserInvitation,
+    InstanceUserRoleWithPermissions,
 )
 
 __all__ = [
@@ -37,4 +42,9 @@ __all__ = [
     "WorkspaceAPIClient",
     "WorkspaceOrderByEnum",
     "WorkspaceRole",
+    "InstanceUserRole",
+    "InstanceUser",
+    "InstanceUserWithEmail",
+    "InstanceUserInvitation",
+    "InstanceUserRoleWithPermissions",
 ]

@@ -195,6 +195,7 @@ class InstanceUserInvitation:
     email: str
     invitation_id: UUID
     invited_at: datetime
+    expiration_date: datetime
     invited_by: str
     status: str
     roles: list[InstanceUserRole]

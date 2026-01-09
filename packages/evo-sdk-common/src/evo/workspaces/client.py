@@ -16,6 +16,7 @@ from uuid import UUID
 
 from pydantic import ValidationError
 from pydantic.type_adapter import TypeAdapter
+from datetime import timezone
 
 from evo.common import APIConnector, HealthCheckType, IContext, Page, ServiceHealth, ServiceUser
 from evo.common.utils import get_service_health, parse_order_by
@@ -185,7 +186,8 @@ class WorkspaceAPIClient:
                 name=role.name,
                 description=role.description
             ) for role in model.roles],
-            invited_at=model.created_date,
+            invited_at=model.created_date.replace(tzinfo=timezone.utc),
+            expiration_date=model.expiration_date.replace(tzinfo=timezone.utc),
             invited_by=model.invited_by_email,
             status=model.status
         )
@@ -561,35 +563,10 @@ class WorkspaceAPIClient:
         response = await self._instance_users_api.add_instance_users(org_id=str(self._org_id), add_instance_users_request=add_instance_users_request)
 
         result: list[InstanceUserWithEmail | InstanceUserInvitation] = []
-
-        for item in response.invitations:
-            result.append(InstanceUserInvitation(
-                email=item.email,
-                invitation_id=item.id,
-                roles=[InstanceUserRole(
-                    role_id=role.id,
-                    name=role.name,
-                    description=role.description
-                ) for role in item.roles],
-                invited_at=item.created_date,
-                invited_by=item.invited_by_email,
-                status=item.status
-            ))
-
-        for item in response.members:
-            result.append(InstanceUserWithEmail(
-                email=item.email,
-                full_name=item.full_name,
-                user_id=item.id,
-                roles=[InstanceUserRole(
-                    role_id=role.id,
-                    name=role.name,
-                    description=role.description
-                ) for role in item.roles]
-            ))
+        result.extend([await self._parse_instance_user_invitation_model(item) for item in response.invitations])
+        result.extend([await self._parse_instance_user_with_email_model(item) for item in response.members])
 
         return result
-
 
     async def list_instance_user_invitations(self, limit: int | None = None, offset: int | None = None) -> Page[InstanceUserInvitation]:
         """
