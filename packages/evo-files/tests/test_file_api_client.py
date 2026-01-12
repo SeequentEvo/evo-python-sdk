@@ -55,7 +55,7 @@ class TestFileApiClient(TestWithConnector):
         self.assertEqual([], page.items())
         self.assert_request_made(
             method=RequestMethod.GET,
-            path=f"{self.base_path}/files?limit=5000&offset=0",
+            path=f"{self.base_path}/files?limit=5000&offset=0&deleted=False",
             headers={"Accept": "application/json"},
         )
 
@@ -71,7 +71,7 @@ class TestFileApiClient(TestWithConnector):
         self.assertEqual([], page.items())
         self.assert_request_made(
             method=RequestMethod.GET,
-            path=f"{self.base_path}/files?limit=20&offset=10&file_name=x.csv",
+            path=f"{self.base_path}/files?limit=20&offset=10&deleted=False&file_name=x.csv",
             headers={"Accept": "application/json"},
         )
 
@@ -141,7 +141,7 @@ class TestFileApiClient(TestWithConnector):
         self.assertFalse(page_one.is_last)
         self.assert_request_made(
             method=RequestMethod.GET,
-            path=f"{self.base_path}/files?limit=2&offset=0",
+            path=f"{self.base_path}/files?limit=2&offset=0&deleted=False",
             headers={"Accept": "application/json"},
         )
         self.transport.request.reset_mock()
@@ -176,7 +176,7 @@ class TestFileApiClient(TestWithConnector):
         self.assertTrue(page_two.is_last)
         self.assert_request_made(
             method=RequestMethod.GET,
-            path=f"{self.base_path}/files?limit=2&offset=2",
+            path=f"{self.base_path}/files?limit=2&offset=2&deleted=False",
             headers={"Accept": "application/json"},
         )
 
@@ -263,12 +263,12 @@ class TestFileApiClient(TestWithConnector):
         self.assertEqual(expected_files, file_list)
         self.assert_any_request_made(
             method=RequestMethod.GET,
-            path=f"{self.base_path}/files?limit=2&offset=0",
+            path=f"{self.base_path}/files?limit=2&offset=0&deleted=False",
             headers={"Accept": "application/json"},
         )
         self.assert_any_request_made(
             method=RequestMethod.GET,
-            path=f"{self.base_path}/files?limit=2&offset=2",
+            path=f"{self.base_path}/files?limit=2&offset=2&deleted=False",
             headers={"Accept": "application/json"},
         )
 
@@ -588,7 +588,47 @@ class TestFileApiClient(TestWithConnector):
             content="",
             headers={"Content-Type": "application/json"},
         ):
-            await self.file_api_client.restore_file_by_id(file_id)
+            result = await self.file_api_client.restore_file_by_id(file_id)
+        self.assertIsNone(result)
+        self.assert_request_made(
+            method=RequestMethod.PUT,
+            path=f"{self.base_path}/files/{file_id}?deleted=False",
+            headers={"Accept": "application/json"},
+        )
+
+    async def test_restore_file_by_id_with_location_change(self) -> None:
+        file_id = UUID(int=6)
+        get_file_response = load_test_data("get_file.json")
+        expected_metadata = FileMetadata(
+            environment=self.environment,
+            id=file_id,
+            name="points.csv",
+            created_by=ServiceUser(
+                id=UUID(int=16),
+                name="x y",
+                email="test@example.com",
+            ),
+            created_at=utc_datetime(2020, 1, 1, 1, 30),
+            modified_by=ServiceUser(
+                id=UUID(int=16),
+                name="x y",
+                email="test@example.com",
+            ),
+            modified_at=utc_datetime(2020, 1, 1, 1, 30),
+            parent="/",
+            size=10,
+            version_id="1",
+        )
+
+        with self.transport.set_http_response(
+            status_code=303,
+            content=json.dumps(get_file_response),
+            headers={"Content-Type": "application/json"},
+        ):
+            result = await self.file_api_client.restore_file_by_id(file_id)
+
+        self.assertIsNotNone(result)
+        self.assertEqual(expected_metadata, result)
         self.assert_request_made(
             method=RequestMethod.PUT,
             path=f"{self.base_path}/files/{file_id}?deleted=False",

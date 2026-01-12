@@ -24,6 +24,7 @@ from evo.common import (
     ServiceHealth,
     ServiceUser,
 )
+from evo.common.data import EmptyResponse
 from evo.common.utils import get_service_health
 
 from .data import FileMetadata, FileVersion
@@ -131,6 +132,7 @@ class FileAPIClient(BaseAPIClient):
         offset: int = 0,
         limit: int = 5000,
         name: str | None = None,
+        deleted: bool = False,
     ) -> Page[FileMetadata]:
         """List up to `limit` files in the workspace, starting at `offset`.
 
@@ -140,6 +142,7 @@ class FileAPIClient(BaseAPIClient):
         :param offset: The number of files to skip before listing.
         :param limit: Max number of files to list.
         :param name: Filter files by name.
+        :param deleted: Only include deleted files in the listing.
 
         :return: A page of all files from the query.
         """
@@ -151,6 +154,7 @@ class FileAPIClient(BaseAPIClient):
             limit=limit,
             offset=offset,
             file_name=name,
+            deleted=deleted,
         )
         return Page(
             offset=offset,
@@ -159,20 +163,23 @@ class FileAPIClient(BaseAPIClient):
             items=[self._metadata_from_listed_file(file) for file in response.files],
         )
 
-    async def list_all_files(self, limit_per_request: int = 5000, name: str | None = None) -> list[FileMetadata]:
+    async def list_all_files(
+        self, limit_per_request: int = 5000, name: str | None = None, deleted: bool = False
+    ) -> list[FileMetadata]:
         """List all files in the workspace.
 
         This method makes multiple calls to the `list_files` endpoint until all files have been listed.
 
         :param limit_per_request: The maximum number of files to list in one request.
         :param name: Filter files by name.
+        :param deleted: Only include deleted files in the listing.
 
         :return: A list of all files in the workspace.
         """
         items = []
         offset = 0
         while True:
-            page = await self.list_files(offset=offset, limit=limit_per_request, name=name)
+            page = await self.list_files(offset=offset, limit=limit_per_request, name=name, deleted=deleted)
             items += page.items()
             if page.is_last:
                 break
@@ -319,17 +326,29 @@ class FileAPIClient(BaseAPIClient):
             initial_url=response.upload,
         )
 
-    async def restore_file_by_id(self, file_id: UUID) -> None:
+    async def restore_file_by_id(self, file_id: UUID) -> FileMetadata | None:
         """Restore a deleted file by ID.
 
         :param file_id: UUID of the file.
+
+        :return: FileMetadata if the file path changed during restore (HTTP 303),
+                 None if the file was restored without path change (HTTP 204).
         """
-        await self._api.update_file_by_id(
+        response = await self._api.update_file_by_id(
             organisation_id=str(self._environment.org_id),
             workspace_id=str(self._environment.workspace_id),
             file_id=str(file_id),
             deleted=False,
         )
+
+        if isinstance(response, DownloadFileResponse):
+            # HTTP 303: File restored with path change (e.g., rename on restore)
+            return self._metadata_from_endpoint_model(response)
+        elif isinstance(response, EmptyResponse):
+            # HTTP 204: File restored without path change
+            return None
+        else:
+            return None
 
     async def delete_file_by_path(self, path: str) -> None:
         """Deletes a file by path.
