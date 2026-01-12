@@ -213,6 +213,7 @@ class ServiceAccess(CustomBaseModel):
     org_id: Annotated[StrictStr, Field(title="Org Id")]
     services: Annotated[list[StrictStr], Field(title="Services")]
 
+
 class UpdateInstanceUserRolesRequest(CustomBaseModel):
     roles: Annotated[list[UUID], Field(title="Roles")]
 
@@ -312,6 +313,8 @@ class CreateWorkspaceRequest(CustomBaseModel):
     """
     The name of the workspace, unique within an organization and hub
     """
+
+
 class Hub(CustomBaseModel):
     code: Annotated[StrictStr, Field(title="Code")]
     display_name: Annotated[StrictStr, Field(title="Display Name")]
@@ -336,6 +339,7 @@ class FolderResponse(CustomBaseModel):
     updated_at: Annotated[datetime, Field(title="Updated At")]
     updated_by: UserModel
     workspace_id: Annotated[UUID, Field(title="Workspace Id")]
+
 
 class LicenseAccessResponseModel(CustomBaseModel):
     """

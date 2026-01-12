@@ -11,12 +11,12 @@
 
 from __future__ import annotations
 
+from datetime import timezone
 from typing import Literal, TypeAlias
 from uuid import UUID
 
 from pydantic import ValidationError
 from pydantic.type_adapter import TypeAdapter
-from datetime import timezone
 
 from evo.common import APIConnector, HealthCheckType, IContext, Page, ServiceHealth, ServiceUser
 from evo.common.utils import get_service_health, parse_order_by
@@ -25,37 +25,34 @@ from .data import (
     BasicWorkspace,
     BoundingBox,
     Coordinate,
+    InstanceUser,
+    InstanceUserInvitation,
+    InstanceUserRole,
+    InstanceUserRoleWithPermissions,
+    InstanceUserWithEmail,
     OrderByOperatorEnum,
     User,
     UserRole,
     Workspace,
     WorkspaceOrderByEnum,
     WorkspaceRole,
-    InstanceUserWithEmail,
-    InstanceUserRole,
-    InstanceUserInvitation,
-    InstanceUserRoleWithPermissions,
-    InstanceUser,
 )
-from .endpoints.api import AdminApi, GeneralApi, ThumbnailsApi, WorkspacesApi, InstanceUsersApi
+from .endpoints.api import AdminApi, GeneralApi, InstanceUsersApi, ThumbnailsApi, WorkspacesApi
 from .endpoints.models import (
+    AddInstanceUsersRequest,
+    BaseInstanceUserResponse,
     BasicWorkspaceResponse,
     CreateWorkspaceRequest,
     GeometryTypeEnum,
     Label,
+    ListInstanceRolesResponse,
+    ListInstanceUserInvitationsResponse,
     RoleEnum,
+    UpdateInstanceUserRolesRequest,
     UpdateWorkspaceRequest,
+    UserRoleMapping,
     WorkspaceRoleOptionalResponse,
     WorkspaceRoleRequiredResponse,
-    ListInstanceUsersResponse,
-    AddInstanceUsersRequest,
-    AddInstanceUsersResponse,
-    UserRoleMapping,
-    UpdateInstanceUserRolesRequest,
-    ListInstanceUserInvitationsResponse,
-    ListInstanceRolesResponse,
-    BaseInstanceUserResponse,
-
 )
 from .endpoints.models import BoundingBox as PydanticBoundingBox
 from .endpoints.models import Coordinate as PydanticCoordinate
@@ -156,11 +153,9 @@ class WorkspaceAPIClient:
     def _parse_instance_user_model(model: BaseInstanceUserResponse) -> InstanceUser:
         return InstanceUser(
             user_id=model.id,
-            roles=[InstanceUserRole(
-                role_id=role.id,
-                name=role.name,
-                description=role.description
-            ) for role in model.roles]
+            roles=[
+                InstanceUserRole(role_id=role.id, name=role.name, description=role.description) for role in model.roles
+            ],
         )
 
     @staticmethod
@@ -169,35 +164,29 @@ class WorkspaceAPIClient:
             email=model.email,
             full_name=model.full_name,
             user_id=model.id,
-            roles=[InstanceUserRole(
-                role_id=role.id,
-                name=role.name,
-                description=role.description
-            ) for role in model.roles]
+            roles=[
+                InstanceUserRole(role_id=role.id, name=role.name, description=role.description) for role in model.roles
+            ],
         )
 
-
-    def _parse_instance_user_invitation_model(self, model: ListInstanceUserInvitationsResponse) -> InstanceUserInvitation:
+    def _parse_instance_user_invitation_model(
+        self, model: ListInstanceUserInvitationsResponse
+    ) -> InstanceUserInvitation:
         return InstanceUserInvitation(
             email=model.email,
             invitation_id=model.id,
-            roles=[InstanceUserRole(
-                role_id=role.id,
-                name=role.name,
-                description=role.description
-            ) for role in model.roles],
+            roles=[
+                InstanceUserRole(role_id=role.id, name=role.name, description=role.description) for role in model.roles
+            ],
             invited_at=model.created_date.replace(tzinfo=timezone.utc),
             expiration_date=model.expiration_date.replace(tzinfo=timezone.utc),
             invited_by=model.invited_by_email,
-            status=model.status
+            status=model.status,
         )
 
     def _parse_instance_user_role_model(self, model: ListInstanceRolesResponse) -> InstanceUserRoleWithPermissions:
         return InstanceUserRoleWithPermissions(
-            role_id=model.id,
-            name=model.name,
-            description=model.description,
-            permissions=model.permissions
+            role_id=model.id, name=model.name, description=model.description, permissions=model.permissions
         )
 
     async def list_user_roles(
@@ -490,7 +479,9 @@ class WorkspaceAPIClient:
         )
         return self.__parse_workspace_model(model)
 
-    async def list_instance_users(self, limit: int | None = None, offset: int | None = None) -> Page[InstanceUserWithEmail]:
+    async def list_instance_users(
+        self, limit: int | None = None, offset: int | None = None
+    ) -> Page[InstanceUserWithEmail]:
         """
         Returns a page of the list of instance users.
 
@@ -505,7 +496,9 @@ class WorkspaceAPIClient:
         if limit is None:
             limit = 50
 
-        response = await self._instance_users_api.list_instance_users(org_id=str(self._org_id), limit=limit, offset=offset)
+        response = await self._instance_users_api.list_instance_users(
+            org_id=str(self._org_id), limit=limit, offset=offset
+        )
 
         if response.links.next:
             total = -1
@@ -519,7 +512,9 @@ class WorkspaceAPIClient:
             items=[self._parse_instance_user_with_email_model(item) for item in response.results],
         )
 
-    async def list_all_instance_users(self, limit: int | None = None, offset: int | None = None) -> list[InstanceUserWithEmail]:
+    async def list_all_instance_users(
+        self, limit: int | None = None, offset: int | None = None
+    ) -> list[InstanceUserWithEmail]:
         """
         Returns the complete list of instance users.
         :param limit: The maximum number of users to return.
@@ -545,7 +540,9 @@ class WorkspaceAPIClient:
 
         return sorted(instance_users, key=lambda x: x.email)
 
-    async def add_users_to_instance(self, users: dict[str, list[UUID]]) -> list[InstanceUserWithEmail | InstanceUserInvitation]:
+    async def add_users_to_instance(
+        self, users: dict[str, list[UUID]]
+    ) -> list[InstanceUserWithEmail | InstanceUserInvitation]:
         """
         Adds users to the instance.
 
@@ -554,13 +551,12 @@ class WorkspaceAPIClient:
         """
 
         add_instance_users_request = AddInstanceUsersRequest(
-            users=[UserRoleMapping(
-                email=email,
-                roles=roles
-            ) for email, roles in users.items()]
+            users=[UserRoleMapping(email=email, roles=roles) for email, roles in users.items()]
         )
 
-        response = await self._instance_users_api.add_instance_users(org_id=str(self._org_id), add_instance_users_request=add_instance_users_request)
+        response = await self._instance_users_api.add_instance_users(
+            org_id=str(self._org_id), add_instance_users_request=add_instance_users_request
+        )
 
         result: list[InstanceUserWithEmail | InstanceUserInvitation] = []
         result.extend([self._parse_instance_user_invitation_model(item) for item in response.invitations])
@@ -568,7 +564,9 @@ class WorkspaceAPIClient:
 
         return result
 
-    async def list_instance_user_invitations(self, limit: int | None = None, offset: int | None = None) -> Page[InstanceUserInvitation]:
+    async def list_instance_user_invitations(
+        self, limit: int | None = None, offset: int | None = None
+    ) -> Page[InstanceUserInvitation]:
         """
         Returns a page of the list of instance user invitations.
 
@@ -581,7 +579,9 @@ class WorkspaceAPIClient:
             offset = 0
         if limit is None:
             limit = 50
-        response = await self._instance_users_api.list_instance_user_invitations(org_id=str(self._org_id), limit=limit, offset=offset)
+        response = await self._instance_users_api.list_instance_user_invitations(
+            org_id=str(self._org_id), limit=limit, offset=offset
+        )
 
         if response.links.next:
             total = -1
@@ -595,7 +595,9 @@ class WorkspaceAPIClient:
             items=[self._parse_instance_user_invitation_model(item) for item in response.results],
         )
 
-    async def list_all_instance_user_invitations(self, limit: int | None = None, offset: int | None = None) -> list[InstanceUserInvitation]:
+    async def list_all_instance_user_invitations(
+        self, limit: int | None = None, offset: int | None = None
+    ) -> list[InstanceUserInvitation]:
         """
         Returns the complete list of instance user invitations.
 
@@ -626,7 +628,9 @@ class WorkspaceAPIClient:
         Deletes an instance user invitation.
         :param invitation_id: The ID of the invitation to delete.
         """
-        await self._instance_users_api.delete_instance_user_invitation(org_id=str(self._org_id), invitation_id=str(invitation_id))
+        await self._instance_users_api.delete_instance_user_invitation(
+            org_id=str(self._org_id), invitation_id=str(invitation_id)
+        )
 
     async def list_instance_user_roles(self) -> list[InstanceUserRoleWithPermissions]:
         """
@@ -634,7 +638,7 @@ class WorkspaceAPIClient:
         :returns: A list of instance user roles with their permissions.
         """
 
-        response =  await self._instance_users_api.list_instance_user_roles(org_id=str(self._org_id))
+        response = await self._instance_users_api.list_instance_user_roles(org_id=str(self._org_id))
         return [self._parse_instance_user_role_model(item) for item in response.roles]
 
     async def remove_instance_user(self, user_id: UUID) -> None:
@@ -652,9 +656,10 @@ class WorkspaceAPIClient:
         :param roles: The new roles to assign to the user.
         :returns: The updated instance user.
         """
-        update_instance_user_roles_request = UpdateInstanceUserRolesRequest(
-            user_id=user_id,
-            roles=roles
+        update_instance_user_roles_request = UpdateInstanceUserRolesRequest(user_id=user_id, roles=roles)
+        response = await self._instance_users_api.update_instance_user_roles(
+            org_id=str(self._org_id),
+            user_id=str(user_id),
+            update_instance_user_roles_request=update_instance_user_roles_request,
         )
-        response =  await self._instance_users_api.update_instance_user_roles(org_id=str(self._org_id), user_id=str(user_id), update_instance_user_roles_request=update_instance_user_roles_request)
         return self._parse_instance_user_model(response)

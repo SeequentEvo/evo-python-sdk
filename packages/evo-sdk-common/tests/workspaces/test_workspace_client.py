@@ -12,13 +12,18 @@
 import json
 from unittest import mock
 from uuid import UUID
-import datetime
+
 from evo.common import HealthCheckType, RequestMethod, StaticContext
 from evo.common.exceptions import ContextError
 from evo.common.test_tools import BASE_URL, MockResponse, TestHTTPHeaderDict, TestWithConnector, utc_datetime
 from evo.common.utils import get_header_metadata
 from evo.workspaces import (
     BasicWorkspace,
+    InstanceUser,
+    InstanceUserInvitation,
+    InstanceUserRole,
+    InstanceUserRoleWithPermissions,
+    InstanceUserWithEmail,
     OrderByOperatorEnum,
     ServiceUser,
     User,
@@ -27,11 +32,6 @@ from evo.workspaces import (
     WorkspaceAPIClient,
     WorkspaceOrderByEnum,
     WorkspaceRole,
-    InstanceUserRole,
-    InstanceUser,
-    InstanceUserWithEmail,
-    InstanceUserInvitation,
-    InstanceUserRoleWithPermissions,
 )
 
 from ..data import load_test_data
@@ -66,6 +66,7 @@ def _test_basic_workspace(ws_id: UUID, name: str) -> BasicWorkspace:
         display_name=name.title(),
     )
 
+
 def _test_instance_role(role_id: UUID, name: str) -> InstanceUserRole:
     """Factory method to create test instance role objects."""
     return InstanceUserRole(
@@ -74,32 +75,31 @@ def _test_instance_role(role_id: UUID, name: str) -> InstanceUserRole:
         description=name.lower(),
     )
 
+
 def _test_instance_role_with_permissions(role_id: UUID, name: str) -> InstanceUserRoleWithPermissions:
     """Factory method to create test instance role objects."""
     return InstanceUserRoleWithPermissions(
-        role_id=role_id,
-        name=name.title(),
-        description=name.lower(),
-        permissions=[name.lower() + " permission"]
+        role_id=role_id, name=name.title(), description=name.lower(), permissions=[name.lower() + " permission"]
     )
+
 
 def _test_instance_user(user_id: UUID, role_name: str, role_id: int) -> InstanceUser:
     """Factory method to create test instance user objects."""
-    return InstanceUser(
-        user_id=user_id,
-        roles = [_test_instance_role(UUID(int=role_id), role_name)]
-    )
+    return InstanceUser(user_id=user_id, roles=[_test_instance_role(UUID(int=role_id), role_name)])
 
-def _test_instance_user_with_email(user_id: UUID, email: str, full_name: str, role_name: str, role_id: int) -> InstanceUserWithEmail:
+
+def _test_instance_user_with_email(
+    user_id: UUID, email: str, full_name: str, role_name: str, role_id: int
+) -> InstanceUserWithEmail:
     """Factory method to create test instance user objects."""
     return InstanceUserWithEmail(
-        user_id=user_id,
-        email=email,
-        full_name=full_name,
-        roles = [_test_instance_role(UUID(int=role_id), role_name)]
+        user_id=user_id, email=email, full_name=full_name, roles=[_test_instance_role(UUID(int=role_id), role_name)]
     )
 
-def _test_instance_user_invitation(invitation_id: UUID, email: str, status: str, role_name: str, role_id: int) -> InstanceUserInvitation:
+
+def _test_instance_user_invitation(
+    invitation_id: UUID, email: str, status: str, role_name: str, role_id: int
+) -> InstanceUserInvitation:
     """Factory method to create test instance user invitation objects."""
     return InstanceUserInvitation(
         email=email,
@@ -108,8 +108,9 @@ def _test_instance_user_invitation(invitation_id: UUID, email: str, status: str,
         expiration_date=utc_datetime(2026, 1, 15, 12, 0, 0),
         invited_by="admin.user@bentley.com",
         status=status,
-        roles=[_test_instance_role(UUID(int=role_id), role_name)]
+        roles=[_test_instance_role(UUID(int=role_id), role_name)],
     )
+
 
 TEST_WORKSPACE_A = _test_workspace(UUID(int=0xA), "Test Workspace A")
 TEST_WORKSPACE_B = _test_workspace(UUID(int=0xB), "Test Workspace B")
@@ -127,6 +128,7 @@ INVITATION_3 = _test_instance_user_invitation(UUID(int=3), "external.user3@gmail
 
 INSTANCE_USER_ROLE = _test_instance_role_with_permissions(UUID(int=1), "Evo User")
 INSTANCE_ADMIN_ROLE = _test_instance_role_with_permissions(UUID(int=2), "Evo Admin")
+
 
 class TestWorkspaceClient(TestWithConnector):
     def setUp(self) -> None:
@@ -439,19 +441,14 @@ class TestWorkspaceClient(TestWithConnector):
         self.assertEqual([TEST_BASIC_WORKSPACE_A, TEST_BASIC_WORKSPACE_B], workspaces_page_1.items())
         self.assertEqual([TEST_BASIC_WORKSPACE_C], workspaces_page_2.items())
 
-
     async def test_paginated_list_instance_users(self) -> None:
         content_1 = load_test_data("instance_users_page_1.json")
         content_2 = load_test_data("instance_users_page_2.json")
 
-        with self.transport.set_http_response(
-            200, json.dumps(content_1), headers={"Content-Type": "application/json"}
-        ):
+        with self.transport.set_http_response(200, json.dumps(content_1), headers={"Content-Type": "application/json"}):
             users_page_1 = await self.workspace_client.list_instance_users(limit=2, offset=0)
 
-        with self.transport.set_http_response(
-            200, json.dumps(content_2), headers={"Content-Type": "application/json"}
-        ):
+        with self.transport.set_http_response(200, json.dumps(content_2), headers={"Content-Type": "application/json"}):
             users_page_2 = await self.workspace_client.list_instance_users(limit=2, offset=2)
 
         self.assert_any_request_made(
@@ -497,9 +494,7 @@ class TestWorkspaceClient(TestWithConnector):
     async def test_list_instance_user_invitations(self) -> None:
         content = load_test_data("invitations_page_1.json")
 
-        with self.transport.set_http_response(
-            200, json.dumps(content), headers={"Content-Type": "application/json"}
-        ):
+        with self.transport.set_http_response(200, json.dumps(content), headers={"Content-Type": "application/json"}):
             invitations = await self.workspace_client.list_instance_user_invitations(limit=2, offset=0)
 
         self.assert_request_made(
@@ -598,7 +593,6 @@ class TestWorkspaceClient(TestWithConnector):
         self.assertIsNone(response, "Remove instance user response should be None")
 
     async def test_update_instance_user_roles(self) -> None:
-
         update_users_content = load_test_data("update_instance_user.json")
         with self.transport.set_http_response(
             200,
