@@ -153,7 +153,7 @@ class WorkspaceAPIClient:
         )
 
     @staticmethod
-    async def _parse_instance_user_model(model: BaseInstanceUserResponse) -> InstanceUser:
+    def _parse_instance_user_model(model: BaseInstanceUserResponse) -> InstanceUser:
         return InstanceUser(
             user_id=model.id,
             roles=[InstanceUserRole(
@@ -164,7 +164,7 @@ class WorkspaceAPIClient:
         )
 
     @staticmethod
-    async def _parse_instance_user_with_email_model(model: BaseInstanceUserResponse) -> InstanceUserWithEmail:
+    def _parse_instance_user_with_email_model(model: BaseInstanceUserResponse) -> InstanceUserWithEmail:
         return InstanceUserWithEmail(
             email=model.email,
             full_name=model.full_name,
@@ -177,7 +177,7 @@ class WorkspaceAPIClient:
         )
 
 
-    async def _parse_instance_user_invitation_model(self, model: ListInstanceUserInvitationsResponse) -> InstanceUserInvitation:
+    def _parse_instance_user_invitation_model(self, model: ListInstanceUserInvitationsResponse) -> InstanceUserInvitation:
         return InstanceUserInvitation(
             email=model.email,
             invitation_id=model.id,
@@ -192,7 +192,7 @@ class WorkspaceAPIClient:
             status=model.status
         )
 
-    async def _parse_instance_user_role_model(self, model: ListInstanceRolesResponse) -> InstanceUserRoleWithPermissions:
+    def _parse_instance_user_role_model(self, model: ListInstanceRolesResponse) -> InstanceUserRoleWithPermissions:
         return InstanceUserRoleWithPermissions(
             role_id=model.id,
             name=model.name,
@@ -516,7 +516,7 @@ class WorkspaceAPIClient:
             offset=offset,
             limit=limit,
             total=total,
-            items=[await self._parse_instance_user_with_email_model(item) for item in response.results],
+            items=[self._parse_instance_user_with_email_model(item) for item in response.results],
         )
 
     async def list_all_instance_users(self, limit: int | None = None, offset: int | None = None) -> list[InstanceUserWithEmail]:
@@ -563,8 +563,8 @@ class WorkspaceAPIClient:
         response = await self._instance_users_api.add_instance_users(org_id=str(self._org_id), add_instance_users_request=add_instance_users_request)
 
         result: list[InstanceUserWithEmail | InstanceUserInvitation] = []
-        result.extend([await self._parse_instance_user_invitation_model(item) for item in response.invitations])
-        result.extend([await self._parse_instance_user_with_email_model(item) for item in response.members])
+        result.extend([self._parse_instance_user_invitation_model(item) for item in response.invitations])
+        result.extend([self._parse_instance_user_with_email_model(item) for item in response.members])
 
         return result
 
@@ -592,7 +592,7 @@ class WorkspaceAPIClient:
             offset=offset,
             limit=limit,
             total=total,
-            items=[await self._parse_instance_user_invitation_model(item) for item in response.results],
+            items=[self._parse_instance_user_invitation_model(item) for item in response.results],
         )
 
     async def list_all_instance_user_invitations(self, limit: int | None = None, offset: int | None = None) -> list[InstanceUserInvitation]:
@@ -635,7 +635,7 @@ class WorkspaceAPIClient:
         """
 
         response =  await self._instance_users_api.list_instance_user_roles(org_id=str(self._org_id))
-        return [await self._parse_instance_user_role_model(item) for item in response.roles]
+        return [self._parse_instance_user_role_model(item) for item in response.roles]
 
     async def remove_instance_user(self, user_id: UUID) -> None:
         """
@@ -657,4 +657,4 @@ class WorkspaceAPIClient:
             roles=roles
         )
         response =  await self._instance_users_api.update_instance_user_roles(org_id=str(self._org_id), user_id=str(user_id), update_instance_user_roles_request=update_instance_user_roles_request)
-        return await self._parse_instance_user_model(response)
+        return self._parse_instance_user_model(response)
