@@ -112,37 +112,11 @@ class GeometryTypeEnum(Enum):
     Polygon = "Polygon"
 
 
-class Hub(CustomBaseModel):
-    code: Annotated[StrictStr, Field(title="Code")]
-    display_name: Annotated[StrictStr, Field(title="Display Name")]
-    url: Annotated[StrictStr, Field(title="Url")]
-
-
-class HubTypeEnum(Enum):
-    enterprise = "enterprise"
-    multitenant = "multitenant"
-
-
 class InstanceRoleWithPermissions(CustomBaseModel):
     description: Annotated[StrictStr, Field(title="Description")]
     id: Annotated[UUID, Field(title="Id")]
     name: Annotated[StrictStr, Field(title="Name")]
     permissions: Annotated[list[StrictStr], Field(title="Permissions")]
-
-
-class InstanceStatusEnum(Enum):
-    active = "active"
-    inactive = "inactive"
-    new = "new"
-
-
-class InstanceTypeEnum(Enum):
-    commercial = "commercial"
-    partner = "partner"
-    sandbox = "sandbox"
-    internal = "internal"
-    trial = "trial"
-    early_access = "early-access"
 
 
 class LicenseAccessAuthDetails(CustomBaseModel):
@@ -239,13 +213,6 @@ class ServiceAccess(CustomBaseModel):
     org_id: Annotated[StrictStr, Field(title="Org Id")]
     services: Annotated[list[StrictStr], Field(title="Services")]
 
-
-class UpdateInstanceDetailsRequest(CustomBaseModel):
-    display_name: Annotated[StrictStr | None, Field(max_length=100, min_length=1, title="Display Name")] = None
-    status: InstanceStatusEnum | None = None
-    type: InstanceTypeEnum | None = None
-
-
 class UpdateInstanceUserRolesRequest(CustomBaseModel):
     roles: Annotated[list[UUID], Field(title="Roles")]
 
@@ -333,28 +300,6 @@ class CoordinateSystemCategory(CustomBaseModel):
     title: Annotated[StrictStr, Field(title="Title")]
 
 
-class CreateHubRequest(CustomBaseModel):
-    hub_code: Annotated[StrictStr, Field(title="Hub Code")]
-    """
-    The abbreviated code for the hub. This is used to identify the hub in the system.
-    """
-    hub_display_name: Annotated[StrictStr, Field(title="Hub Display Name")]
-    hub_type: HubTypeEnum = "multitenant"
-    hub_url: Annotated[StrictStr, Field(title="Hub Url")]
-
-
-class CreateInstanceRequest(CustomBaseModel):
-    display_name: Annotated[StrictStr, Field(title="Display Name")]
-    hub_code: Annotated[StrictStr, Field(title="Hub Code")]
-    instance_id: Annotated[UUID | None, Field(title="Instance Id")] = None
-    org_id: Annotated[UUID, Field(title="Org Id")]
-    owner_id: Annotated[UUID, Field(title="Owner Id")]
-    """
-    The id of the Bentley user to give initial ownership permission for the instance.
-    """
-    type: InstanceTypeEnum = "commercial"
-
-
 class CreateWorkspaceRequest(CustomBaseModel):
     bounding_box: BoundingBox | None = None
     default_coordinate_system: Annotated[StrictStr, Field(title="Default Coordinate System")] = ""
@@ -367,6 +312,10 @@ class CreateWorkspaceRequest(CustomBaseModel):
     """
     The name of the workspace, unique within an organization and hub
     """
+class Hub(CustomBaseModel):
+    code: Annotated[StrictStr, Field(title="Code")]
+    display_name: Annotated[StrictStr, Field(title="Display Name")]
+    url: Annotated[StrictStr, Field(title="Url")]
 
 
 class DiscoveryResponseContent(CustomBaseModel):
@@ -387,37 +336,6 @@ class FolderResponse(CustomBaseModel):
     updated_at: Annotated[datetime, Field(title="Updated At")]
     updated_by: UserModel
     workspace_id: Annotated[UUID, Field(title="Workspace Id")]
-
-
-class HubResponse(CustomBaseModel):
-    created_at: Annotated[datetime, Field(title="Created At")]
-    created_by: Annotated[UUID | StrictStr, Field(title="Created By")]
-    hub_code: Annotated[StrictStr, Field(title="Hub Code")]
-    hub_display_name: Annotated[StrictStr, Field(title="Hub Display Name")]
-    hub_type: HubTypeEnum
-    hub_url: Annotated[StrictStr, Field(title="Hub Url")]
-    updated_at: Annotated[datetime, Field(title="Updated At")]
-    updated_by: Annotated[UUID | StrictStr, Field(title="Updated By")]
-
-
-class InstanceResponse(CustomBaseModel):
-    context_id: Annotated[UUID, Field(title="Context Id")]
-    created_at: Annotated[datetime, Field(title="Created At")]
-    created_by: Annotated[UUID | StrictStr, Field(title="Created By")]
-    hub_code: Annotated[StrictStr, Field(title="Hub Code")]
-    hub_display_name: Annotated[StrictStr, Field(title="Hub Display Name")]
-    hub_type: HubTypeEnum
-    hub_url: Annotated[StrictStr, Field(title="Hub Url")]
-    instance_id: Annotated[UUID, Field(title="Instance Id")]
-    instance_name: Annotated[StrictStr, Field(title="Instance Name")]
-    instance_status: InstanceStatusEnum
-    instance_type: InstanceTypeEnum
-    instance_version: Annotated[StrictInt, Field(title="Instance Version")]
-    org_id: Annotated[UUID, Field(title="Org Id")]
-    org_name: Annotated[StrictStr, Field(title="Org Name")]
-    updated_at: Annotated[datetime, Field(title="Updated At")]
-    updated_by: Annotated[UUID | StrictStr, Field(title="Updated By")]
-
 
 class LicenseAccessResponseModel(CustomBaseModel):
     """
