@@ -465,32 +465,6 @@ class TestWorkspaceClient(TestWithConnector):
         self.assertEqual([INSTANCE_USER_1, INSTANCE_USER_2], users_page_1.items())
         self.assertEqual([INSTANCE_USER_3], users_page_2.items())
 
-    async def test_list_all_instance_users(self) -> None:
-        content_1 = load_test_data("instance_users_page_1.json")
-        content_2 = load_test_data("instance_users_page_2.json")
-
-        responses = [
-            MockResponse(status_code=200, content=json.dumps(content_1), headers={"Content-Type": "application/json"}),
-            MockResponse(status_code=200, content=json.dumps(content_2), headers={"Content-Type": "application/json"}),
-        ]
-        self.transport.request.side_effect = responses
-
-        expected_users = [INSTANCE_USER_1, INSTANCE_USER_2, INSTANCE_USER_3]
-        actual_users = await self.workspace_client.list_all_instance_users(limit=2, offset=0)
-
-        self.assertEqual(2, self.transport.request.call_count, "Two requests should be made.")
-        self.assert_any_request_made(
-            method=RequestMethod.GET,
-            path=f"{BASE_PATH}/members?limit=2&offset=0",
-            headers=TestHTTPHeaderDict({"Accept": "application/json"}),
-        )
-        self.assert_any_request_made(
-            method=RequestMethod.GET,
-            path=f"{BASE_PATH}/members?limit=2&offset=2",
-            headers=TestHTTPHeaderDict({"Accept": "application/json"}),
-        )
-        self.assertEqual(expected_users, actual_users)
-
     async def test_list_instance_user_invitations(self) -> None:
         content = load_test_data("invitations_page_1.json")
 
@@ -503,32 +477,6 @@ class TestWorkspaceClient(TestWithConnector):
             headers={"Accept": "application/json"},
         )
         self.assertEqual([INVITATION_1, INVITATION_2], invitations.items())
-
-    async def test_list_all_instance_user_invitations(self) -> None:
-        content_1 = load_test_data("invitations_page_1.json")
-        content_2 = load_test_data("invitations_page_2.json")
-
-        responses = [
-            MockResponse(status_code=200, content=json.dumps(content_1), headers={"Content-Type": "application/json"}),
-            MockResponse(status_code=200, content=json.dumps(content_2), headers={"Content-Type": "application/json"}),
-        ]
-        self.transport.request.side_effect = responses
-
-        expected_invitations = [INVITATION_1, INVITATION_2, INVITATION_3]
-        actual_invitations = await self.workspace_client.list_all_instance_user_invitations(limit=2, offset=0)
-
-        self.assertEqual(2, self.transport.request.call_count, "Two requests should be made.")
-        self.assert_any_request_made(
-            method=RequestMethod.GET,
-            path=f"{BASE_PATH}/members/invitations?limit=2&offset=0",
-            headers=TestHTTPHeaderDict({"Accept": "application/json"}),
-        )
-        self.assert_any_request_made(
-            method=RequestMethod.GET,
-            path=f"{BASE_PATH}/members/invitations?limit=2&offset=2",
-            headers=TestHTTPHeaderDict({"Accept": "application/json"}),
-        )
-        self.assertEqual(expected_invitations, actual_invitations)
 
     async def test_add_users_to_instance(self) -> None:
         add_users_content = load_test_data("add_instance_users.json")

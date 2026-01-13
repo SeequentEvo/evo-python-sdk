@@ -512,34 +512,6 @@ class WorkspaceAPIClient:
             items=[self._parse_instance_user_with_email_model(item) for item in response.results],
         )
 
-    async def list_all_instance_users(
-        self, limit: int | None = None, offset: int | None = None
-    ) -> list[InstanceUserWithEmail]:
-        """
-        Returns the complete list of instance users.
-        :param limit: The maximum number of users to return.
-        :param offset: The offset for pagination.
-
-        :returns: A list of instance users with email addresses.
-        """
-        instance_users: list[InstanceUserWithEmail] = []
-        if offset is None:
-            offset = 0
-        if limit is None:
-            limit = 50
-
-        while True:
-            instance_user_page = await self.list_instance_users(
-                limit=limit,
-                offset=offset,
-            )
-            instance_users += instance_user_page.items()
-            offset += limit
-            if instance_user_page.total != -1:
-                break
-
-        return sorted(instance_users, key=lambda x: x.email)
-
     async def add_users_to_instance(
         self, users: dict[str, list[UUID]]
     ) -> list[InstanceUserWithEmail | InstanceUserInvitation]:
@@ -594,34 +566,6 @@ class WorkspaceAPIClient:
             total=total,
             items=[self._parse_instance_user_invitation_model(item) for item in response.results],
         )
-
-    async def list_all_instance_user_invitations(
-        self, limit: int | None = None, offset: int | None = None
-    ) -> list[InstanceUserInvitation]:
-        """
-        Returns the complete list of instance user invitations.
-
-        :param limit: The maximum number of invitations to fetch per request.
-        :param offset: The offset for pagination.
-        :returns: A list of instance user invitations.
-        """
-        instance_user_invitations: list[InstanceUserInvitation] = []
-        if offset is None:
-            offset = 0
-        if limit is None:
-            limit = 50
-
-        while True:
-            instance_user_invitation_page = await self.list_instance_user_invitations(
-                limit=limit,
-                offset=offset,
-            )
-            instance_user_invitations += instance_user_invitation_page.items()
-            offset += limit
-            if instance_user_invitation_page.total != -1:
-                break
-
-        return sorted(instance_user_invitations, key=lambda x: x.email)
 
     async def delete_instance_user_invitation(self, invitation_id: UUID) -> None:
         """
