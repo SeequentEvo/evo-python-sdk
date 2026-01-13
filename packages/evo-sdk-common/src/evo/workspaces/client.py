@@ -11,23 +11,20 @@
 
 from __future__ import annotations
 
-from datetime import timezone
 from typing import Literal, TypeAlias
 from uuid import UUID
 
 from pydantic import ValidationError
 from pydantic.type_adapter import TypeAdapter
 
-from evo.common import APIConnector, HealthCheckType, IContext, Page, ServiceHealth, ServiceUser
+from evo.common import APIConnector, HealthCheckType, IContext, Page, ServiceHealth
 from evo.common.utils import get_service_health, parse_order_by
 
+from . import parse
 from .data import (
     BasicWorkspace,
-    BoundingBox,
-    Coordinate,
     InstanceUser,
     InstanceUserInvitation,
-    InstanceUserRole,
     InstanceUserRoleWithPermissions,
     InstanceUserWithEmail,
     OrderByOperatorEnum,
@@ -40,23 +37,15 @@ from .data import (
 from .endpoints.api import AdminApi, GeneralApi, InstanceUsersApi, ThumbnailsApi, WorkspacesApi
 from .endpoints.models import (
     AddInstanceUsersRequest,
-    BaseInstanceUserResponse,
-    BasicWorkspaceResponse,
     CreateWorkspaceRequest,
     GeometryTypeEnum,
     Label,
-    ListInstanceRolesResponse,
-    ListInstanceUserInvitationsResponse,
     RoleEnum,
     UpdateInstanceUserRolesRequest,
     UpdateWorkspaceRequest,
     UserRoleMapping,
-    WorkspaceRoleOptionalResponse,
-    WorkspaceRoleRequiredResponse,
 )
 from .endpoints.models import BoundingBox as PydanticBoundingBox
-from .endpoints.models import Coordinate as PydanticCoordinate
-from .endpoints.models import User as PydanticUser
 from .endpoints.models import UserRole as PydanticUserRole
 
 WorkspaceOrderByLiteral: TypeAlias = Literal["name", "created_at", "updated_at", "user_role"]
@@ -97,98 +86,6 @@ class WorkspaceAPIClient:
         """
         return await get_service_health(self._connector, "workspace", check_type=check_type)
 
-    @staticmethod
-    def __parse_bounding_box(model: PydanticBoundingBox) -> BoundingBox:
-        def convert_coordinate(pydantic_coordinate: PydanticCoordinate) -> Coordinate:
-            return Coordinate(latitude=pydantic_coordinate.root[1], longitude=pydantic_coordinate.root[0])
-
-        coordinates = [[convert_coordinate(coord) for coord in coord_list] for coord_list in model.coordinates]
-
-        return BoundingBox(coordinates=coordinates, type=str(model.type.value))
-
-    def __parse_workspace_model(
-        self, model: WorkspaceRoleOptionalResponse | WorkspaceRoleRequiredResponse
-    ) -> Workspace:
-        bounding_box = None
-        if model.bounding_box:
-            bounding_box = self.__parse_bounding_box(model.bounding_box)
-
-        return Workspace(
-            id=model.id,
-            org_id=self._org_id,
-            hub_url=self._connector.base_url,
-            display_name=model.name,
-            description=model.description,
-            user_role=WorkspaceRole[str(model.current_user_role.value)] if model.current_user_role else None,
-            created_at=model.created_at,
-            created_by=ServiceUser.from_model(model.created_by),
-            updated_at=model.updated_at,
-            updated_by=ServiceUser.from_model(model.updated_by),
-            bounding_box=bounding_box,
-            default_coordinate_system=model.default_coordinate_system,
-            labels=model.labels,
-        )
-
-    @staticmethod
-    def __parse_workspace_basic_model(model: BasicWorkspaceResponse) -> BasicWorkspace:
-        return BasicWorkspace(
-            id=model.id,
-            display_name=model.name,
-        )
-
-    @staticmethod
-    def __parse_user_role_model(model: PydanticUserRole) -> UserRole:
-        return UserRole(user_id=model.user_id, role=WorkspaceRole[str(model.role.value)])
-
-    @staticmethod
-    def __parse_user_model(model: PydanticUser) -> User:
-        return User(
-            user_id=model.user_id,
-            role=WorkspaceRole[str(model.role.value)],
-            email=model.email,
-            full_name=model.full_name,
-        )
-
-    @staticmethod
-    def _parse_instance_user_model(model: BaseInstanceUserResponse) -> InstanceUser:
-        return InstanceUser(
-            user_id=model.id,
-            roles=[
-                InstanceUserRole(role_id=role.id, name=role.name, description=role.description) for role in model.roles
-            ],
-        )
-
-    @staticmethod
-    def _parse_instance_user_with_email_model(model: BaseInstanceUserResponse) -> InstanceUserWithEmail:
-        return InstanceUserWithEmail(
-            email=model.email,
-            full_name=model.full_name,
-            user_id=model.id,
-            roles=[
-                InstanceUserRole(role_id=role.id, name=role.name, description=role.description) for role in model.roles
-            ],
-        )
-
-    def _parse_instance_user_invitation_model(
-        self, model: ListInstanceUserInvitationsResponse
-    ) -> InstanceUserInvitation:
-        return InstanceUserInvitation(
-            email=model.email,
-            invitation_id=model.id,
-            roles=[
-                InstanceUserRole(role_id=role.id, name=role.name, description=role.description) for role in model.roles
-            ],
-            invited_at=model.created_date.replace(tzinfo=timezone.utc),
-            expiration_date=model.expiration_date.replace(tzinfo=timezone.utc),
-            invited_by=model.invited_by_email,
-            status=model.status,
-        )
-
-    def _parse_instance_user_role_model(self, model: ListInstanceRolesResponse) -> InstanceUserRoleWithPermissions:
-        return InstanceUserRoleWithPermissions(
-            role_id=model.id, name=model.name, description=model.description, permissions=model.permissions
-        )
-
     async def list_user_roles(
         self,
         workspace_id: UUID,
@@ -200,7 +97,7 @@ class WorkspaceAPIClient:
             filter_user_id=str(filter_user_id) if filter_user_id else None,
         )
 
-        return [self.__parse_user_model(item) for item in response.results]
+        return [parse.user_model(item) for item in response.results]
 
     async def get_current_user_role(
         self,
@@ -211,7 +108,7 @@ class WorkspaceAPIClient:
             workspace_id=str(workspace_id),
         )
 
-        return self.__parse_user_role_model(response)
+        return parse.user_role_model(response)
 
     async def assign_user_role(
         self,
@@ -226,7 +123,7 @@ class WorkspaceAPIClient:
             assign_role_request=assign_role_request,
         )
 
-        return self.__parse_user_role_model(response)
+        return parse.user_role_model(response)
 
     async def delete_user_role(
         self,
@@ -273,7 +170,7 @@ class WorkspaceAPIClient:
             offset=offset,
             limit=limit,
             total=response.links.total,
-            items=[self.__parse_workspace_model(item) for item in response.results],
+            items=[parse.workspace_model(item, self._org_id, self._connector.base_url) for item in response.results],
         )
 
     async def list_all_workspaces(
@@ -352,14 +249,14 @@ class WorkspaceAPIClient:
             offset=offset or 0,
             limit=limit or response.links.total,
             total=response.links.total,
-            items=[self.__parse_workspace_basic_model(item) for item in response.results],
+            items=[parse.workspace_basic_model(item) for item in response.results],
         )
 
     async def get_workspace(self, workspace_id: UUID, deleted: bool = False) -> Workspace:
         response = await self._workspaces_api.get_workspace(
             org_id=str(self._org_id), workspace_id=str(workspace_id), deleted=deleted
         )
-        return self.__parse_workspace_model(response)
+        return parse.workspace_model(response, self._org_id, self._connector.base_url)
 
     async def delete_workspace(
         self,
@@ -426,7 +323,7 @@ class WorkspaceAPIClient:
         model = await self._workspaces_api.create_workspace(
             org_id=str(self._org_id), create_workspace_request=create_workspace_request
         )
-        return self.__parse_workspace_model(model)
+        return parse.workspace_model(model, self._org_id, self._connector.base_url)
 
     async def update_workspace(
         self,
@@ -477,7 +374,7 @@ class WorkspaceAPIClient:
         model = await self._workspaces_api.update_workspace(
             org_id=str(self._org_id), workspace_id=str(workspace_id), update_workspace_request=update_workspace_request
         )
-        return self.__parse_workspace_model(model)
+        return parse.workspace_model(model, self._org_id, self._connector.base_url)
 
     async def list_instance_users(
         self, limit: int | None = None, offset: int | None = None
@@ -509,7 +406,7 @@ class WorkspaceAPIClient:
             offset=offset,
             limit=limit,
             total=total,
-            items=[self._parse_instance_user_with_email_model(item) for item in response.results],
+            items=[parse.instance_user_with_email_model(item) for item in response.results],
         )
 
     async def add_users_to_instance(
@@ -531,8 +428,8 @@ class WorkspaceAPIClient:
         )
 
         result: list[InstanceUserWithEmail | InstanceUserInvitation] = []
-        result.extend([self._parse_instance_user_invitation_model(item) for item in response.invitations])
-        result.extend([self._parse_instance_user_with_email_model(item) for item in response.members])
+        result.extend([parse.instance_user_invitation_model(item) for item in response.invitations])
+        result.extend([parse.instance_user_with_email_model(item) for item in response.members])
 
         return result
 
@@ -564,7 +461,7 @@ class WorkspaceAPIClient:
             offset=offset,
             limit=limit,
             total=total,
-            items=[self._parse_instance_user_invitation_model(item) for item in response.results],
+            items=[parse.instance_user_invitation_model(item) for item in response.results],
         )
 
     async def delete_instance_user_invitation(self, invitation_id: UUID) -> None:
@@ -583,7 +480,7 @@ class WorkspaceAPIClient:
         """
 
         response = await self._instance_users_api.list_instance_user_roles(org_id=str(self._org_id))
-        return [self._parse_instance_user_role_model(item) for item in response.roles]
+        return [parse.instance_user_role_model(item) for item in response.roles]
 
     async def remove_instance_user(self, user_id: UUID) -> None:
         """
@@ -606,4 +503,4 @@ class WorkspaceAPIClient:
             user_id=str(user_id),
             update_instance_user_roles_request=update_instance_user_roles_request,
         )
-        return self._parse_instance_user_model(response)
+        return parse.instance_user_model(response)
