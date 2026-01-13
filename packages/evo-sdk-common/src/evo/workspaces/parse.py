@@ -62,6 +62,7 @@ def bounding_box(model: PydanticBoundingBox) -> BoundingBox:
     :param model: The model returned by the generated code.
     :return: A BoundingBox instance.
     """
+
     def convert_coordinate(pydantic_coordinate: PydanticCoordinate) -> Coordinate:
         return Coordinate(latitude=pydantic_coordinate.root[1], longitude=pydantic_coordinate.root[0])
 
