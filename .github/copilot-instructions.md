@@ -110,6 +110,47 @@ ruff check src/ tests/
 - Pydantic v2 for data models
 - PyArrow for parquet handling
 
+## Notebook Generation
+
+When generating Jupyter notebooks for users, follow these rules:
+
+### Target Audience
+Notebooks are primarily for **geologists with limited Python experience**. Keep code minimal and readable.
+
+### Notebook Format (IMPORTANT)
+Notebooks in this repository use the **Python percent format**, not standard JSON:
+- `#%% md` for markdown cells
+- `#%%` for code cells
+- Save with `.ipynb` extension
+
+### Default Approach (IMPORTANT)
+- **Always use typed objects** (`PointSet`, `BlockModel`, `Regular3DGrid`, etc.) from `evo.objects.typed`
+- **Always use `ObjectSearchWidget`** for object discovery when users know an object name but not its UUID
+- **Always use `display_object_links()`** after loading/creating objects to show Evo Portal and Viewer links
+- **Never expose `ObjectAPIClient`** or `BlockModelAPIClient` to users unless explicitly requested by an advanced developer
+
+### When to Use Each Pattern
+| User Request | Pattern |
+|-------------|---------|
+| "Find object named X" | `ObjectSearchWidget` + `TypedClass.from_reference()` |
+| "Download from URL" | `TypedClass.from_reference(manager, url)` |
+| "Create from CSV" | `pd.read_csv()` + `TypedClassData()` + `TypedClass.create()` |
+| "I need low-level API" | Only then use `ObjectAPIClient` (advanced users) |
+
+### Standard Notebook Structure
+1. Authentication with `ServiceManagerWidget`
+2. Object discovery with `ObjectSearchWidget` (if needed)
+3. Load object with `TypedClass.from_reference()`
+4. Display links with `display_object_links()`
+5. Access data with `.as_dataframe()` or `.get_data()`
+
+### Detailed Guides
+- [Notebook Generation Guide](notebook-generation-guide.md) — Full instructions
+- [Typed Objects Reference](typed-objects-reference.md) — API reference
+- [Common Patterns](notebook-patterns.md) — Copy-paste snippets
+
+**Note:** These notebook generation rules apply only to Jupyter notebook context, not to SDK development or testing.
+
 ## Package-Specific Guides
 
 - **evo-blockmodels**: See `packages/evo-blockmodels/.github/` for detailed guides
