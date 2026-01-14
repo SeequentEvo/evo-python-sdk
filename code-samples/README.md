@@ -55,7 +55,7 @@ git clone https://github.com/SeequentEvo/evo-python-sdk.git
 
 ### 3. Set up your environment
 
-You must first install the package manager `uv` that will make it easy to set up your Python environment.
+You must first install the package manager `uv`. This will make it easy to set up your Python environment.
 
 Follow the instructions below for [Windows](#windows), [macOS](#macos) or [Linux](#linux).
 
