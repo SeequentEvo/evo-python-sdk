@@ -11,13 +11,14 @@
 
 from .client import WorkspaceAPIClient
 from .data import (
+    AddedInstanceUsers,
     BasicWorkspace,
     BoundingBox,
     Coordinate,
+    InstanceRole,
+    InstanceRoleWithPermissions,
     InstanceUser,
     InstanceUserInvitation,
-    InstanceUserRole,
-    InstanceUserRoleWithPermissions,
     InstanceUserWithEmail,
     OrderByOperatorEnum,
     ServiceUser,
@@ -30,13 +31,14 @@ from .data import (
 )
 
 __all__ = [
+    "AddedInstanceUsers",
     "BasicWorkspace",
     "BoundingBox",
     "Coordinate",
+    "InstanceRole",
+    "InstanceRoleWithPermissions",
     "InstanceUser",
     "InstanceUserInvitation",
-    "InstanceUserRole",
-    "InstanceUserRoleWithPermissions",
     "InstanceUserWithEmail",
     "OrderByOperatorEnum",
     "ServiceUser",

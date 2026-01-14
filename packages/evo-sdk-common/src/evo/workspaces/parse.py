@@ -16,13 +16,14 @@ from uuid import UUID
 from evo.common import ServiceUser
 
 from .data import (
+    AddedInstanceUsers,
     BasicWorkspace,
     BoundingBox,
     Coordinate,
+    InstanceRole,
+    InstanceRoleWithPermissions,
     InstanceUser,
     InstanceUserInvitation,
-    InstanceUserRole,
-    InstanceUserRoleWithPermissions,
     InstanceUserWithEmail,
     User,
     UserRole,
@@ -30,6 +31,7 @@ from .data import (
     WorkspaceRole,
 )
 from .endpoints.models import (
+    AddInstanceUsersResponse,
     BaseInstanceUserResponse,
     BasicWorkspaceResponse,
     ListInstanceRolesResponse,
@@ -145,7 +147,7 @@ def instance_user_model(model: BaseInstanceUserResponse) -> InstanceUser:
     """
     return InstanceUser(
         user_id=model.id,
-        roles=[InstanceUserRole(role_id=role.id, name=role.name, description=role.description) for role in model.roles],
+        roles=[InstanceRole(role_id=role.id, name=role.name, description=role.description) for role in model.roles],
     )
 
 
@@ -159,7 +161,7 @@ def instance_user_with_email_model(model: BaseInstanceUserResponse) -> InstanceU
         email=model.email,
         full_name=model.full_name,
         user_id=model.id,
-        roles=[InstanceUserRole(role_id=role.id, name=role.name, description=role.description) for role in model.roles],
+        roles=[InstanceRole(role_id=role.id, name=role.name, description=role.description) for role in model.roles],
     )
 
 
@@ -172,7 +174,7 @@ def instance_user_invitation_model(model: ListInstanceUserInvitationsResponse) -
     return InstanceUserInvitation(
         email=model.email,
         invitation_id=model.id,
-        roles=[InstanceUserRole(role_id=role.id, name=role.name, description=role.description) for role in model.roles],
+        roles=[InstanceRole(role_id=role.id, name=role.name, description=role.description) for role in model.roles],
         invited_at=model.created_date.replace(tzinfo=timezone.utc),
         expiration_date=model.expiration_date.replace(tzinfo=timezone.utc),
         invited_by=model.invited_by_email,
@@ -180,12 +182,19 @@ def instance_user_invitation_model(model: ListInstanceUserInvitationsResponse) -
     )
 
 
-def instance_user_role_model(model: ListInstanceRolesResponse) -> InstanceUserRoleWithPermissions:
+def instance_user_role_model(model: ListInstanceRolesResponse) -> InstanceRoleWithPermissions:
     """
     Parse an InstanceUserRoleWithPermissions from the generated model.
     :param model: The model returned by the generated code.
     :return: An InstanceUserRoleWithPermissions instance.
     """
-    return InstanceUserRoleWithPermissions(
+    return InstanceRoleWithPermissions(
         role_id=model.id, name=model.name, description=model.description, permissions=model.permissions
+    )
+
+
+def add_instance_user_model(model: AddInstanceUsersResponse):
+    return AddedInstanceUsers(
+        members=[instance_user_with_email_model(user) for user in model.members],
+        invitations=[instance_user_invitation_model(invitation) for invitation in model.invitations],
     )

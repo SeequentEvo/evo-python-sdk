@@ -18,11 +18,12 @@ from evo.common.exceptions import ContextError
 from evo.common.test_tools import BASE_URL, MockResponse, TestHTTPHeaderDict, TestWithConnector, utc_datetime
 from evo.common.utils import get_header_metadata
 from evo.workspaces import (
+    AddedInstanceUsers,
     BasicWorkspace,
+    InstanceRole,
+    InstanceRoleWithPermissions,
     InstanceUser,
     InstanceUserInvitation,
-    InstanceUserRole,
-    InstanceUserRoleWithPermissions,
     InstanceUserWithEmail,
     OrderByOperatorEnum,
     ServiceUser,
@@ -67,18 +68,18 @@ def _test_basic_workspace(ws_id: UUID, name: str) -> BasicWorkspace:
     )
 
 
-def _test_instance_role(role_id: UUID, name: str) -> InstanceUserRole:
+def _test_instance_role(role_id: UUID, name: str) -> InstanceRole:
     """Factory method to create test instance role objects."""
-    return InstanceUserRole(
+    return InstanceRole(
         role_id=role_id,
         name=name.title(),
         description=name.lower(),
     )
 
 
-def _test_instance_role_with_permissions(role_id: UUID, name: str) -> InstanceUserRoleWithPermissions:
+def _test_instance_role_with_permissions(role_id: UUID, name: str) -> InstanceRoleWithPermissions:
     """Factory method to create test instance role objects."""
-    return InstanceUserRoleWithPermissions(
+    return InstanceRoleWithPermissions(
         role_id=role_id, name=name.title(), description=name.lower(), permissions=[name.lower() + " permission"]
     )
 
@@ -441,7 +442,7 @@ class TestWorkspaceClient(TestWithConnector):
         self.assertEqual([TEST_BASIC_WORKSPACE_A, TEST_BASIC_WORKSPACE_B], workspaces_page_1.items())
         self.assertEqual([TEST_BASIC_WORKSPACE_C], workspaces_page_2.items())
 
-    async def test_paginated_list_instance_users(self) -> None:
+    async def test_list_instance_users(self) -> None:
         content_1 = load_test_data("instance_users_page_1.json")
         content_2 = load_test_data("instance_users_page_2.json")
 
@@ -512,12 +513,13 @@ class TestWorkspaceClient(TestWithConnector):
                 ]
             },
         )
+
         self.assertEqual(
             response,
-            [
-                INVITATION_1,
-                INSTANCE_USER_2,
-            ],
+            AddedInstanceUsers(
+                members=[INSTANCE_USER_2],
+                invitations=[INVITATION_1],
+            ),
         )
 
     async def test_delete_instance_user_invitation(self) -> None:

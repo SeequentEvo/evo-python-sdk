@@ -22,10 +22,11 @@ from evo.common.utils import get_service_health, parse_order_by
 
 from . import parse
 from .data import (
+    AddedInstanceUsers,
     BasicWorkspace,
+    InstanceRoleWithPermissions,
     InstanceUser,
     InstanceUserInvitation,
-    InstanceUserRoleWithPermissions,
     InstanceUserWithEmail,
     OrderByOperatorEnum,
     User,
@@ -409,9 +410,7 @@ class WorkspaceAPIClient:
             items=[parse.instance_user_with_email_model(item) for item in response.results],
         )
 
-    async def add_users_to_instance(
-        self, users: dict[str, list[UUID]]
-    ) -> list[InstanceUserWithEmail | InstanceUserInvitation]:
+    async def add_users_to_instance(self, users: dict[str, list[UUID]]) -> AddedInstanceUsers:
         """
         Adds users to the instance.
 
@@ -427,11 +426,7 @@ class WorkspaceAPIClient:
             org_id=str(self._org_id), add_instance_users_request=add_instance_users_request
         )
 
-        result: list[InstanceUserWithEmail | InstanceUserInvitation] = []
-        result.extend([parse.instance_user_invitation_model(item) for item in response.invitations])
-        result.extend([parse.instance_user_with_email_model(item) for item in response.members])
-
-        return result
+        return parse.add_instance_user_model(response)
 
     async def list_instance_user_invitations(
         self, limit: int | None = None, offset: int | None = None
@@ -473,7 +468,7 @@ class WorkspaceAPIClient:
             org_id=str(self._org_id), invitation_id=str(invitation_id)
         )
 
-    async def list_instance_user_roles(self) -> list[InstanceUserRoleWithPermissions]:
+    async def list_instance_roles(self) -> list[InstanceRoleWithPermissions]:
         """
         Returns the list of roles available in the instance.
         :returns: A list of instance user roles with their permissions.

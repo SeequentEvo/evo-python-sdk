@@ -23,6 +23,7 @@ from evo.common.data import OrderByOperatorEnum
 from .exceptions import UserPermissionTypeError
 
 __all__ = [
+    "AddedInstanceUsers",
     "BasicWorkspace",
     "BoundingBox",
     "Coordinate",
@@ -176,7 +177,7 @@ class Workspace(BasicWorkspace):
 
 
 @dataclass(frozen=True, kw_only=True)
-class InstanceUserRole:
+class InstanceRole:
     role_id: UUID
     description: str
     name: str
@@ -185,7 +186,7 @@ class InstanceUserRole:
 @dataclass(frozen=True, kw_only=True)
 class InstanceUser:
     user_id: UUID
-    roles: list[InstanceUserRole]
+    roles: list[InstanceRole]
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -202,9 +203,15 @@ class InstanceUserInvitation:
     expiration_date: datetime
     invited_by: str
     status: str
-    roles: list[InstanceUserRole]
+    roles: list[InstanceRole]
 
 
 @dataclass(frozen=True, kw_only=True)
-class InstanceUserRoleWithPermissions(InstanceUserRole):
+class InstanceRoleWithPermissions(InstanceRole):
     permissions: list[str]
+
+
+@dataclass(frozen=True, kw_only=True)
+class AddedInstanceUsers:
+    members: list[InstanceUserWithEmail]
+    invitations: list[InstanceUserInvitation]
