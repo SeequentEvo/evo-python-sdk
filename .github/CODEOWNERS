@@ -18,10 +18,10 @@
 # PACKAGE-SPECIFIC MAINTAINERS
 # =============================================================================
 
-packages/evo-blockmodels/     @SeequentEvo/blockmodels-maintainers
-packages/evo-colormaps/       @SeequentEvo/colormaps-maintainers
-packages/evo-compute/         @SeequentEvo/compute-maintainers
-packages/evo-files/           @SeequentEvo/files-maintainers
-packages/evo-objects/         @SeequentEvo/objects-maintainers
-packages/evo-sdk-common/      @SeequentEvo/python-sdk-common-maintainers
+packages/evo-blockmodels/                   @SeequentEvo/blockmodels-maintainers
+packages/evo-colormaps/                     @SeequentEvo/colormaps-maintainers
+packages/evo-compute/                       @SeequentEvo/compute-maintainers
+packages/evo-files/                         @SeequentEvo/files-maintainers
+packages/evo-objects/                       @SeequentEvo/objects-maintainers
+packages/evo-sdk-common/                    @SeequentEvo/python-sdk-common-maintainers
 packages/evo-sdk-common/src/evo/workspaces/ @SeequentEvo/workspaces-maintainers
