@@ -127,6 +127,8 @@ Instead, create plain text files with:
 - `#%%` on its own line to start a code cell  
 - Save with `.ipynb` extension
 
+The `.ipynb` percent format files can be opened as notebooks in IDEs like PyCharm or VS Code with the Jupyter extension, which will automatically convert them to the notebook view.
+
 **Example of CORRECT format:**
 ```
 #%% md
@@ -154,17 +156,20 @@ df.head()
 
 ### Default Approach (IMPORTANT)
 - **Always use typed objects** (`PointSet`, `BlockModel`, `Regular3DGrid`, etc.) from `evo.objects.typed`
-- **Always use `ObjectSearchWidget`** for object discovery when users know an object name but not its UUID
+- **Use `ObjectSearchWidget`** for object discovery **only when** users know an object name but not its UUID
 - **Always use `display_object_links()`** after loading/creating objects to show Evo Portal and Viewer links
 - **Never expose `ObjectAPIClient`** or `BlockModelAPIClient` to users unless explicitly requested by an advanced developer
 
 ### When to Use Each Pattern
 | User Request | Pattern |
 |-------------|---------|
-| "Find object named X" | `ObjectSearchWidget` + `TypedClass.from_reference()` |
-| "Download from URL" | `TypedClass.from_reference(manager, url)` |
+| "Find object named X" (no URL given) | `ObjectSearchWidget` + `TypedClass.from_reference()` |
+| **User provides Evo Portal URL with `?id=`** | **Extract IDs from URL, build `ObjectReference` directly** |
+| "Download from URL" | Build `ObjectReference` from environment + object_id |
 | "Create from CSV" | `pd.read_csv()` + `TypedClassData()` + `TypedClass.create()` |
 | "I need low-level API" | Only then use `ObjectAPIClient` (advanced users) |
+
+**IMPORTANT:** When the user provides an Evo Portal URL containing `?id={object_id}`, do **NOT** use `ObjectSearchWidget`. The object ID is already known - build the `ObjectReference` directly from the URL components.
 
 ### Standard Notebook Structure
 1. Authentication with `ServiceManagerWidget`
@@ -229,6 +234,58 @@ manager = await ServiceManagerWidget.with_auth_code(
     discovery_url="https://int-discover.test.api.seequent.com",
     cache_location="./notebook-data",
 ).login()
+```
+
+**Complete Notebook Example (when user provides a URL):**
+
+When a user provides a URL like:
+`https://evo.integration.seequent.com/829e6621-0ab6-4d7d-96bb-2bb5b407a5fe/workspaces/350mt/783b6eef-01b9-42a7-aaf4-35e153e6fcbe/overview?id=9100d7dc-44e9-4e61-b427-159635dea22f`
+
+Generate this notebook (in percent format, saved as `.ipynb`):
+
+```
+#%% md
+# Download PointSet Data from Seequent Evo
+
+This notebook downloads the pointset and displays it as a pandas DataFrame.
+#%%
+from evo.notebooks import ServiceManagerWidget
+
+client_id = "<your-client-id>"  # Replace with your client ID
+
+# Integration environment (detected from evo.integration.seequent.com)
+manager = await ServiceManagerWidget.with_auth_code(
+    client_id=client_id,
+    base_uri="https://qa-ims.bentley.com",
+    discovery_url="https://int-discover.test.api.seequent.com",
+    cache_location="./notebook-data",
+).login()
+#%% md
+## Load the PointSet
+#%%
+from evo.objects import ObjectReference
+from evo.objects.typed import PointSet
+from evo.notebooks import display_object_links
+
+# Build object reference from URL components
+# Source: https://evo.integration.seequent.com/.../overview?id=9100d7dc-44e9-4e61-b427-159635dea22f
+object_id = "9100d7dc-44e9-4e61-b427-159635dea22f"
+
+environment = manager.get_environment()
+prefix = f"{environment.hub_url}/geoscience-object/orgs/{environment.org_id}/workspaces/{environment.workspace_id}/objects"
+object_reference = ObjectReference(f"{prefix}/{object_id}")
+
+# Download the pointset
+pointset = await PointSet.from_reference(manager, object_reference)
+
+display_object_links(pointset)
+print(f"Downloaded: {pointset.name}")
+#%% md
+## View Data as DataFrame
+#%%
+# Get all locations and attributes as a DataFrame
+df = await pointset.locations.as_dataframe()
+df.head()
 ```
 
 ### Detailed Guides
