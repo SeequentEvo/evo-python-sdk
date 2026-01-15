@@ -117,11 +117,40 @@ When generating Jupyter notebooks for users, follow these rules:
 ### Target Audience
 Notebooks are primarily for **geologists with limited Python experience**. Keep code minimal and readable.
 
-### Notebook Format (IMPORTANT)
-Notebooks in this repository use the **Python percent format**, not standard JSON:
-- `#%% md` for markdown cells
-- `#%%` for code cells
+### Notebook Format (CRITICAL)
+Notebooks in this repository use the **Python percent format**, not standard JSON.
+
+**DO NOT create notebooks as JSON objects with `"cells"`, `"cell_type"`, `"source"` keys.**
+
+Instead, create plain text files with:
+- `#%% md` on its own line to start a markdown cell
+- `#%%` on its own line to start a code cell  
 - Save with `.ipynb` extension
+
+**Example of CORRECT format:**
+```
+#%% md
+# My Notebook Title
+
+This is markdown content.
+#%%
+import pandas as pd
+
+df = pd.read_csv("data.csv")
+#%% md
+## Next Section
+#%%
+df.head()
+```
+
+**WRONG format (do not use):**
+```json
+{
+ "cells": [
+  {"cell_type": "markdown", "source": ["# Title"]}
+ ]
+}
+```
 
 ### Default Approach (IMPORTANT)
 - **Always use typed objects** (`PointSet`, `BlockModel`, `Regular3DGrid`, etc.) from `evo.objects.typed`
@@ -143,6 +172,64 @@ Notebooks in this repository use the **Python percent format**, not standard JSO
 3. Load object with `TypedClass.from_reference()`
 4. Display links with `display_object_links()`
 5. Access data with `.as_dataframe()` or `.get_data()`
+
+### Evo Portal URL Format
+
+When users provide an Evo Portal URL, extract the relevant IDs and determine the authentication environment.
+
+**URL Pattern:**
+```
+https://{evo_host}/{org_id}/workspaces/{hub_code}/{workspace_id}/{view}?id={object_id}
+```
+
+**Example:**
+```
+https://evo.integration.seequent.com/829e6621-0ab6-4d7d-96bb-2bb5b407a5fe/workspaces/350mt/783b6eef-01b9-42a7-aaf4-35e153e6fcbe/overview?id=9100d7dc-44e9-4e61-b427-159635dea22f
+```
+
+Extracted values:
+- `org_id`: `829e6621-0ab6-4d7d-96bb-2bb5b407a5fe`
+- `workspace_id`: `783b6eef-01b9-42a7-aaf4-35e153e6fcbe`
+- `object_id`: `9100d7dc-44e9-4e61-b427-159635dea22f` (from `?id=` query parameter)
+
+**Authentication Environment by Host:**
+
+| Evo Host | Environment | `base_uri` | `discovery_url` |
+|----------|-------------|-----------|-----------------|
+| `evo.seequent.com` | Production | (default) | `https://discover.api.seequent.com` |
+| `evo.integration.seequent.com` | Integration/QA | `https://qa-ims.bentley.com` | `https://int-discover.test.api.seequent.com` |
+
+**Building ObjectReference from URL:**
+
+The `ObjectReference` requires a specific HTTPS format. Build it from the environment:
+
+```python
+from evo.objects import ObjectReference
+
+# Extract from the portal URL
+org_id = "829e6621-0ab6-4d7d-96bb-2bb5b407a5fe"
+workspace_id = "783b6eef-01b9-42a7-aaf4-35e153e6fcbe"
+object_id = "9100d7dc-44e9-4e61-b427-159635dea22f"
+
+# After authentication, build the reference
+environment = manager.get_environment()
+prefix = f"{environment.hub_url}/geoscience-object/orgs/{environment.org_id}/workspaces/{environment.workspace_id}/objects"
+object_reference = ObjectReference(f"{prefix}/{object_id}")
+```
+
+**Complete Example for Integration Environment:**
+
+```python
+from evo.notebooks import ServiceManagerWidget
+
+# Integration environment (evo.integration.seequent.com)
+manager = await ServiceManagerWidget.with_auth_code(
+    client_id="your-client-id",
+    base_uri="https://qa-ims.bentley.com",
+    discovery_url="https://int-discover.test.api.seequent.com",
+    cache_location="./notebook-data",
+).login()
+```
 
 ### Detailed Guides
 - [Notebook Generation Guide](notebook-generation-guide.md) — Full instructions
