@@ -1,0 +1,33 @@
+{
+    "invitations": [
+        {
+            "id": "00000000-0000-0000-0000-000000000001",
+            "email": "external.user1@gmail.com",
+            "invited_by_email": "admin.user@bentley.com",
+            "status": "Pending",
+            "created_date": "2026-01-01T12:00:00.000000Z",
+            "expiration_date": "2026-01-15T12:00:00.000000Z",
+            "roles": [
+                {
+                    "id": "00000000-0000-0000-0000-000000000001",
+                    "name": "Evo User",
+                    "description": "evo user"
+                }
+            ]
+        }
+    ],
+    "members": [
+        {
+            "id": "00000000-0000-0000-0000-000000000002",
+            "email": "test.user2@gmail.com",
+            "full_name": "User 2",
+            "roles": [
+                {
+                    "id": "00000000-0000-0000-0000-000000000002",
+                    "name": "Evo Admin",
+                    "description": "evo admin"
+                }
+            ]
+        }
+    ]
+}
