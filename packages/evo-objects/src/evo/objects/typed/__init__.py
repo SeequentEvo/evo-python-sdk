@@ -9,6 +9,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+from .base import object_from_path, object_from_reference, object_from_uuid
 from .pointset import PointSet, PointSetData
 from .regular_grid import (
     Regular3DGrid,
@@ -34,4 +35,7 @@ __all__ = [
     "Size3i",
     "Tensor3DGrid",
     "Tensor3DGridData",
+    "object_from_path",
+    "object_from_reference",
+    "object_from_uuid",
 ]

@@ -84,9 +84,9 @@ class TestTensor3DGrid(TestWithConnector):
         npt.assert_array_equal(result.cell_sizes_y, np.array([2.0, 2.5, 1.0]))
         npt.assert_array_equal(result.cell_sizes_z, np.array([0.5, 1.0, 1.5]))
 
-        cell_df = await result.cells.as_dataframe()
+        cell_df = await result.cells.to_dataframe()
         pd.testing.assert_frame_equal(cell_df, self.example_grid.cell_data)
-        vertices_df = await result.vertices.as_dataframe()
+        vertices_df = await result.vertices.to_dataframe()
         pd.testing.assert_frame_equal(vertices_df, self.example_grid.vertex_data)
 
     async def test_create_without_cell_data(self):
@@ -95,7 +95,7 @@ class TestTensor3DGrid(TestWithConnector):
             result = await Tensor3DGrid.create(context=self.context, data=data)
 
         self.assertEqual(result.name, "Test Tensor Grid")
-        cell_df = await result.cells.as_dataframe()
+        cell_df = await result.cells.to_dataframe()
         self.assertEqual(cell_df.shape[0], 0)
 
     async def test_replace(self):
@@ -114,7 +114,7 @@ class TestTensor3DGrid(TestWithConnector):
         self.assertEqual(result.origin, Point3(0, 0, 0))
         self.assertEqual(result.size, Size3i(3, 3, 3))
 
-        cell_df = await result.cells.as_dataframe()
+        cell_df = await result.cells.to_dataframe()
         pd.testing.assert_frame_equal(cell_df, data.cell_data)
 
     async def test_from_reference(self):
@@ -132,7 +132,7 @@ class TestTensor3DGrid(TestWithConnector):
             npt.assert_array_equal(result.cell_sizes_y, np.array([2.0, 2.5, 1.0]))
             npt.assert_array_equal(result.cell_sizes_z, np.array([0.5, 1.0, 1.5]))
 
-            cell_df = await result.cells.as_dataframe()
+            cell_df = await result.cells.to_dataframe()
             pd.testing.assert_frame_equal(cell_df, self.example_grid.cell_data)
 
     async def test_update(self):
@@ -152,7 +152,7 @@ class TestTensor3DGrid(TestWithConnector):
 
             self.assertEqual(obj.name, "Updated Tensor Grid")
 
-            cell_df = await obj.cells.as_dataframe()
+            cell_df = await obj.cells.to_dataframe()
             pd.testing.assert_frame_equal(
                 cell_df,
                 pd.DataFrame(
