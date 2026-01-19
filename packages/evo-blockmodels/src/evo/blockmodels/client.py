@@ -264,7 +264,6 @@ class BlockModelAPIClient(BaseAPIClient):
 
         cache_location = get_cache_location_for_upload(self._cache, self._environment, job_id)
         pyarrow.parquet.write_table(data, cache_location)
-
         # Upload the data
         upload = BlockModelUpload(self._connector, self._environment, bm_id, job_id, upload_url)
         await upload.upload_from_path(cache_location, self._connector.transport)
@@ -320,6 +319,19 @@ class BlockModelAPIClient(BaseAPIClient):
         )
 
         return [self._bm_from_model(m) for m in response.results]
+
+    async def get_block_model(self, bm_id: UUID) -> BlockModel:
+        """Get a block model by ID.
+
+        :param bm_id: The ID of the block model to retrieve.
+        :return: The BlockModel metadata.
+        """
+        response = await self._metadata_api.retrieve_block_model(
+            bm_id=str(bm_id),
+            workspace_id=str(self._environment.workspace_id),
+            org_id=str(self._environment.org_id),
+        )
+        return self._bm_from_model(response)
 
     async def list_all_block_models(self, page_limit: int | None = 100) -> list[BlockModel]:
         """Return all block models for the current workspace, following paginated responses.
@@ -580,6 +592,7 @@ class BlockModelAPIClient(BaseAPIClient):
             delete=list(delete_columns),
             rename=[],
         )
+        print(columns)
         update_response = await self._column_operations_api.update_block_model_from_latest_version(
             org_id=str(self._environment.org_id),
             workspace_id=str(self._environment.workspace_id),

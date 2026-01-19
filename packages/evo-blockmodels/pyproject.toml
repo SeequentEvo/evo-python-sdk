@@ -21,7 +21,7 @@ Homepage = "https://www.seequent.com/"
 Documentation = "https://developer.seequent.com/"
 
 [project.optional-dependencies]
-pyarrow = ["pyarrow>=19.0.0"]
+pyarrow = ["pyarrow>=19.0.0", "pandas>=2.0.0"]
 aiohttp = ["evo-sdk-common[aiohttp]>=0.1.0"]
 notebooks = ["evo-sdk-common[notebooks]>=0.1.0"]
 

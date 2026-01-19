@@ -9,11 +9,21 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from .widgets import FeedbackWidget, HubSelectorWidget, OrgSelectorWidget, ServiceManagerWidget, WorkspaceSelectorWidget
+from .widgets import (
+    display_object_links,
+    FeedbackWidget,
+    HubSelectorWidget,
+    ObjectSearchWidget,
+    OrgSelectorWidget,
+    ServiceManagerWidget,
+    WorkspaceSelectorWidget,
+)
 
 __all__ = [
+    "display_object_links",
     "FeedbackWidget",
     "HubSelectorWidget",
+    "ObjectSearchWidget",
     "OrgSelectorWidget",
     "ServiceManagerWidget",
     "WorkspaceSelectorWidget",

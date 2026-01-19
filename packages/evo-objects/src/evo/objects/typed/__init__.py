@@ -10,6 +10,13 @@
 #  limitations under the License.
 
 from .base import object_from_path, object_from_reference, object_from_uuid
+from .block_model_ref import (
+    BlockModel,
+    BlockModelAttribute,
+    BlockModelData,
+    BlockModelGeometry,
+    RegularBlockModelData,
+)
 from .pointset import PointSet, PointSetData
 from .regular_grid import (
     Regular3DGrid,
@@ -20,6 +27,10 @@ from .tensor_grid import Tensor3DGrid, Tensor3DGridData
 from .types import BoundingBox, CoordinateReferenceSystem, EpsgCode, Point3, Rotation, Size3d, Size3i
 
 __all__ = [
+    "BlockModel",
+    "BlockModelAttribute",
+    "BlockModelData",
+    "BlockModelGeometry",
     "BoundingBox",
     "CoordinateReferenceSystem",
     "EpsgCode",
@@ -28,6 +39,7 @@ __all__ = [
     "PointSetData",
     "Regular3DGrid",
     "Regular3DGridData",
+    "RegularBlockModelData",
     "RegularMasked3DGrid",
     "RegularMasked3DGridData",
     "Rotation",

@@ -16,11 +16,20 @@ from typing import TypeVar
 
 from ..interfaces import IFeedback
 
+# Try optional imports for notebook widgets
+try:
+    from IPython.display import display  # type: ignore
+    import ipywidgets as widgets  # type: ignore
+    _HAS_WIDGETS = True
+except Exception:  # pragma: no cover - widgets not available
+    _HAS_WIDGETS = False
+
 __all__ = [
     "NoFeedback",
     "PartialFeedback",
     "iter_with_fb",
     "split_feedback",
+    "WidgetFeedback",
 ]
 
 _N_DIGITS = 4  # Let's maintain a user-friendly number of dp.
@@ -154,3 +163,60 @@ def split_feedback(feedback: IFeedback, weights: Sequence[float]) -> list[IFeedb
     """
     group = _ConcurrentFeedbackGroup(feedback)
     return [group.create_feedback(weight) for weight in weights]
+
+
+# --- Notebook widget feedback implementation ---
+class _WidgetFeedback(IFeedback):
+    """Notebook (Jupyter) widget-based feedback.
+
+    Displays a progress bar and a status text that updates as progress() is called.
+    Gracefully becomes a no-op when ipywidgets are not available.
+    """
+
+    def __init__(self, description: str | None = None) -> None:
+        self._enabled = _HAS_WIDGETS
+        self._lock = Lock()
+        self._last = 0.0
+        self._desc = description or "Task progress"
+        if self._enabled:
+            # Create widgets
+            self._bar = widgets.IntProgress(value=0, min=0, max=100)
+            self._label = widgets.HTML(value=f"<b>{self._desc}</b>: 0%")
+            self._message = widgets.HTML(value="")
+            self._box = widgets.VBox([self._label, self._bar, self._message])
+            # Display once
+            try:
+                display(self._box)
+            except Exception:
+                # If display fails, disable to avoid errors
+                self._enabled = False
+
+    def progress(self, progress: float, message: str | None = None) -> None:
+        # Progress is 0..1; clamp and convert to percent int
+        pct = int(max(0.0, min(1.0, progress)) * 100)
+        if not self._enabled:
+            return
+        with self._lock:
+            # Avoid excessive updates; only update if changed
+            if pct == int(self._last * 100) and (message is None):
+                return
+            self._last = progress
+            try:
+                self._bar.value = pct
+                self._label.value = f"<b>{self._desc}</b>: {pct}%"
+                if message:
+                    self._message.value = f"<span style='color:#555'>{message}</span>"
+            except Exception:
+                # Swallow widget update errors to avoid breaking computations
+                pass
+
+
+def WidgetFeedback(description: str | None = None) -> IFeedback:
+    """Factory for a notebook progress widget feedback.
+
+    Returns an IFeedback implementation that renders a progress bar when running in a notebook
+    (ipywidgets available). If widgets aren't available, returns NoFeedback.
+    """
+    if _HAS_WIDGETS:
+        return _WidgetFeedback(description)
+    return NoFeedback
