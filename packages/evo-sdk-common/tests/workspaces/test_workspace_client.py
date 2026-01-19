@@ -18,7 +18,13 @@ from evo.common.exceptions import ContextError
 from evo.common.test_tools import BASE_URL, MockResponse, TestHTTPHeaderDict, TestWithConnector, utc_datetime
 from evo.common.utils import get_header_metadata
 from evo.workspaces import (
+    AddedInstanceUsers,
     BasicWorkspace,
+    InstanceRole,
+    InstanceRoleWithPermissions,
+    InstanceUser,
+    InstanceUserInvitation,
+    InstanceUserWithEmail,
     OrderByOperatorEnum,
     ServiceUser,
     User,
@@ -62,12 +68,67 @@ def _test_basic_workspace(ws_id: UUID, name: str) -> BasicWorkspace:
     )
 
 
+def _test_instance_role(role_id: UUID, name: str) -> InstanceRole:
+    """Factory method to create test instance role objects."""
+    return InstanceRole(
+        role_id=role_id,
+        name=name.title(),
+        description=name.lower(),
+    )
+
+
+def _test_instance_role_with_permissions(role_id: UUID, name: str) -> InstanceRoleWithPermissions:
+    """Factory method to create test instance role objects."""
+    return InstanceRoleWithPermissions(
+        role_id=role_id, name=name.title(), description=name.lower(), permissions=[name.lower() + " permission"]
+    )
+
+
+def _test_instance_user(user_id: UUID, role_name: str, role_id: int) -> InstanceUser:
+    """Factory method to create test instance user objects."""
+    return InstanceUser(user_id=user_id, roles=[_test_instance_role(UUID(int=role_id), role_name)])
+
+
+def _test_instance_user_with_email(
+    user_id: UUID, email: str, full_name: str, role_name: str, role_id: int
+) -> InstanceUserWithEmail:
+    """Factory method to create test instance user objects."""
+    return InstanceUserWithEmail(
+        user_id=user_id, email=email, full_name=full_name, roles=[_test_instance_role(UUID(int=role_id), role_name)]
+    )
+
+
+def _test_instance_user_invitation(
+    invitation_id: UUID, email: str, status: str, role_name: str, role_id: int
+) -> InstanceUserInvitation:
+    """Factory method to create test instance user invitation objects."""
+    return InstanceUserInvitation(
+        email=email,
+        invitation_id=invitation_id,
+        invited_at=utc_datetime(2026, 1, 1, 12, 0, 0),
+        expiration_date=utc_datetime(2026, 1, 15, 12, 0, 0),
+        invited_by="admin.user@bentley.com",
+        status=status,
+        roles=[_test_instance_role(UUID(int=role_id), role_name)],
+    )
+
+
 TEST_WORKSPACE_A = _test_workspace(UUID(int=0xA), "Test Workspace A")
 TEST_WORKSPACE_B = _test_workspace(UUID(int=0xB), "Test Workspace B")
 TEST_WORKSPACE_C = _test_workspace(UUID(int=0xC), "Test Workspace C")
 TEST_BASIC_WORKSPACE_A = _test_basic_workspace(UUID(int=0xA), "Test Workspace A")
 TEST_BASIC_WORKSPACE_B = _test_basic_workspace(UUID(int=0xB), "Test Workspace B")
 TEST_BASIC_WORKSPACE_C = _test_basic_workspace(UUID(int=0xC), "Test Workspace C")
+
+INSTANCE_USER_1 = _test_instance_user_with_email(UUID(int=1), "test.user1@gmail.com", "User 1", "Evo Owner", 3)
+INSTANCE_USER_2 = _test_instance_user_with_email(UUID(int=2), "test.user2@gmail.com", "User 2", "Evo Admin", 2)
+INSTANCE_USER_3 = _test_instance_user_with_email(UUID(int=3), "test.user3@gmail.com", "User 3", "Evo User", 1)
+INVITATION_1 = _test_instance_user_invitation(UUID(int=1), "external.user1@gmail.com", "Pending", "Evo User", 1)
+INVITATION_2 = _test_instance_user_invitation(UUID(int=2), "external.user2@gmail.com", "Accepted", "Evo Admin", 2)
+INVITATION_3 = _test_instance_user_invitation(UUID(int=3), "external.user3@gmail.com", "Pending", "Evo User", 1)
+
+INSTANCE_USER_ROLE = _test_instance_role_with_permissions(UUID(int=1), "Evo User")
+INSTANCE_ADMIN_ROLE = _test_instance_role_with_permissions(UUID(int=2), "Evo Admin")
 
 
 class TestWorkspaceClient(TestWithConnector):
@@ -380,3 +441,134 @@ class TestWorkspaceClient(TestWithConnector):
         self.assertEqual(2, self.transport.request.call_count, "Two requests should be made.")
         self.assertEqual([TEST_BASIC_WORKSPACE_A, TEST_BASIC_WORKSPACE_B], workspaces_page_1.items())
         self.assertEqual([TEST_BASIC_WORKSPACE_C], workspaces_page_2.items())
+
+    async def test_list_instance_users(self) -> None:
+        content_1 = load_test_data("instance_users_page_1.json")
+        content_2 = load_test_data("instance_users_page_2.json")
+
+        with self.transport.set_http_response(200, json.dumps(content_1), headers={"Content-Type": "application/json"}):
+            users_page_1 = await self.workspace_client.list_instance_users(limit=2, offset=0)
+
+        with self.transport.set_http_response(200, json.dumps(content_2), headers={"Content-Type": "application/json"}):
+            users_page_2 = await self.workspace_client.list_instance_users(limit=2, offset=2)
+
+        self.assert_any_request_made(
+            method=RequestMethod.GET,
+            path=f"{BASE_PATH}/members?limit=2&offset=0",
+            headers={"Accept": "application/json"},
+        )
+        self.assert_any_request_made(
+            method=RequestMethod.GET,
+            path=f"{BASE_PATH}/members?limit=2&offset=2",
+            headers={"Accept": "application/json"},
+        )
+        self.assertEqual(2, self.transport.request.call_count, "Two requests should be made.")
+        self.assertEqual([INSTANCE_USER_1, INSTANCE_USER_2], users_page_1.items())
+        self.assertEqual([INSTANCE_USER_3], users_page_2.items())
+
+    async def test_list_instance_user_invitations(self) -> None:
+        content = load_test_data("invitations_page_1.json")
+
+        with self.transport.set_http_response(200, json.dumps(content), headers={"Content-Type": "application/json"}):
+            invitations = await self.workspace_client.list_instance_user_invitations(limit=2, offset=0)
+
+        self.assert_request_made(
+            method=RequestMethod.GET,
+            path=f"{BASE_PATH}/members/invitations?limit=2&offset=0",
+            headers={"Accept": "application/json"},
+        )
+        self.assertEqual([INVITATION_1, INVITATION_2], invitations.items())
+
+    async def test_add_users_to_instance(self) -> None:
+        add_users_content = load_test_data("add_instance_users.json")
+
+        with self.transport.set_http_response(
+            201,
+            json.dumps(add_users_content),
+            headers={"Content-Type": "application/json"},
+        ):
+            response = await self.workspace_client.add_users_to_instance(
+                users={
+                    INSTANCE_USER_2.email: [INSTANCE_USER_2.roles[0].role_id],
+                    INVITATION_1.email: [INVITATION_1.roles[0].role_id],
+                }
+            )
+        self.assert_request_made(
+            method=RequestMethod.POST,
+            path=f"{BASE_PATH}/members",
+            headers={
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+            },
+            body={
+                "users": [
+                    {
+                        "email": INSTANCE_USER_2.email,
+                        "roles": [str(INSTANCE_USER_2.roles[0].role_id)],
+                    },
+                    {
+                        "email": INVITATION_1.email,
+                        "roles": [str(INVITATION_1.roles[0].role_id)],
+                    },
+                ]
+            },
+        )
+
+        self.assertEqual(
+            response,
+            AddedInstanceUsers(
+                members=[INSTANCE_USER_2],
+                invitations=[INVITATION_1],
+            ),
+        )
+
+    async def test_delete_instance_user_invitation(self) -> None:
+        with self.transport.set_http_response(204):
+            response = await self.workspace_client.delete_instance_user_invitation(
+                invitation_id=INVITATION_1.invitation_id
+            )
+        self.assert_request_made(
+            method=RequestMethod.DELETE,
+            path=f"{BASE_PATH}/members/invitations/{INVITATION_1.invitation_id}",
+        )
+        self.assertIsNone(response, "Delete instance user invitation response should be None")
+
+    async def test_remove_instance_user(self) -> None:
+        with self.transport.set_http_response(204):
+            response = await self.workspace_client.remove_instance_user(user_id=INSTANCE_USER_1.user_id)
+        self.assert_request_made(
+            method=RequestMethod.DELETE,
+            path=f"{BASE_PATH}/members/{INSTANCE_USER_1.user_id}",
+        )
+        self.assertIsNone(response, "Remove instance user response should be None")
+
+    async def test_update_instance_user_roles(self) -> None:
+        update_users_content = load_test_data("update_instance_user.json")
+        with self.transport.set_http_response(
+            200,
+            json.dumps(update_users_content),
+            headers={"Content-Type": "application/json"},
+        ):
+            response = await self.workspace_client.update_instance_user_roles(
+                user_id=INSTANCE_USER_1.user_id,
+                roles=[INSTANCE_ADMIN_ROLE.role_id],
+            )
+        self.assert_request_made(
+            method=RequestMethod.PATCH,
+            path=f"{BASE_PATH}/members/{INSTANCE_USER_1.user_id}",
+            headers={
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+            },
+            body={
+                "user_id": str(INSTANCE_USER_1.user_id),
+                "roles": [str(INSTANCE_ADMIN_ROLE.role_id)],
+            },
+        )
+        self.assertEqual(
+            response,
+            InstanceUser(
+                user_id=INSTANCE_USER_1.user_id,
+                roles=[_test_instance_role(INSTANCE_ADMIN_ROLE.role_id, "Evo Admin")],
+            ),
+        )
