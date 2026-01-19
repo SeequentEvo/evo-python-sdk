@@ -24,7 +24,7 @@ from evo.objects.utils.table_formats import FLOAT_ARRAY_3
 from ._adapters import AttributesAdapter, TableAdapter
 from ._property import SchemaProperty
 from .base import BaseSpatialObject, BaseSpatialObjectData, ConstructableObject, DatasetProperty
-from .dataset import Dataset
+from .dataset import Attributes, Dataset
 from .types import BoundingBox
 
 __all__ = [
@@ -110,3 +110,23 @@ class PointSet(BaseSpatialObject, ConstructableObject[PointSetData]):
         ],
         extract_data=lambda data: data.locations,
     )
+
+    @property
+    def attributes(self) -> Attributes:
+        return self.locations.attributes
+
+    async def coordinates(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
+        """Get the coordinates dataframe for the pointset.
+
+        Returns:
+            A DataFrame with 'x', 'y', 'z' columns representing point coordinates.
+        """
+        return await self.locations._values.to_dataframe(fb=fb)
+
+    async def to_dataframe(self, *keys: str, fb: IFeedback = NoFeedback) -> pd.DataFrame:
+        """Get the full dataframe for the pointset, including coordinates and attributes.
+
+        Returns:
+            A DataFrame with 'x', 'y', 'z' columns and any additional attribute columns.
+        """
+        return await self.locations.to_dataframe(*keys, fb=fb)

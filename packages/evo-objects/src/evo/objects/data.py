@@ -22,6 +22,7 @@ from uuid import UUID
 from evo.common import Environment, ResourceMetadata
 from evo.workspaces import ServiceUser
 
+from ._html_styles import build_object_html
 from .exceptions import SchemaIDFormatError
 
 __all__ = [
@@ -190,6 +191,34 @@ class ObjectMetadata(ResourceMetadata):
             object_id=self.id,
             version_id=self.version_id,
         )
+
+    def _repr_html_(self) -> str:
+        """Return an HTML representation for Jupyter notebooks."""
+        # Format dates nicely
+        created_on = self.created_at.strftime("%Y-%m-%d %H:%M:%S %Z")
+        modified_on = self.modified_at.strftime("%Y-%m-%d %H:%M:%S %Z")
+        
+        # Build user info
+        created_by = f"{self.created_by.name} ({self.created_by.email})" if self.created_by else "Unknown"
+        modified_by = f"{self.modified_by.name} ({self.modified_by.email})" if self.modified_by else "Unknown"
+        
+        # Build stage info
+        stage_str = self.stage.value if self.stage else "N/A"
+        
+        # Define rows as (label, value)
+        rows = [
+            ("Path:", self.path),
+            ("Version:", str(self.version_id)),
+            ("ID:", str(self.id)),
+            ("Schema:", str(object=self.schema_id)),
+            ("Created On:", created_on),
+            ("Created By:", created_by),
+            ("Modified On:", modified_on),
+            ("Modified By:", modified_by),
+            ("Stage:", stage_str),
+        ]
+        
+        return build_object_html(self.name, rows)
 
 
 @dataclass(frozen=True, kw_only=True)

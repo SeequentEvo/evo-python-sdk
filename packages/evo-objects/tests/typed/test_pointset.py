@@ -70,7 +70,7 @@ class TestPointSet(TestWithConnector):
         self.assertIsInstance(result, PointSet)
         self.assertEqual(result.name, "Test PointSet")
 
-        locations_df = await result.locations.as_dataframe()
+        locations_df = await result.locations.to_dataframe()
         pd.testing.assert_frame_equal(locations_df, self.example_pointset.locations)
 
     @parameterized.expand([BaseObject, PointSet])
@@ -97,7 +97,7 @@ class TestPointSet(TestWithConnector):
         self.assertIsInstance(result, PointSet)
         self.assertEqual(result.name, "Test PointSet")
 
-        locations_df = await result.locations.as_dataframe()
+        locations_df = await result.locations.to_dataframe()
         pd.testing.assert_frame_equal(locations_df, data.locations)
 
     @parameterized.expand([BaseObject, PointSet])
@@ -114,7 +114,7 @@ class TestPointSet(TestWithConnector):
         self.assertIsInstance(result, PointSet)
         self.assertEqual(result.name, "Test PointSet")
 
-        locations_df = await result.locations.as_dataframe()
+        locations_df = await result.locations.to_dataframe()
         pd.testing.assert_frame_equal(locations_df, self.example_pointset.locations)
 
     async def test_from_reference(self):
@@ -124,7 +124,7 @@ class TestPointSet(TestWithConnector):
             result = await PointSet.from_reference(context=self.context, reference=original.metadata.url)
             self.assertEqual(result.name, "Test PointSet")
 
-            locations_df = await result.locations.as_dataframe()
+            locations_df = await result.locations.to_dataframe()
             pd.testing.assert_frame_equal(locations_df, self.example_pointset.locations)
 
     async def test_update(self):
@@ -145,14 +145,14 @@ class TestPointSet(TestWithConnector):
             )
 
             with self.assertRaises(DataLoaderError):
-                await obj.locations.as_dataframe()
+                await obj.locations.to_dataframe()
 
             await obj.update()
 
             self.assertEqual(obj.name, "Updated PointSet")
             self.assertEqual(obj.metadata.version_id, "2")
 
-            locations_df = await obj.locations.as_dataframe()
+            locations_df = await obj.locations.to_dataframe()
             pd.testing.assert_frame_equal(
                 locations_df,
                 pd.DataFrame(
@@ -176,7 +176,7 @@ class TestPointSet(TestWithConnector):
         self.assertIsInstance(result, PointSet)
         self.assertEqual(result.name, "Empty PointSet")
 
-        locations_df = await result.locations.as_dataframe()
+        locations_df = await result.locations.to_dataframe()
         self.assertEqual(len(locations_df), 0)
 
     async def test_bounding_box_computation(self):
@@ -281,7 +281,7 @@ class TestPointSet(TestWithConnector):
             result = await PointSet.create(context=self.context, data=data)
         self.assertIsInstance(result, PointSet)
 
-        locations_df = await result.locations.as_dataframe()
+        locations_df = await result.locations.to_dataframe()
         pd.testing.assert_frame_equal(locations_df, data.locations)
 
     async def test_pointset_with_many_attributes(self):
@@ -308,5 +308,5 @@ class TestPointSet(TestWithConnector):
             result = await PointSet.create(context=self.context, data=data)
         self.assertIsInstance(result, PointSet)
 
-        locations_df = await result.locations.as_dataframe()
+        locations_df = await result.locations.to_dataframe()
         pd.testing.assert_frame_equal(locations_df, data.locations)

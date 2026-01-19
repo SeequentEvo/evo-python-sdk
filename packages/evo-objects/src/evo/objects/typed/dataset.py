@@ -32,6 +32,7 @@ from evo.objects.utils.table_formats import (
 )
 from evo.objects.utils.types import AttributeInfo
 
+from .._html_styles import STYLESHEET, build_nested_table
 from ._adapters import AttributesAdapter, BaseAdapter, CategoryTableAdapter, DatasetAdapter, TableAdapter
 from ._utils import assign_jmespath_value, get_data_client
 from .exceptions import ObjectValidationError
@@ -90,7 +91,7 @@ class _ValuesStore:
             )
         raise ValueError(f"Unsupported adapter type: {type(adapter)}")
 
-    async def as_dataframe(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
+    async def to_dataframe(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
         """Download a DataFrame containing the referenced values.
 
         :param fb: Optional feedback object to report download progress.
@@ -236,7 +237,7 @@ class Attribute:
         """The type of this attribute."""
         return self._attribute["attribute_type"]
 
-    async def as_dataframe(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
+    async def to_dataframe(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
         """Load a DataFrame containing the values for this attribute from the object.
 
         :param fb: Optional feedback object to report download progress.
@@ -325,7 +326,36 @@ class Attributes(Sequence[Attribute]):
     def __len__(self) -> int:
         return len(self._attributes)
 
-    async def as_dataframe(self, *keys: str, fb: IFeedback = NoFeedback) -> pd.DataFrame:
+    def _repr_html_(self) -> str:
+        """Return an HTML representation for Jupyter notebooks.
+        
+        Uses AttributeInfo from as_dict() to display comprehensive attribute information.
+        
+        :return: An html table with name and type.
+        """
+        if len(self._attributes) == 0:
+            return f'{STYLESHEET}<div class="evo-object">No attributes available.</div>'
+        
+        # Get all attribute info dictionaries
+        attr_infos = [attr.as_dict() for attr in self._attributes]
+        
+        # Build data rows with headers
+        headers = ["Name", "Type"]
+        rows = []
+        for info in attr_infos:
+            attribute_type = info["attribute_type"]
+            attribute_str = (
+                f"{info['attribute_type']} ({info['values']['data_type']})"
+                if attribute_type != "category"
+                else attribute_type
+            )
+            rows.append([info["name"], attribute_str])
+        
+        # Use nested table for a clean header/row structure
+        table_html = build_nested_table(headers, rows)
+        return f'{STYLESHEET}<div class="evo-object">{table_html}</div>'
+
+    async def to_dataframe(self, *keys: str, fb: IFeedback = NoFeedback) -> pd.DataFrame:
         """Load a DataFrame containing the values from the specified attributes in the object.
 
         :param keys: Optional list of attribute keys to filter the attributes by. If no keys are provided, all
@@ -335,7 +365,8 @@ class Attributes(Sequence[Attribute]):
         :return: A DataFrame containing the values from the specified attributes. Column name(s) will be updated
             based on the attribute names.
         """
-        parts = [await attribute.as_dataframe(fb=fb_part) for attribute, fb_part in iter_with_fb(self, fb)]
+        attributes = [self[key] for key in keys] if keys else self._attributes
+        parts = [await attribute.to_dataframe(fb=fb_part) for attribute, fb_part in iter_with_fb(attributes, fb)]
         return pd.concat(parts, axis=1) if len(parts) > 0 else pd.DataFrame()
 
     async def append_attribute(self, df: pd.DataFrame, fb: IFeedback = NoFeedback):
@@ -478,7 +509,7 @@ class Dataset:
                         f"Attribute '{attribute.name}' length ({attribute_length}) does not match dataset length ({length})"
                     )
 
-    async def as_dataframe(self, *keys: str, fb: IFeedback = NoFeedback) -> pd.DataFrame:
+    async def to_dataframe(self, *keys: str, fb: IFeedback = NoFeedback) -> pd.DataFrame:
         """Load a DataFrame containing the datasets base values and the values from the specified attributes.
 
         :param keys: Optional list of attribute keys to filter the attributes by. If no keys are provided, all
@@ -497,10 +528,10 @@ class Dataset:
             self.validate()
         except ObjectValidationError as e:
             raise DataLoaderError(f"Dataset is not valid: {e}") from e
-        values = await self._values.as_dataframe(fb=fb)
+        values = await self._values.to_dataframe(fb=fb)
         if self.attributes is None:
             return values
-        attributes = await self.attributes.as_dataframe(*keys, fb=fb)
+        attributes = await self.attributes.to_dataframe(*keys, fb=fb)
         return pd.concat([values, attributes], axis=1)
 
     async def set_dataframe(self, df: pd.DataFrame, *, fb: IFeedback = NoFeedback) -> None:

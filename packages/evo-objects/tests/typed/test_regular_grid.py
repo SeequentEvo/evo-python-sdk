@@ -81,9 +81,9 @@ class TestRegularGrid(TestWithConnector):
         self.assertEqual(result.cell_size, Size3d(2.5, 5, 5))
         self.assertEqual(result.rotation, Rotation(90, 0, 0))
 
-        cell_df = await result.cells.as_dataframe()
+        cell_df = await result.cells.to_dataframe()
         pd.testing.assert_frame_equal(cell_df, self.example_grid.cell_data)
-        vertices_df = await result.vertices.as_dataframe()
+        vertices_df = await result.vertices.to_dataframe()
         pd.testing.assert_frame_equal(vertices_df, self.example_grid.vertex_data)
 
     @parameterized.expand([BaseObject, Regular3DGrid])
@@ -105,9 +105,9 @@ class TestRegularGrid(TestWithConnector):
         self.assertEqual(result.cell_size, Size3d(2.5, 5, 5))
         self.assertEqual(result.rotation, Rotation(90, 0, 0))
 
-        cell_df = await result.cells.as_dataframe()
+        cell_df = await result.cells.to_dataframe()
         pd.testing.assert_frame_equal(cell_df, data.cell_data)
-        vertices_df = await result.vertices.as_dataframe()
+        vertices_df = await result.vertices.to_dataframe()
         self.assertEqual(vertices_df.shape[0], 0)  # No vertex data provided
 
     @parameterized.expand([BaseObject, Regular3DGrid])
@@ -128,9 +128,9 @@ class TestRegularGrid(TestWithConnector):
         self.assertEqual(result.cell_size, Size3d(2.5, 5, 5))
         self.assertEqual(result.rotation, Rotation(90, 0, 0))
 
-        cell_df = await result.cells.as_dataframe()
+        cell_df = await result.cells.to_dataframe()
         pd.testing.assert_frame_equal(cell_df, self.example_grid.cell_data)
-        vertices_df = await result.vertices.as_dataframe()
+        vertices_df = await result.vertices.to_dataframe()
         pd.testing.assert_frame_equal(vertices_df, self.example_grid.vertex_data)
 
     async def test_from_reference(self):
@@ -144,9 +144,9 @@ class TestRegularGrid(TestWithConnector):
             self.assertEqual(result.cell_size, Size3d(2.5, 5, 5))
             self.assertEqual(result.rotation, Rotation(90, 0, 0))
 
-            cell_df = await result.cells.as_dataframe()
+            cell_df = await result.cells.to_dataframe()
             pd.testing.assert_frame_equal(cell_df, self.example_grid.cell_data)
-            vertices_df = await result.vertices.as_dataframe()
+            vertices_df = await result.vertices.to_dataframe()
             pd.testing.assert_frame_equal(vertices_df, self.example_grid.vertex_data)
 
     async def test_update(self):
@@ -165,7 +165,7 @@ class TestRegularGrid(TestWithConnector):
             )
 
             with self.assertRaises(DataLoaderError):
-                await obj.cells.as_dataframe()
+                await obj.cells.to_dataframe()
 
             await obj.update()
 
@@ -173,7 +173,7 @@ class TestRegularGrid(TestWithConnector):
             self.assertEqual(obj.origin, Point3(1, 1, 1))
             self.assertEqual(obj.metadata.version_id, "2")
 
-            cell_df = await obj.cells.as_dataframe()
+            cell_df = await obj.cells.to_dataframe()
             pd.testing.assert_frame_equal(
                 cell_df,
                 pd.DataFrame(

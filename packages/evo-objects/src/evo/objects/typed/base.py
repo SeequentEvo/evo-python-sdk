@@ -16,13 +16,16 @@ import sys
 import weakref
 from dataclasses import dataclass
 from typing import Any, Callable, ClassVar, Generic, TypeVar, overload
+from urllib.parse import urlparse
+from uuid import UUID
 
 from pydantic import TypeAdapter
 
 from evo import jmespath
-from evo.common import IContext, StaticContext
+from evo.common import Environment, IContext, StaticContext
 from evo.objects import DownloadedObject, ObjectMetadata, ObjectReference, ObjectSchema, SchemaVersion
 
+from .._html_styles import STYLESHEET, build_nested_table, build_table_row, build_table_row_vtop, build_title
 from ._adapters import AttributesAdapter, CategoryTableAdapter, DatasetAdapter, TableAdapter
 from ._property import SchemaProperty
 from ._utils import (
@@ -47,6 +50,9 @@ __all__ = [
     "DatasetProperty",
     "DynamicBoundingBoxSpatialObject",
     "SchemaProperty",
+    "object_from_path",
+    "object_from_reference",
+    "object_from_uuid",
 ]
 
 _T = TypeVar("_T")
@@ -93,6 +99,128 @@ class DatasetProperty(Generic[_T]):
         if self._extract_data is not None:
             return self._extract_data(data)
         return None
+
+
+def _get_url_prefix(environment: Environment) -> str:
+    return f"{environment.hub_url}/geoscience-object/orgs/{environment.org_id}/workspaces/{environment.workspace_id}/objects"
+
+
+async def object_from_reference(
+    context: IContext,
+    reference: ObjectReference | str,
+) -> _BaseObject:
+    """Download a GeoscienceObject from an ObjectReference and create the appropriate typed instance.
+
+    This function downloads the object from a full ObjectReference (which can contain path, UUID,
+    version, etc.) and automatically selects the correct typed class (e.g., PointSet, Regular3DGrid)
+    based on the object's sub-classification.
+
+    :param context: The context for connecting to Evo APIs.
+    :param reference: The ObjectReference identifying the object to download.
+
+    :return: A typed GeoscienceObject instance (PointSet, Regular3DGrid, etc.).
+
+    :raises ValueError: If no typed class is found for the object's sub-classification.
+
+    Example::
+
+        from evo.objects.typed import object_from_reference
+        from evo.objects import ObjectReference
+
+        # Create reference from URL
+        ref = ObjectReference("evo://org/workspace/object/b208a6c9-6881-4b97-b02d-acb5d81299bb")
+        obj = await object_from_reference(context, ref)
+        
+        # obj will be a PointSet if the object is a pointset,
+        # a Regular3DGrid if it's a regular-3d-grid, etc.
+    """        
+    # Context for the reference's workspace
+    reference = ObjectReference(reference)
+    reference_context = StaticContext(
+        connector=context.get_connector(),
+        cache=context.get_cache(),
+        org_id=reference.org_id,
+        workspace_id=reference.workspace_id,
+    )
+    obj = await download_geoscience_object(reference_context, reference)
+    
+    # Look up the class directly from the sub-classification
+    selected_cls = _BaseObject._sub_classification_lookup.get(obj.metadata.schema_id.sub_classification)
+    if selected_cls is None:
+        raise ValueError(
+            f"No typed class found for sub-classification '{obj.metadata.schema_id.sub_classification}'. "
+            f"Available types: {list(_BaseObject._sub_classification_lookup.keys())}"
+        )
+    
+    return selected_cls(reference_context, obj)
+
+
+async def object_from_path(
+    context: IContext,
+    path: str,
+    version: str | None = None,
+) -> _BaseObject:
+    """Download a GeoscienceObject by its path and create the appropriate typed instance.
+
+    This function downloads the object using its path (the hierarchical location/name
+    in the workspace) and automatically selects the correct typed class (e.g., PointSet,
+    Regular3DGrid) based on the object's sub-classification.
+
+    :param context: The context for connecting to Evo APIs.
+    :param path: The object path (e.g., "my-folder/my-object.json" or "/my-folder/my-object.json").
+    :param version: Optional version ID string to download a specific version.
+
+    :return: A typed GeoscienceObject instance (PointSet, Regular3DGrid, etc.).
+
+    :raises ValueError: If no typed class is found for the object's sub-classification.
+
+    Example::
+
+        from evo.objects.typed import object_from_path
+
+        # Download latest version by path
+        obj = await object_from_path(context, "my-folder/pointset.json")
+        
+        # Download specific version
+        obj = await object_from_path(context, "my-folder/pointset.json", version="abc123")
+    """
+    version = "?version=" + version if version else ""
+    reference = ObjectReference(_get_url_prefix(context.get_environment()) + f"/path/{path}{version}")
+    return await object_from_reference(context, reference)
+
+
+async def object_from_uuid(
+    context: IContext,
+    uuid: UUID | str,
+    version: str | None = None,
+) -> _BaseObject:
+    """Download a GeoscienceObject by its UUID and create the appropriate typed instance.
+
+    This function downloads the object using its unique identifier (UUID) and automatically
+    selects the correct typed class (e.g., PointSet, Regular3DGrid) based on the object's
+    sub-classification.
+
+    :param context: The context for connecting to Evo APIs.
+    :param uuid: The UUID of the object to download (as a UUID object or string).
+    :param version: Optional version ID string to download a specific version.
+
+    :return: A typed GeoscienceObject instance (PointSet, Regular3DGrid, etc.).
+
+    :raises ValueError: If no typed class is found for the object's sub-classification.
+
+    Example::
+
+        from evo.objects.typed import object_from_uuid
+
+        # Download latest version by UUID
+        obj = await object_from_uuid(context, "b208a6c9-6881-4b97-b02d-acb5d81299bb")
+        
+        # Download specific version
+        obj = await object_from_uuid(context, "b208a6c9-6881-4b97-b02d-acb5d81299bb", version="abc123")
+    """
+    version = "?version=" + version if version else ""
+    reference = ObjectReference(_get_url_prefix(context.get_environment()) + f"/{uuid}{version}")
+    return await object_from_reference(context, reference)
 
 
 class _BaseObject:
@@ -311,6 +439,37 @@ class _BaseObject:
         """
         return self._obj.metadata
 
+
+    def _url_from_metadata(self, view: str, evo_base_url: str) -> str:
+        # Extract hub_id from hostname (e.g., "350mt" from "350mt.api.integration.seequent.com")
+        environment = self._obj.metadata.environment
+        parsed = urlparse(environment.hub_url)
+        hostname_parts = parsed.hostname.split('.') if parsed.hostname else []
+        if len(hostname_parts) < 1:
+            raise ValueError(f"Invalid URL: cannot extract hub_id from hostname '{parsed.hostname}'")
+        hub_id = hostname_parts[0]
+        return f"{evo_base_url}/{environment.org_id}/workspaces/{hub_id}/{environment.workspace_id}/{view}?id={self._obj.metadata.id}"
+    
+    @property
+    def viewer_url(self, evo_base_url: str = "https://evo.integration.seequent.com") -> str:
+        """The URL to view the object in the Evo Viewer.
+
+        :param evo_base_url: The base URL of the Evo Portal.
+
+        :return: The viewer URL.
+        """
+        return self._url_from_metadata("viewer", evo_base_url)
+
+    @property
+    def portal_url(self, evo_base_url: str = "https://evo.integration.seequent.com") -> str:
+        """The URL to view the object in the Evo Portal.
+
+        :param evo_base_url: The base URL of the Evo Portal.
+
+        :return: The portal URL.
+        """
+        return self._url_from_metadata("overview", evo_base_url)
+
     def as_dict(self) -> dict[str, Any]:
         """Get the Geoscience Object as a dictionary.
 
@@ -369,6 +528,97 @@ class _BaseObject:
         """
         for dataset in self._datasets.values():
             dataset.validate()
+
+    def _repr_html_(self) -> str:
+        """Return an HTML representation for Jupyter notebooks."""
+        doc = self.as_dict()
+        
+        # Get basic info
+        name = doc.get("name", "Unnamed")
+        schema = doc.get("schema", "Unknown")
+        obj_id = doc.get("uuid", "Unknown")
+        
+        # Build title links for viewer and portal
+        title_links = [("Portal", self.portal_url), ("Viewer", self.viewer_url)]
+
+        # Build basic rows
+        rows = [
+            ("ID:", str(obj_id)),
+            ("Schema:", schema),
+        ]
+        
+        # Add tags if present
+        if tags := doc.get("tags"):
+            tags_str = ", ".join(f"{k}: {v}" for k, v in tags.items())
+            rows.append(("Tags:", tags_str))
+        
+        # Add bounding box if present (as nested table)
+        if bbox := doc.get("bounding_box"):
+            bbox_rows = [
+                ["<strong>X:</strong>", f"{bbox.get('min_x', 0):.2f}", f"{bbox.get('max_x', 0):.2f}"],
+                ["<strong>Y:</strong>", f"{bbox.get('min_y', 0):.2f}", f"{bbox.get('max_y', 0):.2f}"],
+                ["<strong>Z:</strong>", f"{bbox.get('min_z', 0):.2f}", f"{bbox.get('max_z', 0):.2f}"],
+            ]
+            bbox_table = build_nested_table(["", "Min", "Max"], bbox_rows)
+            rows.append(("Bounding Box:", bbox_table))
+        
+        # Add CRS if present
+        if crs := doc.get("coordinate_reference_system"):
+            crs_str = f"EPSG:{crs.get('epsg_code')}" if isinstance(crs, dict) else str(crs)
+            rows.append(("CRS:", crs_str))
+        
+        # Build the main table (handle bounding box with vtop alignment)
+        table_rows = []
+        for label, value in rows:
+            if label == "Bounding Box:":
+                table_rows.append(build_table_row_vtop(label, value))
+            else:
+                table_rows.append(build_table_row(label, value))
+        
+        main_table = f'<table>{"".join(table_rows)}</table>'
+        
+        # Build datasets section
+        datasets_parts = []
+        for dataset_name, dataset_prop in self._dataset_properties.items():
+            dataset = self._datasets.get(dataset_name)
+            if dataset:
+
+                # Get attributes info
+                if hasattr(dataset, 'attributes') and len(dataset.attributes) > 0:
+                    datasets_parts.append(f'<div style="margin-bottom: 4px;"><strong>{dataset_name}:</strong></div>')
+                    
+                    # Build attribute rows
+                    attr_rows = []
+                    for attr in dataset.attributes:
+                        attr_info = attr.as_dict()
+                        attr_name = attr_info.get("name", "Unknown")
+                        attr_type = attr_info.get("attribute_type", "Unknown")
+                        attr_rows.append([attr_name, attr_type])
+                    
+                    attrs_table = build_nested_table(["Attribute", "Type"], attr_rows, css_class="attrs indent")
+                    datasets_parts.append(attrs_table)
+                else:
+                    datasets_parts.append(f"<div><strong>{dataset_name}</strong></div>")
+        
+        # Build extra content section
+        extra_content = ""
+        if datasets_parts:
+            extra_content = (
+                '<div class="section">'
+                '<div class="section-heading">Datasets:</div>'
+                f'{"".join(datasets_parts)}'
+                '</div>'
+            )
+        
+        # Build final HTML
+        return (
+            f'{STYLESHEET}'
+            f'<div class="evo-object">'
+            f'{build_title(name, title_links if title_links else None)}'
+            f'{main_table}'
+            f'{extra_content}'
+            f'</div>'
+        )
 
 
 @dataclass(kw_only=True, frozen=True)
