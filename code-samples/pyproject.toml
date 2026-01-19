@@ -8,6 +8,7 @@ dependencies = [
     "evo-schemas>=2025.12.15",
     "evo-sdk>=0.1.17",
     "geosoft>=2025.1.1 ; sys_platform == 'windows'",
+    "matplotlib>=3.10.8",
     "pandas[excel]>=2.2.3",
     "prettytable>=3.16.0",
     "pyarrow>=19.0.1",
