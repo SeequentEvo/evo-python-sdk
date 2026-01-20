@@ -15,80 +15,98 @@
 STYLESHEET = """
 <style>
     .evo-object {
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        padding: 12px;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+        padding: 16px;
         margin: 8px 0;
-        font-family: sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        font-size: 13px;
         display: inline-block;
         max-width: 800px;
+        background-color: var(--jp-layout-color1, #fff);
     }
     .evo-object .title {
-        font-size: 16px;
-        font-weight: bold;
-        margin-bottom: 8px;
+        font-size: 15px;
+        font-weight: 600;
+        margin-bottom: 12px;
         color: var(--jp-ui-font-color1, #111);
         display: flex;
-        align-items: center;
-        gap: 12px;
-    }
-    .evo-object .title-links {
-        font-size: 13px;
-        font-weight: normal;
-        display: flex;
+        align-items: baseline;
         gap: 8px;
     }
+    .evo-object .title-links {
+        font-size: 12px;
+        font-weight: normal;
+        color: #666;
+    }
     .evo-object .title-links a {
-        color: #0066cc;
+        color: #666;
         text-decoration: none;
     }
     .evo-object .title-links a:hover {
+        color: #0066cc;
         text-decoration: underline;
     }
     .evo-object table {
         border-collapse: collapse;
-        margin-bottom: 12px;
+        width: 100%;
+        margin-bottom: 8px;
     }
     .evo-object td.label {
-        padding: 4px 8px;
+        padding: 3px 8px 3px 0;
         font-weight: 600;
         white-space: nowrap;
+        vertical-align: top;
+        color: var(--jp-ui-font-color1, #333);
+        text-align: left;
     }
     .evo-object td.label-vtop {
-        padding: 4px 8px;
+        padding: 3px 8px 3px 0;
         font-weight: 600;
         vertical-align: top;
+        color: var(--jp-ui-font-color1, #333);
+        text-align: left;
     }
     .evo-object td.value {
-        padding: 4px 8px;
+        padding: 3px 0;
+        color: var(--jp-ui-font-color1, #111);
+        text-align: left;
     }
     .evo-object table.nested {
         border-collapse: collapse;
-        font-size: 0.9em;
+        font-size: 12px;
         margin-bottom: 0;
+        width: 100%;
     }
     .evo-object table.nested th {
-        padding: 2px 8px;
+        padding: 3px 12px 3px 0;
         text-align: left;
+        font-weight: 600;
+        color: var(--jp-ui-font-color1, #333);
     }
     .evo-object table.nested th.right {
         text-align: right;
+        padding-right: 0;
     }
     .evo-object table.nested td {
-        padding: 2px 8px;
+        padding: 3px 12px 3px 0;
+        color: var(--jp-ui-font-color1, #111);
+        text-align: left;
     }
     .evo-object table.nested td.right {
         text-align: right;
+        padding-right: 0;
     }
     .evo-object .section {
-        margin-top: 12px;
+        margin-top: 8px;
     }
     .evo-object .section-heading {
         font-weight: 600;
-        margin-bottom: 8px;
+        margin-bottom: 6px;
+        color: var(--jp-ui-font-color1, #333);
     }
     .evo-object .indent {
-        margin-left: 12px;
+        margin-left: 16px;
     }
 </style>
 """
@@ -170,16 +188,19 @@ def build_nested_table(headers: list[str], rows: list[list[str]], css_class: str
     # Build header row
     header_cells = []
     for i, header in enumerate(headers):
-        align_class = ' class="right"' if i > 0 and header in ["Min", "Max"] else ''
-        header_cells.append(f'<th{align_class}>{header}</th>')
+        header_cells.append(f'<th>{header}</th>')
     
     # Build data rows
     data_rows = []
     for row in rows:
         cells = []
         for i, cell in enumerate(row):
-            align_class = ' class="right"' if i > 0 and isinstance(cell, (int, float)) else ''
-            cells.append(f'<td{align_class}>{cell}</td>')
+            # Format numeric values
+            if isinstance(cell, (int, float)):
+                formatted_cell = f"{cell:.2f}"
+            else:
+                formatted_cell = str(cell)
+            cells.append(f'<td>{formatted_cell}</td>')
         data_rows.append(f'<tr>{"".join(cells)}</tr>')
     
     return (
