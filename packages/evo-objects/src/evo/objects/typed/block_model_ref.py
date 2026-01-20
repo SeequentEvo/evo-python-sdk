@@ -47,6 +47,7 @@ if TYPE_CHECKING:
 __all__ = [
     "BlockModel",
     "BlockModelAttribute",
+    "BlockModelAttributes",
     "BlockModelData",
     "BlockModelGeometry",
     "RegularBlockModelData",
@@ -72,6 +73,43 @@ class BlockModelAttribute:
     attribute_type: str
     block_model_column_uuid: UUID | None = None
     unit: str | None = None
+
+
+class BlockModelAttributes:
+    """A collection of attributes on a block model with pretty-printing support."""
+
+    def __init__(self, attributes: list[BlockModelAttribute]):
+        self._attributes = attributes
+
+    def __iter__(self):
+        return iter(self._attributes)
+
+    def __len__(self):
+        return len(self._attributes)
+
+    def __getitem__(self, index_or_name: int | str) -> BlockModelAttribute:
+        if isinstance(index_or_name, str):
+            for attr in self._attributes:
+                if attr.name == index_or_name:
+                    return attr
+            raise KeyError(f"Attribute '{index_or_name}' not found")
+        return self._attributes[index_or_name]
+
+    def __repr__(self) -> str:
+        names = [attr.name for attr in self._attributes]
+        return f"BlockModelAttributes({names})"
+
+    def _repr_html_(self) -> str:
+        """Return an HTML representation for Jupyter notebooks."""
+        from .._html_styles import STYLESHEET, build_nested_table
+
+        if len(self._attributes) == 0:
+            return f'{STYLESHEET}<div class="evo-object">No attributes available.</div>'
+
+        headers = ["Name", "Type", "Unit"]
+        rows = [[attr.name, attr.attribute_type, attr.unit or ""] for attr in self._attributes]
+        table_html = build_nested_table(headers, rows)
+        return f'{STYLESHEET}<div class="evo-object">{table_html}</div>'
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -275,9 +313,9 @@ class BlockModel(BaseSpatialObject, ConstructableObject[BlockModelData]):
         return _parse_geometry(self._geometry_raw)
 
     @property
-    def attributes(self) -> list[BlockModelAttribute]:
+    def attributes(self) -> BlockModelAttributes:
         """The attributes available on this block model."""
-        return _parse_attributes(self._attributes_raw)
+        return BlockModelAttributes(_parse_attributes(self._attributes_raw))
 
     def get_attribute(self, name: str) -> BlockModelAttribute | None:
         """Get an attribute by name.
@@ -289,6 +327,70 @@ class BlockModel(BaseSpatialObject, ConstructableObject[BlockModelData]):
             if attr.name == name:
                 return attr
         return None
+
+    def _repr_html_(self) -> str:
+        """Return an HTML representation for Jupyter notebooks."""
+        from .._html_styles import STYLESHEET, build_nested_table, build_table_row, build_table_row_vtop, build_title
+
+        doc = self.as_dict()
+
+        # Get basic info
+        name = doc.get("name", "Unnamed")
+
+        # Build title links for viewer and portal
+        title_links = [("Portal", self.portal_url), ("Viewer", self.viewer_url)]
+
+        # Build basic rows
+        rows = [
+            ("Block Model UUID:", str(self.block_model_uuid)),
+        ]
+
+        # Add geometry info
+        geom = self.geometry
+        geom_rows = [
+            ["<strong>Origin:</strong>", f"({geom.origin.x:.2f}, {geom.origin.y:.2f}, {geom.origin.z:.2f})"],
+            ["<strong>N Blocks:</strong>", f"({geom.n_blocks.nx}, {geom.n_blocks.ny}, {geom.n_blocks.nz})"],
+            ["<strong>Block Size:</strong>", f"({geom.block_size.dx:.2f}, {geom.block_size.dy:.2f}, {geom.block_size.dz:.2f})"],
+        ]
+        if geom.rotation:
+            geom_rows.append(["<strong>Rotation:</strong>", f"({geom.rotation[0]:.2f}, {geom.rotation[1]:.2f}, {geom.rotation[2]:.2f})"])
+        geom_table = build_nested_table(["Property", "Value"], geom_rows)
+        rows.append(("Geometry:", geom_table))
+
+        # Add bounding box if present (as nested table)
+        if bbox := doc.get("bounding_box"):
+            bbox_rows = [
+                ["<strong>X:</strong>", f"{bbox.get('min_x', 0):.2f}", f"{bbox.get('max_x', 0):.2f}"],
+                ["<strong>Y:</strong>", f"{bbox.get('min_y', 0):.2f}", f"{bbox.get('max_y', 0):.2f}"],
+                ["<strong>Z:</strong>", f"{bbox.get('min_z', 0):.2f}", f"{bbox.get('max_z', 0):.2f}"],
+            ]
+            bbox_table = build_nested_table(["", "Min", "Max"], bbox_rows)
+            rows.append(("Bounding Box:", bbox_table))
+
+        # Add CRS if present
+        if crs := doc.get("coordinate_reference_system"):
+            crs_str = f"EPSG:{crs.get('epsg_code')}" if isinstance(crs, dict) else str(crs)
+            rows.append(("CRS:", crs_str))
+
+        # Build the main table (handle nested tables with vtop alignment)
+        table_rows = []
+        for label, value in rows:
+            if label in ("Bounding Box:", "Geometry:"):
+                table_rows.append(build_table_row_vtop(label, value))
+            else:
+                table_rows.append(build_table_row(label, value))
+
+        main_table = f'<table>{"".join(table_rows)}</table>'
+
+        # Build attributes section
+        attributes_html = ""
+        attrs = self.attributes
+        if attrs:
+            attr_rows = [[attr.name, attr.attribute_type, attr.unit or ""] for attr in attrs]
+            attrs_table = build_nested_table(["Name", "Type", "Unit"], attr_rows)
+            attributes_html = f'<div style="margin-top: 8px;"><strong>Attributes ({len(attrs)}):</strong></div>{attrs_table}'
+
+        return f'{STYLESHEET}<div class="evo-object">{build_title(name, title_links)}{main_table}{attributes_html}</div>'
 
     def _get_block_model_client(self) -> BlockModelAPIClient:
         """Get a BlockModelAPIClient for the current context."""

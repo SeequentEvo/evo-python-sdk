@@ -193,27 +193,51 @@ The percent format (`#%% md`, `#%%`) is only a text representation used by some 
 
 ### Default Approach (IMPORTANT)
 - **Always use typed objects** (`PointSet`, `BlockModel`, `Regular3DGrid`, etc.) from `evo.objects.typed`
+- **Use `object_from_uuid()` or `object_from_path()`** to load existing objects - these are the preferred methods
+- **Use pretty printing** (just output the object) to display objects in Jupyter - this shows Portal/Viewer links automatically
+- **Do NOT use `display_object_links()`** - typed objects have built-in pretty printing with links
 - **Use `ObjectSearchWidget`** for object discovery **only when** users know an object name but not its UUID
-- **Always use `display_object_links()`** after loading/creating objects to show Evo Portal and Viewer links
 - **Never expose `ObjectAPIClient`** or `BlockModelAPIClient` to users unless explicitly requested by an advanced developer
+
+### Loading Objects (IMPORTANT)
+The preferred methods for loading objects are `object_from_uuid()` and `object_from_path()`:
+
+```python
+from evo.objects.typed import object_from_uuid, object_from_path
+
+# Load by UUID (preferred when UUID is known)
+pointset = await object_from_uuid(manager, "b208a6c9-6881-4b97-b02d-acb5d81299bb")
+
+# Load by path (alternative)
+pointset = await object_from_path(manager, "my-folder/pointset.json")
+
+# Pretty-print the object (shows Portal/Viewer links, metadata, attributes)
+pointset  # Just output the object - it has _repr_html_ for Jupyter
+
+# View attributes (also has pretty printing)
+pointset.attributes
+```
+
+**Do NOT use** `TypedClass.from_reference()` directly - use `object_from_uuid()` or `object_from_path()` instead.
 
 ### When to Use Each Pattern
 | User Request | Pattern |
 |-------------|---------|
-| "Find object named X" (no URL given) | `ObjectSearchWidget` + `TypedClass.from_reference()` |
-| **User provides Evo Portal URL with `?id=`** | **Extract IDs from URL, build `ObjectReference` directly** |
-| "Download from URL" | Build `ObjectReference` from environment + object_id |
+| "Find object named X" (no URL given) | `ObjectSearchWidget` + `object_from_uuid()` |
+| **User provides Evo Portal URL with `?id=`** | **Extract UUID from URL, use `object_from_uuid()`** |
+| "Download object with UUID" | `object_from_uuid(manager, uuid)` |
+| "Download object by path" | `object_from_path(manager, path)` |
 | "Create from CSV" | `pd.read_csv()` + `TypedClassData()` + `TypedClass.create()` |
 | "I need low-level API" | Only then use `ObjectAPIClient` (advanced users) |
 
-**IMPORTANT:** When the user provides an Evo Portal URL containing `?id={object_id}`, do **NOT** use `ObjectSearchWidget`. The object ID is already known - build the `ObjectReference` directly from the URL components.
+**IMPORTANT:** When the user provides an Evo Portal URL containing `?id={object_id}`, extract the UUID and use `object_from_uuid()`.
 
 ### Standard Notebook Structure
 1. Authentication with `ServiceManagerWidget`
 2. Object discovery with `ObjectSearchWidget` (if needed)
-3. Load object with `TypedClass.from_reference()`
-4. Display links with `display_object_links()`
-5. Access data with `.as_dataframe()` or `.get_data()`
+3. Load object with `object_from_uuid()` or `object_from_path()`
+4. Display object by outputting it (pretty printing shows Portal/Viewer links)
+5. Access data with `.as_dataframe()`, `.to_dataframe()`, or `.get_data()`
 
 ### Evo Portal URL Format
 
@@ -241,22 +265,22 @@ Extracted values:
 | `evo.seequent.com` | Production | (default) | `https://discover.api.seequent.com` |
 | `evo.integration.seequent.com` | Integration/QA | `https://qa-ims.bentley.com` | `https://int-discover.test.api.seequent.com` |
 
-**Building ObjectReference from URL:**
+**Building ObjectReference from URL (legacy approach):**
 
-The `ObjectReference` requires a specific HTTPS format. Build it from the environment:
+Note: The preferred approach is to extract the UUID from the URL and use `object_from_uuid()`.
 
 ```python
-from evo.objects import ObjectReference
+from evo.objects.typed import object_from_uuid
 
-# Extract from the portal URL
-org_id = "829e6621-0ab6-4d7d-96bb-2bb5b407a5fe"
-workspace_id = "783b6eef-01b9-42a7-aaf4-35e153e6fcbe"
+# Extract UUID from the portal URL
+# URL: https://evo.integration.seequent.com/.../overview?id=9100d7dc-44e9-4e61-b427-159635dea22f
 object_id = "9100d7dc-44e9-4e61-b427-159635dea22f"
 
-# After authentication, build the reference
-environment = manager.get_environment()
-prefix = f"{environment.hub_url}/geoscience-object/orgs/{environment.org_id}/workspaces/{environment.workspace_id}/objects"
-object_reference = ObjectReference(f"{prefix}/{object_id}")
+# Load the object directly by UUID
+pointset = await object_from_uuid(manager, object_id)
+
+# Pretty-print shows Portal/Viewer links
+pointset
 ```
 
 **Complete Example for Integration Environment:**
@@ -328,28 +352,30 @@ Generate a notebook in standard JSON format (saved as `.ipynb`):
    "metadata": {},
    "outputs": [],
    "source": [
-    "from evo.objects import ObjectReference\n",
-    "from evo.objects.typed import PointSet\n",
-    "from evo.notebooks import display_object_links\n",
+    "from evo.objects.typed import object_from_uuid\n",
     "\n",
-    "# Build object reference from URL components\n",
+    "# Load by UUID extracted from URL\n",
     "# Source: https://evo.integration.seequent.com/.../overview?id=9100d7dc-44e9-4e61-b427-159635dea22f\n",
-    "object_id = \"9100d7dc-44e9-4e61-b427-159635dea22f\"\n",
+    "pointset = await object_from_uuid(manager, \"9100d7dc-44e9-4e61-b427-159635dea22f\")\n",
     "\n",
-    "environment = manager.get_environment()\n",
-    "prefix = f\"{environment.hub_url}/geoscience-object/orgs/{environment.org_id}/workspaces/{environment.workspace_id}/objects\"\n",
-    "object_reference = ObjectReference(f\"{prefix}/{object_id}\")\n",
-    "\n",
-    "# Download the pointset\n",
-    "pointset = await PointSet.from_reference(manager, object_reference)\n",
-    "\n",
-    "display_object_links(pointset)\n",
-    "print(f\"Downloaded: {pointset.name}\")"
+    "# Pretty-print shows object info and Portal/Viewer links\n",
+    "pointset"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "4",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# View the attributes (also has pretty printing)\n",
+    "pointset.attributes"
    ]
   },
   {
    "cell_type": "markdown",
-   "id": "4",
+   "id": "5",
    "metadata": {},
    "source": [
     "## View Data as DataFrame"
@@ -358,12 +384,12 @@ Generate a notebook in standard JSON format (saved as `.ipynb`):
   {
    "cell_type": "code",
    "execution_count": null,
-   "id": "5",
+   "id": "6",
    "metadata": {},
    "outputs": [],
    "source": [
     "# Get all locations and attributes as a DataFrame\n",
-    "df = await pointset.locations.as_dataframe()\n",
+    "df = await pointset.to_dataframe()\n",
     "df.head()"
    ]
   }
@@ -376,7 +402,7 @@ Generate a notebook in standard JSON format (saved as `.ipynb`):
   },
   "language_info": {
    "name": "python",
-   "version": "3.10.0"
+   "version": "3.12.0"
   }
  },
  "nbformat": 4,
@@ -388,11 +414,39 @@ Generate a notebook in standard JSON format (saved as `.ipynb`):
 - [Notebook Generation Guide](notebook-generation-guide.md) — Full instructions
 - [Typed Objects Reference](typed-objects-reference.md) — API reference
 - [Common Patterns](notebook-patterns.md) — Copy-paste snippets
+- [Compute Task Notebook Guide](../packages/evo-compute/.github/compute-notebook-guide.md) — Kriging and compute task patterns
 
 **Note:** These notebook generation rules apply only to Jupyter notebook context, not to SDK development or testing.
 
+## Compute Tasks (Kriging)
+
+When users ask to run compute tasks (especially kriging), follow the patterns in the [Compute Task Notebook Guide](../packages/evo-compute/.github/compute-notebook-guide.md).
+
+**Key patterns for kriging notebooks:**
+
+1. **Authenticate** with `ServiceManagerWidget`
+2. **Load source objects** using `object_from_uuid()` and review with pretty printing
+3. **Create a target BlockModel** (preferred over grids) or use existing one
+4. **Define kriging parameters** - prefer multiple scenarios with `run_kriging_multiple()`
+5. **Run kriging** with `FeedbackWidget` for progress
+6. **Refresh and review** - reload block model to see new attributes, view with pretty printing
+7. **Basic analysis** - query data with `get_data()`, show statistics
+
+**Example kriging imports:**
+```python
+from evo.compute.tasks import (
+    run_kriging, run_kriging_multiple,
+    KrigingParameters, Source, Target,
+    OrdinaryKriging, KrigingSearch, Ellipsoid, EllipsoidRanges, Rotation,
+)
+from evo.objects.typed import object_from_uuid, BlockModel, RegularBlockModelData, Point3, Size3i, Size3d
+from evo.blockmodels import Units
+from evo.notebooks import ServiceManagerWidget, FeedbackWidget
+```
+
 ## Package-Specific Guides
 
+- **evo-compute**: See `packages/evo-compute/.github/` for compute task notebook patterns
 - **evo-blockmodels**: See `packages/evo-blockmodels/.github/` for detailed guides
 - **evo-objects**: Follow patterns in `src/evo/objects/typed/`
 
