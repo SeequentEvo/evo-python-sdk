@@ -1,4 +1,12 @@
 repos:
+  - repo: local
+    hooks:
+      - id: mkdocs-build
+        name: Build MkDocs documentation
+        entry: uv run --with mkdocs --with mkdocstrings-python mkdocs build
+        language: system
+        pass_filenames: false
+        args: ["--config-file", "mkdocs/mkdocs.yml", "--site-dir", "site"]
   - repo: https://github.com/charliermarsh/ruff-pre-commit
     rev: v0.14.0 # keep in sync with pyproject.toml
     hooks:

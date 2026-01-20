@@ -1,0 +1,7 @@
+packages.evo-blockmodels.src.evo.blockmodels.client.BlockModelAPIClient
+packages.evo-colormaps.src.evo.colormaps.client.ColormapAPIClient
+packages.evo-compute.src.evo.compute.client.JobClient
+packages.evo-sdk-common.src.evo.discovery.client.DiscoveryAPIClient
+packages.evo-files.src.evo.files.client.FileAPIClient
+packages.evo-objects.src.evo.objects.client.api_client.ObjectAPIClient
+packages.evo-sdk-common.src.evo.workspaces.client.WorkspaceAPIClient
