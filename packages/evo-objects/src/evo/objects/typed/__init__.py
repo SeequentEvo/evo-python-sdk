@@ -13,6 +13,7 @@ from .base import object_from_path, object_from_reference, object_from_uuid
 from .block_model_ref import (
     BlockModel,
     BlockModelAttribute,
+    BlockModelAttributes,
     BlockModelData,
     BlockModelGeometry,
     RegularBlockModelData,
@@ -29,6 +30,7 @@ from .types import BoundingBox, CoordinateReferenceSystem, EpsgCode, Point3, Rot
 __all__ = [
     "BlockModel",
     "BlockModelAttribute",
+    "BlockModelAttributes",
     "BlockModelData",
     "BlockModelGeometry",
     "BoundingBox",
