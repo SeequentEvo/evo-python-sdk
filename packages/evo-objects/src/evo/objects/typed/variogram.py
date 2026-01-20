@@ -11,7 +11,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any, Literal
 
 from pydantic import TypeAdapter
@@ -325,11 +325,16 @@ class Variogram(ConstructableObject[VariogramData]):
 
         Overrides the base implementation to handle typed structure conversion.
         """
-        # Get base dict from parent class
-        result = await super()._data_to_dict(data, context)
+        # Convert structures to dicts BEFORE calling super() to avoid Pydantic
+        # serialization warnings (it expects dict but gets dataclass objects)
+        converted_structures = data.get_structures_as_dicts()
 
-        # Override structures with converted version (handles typed classes)
-        result["structures"] = data.get_structures_as_dicts()
+        # Create a modified data object with pre-converted structures
+        # This avoids the warning from TypeAdapter.dump_python()
+        modified_data = replace(data, structures=converted_structures)
+
+        # Get base dict from parent class (now with dict structures)
+        result = await super()._data_to_dict(modified_data, context)
 
         return result
 
