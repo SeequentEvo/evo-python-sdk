@@ -274,7 +274,6 @@ from evo.compute.tasks import (
     run_kriging,
     run_kriging_multiple,
     KrigingParameters,
-    Source,
     Target,
     OrdinaryKriging,
     SimpleKriging,
@@ -284,18 +283,21 @@ from evo.compute.tasks import (
     Rotation,
 )
 
-# Object loading
+# Object loading (preferred methods)
 from evo.objects.typed import object_from_uuid, object_from_path
 
 # Block model creation
 from evo.objects.typed import BlockModel, RegularBlockModelData, Point3, Size3i, Size3d
 from evo.blockmodels import Units
 
-# Variogram creation
+# Variogram creation (using typed structure classes)
 from evo.objects.typed import (
     Variogram, VariogramData,
     SphericalStructure, ExponentialStructure, GaussianStructure, CubicStructure,
-    Anisotropy, EllipsoidRanges, VariogramRotation,
+    LinearStructure, SpheroidalStructure, GeneralisedCauchyStructure,
+    Anisotropy,
+    EllipsoidRanges as VariogramEllipsoidRanges,  # Disambiguate from compute
+    VariogramRotation,
 )
 
 # Notebooks utilities

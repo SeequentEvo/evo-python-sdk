@@ -453,3 +453,26 @@ from evo.notebooks import ServiceManagerWidget, FeedbackWidget
 - **evo-blockmodels**: See `packages/evo-blockmodels/.github/` for detailed guides
 - **evo-objects**: Follow patterns in `src/evo/objects/typed/`
 
+## SDK Development
+
+### Creating New Typed Object Wrappers
+
+When adding support for new Geoscience Object types, follow the [Typed Object Development Guide](typed-object-development-guide.md).
+
+**Quick summary of steps:**
+1. Understand the JSON schema (sub-classification, required fields, datasets)
+2. Create a `*Data` dataclass for object creation
+3. Create helper classes for complex nested structures (with `to_dict()` methods)
+4. Create the wrapper class inheriting from appropriate bases
+5. Define `SchemaProperty` for JSON fields and `DatasetProperty` for datasets
+6. Override `_data_to_dict` if complex serialization is needed
+7. Implement `_repr_html_` for Jupyter pretty printing
+8. Export from `__init__.py` and write comprehensive tests
+
+**Existing typed objects to reference:**
+- `PointSet` - Simple object with locations dataset and attributes
+- `Variogram` - Complex nested structures (structures, anisotropy, rotation)
+- `Regular3DGrid` - Grid with cells and vertices datasets
+- `RegularMasked3DGrid` - Grid with boolean mask
+- `BlockModel` - Integration with Block Model Service
+
