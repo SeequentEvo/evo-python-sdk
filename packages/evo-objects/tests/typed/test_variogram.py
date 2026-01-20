@@ -21,7 +21,17 @@ from parameterized import parameterized
 from evo.common import Environment, StaticContext
 from evo.common.test_tools import BASE_URL, ORG, WORKSPACE_ID, TestWithConnector
 from evo.objects import ObjectReference
-from evo.objects.typed import Variogram, VariogramData
+from evo.objects.typed import (
+    Variogram,
+    VariogramData,
+    SphericalStructure,
+    ExponentialStructure,
+    GaussianStructure,
+    CubicStructure,
+    Anisotropy,
+    EllipsoidRanges,
+    VariogramRotation,
+)
 from evo.objects.typed.base import BaseObject
 
 from .helpers import MockClient
@@ -52,16 +62,20 @@ class TestVariogram(TestWithConnector):
         sill=1.5,
         is_rotation_fixed=True,
         structures=[
-            {
-                "type": "spherical",
-                "contribution": 0.8,
-                "range": {"major": 100.0, "minor": 50.0, "vertical": 25.0},
-            },
-            {
-                "type": "exponential",
-                "contribution": 0.5,
-                "range": {"major": 200.0, "minor": 100.0, "vertical": 50.0},
-            },
+            SphericalStructure(
+                contribution=0.8,
+                anisotropy=Anisotropy(
+                    ellipsoid_ranges=EllipsoidRanges(major=100.0, semi_major=50.0, minor=25.0),
+                    rotation=VariogramRotation(dip_azimuth=0.0, dip=0.0, pitch=0.0),
+                ),
+            ),
+            ExponentialStructure(
+                contribution=0.5,
+                anisotropy=Anisotropy(
+                    ellipsoid_ranges=EllipsoidRanges(major=200.0, semi_major=100.0, minor=50.0),
+                    rotation=VariogramRotation(dip_azimuth=0.0, dip=0.0, pitch=0.0),
+                ),
+            ),
         ],
         nugget=0.2,
         data_variance=1.5,
@@ -128,17 +142,18 @@ class TestVariogram(TestWithConnector):
             self.assertEqual(obj.metadata.version_id, "2")
 
     async def test_minimal_variogram(self):
-        """Test creating a variogram with only required fields."""
+        """Test creating a variogram with only required fields using typed classes."""
         minimal_data = VariogramData(
             name="Minimal Variogram",
             sill=1.0,
             is_rotation_fixed=False,
             structures=[
-                {
-                    "type": "spherical",
-                    "contribution": 1.0,
-                    "range": {"major": 100.0, "minor": 100.0, "vertical": 100.0},
-                }
+                SphericalStructure(
+                    contribution=1.0,
+                    anisotropy=Anisotropy(
+                        ellipsoid_ranges=EllipsoidRanges(major=100.0, semi_major=100.0, minor=100.0),
+                    ),
+                )
             ],
         )
         with self._mock_geoscience_objects():
@@ -153,11 +168,13 @@ class TestVariogram(TestWithConnector):
             sill=1.0,
             is_rotation_fixed=True,
             structures=[
-                {
-                    "type": "gaussian",
-                    "contribution": 0.9,
-                    "range": {"major": 150.0, "minor": 75.0, "vertical": 30.0},
-                }
+                GaussianStructure(
+                    contribution=0.9,
+                    anisotropy=Anisotropy(
+                        ellipsoid_ranges=EllipsoidRanges(major=150.0, semi_major=75.0, minor=30.0),
+                        rotation=VariogramRotation(dip_azimuth=0.0, dip=0.0, pitch=0.0),
+                    ),
+                )
             ],
             nugget=0.1,
             modelling_space="normalscore",
@@ -169,27 +186,33 @@ class TestVariogram(TestWithConnector):
         self.assertEqual(result.name, "Normalscore Variogram")
 
     async def test_variogram_multiple_structures(self):
-        """Test creating a variogram with multiple structure types."""
+        """Test creating a variogram with multiple structure types using typed classes."""
         multi_structure_data = VariogramData(
             name="Multi-Structure Variogram",
             sill=2.0,
             is_rotation_fixed=False,
             structures=[
-                {
-                    "type": "spherical",
-                    "contribution": 0.5,
-                    "range": {"major": 100.0, "minor": 50.0, "vertical": 25.0},
-                },
-                {
-                    "type": "exponential",
-                    "contribution": 0.8,
-                    "range": {"major": 200.0, "minor": 100.0, "vertical": 50.0},
-                },
-                {
-                    "type": "gaussian",
-                    "contribution": 0.5,
-                    "range": {"major": 300.0, "minor": 150.0, "vertical": 75.0},
-                },
+                SphericalStructure(
+                    contribution=0.5,
+                    anisotropy=Anisotropy(
+                        ellipsoid_ranges=EllipsoidRanges(major=100.0, semi_major=50.0, minor=25.0),
+                        rotation=VariogramRotation(dip_azimuth=0.0, dip=0.0, pitch=0.0),
+                    ),
+                ),
+                ExponentialStructure(
+                    contribution=0.8,
+                    anisotropy=Anisotropy(
+                        ellipsoid_ranges=EllipsoidRanges(major=200.0, semi_major=100.0, minor=50.0),
+                        rotation=VariogramRotation(dip_azimuth=0.0, dip=0.0, pitch=0.0),
+                    ),
+                ),
+                GaussianStructure(
+                    contribution=0.5,
+                    anisotropy=Anisotropy(
+                        ellipsoid_ranges=EllipsoidRanges(major=300.0, semi_major=150.0, minor=75.0),
+                        rotation=VariogramRotation(dip_azimuth=0.0, dip=0.0, pitch=0.0),
+                    ),
+                ),
             ],
             nugget=0.2,
             data_variance=2.0,
@@ -198,3 +221,127 @@ class TestVariogram(TestWithConnector):
             result = await Variogram.create(context=self.context, data=multi_structure_data)
         self.assertIsInstance(result, Variogram)
         self.assertEqual(result.name, "Multi-Structure Variogram")
+
+    async def test_cubic_structure(self):
+        """Test creating a variogram with cubic structure."""
+        cubic_data = VariogramData(
+            name="Cubic Variogram",
+            sill=1.0,
+            is_rotation_fixed=True,
+            structures=[
+                CubicStructure(
+                    contribution=1.0,
+                    anisotropy=Anisotropy(
+                        ellipsoid_ranges=EllipsoidRanges(major=100.0, semi_major=100.0, minor=100.0),
+                    ),
+                )
+            ],
+        )
+        with self._mock_geoscience_objects():
+            result = await Variogram.create(context=self.context, data=cubic_data)
+        self.assertIsInstance(result, Variogram)
+        self.assertEqual(result.name, "Cubic Variogram")
+
+    def test_structure_to_dict(self):
+        """Test that typed structures correctly convert to dictionaries."""
+        structure = SphericalStructure(
+            contribution=0.8,
+            anisotropy=Anisotropy(
+                ellipsoid_ranges=EllipsoidRanges(major=100.0, semi_major=50.0, minor=25.0),
+                rotation=VariogramRotation(dip_azimuth=45.0, dip=30.0, pitch=15.0),
+            ),
+        )
+        result = structure.to_dict()
+
+        self.assertEqual(result["variogram_type"], "spherical")
+        self.assertEqual(result["contribution"], 0.8)
+        self.assertEqual(result["anisotropy"]["ellipsoid_ranges"]["major"], 100.0)
+        self.assertEqual(result["anisotropy"]["ellipsoid_ranges"]["semi_major"], 50.0)
+        self.assertEqual(result["anisotropy"]["ellipsoid_ranges"]["minor"], 25.0)
+        self.assertEqual(result["anisotropy"]["rotation"]["dip_azimuth"], 45.0)
+        self.assertEqual(result["anisotropy"]["rotation"]["dip"], 30.0)
+        self.assertEqual(result["anisotropy"]["rotation"]["pitch"], 15.0)
+
+    def test_ellipsoid_ranges_to_dict(self):
+        """Test EllipsoidRanges to_dict method."""
+        ranges = EllipsoidRanges(major=200.0, semi_major=150.0, minor=100.0)
+        result = ranges.to_dict()
+
+        self.assertEqual(result, {"major": 200.0, "semi_major": 150.0, "minor": 100.0})
+
+    def test_variogram_rotation_to_dict(self):
+        """Test VariogramRotation to_dict method."""
+        rotation = VariogramRotation(dip_azimuth=45.0, dip=30.0, pitch=15.0)
+        result = rotation.to_dict()
+
+        self.assertEqual(result, {"dip_azimuth": 45.0, "dip": 30.0, "pitch": 15.0})
+
+    def test_variogram_rotation_defaults(self):
+        """Test VariogramRotation default values."""
+        rotation = VariogramRotation()
+        result = rotation.to_dict()
+
+        self.assertEqual(result, {"dip_azimuth": 0.0, "dip": 0.0, "pitch": 0.0})
+
+    def test_anisotropy_default_rotation(self):
+        """Test Anisotropy with default rotation."""
+        anisotropy = Anisotropy(
+            ellipsoid_ranges=EllipsoidRanges(major=100.0, semi_major=50.0, minor=25.0),
+        )
+        result = anisotropy.to_dict()
+
+        self.assertEqual(result["ellipsoid_ranges"]["major"], 100.0)
+        self.assertEqual(result["rotation"]["dip_azimuth"], 0.0)
+        self.assertEqual(result["rotation"]["dip"], 0.0)
+        self.assertEqual(result["rotation"]["pitch"], 0.0)
+
+    def test_variogram_data_get_structures_as_dicts(self):
+        """Test that VariogramData correctly converts mixed typed and dict structures."""
+        data = VariogramData(
+            name="Mixed Structures",
+            sill=1.0,
+            is_rotation_fixed=True,
+            structures=[
+                SphericalStructure(
+                    contribution=0.5,
+                    anisotropy=Anisotropy(
+                        ellipsoid_ranges=EllipsoidRanges(major=100.0, semi_major=50.0, minor=25.0),
+                    ),
+                ),
+                {
+                    "variogram_type": "exponential",
+                    "contribution": 0.5,
+                    "anisotropy": {
+                        "ellipsoid_ranges": {"major": 200.0, "semi_major": 100.0, "minor": 50.0},
+                        "rotation": {"dip_azimuth": 0.0, "dip": 0.0, "pitch": 0.0},
+                    },
+                },
+            ],
+        )
+        result = data.get_structures_as_dicts()
+
+        self.assertEqual(len(result), 2)
+        self.assertEqual(result[0]["variogram_type"], "spherical")
+        self.assertEqual(result[1]["variogram_type"], "exponential")
+
+    def test_all_structure_types(self):
+        """Test that all structure types have correct variogram_type."""
+        self.assertEqual(SphericalStructure(
+            contribution=1.0,
+            anisotropy=Anisotropy(ellipsoid_ranges=EllipsoidRanges(major=1, semi_major=1, minor=1)),
+        ).variogram_type, "spherical")
+
+        self.assertEqual(ExponentialStructure(
+            contribution=1.0,
+            anisotropy=Anisotropy(ellipsoid_ranges=EllipsoidRanges(major=1, semi_major=1, minor=1)),
+        ).variogram_type, "exponential")
+
+        self.assertEqual(GaussianStructure(
+            contribution=1.0,
+            anisotropy=Anisotropy(ellipsoid_ranges=EllipsoidRanges(major=1, semi_major=1, minor=1)),
+        ).variogram_type, "gaussian")
+
+        self.assertEqual(CubicStructure(
+            contribution=1.0,
+            anisotropy=Anisotropy(ellipsoid_ranges=EllipsoidRanges(major=1, semi_major=1, minor=1)),
+        ).variogram_type, "cubic")

@@ -426,11 +426,12 @@ When users ask to run compute tasks (especially kriging), follow the patterns in
 
 1. **Authenticate** with `ServiceManagerWidget`
 2. **Load source objects** using `object_from_uuid()` and review with pretty printing
-3. **Create a target BlockModel** (preferred over grids) or use existing one
-4. **Define kriging parameters** - prefer multiple scenarios with `run_kriging_multiple()`
-5. **Run kriging** with `FeedbackWidget` for progress
-6. **Refresh and review** - reload block model to see new attributes, view with pretty printing
-7. **Basic analysis** - query data with `get_data()`, show statistics
+3. **Load or create a variogram** using `object_from_uuid()` or `Variogram.create()`
+4. **Create a target BlockModel** (preferred over grids) or use existing one
+5. **Define kriging parameters** - prefer multiple scenarios with `run_kriging_multiple()`
+6. **Run kriging** with `FeedbackWidget` for progress
+7. **Refresh and review** - reload block model to see new attributes, view with pretty printing
+8. **Basic analysis** - query data with `get_data()`, show statistics
 
 **Example kriging imports:**
 ```python
@@ -440,6 +441,8 @@ from evo.compute.tasks import (
     OrdinaryKriging, KrigingSearch, Ellipsoid, EllipsoidRanges, Rotation,
 )
 from evo.objects.typed import object_from_uuid, BlockModel, RegularBlockModelData, Point3, Size3i, Size3d
+from evo.objects.typed import Variogram, VariogramData, SphericalStructure, Anisotropy
+from evo.objects.typed import EllipsoidRanges as VariogramEllipsoidRanges  # If needed to disambiguate
 from evo.blockmodels import Units
 from evo.notebooks import ServiceManagerWidget, FeedbackWidget
 ```
