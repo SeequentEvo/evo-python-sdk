@@ -26,6 +26,7 @@ from .regular_grid import (
 from .regular_masked_grid import RegularMasked3DGrid, RegularMasked3DGridData
 from .tensor_grid import Tensor3DGrid, Tensor3DGridData
 from .types import BoundingBox, CoordinateReferenceSystem, EpsgCode, Point3, Rotation, Size3d, Size3i
+from .variogram import Variogram, VariogramData
 
 __all__ = [
     "BlockModel",
@@ -49,6 +50,8 @@ __all__ = [
     "Size3i",
     "Tensor3DGrid",
     "Tensor3DGridData",
+    "Variogram",
+    "VariogramData",
     "object_from_path",
     "object_from_reference",
     "object_from_uuid",
