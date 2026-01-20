@@ -543,7 +543,7 @@ class _BaseObject:
 
         # Build basic rows
         rows = [
-            ("ID:", str(obj_id)),
+            ("Object ID:", str(obj_id)),
             ("Schema:", schema),
         ]
         
@@ -555,12 +555,12 @@ class _BaseObject:
         # Add bounding box if present (as nested table)
         if bbox := doc.get("bounding_box"):
             bbox_rows = [
-                ["<strong>X:</strong>", f"{bbox.get('min_x', 0):.2f}", f"{bbox.get('max_x', 0):.2f}"],
-                ["<strong>Y:</strong>", f"{bbox.get('min_y', 0):.2f}", f"{bbox.get('max_y', 0):.2f}"],
-                ["<strong>Z:</strong>", f"{bbox.get('min_z', 0):.2f}", f"{bbox.get('max_z', 0):.2f}"],
+                ["<strong>X:</strong>", bbox.get('min_x', 0), bbox.get('max_x', 0)],
+                ["<strong>Y:</strong>", bbox.get('min_y', 0), bbox.get('max_y', 0)],
+                ["<strong>Z:</strong>", bbox.get('min_z', 0), bbox.get('max_z', 0)],
             ]
             bbox_table = build_nested_table(["", "Min", "Max"], bbox_rows)
-            rows.append(("Bounding Box:", bbox_table))
+            rows.append(("Bounding box:", bbox_table))
         
         # Add CRS if present
         if crs := doc.get("coordinate_reference_system"):
@@ -570,23 +570,20 @@ class _BaseObject:
         # Build the main table (handle bounding box with vtop alignment)
         table_rows = []
         for label, value in rows:
-            if label == "Bounding Box:":
+            if label == "Bounding box:":
                 table_rows.append(build_table_row_vtop(label, value))
             else:
                 table_rows.append(build_table_row(label, value))
         
         main_table = f'<table>{"".join(table_rows)}</table>'
         
-        # Build datasets section
-        datasets_parts = []
+        # Build datasets section - add as rows to the main table
+        dataset_rows = []
         for dataset_name, dataset_prop in self._dataset_properties.items():
             dataset = self._datasets.get(dataset_name)
             if dataset:
-
                 # Get attributes info
                 if hasattr(dataset, 'attributes') and len(dataset.attributes) > 0:
-                    datasets_parts.append(f'<div style="margin-bottom: 4px;"><strong>{dataset_name}:</strong></div>')
-                    
                     # Build attribute rows
                     attr_rows = []
                     for attr in dataset.attributes:
@@ -595,20 +592,22 @@ class _BaseObject:
                         attr_type = attr_info.get("attribute_type", "Unknown")
                         attr_rows.append([attr_name, attr_type])
                     
-                    attrs_table = build_nested_table(["Attribute", "Type"], attr_rows, css_class="attrs indent")
-                    datasets_parts.append(attrs_table)
-                else:
-                    datasets_parts.append(f"<div><strong>{dataset_name}</strong></div>")
+                    attrs_table = build_nested_table(["Attribute", "Type"], attr_rows)
+                    dataset_rows.append((f"{dataset_name}:", attrs_table))
         
-        # Build extra content section
-        extra_content = ""
-        if datasets_parts:
-            extra_content = (
-                '<div class="section">'
-                '<div class="section-heading">Datasets:</div>'
-                f'{"".join(datasets_parts)}'
-                '</div>'
-            )
+        # Add dataset rows to the main table rows
+        rows.extend(dataset_rows)
+        
+        # Build the main table (handle bounding box and datasets with vtop alignment)
+        table_rows = []
+        for label, value in rows:
+            if isinstance(value, str) and value.startswith('<table'):
+                # Use vtop for nested tables
+                table_rows.append(build_table_row_vtop(label, value))
+            else:
+                table_rows.append(build_table_row(label, value))
+        
+        main_table = f'<table>{"".join(table_rows)}</table>'
         
         # Build final HTML
         return (
@@ -616,7 +615,6 @@ class _BaseObject:
             f'<div class="evo-object">'
             f'{build_title(name, title_links if title_links else None)}'
             f'{main_table}'
-            f'{extra_content}'
             f'</div>'
         )
 
