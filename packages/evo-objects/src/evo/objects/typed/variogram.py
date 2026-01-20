@@ -23,11 +23,14 @@ from .base import BaseObjectData, ConstructableObject
 
 __all__ = [
     "Anisotropy",
+    "CubicStructure",
     "EllipsoidRanges",
-    "SphericalStructure",
     "ExponentialStructure",
     "GaussianStructure",
-    "CubicStructure",
+    "GeneralisedCauchyStructure",
+    "LinearStructure",
+    "SphericalStructure",
+    "SpheroidalStructure",
     "Variogram",
     "VariogramData",
     "VariogramRotation",
@@ -162,6 +165,63 @@ class CubicStructure(VariogramStructure):
     variogram_type: str = field(default="cubic", init=False)
 
 
+@dataclass(frozen=True, kw_only=True)
+class LinearStructure(VariogramStructure):
+    """Linear variogram structure.
+
+    The linear model has no sill and increases indefinitely.
+    Useful for modeling trends or unbounded variability.
+    """
+
+    variogram_type: str = field(default="linear", init=False)
+
+
+@dataclass(frozen=True, kw_only=True)
+class SpheroidalStructure(VariogramStructure):
+    """Spheroidal variogram structure.
+
+    The spheroidal model is a generalization of the spherical model
+    with a shape parameter (alpha) that controls the curvature.
+    """
+
+    alpha: Literal[3, 5, 7, 9]
+    """Shape factor of the spheroidal model. Valid values: 3, 5, 7, or 9."""
+
+    variogram_type: str = field(default="spheroidal", init=False)
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to dictionary format for the schema."""
+        return {
+            "variogram_type": self.variogram_type,
+            "contribution": self.contribution,
+            "anisotropy": self.anisotropy.to_dict(),
+            "alpha": self.alpha,
+        }
+
+
+@dataclass(frozen=True, kw_only=True)
+class GeneralisedCauchyStructure(VariogramStructure):
+    """Generalised Cauchy variogram structure.
+
+    The Generalised Cauchy model allows for long-range correlation with
+    a shape parameter (alpha) that controls the decay behavior.
+    """
+
+    alpha: Literal[3, 5, 7, 9]
+    """Shape factor of the Cauchy model. Valid values: 3, 5, 7, or 9."""
+
+    variogram_type: str = field(default="generalisedcauchy", init=False)
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to dictionary format for the schema."""
+        return {
+            "variogram_type": self.variogram_type,
+            "contribution": self.contribution,
+            "anisotropy": self.anisotropy.to_dict(),
+            "alpha": self.alpha,
+        }
+
+
 def _convert_structures(structures: list[VariogramStructure | dict[str, Any]]) -> list[dict[str, Any]]:
     """Convert a list of structures to dictionary format."""
     result = []
@@ -182,12 +242,19 @@ class VariogramData(BaseObjectData):
     The variogram model is defined by the nugget and multiple structures using the
     leapfrog-convention rotation.
 
+    Note:
+        When using a variogram with kriging tasks, the following fields should be set:
+        - `modelling_space`: Set to "data" for original units or "normalscore" for gaussian space
+        - `data_variance`: Should match the sill value for non-normalized data
+
     Example using typed structures (recommended):
         >>> data = VariogramData(
         ...     name="My Variogram",
         ...     sill=1.0,
         ...     nugget=0.1,
         ...     is_rotation_fixed=True,
+        ...     modelling_space="data",  # Required for kriging
+        ...     data_variance=1.0,       # Required for kriging
         ...     structures=[
         ...         SphericalStructure(
         ...             contribution=0.9,
@@ -247,7 +314,10 @@ class Variogram(ConstructableObject[VariogramData]):
     _data_class = VariogramData
 
     sub_classification = "variogram"
-    creation_schema_version = SchemaVersion(major=1, minor=2, patch=0)
+    # Note: Using v1.1.0 for compatibility with kriging task runtime
+    # v1.2.0 adds spheroidal and linear structures, but the task runtime
+    # currently only supports v1.1.0 schemas
+    creation_schema_version = SchemaVersion(major=1, minor=1, patch=0)
 
     @classmethod
     async def _data_to_dict(cls, data: VariogramData, context: Any) -> dict[str, Any]:

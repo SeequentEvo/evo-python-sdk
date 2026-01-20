@@ -58,6 +58,8 @@ variogram_data = VariogramData(
     sill=1.0,
     nugget=0.1,
     is_rotation_fixed=True,
+    modelling_space="data",  # Required: "data" or "normalscore"
+    data_variance=1.0,       # Required: should match sill for non-normalized data
     structures=[
         SphericalStructure(
             contribution=0.9,

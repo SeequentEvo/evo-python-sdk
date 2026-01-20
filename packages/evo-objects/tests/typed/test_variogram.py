@@ -28,6 +28,9 @@ from evo.objects.typed import (
     ExponentialStructure,
     GaussianStructure,
     CubicStructure,
+    LinearStructure,
+    SpheroidalStructure,
+    GeneralisedCauchyStructure,
     Anisotropy,
     EllipsoidRanges,
     VariogramRotation,
@@ -345,3 +348,131 @@ class TestVariogram(TestWithConnector):
             contribution=1.0,
             anisotropy=Anisotropy(ellipsoid_ranges=EllipsoidRanges(major=1, semi_major=1, minor=1)),
         ).variogram_type, "cubic")
+
+        self.assertEqual(LinearStructure(
+            contribution=1.0,
+            anisotropy=Anisotropy(ellipsoid_ranges=EllipsoidRanges(major=1, semi_major=1, minor=1)),
+        ).variogram_type, "linear")
+
+        self.assertEqual(SpheroidalStructure(
+            contribution=1.0,
+            alpha=5,
+            anisotropy=Anisotropy(ellipsoid_ranges=EllipsoidRanges(major=1, semi_major=1, minor=1)),
+        ).variogram_type, "spheroidal")
+
+        self.assertEqual(GeneralisedCauchyStructure(
+            contribution=1.0,
+            alpha=7,
+            anisotropy=Anisotropy(ellipsoid_ranges=EllipsoidRanges(major=1, semi_major=1, minor=1)),
+        ).variogram_type, "generalisedcauchy")
+
+    async def test_linear_structure(self):
+        """Test creating a variogram with linear structure."""
+        linear_data = VariogramData(
+            name="Linear Variogram",
+            sill=1.0,
+            is_rotation_fixed=True,
+            structures=[
+                LinearStructure(
+                    contribution=1.0,
+                    anisotropy=Anisotropy(
+                        ellipsoid_ranges=EllipsoidRanges(major=100.0, semi_major=100.0, minor=100.0),
+                    ),
+                )
+            ],
+        )
+        with self._mock_geoscience_objects():
+            result = await Variogram.create(context=self.context, data=linear_data)
+        self.assertIsInstance(result, Variogram)
+        self.assertEqual(result.name, "Linear Variogram")
+
+    async def test_spheroidal_structure(self):
+        """Test creating a variogram with spheroidal structure."""
+        spheroidal_data = VariogramData(
+            name="Spheroidal Variogram",
+            sill=1.0,
+            is_rotation_fixed=True,
+            structures=[
+                SpheroidalStructure(
+                    contribution=1.0,
+                    alpha=5,
+                    anisotropy=Anisotropy(
+                        ellipsoid_ranges=EllipsoidRanges(major=100.0, semi_major=75.0, minor=50.0),
+                        rotation=VariogramRotation(dip_azimuth=45.0, dip=30.0, pitch=15.0),
+                    ),
+                )
+            ],
+        )
+        with self._mock_geoscience_objects():
+            result = await Variogram.create(context=self.context, data=spheroidal_data)
+        self.assertIsInstance(result, Variogram)
+        self.assertEqual(result.name, "Spheroidal Variogram")
+
+    async def test_generalisedcauchy_structure(self):
+        """Test creating a variogram with generalised cauchy structure."""
+        cauchy_data = VariogramData(
+            name="Generalised Cauchy Variogram",
+            sill=1.0,
+            is_rotation_fixed=True,
+            structures=[
+                GeneralisedCauchyStructure(
+                    contribution=1.0,
+                    alpha=7,
+                    anisotropy=Anisotropy(
+                        ellipsoid_ranges=EllipsoidRanges(major=150.0, semi_major=100.0, minor=75.0),
+                    ),
+                )
+            ],
+        )
+        with self._mock_geoscience_objects():
+            result = await Variogram.create(context=self.context, data=cauchy_data)
+        self.assertIsInstance(result, Variogram)
+        self.assertEqual(result.name, "Generalised Cauchy Variogram")
+
+    def test_spheroidal_structure_to_dict(self):
+        """Test that spheroidal structure correctly includes alpha in dict."""
+        structure = SpheroidalStructure(
+            contribution=0.8,
+            alpha=5,
+            anisotropy=Anisotropy(
+                ellipsoid_ranges=EllipsoidRanges(major=100.0, semi_major=50.0, minor=25.0),
+            ),
+        )
+        result = structure.to_dict()
+
+        self.assertEqual(result["variogram_type"], "spheroidal")
+        self.assertEqual(result["contribution"], 0.8)
+        self.assertEqual(result["alpha"], 5)
+        self.assertEqual(result["anisotropy"]["ellipsoid_ranges"]["major"], 100.0)
+
+    def test_generalisedcauchy_structure_to_dict(self):
+        """Test that generalised cauchy structure correctly includes alpha in dict."""
+        structure = GeneralisedCauchyStructure(
+            contribution=0.7,
+            alpha=9,
+            anisotropy=Anisotropy(
+                ellipsoid_ranges=EllipsoidRanges(major=200.0, semi_major=150.0, minor=100.0),
+                rotation=VariogramRotation(dip_azimuth=90.0, dip=45.0, pitch=0.0),
+            ),
+        )
+        result = structure.to_dict()
+
+        self.assertEqual(result["variogram_type"], "generalisedcauchy")
+        self.assertEqual(result["contribution"], 0.7)
+        self.assertEqual(result["alpha"], 9)
+        self.assertEqual(result["anisotropy"]["rotation"]["dip_azimuth"], 90.0)
+
+    def test_linear_structure_to_dict(self):
+        """Test that linear structure correctly converts to dict."""
+        structure = LinearStructure(
+            contribution=0.5,
+            anisotropy=Anisotropy(
+                ellipsoid_ranges=EllipsoidRanges(major=100.0, semi_major=100.0, minor=100.0),
+            ),
+        )
+        result = structure.to_dict()
+
+        self.assertEqual(result["variogram_type"], "linear")
+        self.assertEqual(result["contribution"], 0.5)
+        self.assertNotIn("alpha", result)  # Linear doesn't have alpha
+
