@@ -38,11 +38,40 @@ source_pointset
 source_pointset.attributes
 ```
 
-For variograms (until typed class is available):
+For variograms - load existing or create new:
 ```python
-environment = manager.get_environment()
-prefix = f"{environment.hub_url}/geoscience-object/orgs/{environment.org_id}/workspaces/{environment.workspace_id}/objects"
-variogram_ref = f"{prefix}/YOUR-VARIOGRAM-UUID"
+# Load existing variogram by UUID
+variogram = await object_from_uuid(manager, "YOUR-VARIOGRAM-UUID")
+# Alternative: load by path
+# variogram = await object_from_path(manager, "path/to/variogram.json")
+
+# Pretty-print the variogram
+variogram
+```
+
+Or create a new variogram:
+```python
+from evo.objects.typed import Variogram, VariogramData, SphericalStructure, Anisotropy, EllipsoidRanges
+
+variogram_data = VariogramData(
+    name="My Variogram",
+    sill=1.0,
+    nugget=0.1,
+    is_rotation_fixed=True,
+    modelling_space="data",  # Required: "data" or "normalscore"
+    data_variance=1.0,       # Required: should match sill for non-normalized data
+    structures=[
+        SphericalStructure(
+            contribution=0.9,
+            anisotropy=Anisotropy(
+                ellipsoid_ranges=EllipsoidRanges(major=200.0, semi_major=150.0, minor=100.0),
+            ),
+        )
+    ],
+    attribute="grade",
+)
+variogram = await Variogram.create(manager, variogram_data)
+variogram
 ```
 
 ### 3. Create Target Block Model (Preferred) or Use Existing
@@ -227,7 +256,7 @@ print(df[scenario_columns].describe())
 2. Authentication (ServiceManagerWidget)
 3. Setup for local development (sys.path if needed)
 4. Load source pointset (object_from_uuid) + pretty print + view attributes
-5. Define variogram reference
+5. Load or create variogram (object_from_uuid or Variogram.create) + pretty print
 6. Create target block model (BlockModel.create_regular) + pretty print
 7. Define kriging scenarios (KrigingParameters with variations)
 8. Run kriging tasks (run_kriging_multiple with FeedbackWidget)
@@ -245,7 +274,6 @@ from evo.compute.tasks import (
     run_kriging,
     run_kriging_multiple,
     KrigingParameters,
-    Source,
     Target,
     OrdinaryKriging,
     SimpleKriging,
@@ -255,12 +283,22 @@ from evo.compute.tasks import (
     Rotation,
 )
 
-# Object loading
+# Object loading (preferred methods)
 from evo.objects.typed import object_from_uuid, object_from_path
 
 # Block model creation
 from evo.objects.typed import BlockModel, RegularBlockModelData, Point3, Size3i, Size3d
 from evo.blockmodels import Units
+
+# Variogram creation (using typed structure classes)
+from evo.objects.typed import (
+    Variogram, VariogramData,
+    SphericalStructure, ExponentialStructure, GaussianStructure, CubicStructure,
+    LinearStructure, SpheroidalStructure, GeneralisedCauchyStructure,
+    Anisotropy,
+    EllipsoidRanges as VariogramEllipsoidRanges,  # Disambiguate from compute
+    VariogramRotation,
+)
 
 # Notebooks utilities
 from evo.notebooks import ServiceManagerWidget, FeedbackWidget

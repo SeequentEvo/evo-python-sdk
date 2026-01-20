@@ -26,8 +26,24 @@ from .regular_grid import (
 from .regular_masked_grid import RegularMasked3DGrid, RegularMasked3DGridData
 from .tensor_grid import Tensor3DGrid, Tensor3DGridData
 from .types import BoundingBox, CoordinateReferenceSystem, EpsgCode, Point3, Rotation, Size3d, Size3i
+from .variogram import (
+    Anisotropy,
+    CubicStructure,
+    EllipsoidRanges,
+    ExponentialStructure,
+    GaussianStructure,
+    GeneralisedCauchyStructure,
+    LinearStructure,
+    SphericalStructure,
+    SpheroidalStructure,
+    Variogram,
+    VariogramData,
+    VariogramRotation,
+    VariogramStructure,
+)
 
 __all__ = [
+    "Anisotropy",
     "BlockModel",
     "BlockModelAttribute",
     "BlockModelAttributes",
@@ -35,7 +51,13 @@ __all__ = [
     "BlockModelGeometry",
     "BoundingBox",
     "CoordinateReferenceSystem",
+    "CubicStructure",
+    "EllipsoidRanges",
     "EpsgCode",
+    "ExponentialStructure",
+    "GaussianStructure",
+    "GeneralisedCauchyStructure",
+    "LinearStructure",
     "Point3",
     "PointSet",
     "PointSetData",
@@ -47,8 +69,14 @@ __all__ = [
     "Rotation",
     "Size3d",
     "Size3i",
+    "SphericalStructure",
+    "SpheroidalStructure",
     "Tensor3DGrid",
     "Tensor3DGridData",
+    "Variogram",
+    "VariogramData",
+    "VariogramRotation",
+    "VariogramStructure",
     "object_from_path",
     "object_from_reference",
     "object_from_uuid",

@@ -426,11 +426,12 @@ When users ask to run compute tasks (especially kriging), follow the patterns in
 
 1. **Authenticate** with `ServiceManagerWidget`
 2. **Load source objects** using `object_from_uuid()` and review with pretty printing
-3. **Create a target BlockModel** (preferred over grids) or use existing one
-4. **Define kriging parameters** - prefer multiple scenarios with `run_kriging_multiple()`
-5. **Run kriging** with `FeedbackWidget` for progress
-6. **Refresh and review** - reload block model to see new attributes, view with pretty printing
-7. **Basic analysis** - query data with `get_data()`, show statistics
+3. **Load or create a variogram** using `object_from_uuid()` or `Variogram.create()`
+4. **Create a target BlockModel** (preferred over grids) or use existing one
+5. **Define kriging parameters** - prefer multiple scenarios with `run_kriging_multiple()`
+6. **Run kriging** with `FeedbackWidget` for progress
+7. **Refresh and review** - reload block model to see new attributes, view with pretty printing
+8. **Basic analysis** - query data with `get_data()`, show statistics
 
 **Example kriging imports:**
 ```python
@@ -440,6 +441,8 @@ from evo.compute.tasks import (
     OrdinaryKriging, KrigingSearch, Ellipsoid, EllipsoidRanges, Rotation,
 )
 from evo.objects.typed import object_from_uuid, BlockModel, RegularBlockModelData, Point3, Size3i, Size3d
+from evo.objects.typed import Variogram, VariogramData, SphericalStructure, Anisotropy
+from evo.objects.typed import EllipsoidRanges as VariogramEllipsoidRanges  # If needed to disambiguate
 from evo.blockmodels import Units
 from evo.notebooks import ServiceManagerWidget, FeedbackWidget
 ```
@@ -449,4 +452,27 @@ from evo.notebooks import ServiceManagerWidget, FeedbackWidget
 - **evo-compute**: See `packages/evo-compute/.github/` for compute task notebook patterns
 - **evo-blockmodels**: See `packages/evo-blockmodels/.github/` for detailed guides
 - **evo-objects**: Follow patterns in `src/evo/objects/typed/`
+
+## SDK Development
+
+### Creating New Typed Object Wrappers
+
+When adding support for new Geoscience Object types, follow the [Typed Object Development Guide](typed-object-development-guide.md).
+
+**Quick summary of steps:**
+1. Understand the JSON schema (sub-classification, required fields, datasets)
+2. Create a `*Data` dataclass for object creation
+3. Create helper classes for complex nested structures (with `to_dict()` methods)
+4. Create the wrapper class inheriting from appropriate bases
+5. Define `SchemaProperty` for JSON fields and `DatasetProperty` for datasets
+6. Override `_data_to_dict` if complex serialization is needed
+7. Implement `_repr_html_` for Jupyter pretty printing
+8. Export from `__init__.py` and write comprehensive tests
+
+**Existing typed objects to reference:**
+- `PointSet` - Simple object with locations dataset and attributes
+- `Variogram` - Complex nested structures (structures, anisotropy, rotation)
+- `Regular3DGrid` - Grid with cells and vertices datasets
+- `RegularMasked3DGrid` - Grid with boolean mask
+- `BlockModel` - Integration with Block Model Service
 

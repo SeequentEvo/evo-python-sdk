@@ -296,6 +296,139 @@ grid = await Tensor3DGrid.create(manager, data)
 
 ---
 
+## Variogram
+
+A geostatistical model describing spatial correlation structure, used for kriging interpolation.
+
+### Loading an Existing Variogram
+
+```python
+from evo.objects.typed import object_from_uuid, Variogram
+
+# Preferred: load by UUID
+variogram = await object_from_uuid(manager, "72cd9b83-90f4-4cb0-9691-95728e3f9cbb")
+
+# Alternative: from direct reference
+variogram = await Variogram.from_reference(manager, reference)
+```
+
+### Creating a New Variogram
+
+```python
+from evo.objects.typed import (
+    Variogram, VariogramData,
+    SphericalStructure, ExponentialStructure,
+    Anisotropy, EllipsoidRanges, VariogramRotation,
+)
+
+# Create variogram with typed structure classes (recommended)
+data = VariogramData(
+    name="My Variogram",
+    sill=1.0,
+    nugget=0.1,
+    is_rotation_fixed=True,
+    modelling_space="data",      # Required for kriging
+    data_variance=1.0,           # Should match sill for non-normalized data
+    structures=[
+        SphericalStructure(
+            contribution=0.6,
+            anisotropy=Anisotropy(
+                ellipsoid_ranges=EllipsoidRanges(major=200.0, semi_major=150.0, minor=100.0),
+                rotation=VariogramRotation(dip_azimuth=45.0, dip=30.0, pitch=15.0),
+            ),
+        ),
+        ExponentialStructure(
+            contribution=0.3,
+            anisotropy=Anisotropy(
+                ellipsoid_ranges=EllipsoidRanges(major=500.0, semi_major=400.0, minor=200.0),
+                # rotation defaults to (0, 0, 0) if not specified
+            ),
+        ),
+    ],
+    attribute="grade",
+    domain="ore_zone",
+)
+
+variogram = await Variogram.create(manager, data)
+```
+
+### Available Structure Types
+
+| Structure Class | Description |
+|-----------------|-------------|
+| `SphericalStructure` | Most common; reaches sill at finite range |
+| `ExponentialStructure` | Approaches sill asymptotically |
+| `GaussianStructure` | Parabolic near origin, very smooth |
+| `CubicStructure` | Smooth transitions, bounded |
+| `LinearStructure` | No sill, increases indefinitely |
+| `SpheroidalStructure` | Generalized spherical with `alpha` parameter (3, 5, 7, or 9) |
+| `GeneralisedCauchyStructure` | Long-range correlation with `alpha` parameter |
+
+### Structure with Alpha Parameter
+
+```python
+from evo.objects.typed import SpheroidalStructure, GeneralisedCauchyStructure
+
+# Spheroidal with shape factor
+spheroidal = SpheroidalStructure(
+    contribution=0.5,
+    alpha=5,  # Valid values: 3, 5, 7, 9
+    anisotropy=Anisotropy(
+        ellipsoid_ranges=EllipsoidRanges(major=100.0, semi_major=75.0, minor=50.0),
+    ),
+)
+
+# Generalised Cauchy with shape factor
+cauchy = GeneralisedCauchyStructure(
+    contribution=0.4,
+    alpha=7,  # Valid values: 3, 5, 7, 9
+    anisotropy=Anisotropy(
+        ellipsoid_ranges=EllipsoidRanges(major=300.0, semi_major=200.0, minor=100.0),
+    ),
+)
+```
+
+### Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `name` | `str` | Object name |
+| `sill` | `float` | Total variance (nugget + sum of contributions) |
+| `nugget` | `float` | Variance at zero lag distance |
+| `is_rotation_fixed` | `bool` | Whether all structures share the same rotation |
+| `structures` | `list[dict]` | List of variogram structures |
+| `data_variance` | `float \| None` | Variance of the data |
+| `modelling_space` | `str \| None` | "data" or "normalscore" |
+| `attribute` | `str \| None` | Attribute the variogram was modeled for |
+| `domain` | `str \| None` | Domain the variogram was modeled for |
+| `metadata` | `ObjectMetadata` | Full metadata including URL |
+
+### Anisotropy Components
+
+```python
+from evo.objects.typed import Anisotropy, EllipsoidRanges, VariogramRotation
+
+anisotropy = Anisotropy(
+    ellipsoid_ranges=EllipsoidRanges(
+        major=200.0,      # Range in major direction
+        semi_major=150.0, # Range in semi-major direction
+        minor=100.0,      # Range in minor direction
+    ),
+    rotation=VariogramRotation(
+        dip_azimuth=45.0, # Azimuth of dip direction (0-360°)
+        dip=30.0,         # Dip angle (0-90°)
+        pitch=15.0,       # Pitch/rake angle
+    ),
+)
+
+# Rotation defaults to (0, 0, 0) if not specified
+simple_anisotropy = Anisotropy(
+    ellipsoid_ranges=EllipsoidRanges(major=100.0, semi_major=100.0, minor=100.0),
+)
+```
+
+---
+
 ## Helper Types
 
 ### Point3
