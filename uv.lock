@@ -871,7 +871,7 @@ test = [
 
 [[package]]
 name = "evo-compute"
-version = "0.0.1rc2"
+version = "0.0.1rc3"
 source = { editable = "packages/evo-compute" }
 dependencies = [
     { name = "evo-sdk-common" },
@@ -1132,7 +1132,7 @@ test = [
 
 [[package]]
 name = "evo-sdk-common"
-version = "0.5.13"
+version = "0.5.14"
 source = { editable = "packages/evo-sdk-common" }
 dependencies = [
     { name = "pure-interface" },
