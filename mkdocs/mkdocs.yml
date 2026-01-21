@@ -11,8 +11,7 @@
 
 site_name: Evo Python SDK
 
-repo_url: https://github.com/SeequentEvo/evo-python-sdk
-edit_uri_template: https://github.com/SeequentEvo/evo-python-sdk/blob/main/{path_noext}.py
+use_directory_urls: false
 
 hooks:
   - gen_api_docs.py
