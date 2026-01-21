@@ -73,10 +73,10 @@ def _parse_service_health_dict(service_name: str, status_code: int, response: di
     """
     try:
         status_str = response["status"]
-        version = response["version"]
     except KeyError as err:
         raise ClientValueError("Service health response must include a status.") from err
 
+    version = response.get("version")
     service_status = _parse_service_status(status_str)
 
     dependencies = None
