@@ -20,6 +20,8 @@ from evo.objects.notebooks.variogram_plot import (
     _generate_ellipsoid_wireframe,
     _get_variogram_data,
     _rotation_matrix,
+    plot_ellipsoids_comparison,
+    plot_search_ellipsoid,
     plot_variogram,
     plot_variogram_2d,
     plot_variogram_ellipsoids,
@@ -325,6 +327,71 @@ class TestPlotWithTypedVariogram(unittest.TestCase):
 
         fig = plot_variogram_ellipsoids(MockVariogram())
         self.assertGreater(len(fig.data), 0)
+
+
+class TestSearchEllipsoidPlots(unittest.TestCase):
+    """Tests for search ellipsoid plotting functions."""
+
+    @classmethod
+    def setUpClass(cls):
+        """Create sample data for testing."""
+        cls.variogram = {
+            "sill": 10.0,
+            "nugget": 2.0,
+            "structures": [
+                {
+                    "variogram_type": "spherical",
+                    "contribution": 8.0,
+                    "anisotropy": {
+                        "ellipsoid_ranges": {"major": 200, "semi_major": 150, "minor": 100},
+                        "rotation": {"dip_azimuth": 45, "dip": 30, "pitch": 0},
+                    },
+                },
+            ],
+        }
+        cls.search_ellipsoid_dict = {
+            "ranges": {"major": 250, "semi_major": 200, "minor": 150},
+            "rotation": {"dip_azimuth": 0, "dip": 0, "pitch": 0},
+        }
+
+    def test_plot_search_ellipsoid_from_dict(self):
+        """plot_search_ellipsoid should work with dict input."""
+        import plotly.graph_objects as go
+
+        fig = plot_search_ellipsoid(self.search_ellipsoid_dict)
+        self.assertIsInstance(fig, go.Figure)
+        self.assertGreater(len(fig.data), 0)
+
+    def test_plot_search_ellipsoid_has_wireframe(self):
+        """plot_search_ellipsoid should have a wireframe trace."""
+        fig = plot_search_ellipsoid(self.search_ellipsoid_dict)
+        # Should have wireframe trace
+        wireframe_traces = [t for t in fig.data if "Search Ellipsoid" in (t.name or "")]
+        self.assertEqual(len(wireframe_traces), 1)
+
+    def test_plot_ellipsoids_comparison_returns_figure(self):
+        """plot_ellipsoids_comparison should return a Plotly Figure."""
+        import plotly.graph_objects as go
+
+        fig = plot_ellipsoids_comparison(self.variogram, self.search_ellipsoid_dict)
+        self.assertIsInstance(fig, go.Figure)
+
+    def test_plot_ellipsoids_comparison_has_both(self):
+        """plot_ellipsoids_comparison should have both variogram and search ellipsoids."""
+        fig = plot_ellipsoids_comparison(self.variogram, self.search_ellipsoid_dict)
+        trace_names = [t.name for t in fig.data if t.name]
+        # Should have variogram structure traces and search ellipsoid trace
+        has_variogram = any("spherical" in name.lower() for name in trace_names)
+        has_search = any("search" in name.lower() for name in trace_names)
+        self.assertTrue(has_variogram)
+        self.assertTrue(has_search)
+
+    def test_plot_search_ellipsoid_custom_color(self):
+        """plot_search_ellipsoid should accept custom color."""
+        fig = plot_search_ellipsoid(self.search_ellipsoid_dict, color="#FF0000")
+        # Verify the trace uses the custom color
+        wireframe_trace = [t for t in fig.data if "Search" in (t.name or "")][0]
+        self.assertEqual(wireframe_trace.line.color, "#FF0000")
 
 
 if __name__ == "__main__":

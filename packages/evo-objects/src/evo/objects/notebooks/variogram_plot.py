@@ -34,6 +34,8 @@ except ImportError as e:
     ) from e
 
 __all__ = [
+    "plot_ellipsoids_comparison",
+    "plot_search_ellipsoid",
     "plot_variogram",
     "plot_variogram_2d",
     "plot_variogram_3d",
@@ -61,6 +63,7 @@ STRUCTURE_COLORS = [
 ]
 
 NUGGET_COLOR = "#888888"  # medium gray - visible on both backgrounds
+SEARCH_ELLIPSOID_COLOR = "#FFD700"  # Gold - stands out against variogram colors
 
 
 @runtime_checkable
@@ -464,6 +467,261 @@ def plot_variogram_ellipsoids(
         },
         legend={"yanchor": "top", "y": 0.99, "xanchor": "left", "x": 0.01},
         margin={"l": 0, "r": 0, "t": 40, "b": 0},
+    )
+
+    return fig
+
+
+def plot_search_ellipsoid(
+    search_ellipsoid: Any,
+    *,
+    title: str | None = None,
+    color: str | None = None,
+) -> go.Figure:
+    """Plot a 3D search ellipsoid from kriging parameters.
+
+    Creates an interactive 3D visualization of a search ellipsoid used in kriging.
+    This helps visualize the neighbourhood used for sample selection.
+
+    Args:
+        search_ellipsoid: An Ellipsoid object from evo.compute.tasks with
+            'ranges' (EllipsoidRanges) and 'rotation' (Rotation) attributes,
+            or a dict with equivalent structure.
+        title: Optional title for the plot.
+        color: Optional color for the ellipsoid. Defaults to gold.
+
+    Returns:
+        Plotly Figure object that can be displayed in Jupyter.
+
+    Example:
+        >>> from evo.objects.notebooks import plot_search_ellipsoid
+        >>> from evo.compute.tasks import Ellipsoid, EllipsoidRanges, Rotation
+        >>>
+        >>> search_ellipsoid = Ellipsoid(
+        ...     ranges=EllipsoidRanges(major=200.0, semi_major=150.0, minor=100.0),
+        ...     rotation=Rotation(dip_azimuth=0.0, dip=0.0, pitch=0.0),
+        ... )
+        >>> fig = plot_search_ellipsoid(search_ellipsoid)
+        >>> fig.show()
+    """
+    ellipsoid_color = color or SEARCH_ELLIPSOID_COLOR
+
+    # Extract ranges and rotation from the ellipsoid object
+    if hasattr(search_ellipsoid, "ranges"):
+        # It's an Ellipsoid object from evo.compute.tasks
+        ranges_obj = search_ellipsoid.ranges
+        rotation_obj = search_ellipsoid.rotation
+        ranges = (
+            getattr(ranges_obj, "major", 1),
+            getattr(ranges_obj, "semi_major", 1),
+            getattr(ranges_obj, "minor", 1),
+        )
+        rotation = _rotation_matrix(
+            getattr(rotation_obj, "dip_azimuth", 0),
+            getattr(rotation_obj, "dip", 0),
+            getattr(rotation_obj, "pitch", 0),
+        )
+    elif isinstance(search_ellipsoid, dict):
+        # It's a dict
+        ranges_dict = search_ellipsoid.get("ranges", {})
+        rotation_dict = search_ellipsoid.get("rotation", {})
+        ranges = (
+            ranges_dict.get("major", 1),
+            ranges_dict.get("semi_major", 1),
+            ranges_dict.get("minor", 1),
+        )
+        rotation = _rotation_matrix(
+            rotation_dict.get("dip_azimuth", 0),
+            rotation_dict.get("dip", 0),
+            rotation_dict.get("pitch", 0),
+        )
+    else:
+        raise ValueError("search_ellipsoid must be an Ellipsoid object or dict")
+
+    fig = go.Figure()
+
+    # Generate wireframe
+    x, y, z = _generate_ellipsoid_wireframe(ranges, rotation)
+    fig.add_trace(
+        go.Scatter3d(
+            x=x,
+            y=y,
+            z=z,
+            mode="lines",
+            line={"color": ellipsoid_color, "width": 3},
+            name=f"Search Ellipsoid ({ranges[0]:.0f} × {ranges[1]:.0f} × {ranges[2]:.0f})",
+        )
+    )
+
+    # Add principal axis arrows
+    axis_scale = 1.1
+    axes = rotation @ np.diag(ranges) * axis_scale
+    origin = np.zeros(3)
+
+    for j, (axis_name, axis_range) in enumerate(zip(["Major", "Semi-major", "Minor"], ranges, strict=False)):
+        end = axes[:, j]
+        fig.add_trace(
+            go.Scatter3d(
+                x=[origin[0], end[0]],
+                y=[origin[1], end[1]],
+                z=[origin[2], end[2]],
+                mode="lines",
+                line={"color": ellipsoid_color, "width": 4},
+                name=f"{axis_name}: {axis_range:.1f}",
+                showlegend=False,
+                hoverinfo="name",
+            )
+        )
+
+    # Set axis properties
+    max_range = max(ranges)
+    axis_range_val = [-max_range * 1.2, max_range * 1.2]
+    axis_props = {
+        "range": axis_range_val,
+        "showgrid": True,
+        "showticklabels": True,
+    }
+
+    fig.update_layout(
+        title=title or "Search Ellipsoid",
+        scene={
+            "xaxis": {**axis_props, "title": "X (East)"},
+            "yaxis": {**axis_props, "title": "Y (North)"},
+            "zaxis": {**axis_props, "title": "Z (Up)"},
+            "aspectmode": "cube",
+        },
+        legend={"yanchor": "top", "y": 0.99, "xanchor": "left", "x": 0.01},
+        margin={"l": 0, "r": 0, "t": 40, "b": 0},
+    )
+
+    return fig
+
+
+def plot_ellipsoids_comparison(
+    variogram: VariogramLike | dict[str, Any],
+    search_ellipsoid: Any,
+    *,
+    surface: bool = False,
+    title: str | None = None,
+) -> go.Figure:
+    """Plot variogram ellipsoids and search ellipsoid together for comparison.
+
+    This visualization helps geostatisticians compare the variogram anisotropy
+    (correlation structure) with the search neighbourhood used in kriging.
+    Ideally, the search ellipsoid should be similar to or larger than the
+    variogram range ellipsoids.
+
+    Args:
+        variogram: A Variogram object or dict with variogram model parameters.
+        search_ellipsoid: An Ellipsoid object from evo.compute.tasks or dict
+            with 'ranges' and 'rotation'.
+        surface: If True, render variogram ellipsoids as semi-transparent surfaces.
+        title: Optional title for the plot.
+
+    Returns:
+        Plotly Figure object showing both ellipsoids on the same axes.
+
+    Example:
+        >>> from evo.objects.notebooks import plot_ellipsoids_comparison
+        >>> from evo.compute.tasks import Ellipsoid, EllipsoidRanges, Rotation
+        >>>
+        >>> search_ellipsoid = Ellipsoid(
+        ...     ranges=EllipsoidRanges(major=200.0, semi_major=150.0, minor=100.0),
+        ...     rotation=Rotation(dip_azimuth=0.0, dip=0.0, pitch=0.0),
+        ... )
+        >>> fig = plot_ellipsoids_comparison(variogram, search_ellipsoid)
+        >>> fig.show()
+    """
+    # Start with the variogram ellipsoids plot
+    fig = plot_variogram_ellipsoids(variogram, surface=surface, show_axes=True, title=None)
+
+    # Extract search ellipsoid data
+    if hasattr(search_ellipsoid, "ranges"):
+        ranges_obj = search_ellipsoid.ranges
+        rotation_obj = search_ellipsoid.rotation
+        search_ranges = (
+            getattr(ranges_obj, "major", 1),
+            getattr(ranges_obj, "semi_major", 1),
+            getattr(ranges_obj, "minor", 1),
+        )
+        search_rotation = _rotation_matrix(
+            getattr(rotation_obj, "dip_azimuth", 0),
+            getattr(rotation_obj, "dip", 0),
+            getattr(rotation_obj, "pitch", 0),
+        )
+    elif isinstance(search_ellipsoid, dict):
+        ranges_dict = search_ellipsoid.get("ranges", {})
+        rotation_dict = search_ellipsoid.get("rotation", {})
+        search_ranges = (
+            ranges_dict.get("major", 1),
+            ranges_dict.get("semi_major", 1),
+            ranges_dict.get("minor", 1),
+        )
+        search_rotation = _rotation_matrix(
+            rotation_dict.get("dip_azimuth", 0),
+            rotation_dict.get("dip", 0),
+            rotation_dict.get("pitch", 0),
+        )
+    else:
+        raise ValueError("search_ellipsoid must be an Ellipsoid object or dict")
+
+    # Add search ellipsoid wireframe
+    x, y, z = _generate_ellipsoid_wireframe(search_ranges, search_rotation)
+    fig.add_trace(
+        go.Scatter3d(
+            x=x,
+            y=y,
+            z=z,
+            mode="lines",
+            line={"color": SEARCH_ELLIPSOID_COLOR, "width": 3},
+            name=f"Search ({search_ranges[0]:.0f} × {search_ranges[1]:.0f} × {search_ranges[2]:.0f})",
+        )
+    )
+
+    # Add search ellipsoid principal axes
+    axis_scale = 1.1
+    axes = search_rotation @ np.diag(search_ranges) * axis_scale
+    origin = np.zeros(3)
+
+    for j, (axis_name, axis_range) in enumerate(zip(["Major", "Semi-major", "Minor"], search_ranges, strict=False)):
+        end = axes[:, j]
+        fig.add_trace(
+            go.Scatter3d(
+                x=[origin[0], end[0]],
+                y=[origin[1], end[1]],
+                z=[origin[2], end[2]],
+                mode="lines",
+                line={"color": SEARCH_ELLIPSOID_COLOR, "width": 4},
+                name=f"Search {axis_name}: {axis_range:.1f}",
+                showlegend=False,
+                hoverinfo="name",
+            )
+        )
+
+    # Update axis range to fit both ellipsoids
+    sill, nugget, structures, attribute = _get_variogram_data(variogram)
+    max_variogram_range = 0.0
+    for struct in structures:
+        anisotropy = struct.get("anisotropy", {})
+        ranges_dict = anisotropy.get("ellipsoid_ranges", {})
+        max_variogram_range = max(
+            max_variogram_range,
+            ranges_dict.get("major", 0),
+            ranges_dict.get("semi_major", 0),
+            ranges_dict.get("minor", 0),
+        )
+
+    max_range = max(max_variogram_range, max(search_ranges))
+    axis_range_val = [-max_range * 1.2, max_range * 1.2]
+
+    fig.update_layout(
+        title=title or "Variogram vs Search Ellipsoids",
+        scene={
+            "xaxis": {"range": axis_range_val, "title": "X (East)"},
+            "yaxis": {"range": axis_range_val, "title": "Y (North)"},
+            "zaxis": {"range": axis_range_val, "title": "Z (Up)"},
+            "aspectmode": "cube",
+        },
     )
 
     return fig

@@ -16,6 +16,8 @@ Requires the 'viz' optional dependency: pip install evo-objects[viz]
 """
 
 from .variogram_plot import (
+    plot_ellipsoids_comparison,
+    plot_search_ellipsoid,
     plot_variogram,
     plot_variogram_2d,
     plot_variogram_3d,
@@ -24,6 +26,8 @@ from .variogram_plot import (
 )
 
 __all__ = [
+    "plot_ellipsoids_comparison",
+    "plot_search_ellipsoid",
     "plot_variogram",
     "plot_variogram_2d",
     "plot_variogram_3d",
