@@ -25,7 +25,6 @@ aiohttp = ["evo-sdk-common[aiohttp]"]
 notebooks = ["evo-sdk-common[notebooks]"]
 utils = ["pyarrow", "pyarrow-stubs", "pandas", "numpy"]
 blockmodels = ["evo-blockmodels[pyarrow]>=0.1.0"]
-viz = ["plotly>=5.0", "numpy"]
 
 [dependency-groups]
 # Dev dependencies. The version is left unspecified so the latest is installed.
