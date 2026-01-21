@@ -20,6 +20,8 @@ from evo.common.utils import get_header_metadata
 from evo.workspaces import (
     AddedInstanceUsers,
     BasicWorkspace,
+    BoundingBox,
+    Coordinate,
     InstanceRole,
     InstanceRoleWithPermissions,
     InstanceUser,
@@ -28,13 +30,11 @@ from evo.workspaces import (
     OrderByOperatorEnum,
     ServiceUser,
     User,
-    BoundingBox,
     UserRole,
     Workspace,
     WorkspaceAPIClient,
     WorkspaceOrderByEnum,
     WorkspaceRole,
-    Coordinate
 )
 
 from ..data import load_test_data
@@ -119,17 +119,22 @@ def _test_instance_user_invitation(
 TEST_WORKSPACE_A = _test_workspace(UUID(int=0xA), "Test Workspace A")
 TEST_WORKSPACE_B = _test_workspace(UUID(int=0xB), "Test Workspace B")
 TEST_WORKSPACE_C = _test_workspace(UUID(int=0xC), "Test Workspace C")
-TEST_WORKSPACE_D = _test_workspace(UUID(int=0xD), "Test Workspace D", bounding_box=BoundingBox(
-    coordinates=[
-        [
-            Coordinate(longitude=100, latitude=0),
-            Coordinate(longitude=101, latitude=0),
-            Coordinate(longitude=101, latitude=1),
-            Coordinate(longitude=100, latitude=1),
-            Coordinate(longitude=100, latitude=0)
-        ]
-    ],    type="Polygon"
-))
+TEST_WORKSPACE_D = _test_workspace(
+    UUID(int=0xD),
+    "Test Workspace D",
+    bounding_box=BoundingBox(
+        coordinates=[
+            [
+                Coordinate(longitude=100, latitude=0),
+                Coordinate(longitude=101, latitude=0),
+                Coordinate(longitude=101, latitude=1),
+                Coordinate(longitude=100, latitude=1),
+                Coordinate(longitude=100, latitude=0),
+            ]
+        ],
+        type="Polygon",
+    ),
+)
 
 TEST_BASIC_WORKSPACE_A = _test_basic_workspace(UUID(int=0xA), "Test Workspace A")
 TEST_BASIC_WORKSPACE_B = _test_basic_workspace(UUID(int=0xB), "Test Workspace B")
@@ -224,13 +229,7 @@ class TestWorkspaceClient(TestWithConnector):
             new_workspace = await self.workspace_client.create_workspace(
                 name="Test Workspace",
                 description="test workspace",
-                bounding_box_coordinates=[
-                    (100, 0),
-                    (101, 0),
-                    (101, 1),
-                    (100, 1),
-                    (100, 0)
-                ],
+                bounding_box_coordinates=[(100, 0), (101, 0), (101, 1), (100, 1), (100, 0)],
             )
         self.assert_request_made(
             method=RequestMethod.POST,
@@ -241,31 +240,8 @@ class TestWorkspaceClient(TestWithConnector):
             },
             body={
                 "bounding_box": {
-                    "coordinates": [
-                        [
-                            [
-                            100,
-                            0
-                            ],
-                            [
-                            101,
-                            0
-                            ],
-                            [
-                            101,
-                            1
-                            ],
-                            [
-                            100,
-                            1
-                            ],
-                            [
-                            100,
-                            0
-                            ]
-                        ]
-                    ],
-                    "type": "Polygon"
+                    "coordinates": [[[100, 0], [101, 0], [101, 1], [100, 1], [100, 0]]],
+                    "type": "Polygon",
                 },
                 "default_coordinate_system": "",
                 "description": "test workspace",
@@ -274,8 +250,6 @@ class TestWorkspaceClient(TestWithConnector):
             },
         )
         self.assertEqual(TEST_WORKSPACE_D, new_workspace)
-
-
 
     async def test_update_workspace(self):
         with self.transport.set_http_response(200, json.dumps(load_test_data("new_workspace.json"))):
