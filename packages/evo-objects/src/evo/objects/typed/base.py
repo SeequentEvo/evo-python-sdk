@@ -479,6 +479,21 @@ class _BaseObject:
             dataset.update_document()
         return copy.deepcopy(self._document)
 
+    async def refresh(self) -> Self:
+        """Refresh this object with the latest data from the server.
+
+        Use this after a remote operation has updated the object to see
+        any newly added attributes or modified data.
+
+        :return: A new instance with refreshed data.
+
+        Example:
+            >>> # After a remote operation modifies the object...
+            >>> obj = await obj.refresh()
+            >>> obj.attributes  # Now shows the latest attributes
+        """
+        return await self.from_reference(self._context, self.metadata.url)
+
     def search(self, expression: str) -> Any:
         """Search the object metadata using a JMESPath expression.
 

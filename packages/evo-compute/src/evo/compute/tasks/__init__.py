@@ -11,41 +11,48 @@
 
 """Task-specific clients for Evo Compute."""
 
-from .kriging import (
+# Shared components from common module
+from .common import (
     CreateAttribute,
     Ellipsoid,
     EllipsoidRanges,
-    KrigingAttribute,
-    KrigingParameters,
-    KrigingResults,
-    KrigingSearch,
-    KrigingTarget,
-    OrdinaryKriging,
     Rotation,
-    run_kriging,
-    run_kriging_multiple,
-    SimpleKriging,
+    run_multiple,
+    SearchNeighbourhood,
     Source,
     Target,
     UpdateAttribute,
 )
 
+# Kriging-specific
+from .kriging import (
+    KrigingMethod,
+    KrigingParameters,
+    KrigingResult,
+    OrdinaryKriging,
+    run_kriging,
+    run_kriging_multiple,
+    SimpleKriging,
+)
+
 __all__ = [
+    # Shared components
     "CreateAttribute",
     "Ellipsoid",
     "EllipsoidRanges",
-    "KrigingAttribute",
-    "KrigingParameters",
-    "KrigingResults",
-    "KrigingSearch",
-    "KrigingTarget",
-    "OrdinaryKriging",
     "Rotation",
-    "run_kriging",
-    "run_kriging_multiple",
-    "SimpleKriging",
+    "run_multiple",
+    "SearchNeighbourhood",
     "Source",
     "Target",
     "UpdateAttribute",
+    # Kriging
+    "KrigingMethod",
+    "KrigingParameters",
+    "KrigingResult",
+    "OrdinaryKriging",
+    "run_kriging",
+    "run_kriging_multiple",
+    "SimpleKriging",
 ]
 

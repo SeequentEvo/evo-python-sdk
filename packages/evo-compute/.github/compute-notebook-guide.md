@@ -115,10 +115,8 @@ For **multiple scenarios** (preferred pattern):
 ```python
 from evo.compute.tasks import (
     KrigingParameters,
-    Source,
     Target,
-    OrdinaryKriging,
-    KrigingSearch,
+    SearchNeighbourhood,
     Ellipsoid,
     EllipsoidRanges,
     Rotation,
@@ -129,19 +127,19 @@ max_samples_values = [5, 10, 15, 20]
 
 # Search ellipsoid configuration
 search_ellipsoid = Ellipsoid(
-    ellipsoid_ranges=EllipsoidRanges(major=200.0, semi_major=150.0, minor=100.0),
+    ranges=EllipsoidRanges(major=200.0, semi_major=150.0, minor=100.0),
     rotation=Rotation(dip_azimuth=0.0, dip=0.0, pitch=0.0),
 )
 
 # Create parameter sets for each scenario
+# Note: method defaults to ordinary kriging
 parameter_sets = []
 for max_samples in max_samples_values:
     params = KrigingParameters(
-        source=Source(object=source_pointset, attribute="grade"),
+        source=source_pointset.attributes["grade"],  # Access attribute from pointset
         target=Target.new_attribute(block_model, attribute_name=f"Samples={max_samples}"),
-        kriging_method=OrdinaryKriging(),
-        variogram=variogram_ref,
-        neighborhood=KrigingSearch(ellipsoid=search_ellipsoid, max_samples=max_samples),
+        variogram=variogram,
+        search=SearchNeighbourhood(ellipsoid=search_ellipsoid, max_samples=max_samples),
     )
     parameter_sets.append(params)
     print(f"Prepared scenario with max_samples={max_samples}")
@@ -151,23 +149,20 @@ For **single run** (alternative):
 ```python
 from evo.compute.tasks import (
     KrigingParameters,
-    Source,
     Target,
-    OrdinaryKriging,
-    KrigingSearch,
+    SearchNeighbourhood,
     Ellipsoid,
     EllipsoidRanges,
     Rotation,
 )
 
 kriging_params = KrigingParameters(
-    source=Source(object=source_pointset, attribute="grade"),
-    target=Target.new_attribute(object=target_object, attribute_name="kriged_grade"),
-    kriging_method=OrdinaryKriging(),
-    variogram=variogram_ref,
-    neighborhood=KrigingSearch(
+    source=source_pointset.attributes["grade"],  # Access attribute from pointset
+    target=Target.new_attribute(target_object, attribute_name="kriged_grade"),
+    variogram=variogram,
+    search=SearchNeighbourhood(
         ellipsoid=Ellipsoid(
-            ellipsoid_ranges=EllipsoidRanges(major=200.0, semi_major=150.0, minor=100.0),
+            ranges=EllipsoidRanges(major=200.0, semi_major=150.0, minor=100.0),
             rotation=Rotation(dip_azimuth=0.0, dip=0.0, pitch=0.0),
         ),
         max_samples=20,
@@ -196,17 +191,17 @@ from evo.notebooks import FeedbackWidget
 
 print("Submitting kriging task...")
 fb = FeedbackWidget("Kriging task")
-result = await run_kriging(manager, kriging_params, fb=fb)
+job_result = await run_kriging(manager, kriging_params, fb=fb)
 
-print(f"\nKriging completed!")
-print(f"Message: {result.message}")
+# Pretty-print the result
+job_result
 ```
 
 ### 6. Review Results
 **Refresh the block model** to see new attributes:
 ```python
 # Refresh to see new attributes added by kriging
-block_model = await object_from_uuid(manager, block_model.metadata.id)
+block_model = await block_model.refresh()
 
 # Pretty-print shows updated state
 block_model
@@ -219,12 +214,19 @@ block_model.attributes
 
 **Query the data**:
 ```python
-# Query scenario columns
+# Query scenario columns using to_dataframe()
 scenario_columns = [f"Samples={ms}" for ms in max_samples_values]
-df = await block_model.get_data(columns=scenario_columns)
+df = await block_model.to_dataframe(columns=scenario_columns)
 
 print(f"Retrieved {len(df)} blocks with {len(scenario_columns)} scenario columns")
 df.head(10)
+```
+
+**Get data from job result directly**:
+```python
+# Simplest approach - get data directly from the job result
+df = await job_result.to_dataframe()
+df.head()
 ```
 
 **Basic analysis**:
@@ -241,7 +243,9 @@ print(df[scenario_columns].describe())
 - Use pretty printing (just output the object) to display objects - it shows Portal/Viewer links
 - Use `BlockModel` as the target for kriging (preferred over grids)
 - Use `run_kriging_multiple()` for scenario analysis
-- Refresh objects with `object_from_uuid()` after modifications to see new attributes
+- Use `block_model.refresh()` after modifications to see new attributes
+- Use `block_model.to_dataframe()` to get data (preferred over `get_data()`)
+- Use `job_result.to_dataframe()` to get kriging results directly
 - Use `FeedbackWidget` for progress display
 
 ### DON'T:
@@ -258,11 +262,11 @@ print(df[scenario_columns].describe())
 4. Load source pointset (object_from_uuid) + pretty print + view attributes
 5. Load or create variogram (object_from_uuid or Variogram.create) + pretty print
 6. Create target block model (BlockModel.create_regular) + pretty print
-7. Define kriging scenarios (KrigingParameters with variations)
+7. Define kriging scenarios (KrigingParameters with SearchNeighbourhood)
 8. Run kriging tasks (run_kriging_multiple with FeedbackWidget)
-9. Refresh block model (object_from_uuid) + pretty print
+9. Refresh block model (block_model.refresh()) + pretty print
 10. View block model attributes
-11. Query results (get_data)
+11. Query results (to_dataframe())
 12. Basic analysis (describe, optional plotly visualization)
 ```
 

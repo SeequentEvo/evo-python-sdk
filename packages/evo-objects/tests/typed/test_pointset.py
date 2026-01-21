@@ -310,3 +310,20 @@ class TestPointSet(TestWithConnector):
 
         locations_df = await result.locations.to_dataframe()
         pd.testing.assert_frame_equal(locations_df, data.locations)
+
+    async def test_refresh(self):
+        """Test refresh() method reloads object from server."""
+        with self._mock_geoscience_objects():
+            original = await PointSet.create(context=self.context, data=self.example_pointset)
+
+            # Refresh should return a new instance with the same data
+            refreshed = await original.refresh()
+
+            self.assertIsInstance(refreshed, PointSet)
+            self.assertEqual(refreshed.name, original.name)
+
+            # Data should be the same
+            original_df = await original.locations.to_dataframe()
+            refreshed_df = await refreshed.locations.to_dataframe()
+            pd.testing.assert_frame_equal(original_df, refreshed_df)
+

@@ -14,187 +14,89 @@ Kriging compute task client.
 
 This module provides typed dataclass models and convenience functions for running
 the Kriging task (geostatistics/kriging).
+
+Example:
+    >>> from evo.compute.tasks import (
+    ...     run_kriging,
+    ...     KrigingParameters,
+    ...     Target,
+    ...     SearchNeighbourhood,
+    ...     Ellipsoid,
+    ...     EllipsoidRanges,
+    ... )
+    >>>
+    >>> params = KrigingParameters(
+    ...     source=pointset.attributes["grade"],
+    ...     target=Target.new_attribute(block_model, "kriged_grade"),
+    ...     variogram=variogram,
+    ...     search=SearchNeighbourhood(
+    ...         ellipsoid=Ellipsoid(ranges=EllipsoidRanges(200, 150, 100)),
+    ...         max_samples=20,
+    ...     ),
+    ... )
+    >>> job_result = await run_kriging(manager, params)
 """
 
 from __future__ import annotations
 
-import asyncio
 from dataclasses import dataclass
 from typing import Any
 
 from evo.common import IContext
 from evo.common.interfaces import IFeedback
-from evo.common.utils import NoFeedback, Retry, split_feedback
+from evo.common.utils import NoFeedback, Retry
 
 from ..client import JobClient
 
+# Import shared components
+from .common import (
+    CreateAttribute,
+    Ellipsoid,
+    EllipsoidRanges,
+    Rotation,
+    run_multiple,
+    SearchNeighbourhood,
+    Source,
+    Target,
+    UpdateAttribute,
+)
+from .common.source_target import GeoscienceObjectReference, _serialize_object_reference
+
 __all__ = [
+    # Shared components (re-exported for convenience)
     "CreateAttribute",
     "Ellipsoid",
     "EllipsoidRanges",
-    "KrigingAttribute",
-    "KrigingParameters",
-    "KrigingResults",
-    "KrigingSearch",
-    "KrigingTarget",
-    "OrdinaryKriging",
     "Rotation",
-    "run_kriging",
-    "run_kriging_multiple",
-    "SimpleKriging",
+    "SearchNeighbourhood",
     "Source",
     "Target",
     "UpdateAttribute",
+    # Kriging-specific
+    "KrigingMethod",
+    "KrigingParameters",
+    "KrigingResult",
+    "OrdinaryKriging",
+    "run_kriging",
+    "run_kriging_multiple",
+    "SimpleKriging",
 ]
 
 
-# Type alias for any object that can be serialized to a geoscience object reference URL
-type GeoscienceObjectReference = str | Any  # str, ObjectReference, BaseObject, DownloadedObject, ObjectMetadata
-
-
-def _serialize_object_reference(value: GeoscienceObjectReference) -> str:
-    """
-    Serialize an object reference to a string URL.
-
-    Supports:
-    - str: returned as-is
-    - ObjectReference: str(value)
-    - BaseObject (typed objects like PointSet): value.metadata.url
-    - DownloadedObject: value.metadata.url
-    - ObjectMetadata: value.url
-
-    Args:
-        value: The value to serialize
-
-    Returns:
-        String URL of the object reference
-
-    Raises:
-        TypeError: If the value type is not supported
-    """
-    if isinstance(value, str):
-        return value
-
-    # Check for ObjectReference (has __str__ that returns the URL)
-    type_name = type(value).__name__
-    if type_name == "ObjectReference":
-        return str(value)
-
-    # Check for typed objects (BaseObject subclasses like PointSet, Regular3DGrid)
-    if hasattr(value, "metadata") and hasattr(value.metadata, "url"):
-        return value.metadata.url
-
-    # Check for ObjectMetadata
-    if hasattr(value, "url") and isinstance(value.url, str):
-        return value.url
-
-    raise TypeError(f"Cannot serialize object reference of type {type(value)}")
-
-
-@dataclass
-class Source:
-    """The source object and attribute containing known values."""
-
-    object: GeoscienceObjectReference
-    """Reference to the source geoscience object."""
-
-    attribute: str
-    """Name of the attribute on the source object."""
-
-    def __init__(self, object: GeoscienceObjectReference, attribute: str):
-        self.object = object
-        self.attribute = attribute
-
-    def to_dict(self) -> dict[str, Any]:
-        """Serialize to dictionary."""
-        return {
-            "object": _serialize_object_reference(self.object),
-            "attribute": self.attribute,
-        }
-
-
-@dataclass
-class CreateAttribute:
-    """Specification for creating a new attribute."""
-
-    name: str
-    """The name of the attribute to create."""
-
-    def __init__(self, name: str):
-        self.name = name
-
-    def to_dict(self) -> dict[str, Any]:
-        """Serialize to dictionary."""
-        return {
-            "operation": "create",
-            "name": self.name,
-        }
-
-
-@dataclass
-class UpdateAttribute:
-    """Specification for updating an existing attribute."""
-
-    reference: str
-    """Reference to an existing attribute to update."""
-
-    def __init__(self, reference: str):
-        self.reference = reference
-
-    def to_dict(self) -> dict[str, Any]:
-        """Serialize to dictionary."""
-        return {
-            "operation": "update",
-            "reference": self.reference,
-        }
-
-
-@dataclass
-class Target:
-    """The target object and attribute to create or update with kriging results."""
-
-    object: GeoscienceObjectReference
-    """Object to evaluate onto."""
-
-    attribute: CreateAttribute | UpdateAttribute
-    """Attribute specification (create new or update existing)."""
-
-    def __init__(self, object: GeoscienceObjectReference, attribute: CreateAttribute | UpdateAttribute):
-        self.object = object
-        self.attribute = attribute
-
-    @classmethod
-    def new_attribute(cls, object: GeoscienceObjectReference, attribute_name: str) -> Target:
-        """
-        Create a Target that will create a new attribute on the target object.
-
-        Args:
-            object: The target object to evaluate onto.
-            attribute_name: The name of the new attribute to create.
-
-        Returns:
-            A Target instance configured to create a new attribute.
-        """
-        return cls(object=object, attribute=CreateAttribute(name=attribute_name))
-
-    def to_dict(self) -> dict[str, Any]:
-        """Serialize to dictionary."""
-        if hasattr(self.attribute, "to_dict"):
-            attribute_value = self.attribute.to_dict()
-        elif isinstance(self.attribute, dict):
-            attribute_value = self.attribute
-        else:
-            attribute_value = self.attribute
-
-        return {
-            "object": _serialize_object_reference(self.object),
-            "attribute": attribute_value,
-        }
+# =============================================================================
+# Kriging Method Types
+# =============================================================================
 
 
 @dataclass
 class SimpleKriging:
-    """Kriging method with a constant mean value."""
+    """Simple kriging method with a known constant mean.
+
+    Use when the mean of the variable is known and constant across the domain.
+
+    Example:
+        >>> method = SimpleKriging(mean=100.0)
+    """
 
     mean: float
     """The mean value, assumed to be constant across the domain."""
@@ -212,10 +114,11 @@ class SimpleKriging:
 
 @dataclass
 class OrdinaryKriging:
-    """Kriging method with a variable mean value."""
+    """Ordinary kriging method with unknown local mean.
 
-    def __init__(self):
-        pass
+    The most common kriging method. Estimates the local mean from nearby samples.
+    This is the default kriging method if none is specified.
+    """
 
     def to_dict(self) -> dict[str, Any]:
         """Serialize to dictionary."""
@@ -224,112 +127,58 @@ class OrdinaryKriging:
         }
 
 
-@dataclass
-class EllipsoidRanges:
-    """The ranges of the ellipsoid."""
+class KrigingMethod:
+    """Factory for kriging methods.
 
-    major: float
-    """The major axis length of the ellipsoid."""
+    Provides convenient access to kriging method types.
 
-    semi_major: float
-    """The semi major axis length of the ellipsoid."""
-
-    minor: float
-    """The minor axis length of the ellipsoid."""
-
-    def __init__(self, major: float, semi_major: float, minor: float):
-        self.major = major
-        self.semi_major = semi_major
-        self.minor = minor
-
-    def to_dict(self) -> dict[str, Any]:
-        """Serialize to dictionary."""
-        return {
-            "major": self.major,
-            "semi_major": self.semi_major,
-            "minor": self.minor,
-        }
-
-
-@dataclass
-class Rotation:
-    """The rotation of the ellipsoid."""
-
-    dip_azimuth: float = 0.0
-    """First rotation, about the z-axis, in degrees."""
-
-    dip: float = 0.0
-    """Second rotation, about the x-axis, in degrees."""
-
-    pitch: float = 0.0
-    """Third rotation, about the z-axis, in degrees."""
-
-    def __init__(self, dip_azimuth: float = 0.0, dip: float = 0.0, pitch: float = 0.0):
-        self.dip_azimuth = dip_azimuth
-        self.dip = dip
-        self.pitch = pitch
-
-    def to_dict(self) -> dict[str, Any]:
-        """Serialize to dictionary."""
-        return {
-            "dip_azimuth": self.dip_azimuth,
-            "dip": self.dip,
-            "pitch": self.pitch,
-        }
-
-
-@dataclass
-class Ellipsoid:
-    """The ellipsoid, to search for points within."""
-
-    ellipsoid_ranges: EllipsoidRanges
-    """The ranges of the ellipsoid."""
-
-    rotation: Rotation
-    """The rotation of the ellipsoid."""
-
-    def __init__(self, ellipsoid_ranges: EllipsoidRanges, rotation: Rotation):
-        self.ellipsoid_ranges = ellipsoid_ranges
-        self.rotation = rotation
-
-    def to_dict(self) -> dict[str, Any]:
-        """Serialize to dictionary."""
-        return {
-            "ellipsoid_ranges": self.ellipsoid_ranges.to_dict(),
-            "rotation": self.rotation.to_dict(),
-        }
-
-
-@dataclass
-class KrigingSearch:
-    """
-    Search parameters.
-
-    In Kriging, the value of each evaluation point is determined by a set of nearby points with known values.
-    The search parameters determines which nearby points to use.
+    Example:
+        >>> # Use ordinary kriging (most common)
+        >>> method = KrigingMethod.ORDINARY
+        >>>
+        >>> # Use simple kriging with known mean
+        >>> method = KrigingMethod.simple(mean=100.0)
     """
 
-    ellipsoid: Ellipsoid
-    """The ellipsoid, to search for points within."""
+    ORDINARY: OrdinaryKriging = OrdinaryKriging()
+    """Ordinary kriging - estimates local mean from nearby samples."""
 
-    max_samples: int
-    """The maximum number of samples to use for each evaluation point."""
+    @staticmethod
+    def simple(mean: float) -> SimpleKriging:
+        """Create a simple kriging method with the given mean.
 
-    def __init__(self, ellipsoid: Ellipsoid, max_samples: int):
-        self.ellipsoid = ellipsoid
-        self.max_samples = max_samples
+        Args:
+            mean: The known constant mean value across the domain.
 
-    def to_dict(self) -> dict[str, Any]:
-        """Serialize to dictionary."""
-        return {
-            "ellipsoid": self.ellipsoid.to_dict(),
-            "max_samples": self.max_samples,
-        }
+        Returns:
+            SimpleKriging instance configured with the given mean.
+        """
+        return SimpleKriging(mean)
+
+
+# =============================================================================
+# Kriging Parameters
+# =============================================================================
 
 
 @dataclass
 class KrigingParameters:
-    """Parameters for the kriging task."""
+    """Parameters for the kriging task.
+
+    Defines all inputs needed to run a kriging interpolation task.
+
+    Example:
+        >>> params = KrigingParameters(
+        ...     source=pointset.attributes["grade"],  # Source attribute
+        ...     target=Target.new_attribute(block_model, "kriged_grade"),
+        ...     variogram=variogram,  # Variogram model
+        ...     search=SearchNeighbourhood(
+        ...         ellipsoid=Ellipsoid(ranges=EllipsoidRanges(200, 150, 100)),
+        ...         max_samples=20,
+        ...     ),
+        ...     # method defaults to ordinary kriging
+        ... )
+    """
 
     source: Source
     """The source object and attribute containing known values."""
@@ -337,84 +186,71 @@ class KrigingParameters:
     target: Target
     """The target object and attribute to create or update with kriging results."""
 
-    kriging_method: SimpleKriging | OrdinaryKriging
-    """The kriging method to use. Either simple or ordinary kriging."""
-
     variogram: GeoscienceObjectReference
-    """Model of the covariance within the domain."""
+    """Model of the covariance within the domain (Variogram object or reference)."""
 
-    neighborhood: KrigingSearch
-    """Search parameters."""
+    search: SearchNeighbourhood
+    """Search neighbourhood parameters."""
+
+    method: SimpleKriging | OrdinaryKriging | None = None
+    """The kriging method to use. Defaults to ordinary kriging if not specified."""
 
     def __init__(
         self,
         source: Source | Any,  # Also accepts Attribute from evo.objects.typed
         target: Target,
-        kriging_method: SimpleKriging | OrdinaryKriging,
         variogram: GeoscienceObjectReference,
-        neighborhood: KrigingSearch,
+        search: SearchNeighbourhood,
+        method: SimpleKriging | OrdinaryKriging | None = None,
     ):
         # Handle Attribute type from evo.objects.typed.dataset
         if hasattr(source, "_obj") and hasattr(source, "expression"):
             # source is an Attribute, construct a Source object
             source = Source(object=source._obj.metadata.url, attribute=source.expression)
+
         self.source = source
         self.target = target
-        self.kriging_method = kriging_method
         self.variogram = variogram
-        self.neighborhood = neighborhood
+        self.search = search
+        self.method = method or OrdinaryKriging()
 
     def to_dict(self) -> dict[str, Any]:
         """Serialize to dictionary."""
         return {
             "source": self.source.to_dict(),
             "target": self.target.to_dict(),
-            "kriging_method": self.kriging_method.to_dict(),
             "variogram": _serialize_object_reference(self.variogram),
-            "neighborhood": self.neighborhood.to_dict(),
+            "neighborhood": self.search.to_dict(),
+            "kriging_method": self.method.to_dict(),
         }
 
 
+# =============================================================================
+# Kriging Result Types
+# =============================================================================
+
+
 @dataclass
-class KrigingAttribute:
-    """Attribute containing the kriging result."""
+class _KrigingAttribute:
+    """Attribute containing the kriging result (internal)."""
 
     reference: str
-    """Reference to the attribute in the geoscience object."""
-
     name: str
-    """The name of the output attribute."""
 
     def __init__(self, reference: str, name: str):
         self.reference = reference
         self.name = name
 
-    def to_dict(self) -> dict[str, Any]:
-        """Serialize to dictionary."""
-        return {
-            "reference": self.reference,
-            "name": self.name,
-        }
-
 
 @dataclass
-class KrigingTarget:
-    """The target that was created or updated."""
+class _KrigingTarget:
+    """The target that was created or updated (internal)."""
 
     reference: str
-    """Reference to a geoscience object."""
-
     name: str
-    """The name of the geoscience object."""
-
     description: Any
-    """The description of the geoscience object."""
-
     schema_id: str
-    """The ID of the Geoscience Object schema."""
-
-    attribute: KrigingAttribute
-    """Attribute containing the kriging result."""
+    attribute: _KrigingAttribute
 
     def __init__(
         self,
@@ -422,7 +258,7 @@ class KrigingTarget:
         name: str,
         description: Any,
         schema_id: str,
-        attribute: KrigingAttribute,
+        attribute: _KrigingAttribute,
     ):
         self.reference = reference
         self.name = name
@@ -430,37 +266,285 @@ class KrigingTarget:
         self.schema_id = schema_id
         self.attribute = attribute
 
-    def to_dict(self) -> dict[str, Any]:
-        """Serialize to dictionary."""
-        return {
-            "reference": _serialize_object_reference(self.reference),
-            "name": self.name,
-            "description": self.description,
-            "schema_id": self.schema_id,
-            "attribute": self.attribute.to_dict(),
-        }
-
 
 @dataclass
-class KrigingResults:
-    """Result of the kriging task."""
+class KrigingResult:
+    """Result of a kriging task.
+
+    Contains information about the completed kriging operation and provides
+    convenient methods to access the target object and its data.
+
+    Example:
+        >>> job_result = await run_kriging(manager, params)
+        >>> job_result  # Pretty-prints the result
+        >>>
+        >>> # Get data directly as DataFrame (simplest approach)
+        >>> df = await job_result.to_dataframe()
+        >>>
+        >>> # Or load the target object for more control
+        >>> target = await job_result.get_target_object()
+    """
 
     message: str
-    """A message that says what happened in the task."""
+    """A message describing what happened in the task."""
 
-    target: KrigingTarget
-    """The target that was created or updated."""
+    _target: _KrigingTarget
+    """Internal target information."""
 
-    def __init__(self, message: str, target: KrigingTarget):
+    _context: IContext | None = None
+    """The context used to run the task (for convenience methods)."""
+
+    def __init__(self, message: str, target: _KrigingTarget):
         self.message = message
-        self.target = target
+        self._target = target
+        self._context = None
 
-    def to_dict(self) -> dict[str, Any]:
-        """Serialize to dictionary."""
-        return {
-            "message": self.message,
-            "target": self.target.to_dict(),
-        }
+    @property
+    def target_name(self) -> str:
+        """The name of the target object."""
+        return self._target.name
+
+    @property
+    def target_reference(self) -> str:
+        """Reference URL to the target object."""
+        return self._target.reference
+
+    @property
+    def attribute_name(self) -> str:
+        """The name of the attribute that was created/updated."""
+        return self._target.attribute.name
+
+    @property
+    def schema_type(self) -> str:
+        """The schema type of the target object (e.g., 'regular-masked-3d-grid')."""
+        schema = self._target.schema_id
+        if "/" in schema:
+            parts = schema.split("/")
+            for part in parts:
+                if part and not part.startswith("objects") and "." not in part and part[0].isalpha():
+                    return part
+        return schema
+
+    async def get_target_object(self, context: IContext | None = None):
+        """Load and return the target geoscience object.
+
+        Args:
+            context: Optional context to use. If not provided, uses the context
+                    from when the kriging task was run.
+
+        Returns:
+            The typed geoscience object (e.g., Regular3DGrid, RegularMasked3DGrid, BlockModel)
+
+        Example:
+            >>> job_result = await run_kriging(manager, params)
+            >>> target = await job_result.get_target_object()
+            >>> target  # Pretty-prints with Portal/Viewer links
+        """
+        from evo.objects.typed import object_from_reference
+
+        ctx = context or self._context
+        if ctx is None:
+            raise ValueError(
+                "No context available. Either pass a context to get_target_object() "
+                "or ensure the result was returned from run_kriging()."
+            )
+        return await object_from_reference(ctx, self._target.reference)
+
+    async def to_dataframe(self, context: IContext | None = None, columns: list[str] | None = None):
+        """Get the kriging results as a DataFrame.
+
+        This is the simplest way to access the kriging output data. It loads
+        the target object and returns its data as a pandas DataFrame.
+
+        Args:
+            context: Optional context to use. If not provided, uses the context
+                    from when the kriging task was run.
+            columns: Optional list of column names to include. If None, includes
+                    all columns. Use ["*"] to explicitly request all columns.
+
+        Returns:
+            A pandas DataFrame containing the kriging results.
+
+        Example:
+            >>> job_result = await run_kriging(manager, params)
+            >>> df = await job_result.to_dataframe()
+            >>> df.head()
+        """
+        target_obj = await self.get_target_object(context)
+
+        # Try different methods to get the dataframe based on object type
+        if hasattr(target_obj, "to_dataframe"):
+            # BlockModel, PointSet, and similar objects with to_dataframe
+            if columns is not None:
+                return await target_obj.to_dataframe(columns=columns)
+            return await target_obj.to_dataframe()
+        elif hasattr(target_obj, "cells") and hasattr(target_obj.cells, "to_dataframe"):
+            # Grid objects (Regular3DGrid, RegularMasked3DGrid, etc.)
+            return await target_obj.cells.to_dataframe()
+        else:
+            raise TypeError(
+                f"Don't know how to get DataFrame from {type(target_obj).__name__}. "
+                "Use get_target_object() and access the data manually."
+            )
+
+    def _get_portal_url(self) -> str | None:
+        """Extract Portal URL from the target reference."""
+        ref = self._target.reference
+        if not ref:
+            return None
+        try:
+            from urllib.parse import urlparse
+
+            parsed = urlparse(ref)
+            if parsed.scheme != "evo":
+                return None
+            parts = parsed.path.split("/")
+            if "orgs" in parts and "workspaces" in parts and "objects" in parts:
+                org_idx = parts.index("orgs") + 1
+                ws_idx = parts.index("workspaces") + 1
+                obj_idx = parts.index("objects") + 1
+                org_id = parts[org_idx]
+                workspace_id = parts[ws_idx]
+                object_id = parts[obj_idx]
+                hub = parsed.netloc
+                if "int" in hub or "integration" in hub or "qa" in hub:
+                    portal_base = "https://evo.integration.seequent.com"
+                else:
+                    portal_base = "https://evo.seequent.com"
+                return f"{portal_base}/{org_id}/workspaces/workspace/{workspace_id}/overview?id={object_id}"
+        except Exception:
+            pass
+        return None
+
+    def _repr_html_(self) -> str:
+        """Generate HTML representation for Jupyter notebooks."""
+        portal_url = self._get_portal_url()
+
+        links_html = ""
+        if portal_url:
+            links_html = f'<a href="{portal_url}" target="_blank">Portal</a>'
+
+        html = """
+<style>
+    .kriging-result {
+        border: 1px solid #ccc;
+        border-radius: 3px;
+        padding: 16px;
+        margin: 8px 0;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        font-size: 13px;
+        display: inline-block;
+        max-width: 800px;
+        background-color: var(--jp-layout-color1, #fff);
+    }
+    .kriging-result .title {
+        font-size: 15px;
+        font-weight: 600;
+        margin-bottom: 12px;
+        color: var(--jp-ui-font-color1, #111);
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+    }
+    .kriging-result .title-links {
+        font-size: 12px;
+        font-weight: normal;
+    }
+    .kriging-result .title-links a {
+        color: #666;
+        text-decoration: none;
+    }
+    .kriging-result .title-links a:hover {
+        color: #0066cc;
+        text-decoration: underline;
+    }
+    .kriging-result table {
+        border-collapse: collapse;
+        width: 100%;
+    }
+    .kriging-result td.label {
+        padding: 3px 8px 3px 0;
+        font-weight: 600;
+        white-space: nowrap;
+        vertical-align: top;
+        color: var(--jp-ui-font-color1, #333);
+    }
+    .kriging-result td.value {
+        padding: 3px 0;
+        color: var(--jp-ui-font-color1, #111);
+    }
+    .kriging-result .attr-highlight {
+        background: #e3f2fd;
+        padding: 2px 8px;
+        border-radius: 3px;
+        font-family: monospace;
+        font-weight: 600;
+        color: #1565c0;
+    }
+    .kriging-result .message {
+        background: #e8f5e9;
+        padding: 6px 10px;
+        border-radius: 3px;
+        color: #2e7d32;
+        margin-bottom: 12px;
+        font-size: 12px;
+    }
+</style>
+<div class="kriging-result">
+"""
+        title = "✓ Kriging Result"
+        if links_html:
+            html += f'<div class="title"><span>{title}</span><span class="title-links">{links_html}</span></div>'
+        else:
+            html += f'<div class="title">{title}</div>'
+
+        html += f'<div class="message">{self.message}</div>'
+
+        html += '<table>'
+        html += f'<tr><td class="label">Target:</td><td class="value">{self.target_name}</td></tr>'
+        html += f'<tr><td class="label">Schema:</td><td class="value">{self.schema_type}</td></tr>'
+        html += f'<tr><td class="label">Attribute:</td><td class="value"><span class="attr-highlight">{self.attribute_name}</span></td></tr>'
+        html += '</table>'
+
+        html += '</div>'
+        return html
+
+    def __repr__(self) -> str:
+        """String representation."""
+        portal_url = self._get_portal_url()
+        lines = [
+            "✓ Kriging Result",
+            f"  Message:   {self.message}",
+            f"  Target:    {self.target_name}",
+            f"  Attribute: {self.attribute_name}",
+        ]
+        if portal_url:
+            lines.append(f"  Portal:    {portal_url}")
+        return "\n".join(lines)
+
+
+# =============================================================================
+# Run Functions
+# =============================================================================
+
+
+def _parse_kriging_result(data: dict[str, Any]) -> KrigingResult:
+    """Parse the kriging result from the API response."""
+    target_data = data["target"]
+    attr_data = target_data["attribute"]
+
+    attribute = _KrigingAttribute(
+        reference=attr_data["reference"],
+        name=attr_data["name"],
+    )
+    target = _KrigingTarget(
+        reference=target_data["reference"],
+        name=target_data["name"],
+        description=target_data.get("description"),
+        schema_id=target_data["schema_id"],
+        attribute=attribute,
+    )
+    return KrigingResult(message=data["message"], target=target)
 
 
 async def run_kriging(
@@ -470,11 +554,14 @@ async def run_kriging(
     polling_interval_seconds: float = 0.5,
     retry: Retry | None = None,
     fb: IFeedback = NoFeedback,
-) -> KrigingResults:
+) -> KrigingResult:
     """
     Run a kriging compute task.
 
-    For more information, please read the kriging guide at:
+    Kriging is a geostatistical interpolation method that estimates values at
+    unsampled locations using a weighted average of nearby known values.
+
+    For more information, see:
     https://developer.seequent.com/docs/guides/geostatistics-tasks/tasks/kriging
 
     Args:
@@ -485,43 +572,33 @@ async def run_kriging(
         fb: Feedback interface for progress updates
 
     Returns:
-        The kriging task results
+        The kriging task result
 
     Example:
-        ```python
-        from evo.compute.tasks import (
-            run_kriging,
-            KrigingParameters,
-            Source,
-            Target,
-            OrdinaryKriging,
-            KrigingSearch,
-            Ellipsoid,
-            EllipsoidRanges,
-            Rotation,
-        )
-
-        params = KrigingParameters(
-            source=Source(object=pointset, attribute="grade"),
-            target=Target.new_attribute(object=grid, attribute_name="kriged_grade"),
-            kriging_method=OrdinaryKriging(),
-            variogram=variogram,
-            neighborhood=KrigingSearch(
-                ellipsoid=Ellipsoid(
-                    ellipsoid_ranges=EllipsoidRanges(major=200, semi_major=150, minor=100),
-                    rotation=Rotation(0, 0, 0),
-                ),
-                max_samples=20,
-            ),
-        )
-        result = await run_kriging(manager, params)
-        ```
+        >>> from evo.compute.tasks import (
+        ...     run_kriging,
+        ...     KrigingParameters,
+        ...     Target,
+        ...     SearchNeighbourhood,
+        ...     Ellipsoid,
+        ...     EllipsoidRanges,
+        ... )
+        >>>
+        >>> params = KrigingParameters(
+        ...     source=pointset.attributes["grade"],
+        ...     target=Target.new_attribute(block_model, "kriged_grade"),
+        ...     variogram=variogram,
+        ...     search=SearchNeighbourhood(
+        ...         ellipsoid=Ellipsoid(ranges=EllipsoidRanges(200, 150, 100)),
+        ...         max_samples=20,
+        ...     ),
+        ... )
+        >>> job_result = await run_kriging(manager, params)
     """
     connector = context.get_connector()
     org_id = context.get_org_id()
 
-    # Add API-Preview header for opt-in features
-    # Must set on connector so it's included in ALL requests (submit, get_status, get_results)
+    # Add API-Preview header for preview API
     if connector._additional_headers is None:
         connector._additional_headers = {}
     connector._additional_headers["API-Preview"] = "opt-in"
@@ -535,17 +612,20 @@ async def run_kriging(
         topic="geostatistics",
         task="kriging",
         parameters=params_dict,
-        result_type=KrigingResults,
+        result_type=dict,  # Get raw dict, we'll parse it ourselves
     )
 
-    # Wait for results and return them directly
-    results = await job.wait_for_results(
+    # Wait for results
+    raw_result = await job.wait_for_results(
         polling_interval_seconds=polling_interval_seconds,
         retry=retry,
         fb=fb,
     )
 
-    return results
+    # Parse and return
+    result = _parse_kriging_result(raw_result)
+    result._context = context
+    return result
 
 
 async def run_kriging_multiple(
@@ -555,15 +635,12 @@ async def run_kriging_multiple(
     polling_interval_seconds: float = 0.5,
     retry: Retry | None = None,
     fb: IFeedback = NoFeedback,
-) -> list[KrigingResults]:
+) -> list[KrigingResult]:
     """
     Run multiple kriging compute tasks concurrently.
 
     This function submits multiple kriging tasks and waits for all to complete.
     Progress is aggregated across all tasks.
-
-    For more information, please read the kriging guide at:
-    https://developer.seequent.com/docs/guides/geostatistics-tasks/tasks/kriging
 
     Args:
         context: The context providing connector and org_id
@@ -576,65 +653,22 @@ async def run_kriging_multiple(
         List of kriging task results in the same order as the input parameters
 
     Example:
-        ```python
-        from evo.compute.tasks import run_kriging_multiple, KrigingParameters
-
-        # Create parameter sets for different scenarios
-        param_sets = [
-            KrigingParameters(..., neighborhood=KrigingSearch(..., max_samples=10)),
-            KrigingParameters(..., neighborhood=KrigingSearch(..., max_samples=20)),
-            KrigingParameters(..., neighborhood=KrigingSearch(..., max_samples=30)),
-        ]
-
-        results = await run_kriging_multiple(manager, param_sets)
-        ```
+        >>> # Create parameter sets for different scenarios
+        >>> param_sets = [
+        ...     KrigingParameters(..., search=SearchNeighbourhood(..., max_samples=10)),
+        ...     KrigingParameters(..., search=SearchNeighbourhood(..., max_samples=20)),
+        ...     KrigingParameters(..., search=SearchNeighbourhood(..., max_samples=30)),
+        ... ]
+        >>>
+        >>> results = await run_kriging_multiple(manager, param_sets, fb=fb)
     """
-    if len(parameters) == 0:
-        return []
-
-    total = len(parameters)
-
-    # Split feedback across tasks to aggregate total progress linearly
-    per_task_fb = split_feedback(fb, [1.0] * total)
-
-    # Wrapper that returns (index, result) for robust mapping
-    async def _run_one(i: int, param: KrigingParameters) -> tuple[int, KrigingResults]:
-        res = await run_kriging(
-            context,
-            param,
+    async def _run_one(ctx: IContext, params: KrigingParameters) -> KrigingResult:
+        return await run_kriging(
+            ctx,
+            params,
             polling_interval_seconds=polling_interval_seconds,
             retry=retry,
-            fb=per_task_fb[i],
         )
-        return i, res
 
-    tasks = [asyncio.create_task(_run_one(i, param)) for i, param in enumerate(parameters)]
-
-    results: list[KrigingResults | None] = [None] * total
-
-    done_count = 0
-    for fut in asyncio.as_completed(tasks):
-        try:
-            i, res = await fut
-            results[i] = res
-            done_count += 1
-            percent = done_count / total
-            msg = f"{done_count}/{total} scenarios completed ({int(percent * 100)}%)"
-            # Update message via a child feedback (progress already aggregated)
-            per_task_fb[i].progress(1.0, msg)
-        except Exception:
-            # Find index if the wrapper raised before returning (i, res)
-            done_count += 1
-            percent = done_count / total
-            msg = f"{done_count}/{total} scenarios completed ({int(percent * 100)}%) with errors"
-            # We cannot pinpoint i reliably here; update parent
-            fb.progress(percent, msg)
-            # Cancel remaining to fail fast
-            for t in tasks:
-                t.cancel()
-            # Re-raise the first error to caller
-            raise
-
-    # Type assertion: all results should be populated
-    return [r for r in results if r is not None]
+    return await run_multiple(context, parameters, _run_one, fb=fb)
 

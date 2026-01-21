@@ -221,11 +221,19 @@ def _parse_attributes(attributes_list: list[dict]) -> list[BlockModelAttribute]:
     result = []
     for attr in attributes_list:
         col_uuid = attr.get("block_model_column_uuid")
+        # Try to parse as UUID, but handle invalid formats gracefully
+        parsed_uuid = None
+        if col_uuid:
+            try:
+                parsed_uuid = UUID(col_uuid)
+            except (ValueError, AttributeError):
+                # col_uuid is not a valid UUID format, skip it
+                pass
         result.append(
             BlockModelAttribute(
                 name=attr.get("name", ""),
                 attribute_type=attr.get("attribute_type", "Float64"),
-                block_model_column_uuid=UUID(col_uuid) if col_uuid else None,
+                block_model_column_uuid=parsed_uuid,
                 unit=attr.get("unit"),
             )
         )
@@ -463,6 +471,83 @@ class BlockModel(BaseSpatialObject, ConstructableObject[BlockModelData]):
 
         fb.progress(1.0, "Data retrieved")
         return result
+
+    async def to_dataframe(
+        self,
+        columns: list[str] | None = None,
+        version_uuid: UUID | None | Literal["latest"] = "latest",
+        fb: IFeedback = NoFeedback,
+    ) -> pd.DataFrame:
+        """Get block model data as a DataFrame.
+
+        This is the preferred method for accessing block model data. It retrieves
+        the data from the Block Model Service and returns it as a pandas DataFrame.
+
+        :param columns: List of column names to retrieve. Defaults to all columns ["*"].
+        :param version_uuid: Specific version to query. Use "latest" (default) to get the latest version,
+            or None to use the version referenced by this object.
+        :param fb: Optional feedback interface for progress reporting.
+        :return: DataFrame containing the block model data with user-friendly column names.
+
+        Example:
+            >>> df = await block_model.to_dataframe()
+            >>> df.head()
+        """
+        return await self.get_data(columns=columns, version_uuid=version_uuid, fb=fb)
+
+    async def refresh(self) -> "BlockModel":
+        """Refresh this block model object with the latest data from the server.
+
+        Use this after a remote operation (like kriging) has updated the block model
+        to see the newly added attributes.
+
+        This method:
+        1. Reloads the geoscience object metadata
+        2. Fetches the latest version's attributes from the Block Model Service
+
+        :return: A new BlockModel instance with refreshed data.
+
+        Example:
+            >>> # After running kriging that adds attributes...
+            >>> block_model = await block_model.refresh()
+            >>> block_model.attributes  # Now shows the new attributes
+        """
+        from . import object_from_reference
+
+        # Reload the object from the server using its reference URL
+        refreshed = await object_from_reference(self._context, self.metadata.url)
+
+        # Also fetch the latest attributes from the Block Model Service
+        # The geoscience object might not have the latest attributes if they were
+        # added by the Block Model Service (e.g., via kriging)
+        try:
+            client = refreshed._get_block_model_client()
+            versions = await client.list_versions(refreshed.block_model_uuid)
+            if versions:
+                latest_version = versions[0]  # List is ordered newest to oldest
+                # Convert Column objects to the expected _attributes_raw format
+                # Filter out geometry columns (i, j, k, x, y, z)
+                geometry_cols = {"i", "j", "k", "x", "y", "z"}
+                updated_attrs = []
+                for col in latest_version.columns:
+                    if col.title.lower() not in geometry_cols:
+                        # Only include col_id if it looks like a valid UUID (36 chars with dashes)
+                        col_uuid = None
+                        if col.col_id and len(col.col_id) == 36 and '-' in col.col_id:
+                            col_uuid = col.col_id
+                        updated_attrs.append({
+                            "name": col.title,
+                            "attribute_type": col.data_type.value if hasattr(col.data_type, 'value') else str(col.data_type),
+                            "block_model_column_uuid": col_uuid,
+                            "unit": col.unit_id,
+                        })
+                # Update the _attributes_raw on the refreshed object
+                refreshed._attributes_raw = updated_attrs
+        except Exception:
+            # If we can't fetch from Block Model Service, just use what we got from geoscience object
+            pass
+
+        return refreshed
 
     async def add_attribute(
         self,

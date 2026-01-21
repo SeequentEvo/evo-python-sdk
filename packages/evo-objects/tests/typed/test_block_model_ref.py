@@ -249,6 +249,65 @@ class TestAttributeSerialization(TestCase):
         self.assertEqual(attrs[1].name, "density")
         self.assertIsNone(attrs[1].block_model_column_uuid)
 
+    def test_parse_attributes_with_invalid_uuid(self):
+        """Test parsing attributes handles invalid UUID strings gracefully."""
+        attrs_list = [
+            {
+                "name": "grade",
+                "attribute_type": "Float64",
+                "block_model_column_uuid": "i",  # Invalid - geometry column ID
+            },
+            {
+                "name": "x_coord",
+                "attribute_type": "Float64",
+                "block_model_column_uuid": "x",  # Invalid - geometry column ID
+            },
+            {
+                "name": "valid_attr",
+                "attribute_type": "Float64",
+                "block_model_column_uuid": "12345678-1234-5678-1234-567812345678",  # Valid UUID
+            },
+        ]
+
+        attrs = _parse_attributes(attrs_list)
+
+        self.assertEqual(len(attrs), 3)
+        # Invalid UUIDs should result in None
+        self.assertIsNone(attrs[0].block_model_column_uuid)
+        self.assertIsNone(attrs[1].block_model_column_uuid)
+        # Valid UUID should be parsed
+        self.assertIsNotNone(attrs[2].block_model_column_uuid)
+        self.assertEqual(str(attrs[2].block_model_column_uuid), "12345678-1234-5678-1234-567812345678")
+
+    def test_parse_attributes_with_none_uuid(self):
+        """Test parsing attributes with None UUID."""
+        attrs_list = [
+            {
+                "name": "test",
+                "attribute_type": "Float64",
+                "block_model_column_uuid": None,
+            },
+        ]
+
+        attrs = _parse_attributes(attrs_list)
+
+        self.assertEqual(len(attrs), 1)
+        self.assertIsNone(attrs[0].block_model_column_uuid)
+
+    def test_parse_attributes_missing_uuid(self):
+        """Test parsing attributes without UUID field."""
+        attrs_list = [
+            {
+                "name": "test",
+                "attribute_type": "Float64",
+            },
+        ]
+
+        attrs = _parse_attributes(attrs_list)
+
+        self.assertEqual(len(attrs), 1)
+        self.assertIsNone(attrs[0].block_model_column_uuid)
+
     def test_serialize_attributes(self):
         """Test serializing attributes to list of dictionaries."""
         col_uuid = uuid.uuid4()
