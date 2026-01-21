@@ -1,5 +1,19 @@
 # Changelog
 
+## evo-sdk-common@v0.5.14
+## What's Changed
+### Other Changes
+* Bump the uv group across 2 directories with 4 updates by @dependabot[bot] in https://github.com/SeequentEvo/evo-python-sdk/pull/183
+* Instance user management endpoints exposed through evo sdk by @sachinseizer in https://github.com/SeequentEvo/evo-python-sdk/pull/185
+* Make version field optional in service health check response by @shivangj10 in https://github.com/SeequentEvo/evo-python-sdk/pull/184
+* Changes to code-samples by @shivangj10 in https://github.com/SeequentEvo/evo-python-sdk/pull/186
+
+## New Contributors
+* @dependabot[bot] made their first contribution in https://github.com/SeequentEvo/evo-python-sdk/pull/183
+* @sachinseizer made their first contribution in https://github.com/SeequentEvo/evo-python-sdk/pull/185
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-compute@v0.0.1rc3...evo-sdk-common@v0.5.14
+
 ## evo-sdk-common@v0.5.13
 ## What's Changed
 ### evo-sdk-common
@@ -58,7 +72,7 @@
 ## evo-blockmodels@v0.1.0
 ### What's changed
 #### evo-blockmodels
-New methods on the Blockmodel SDK 🎉 
+New methods on the Blockmodel SDK 🎉
 * Blockmodel list models by @rachelcarpenterseequent in https://github.com/SeequentEvo/evo-python-sdk/pull/148
 * Add a method to update column metadata ie units by @rachelcarpenterseequent in https://github.com/SeequentEvo/evo-python-sdk/pull/149
 * Add a method to rename blockmodel columns to the SDK by @rachelcarpenterseequent in https://github.com/SeequentEvo/evo-python-sdk/pull/150
