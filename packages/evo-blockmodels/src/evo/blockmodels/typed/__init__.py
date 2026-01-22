@@ -12,14 +12,22 @@
 """Typed access for block models with pandas DataFrame support."""
 
 from .regular_block_model import RegularBlockModel, RegularBlockModelData
+from .report import Aggregation, MassUnits, Report, ReportCategorySpec, ReportColumnSpec, ReportResult, ReportSpecificationData
 from .types import BoundingBox, Point3, Size3d, Size3i
 from .units import UnitInfo, Units, UnitType, get_available_units
 
 __all__ = [
+    "Aggregation",
     "BoundingBox",
+    "MassUnits",
     "Point3",
     "RegularBlockModel",
     "RegularBlockModelData",
+    "Report",
+    "ReportCategorySpec",
+    "ReportColumnSpec",
+    "ReportResult",
+    "ReportSpecificationData",
     "Size3d",
     "Size3i",
     "UnitInfo",
