@@ -109,6 +109,7 @@ ruff check src/ tests/
 - Async/await for all API operations
 - Pydantic v2 for data models
 - PyArrow for parquet handling
+- **Prefer enums and helper classes over string literals** for parameters with known options (improves discoverability via autocomplete)
 
 ## Notebook Generation
 
@@ -119,6 +120,8 @@ Notebooks are primarily for **geologists with limited Python experience**. Keep 
 
 ### Notebook Format (CRITICAL)
 Jupyter notebooks (`.ipynb` files) must use **standard JSON format** with proper cell structure.
+
+**CRITICAL: The `source` field MUST be an array of strings (one per line), NOT a single string.**
 
 **CORRECT format - use this:**
 ```json
@@ -181,7 +184,15 @@ Jupyter notebooks (`.ipynb` files) must use **standard JSON format** with proper
 }
 ```
 
-**WRONG format (do not use) - percent format is NOT valid for .ipynb files:**
+**WRONG - source as single string (causes cell rendering issues):**
+```json
+{
+  "cell_type": "markdown",
+  "source": "# Title\n\nThis is wrong format"
+}
+```
+
+**WRONG format - percent format is NOT valid for .ipynb files:**
 ```
 #%% md
 # My Notebook Title
@@ -190,6 +201,11 @@ import pandas as pd
 ```
 
 The percent format (`#%% md`, `#%%`) is only a text representation used by some IDEs internally. Files saved in this format will appear as a single unexecutable cell when opened in Jupyter.
+
+### Notebook Output Guidelines (IMPORTANT)
+- **Always clear outputs** from notebook cells before committing - outputs can be very large and cause merge conflicts
+- Code cells should have `"execution_count": null` and `"outputs": []`
+- This keeps notebooks small and easy to review in version control
 
 ### Default Approach (IMPORTANT)
 - **Always use typed objects** (`PointSet`, `BlockModel`, `Regular3DGrid`, etc.) from `evo.objects.typed`
@@ -447,6 +463,74 @@ from evo.blockmodels import Units
 from evo.notebooks import ServiceManagerWidget, FeedbackWidget
 ```
 
+## Block Model Reports
+
+Reports provide resource estimation summaries for block models (tonnages, grades, metal content by category).
+
+**Requirements for reports:**
+1. **Units on columns** - Report columns must have units defined (use `set_attribute_units()`)
+2. **At least one category column** - For grouping results (e.g., domain, rock type)
+3. **Density information** - Either a density column OR fixed density value (not both)
+
+**Density configuration rules:**
+- **Using density column**: Set `density_column_name="density"` only. Do NOT set `density_unit_id` - the unit comes from the column.
+- **Using fixed density**: Set both `density_value=2.7` AND `density_unit_id="t/m3"`. Do NOT set `density_column_name`.
+
+**Example report workflow:**
+```python
+from evo.blockmodels import Units
+from evo.blockmodels.typed import ReportSpecificationData, ReportColumnSpec, ReportCategorySpec
+
+# Step 1: Add a category column (e.g., domain) to the block model
+df = await block_model.to_dataframe()
+# Create domains by slicing on z-coordinate (example - in practice use geological interpretation)
+z_min, z_max = df["z"].min(), df["z"].max()
+z_range = z_max - z_min
+df["domain"] = df["z"].apply(lambda z: "LMS1" if z < z_min + z_range/3 else ("LMS2" if z < z_min + 2*z_range/3 else "LMS3"))
+await block_model.add_attribute(df[["x", "y", "z", "domain"]], "domain")
+
+# Step 2: Set units on report columns
+block_model = await block_model.set_attribute_units({
+    "Au": Units.GRAMS_PER_TONNE,
+})
+
+# Step 3: Create and run the report (using fixed density)
+report = await block_model.create_report(ReportSpecificationData(
+    name="Gold Resource Report",
+    columns=[
+        ReportColumnSpec(column_name="Au", aggregation=Aggregation.MASS_AVERAGE, label="Au Grade", output_unit_id=Units.GRAMS_PER_TONNE),
+    ],
+    categories=[
+        ReportCategorySpec(column_name="domain", label="Domain", values=["LMS1", "LMS2", "LMS3"]),
+    ],
+    mass_unit_id="t",
+    density_value=2.7,  # Fixed density - requires density_unit_id
+    density_unit_id="t/m3",
+    # OR use density_column_name="density" (without density_unit_id) if you have a density column
+    run_now=True,
+))
+
+# Step 4: Pretty-print shows BlockSync link
+report  # Displays report info with link to BlockSync
+
+# Step 5: Get results as DataFrame
+result = await report.refresh()
+df = result.to_dataframe()
+```
+
+**BlockSync URL pattern:**
+- **Integration**: `https://blocksync.integration.seequent.com/{org_id}/{hub_code}/{workspace_id}/blockmodel/{bm_id}/reports/{report_id}?result_id={result_id}`
+- **Production**: `https://blocksync.seequent.com/{org_id}/{hub_code}/{workspace_id}/blockmodel/{bm_id}/reports/{report_id}?result_id={result_id}`
+
+**Key classes:**
+- `ReportSpecificationData` - Data for creating a report
+- `ReportColumnSpec` - Column definition (name, aggregation, unit)
+- `Aggregation` - Enum for aggregation type: `MASS_AVERAGE` for grades, `SUM` for metal content
+- `ReportCategorySpec` - Category definition (name, label, values)
+- `MassUnits` - Helper with common mass unit IDs (`TONNES`, `KILOGRAMS`, `OUNCES`)
+- `Report` - Report wrapper with `create_report()`, `run()`, `refresh()`, `blocksync_url`
+- `ReportResult` - Result wrapper with `to_dataframe()`
+
 ## Package-Specific Guides
 
 - **evo-compute**: See `packages/evo-compute/.github/` for compute task notebook patterns
@@ -469,10 +553,51 @@ When adding support for new Geoscience Object types, follow the [Typed Object De
 7. Implement `_repr_html_` for Jupyter pretty printing
 8. Export from `__init__.py` and write comprehensive tests
 
+### Enums and Helper Classes (IMPORTANT)
+
+**Prefer enums and helper classes over string literals** for any parameter with a known set of valid options. This improves discoverability via IDE autocomplete.
+
+**Pattern - Use Enum classes:**
+```python
+from enum import Enum
+
+class Aggregation(str, Enum):
+    """Aggregation methods for report columns."""
+    SUM = "SUM"
+    """Sum of values - use for metal content, volume, etc."""
+    MASS_AVERAGE = "MASS_AVERAGE"
+    """Mass-weighted average - use for grades, densities, etc."""
+
+# Usage: aggregation=Aggregation.MASS_AVERAGE
+```
+
+**Pattern - Use helper classes with class attributes:**
+```python
+class MassUnits:
+    """Common mass unit IDs."""
+    TONNES = "t"
+    KILOGRAMS = "kg"
+    OUNCES = "oz"
+
+# Usage: mass_unit_id=MassUnits.TONNES
+```
+
+**When to apply:**
+- API parameters with enumerated values (e.g., aggregation types, status codes)
+- Unit IDs (e.g., `Units.GRAMS_PER_TONNE`, `MassUnits.TONNES`)
+- Any string parameter where users would otherwise need to read docs to discover valid values
+
+**Benefits:**
+- IDE autocomplete shows all valid options
+- Docstrings on enum values explain when to use each
+- Type checking catches invalid values
+- Users don't need to memorize string values
+
 **Existing typed objects to reference:**
 - `PointSet` - Simple object with locations dataset and attributes
 - `Variogram` - Complex nested structures (structures, anisotropy, rotation)
 - `Regular3DGrid` - Grid with cells and vertices datasets
 - `RegularMasked3DGrid` - Grid with boolean mask
 - `BlockModel` - Integration with Block Model Service
+- `Report` - Uses `Aggregation` enum, `Units` class, `MassUnits` class
 

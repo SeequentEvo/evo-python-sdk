@@ -43,6 +43,7 @@ else:
 if TYPE_CHECKING:
     from evo.blockmodels import BlockModelAPIClient
     from evo.blockmodels.data import BlockModel as BlockModelMetadata, Version
+    from evo.blockmodels.typed import Report, ReportSpecificationData
 
 __all__ = [
     "BlockModel",
@@ -841,3 +842,127 @@ class BlockModel(BaseSpatialObject, ConstructableObject[BlockModelData]):
         fb.progress(1.0, "Block model reference created")
         return result
 
+    async def set_attribute_units(
+        self,
+        units: dict[str, str],
+        fb: IFeedback = NoFeedback,
+    ) -> "BlockModel":
+        """Set units for attributes on this block model.
+
+        This is required before creating reports, as reports need columns to have
+        units defined.
+
+        :param units: Dictionary mapping attribute names to unit IDs (e.g., {"Au": "g/t", "density": "t/m3"}).
+        :param fb: Optional feedback interface for progress reporting.
+        :return: The updated BlockModel instance (refreshed from server).
+
+        Example:
+            >>> from evo.blockmodels import Units
+            >>> block_model = await block_model.set_attribute_units({
+            ...     "Au": Units.GRAMS_PER_TONNE,
+            ...     "density": Units.TONNES_PER_CUBIC_METRE,
+            ... })
+        """
+        fb.progress(0.0, "Updating attribute units...")
+
+        client = self._get_block_model_client()
+
+        fb.progress(0.3, "Applying unit updates...")
+
+        # Use the client's update_column_metadata method
+        await client.update_column_metadata(
+            bm_id=self.block_model_uuid,
+            column_updates=units,
+        )
+
+        fb.progress(0.9, "Refreshing block model...")
+
+        # Refresh to get updated metadata
+        result = await self.refresh()
+
+        fb.progress(1.0, "Units updated")
+        return result
+
+    def _get_column_id_map(self) -> dict[str, UUID]:
+        """Get a mapping of column names to their UUIDs.
+
+        :return: Dictionary mapping column names to UUIDs.
+        """
+        result = {}
+        for attr in self.attributes:
+            if attr.block_model_column_uuid:
+                result[attr.name] = attr.block_model_column_uuid
+        return result
+
+    async def create_report(
+        self,
+        data: "ReportSpecificationData",
+        fb: IFeedback = NoFeedback,
+    ) -> "Report":
+        """Create a new report specification for this block model.
+
+        Reports require:
+        1. Columns to have units set (use `set_attribute_units()` first)
+        2. At least one category column for grouping (e.g., domain, rock type)
+
+        :param data: The report specification data.
+        :param fb: Optional feedback interface for progress reporting.
+        :return: A Report instance representing the created report.
+
+        Example:
+            >>> from evo.blockmodels.typed import ReportSpecificationData, ReportColumnSpec, ReportCategorySpec
+            >>> report = await block_model.create_report(ReportSpecificationData(
+            ...     name="Gold Resource Report",
+            ...     columns=[ReportColumnSpec(column_name="Au", aggregation="WEIGHTED_MEAN", output_unit_id="g/t")],
+            ...     categories=[ReportCategorySpec(column_name="domain")],
+            ...     mass_unit_id="t",
+            ...     density_value=2.7,
+            ...     density_unit_id="t/m3",
+            ... ))
+            >>> report  # Pretty-prints with BlockSync link
+        """
+        from evo.blockmodels.typed import Report, ReportSpecificationData as RSD
+
+        fb.progress(0.0, "Preparing report specification...")
+
+        # Refresh to ensure we have latest column information
+        refreshed = await self.refresh()
+        column_id_map = refreshed._get_column_id_map()
+
+        fb.progress(0.2, "Creating report...")
+
+        report = await Report.create(
+            context=self._context,
+            block_model_uuid=self.block_model_uuid,
+            data=data,
+            column_id_map=column_id_map,
+            fb=fb,
+        )
+
+        return report
+
+    async def list_reports(self, fb: IFeedback = NoFeedback) -> list["Report"]:
+        """List all report specifications for this block model.
+
+        :param fb: Optional feedback interface for progress reporting.
+        :return: List of Report instances.
+        """
+        from evo.blockmodels.typed import Report
+
+        fb.progress(0.0, "Fetching reports...")
+
+        client = self._get_block_model_client()
+        environment = self._context.get_environment()
+
+        result = await client._reports_api.list_block_model_report_specifications(
+            workspace_id=str(environment.workspace_id),
+            org_id=str(environment.org_id),
+            bm_id=str(self.block_model_uuid),
+        )
+
+        fb.progress(1.0, f"Found {result.total} reports")
+
+        return [
+            Report(self._context, self.block_model_uuid, spec)
+            for spec in result.results
+        ]
