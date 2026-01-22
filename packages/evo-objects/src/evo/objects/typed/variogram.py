@@ -12,7 +12,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field, replace
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 from pydantic import TypeAdapter
 
@@ -20,6 +20,9 @@ from evo.objects import SchemaVersion
 
 from ._property import SchemaProperty
 from .base import BaseObjectData, ConstructableObject
+
+if TYPE_CHECKING:
+    from evo.compute.tasks import Ellipsoid as ComputeEllipsoid
 
 __all__ = [
     "Anisotropy",
@@ -120,6 +123,52 @@ class VariogramStructure:
             "contribution": self.contribution,
             "anisotropy": self.anisotropy.to_dict(),
         }
+
+    def to_ellipsoid(self) -> "ComputeEllipsoid":
+        """Convert this structure's anisotropy to an Ellipsoid for visualization or search.
+
+        Returns an Ellipsoid from evo.compute.tasks that can be used for:
+        - 3D visualization with surface_points() or wireframe_points()
+        - Creating search ellipsoids via scaled()
+        - Kriging search neighborhoods
+
+        Example:
+            >>> # Get ellipsoid from variogram structure
+            >>> var_ell = variogram.structures[0].to_ellipsoid()
+            >>>
+            >>> # Create search ellipsoid scaled by 2x
+            >>> search_ell = var_ell.scaled(2.0)
+            >>>
+            >>> # Visualize with Plotly
+            >>> x, y, z = var_ell.surface_points(center=(100, 200, 50))
+            >>> mesh = go.Mesh3d(x=x, y=y, z=z, alphahull=0, opacity=0.3)
+        """
+        from evo.compute.tasks import Ellipsoid as ComputeEllipsoid
+        from evo.compute.tasks import EllipsoidRanges as ComputeRanges
+        from evo.compute.tasks import Rotation as ComputeRotation
+
+        ranges = self.anisotropy.ellipsoid_ranges
+        rotation = self.anisotropy.rotation
+
+        return ComputeEllipsoid(
+            ranges=ComputeRanges(
+                major=ranges.major,
+                semi_major=ranges.semi_major,
+                minor=ranges.minor,
+            ),
+            rotation=ComputeRotation(
+                dip_azimuth=rotation.dip_azimuth,
+                dip=rotation.dip,
+                pitch=rotation.pitch,
+            ),
+        )
+
+
+# Import for type annotation
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from evo.compute.tasks import Ellipsoid as ComputeEllipsoid
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -363,6 +412,59 @@ class Variogram(ConstructableObject[VariogramData]):
 
     attribute: str | None = SchemaProperty("attribute", TypeAdapter(str | None))
     """The attribute the variogram is modelled for."""
+
+    def get_ellipsoid(self, structure_index: int = 0) -> "ComputeEllipsoid":
+        """Get an Ellipsoid from a variogram structure for visualization or search.
+
+        Returns an Ellipsoid from evo.compute.tasks that can be used for:
+        - 3D visualization with surface_points() or wireframe_points()
+        - Creating search ellipsoids via scaled()
+        - Kriging search neighborhoods
+
+        Args:
+            structure_index: Index of the structure to use (default: 0, the first structure).
+
+        Returns:
+            Ellipsoid configured with the structure's anisotropy ranges and rotation.
+
+        Example:
+            >>> # Get ellipsoid from first variogram structure
+            >>> var_ell = variogram.get_ellipsoid()
+            >>>
+            >>> # Create search ellipsoid scaled by 2x
+            >>> search_ell = var_ell.scaled(2.0)
+            >>>
+            >>> # Visualize with Plotly
+            >>> x, y, z = var_ell.surface_points(center=(100, 200, 50))
+            >>> mesh = go.Mesh3d(x=x, y=y, z=z, alphahull=0, opacity=0.3)
+        """
+        from evo.compute.tasks import Ellipsoid as ComputeEllipsoid
+        from evo.compute.tasks import EllipsoidRanges as ComputeRanges
+        from evo.compute.tasks import Rotation as ComputeRotation
+
+        if not self.structures:
+            raise ValueError("Variogram has no structures")
+
+        if structure_index >= len(self.structures):
+            raise ValueError(f"structure_index {structure_index} out of range (max {len(self.structures) - 1})")
+
+        struct = self.structures[structure_index]
+        anisotropy = struct.get("anisotropy", {})
+        ranges_dict = anisotropy.get("ellipsoid_ranges", {})
+        rotation_dict = anisotropy.get("rotation", {})
+
+        return ComputeEllipsoid(
+            ranges=ComputeRanges(
+                major=ranges_dict.get("major", 1.0),
+                semi_major=ranges_dict.get("semi_major", 1.0),
+                minor=ranges_dict.get("minor", 1.0),
+            ),
+            rotation=ComputeRotation(
+                dip_azimuth=rotation_dict.get("dip_azimuth", 0.0),
+                dip=rotation_dict.get("dip", 0.0),
+                pitch=rotation_dict.get("pitch", 0.0),
+            ),
+        )
 
     def _repr_html_(self) -> str:
         """Return an HTML representation for Jupyter notebooks."""
