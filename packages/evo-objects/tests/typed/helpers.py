@@ -45,6 +45,18 @@ class MockDownloadedObject(DownloadedObject):
     async def download_attribute_dataframe(self, data: dict, fb) -> pd.DataFrame:
         return self.mock_client.get_dataframe(data["values"])
 
+    async def download_array(self, jmespath_expr: str, fb=None):
+        """Download an array from the object using a JMESPath expression."""
+
+        from evo import jmespath as jp
+
+        data_info = jp.search(jmespath_expr, self.object_dict)
+        if data_info is None:
+            raise ValueError(f"No data found at {jmespath_expr}")
+        df = self.mock_client.get_dataframe(data_info)
+        # Return the first column as a numpy array
+        return df.iloc[:, 0].values
+
     async def update(self, object_dict):
         new_version_id = str(int(self.metadata.version_id) + 1)
         return MockDownloadedObject(self.mock_client, object_dict, new_version_id)
