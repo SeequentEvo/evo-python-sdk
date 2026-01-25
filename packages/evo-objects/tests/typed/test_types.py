@@ -18,7 +18,7 @@ import numpy.testing as npt
 from parameterized import parameterized
 from pydantic import TypeAdapter
 
-from evo.objects.typed import BoundingBox, CoordinateReferenceSystem, EpsgCode, Point3, Rotation
+from evo.objects.typed import BoundingBox, CoordinateReferenceSystem, EpsgCode, Point3, Rotation, Size3d, Size3i
 
 
 class TestTypes(TestCase):
@@ -65,3 +65,66 @@ class TestTypes(TestCase):
         self.assertEqual(type_adapter.dump_python(crs1), {"epsg_code": 4326})
         self.assertEqual(type_adapter.dump_python(crs2), {"ogc_wkt": "WKT_STRING"})
         self.assertEqual(type_adapter.dump_python(crs3), "unspecified")
+
+    def test_bounding_box_from_box_no_rotation(self):
+        """Test BoundingBox.from_box without rotation."""
+        origin = Point3(10, 20, 30)
+        extent = Size3d(5, 10, 15)
+
+        box = BoundingBox.from_box(origin, extent)
+
+        self.assertAlmostEqual(box.min_x, 10.0)
+        self.assertAlmostEqual(box.min_y, 20.0)
+        self.assertAlmostEqual(box.min_z, 30.0)
+        self.assertAlmostEqual(box.max_x, 15.0)
+        self.assertAlmostEqual(box.max_y, 30.0)
+        self.assertAlmostEqual(box.max_z, 45.0)
+
+    def test_bounding_box_from_box_with_rotation(self):
+        """Test BoundingBox.from_box with 90 degree rotation around Z."""
+        origin = Point3(0, 0, 0)
+        extent = Size3d(10, 20, 5)
+        rotation = Rotation(90, 0, 0)  # 90 degrees around Z
+
+        box = BoundingBox.from_box(origin, extent, rotation)
+
+        # After 90 degree rotation: x becomes y, y becomes -x
+        self.assertAlmostEqual(box.min_x, 0.0)
+        self.assertAlmostEqual(box.min_y, -10.0)
+        self.assertAlmostEqual(box.min_z, 0.0)
+        self.assertAlmostEqual(box.max_x, 20.0)
+        self.assertAlmostEqual(box.max_y, 0.0)
+        self.assertAlmostEqual(box.max_z, 5.0)
+
+    def test_bounding_box_from_regular_grid_no_rotation(self):
+        """Test BoundingBox.from_regular_grid without rotation."""
+        origin = Point3(100, 200, 0)
+        size = Size3i(10, 8, 5)
+        cell_size = Size3d(2.5, 5.0, 4.0)
+
+        box = BoundingBox.from_regular_grid(origin, size, cell_size)
+
+        # Extent should be: (10*2.5, 8*5.0, 5*4.0) = (25, 40, 20)
+        self.assertAlmostEqual(box.min_x, 100.0)
+        self.assertAlmostEqual(box.min_y, 200.0)
+        self.assertAlmostEqual(box.min_z, 0.0)
+        self.assertAlmostEqual(box.max_x, 125.0)
+        self.assertAlmostEqual(box.max_y, 240.0)
+        self.assertAlmostEqual(box.max_z, 20.0)
+
+    def test_bounding_box_from_regular_grid_with_rotation(self):
+        """Test BoundingBox.from_regular_grid with rotation."""
+        origin = Point3(0, 0, 0)
+        size = Size3i(10, 10, 5)
+        cell_size = Size3d(2.5, 5.0, 5.0)
+        rotation = Rotation(90, 0, 0)
+
+        box = BoundingBox.from_regular_grid(origin, size, cell_size, rotation)
+
+        # Extent is (25, 50, 25), rotated 90 degrees around Z
+        self.assertAlmostEqual(box.min_x, 0.0)
+        self.assertAlmostEqual(box.min_y, -25.0)
+        self.assertAlmostEqual(box.min_z, 0.0)
+        self.assertAlmostEqual(box.max_x, 50.0)
+        self.assertAlmostEqual(box.max_y, 0.0)
+        self.assertAlmostEqual(box.max_z, 25.0)

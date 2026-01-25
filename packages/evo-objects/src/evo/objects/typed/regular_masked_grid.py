@@ -11,7 +11,6 @@
 
 from __future__ import annotations
 
-import sys
 import uuid
 from dataclasses import dataclass
 from typing import Annotated, Any
@@ -20,7 +19,6 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 
-from evo import jmespath
 from evo.common import IContext, IFeedback
 from evo.common.utils import NoFeedback
 from evo.objects import SchemaVersion
@@ -33,44 +31,11 @@ from .exceptions import DataLoaderError, ObjectValidationError
 from .spatial import BaseSpatialObject, BaseSpatialObjectData
 from .types import BoundingBox, Point3, Rotation, Size3d, Size3i
 
-if sys.version_info >= (3, 11):
-    pass
-else:
-    pass
-
 __all__ = [
     "MaskedCells",
     "RegularMasked3DGrid",
     "RegularMasked3DGridData",
 ]
-
-
-def _calculate_bounding_box(
-    origin: Point3,
-    size: Size3i,
-    cell_size: Size3d,
-    rotation: Rotation | None = None,
-) -> BoundingBox:
-    if rotation is not None:
-        rotation_matrix = rotation.as_rotation_matrix()
-    else:
-        rotation_matrix = np.eye(3)
-    corners = np.array(
-        [
-            [0, 0, 0],
-            [size.nx * cell_size.dx, 0, 0],
-            [0, size.ny * cell_size.dy, 0],
-            [0, 0, size.nz * cell_size.dz],
-            [size.nx * cell_size.dx, size.ny * cell_size.dy, 0],
-            [size.nx * cell_size.dx, 0, size.nz * cell_size.dz],
-            [0, size.ny * cell_size.dy, size.nz * cell_size.dz],
-            [size.nx * cell_size.dx, size.ny * cell_size.dy, size.nz * cell_size.dz],
-        ]
-    )
-    rotated_corners = rotation_matrix @ corners.T
-    return BoundingBox.from_points(
-        rotated_corners[0, :] + origin.x, rotated_corners[1, :] + origin.y, rotated_corners[2, :] + origin.z
-    )
 
 
 @dataclass(kw_only=True, frozen=True)
@@ -94,7 +59,7 @@ class RegularMasked3DGridData(BaseSpatialObjectData):
             )
 
     def compute_bounding_box(self) -> BoundingBox:
-        return _calculate_bounding_box(self.origin, self.size, self.cell_size, self.rotation)
+        return BoundingBox.from_regular_grid(self.origin, self.size, self.cell_size, self.rotation)
 
 
 class MaskedCells(SchemaModel):
@@ -105,20 +70,13 @@ class MaskedCells(SchemaModel):
     """
 
     _grid_size: Annotated[Size3i, SchemaLocation("size")]
-    _number_active: Annotated[int, SchemaLocation("number_of_active_cells")]
+    _mask_length: Annotated[int, SchemaLocation("mask.values.length")]
+    number_active: Annotated[int, SchemaLocation("number_of_active_cells")]
     attributes: Annotated[Attributes, SchemaLocation("cell_attributes"), DataLocation("cell_data")]
 
     @property
     def size(self) -> Size3i:
         return self._grid_size
-
-    @property
-    def number_active(self) -> int:
-        return self._number_active
-
-    @number_active.setter
-    def number_active(self, value: int) -> None:
-        assign_jmespath_value(self._document, "number_of_active_cells", value)
 
     @property
     def expected_length(self) -> int:
@@ -181,10 +139,9 @@ class MaskedCells(SchemaModel):
     def validate(self) -> None:
         """Validate that all attributes have the correct length and mask is valid."""
         self.attributes.validate_lengths(self.expected_length)
-        mask_length = jmespath.search("mask.values.length", self._document)
-        if self.size.total_size != mask_length:
+        if self.size.total_size != self._mask_length:
             raise ObjectValidationError(
-                f"The length of the mask ({mask_length}) does not match the number of cells in the grid ({self.size.total_size})."
+                f"The length of the mask ({self._mask_length}) does not match the number of cells in the grid ({self.size.total_size})."
             )
 
     @classmethod
@@ -192,30 +149,19 @@ class MaskedCells(SchemaModel):
         """Convert data to a dictionary for schema creation."""
         result = await super()._data_to_schema(data, context)
 
-        # data is a tuple of (cell_data, mask)
-        cell_data, mask = data if data is not None else (None, None)
-
-        if mask is not None:
-            # Upload the mask
-            data_client = get_data_client(context)
-            table_info = await data_client.upload_table(
-                table=pa.table({"mask": pa.array(mask)}),
-                table_format=BOOL_ARRAY_1,
-            )
-            result["mask"] = {
-                "name": "mask",
-                "key": str(uuid.uuid4()),
-                "attribute_type": "bool",
-                "values": table_info,
-            }
-            result["number_of_active_cells"] = int(np.sum(mask))
-
-            # Upload cell attributes if provided
-            if cell_data is not None:
-                result["cell_attributes"] = await Attributes._data_to_schema(cell_data, context)
-            else:
-                result["cell_attributes"] = []
-
+        mask = data.mask
+        data_client = get_data_client(context)
+        table_info = await data_client.upload_table(
+            table=pa.table({"mask": pa.array(mask)}),
+            table_format=BOOL_ARRAY_1,
+        )
+        result["mask"] = {
+            "name": "mask",
+            "key": str(uuid.uuid4()),
+            "attribute_type": "bool",
+            "values": table_info,
+        }
+        result["number_of_active_cells"] = int(np.sum(mask))
         return result
 
 
@@ -231,41 +177,11 @@ class RegularMasked3DGrid(BaseSpatialObject):
     sub_classification = "regular-masked-3d-grid"
     creation_schema_version = SchemaVersion(major=1, minor=3, patch=0)
 
-    cells: Annotated[MaskedCells, SchemaLocation(""), DataLocation("_cells")]
+    cells: Annotated[MaskedCells, SchemaLocation("")]
     origin: Annotated[Point3, SchemaLocation("origin")]
     size: Annotated[Size3i, SchemaLocation("size")]
     cell_size: Annotated[Size3d, SchemaLocation("cell_size")]
     rotation: Annotated[Rotation | None, SchemaLocation("rotation")]
 
-    @classmethod
-    async def _data_to_schema(cls, data: RegularMasked3DGridData, context: IContext) -> dict[str, Any]:
-        # Override to handle the mask and cell_data tuple
-        # Build the result using the parent method
-        result = await BaseSpatialObject._data_to_schema.__func__(cls, data, context)
-
-        # Handle the cells data manually (mask + cell_data)
-        data_client = get_data_client(context)
-
-        # Upload the mask
-        table_info = await data_client.upload_table(
-            table=pa.table({"mask": pa.array(data.mask)}),
-            table_format=BOOL_ARRAY_1,
-        )
-        result["mask"] = {
-            "name": "mask",
-            "key": str(uuid.uuid4()),
-            "attribute_type": "bool",
-            "values": table_info,
-        }
-        result["number_of_active_cells"] = int(np.sum(data.mask))
-
-        # Upload cell attributes if provided
-        if data.cell_data is not None:
-            result["cell_attributes"] = await Attributes._data_to_schema(data.cell_data, context)
-        else:
-            result["cell_attributes"] = []
-
-        return result
-
     def compute_bounding_box(self) -> BoundingBox:
-        return _calculate_bounding_box(self.origin, self.size, self.cell_size, self.rotation)
+        return BoundingBox.from_regular_grid(self.origin, self.size, self.cell_size, self.rotation)

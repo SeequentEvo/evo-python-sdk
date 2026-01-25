@@ -334,3 +334,47 @@ class TestRegularMaskedGrid(TestWithConnector):
         self.assertEqual(result.cells.number_active, 0)
         cell_df = await result.cells.as_dataframe()
         self.assertEqual(cell_df.shape[0], 0)
+
+    async def test_json(self):
+        with self._mock_geoscience_objects() as mock_client:
+            # Create an object
+            obj = await RegularMasked3DGrid.create(context=self.context, data=self.example_grid)
+
+            # Get the JSON that was stored (would be sent to the API)
+            object_json = mock_client.objects[str(obj.metadata.url.object_id)]
+
+            # Verify all required properties from the schemas are present
+            # From /objects/regular-masked-3d-grid/1.3.0/regular-masked-3d-grid.schema.json
+            self.assertEqual(
+                object_json["schema"], "/objects/regular-masked-3d-grid/1.3.0/regular-masked-3d-grid.schema.json"
+            )
+            self.assertEqual(object_json["origin"], (0, 0, 0))
+            self.assertEqual(object_json["size"], (10, 10, 5))
+            self.assertEqual(object_json["cell_size"], (2.5, 5, 5))
+
+            # From /components/base-spatial-data-properties/1.1.0/base-spatial-data-properties.schema.json
+            self.assertIn("bounding_box", object_json)
+            self.assertEqual(object_json["coordinate_reference_system"], "unspecified")
+
+            # From /components/base-object-properties/1.1.0/base-object-properties.schema.json
+            self.assertEqual(object_json["name"], "Test Masked Grid")
+            self.assertIn("uuid", object_json)
+
+            # Verify optional properties that were provided
+            self.assertEqual(object_json["rotation"], {"dip": 0, "dip_azimuth": 90, "pitch": 0})
+
+            # Verify mask structure (bool-attribute)
+            self.assertIn("mask", object_json)
+            self.assertEqual(object_json["mask"]["name"], "mask")
+            self.assertEqual(object_json["mask"]["attribute_type"], "bool")
+            self.assertIn("values", object_json["mask"])
+
+            # Verify number_of_active_cells
+            self.assertEqual(object_json["number_of_active_cells"], np.sum(self.example_mask))
+
+            # Verify cell_attributes structure
+            self.assertEqual(len(object_json["cell_attributes"]), 2)
+            self.assertEqual(object_json["cell_attributes"][0]["name"], "value")
+            self.assertEqual(object_json["cell_attributes"][0]["attribute_type"], "scalar")
+            self.assertEqual(object_json["cell_attributes"][1]["name"], "cat")
+            self.assertEqual(object_json["cell_attributes"][1]["attribute_type"], "category")

@@ -24,55 +24,12 @@ from ._model import SchemaLocation
 from .exceptions import ObjectValidationError
 from .regular_grid import Cells, Vertices
 from .spatial import BaseSpatialObject, BaseSpatialObjectData
-from .types import BoundingBox, Point3, Rotation, Size3i
+from .types import BoundingBox, Point3, Rotation, Size3d, Size3i
 
 __all__ = [
     "Tensor3DGrid",
     "Tensor3DGridData",
 ]
-
-
-def _calculate_tensor_bounding_box(
-    origin: Point3,
-    cell_sizes_x: np.ndarray,
-    cell_sizes_y: np.ndarray,
-    cell_sizes_z: np.ndarray,
-    rotation: Rotation | None = None,
-) -> BoundingBox:
-    """Calculate bounding box for a tensor grid."""
-    # Calculate the extent of the grid
-    extent_x = np.sum(cell_sizes_x)
-    extent_y = np.sum(cell_sizes_y)
-    extent_z = np.sum(cell_sizes_z)
-
-    if rotation is not None:
-        rotation_matrix = rotation.as_rotation_matrix()
-    else:
-        rotation_matrix = np.eye(3)
-
-    # Define the 8 corners of the grid
-    corners = np.array(
-        [
-            [0, 0, 0],
-            [extent_x, 0, 0],
-            [0, extent_y, 0],
-            [0, 0, extent_z],
-            [extent_x, extent_y, 0],
-            [extent_x, 0, extent_z],
-            [0, extent_y, extent_z],
-            [extent_x, extent_y, extent_z],
-        ]
-    )
-
-    # Apply rotation
-    rotated_corners = rotation_matrix @ corners.T
-
-    # Calculate bounding box from rotated corners plus origin
-    return BoundingBox.from_points(
-        rotated_corners[0, :] + origin.x,
-        rotated_corners[1, :] + origin.y,
-        rotated_corners[2, :] + origin.z,
-    )
 
 
 # Custom type for numpy float arrays that validate/serialize from/to lists
@@ -151,13 +108,12 @@ class Tensor3DGridData(BaseSpatialObjectData):
 
     def compute_bounding_box(self) -> BoundingBox:
         """Compute the bounding box from the origin, cell sizes, and rotation."""
-        return _calculate_tensor_bounding_box(
-            self.origin,
-            self.cell_sizes_x,
-            self.cell_sizes_y,
-            self.cell_sizes_z,
-            self.rotation,
+        extent = Size3d(
+            dx=float(np.sum(self.cell_sizes_x)),
+            dy=float(np.sum(self.cell_sizes_y)),
+            dz=float(np.sum(self.cell_sizes_z)),
         )
+        return BoundingBox.from_box(self.origin, extent, self.rotation)
 
 
 class Tensor3DGrid(BaseSpatialObject):
@@ -184,10 +140,9 @@ class Tensor3DGrid(BaseSpatialObject):
 
     def compute_bounding_box(self) -> BoundingBox:
         """Compute the bounding box from the grid properties."""
-        return _calculate_tensor_bounding_box(
-            self.origin,
-            self.cell_sizes_x,
-            self.cell_sizes_y,
-            self.cell_sizes_z,
-            self.rotation,
+        extent = Size3d(
+            dx=float(np.sum(self.cell_sizes_x)),
+            dy=float(np.sum(self.cell_sizes_y)),
+            dz=float(np.sum(self.cell_sizes_z)),
         )
+        return BoundingBox.from_box(self.origin, extent, self.rotation)

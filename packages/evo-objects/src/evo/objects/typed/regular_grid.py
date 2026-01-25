@@ -14,7 +14,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Annotated
 
-import numpy as np
 import pandas as pd
 
 from evo.common import IFeedback
@@ -33,34 +32,6 @@ __all__ = [
     "Regular3DGridData",
     "Vertices",
 ]
-
-
-def _calculate_bounding_box(
-    origin: Point3,
-    size: Size3i,
-    cell_size: Size3d,
-    rotation: Rotation | None = None,
-) -> BoundingBox:
-    if rotation is not None:
-        rotation_matrix = rotation.as_rotation_matrix()
-    else:
-        rotation_matrix = np.eye(3)
-    corners = np.array(
-        [
-            [0, 0, 0],
-            [size.nx * cell_size.dx, 0, 0],
-            [0, size.ny * cell_size.dy, 0],
-            [0, 0, size.nz * cell_size.dz],
-            [size.nx * cell_size.dx, size.ny * cell_size.dy, 0],
-            [size.nx * cell_size.dx, 0, size.nz * cell_size.dz],
-            [0, size.ny * cell_size.dy, size.nz * cell_size.dz],
-            [size.nx * cell_size.dx, size.ny * cell_size.dy, size.nz * cell_size.dz],
-        ]
-    )
-    rotated_corners = rotation_matrix @ corners.T
-    return BoundingBox.from_points(
-        rotated_corners[0, :] + origin.x, rotated_corners[1, :] + origin.y, rotated_corners[2, :] + origin.z
-    )
 
 
 @dataclass(kw_only=True, frozen=True)
@@ -84,7 +55,7 @@ class Regular3DGridData(BaseSpatialObjectData):
             )
 
     def compute_bounding_box(self) -> BoundingBox:
-        return _calculate_bounding_box(self.origin, self.size, self.cell_size, self.rotation)
+        return BoundingBox.from_regular_grid(self.origin, self.size, self.cell_size, self.rotation)
 
 
 class Cells(SchemaModel):
@@ -178,4 +149,4 @@ class Regular3DGrid(BaseSpatialObject):
     rotation: Annotated[Rotation | None, SchemaLocation("rotation")]
 
     def compute_bounding_box(self) -> BoundingBox:
-        return _calculate_bounding_box(self.origin, self.size, self.cell_size, self.rotation)
+        return BoundingBox.from_regular_grid(self.origin, self.size, self.cell_size, self.rotation)
