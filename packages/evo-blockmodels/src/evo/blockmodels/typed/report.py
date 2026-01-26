@@ -311,15 +311,71 @@ class ReportResult:
     def _repr_html_(self) -> str:
         """Return an HTML representation for Jupyter notebooks."""
         df = self.to_dataframe()
+
+        # Build the result table with alternating row colors
+        headers = list(df.columns)
+        header_html = "".join([f"<th>{h}</th>" for h in headers])
+
+        rows_html = []
+        for i, (_, row) in enumerate(df.iterrows()):
+            row_class = 'class="alt-row"' if i % 2 == 1 else ""
+            cells = "".join([f"<td>{v if pd.notna(v) else ''}</td>" for v in row])
+            rows_html.append(f"<tr {row_class}>{cells}</tr>")
+
         html = f"""
-<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 13px;">
-    <div style="margin-bottom: 8px;">
-        <strong>Report Result</strong> (Version {self.version_id})
-    </div>
-    <div style="margin-bottom: 8px; color: #666;">
-        Created: {self.created_at.strftime('%Y-%m-%d %H:%M:%S')}
-    </div>
-    {df.to_html(index=False, classes='dataframe')}
+<style>
+    .evo-object {{
+        border: 1px solid #ccc;
+        border-radius: 3px;
+        padding: 16px;
+        margin: 8px 0;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        font-size: 13px;
+        display: inline-block;
+        max-width: 800px;
+        background-color: var(--jp-layout-color1, #fff);
+    }}
+    .evo-object .title {{
+        font-size: 15px;
+        font-weight: 600;
+        margin-bottom: 12px;
+        color: var(--jp-ui-font-color1, #111);
+    }}
+    .evo-object table.nested {{
+        border-collapse: collapse;
+        font-size: 12px;
+        margin-bottom: 0;
+        margin-top: 4px;
+        width: 100%;
+    }}
+    .evo-object table.nested th {{
+        padding: 3px 12px 3px 0;
+        text-align: left;
+        font-weight: 600;
+        color: var(--jp-ui-font-color1, #333);
+        border-bottom: 1px solid #ddd;
+    }}
+    .evo-object table.nested td {{
+        padding: 3px 12px 3px 0;
+        color: var(--jp-ui-font-color1, #111);
+        text-align: left;
+    }}
+    .evo-object table.nested tr.alt-row {{
+        background-color: var(--jp-layout-color2, #f5f5f5);
+    }}
+    .evo-object .subtitle {{
+        font-size: 12px;
+        color: #666;
+        margin-bottom: 8px;
+    }}
+</style>
+<div class="evo-object">
+    <div class="title">📊 Report Result (Version {self.version_id})</div>
+    <div class="subtitle">Created: {self.created_at.strftime('%Y-%m-%d %H:%M:%S')} | Rows: {len(df)}</div>
+    <table class="nested">
+        <tr>{header_html}</tr>
+        {''.join(rows_html)}
+    </table>
 </div>
 """
         return html
@@ -356,16 +412,19 @@ class Report:
         context: IContext,
         block_model_uuid: UUID,
         specification: "ReportSpecificationWithLastRunInfo | ReportSpecificationWithJobUrl",
+        block_model_name: str | None = None,
     ) -> None:
         """Initialize a Report instance.
 
         :param context: The context containing environment, connector, and cache.
         :param block_model_uuid: The UUID of the block model this report is for.
         :param specification: The report specification from the API.
+        :param block_model_name: The name of the block model (for display purposes).
         """
         self._context = context
         self._block_model_uuid = block_model_uuid
         self._specification = specification
+        self._block_model_name = block_model_name
 
     @property
     def id(self) -> UUID:
@@ -435,34 +494,48 @@ class Report:
         """Return an HTML representation for Jupyter notebooks."""
         blocksync_url = self.blocksync_url
 
-        # Build column info
+        # Build column info table
         columns_html = ""
         if self._specification.columns:
             col_rows = []
-            for col in self._specification.columns:
-                col_rows.append(f"<tr><td>{col.label}</td><td>{col.aggregation}</td><td>{col.output_unit_id}</td></tr>")
+            for i, col in enumerate(self._specification.columns):
+                row_class = 'class="alt-row"' if i % 2 == 1 else ""
+                col_rows.append(f'<tr {row_class}><td>{col.label}</td><td>{col.aggregation}</td><td>{col.output_unit_id}</td></tr>')
             columns_html = f"""
             <div style="margin-top: 8px;"><strong>Columns:</strong></div>
-            <table style="border-collapse: collapse; margin-top: 4px;">
-                <tr style="background: #f5f5f5;"><th style="padding: 4px 8px; text-align: left;">Label</th><th style="padding: 4px 8px; text-align: left;">Aggregation</th><th style="padding: 4px 8px; text-align: left;">Unit</th></tr>
+            <table class="nested">
+                <tr><th>Label</th><th>Aggregation</th><th>Unit</th></tr>
                 {''.join(col_rows)}
             </table>
             """
 
-        # Build category info
+        # Build category info table
         categories_html = ""
         if self._specification.categories:
-            cat_names = [cat.label for cat in self._specification.categories]
-            categories_html = f'<div style="margin-top: 8px;"><strong>Categories:</strong> {", ".join(cat_names)}</div>'
+            cat_rows = []
+            for i, cat in enumerate(self._specification.categories):
+                row_class = 'class="alt-row"' if i % 2 == 1 else ""
+                values_str = ", ".join(cat.values) if cat.values else "(all)"
+                cat_rows.append(f'<tr {row_class}><td>{cat.label}</td><td>{values_str}</td></tr>')
+            categories_html = f"""
+            <div style="margin-top: 8px;"><strong>Categories:</strong></div>
+            <table class="nested">
+                <tr><th>Label</th><th>Values</th></tr>
+                {''.join(cat_rows)}
+            </table>
+            """
 
         # Check for last run info
         last_run_html = ""
         if hasattr(self._specification, "last_result_created_at") and self._specification.last_result_created_at:
-            last_run_html = f'<div style="margin-top: 8px; color: #666;">Last run: {self._specification.last_result_created_at.strftime("%Y-%m-%d %H:%M:%S")}</div>'
+            last_run_html = f'<tr><td class="label">Last run:</td><td class="value">{self._specification.last_result_created_at.strftime("%Y-%m-%d %H:%M:%S")}</td></tr>'
+
+        # Build main info table
+        block_model_display = f"{self._block_model_name} ({self._block_model_uuid})" if self._block_model_name else str(self._block_model_uuid)
 
         html = f"""
 <style>
-    .report-card {{
+    .evo-object {{
         border: 1px solid #ccc;
         border-radius: 3px;
         padding: 16px;
@@ -470,45 +543,85 @@ class Report:
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
         font-size: 13px;
         display: inline-block;
-        max-width: 600px;
+        max-width: 800px;
         background-color: var(--jp-layout-color1, #fff);
     }}
-    .report-card .title {{
+    .evo-object .title {{
         font-size: 15px;
         font-weight: 600;
-        margin-bottom: 8px;
-    }}
-    .report-card .links {{
         margin-bottom: 12px;
+        color: var(--jp-ui-font-color1, #111);
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
     }}
-    .report-card .links a {{
-        color: #0066cc;
+    .evo-object .title-links {{
+        font-size: 12px;
+        font-weight: normal;
+        color: #666;
+    }}
+    .evo-object .title-links a {{
+        color: #666;
         text-decoration: none;
-        margin-right: 16px;
     }}
-    .report-card .links a:hover {{
+    .evo-object .title-links a:hover {{
+        color: #0066cc;
         text-decoration: underline;
     }}
-    .report-card table {{
+    .evo-object table {{
         border-collapse: collapse;
+        width: 100%;
+        margin-bottom: 8px;
     }}
-    .report-card th, .report-card td {{
-        padding: 4px 8px;
+    .evo-object td.label {{
+        padding: 3px 8px 3px 0;
+        font-weight: 600;
+        white-space: nowrap;
+        vertical-align: top;
+        color: var(--jp-ui-font-color1, #333);
         text-align: left;
-        border-bottom: 1px solid #eee;
+    }}
+    .evo-object td.value {{
+        padding: 3px 0;
+        color: var(--jp-ui-font-color1, #111);
+        text-align: left;
+    }}
+    .evo-object table.nested {{
+        border-collapse: collapse;
+        font-size: 12px;
+        margin-bottom: 0;
+        margin-top: 4px;
+        width: 100%;
+    }}
+    .evo-object table.nested th {{
+        padding: 3px 12px 3px 0;
+        text-align: left;
+        font-weight: 600;
+        color: var(--jp-ui-font-color1, #333);
+        border-bottom: 1px solid #ddd;
+    }}
+    .evo-object table.nested td {{
+        padding: 3px 12px 3px 0;
+        color: var(--jp-ui-font-color1, #111);
+        text-align: left;
+    }}
+    .evo-object table.nested tr.alt-row {{
+        background-color: var(--jp-layout-color2, #f5f5f5);
     }}
 </style>
-<div class="report-card">
-    <div class="title">📊 {self.name}</div>
-    <div class="links">
-        <a href="{blocksync_url}" target="_blank">Open in BlockSync</a>
+<div class="evo-object">
+    <div class="title">
+        <span>📊 {self.name}</span>
+        <span class="title-links"><a href="{blocksync_url}" target="_blank">BlockSync</a></span>
     </div>
-    <div><strong>Report ID:</strong> {self.id}</div>
-    <div><strong>Block Model:</strong> {self._block_model_uuid}</div>
-    <div><strong>Revision:</strong> {self.revision}</div>
+    <table>
+        <tr><td class="label">Report ID:</td><td class="value">{self.id}</td></tr>
+        <tr><td class="label">Block Model:</td><td class="value">{block_model_display}</td></tr>
+        <tr><td class="label">Revision:</td><td class="value">{self.revision}</td></tr>
+        {last_run_html}
+    </table>
     {categories_html}
     {columns_html}
-    {last_run_html}
 </div>
 """
         return html
@@ -521,6 +634,7 @@ class Report:
         data: ReportSpecificationData,
         column_id_map: dict[str, UUID],
         fb: IFeedback = NoFeedback,
+        block_model_name: str | None = None,
     ) -> "Report":
         """Create a new report specification.
 
@@ -529,6 +643,7 @@ class Report:
         :param data: The report specification data.
         :param column_id_map: Mapping of column names to their UUIDs in the block model.
         :param fb: Optional feedback interface for progress reporting.
+        :param block_model_name: The name of the block model (for display purposes).
         :return: A Report instance representing the created report.
         """
         from ..endpoints.models import (
@@ -618,7 +733,7 @@ class Report:
 
         fb.progress(1.0, "Report specification created")
 
-        return cls(context, block_model_uuid, result)
+        return cls(context, block_model_uuid, result, block_model_name=block_model_name)
 
     async def run(self, version_uuid: UUID | None = None, fb: IFeedback = NoFeedback) -> ReportResult:
         """Run the report to generate a new result.

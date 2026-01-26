@@ -937,6 +937,7 @@ class BlockModel(BaseSpatialObject, ConstructableObject[BlockModelData]):
             data=data,
             column_id_map=column_id_map,
             fb=fb,
+            block_model_name=self.name,
         )
 
         return report
@@ -963,6 +964,6 @@ class BlockModel(BaseSpatialObject, ConstructableObject[BlockModelData]):
         fb.progress(1.0, f"Found {result.total} reports")
 
         return [
-            Report(self._context, self.block_model_uuid, spec)
+            Report(self._context, self.block_model_uuid, spec, block_model_name=self.name)
             for spec in result.results
         ]
