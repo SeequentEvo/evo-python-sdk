@@ -9,6 +9,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import ast
 import logging
 from pathlib import Path
 
@@ -25,16 +26,35 @@ def on_startup(command: str, dirty: bool) -> None:
 
     for old_md in docs_packages_dir.rglob("*.md"):
         old_md.unlink()
-        log.info(f"Deleted old doc: {old_md.relative_to(mkdocs_dir)}")
 
     for module_path in api_clients:
-        _, package, _, _, sub_package, *rest = module_path.split(".")
-        doc_name = f"{package}/{sub_package}" if package == "evo-sdk-common" else package
+        parts = module_path.split(".")
+        package, sub_package, class_name = parts[1], parts[4], parts[-1]
+        package_dir_name = f"{package}/{sub_package}" if package == "evo-sdk-common" else package
 
-        doc_path = docs_packages_dir / f"{doc_name}.md"
-        doc_path.parent.mkdir(parents=True, exist_ok=True)
-        content = f"::: {module_path}\n"
+        package_dir = docs_packages_dir / package_dir_name
+        package_dir.mkdir(parents=True, exist_ok=True)
 
-        with doc_path.open("x") as f:
-            f.write(content)
-        log.info(f"Generated: {doc_path.relative_to(mkdocs_dir)}")
+        source_path = "/".join(parts[:-1]).replace(".", "/") + ".py"
+        source = (mkdocs_dir.parent / source_path).read_text()
+        methods = _get_class_methods(source, class_name)
+
+        for method in methods:
+            (package_dir / f"{method}.md").write_text(f"::: {module_path}.{method}\n")
+        log.info(f"Generated {len(methods)} method pages for {class_name}")
+
+
+def _get_class_methods(source: str, class_name: str) -> list[str]:
+    """Extract public method names from a class, including __init__."""
+    tree = ast.parse(source)
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef) and node.name == class_name:
+            methods = []
+            for item in node.body:
+                if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    name = item.name
+                    if name == "__init__" or not name.startswith("_"):
+                        methods.append(name)
+            return sorted(methods)
+    return []
