@@ -1,5 +1,4 @@
-hole_id,distance,azimuth,dip,lift rate,drift rate,deviation rate distance
-phase_001,240.0,0.0,90.0,0.0,0.0,10.0
-phase_002,230.0,0.0,90.0,1.0,4.0,10.0
-phase_003,210.0,270.0,60.0,0.0,0.0,10.0
-phase_004,220.0,270.0,60.0,-3.0,-1.0,10.0
+Holeid,Easting,Northing,Elevation,Azimuth,Dip,Lift Rate,Drift Rate,Distance,Extension,Target Depth,Comment
+phase_001,445220.9948,493859.2877,3043.634217,85.36788526703913,82.10486697555353,0,0,10,50,500,
+phase_002,445402.38,493907.18,2897.34,255.57110014588133,54.21942818722516,0.1,0.04,10,50,300,With some small natual deviation
+phase_003,445023.9763,493590.3905,2935.007307,80,50,0,0,10,100,780.912156,
