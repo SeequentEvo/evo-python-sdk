@@ -33,14 +33,17 @@ __all__ = [
     "PointSetData",
 ]
 
-_COORDINATE_COLUMNS = ["x", "y", "z"]
+_X = "x"
+_Y = "y"
+_Z = "z"
+_COORDINATE_COLUMNS = [_X, _Y, _Z]
 
 
 def _bounding_box_from_dataframe(df: pd.DataFrame) -> BoundingBox:
     return BoundingBox.from_points(
-        df["x"].values,
-        df["y"].values,
-        df["z"].values,
+        df[_X].values,
+        df[_Y].values,
+        df[_Z].values,
     )
 
 
