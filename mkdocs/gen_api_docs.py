@@ -25,7 +25,8 @@ def on_startup(command: str, dirty: bool) -> None:
     log.info(f"Loaded {len(api_clients)} API clients from {api_clients_file.relative_to(mkdocs_dir)}")
 
     for old_md in docs_packages_dir.rglob("*.md"):
-        old_md.unlink()
+        if old_md.name != "evo-python-sdk.md":
+            old_md.unlink()
 
     for module_path in api_clients:
         parts = module_path.split(".")
