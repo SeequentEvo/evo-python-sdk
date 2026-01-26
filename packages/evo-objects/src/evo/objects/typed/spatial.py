@@ -44,10 +44,11 @@ class BaseSpatialObjectData(BaseObjectData, ABC):
         raise NotImplementedError("Subclasses must implement compute_bounding_box to derive bounding box from data.")
 
 
-class BaseSpatialObject(BaseObject, ABC):
+class BaseSpatialObject(BaseObject):
     """Base class for all Geoscience Objects with spatial data."""
 
     _bbox_type_adapter: ClassVar[TypeAdapter[BoundingBox]] = TypeAdapter(BoundingBox)
+    _bounding_box: Annotated[BoundingBox, SchemaLocation("bounding_box")]
     coordinate_reference_system: Annotated[CoordinateReferenceSystem, SchemaLocation("coordinate_reference_system")]
 
     @classmethod
@@ -57,27 +58,11 @@ class BaseSpatialObject(BaseObject, ABC):
         object_dict["bounding_box"] = cls._bbox_type_adapter.dump_python(data.compute_bounding_box())
         return object_dict
 
-    @abstractmethod
-    def compute_bounding_box(self) -> BoundingBox:
-        """Compute the bounding box for the object based on its datasets.
-
-        :return: The computed bounding box.
-
-        :raises ValueError: If the bounding box cannot be computed from the datasets.
-        """
-        raise NotImplementedError("Subclasses must implement compute_bounding_box to derive bounding box from data.")
-
+    # The bounding box is defined as regular a property so that subclasses can override it if needed
     @property
     def bounding_box(self) -> BoundingBox:
-        return self.compute_bounding_box()
+        return self._bounding_box
 
     @bounding_box.setter
     def bounding_box(self, value: BoundingBox) -> None:
-        raise AttributeError("Cannot set bounding_box on this object, as it is dynamically derived from the data.")
-
-    async def update(self):
-        """Update the object on the geoscience object service, including recomputing the bounding box."""
-
-        # Update the bounding box in the document
-        self._document["bounding_box"] = self._bbox_type_adapter.dump_python(self.compute_bounding_box())
-        await super().update()
+        self._bounding_box = value

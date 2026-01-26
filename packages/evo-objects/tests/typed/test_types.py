@@ -66,12 +66,12 @@ class TestTypes(TestCase):
         self.assertEqual(type_adapter.dump_python(crs2), {"ogc_wkt": "WKT_STRING"})
         self.assertEqual(type_adapter.dump_python(crs3), "unspecified")
 
-    def test_bounding_box_from_box_no_rotation(self):
-        """Test BoundingBox.from_box without rotation."""
+    def test_bounding_box_from_extent_no_rotation(self):
+        """Test BoundingBox.from_extent without rotation."""
         origin = Point3(10, 20, 30)
         extent = Size3d(5, 10, 15)
 
-        box = BoundingBox.from_box(origin, extent)
+        box = BoundingBox.from_extent(origin, extent)
 
         self.assertAlmostEqual(box.min_x, 10.0)
         self.assertAlmostEqual(box.min_y, 20.0)
@@ -80,13 +80,13 @@ class TestTypes(TestCase):
         self.assertAlmostEqual(box.max_y, 30.0)
         self.assertAlmostEqual(box.max_z, 45.0)
 
-    def test_bounding_box_from_box_with_rotation(self):
-        """Test BoundingBox.from_box with 90 degree rotation around Z."""
+    def test_bounding_box_from_extent_with_rotation(self):
+        """Test BoundingBox.from_extent with 90 degree rotation around Z."""
         origin = Point3(0, 0, 0)
         extent = Size3d(10, 20, 5)
         rotation = Rotation(90, 0, 0)  # 90 degrees around Z
 
-        box = BoundingBox.from_box(origin, extent, rotation)
+        box = BoundingBox.from_extent(origin, extent, rotation)
 
         # After 90 degree rotation: x becomes y, y becomes -x
         self.assertAlmostEqual(box.min_x, 0.0)

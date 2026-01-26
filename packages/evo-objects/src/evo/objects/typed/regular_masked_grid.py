@@ -24,12 +24,12 @@ from evo.common.utils import NoFeedback
 from evo.objects import SchemaVersion
 from evo.objects.utils.table_formats import BOOL_ARRAY_1
 
+from ._grid import BaseRegular3DGrid, BaseRegular3DGridData
 from ._model import DataLocation, SchemaLocation, SchemaModel
 from ._utils import assign_jmespath_value, get_data_client
 from .attributes import Attributes
 from .exceptions import DataLoaderError, ObjectValidationError
-from .spatial import BaseSpatialObject, BaseSpatialObjectData
-from .types import BoundingBox, Point3, Rotation, Size3d, Size3i
+from .types import Size3i
 
 __all__ = [
     "MaskedCells",
@@ -39,13 +39,8 @@ __all__ = [
 
 
 @dataclass(kw_only=True, frozen=True)
-class RegularMasked3DGridData(BaseSpatialObjectData):
-    origin: Point3
-    size: Size3i
-    cell_size: Size3d
+class RegularMasked3DGridData(BaseRegular3DGridData):
     mask: np.ndarray
-    cell_data: pd.DataFrame | None = None
-    rotation: Rotation | None = None
 
     def __post_init__(self):
         if self.mask.shape[0] != self.size.total_size:
@@ -57,9 +52,6 @@ class RegularMasked3DGridData(BaseSpatialObjectData):
             raise ObjectValidationError(
                 f"The number of rows in the cell_data dataframe ({self.cell_data.shape[0]}) does not match the number of active cells in the grid ({number_active})."
             )
-
-    def compute_bounding_box(self) -> BoundingBox:
-        return BoundingBox.from_regular_grid(self.origin, self.size, self.cell_size, self.rotation)
 
 
 class MaskedCells(SchemaModel):
@@ -165,7 +157,7 @@ class MaskedCells(SchemaModel):
         return result
 
 
-class RegularMasked3DGrid(BaseSpatialObject):
+class RegularMasked3DGrid(BaseRegular3DGrid):
     """A GeoscienceObject representing a regular masked 3D grid.
 
     The object contains a dataset for the cells of the grid, where only active cells
@@ -178,10 +170,3 @@ class RegularMasked3DGrid(BaseSpatialObject):
     creation_schema_version = SchemaVersion(major=1, minor=3, patch=0)
 
     cells: Annotated[MaskedCells, SchemaLocation("")]
-    origin: Annotated[Point3, SchemaLocation("origin")]
-    size: Annotated[Size3i, SchemaLocation("size")]
-    cell_size: Annotated[Size3d, SchemaLocation("cell_size")]
-    rotation: Annotated[Rotation | None, SchemaLocation("rotation")]
-
-    def compute_bounding_box(self) -> BoundingBox:
-        return BoundingBox.from_regular_grid(self.origin, self.size, self.cell_size, self.rotation)

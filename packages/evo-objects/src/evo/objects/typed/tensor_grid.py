@@ -20,11 +20,10 @@ from pydantic import AfterValidator, PlainSerializer
 
 from evo.objects import SchemaVersion
 
+from ._grid import Base3DGrid, Base3DGridData, Cells3D, Vertices3D
 from ._model import SchemaLocation
 from .exceptions import ObjectValidationError
-from .regular_grid import Cells, Vertices
-from .spatial import BaseSpatialObject, BaseSpatialObjectData
-from .types import BoundingBox, Point3, Rotation, Size3d, Size3i
+from .types import BoundingBox, Size3d
 
 __all__ = [
     "Tensor3DGrid",
@@ -53,7 +52,7 @@ NumpyFloat1D = Annotated[
 
 
 @dataclass(kw_only=True, frozen=True)
-class Tensor3DGridData(BaseSpatialObjectData):
+class Tensor3DGridData(Base3DGridData):
     """Data for creating a Tensor3DGrid.
 
     A tensor grid is a 3D grid where cells may have different sizes.
@@ -61,14 +60,10 @@ class Tensor3DGridData(BaseSpatialObjectData):
     and arrays of cell sizes along each axis.
     """
 
-    origin: Point3
-    size: Size3i
     cell_sizes_x: np.ndarray  # Array of cell sizes along x-axis (length = size.nx)
     cell_sizes_y: np.ndarray  # Array of cell sizes along y-axis (length = size.ny)
     cell_sizes_z: np.ndarray  # Array of cell sizes along z-axis (length = size.nz)
-    cell_data: pd.DataFrame | None = None
     vertex_data: pd.DataFrame | None = None
-    rotation: Rotation | None = None
 
     def __post_init__(self):
         # Validate cell size array lengths
@@ -113,10 +108,10 @@ class Tensor3DGridData(BaseSpatialObjectData):
             dy=float(np.sum(self.cell_sizes_y)),
             dz=float(np.sum(self.cell_sizes_z)),
         )
-        return BoundingBox.from_box(self.origin, extent, self.rotation)
+        return BoundingBox.from_extent(self.origin, extent, self.rotation)
 
 
-class Tensor3DGrid(BaseSpatialObject):
+class Tensor3DGrid(Base3DGrid):
     """A GeoscienceObject representing a tensor 3D grid.
 
     A tensor grid is a 3D grid where cells may have different sizes. The grid is defined
@@ -129,11 +124,8 @@ class Tensor3DGrid(BaseSpatialObject):
     sub_classification = "tensor-3d-grid"
     creation_schema_version = SchemaVersion(major=1, minor=3, patch=0)
 
-    cells: Annotated[Cells, SchemaLocation("")]
-    vertices: Annotated[Vertices, SchemaLocation("")]
-    origin: Annotated[Point3, SchemaLocation("origin")]
-    size: Annotated[Size3i, SchemaLocation("size")]
-    rotation: Annotated[Rotation | None, SchemaLocation("rotation")]
+    cells: Annotated[Cells3D, SchemaLocation("")]
+    vertices: Annotated[Vertices3D, SchemaLocation("")]
     cell_sizes_x: Annotated[NumpyFloat1D, SchemaLocation("grid_cells_3d.cell_sizes_x")]
     cell_sizes_y: Annotated[NumpyFloat1D, SchemaLocation("grid_cells_3d.cell_sizes_y")]
     cell_sizes_z: Annotated[NumpyFloat1D, SchemaLocation("grid_cells_3d.cell_sizes_z")]
@@ -145,4 +137,4 @@ class Tensor3DGrid(BaseSpatialObject):
             dy=float(np.sum(self.cell_sizes_y)),
             dz=float(np.sum(self.cell_sizes_z)),
         )
-        return BoundingBox.from_box(self.origin, extent, self.rotation)
+        return BoundingBox.from_extent(self.origin, extent, self.rotation)

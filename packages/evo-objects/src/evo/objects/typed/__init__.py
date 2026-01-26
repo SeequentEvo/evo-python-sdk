@@ -12,10 +12,8 @@
 from .attributes import Attribute, Attributes
 from .base import BaseObject
 from .regular_grid import (
-    Cells,
     Regular3DGrid,
     Regular3DGridData,
-    Vertices,
 )
 from .regular_masked_grid import (
     MaskedCells,
@@ -35,7 +33,6 @@ __all__ = [
     "BaseObject",
     "BaseSpatialObject",
     "BoundingBox",
-    "Cells",
     "CoordinateReferenceSystem",
     "EpsgCode",
     "MaskedCells",
@@ -49,5 +46,4 @@ __all__ = [
     "Size3i",
     "Tensor3DGrid",
     "Tensor3DGridData",
-    "Vertices",
 ]

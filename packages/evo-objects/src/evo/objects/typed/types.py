@@ -182,7 +182,7 @@ class BoundingBox:
         )
 
     @classmethod
-    def from_box(
+    def from_extent(
         cls,
         origin: Point3,
         extent: Size3d,
@@ -240,7 +240,7 @@ class BoundingBox:
             dy=size.ny * cell_size.dy,
             dz=size.nz * cell_size.dz,
         )
-        return cls.from_box(origin, extent, rotation)
+        return cls.from_extent(origin, extent, rotation)
 
 
 @dataclass(frozen=True)
