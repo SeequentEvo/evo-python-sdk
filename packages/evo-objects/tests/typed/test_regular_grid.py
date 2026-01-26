@@ -133,11 +133,13 @@ class TestRegularGrid(TestWithConnector):
         vertices_df = await result.vertices.as_dataframe()
         pd.testing.assert_frame_equal(vertices_df, self.example_grid.vertex_data)
 
-    async def test_from_reference(self):
+    @parameterized.expand([BaseObject, Regular3DGrid])
+    async def test_from_reference(self, class_to_call):
         with self._mock_geoscience_objects():
             original = await Regular3DGrid.create(context=self.context, data=self.example_grid)
 
-            result = await Regular3DGrid.from_reference(context=self.context, reference=original.metadata.url)
+            result = await class_to_call.from_reference(context=self.context, reference=original.metadata.url)
+            self.assertIsInstance(result, Regular3DGrid)
             self.assertEqual(result.name, "Test Grid")
             self.assertEqual(result.origin, Point3(0, 0, 0))
             self.assertEqual(result.size, Size3i(10, 10, 5))
@@ -279,18 +281,6 @@ class TestRegularGrid(TestWithConnector):
 
             # Verify validation passes with correct data
             obj.validate()  # Should not raise
-
-    async def test_from_reference_with_base_object(self):
-        """Test that from_reference works when called on BaseObject."""
-        with self._mock_geoscience_objects():
-            original = await Regular3DGrid.create(context=self.context, data=self.example_grid)
-
-            # Download using BaseObject.from_reference
-            result = await BaseObject.from_reference(context=self.context, reference=original.metadata.url)
-
-            # Should return a Regular3DGrid instance
-            self.assertIsInstance(result, Regular3DGrid)
-            self.assertEqual(result.name, "Test Grid")
 
     async def test_description_and_tags(self):
         """Test setting and getting description and tags."""

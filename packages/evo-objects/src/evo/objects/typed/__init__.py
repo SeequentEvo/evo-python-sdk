@@ -11,6 +11,11 @@
 
 from .attributes import Attribute, Attributes
 from .base import BaseObject
+from .pointset import (
+    Locations,
+    PointSet,
+    PointSetData,
+)
 from .regular_grid import (
     Cells,
     Regular3DGrid,
@@ -29,7 +34,10 @@ __all__ = [
     "Cells",
     "CoordinateReferenceSystem",
     "EpsgCode",
+    "Locations",
     "Point3",
+    "PointSet",
+    "PointSetData",
     "Regular3DGrid",
     "Regular3DGridData",
     "Rotation",

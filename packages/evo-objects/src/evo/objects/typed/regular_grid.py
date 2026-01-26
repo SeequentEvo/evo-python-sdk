@@ -24,7 +24,7 @@ from evo.objects import SchemaVersion
 from ._model import DataLocation, SchemaLocation, SchemaModel
 from .attributes import Attributes
 from .exceptions import ObjectValidationError
-from .spatial import BaseSpatialObject, BaseSpatialObjectData
+from .spatial import BaseSpatialObjectData, DynamicBoundingBoxObject
 from .types import BoundingBox, Point3, Rotation, Size3d, Size3i
 
 __all__ = [
@@ -156,7 +156,7 @@ class Vertices(SchemaModel):
         self.attributes.validate_lengths(self.expected_length)
 
 
-class Regular3DGrid(BaseSpatialObject):
+class Regular3DGrid(DynamicBoundingBoxObject):
     """A GeoscienceObject representing a regular 3D grid.
 
     The object contains a dataset for both the cells and the vertices of the grid.
