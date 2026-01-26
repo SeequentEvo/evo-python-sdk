@@ -143,7 +143,7 @@ class TestPointSet(TestWithConnector):
             actual_df = await result.locations.as_dataframe()
             pd.testing.assert_frame_equal(actual_df, self.example_pointset.locations)
 
-    async def test_bounding_box_from_data(self):
+    def test_bounding_box_from_data(self):
         """Test that the bounding box is computed correctly from the data."""
         bbox = self.example_pointset.compute_bounding_box()
         self._assert_bounding_box_equal(bbox, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0)
@@ -161,7 +161,7 @@ class TestPointSet(TestWithConnector):
             self.assertAlmostEqual(bbox_dict["min_x"], 0.0)
             self.assertAlmostEqual(bbox_dict["max_x"], 1.0)
 
-    async def test_coordinates_validation(self):
+    def test_coordinates_validation(self):
         """Test that coordinates validation works correctly."""
         # Missing x column
         with self.assertRaises(ObjectValidationError):

@@ -69,12 +69,17 @@ class PointSetData(BaseSpatialObjectData):
 
 
 class CoordinateTable(DataTable):
-    """DataTable subclass for point coordinates with X, Y, Z columns."""
+    """DataTable subclass for point coordinates with x, y, z columns."""
 
     table_format: ClassVar[KnownTableFormat] = FLOAT_ARRAY_3
     data_columns: ClassVar[list[str]] = _COORDINATE_COLUMNS
 
     async def set_dataframe(self, df: pd.DataFrame, fb: IFeedback = NoFeedback):
+        """Update the coordinate values and recalculate the bounding box.
+
+        :param df: DataFrame containing x, y, z coordinate columns.
+        :param fb: Optional feedback object to report upload progress.
+        """
         await super().set_dataframe(df, fb)
 
         # Update the bounding box in the parent object context

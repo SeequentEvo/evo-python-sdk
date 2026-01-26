@@ -61,15 +61,15 @@ class DataTable(SchemaModel):
 class DataTableAndAttributes(SchemaModel):
     """A dataset representing a table of data along with associated attributes.
 
-    Subclasses should redefine the _tabble property to additional details about the data table like:
+    Subclasses should redefine the _table property to provide additional details about the data table like:
     1. the location of it within the schema using SchemaLocation
     2. the data columns that are expected in the table, which is done by creating a subclass of DataTable,
-    3. the table format used for storing the data, whihch can also be done by creating a subclass of DataTable.
+    3. the table format used for storing the data, which can also be done by creating a subclass of DataTable.
 
     e.g.,
     class LocationTable(DataTable):
         table_format: ClassVar[KnownTableFormat] = FLOAT_ARRAY_3
-        data_columns: ClassVar[list[str]] = ["X", "Y", "Z"]
+        data_columns: ClassVar[list[str]] = ["x", "y", "z"]
 
 
     class Locations(DataTableAndAttributes):
