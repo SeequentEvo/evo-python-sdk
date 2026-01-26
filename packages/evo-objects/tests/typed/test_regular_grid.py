@@ -202,7 +202,7 @@ class TestRegularGrid(TestWithConnector):
             with self.assertRaises(ObjectValidationError):
                 obj.validate()
 
-    async def test_size_check_data(self):
+    def test_size_check_data(self):
         with self.assertRaises(ObjectValidationError):
             Regular3DGridData(
                 name="Test Grid",

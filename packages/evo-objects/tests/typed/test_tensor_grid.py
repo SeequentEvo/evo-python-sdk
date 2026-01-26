@@ -135,7 +135,7 @@ class TestTensorGrid(TestWithConnector):
             cell_df = await result.cells.as_dataframe()
             pd.testing.assert_frame_equal(cell_df, self.example_grid.cell_data)
 
-    async def test_cell_sizes_x_validation(self):
+    def test_cell_sizes_x_validation(self):
         # Wrong number of x cell sizes
         with self.assertRaises(ObjectValidationError):
             Tensor3DGridData(
@@ -147,7 +147,7 @@ class TestTensorGrid(TestWithConnector):
                 cell_sizes_z=np.array([1.0] * 5),
             )
 
-    async def test_cell_sizes_y_validation(self):
+    def test_cell_sizes_y_validation(self):
         # Wrong number of y cell sizes
         with self.assertRaises(ObjectValidationError):
             Tensor3DGridData(
@@ -159,7 +159,7 @@ class TestTensorGrid(TestWithConnector):
                 cell_sizes_z=np.array([1.0] * 5),
             )
 
-    async def test_cell_sizes_z_validation(self):
+    def test_cell_sizes_z_validation(self):
         # Wrong number of z cell sizes
         with self.assertRaises(ObjectValidationError):
             Tensor3DGridData(
@@ -171,7 +171,7 @@ class TestTensorGrid(TestWithConnector):
                 cell_sizes_z=np.array([1.0] * 10),  # 10 instead of 5
             )
 
-    async def test_positive_cell_sizes_validation(self):
+    def test_positive_cell_sizes_validation(self):
         # Negative x cell size
         with self.assertRaises(ObjectValidationError):
             Tensor3DGridData(
@@ -194,7 +194,7 @@ class TestTensorGrid(TestWithConnector):
                 cell_sizes_z=np.array([1.0] * 5),
             )
 
-    async def test_cell_data_size_validation(self):
+    def test_cell_data_size_validation(self):
         # Cell data wrong size
         with self.assertRaises(ObjectValidationError):
             Tensor3DGridData(
@@ -207,7 +207,7 @@ class TestTensorGrid(TestWithConnector):
                 cell_data=pd.DataFrame({"value": np.random.rand(100)}),  # Should be 500
             )
 
-    async def test_vertex_data_size_validation(self):
+    def test_vertex_data_size_validation(self):
         # Vertex data wrong size
         with self.assertRaises(ObjectValidationError):
             Tensor3DGridData(

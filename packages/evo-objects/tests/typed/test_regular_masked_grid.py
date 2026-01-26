@@ -192,7 +192,7 @@ class TestRegularMaskedGrid(TestWithConnector):
                 ),
             )
 
-    async def test_mask_size_validation(self):
+    def test_mask_size_validation(self):
         # Mask too small
         with self.assertRaises(ObjectValidationError):
             RegularMasked3DGridData(
@@ -213,7 +213,7 @@ class TestRegularMaskedGrid(TestWithConnector):
                 mask=np.array([True, False] * 300, dtype=bool),  # 600 elements
             )
 
-    async def test_cell_data_size_validation(self):
+    def test_cell_data_size_validation(self):
         mask = np.array([True, False, True] * 167, dtype=bool)  # 501 elements, 334 True
 
         # Cell data doesn't match active cells
