@@ -51,7 +51,10 @@ variogram
 
 Or create a new variogram:
 ```python
-from evo.objects.typed import Variogram, VariogramData, SphericalStructure, Anisotropy, EllipsoidRanges
+from evo.objects.typed import (
+    Variogram, VariogramData, SphericalStructure, Anisotropy,
+    VariogramEllipsoidRanges,  # For variogram structure definition
+)
 
 variogram_data = VariogramData(
     name="My Variogram",
@@ -64,7 +67,7 @@ variogram_data = VariogramData(
         SphericalStructure(
             contribution=0.9,
             anisotropy=Anisotropy(
-                ellipsoid_ranges=EllipsoidRanges(major=200.0, semi_major=150.0, minor=100.0),
+                ellipsoid_ranges=VariogramEllipsoidRanges(major=200.0, semi_major=150.0, minor=100.0),
             ),
         )
     ],
@@ -117,19 +120,22 @@ from evo.compute.tasks import (
     KrigingParameters,
     Target,
     SearchNeighbourhood,
-    Ellipsoid,
-    EllipsoidRanges,
-    Rotation,
 )
+from evo.objects.typed import Ellipsoid, EllipsoidRanges
+from evo.objects.typed.ellipsoid import Rotation as EllipsoidRotation
 
 # Define scenario variations (e.g., different max_samples)
 max_samples_values = [5, 10, 15, 20]
 
-# Search ellipsoid configuration
-search_ellipsoid = Ellipsoid(
-    ranges=EllipsoidRanges(major=200.0, semi_major=150.0, minor=100.0),
-    rotation=Rotation(dip_azimuth=0.0, dip=0.0, pitch=0.0),
-)
+# Get search ellipsoid from variogram (scaled by 2x for search neighborhood)
+var_ell = variogram.get_ellipsoid()
+search_ellipsoid = var_ell.scaled(2.0)
+
+# Or create search ellipsoid directly:
+# search_ellipsoid = Ellipsoid(
+#     ranges=EllipsoidRanges(major=200.0, semi_major=150.0, minor=100.0),
+#     rotation=EllipsoidRotation(dip_azimuth=0.0, dip=0.0, pitch=0.0),
+# )
 
 # Create parameter sets for each scenario
 # Note: method defaults to ordinary kriging
@@ -151,10 +157,9 @@ from evo.compute.tasks import (
     KrigingParameters,
     Target,
     SearchNeighbourhood,
-    Ellipsoid,
-    EllipsoidRanges,
-    Rotation,
 )
+from evo.objects.typed import Ellipsoid, EllipsoidRanges
+from evo.objects.typed.ellipsoid import Rotation as EllipsoidRotation
 
 kriging_params = KrigingParameters(
     source=source_pointset.attributes["grade"],  # Access attribute from pointset
@@ -163,7 +168,7 @@ kriging_params = KrigingParameters(
     search=SearchNeighbourhood(
         ellipsoid=Ellipsoid(
             ranges=EllipsoidRanges(major=200.0, semi_major=150.0, minor=100.0),
-            rotation=Rotation(dip_azimuth=0.0, dip=0.0, pitch=0.0),
+            rotation=EllipsoidRotation(dip_azimuth=0.0, dip=0.0, pitch=0.0),
         ),
         max_samples=20,
     ),
@@ -279,13 +284,12 @@ from evo.compute.tasks import (
     run_kriging_multiple,
     KrigingParameters,
     Target,
-    OrdinaryKriging,
-    SimpleKriging,
-    KrigingSearch,
-    Ellipsoid,
-    EllipsoidRanges,
-    Rotation,
+    SearchNeighbourhood,
 )
+
+# Ellipsoid classes (for search neighborhoods and visualization)
+from evo.objects.typed import Ellipsoid, EllipsoidRanges
+from evo.objects.typed.ellipsoid import Rotation as EllipsoidRotation
 
 # Object loading (preferred methods)
 from evo.objects.typed import object_from_uuid, object_from_path
@@ -300,11 +304,59 @@ from evo.objects.typed import (
     SphericalStructure, ExponentialStructure, GaussianStructure, CubicStructure,
     LinearStructure, SpheroidalStructure, GeneralisedCauchyStructure,
     Anisotropy,
-    EllipsoidRanges as VariogramEllipsoidRanges,  # Disambiguate from compute
+    VariogramEllipsoidRanges,  # For variogram structure definition
     VariogramRotation,
 )
 
 # Notebooks utilities
 from evo.notebooks import ServiceManagerWidget, FeedbackWidget
+```
+
+## Ellipsoid Visualization
+
+The `Ellipsoid` class in `evo.objects.typed` provides methods for 3D visualization:
+
+```python
+# Get ellipsoid from variogram structure
+var_ell = variogram.get_ellipsoid()  # From first structure
+var_ell = variogram.get_ellipsoid(structure_index=1)  # From second structure
+
+# Scale for search neighborhood (typically 2x variogram range)
+search_ell = var_ell.scaled(2.0)
+
+# Generate mesh points for Plotly Mesh3d
+import plotly.graph_objects as go
+pts = await source_pointset.to_dataframe()
+center = (pts["x"].mean(), pts["y"].mean(), pts["z"].mean())
+
+x, y, z = var_ell.surface_points(center=center)
+var_mesh = go.Mesh3d(x=x, y=y, z=z, alphahull=0, opacity=0.3, color="blue", name="Variogram")
+
+sx, sy, sz = search_ell.surface_points(center=center)
+search_mesh = go.Mesh3d(x=sx, y=sy, z=sz, alphahull=0, opacity=0.2, color="gold", name="Search (2x)")
+
+scatter = go.Scatter3d(x=pts["x"], y=pts["y"], z=pts["z"], mode="markers",
+                       marker=dict(size=2, color=pts["grade"], colorscale="Viridis"))
+
+fig = go.Figure(data=[var_mesh, search_mesh, scatter])
+fig.update_layout(scene=dict(aspectmode="data"))
+fig.show()
+```
+
+## Variogram Curve Visualization
+
+Get variogram curves for 2D directional plotting:
+
+```python
+# Get curves for major, semi-major, and minor directions
+major, semi_maj, minor = variogram.get_variogram_curves()
+
+import plotly.graph_objects as go
+fig = go.Figure()
+fig.add_trace(go.Scatter(x=minor.distance, y=minor.semivariance, name="Minor", line=dict(color="blue")))
+fig.add_trace(go.Scatter(x=semi_maj.distance, y=semi_maj.semivariance, name="Semi-major", line=dict(color="green")))
+fig.add_trace(go.Scatter(x=major.distance, y=major.semivariance, name="Major", line=dict(color="red")))
+fig.update_layout(xaxis_title="Distance", yaxis_title="Semivariance", title="Variogram Model")
+fig.show()
 ```
 
