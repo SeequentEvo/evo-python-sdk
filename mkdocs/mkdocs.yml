@@ -26,3 +26,5 @@ plugins:
             show_source: false
             show_bases: false
             show_root_heading: true
+            separate_signature: true
+            show_signature_annotations: true
