@@ -77,7 +77,10 @@ class Base3DGrid(BaseSpatialObject):
     @abstractmethod
     def compute_bounding_box(self) -> BoundingBox:
         """Compute the bounding box for the grid."""
-        raise NotImplementedError
+        # This class does not have enough information about the grid cell sizes to compute the bounding box.
+        raise NotImplementedError(
+            "Subclasses must implement compute_bounding_box to derive bounding box from grid properties."
+        )
 
     @property
     def bounding_box(self) -> BoundingBox:
@@ -123,9 +126,9 @@ class Cells3D(SchemaModel):
     def expected_length(self) -> int:
         return self.size.total_size
 
-    async def as_dataframe(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
+    async def get_dataframe(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
         """Load a DataFrame containing the cell attribute values."""
-        return await self.attributes.as_dataframe(fb=fb)
+        return await self.attributes.get_dataframe(fb=fb)
 
     async def set_dataframe(self, df: pd.DataFrame, fb: IFeedback = NoFeedback) -> None:
         """Set the cell attributes from a DataFrame."""
@@ -158,9 +161,9 @@ class Vertices3D(SchemaModel):
     def expected_length(self) -> int:
         return self.size.total_size
 
-    async def as_dataframe(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
+    async def get_dataframe(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
         """Load a DataFrame containing the vertex attribute values."""
-        return await self.attributes.as_dataframe(fb=fb)
+        return await self.attributes.get_dataframe(fb=fb)
 
     async def set_dataframe(self, df: pd.DataFrame, fb: IFeedback = NoFeedback) -> None:
         """Set the vertex attributes from a DataFrame."""

@@ -84,9 +84,9 @@ class MaskedCells(SchemaModel):
             raise DataLoaderError(f"Expected mask array to have dtype 'bool', but got '{array.dtype}'")
         return array
 
-    async def as_dataframe(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
+    async def get_dataframe(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
         """Load a DataFrame containing the cell attribute values."""
-        return await self.attributes.as_dataframe(fb=fb)
+        return await self.attributes.get_dataframe(fb=fb)
 
     async def set_dataframe(
         self, df: pd.DataFrame, mask: np.ndarray | None = None, *, fb: IFeedback = NoFeedback

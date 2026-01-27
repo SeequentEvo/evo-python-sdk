@@ -82,9 +82,9 @@ class TestTensorGrid(TestWithConnector):
         np.testing.assert_array_equal(result.cell_sizes_y, self.example_grid.cell_sizes_y)
         np.testing.assert_array_equal(result.cell_sizes_z, self.example_grid.cell_sizes_z)
 
-        cell_df = await result.cells.as_dataframe()
+        cell_df = await result.cells.get_dataframe()
         pd.testing.assert_frame_equal(cell_df, self.example_grid.cell_data)
-        vertices_df = await result.vertices.as_dataframe()
+        vertices_df = await result.vertices.get_dataframe()
         pd.testing.assert_frame_equal(vertices_df, self.example_grid.vertex_data)
 
     async def test_create_with_no_data(self):
@@ -95,7 +95,7 @@ class TestTensorGrid(TestWithConnector):
         self.assertEqual(result.name, "Test Tensor Grid")
         np.testing.assert_array_equal(result.cell_sizes_x, self.example_grid.cell_sizes_x)
 
-        cell_df = await result.cells.as_dataframe()
+        cell_df = await result.cells.get_dataframe()
         self.assertEqual(cell_df.shape[0], 0)
 
     async def test_replace(self):
@@ -115,7 +115,7 @@ class TestTensorGrid(TestWithConnector):
         self.assertEqual(result.size, Size3i(10, 10, 5))
         np.testing.assert_array_equal(result.cell_sizes_x, self.example_grid.cell_sizes_x)
 
-        cell_df = await result.cells.as_dataframe()
+        cell_df = await result.cells.get_dataframe()
         pd.testing.assert_frame_equal(cell_df, data.cell_data)
 
     async def test_from_reference(self):
@@ -132,7 +132,7 @@ class TestTensorGrid(TestWithConnector):
             np.testing.assert_array_equal(result.cell_sizes_y, self.example_grid.cell_sizes_y)
             np.testing.assert_array_equal(result.cell_sizes_z, self.example_grid.cell_sizes_z)
 
-            cell_df = await result.cells.as_dataframe()
+            cell_df = await result.cells.get_dataframe()
             pd.testing.assert_frame_equal(cell_df, self.example_grid.cell_data)
 
     def test_cell_sizes_x_validation(self):
@@ -266,7 +266,7 @@ class TestTensorGrid(TestWithConnector):
 
             await obj.update()
 
-            cell_df = await obj.cells.as_dataframe()
+            cell_df = await obj.cells.get_dataframe()
             pd.testing.assert_frame_equal(cell_df, new_cell_data)
 
     async def test_uniform_cell_sizes(self):
