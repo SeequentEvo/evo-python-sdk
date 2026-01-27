@@ -13,7 +13,7 @@
 
 from __future__ import annotations
 
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Annotated
 
@@ -63,7 +63,7 @@ class BaseRegular3DGridData(Base3DGridData):
         return BoundingBox.from_regular_grid(self.origin, self.size, self.cell_size, self.rotation)
 
 
-class Base3DGrid(BaseSpatialObject):
+class Base3DGrid(BaseSpatialObject, ABC):
     """Base class for all 3D grid objects.
 
     Contains the common properties shared by all grid types: origin, size, and rotation.
