@@ -32,7 +32,7 @@ from .data import (
     Version,
 )
 from .endpoints import models
-from .endpoints.api import ColumnOperationsApi, JobsApi, MetadataApi, OperationsApi, VersionsApi
+from .endpoints.api import ColumnOperationsApi, JobsApi, MetadataApi, OperationsApi, ReportsApi, VersionsApi
 from .endpoints.models import (
     AnyUrl,
     BBox,
@@ -107,6 +107,7 @@ class BlockModelAPIClient(BaseAPIClient):
         self._operations_api = OperationsApi(connector)
         self._column_operations_api = ColumnOperationsApi(connector)
         self._metadata_api = MetadataApi(connector)
+        self._reports_api = ReportsApi(connector)
         self._cache = cache
 
     @classmethod
