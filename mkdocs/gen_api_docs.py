@@ -12,6 +12,8 @@
 import logging
 from pathlib import Path
 
+GITHUB_BASE_URL = "https://github.com/SeequentEvo/evo-python-sdk/blob/main"
+
 log = logging.getLogger("mkdocs.gen_api_docs")
 
 
@@ -29,12 +31,17 @@ def on_startup(command: str, dirty: bool) -> None:
             log.info(f"Deleted old doc: {old_md.relative_to(mkdocs_dir)}")
 
     for module_path in api_clients:
-        _, package, _, _, sub_package, *rest = module_path.split(".")
+        module_parts = module_path.split(".")
+        _, package, _, _, sub_package, *rest = module_parts
         doc_name = f"{package}/{sub_package}" if package == "evo-sdk-common" else package
+
+        file_path_parts = module_parts[:-1]
+        source_file_path = "/".join(file_path_parts) + ".py"
+        github_url = f"{GITHUB_BASE_URL}/{source_file_path}"
 
         doc_path = docs_packages_dir / f"{doc_name}.md"
         doc_path.parent.mkdir(parents=True, exist_ok=True)
-        content = f"::: {module_path}\n"
+        content = f"[GitHub source]({github_url})\n::: {module_path}\n"
 
         with doc_path.open("x") as f:
             f.write(content)
