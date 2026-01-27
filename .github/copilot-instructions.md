@@ -454,13 +454,52 @@ When users ask to run compute tasks (especially kriging), follow the patterns in
 from evo.compute.tasks import (
     run_kriging, run_kriging_multiple,
     KrigingParameters, Source, Target,
-    OrdinaryKriging, KrigingSearch, Ellipsoid, EllipsoidRanges, Rotation,
+    SearchNeighbourhood,
 )
-from evo.objects.typed import object_from_uuid, BlockModel, RegularBlockModelData, Point3, Size3i, Size3d
-from evo.objects.typed import Variogram, VariogramData, SphericalStructure, Anisotropy
-from evo.objects.typed import EllipsoidRanges as VariogramEllipsoidRanges  # If needed to disambiguate
+from evo.objects.typed import (
+    object_from_uuid, BlockModel, RegularBlockModelData, Point3, Size3i, Size3d,
+    Variogram, VariogramData, SphericalStructure, Anisotropy,
+    Ellipsoid, EllipsoidRanges,  # For search ellipsoids and visualization
+    VariogramEllipsoidRanges,    # For variogram structure definition
+)
+from evo.objects.typed.ellipsoid import Rotation as EllipsoidRotation
 from evo.blockmodels import Units
 from evo.notebooks import ServiceManagerWidget, FeedbackWidget
+```
+
+**Ellipsoid visualization pattern:**
+```python
+# Get ellipsoid from variogram structure
+var_ell = variogram.get_ellipsoid()  # Returns Ellipsoid from first structure
+
+# Scale for search neighborhood (typically 2x variogram range)
+search_ell = var_ell.scaled(2.0)
+
+# Generate mesh points for 3D visualization with Plotly
+import plotly.graph_objects as go
+pts = await source_pointset.to_dataframe()
+center = (pts["x"].mean(), pts["y"].mean(), pts["z"].mean())
+
+x, y, z = var_ell.surface_points(center=center)
+mesh = go.Mesh3d(x=x, y=y, z=z, alphahull=0, opacity=0.3, color="blue", name="Variogram")
+
+# Or wireframe for lighter visualization
+x, y, z = var_ell.wireframe_points(center=center)
+line = go.Scatter3d(x=x, y=y, z=z, mode="lines", name="Variogram")
+```
+
+**Variogram curve visualization:**
+```python
+# Get variogram curves for 2D plotting
+major, semi_maj, minor = variogram.get_variogram_curves()
+
+import plotly.graph_objects as go
+fig = go.Figure()
+fig.add_trace(go.Scatter(x=minor.distance, y=minor.semivariance, name="Minor"))
+fig.add_trace(go.Scatter(x=semi_maj.distance, y=semi_maj.semivariance, name="Semi-major"))
+fig.add_trace(go.Scatter(x=major.distance, y=major.semivariance, name="Major"))
+fig.update_layout(xaxis_title="Distance", yaxis_title="Semivariance")
+fig.show()
 ```
 
 ## Block Model Reports
@@ -596,6 +635,13 @@ class MassUnits:
 **Existing typed objects to reference:**
 - `PointSet` - Simple object with locations dataset and attributes
 - `Variogram` - Complex nested structures (structures, anisotropy, rotation)
+  - `variogram.get_ellipsoid(structure_index=0)` - Get Ellipsoid for visualization/search
+  - `variogram.get_variogram_curves()` - Get curve data for 2D plotting
+- `Ellipsoid` - 3D ellipsoid for search neighborhoods and visualization
+  - `Ellipsoid(ranges=EllipsoidRanges(...), rotation=Rotation(...))` - Create directly
+  - `ellipsoid.scaled(factor)` - Create scaled copy (e.g., for search neighborhood)
+  - `ellipsoid.surface_points(center)` - Generate mesh points for Plotly Mesh3d
+  - `ellipsoid.wireframe_points(center)` - Generate wireframe for Plotly Scatter3d
 - `Regular3DGrid` - Grid with cells and vertices datasets
 - `RegularMasked3DGrid` - Grid with boolean mask
 - `BlockModel` - Integration with Block Model Service
