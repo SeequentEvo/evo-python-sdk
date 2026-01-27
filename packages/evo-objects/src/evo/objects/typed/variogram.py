@@ -14,6 +14,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field, replace
 from typing import TYPE_CHECKING, Any, Literal
 
+import numpy as np
 from pydantic import TypeAdapter
 
 from evo.objects import SchemaVersion
@@ -22,7 +23,9 @@ from ._property import SchemaProperty
 from .base import BaseObjectData, ConstructableObject
 
 if TYPE_CHECKING:
-    from evo.compute.tasks import Ellipsoid as ComputeEllipsoid
+    from numpy.typing import NDArray
+
+    from .ellipsoid import Ellipsoid
 
 __all__ = [
     "Anisotropy",
@@ -35,6 +38,7 @@ __all__ = [
     "SphericalStructure",
     "SpheroidalStructure",
     "Variogram",
+    "VariogramCurveData",
     "VariogramData",
     "VariogramRotation",
     "VariogramStructure",
@@ -124,7 +128,7 @@ class VariogramStructure:
             "anisotropy": self.anisotropy.to_dict(),
         }
 
-    def to_ellipsoid(self) -> "ComputeEllipsoid":
+    def to_ellipsoid(self) -> "Ellipsoid":
         """Convert this structure's anisotropy to an Ellipsoid for visualization or search.
 
         Returns an Ellipsoid from evo.compute.tasks that can be used for:
@@ -143,32 +147,23 @@ class VariogramStructure:
             >>> x, y, z = var_ell.surface_points(center=(100, 200, 50))
             >>> mesh = go.Mesh3d(x=x, y=y, z=z, alphahull=0, opacity=0.3)
         """
-        from evo.compute.tasks import Ellipsoid as ComputeEllipsoid
-        from evo.compute.tasks import EllipsoidRanges as ComputeRanges
-        from evo.compute.tasks import Rotation as ComputeRotation
+        from .ellipsoid import Ellipsoid, EllipsoidRanges as EllipsoidRangesObj, Rotation
 
         ranges = self.anisotropy.ellipsoid_ranges
         rotation = self.anisotropy.rotation
 
-        return ComputeEllipsoid(
-            ranges=ComputeRanges(
+        return Ellipsoid(
+            ranges=EllipsoidRangesObj(
                 major=ranges.major,
                 semi_major=ranges.semi_major,
                 minor=ranges.minor,
             ),
-            rotation=ComputeRotation(
+            rotation=Rotation(
                 dip_azimuth=rotation.dip_azimuth,
                 dip=rotation.dip,
                 pitch=rotation.pitch,
             ),
         )
-
-
-# Import for type annotation
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from evo.compute.tasks import Ellipsoid as ComputeEllipsoid
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -281,6 +276,74 @@ def _convert_structures(structures: list[VariogramStructure | dict[str, Any]]) -
             # Already a dict, pass through
             result.append(struct)
     return result
+
+
+@dataclass
+class VariogramCurveData:
+    """Data for rendering a 2D variogram curve.
+
+    This dataclass contains numpy arrays for plotting a variogram model curve
+    in one of the principal directions.
+
+    Attributes:
+        distance: Lag distances (x-axis values).
+        semivariance: Semivariance γ(h) values (y-axis values).
+        direction: Direction label ("major", "semi_major", or "minor").
+        range_value: The effective range in this direction.
+        sill: The variogram sill value.
+    """
+
+    distance: "NDArray[np.floating[Any]]"
+    semivariance: "NDArray[np.floating[Any]]"
+    direction: str
+    range_value: float
+    sill: float
+
+
+def _evaluate_structure(
+    structure_type: str,
+    h: "NDArray[np.floating[Any]]",
+    contribution: float,
+    range_val: float,
+    alpha: int | None = None,
+) -> "NDArray[np.floating[Any]]":
+    """Evaluate a variogram structure model."""
+    h_norm = h / range_val if range_val > 0 else h
+
+    if structure_type == "spherical":
+        gamma = np.where(
+            h_norm < 1,
+            contribution * (1.5 * h_norm - 0.5 * h_norm**3),
+            contribution,
+        )
+    elif structure_type == "exponential":
+        gamma = contribution * (1 - np.exp(-3 * h_norm))
+    elif structure_type == "gaussian":
+        gamma = contribution * (1 - np.exp(-3 * h_norm**2))
+    elif structure_type == "cubic":
+        gamma = np.where(
+            h_norm < 1,
+            contribution * (7 * h_norm**2 - 8.75 * h_norm**3 + 3.5 * h_norm**5 - 0.75 * h_norm**7),
+            contribution,
+        )
+    elif structure_type == "linear":
+        gamma = contribution * h_norm
+    elif structure_type == "spheroidal":
+        if alpha is None:
+            alpha = 3
+        gamma = np.where(
+            h_norm < 1,
+            contribution * (1 - (1 - h_norm**2) ** (alpha / 2)),
+            contribution,
+        )
+    elif structure_type == "generalisedcauchy":
+        if alpha is None:
+            alpha = 3
+        gamma = contribution * (1 - (1 + h_norm**2) ** (-alpha / 2))
+    else:
+        gamma = np.full_like(h, contribution)
+
+    return gamma
 
 
 @dataclass(kw_only=True, frozen=True)
@@ -413,7 +476,7 @@ class Variogram(ConstructableObject[VariogramData]):
     attribute: str | None = SchemaProperty("attribute", TypeAdapter(str | None))
     """The attribute the variogram is modelled for."""
 
-    def get_ellipsoid(self, structure_index: int = 0) -> "ComputeEllipsoid":
+    def get_ellipsoid(self, structure_index: int = 0) -> "Ellipsoid":
         """Get an Ellipsoid from a variogram structure for visualization or search.
 
         Returns an Ellipsoid from evo.compute.tasks that can be used for:
@@ -438,9 +501,7 @@ class Variogram(ConstructableObject[VariogramData]):
             >>> x, y, z = var_ell.surface_points(center=(100, 200, 50))
             >>> mesh = go.Mesh3d(x=x, y=y, z=z, alphahull=0, opacity=0.3)
         """
-        from evo.compute.tasks import Ellipsoid as ComputeEllipsoid
-        from evo.compute.tasks import EllipsoidRanges as ComputeRanges
-        from evo.compute.tasks import Rotation as ComputeRotation
+        from .ellipsoid import Ellipsoid, EllipsoidRanges as EllipsoidRangesObj, Rotation
 
         if not self.structures:
             raise ValueError("Variogram has no structures")
@@ -453,18 +514,87 @@ class Variogram(ConstructableObject[VariogramData]):
         ranges_dict = anisotropy.get("ellipsoid_ranges", {})
         rotation_dict = anisotropy.get("rotation", {})
 
-        return ComputeEllipsoid(
-            ranges=ComputeRanges(
+        return Ellipsoid(
+            ranges=EllipsoidRangesObj(
                 major=ranges_dict.get("major", 1.0),
                 semi_major=ranges_dict.get("semi_major", 1.0),
                 minor=ranges_dict.get("minor", 1.0),
             ),
-            rotation=ComputeRotation(
+            rotation=Rotation(
                 dip_azimuth=rotation_dict.get("dip_azimuth", 0.0),
                 dip=rotation_dict.get("dip", 0.0),
                 pitch=rotation_dict.get("pitch", 0.0),
             ),
         )
+
+    def get_variogram_curves(
+        self,
+        max_lag: float | None = None,
+        n_points: int = 200,
+    ) -> tuple["VariogramCurveData", "VariogramCurveData", "VariogramCurveData"]:
+        """Generate variogram curve data for the three principal directions.
+
+        Calculates the variogram model along the major, semi-major, and minor
+        axis directions. Each direction uses the corresponding range from the
+        anisotropy ellipsoid.
+
+        Args:
+            max_lag: Maximum lag distance. If None, uses 1.2x the maximum range.
+            n_points: Number of points for smooth curves.
+
+        Returns:
+            Tuple of (major_curve, semi_major_curve, minor_curve) as VariogramCurveData.
+
+        Example with Plotly:
+            >>> major, semi_maj, minor = variogram.get_variogram_curves()
+            >>> import plotly.graph_objects as go
+            >>> fig = go.Figure()
+            >>> fig.add_trace(go.Scatter(x=minor.distance, y=minor.semivariance,
+            ...                          name='Minor', line=dict(color='blue')))
+            >>> fig.add_trace(go.Scatter(x=semi_maj.distance, y=semi_maj.semivariance,
+            ...                          name='Semi-major', line=dict(color='green')))
+            >>> fig.add_trace(go.Scatter(x=major.distance, y=major.semivariance,
+            ...                          name='Major', line=dict(color='red')))
+            >>> fig.update_layout(xaxis_title='Distance', yaxis_title='Semivariance')
+            >>> fig.show()
+        """
+        max_ranges = {"major": 0.0, "semi_major": 0.0, "minor": 0.0}
+        for struct in self.structures:
+            anisotropy = struct.get("anisotropy", {})
+            ranges = anisotropy.get("ellipsoid_ranges", {})
+            for direction in max_ranges:
+                max_ranges[direction] = max(max_ranges[direction], ranges.get(direction, 0))
+
+        if max_lag is None:
+            max_lag = max(max_ranges.values()) * 1.2 if max(max_ranges.values()) > 0 else 100.0
+
+        h = np.linspace(0, max_lag, n_points)
+
+        results = []
+        for direction in ["major", "semi_major", "minor"]:
+            gamma = np.full_like(h, self.nugget, dtype=float)
+
+            for struct in self.structures:
+                vtype = struct.get("variogram_type", "unknown")
+                contribution = struct.get("contribution", 0)
+                alpha = struct.get("alpha")
+                anisotropy = struct.get("anisotropy", {})
+                ranges = anisotropy.get("ellipsoid_ranges", {})
+                range_val = ranges.get(direction, 1.0)
+
+                gamma += _evaluate_structure(vtype, h, contribution, range_val, alpha)
+
+            results.append(
+                VariogramCurveData(
+                    distance=h.copy(),
+                    semivariance=gamma,
+                    direction=direction,
+                    range_value=max_ranges[direction],
+                    sill=self.sill,
+                )
+            )
+
+        return results[0], results[1], results[2]
 
     def _repr_html_(self) -> str:
         """Return an HTML representation for Jupyter notebooks."""

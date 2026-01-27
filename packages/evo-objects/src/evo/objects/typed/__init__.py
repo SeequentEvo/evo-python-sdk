@@ -18,6 +18,9 @@ from .block_model_ref import (
     BlockModelGeometry,
     RegularBlockModelData,
 )
+from .ellipsoid import Ellipsoid
+from .ellipsoid import EllipsoidRanges as EllipsoidRanges  # For search/visualization
+from .ellipsoid import Rotation as EllipsoidRotation  # For search/visualization
 from .pointset import PointSet, PointSetData
 from .regular_grid import (
     Regular3DGrid,
@@ -29,7 +32,7 @@ from .types import BoundingBox, CoordinateReferenceSystem, EpsgCode, Point3, Rot
 from .variogram import (
     Anisotropy,
     CubicStructure,
-    EllipsoidRanges,
+    EllipsoidRanges as VariogramEllipsoidRanges,  # For variogram structure data definition
     ExponentialStructure,
     GaussianStructure,
     GeneralisedCauchyStructure,
@@ -37,6 +40,7 @@ from .variogram import (
     SphericalStructure,
     SpheroidalStructure,
     Variogram,
+    VariogramCurveData,
     VariogramData,
     VariogramRotation,
     VariogramStructure,
@@ -52,7 +56,9 @@ __all__ = [
     "BoundingBox",
     "CoordinateReferenceSystem",
     "CubicStructure",
+    "Ellipsoid",
     "EllipsoidRanges",
+    "EllipsoidRotation",
     "EpsgCode",
     "ExponentialStructure",
     "GaussianStructure",
@@ -74,7 +80,9 @@ __all__ = [
     "Tensor3DGrid",
     "Tensor3DGridData",
     "Variogram",
+    "VariogramCurveData",
     "VariogramData",
+    "VariogramEllipsoidRanges",
     "VariogramRotation",
     "VariogramStructure",
     "object_from_path",

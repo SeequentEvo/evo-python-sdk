@@ -11,7 +11,8 @@
 
 """Common primitives shared across geostatistics compute tasks."""
 
-from .ellipsoid import Ellipsoid, EllipsoidRanges, Rotation
+from evo.objects.typed.ellipsoid import Ellipsoid, EllipsoidRanges, Rotation
+
 from .run_multiple import run_multiple
 from .search import SearchNeighbourhood
 from .source_target import CreateAttribute, Source, Target, UpdateAttribute

@@ -16,7 +16,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from .ellipsoid import Ellipsoid
+from evo.objects.typed.ellipsoid import Ellipsoid
 
 __all__ = [
     "SearchNeighbourhood",
