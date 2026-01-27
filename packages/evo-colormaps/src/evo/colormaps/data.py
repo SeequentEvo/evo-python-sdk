@@ -29,7 +29,7 @@ from evo.common import ResourceMetadata, ServiceUser
 
 def _validate_colors(colors: list[list[int]], minimum: int = 2, maximum: int = 1024):
     if not minimum <= len(colors) <= maximum:
-        raise ValueError("Colors must have between 2 and 1024 entries")
+        raise ValueError(f"Colors must have between {minimum} and {maximum} entries")
 
     for color in colors:
         if len(color) != 3 or any(not isinstance(value, int) or value < 0 or value > 255 for value in color):
