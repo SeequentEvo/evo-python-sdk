@@ -29,30 +29,45 @@ __all__ = [
 
 
 def _rotation_matrix(dip_azimuth: float, dip: float, pitch: float) -> NDArray[np.floating[Any]]:
-    """Create a 3D rotation matrix from Geoscience object convention angles."""
+    """Create a 3D rotation matrix from Leapfrog/Geoscience object convention angles.
+
+    Leapfrog uses row vector post-multiplication (vR) with convention:
+        R = Rz(-pitch) @ Rx(-dip) @ Rz(-azimuth)
+
+    For column vector pre-multiplication (Rv) we need the transpose:
+        R^T = Rz(-azimuth)^T @ Rx(-dip)^T @ Rz(-pitch)^T
+            = Rz(azimuth) @ Rx(dip) @ Rz(pitch)
+
+    This gives us a matrix that when applied as (R @ v) produces the same
+    result as Leapfrog's (v @ R_leapfrog).
+    """
     az = np.radians(dip_azimuth)
     d = np.radians(dip)
     p = np.radians(pitch)
 
-    rz1 = np.array([
-        [np.cos(az), np.sin(az), 0],
-        [-np.sin(az), np.cos(az), 0],
+    # Rz(azimuth) - first rotation
+    rz_az = np.array([
+        [np.cos(az), -np.sin(az), 0],
+        [np.sin(az), np.cos(az), 0],
         [0, 0, 1],
     ])
 
-    rx = np.array([
+    # Rx(dip) - second rotation
+    rx_dip = np.array([
         [1, 0, 0],
         [0, np.cos(d), -np.sin(d)],
         [0, np.sin(d), np.cos(d)],
     ])
 
-    rz2 = np.array([
-        [np.cos(p), np.sin(p), 0],
-        [-np.sin(p), np.cos(p), 0],
+    # Rz(pitch) - third rotation
+    rz_pitch = np.array([
+        [np.cos(p), -np.sin(p), 0],
+        [np.sin(p), np.cos(p), 0],
         [0, 0, 1],
     ])
 
-    return rz2 @ rx @ rz1
+    # For column vectors: apply in order azimuth -> dip -> pitch
+    return rz_az @ rx_dip @ rz_pitch
 
 
 @dataclass

@@ -9,7 +9,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-"""Search neighbourhood parameters for geostatistical operations."""
+"""Search neighborhood parameters for geostatistical operations."""
 
 from __future__ import annotations
 
@@ -19,22 +19,22 @@ from typing import Any
 from evo.objects.typed.ellipsoid import Ellipsoid
 
 __all__ = [
-    "SearchNeighbourhood",
+    "SearchNeighborhood",
 ]
 
 
 @dataclass
-class SearchNeighbourhood:
-    """Search neighbourhood parameters for geostatistical operations.
+class SearchNeighborhood:
+    """Search neighborhood parameters for geostatistical operations.
 
     Defines how to find nearby samples when performing spatial interpolation
     or estimation. Used by kriging, simulation, and other geostatistical tasks.
 
-    The search neighbourhood is defined by an ellipsoid (spatial extent and
+    The search neighborhood is defined by an ellipsoid (spatial extent and
     orientation) and constraints on the number of samples to use.
 
     Example:
-        >>> search = SearchNeighbourhood(
+        >>> search = SearchNeighborhood(
         ...     ellipsoid=Ellipsoid(
         ...         ranges=EllipsoidRanges(major=200.0, semi_major=150.0, minor=100.0),
         ...         rotation=Rotation(dip_azimuth=45.0),
