@@ -236,28 +236,24 @@ def _target_from_attribute(attr: Any) -> Target:
     Handles Attribute, PendingAttribute (from evo.objects.typed.dataset) and
     BlockModelAttribute, BlockModelPendingAttribute (from evo.objects.typed.block_model_ref).
 
+    All attribute types use `_obj` to reference their parent object:
+    - For Attribute/PendingAttribute: _obj is a DownloadedObject
+    - For BlockModelAttribute/BlockModelPendingAttribute: _obj is a BlockModel
+
     Args:
-        attr: An attribute object with to_target_dict() method.
+        attr: An attribute object with to_target_dict() method and _obj reference.
 
     Returns:
         A Target instance configured based on the attribute.
     """
-    # Get the object reference - different paths for different attribute types
-    if hasattr(attr, "_obj") and attr._obj is not None:
-        # Attribute or PendingAttribute from dataset.py (PointSet, Grid, etc.)
-        # _obj is a DownloadedObject which has metadata with the reference
-        target_object = attr._obj
-    elif hasattr(attr, "_block_model") and attr._block_model is not None:
-        # BlockModelAttribute or BlockModelPendingAttribute
-        target_object = attr._block_model
-    elif hasattr(attr, "_parent") and hasattr(attr._parent, "_block_model") and attr._parent._block_model is not None:
-        # BlockModelAttribute (alternative path through parent)
-        target_object = attr._parent._block_model
-    else:
+    # All attribute types now use _obj to reference their parent object
+    if not hasattr(attr, "_obj") or attr._obj is None:
         raise TypeError(
             f"Cannot determine target object from attribute type {type(attr).__name__}. "
-            "Expected Attribute, PendingAttribute, BlockModelAttribute, or BlockModelPendingAttribute."
+            "Attribute must have an _obj reference to its parent object."
         )
+
+    target_object = attr._obj
 
     # Get the attribute specification dict
     attr_dict = attr.to_target_dict()

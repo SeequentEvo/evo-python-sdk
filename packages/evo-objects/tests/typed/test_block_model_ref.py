@@ -369,19 +369,17 @@ class TestBlockModelAttributeTarget(TestCase):
 
     def test_pending_attribute_exists_property(self):
         """Test that pending attributes have exists=False."""
-        from evo.objects.typed.block_model_ref import BlockModelPendingAttribute, BlockModelAttributes
+        from evo.objects.typed.block_model_ref import BlockModelPendingAttribute
 
-        attrs = BlockModelAttributes([], block_model=None)
-        pending = BlockModelPendingAttribute(attrs, "new_attribute")
+        pending = BlockModelPendingAttribute(None, "new_attribute")
 
         self.assertFalse(pending.exists)
 
     def test_pending_attribute_to_target_dict(self):
         """Test that pending attributes serialize to create operation."""
-        from evo.objects.typed.block_model_ref import BlockModelPendingAttribute, BlockModelAttributes
+        from evo.objects.typed.block_model_ref import BlockModelPendingAttribute
 
-        attrs = BlockModelAttributes([], block_model=None)
-        pending = BlockModelPendingAttribute(attrs, "new_attribute")
+        pending = BlockModelPendingAttribute(None, "new_attribute")
         target_dict = pending.to_target_dict()
 
         self.assertEqual(target_dict["operation"], "create")
@@ -389,20 +387,18 @@ class TestBlockModelAttributeTarget(TestCase):
 
     def test_pending_attribute_expression(self):
         """Test that pending attributes have correct JMESPath expression."""
-        from evo.objects.typed.block_model_ref import BlockModelPendingAttribute, BlockModelAttributes
+        from evo.objects.typed.block_model_ref import BlockModelPendingAttribute
 
-        attrs = BlockModelAttributes([], block_model=None)
-        pending = BlockModelPendingAttribute(attrs, "new_attribute")
+        pending = BlockModelPendingAttribute(None, "new_attribute")
 
         self.assertIn("new_attribute", pending.expression)
         self.assertIn("attributes", pending.expression)
 
     def test_pending_attribute_repr(self):
         """Test the string representation of BlockModelPendingAttribute."""
-        from evo.objects.typed.block_model_ref import BlockModelPendingAttribute, BlockModelAttributes
+        from evo.objects.typed.block_model_ref import BlockModelPendingAttribute
 
-        attrs = BlockModelAttributes([], block_model=None)
-        pending = BlockModelPendingAttribute(attrs, "new_attribute")
+        pending = BlockModelPendingAttribute(None, "new_attribute")
         repr_str = repr(pending)
 
         self.assertIn("BlockModelPendingAttribute", repr_str)
@@ -441,17 +437,33 @@ class TestBlockModelAttributeTarget(TestCase):
         self.assertEqual(attrs[0].name, "grade")
         self.assertEqual(attrs[1].name, "density")
 
-    def test_attribute_has_parent_reference(self):
-        """Test that attributes have access to parent BlockModelAttributes."""
+    def test_attribute_has_obj_reference(self):
+        """Test that attributes have _obj reference to the parent BlockModel."""
         from evo.objects.typed.block_model_ref import BlockModelAttributes
+
+        # Create a mock block model (using None for simplicity in unit tests)
+        mock_block_model = "mock_block_model"  # In real use, this would be a BlockModel instance
 
         existing_attrs = [
             BlockModelAttribute(name="grade", attribute_type="Float64"),
         ]
-        attrs = BlockModelAttributes(existing_attrs, block_model=None)
+        attrs = BlockModelAttributes(existing_attrs, block_model=mock_block_model)
 
-        # The attribute should have a parent reference
+        # The attribute should have _obj reference to the block model
         attr = attrs["grade"]
-        self.assertIsNotNone(attr._parent)
-        self.assertEqual(attr._parent, attrs)
+        self.assertEqual(attr._obj, mock_block_model)
+
+    def test_pending_attribute_has_obj_reference(self):
+        """Test that pending attributes have _obj reference to the parent BlockModel."""
+        from evo.objects.typed.block_model_ref import BlockModelAttributes, BlockModelPendingAttribute
+
+        # Create a mock block model
+        mock_block_model = "mock_block_model"
+
+        attrs = BlockModelAttributes([], block_model=mock_block_model)
+
+        # Accessing non-existent attribute returns BlockModelPendingAttribute with _obj set
+        pending = attrs["new_attribute"]
+        self.assertIsInstance(pending, BlockModelPendingAttribute)
+        self.assertEqual(pending._obj, mock_block_model)
 

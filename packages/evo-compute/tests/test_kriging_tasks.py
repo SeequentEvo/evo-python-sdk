@@ -60,13 +60,10 @@ class TestKrigingParametersWithAttributes(TestCase):
         attr.exists = exists
         attr.expression = f"attributes[?name=='{name}']"
 
-        # Important: Set _obj to None so the code takes the _block_model path
-        attr._obj = None
-
-        # Mock the _block_model for object URL access
+        # Mock the _obj for object URL access (unified interface with Attribute)
         mock_bm = MagicMock()
         mock_bm.metadata.url = object_url
-        attr._block_model = mock_bm
+        attr._obj = mock_bm
 
         if exists:
             attr.to_target_dict.return_value = {

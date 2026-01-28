@@ -68,7 +68,11 @@ class BlockModelGeometry:
 
 
 class BlockModelAttribute:
-    """An attribute on a block model."""
+    """An attribute on a block model.
+
+    This class represents an existing attribute on a block model. It stores a reference
+    to the parent BlockModel via `_obj`, similar to how `Attribute` in dataset.py works.
+    """
 
     def __init__(
         self,
@@ -76,13 +80,13 @@ class BlockModelAttribute:
         attribute_type: str,
         block_model_column_uuid: UUID | None = None,
         unit: str | None = None,
-        parent: "BlockModelAttributes | None" = None,
+        obj: "BlockModel | None" = None,
     ):
         self._name = name
         self._attribute_type = attribute_type
         self._block_model_column_uuid = block_model_column_uuid
         self._unit = unit
-        self._parent = parent
+        self._obj = obj  # Reference to parent BlockModel, similar to Attribute._obj
 
     @property
     def name(self) -> str:
@@ -117,12 +121,6 @@ class BlockModelAttribute:
         """The JMESPath expression to access this attribute from the object."""
         return f"attributes[?name=='{self._name}']"
 
-    @property
-    def _block_model(self) -> "BlockModel | None":
-        """The BlockModel this attribute belongs to."""
-        if self._parent is not None:
-            return self._parent._block_model
-        return None
 
     def to_target_dict(self) -> dict[str, str]:
         """Serialize this attribute as a target for compute tasks.
@@ -158,14 +156,17 @@ class BlockModelPendingAttribute:
 
     This is returned when accessing an attribute by name that doesn't exist.
     It can be used as a target for compute tasks, which will create the attribute.
+
+    Stores a reference to the parent BlockModel via `_obj`, similar to how
+    `BlockModelAttribute` and `Attribute` (in dataset.py) work.
     """
 
-    def __init__(self, parent: "BlockModelAttributes", name: str) -> None:
+    def __init__(self, obj: "BlockModel", name: str) -> None:
         """
-        :param parent: The BlockModelAttributes collection this pending attribute belongs to.
+        :param obj: The BlockModel this pending attribute belongs to.
         :param name: The name of the attribute to create.
         """
-        self._parent = parent
+        self._obj = obj  # Reference to parent BlockModel
         self._name = name
 
     @property
@@ -186,13 +187,6 @@ class BlockModelPendingAttribute:
         """
         return False
 
-    @property
-    def _block_model(self) -> "BlockModel":
-        """The BlockModel containing this attribute's parent.
-
-        Delegates to the parent BlockModelAttributes collection.
-        """
-        return self._parent._block_model
 
     def to_target_dict(self) -> dict[str, str]:
         """Serialize this attribute as a target for compute tasks.
@@ -215,18 +209,18 @@ class BlockModelAttributes:
 
     def __init__(self, attributes: list[BlockModelAttribute], block_model: "BlockModel | None" = None):
         self._block_model = block_model
-        # Set parent reference on each attribute, preserving the key
+        # Set _obj reference on each attribute to the parent BlockModel
         self._attributes = []
         for attr in attributes:
-            # Create a new attribute with parent reference, preserving the original key
-            attr_with_parent = BlockModelAttribute(
+            # Create a new attribute with _obj reference to the block model
+            attr_with_obj = BlockModelAttribute(
                 name=attr.name,
                 attribute_type=attr.attribute_type,
                 block_model_column_uuid=attr.block_model_column_uuid,
                 unit=attr.unit,
-                parent=self,
+                obj=block_model,
             )
-            self._attributes.append(attr_with_parent)
+            self._attributes.append(attr_with_obj)
 
     def __iter__(self):
         return iter(self._attributes)
@@ -240,7 +234,8 @@ class BlockModelAttributes:
                 if attr.name == index_or_name:
                     return attr
             # Return a BlockModelPendingAttribute for non-existent attributes accessed by name
-            return BlockModelPendingAttribute(self, index_or_name)
+            # Pass the block model directly as _obj
+            return BlockModelPendingAttribute(self._block_model, index_or_name)
         return self._attributes[index_or_name]
 
     def __repr__(self) -> str:
