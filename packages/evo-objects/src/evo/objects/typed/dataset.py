@@ -47,6 +47,7 @@ __all__ = [
     "Attributes",
     "DataLoaderError",
     "Dataset",
+    "PendingAttribute",
 ]
 
 
@@ -285,6 +286,83 @@ class Attribute:
         """
         return cast(AttributeInfo, self._attribute)
 
+    @property
+    def exists(self) -> bool:
+        """Whether this attribute exists on the object.
+
+        :return: True for existing attributes.
+        """
+        return True
+
+    def to_target_dict(self) -> dict[str, str]:
+        """Serialize this attribute as a target for compute tasks.
+
+        For existing attributes, returns an update operation referencing this attribute.
+
+        :return: A dictionary with operation type and reference.
+        """
+        return {
+            "operation": "update",
+            "reference": self.expression,
+        }
+
+
+class PendingAttribute:
+    """A placeholder for an attribute that doesn't exist yet on a Geoscience Object.
+
+    This is returned when accessing an attribute by name that doesn't exist.
+    It can be used as a target for compute tasks, which will create the attribute.
+    """
+
+    def __init__(self, parent: Attributes, name: str) -> None:
+        """
+        :param parent: The Attributes collection this pending attribute belongs to.
+        :param name: The name of the attribute to create.
+        """
+        self._parent = parent
+        self._name = name
+
+    @property
+    def name(self) -> str:
+        """The name of this attribute."""
+        return self._name
+
+    @property
+    def expression(self) -> str:
+        """The JMESPath expression to access this attribute from the object."""
+        return f"{self._parent._attribute_adapter.attribute_list_path}[?name=='{self._name}']"
+
+    @property
+    def exists(self) -> bool:
+        """Whether this attribute exists on the object.
+
+        :return: False for pending attributes.
+        """
+        return False
+
+    @property
+    def _obj(self) -> DownloadedObject | None:
+        """The DownloadedObject containing this attribute's parent object.
+
+        Delegates to the parent Attributes collection.
+        """
+        return self._parent._obj
+
+    def to_target_dict(self) -> dict[str, str]:
+        """Serialize this attribute as a target for compute tasks.
+
+        For pending attributes, returns a create operation with the attribute name.
+
+        :return: A dictionary with operation type and name.
+        """
+        return {
+            "operation": "create",
+            "name": self._name,
+        }
+
+    def __repr__(self) -> str:
+        return f"PendingAttribute(name={self._name!r}, exists=False)"
+
 
 class Attributes(Sequence[Attribute]):
     """A collection of Geoscience Object Attributes"""
@@ -305,6 +383,7 @@ class Attributes(Sequence[Attribute]):
         self._document = document
         self._attribute_adapter = attribute_adapter
         self._context = context
+        self._obj = obj
 
         attribute_list = jmespath.search(self._attribute_adapter.attribute_list_path, document)
         if not isinstance(attribute_list, jmespath.JMESPathArrayProxy):
@@ -315,12 +394,13 @@ class Attributes(Sequence[Attribute]):
         else:
             self._attributes = [Attribute(self, attr, context, obj) for attr in attribute_list]
 
-    def __getitem__(self, index_or_name: int | str) -> Attribute:
+    def __getitem__(self, index_or_name: int | str) -> Attribute | PendingAttribute:
         if isinstance(index_or_name, str):
             for attribute in self._attributes:
                 if attribute.name == index_or_name:
                     return attribute
-            raise KeyError(f"Attribute with name '{index_or_name}' not found")
+            # Return a PendingAttribute for non-existent attributes accessed by name
+            return PendingAttribute(self, index_or_name)
         return self._attributes[index_or_name]
 
     def __len__(self) -> int:
