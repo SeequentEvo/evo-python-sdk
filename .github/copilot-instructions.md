@@ -444,10 +444,24 @@ When users ask to run compute tasks (especially kriging), follow the patterns in
 2. **Load source objects** using `object_from_uuid()` and review with pretty printing
 3. **Load or create a variogram** using `object_from_uuid()` or `Variogram.create()`
 4. **Create a target BlockModel** (preferred over grids) or use existing one
-5. **Define kriging parameters** - prefer multiple scenarios with `run_kriging_multiple()`
+5. **Define kriging parameters** - use `block_model.attributes["name"]` for targets (works for both new and existing attributes)
 6. **Run kriging** with `FeedbackWidget` for progress
-7. **Refresh and review** - reload block model to see new attributes, view with pretty printing
-8. **Basic analysis** - query data with `get_data()`, show statistics
+7. **Refresh and review** - `block_model = await block_model.refresh()` to see new attributes
+8. **Basic analysis** - query data with `to_dataframe()`, show statistics
+
+**Targeting Block Model attributes:**
+```python
+# Use block_model.attributes[] for target - creates if doesn't exist, updates if it does
+params = KrigingParameters(
+    source=source_pointset.attributes["grade"],
+    target=block_model.attributes["kriged_grade"],  # Preferred pattern
+    variogram=variogram,
+    search=SearchNeighbourhood(ellipsoid=search_ellipsoid, max_samples=20),
+)
+
+# After kriging, ALWAYS refresh to get the updated block model:
+block_model = await block_model.refresh()
+```
 
 **Example kriging imports:**
 ```python

@@ -335,3 +335,123 @@ class TestAttributeSerialization(TestCase):
         self.assertNotIn("unit", result[1])
         self.assertNotIn("block_model_column_uuid", result[1])
 
+
+class TestBlockModelAttributeTarget(TestCase):
+    """Tests for BlockModelAttribute and BlockModelPendingAttribute target functionality."""
+
+    def test_existing_attribute_exists_property(self):
+        """Test that existing attributes have exists=True."""
+        attr = BlockModelAttribute(
+            name="grade",
+            attribute_type="Float64",
+        )
+        self.assertTrue(attr.exists)
+
+    def test_existing_attribute_to_target_dict(self):
+        """Test that existing attributes serialize to update operation with name-based reference."""
+        attr = BlockModelAttribute(
+            name="grade",
+            attribute_type="Float64",
+        )
+        target_dict = attr.to_target_dict()
+
+        self.assertEqual(target_dict["operation"], "update")
+        self.assertIn("reference", target_dict)
+        self.assertEqual(target_dict["reference"], "attributes[?name=='grade']")
+
+    def test_existing_attribute_expression(self):
+        """Test that existing attributes have correct JMESPath expression."""
+        attr = BlockModelAttribute(
+            name="grade",
+            attribute_type="Float64",
+        )
+        self.assertEqual(attr.expression, "attributes[?name=='grade']")
+
+    def test_pending_attribute_exists_property(self):
+        """Test that pending attributes have exists=False."""
+        from evo.objects.typed.block_model_ref import BlockModelPendingAttribute, BlockModelAttributes
+
+        attrs = BlockModelAttributes([], block_model=None)
+        pending = BlockModelPendingAttribute(attrs, "new_attribute")
+
+        self.assertFalse(pending.exists)
+
+    def test_pending_attribute_to_target_dict(self):
+        """Test that pending attributes serialize to create operation."""
+        from evo.objects.typed.block_model_ref import BlockModelPendingAttribute, BlockModelAttributes
+
+        attrs = BlockModelAttributes([], block_model=None)
+        pending = BlockModelPendingAttribute(attrs, "new_attribute")
+        target_dict = pending.to_target_dict()
+
+        self.assertEqual(target_dict["operation"], "create")
+        self.assertEqual(target_dict["name"], "new_attribute")
+
+    def test_pending_attribute_expression(self):
+        """Test that pending attributes have correct JMESPath expression."""
+        from evo.objects.typed.block_model_ref import BlockModelPendingAttribute, BlockModelAttributes
+
+        attrs = BlockModelAttributes([], block_model=None)
+        pending = BlockModelPendingAttribute(attrs, "new_attribute")
+
+        self.assertIn("new_attribute", pending.expression)
+        self.assertIn("attributes", pending.expression)
+
+    def test_pending_attribute_repr(self):
+        """Test the string representation of BlockModelPendingAttribute."""
+        from evo.objects.typed.block_model_ref import BlockModelPendingAttribute, BlockModelAttributes
+
+        attrs = BlockModelAttributes([], block_model=None)
+        pending = BlockModelPendingAttribute(attrs, "new_attribute")
+        repr_str = repr(pending)
+
+        self.assertIn("BlockModelPendingAttribute", repr_str)
+        self.assertIn("new_attribute", repr_str)
+        self.assertIn("exists=False", repr_str)
+
+    def test_attributes_getitem_returns_pending_for_missing(self):
+        """Test that accessing a non-existent attribute returns PendingAttribute."""
+        from evo.objects.typed.block_model_ref import BlockModelPendingAttribute, BlockModelAttributes
+
+        existing_attrs = [
+            BlockModelAttribute(name="grade", attribute_type="Float64"),
+        ]
+        attrs = BlockModelAttributes(existing_attrs, block_model=None)
+
+        # Accessing existing attribute returns BlockModelAttribute
+        existing = attrs["grade"]
+        self.assertIsInstance(existing, BlockModelAttribute)
+        self.assertTrue(existing.exists)
+
+        # Accessing non-existent attribute returns BlockModelPendingAttribute
+        pending = attrs["new_attribute"]
+        self.assertIsInstance(pending, BlockModelPendingAttribute)
+        self.assertFalse(pending.exists)
+
+    def test_attributes_getitem_by_index(self):
+        """Test that accessing attributes by index works correctly."""
+        from evo.objects.typed.block_model_ref import BlockModelAttributes
+
+        existing_attrs = [
+            BlockModelAttribute(name="grade", attribute_type="Float64"),
+            BlockModelAttribute(name="density", attribute_type="Float32"),
+        ]
+        attrs = BlockModelAttributes(existing_attrs, block_model=None)
+
+        self.assertEqual(attrs[0].name, "grade")
+        self.assertEqual(attrs[1].name, "density")
+
+    def test_attribute_has_parent_reference(self):
+        """Test that attributes have access to parent BlockModelAttributes."""
+        from evo.objects.typed.block_model_ref import BlockModelAttributes
+
+        existing_attrs = [
+            BlockModelAttribute(name="grade", attribute_type="Float64"),
+        ]
+        attrs = BlockModelAttributes(existing_attrs, block_model=None)
+
+        # The attribute should have a parent reference
+        attr = attrs["grade"]
+        self.assertIsNotNone(attr._parent)
+        self.assertEqual(attr._parent, attrs)
+

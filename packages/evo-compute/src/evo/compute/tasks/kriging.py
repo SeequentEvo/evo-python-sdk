@@ -170,7 +170,7 @@ class KrigingParameters:
     Example:
         >>> params = KrigingParameters(
         ...     source=pointset.attributes["grade"],  # Source attribute
-        ...     target=Target.new_attribute(block_model, "kriged_grade"),
+        ...     target=block_model.attributes["kriged_grade"],  # Target attribute (creates if doesn't exist)
         ...     variogram=variogram,  # Variogram model
         ...     search=SearchNeighbourhood(
         ...         ellipsoid=Ellipsoid(ranges=EllipsoidRanges(200, 150, 100)),
@@ -198,15 +198,20 @@ class KrigingParameters:
     def __init__(
         self,
         source: Source | Any,  # Also accepts Attribute from evo.objects.typed
-        target: Target,
+        target: Target | Any,  # Also accepts Attribute/PendingAttribute from evo.objects.typed
         variogram: GeoscienceObjectReference,
         search: SearchNeighbourhood,
         method: SimpleKriging | OrdinaryKriging | None = None,
     ):
-        # Handle Attribute type from evo.objects.typed.dataset
+        # Handle Attribute/PendingAttribute types from evo.objects.typed.dataset
         if hasattr(source, "_obj") and hasattr(source, "expression"):
             # source is an Attribute, construct a Source object
             source = Source(object=source._obj.metadata.url, attribute=source.expression)
+
+        # Handle target attribute types (Attribute, PendingAttribute, BlockModelAttribute, BlockModelPendingAttribute)
+        if hasattr(target, "to_target_dict"):
+            # target is an attribute type with to_target_dict() method
+            target = _target_from_attribute(target)
 
         self.source = source
         self.target = target
@@ -223,6 +228,41 @@ class KrigingParameters:
             "neighborhood": self.search.to_dict(),
             "kriging_method": self.method.to_dict(),
         }
+
+
+def _target_from_attribute(attr: Any) -> Target:
+    """Convert an attribute object to a Target.
+
+    Handles Attribute, PendingAttribute (from evo.objects.typed.dataset) and
+    BlockModelAttribute, BlockModelPendingAttribute (from evo.objects.typed.block_model_ref).
+
+    Args:
+        attr: An attribute object with to_target_dict() method.
+
+    Returns:
+        A Target instance configured based on the attribute.
+    """
+    # Get the object reference - different paths for different attribute types
+    if hasattr(attr, "_obj") and attr._obj is not None:
+        # Attribute or PendingAttribute from dataset.py (PointSet, Grid, etc.)
+        # _obj is a DownloadedObject which has metadata with the reference
+        target_object = attr._obj
+    elif hasattr(attr, "_block_model") and attr._block_model is not None:
+        # BlockModelAttribute or BlockModelPendingAttribute
+        target_object = attr._block_model
+    elif hasattr(attr, "_parent") and hasattr(attr._parent, "_block_model") and attr._parent._block_model is not None:
+        # BlockModelAttribute (alternative path through parent)
+        target_object = attr._parent._block_model
+    else:
+        raise TypeError(
+            f"Cannot determine target object from attribute type {type(attr).__name__}. "
+            "Expected Attribute, PendingAttribute, BlockModelAttribute, or BlockModelPendingAttribute."
+        )
+
+    # Get the attribute specification dict
+    attr_dict = attr.to_target_dict()
+
+    return Target(object=target_object, attribute=attr_dict)
 
 
 # =============================================================================
