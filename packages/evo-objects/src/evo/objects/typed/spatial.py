@@ -44,7 +44,7 @@ class BaseSpatialObjectData(BaseObjectData, ABC):
         raise NotImplementedError("Subclasses must implement compute_bounding_box to derive bounding box from data.")
 
 
-class BaseSpatialObject(BaseObject, ABC):
+class BaseSpatialObject(BaseObject):
     """Base class for all Geoscience Objects with spatial data."""
 
     _bbox_type_adapter: ClassVar[TypeAdapter[BoundingBox]] = TypeAdapter(BoundingBox)
@@ -58,6 +58,7 @@ class BaseSpatialObject(BaseObject, ABC):
         object_dict["bounding_box"] = cls._bbox_type_adapter.dump_python(data.compute_bounding_box())
         return object_dict
 
+    # The bounding box is defined as regular a property so that subclasses can override it if needed
     @property
     def bounding_box(self) -> BoundingBox:
         return self._bounding_box
@@ -65,33 +66,3 @@ class BaseSpatialObject(BaseObject, ABC):
     @bounding_box.setter
     def bounding_box(self, value: BoundingBox) -> None:
         self._bounding_box = value
-
-
-class DynamicBoundingBoxObject(BaseSpatialObject):
-    """A base class for Geoscience Objects where the bounding box is directly derived from properties of the object.
-
-    The bounding box is recomputed whenever it is accessed.
-    """
-
-    @abstractmethod
-    def compute_bounding_box(self) -> BoundingBox:
-        """Compute the bounding box for the object based on its datasets.
-
-        :return: The computed bounding box.
-        """
-        raise NotImplementedError("Subclasses must implement compute_bounding_box to derive bounding box from data.")
-
-    @property
-    def bounding_box(self) -> BoundingBox:
-        return self.compute_bounding_box()
-
-    @bounding_box.setter
-    def bounding_box(self, value: BoundingBox) -> None:
-        raise AttributeError("Cannot set bounding_box on this object, as it is dynamically derived from the data.")
-
-    async def update(self):
-        """Update the object on the geoscience object service, including recomputing the bounding box."""
-
-        # Update the bounding box in the document
-        self._bounding_box = self.compute_bounding_box()
-        await super().update()

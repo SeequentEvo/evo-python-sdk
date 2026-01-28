@@ -93,7 +93,7 @@ class Attribute(SchemaModel):
         """The type of this attribute."""
         return self._attribute_type
 
-    async def as_dataframe(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
+    async def get_dataframe(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
         """Load a DataFrame containing the values for this attribute from the object.
 
         :param fb: Optional feedback object to report download progress.
@@ -200,7 +200,7 @@ class Attributes(SchemaList[Attribute]):
 
             attributes_list.append(attr_doc)
 
-    async def as_dataframe(self, *keys: str, fb: IFeedback = NoFeedback) -> pd.DataFrame:
+    async def get_dataframe(self, *keys: str, fb: IFeedback = NoFeedback) -> pd.DataFrame:
         """Load a DataFrame containing the values from the specified attributes in the object.
 
         :param keys: Optional list of attribute keys to filter the attributes by. If no keys are provided, all
@@ -210,7 +210,7 @@ class Attributes(SchemaList[Attribute]):
         :return: A DataFrame containing the values from the specified attributes. Column name(s) will be updated
             based on the attribute names.
         """
-        parts = [await attribute.as_dataframe(fb=fb_part) for attribute, fb_part in iter_with_fb(self, fb)]
+        parts = [await attribute.get_dataframe(fb=fb_part) for attribute, fb_part in iter_with_fb(self, fb)]
         return pd.concat(parts, axis=1) if len(parts) > 0 else pd.DataFrame()
 
     async def append_attribute(self, df: pd.DataFrame, fb: IFeedback = NoFeedback):

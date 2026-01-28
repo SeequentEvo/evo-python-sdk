@@ -181,6 +181,67 @@ class BoundingBox:
             max_z=z.max(),
         )
 
+    @classmethod
+    def from_extent(
+        cls,
+        origin: Point3,
+        extent: Size3d,
+        rotation: Rotation | None = None,
+    ) -> BoundingBox:
+        """Create a BoundingBox from an origin point and extent.
+
+        :param origin: The origin point of the box.
+        :param extent: The extent (dx, dy, dz) of the box.
+        :param rotation: Optional rotation to apply to the box.
+        :return: The bounding box that encompasses the rotated box.
+        """
+        if rotation is not None:
+            rotation_matrix = rotation.as_rotation_matrix()
+        else:
+            rotation_matrix = np.eye(3)
+
+        corners = np.array(
+            [
+                [0, 0, 0],
+                [extent.dx, 0, 0],
+                [0, extent.dy, 0],
+                [0, 0, extent.dz],
+                [extent.dx, extent.dy, 0],
+                [extent.dx, 0, extent.dz],
+                [0, extent.dy, extent.dz],
+                [extent.dx, extent.dy, extent.dz],
+            ]
+        )
+        rotated_corners = rotation_matrix @ corners.T
+        return cls.from_points(
+            rotated_corners[0, :] + origin.x,
+            rotated_corners[1, :] + origin.y,
+            rotated_corners[2, :] + origin.z,
+        )
+
+    @classmethod
+    def from_regular_grid(
+        cls,
+        origin: Point3,
+        size: Size3i,
+        cell_size: Size3d,
+        rotation: Rotation | None = None,
+    ) -> BoundingBox:
+        """Create a BoundingBox for a regular 3D grid.
+
+        :param origin: The origin point of the grid.
+        :param size: The number of cells in each dimension.
+        :param cell_size: The size of each cell in each dimension.
+        :param rotation: Optional rotation to apply to the grid.
+        :return: The bounding box that encompasses the grid.
+        """
+        extent = Size3d(
+            dx=size.nx * cell_size.dx,
+            dy=size.ny * cell_size.dy,
+            dz=size.nz * cell_size.dz,
+        )
+        return cls.from_extent(origin, extent, rotation)
+
 
 @dataclass(frozen=True)
 class Rotation:

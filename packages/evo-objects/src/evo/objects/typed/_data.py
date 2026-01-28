@@ -22,7 +22,7 @@ class DataTable(SchemaModel):
     table_format: ClassVar[KnownTableFormat | None] = None
     data_columns: ClassVar[list[str]] = []
 
-    async def as_dataframe(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
+    async def get_dataframe(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
         """Load a DataFrame containing value for this table.
 
         :param fb: Optional feedback object to report download progress.
@@ -85,15 +85,15 @@ class DataTableAndAttributes(SchemaModel):
         """The expected number of rows in the table and attributes."""
         return self._table.length
 
-    async def as_dataframe(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
+    async def get_dataframe(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
         """Load a DataFrame containing the values and attributes.
 
         :param fb: Optional feedback object to report download progress.
         :return: DataFrame with data columns (e.g., X, Y, Z) and additional columns for attributes.
         """
-        table_df = await self._table.as_dataframe(fb=fb)
+        table_df = await self._table.get_dataframe(fb=fb)
         if self.attributes is not None and len(self.attributes) > 0:
-            attr_df = await self.attributes.as_dataframe(fb=fb)
+            attr_df = await self.attributes.get_dataframe(fb=fb)
             combined_df = pd.concat([table_df, attr_df], axis=1)
             return combined_df
         else:
