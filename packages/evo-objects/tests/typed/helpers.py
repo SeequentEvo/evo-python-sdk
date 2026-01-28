@@ -42,6 +42,10 @@ class MockDownloadedObject(DownloadedObject):
     def as_dict(self):
         return self.object_dict
 
+    async def download_dataframe(self, data: dict, fb=None, **kwargs) -> pd.DataFrame:
+        """Download a DataFrame from a table info dict."""
+        return self.mock_client.get_dataframe(data)
+
     async def download_attribute_dataframe(self, data: dict, fb) -> pd.DataFrame:
         return self.mock_client.get_dataframe(data["values"])
 
