@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING, Any, Literal
 import numpy as np
 from pydantic import TypeAdapter
 
+from evo.common.styles.html import STYLESHEET, build_nested_table, build_table_row, build_title
 from evo.objects import SchemaVersion
 
 from ._property import SchemaProperty
@@ -785,8 +786,6 @@ class Variogram(ConstructableObject[VariogramData]):
 
     def _repr_html_(self) -> str:
         """Return an HTML representation for Jupyter notebooks."""
-        from .._html_styles import STYLESHEET, build_nested_table, build_table_row, build_title
-
         doc = self.as_dict()
 
         # Get basic info
@@ -851,5 +850,5 @@ class Variogram(ConstructableObject[VariogramData]):
         table_rows = [build_table_row(label, value) for label, value in rows]
         main_table = f'<table>{"".join(table_rows)}</table>'
 
-        return f'{STYLESHEET}<div class="evo-object">{build_title(name, title_links)}{main_table}{structures_html}</div>'
+        return f'{STYLESHEET}<div class="evo">{build_title(name, title_links)}{main_table}{structures_html}</div>'
 

@@ -39,6 +39,7 @@ from typing import Any, TypeVar, overload
 
 from evo.common import IContext
 from evo.common.interfaces import IFeedback
+from evo.common.styles.html import STYLESHEET, build_nested_table, build_table, build_title
 from evo.common.utils import NoFeedback, Retry, split_feedback
 
 from ..client import JobClient
@@ -401,8 +402,6 @@ class TaskResult:
             from urllib.parse import urlparse
 
             parsed = urlparse(ref)
-            if parsed.scheme != "evo":
-                return None
             parts = parsed.path.split("/")
             if "orgs" in parts and "workspaces" in parts and "objects" in parts:
                 org_idx = parts.index("orgs") + 1
@@ -427,95 +426,25 @@ class TaskResult:
 
     def _repr_html_(self) -> str:
         """Generate HTML representation for Jupyter notebooks."""
+
         portal_url = self._get_portal_url()
+        links = [("Portal", portal_url)] if portal_url else None
 
-        links_html = ""
-        if portal_url:
-            links_html = f'<a href="{portal_url}" target="_blank">Portal</a>'
-
-        html = """
-<style>
-    .task-result {
-        border: 1px solid #ccc;
-        border-radius: 3px;
-        padding: 16px;
-        margin: 8px 0;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-        font-size: 13px;
-        display: inline-block;
-        max-width: 800px;
-        background-color: var(--jp-layout-color1, #fff);
-    }
-    .task-result .title {
-        font-size: 15px;
-        font-weight: 600;
-        margin-bottom: 12px;
-        color: var(--jp-ui-font-color1, #111);
-        display: flex;
-        align-items: baseline;
-        gap: 8px;
-    }
-    .task-result .title-links {
-        font-size: 12px;
-        font-weight: normal;
-    }
-    .task-result .title-links a {
-        color: #666;
-        text-decoration: none;
-    }
-    .task-result .title-links a:hover {
-        color: #0066cc;
-        text-decoration: underline;
-    }
-    .task-result table {
-        border-collapse: collapse;
-        width: 100%;
-    }
-    .task-result td.label {
-        padding: 3px 8px 3px 0;
-        font-weight: 600;
-        white-space: nowrap;
-        vertical-align: top;
-        color: var(--jp-ui-font-color1, #333);
-    }
-    .task-result td.value {
-        padding: 3px 0;
-        color: var(--jp-ui-font-color1, #111);
-    }
-    .task-result .attr-highlight {
-        background: #e3f2fd;
-        padding: 2px 8px;
-        border-radius: 3px;
-        font-family: monospace;
-        font-weight: 600;
-        color: #1565c0;
-    }
-    .task-result .message {
-        background: #e8f5e9;
-        padding: 6px 10px;
-        border-radius: 3px;
-        color: #2e7d32;
-        margin-bottom: 12px;
-        font-size: 12px;
-    }
-</style>
-<div class="task-result">
-"""
         title = f"✓ {self._get_result_type_name()} Result"
-        if links_html:
-            html += f'<div class="title"><span>{title}</span><span class="title-links">{links_html}</span></div>'
-        else:
-            html += f'<div class="title">{title}</div>'
-
-        html += f'<div class="message">{self.message}</div>'
-
-        html += '<table>'
-        html += f'<tr><td class="label">Target:</td><td class="value">{self.target_name}</td></tr>'
-        html += f'<tr><td class="label">Schema:</td><td class="value">{self.schema_type}</td></tr>'
-        html += f'<tr><td class="label">Attribute:</td><td class="value"><span class="attr-highlight">{self.attribute_name}</span></td></tr>'
-        html += '</table>'
-
-        html += '</div>'
+        
+        rows = [
+            ("Target:", self.target_name),
+            ("Schema:", self.schema_type),
+            ("Attribute:", f'<span class="attr-highlight">{self.attribute_name}</span>'),
+        ]
+        
+        html = f"""{STYLESHEET}
+<div class="evo">
+{build_title(title, links)}
+<div class="message">{self.message}</div>
+{build_table(rows)}
+</div>
+"""
         return html
 
     def __repr__(self) -> str:
@@ -564,79 +493,34 @@ class TaskResults:
 
     def _repr_html_(self) -> str:
         """Generate HTML representation for Jupyter notebooks."""
+
         if not self._results:
             return "<div>No results</div>"
 
         result_type = self._results[0]._get_result_type_name() if self._results else "Task"
-        html = f"""
-<style>
-    .task-results {{
-        border: 1px solid #ccc;
-        border-radius: 3px;
-        padding: 16px;
-        margin: 8px 0;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-        font-size: 13px;
-        max-width: 800px;
-        background-color: var(--jp-layout-color1, #fff);
-    }}
-    .task-results .title {{
-        font-size: 15px;
-        font-weight: 600;
-        margin-bottom: 12px;
-        color: var(--jp-ui-font-color1, #111);
-    }}
-    .task-results table {{
-        border-collapse: collapse;
-        width: 100%;
-    }}
-    .task-results th {{
-        text-align: left;
-        padding: 6px 8px;
-        border-bottom: 2px solid #ccc;
-        color: var(--jp-ui-font-color1, #333);
-    }}
-    .task-results td {{
-        padding: 6px 8px;
-        border-bottom: 1px solid #eee;
-        color: var(--jp-ui-font-color1, #111);
-    }}
-    .task-results .attr-highlight {{
-        background: #e3f2fd;
-        padding: 2px 6px;
-        border-radius: 3px;
-        font-family: monospace;
-        font-size: 12px;
-        color: #1565c0;
-    }}
-    .task-results .success {{
-        color: #2e7d32;
-    }}
-</style>
-<div class="task-results">
-    <div class="title">✓ {len(self._results)} {result_type} Results</div>
-    <table>
-        <tr>
-            <th>#</th>
-            <th>Target</th>
-            <th>Attribute</th>
-            <th>Schema</th>
-        </tr>
-"""
-        for i, result in enumerate(self._results):
-            html += f"""
-        <tr>
-            <td>{i + 1}</td>
-            <td>{result.target_name}</td>
-            <td><span class="attr-highlight">{result.attribute_name}</span></td>
-            <td>{result.schema_type}</td>
-        </tr>
-"""
-        html += """
-    </table>
+        title = f"✓ {len(self._results)} {result_type} Results"
+
+        # Build table data
+        headers = ["#", "Target", "Attribute", "Schema", "Link"]
+        rows = [
+            [
+                str(i + 1),
+                result.target_name,
+                f'<span class="attr-highlight">{result.attribute_name}</span>',
+                result.schema_type,
+                f'<a href="{result._get_portal_url()}" target="_blank">Portal</a>' if result._get_portal_url() else "N/A",
+            ]
+            for i, result in enumerate(self._results)
+        ]
+
+        table = build_nested_table(headers, rows)
+
+        return f"""{STYLESHEET}
+<div class="evo">
+{build_title(title)}
+{table}
 </div>
 """
-        return html
 
     def __repr__(self) -> str:
         """String representation."""

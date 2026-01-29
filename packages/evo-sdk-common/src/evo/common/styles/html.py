@@ -9,12 +9,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-"""Shared HTML styles for Jupyter notebook representations."""
+"""Shared HTML styles for Jupyter notebook representations across all Evo SDK packages."""
 
-# CSS Stylesheet for all object HTML representations
+# CSS Stylesheet for all HTML representations (objects, task results, etc.)
 STYLESHEET = """
 <style>
-    .evo-object {
+    .evo {
         border: 1px solid #ccc;
         border-radius: 3px;
         padding: 16px;
@@ -25,7 +25,7 @@ STYLESHEET = """
         max-width: 800px;
         background-color: var(--jp-layout-color1, #fff);
     }
-    .evo-object .title {
+    .evo .title {
         font-size: 15px;
         font-weight: 600;
         margin-bottom: 12px;
@@ -34,91 +34,124 @@ STYLESHEET = """
         align-items: baseline;
         gap: 8px;
     }
-    .evo-object .title-links {
+    .evo .title-links {
         font-size: 12px;
         font-weight: normal;
-        color: #666;
     }
-    .evo-object .title-links a {
-        color: #666;
+    .evo .title-links a {
+        color: #0066cc !important;
         text-decoration: none;
     }
-    .evo-object .title-links a:hover {
-        color: #0066cc;
+    .evo .title-links a:hover {
         text-decoration: underline;
     }
-    .evo-object table {
+    .evo table {
         border-collapse: collapse;
-        width: 100%;
+        width: auto;
         margin-bottom: 8px;
+        table-layout: auto;
     }
-    .evo-object td.label {
+    .evo td.label {
         padding: 3px 8px 3px 0;
         font-weight: 600;
         white-space: nowrap;
         vertical-align: top;
         color: var(--jp-ui-font-color1, #333);
         text-align: left;
+        width: 0.1%;
     }
-    .evo-object td.label-vtop {
+    .evo td.label-vtop {
         padding: 3px 8px 3px 0;
         font-weight: 600;
+        white-space: nowrap;
         vertical-align: top;
         color: var(--jp-ui-font-color1, #333);
         text-align: left;
+        width: 0.1%;
     }
-    .evo-object td.value {
+    .evo td.value {
         padding: 3px 0;
         color: var(--jp-ui-font-color1, #111);
         text-align: left;
+        width: auto;
     }
-    .evo-object table.nested {
+    .evo table.nested {
         border-collapse: collapse;
         font-size: 12px;
         margin-bottom: 0;
-        width: 100%;
+        width: auto;
     }
-    .evo-object table.nested th {
+    .evo table.nested th {
         padding: 3px 12px 3px 0;
         text-align: left;
         font-weight: 600;
         color: var(--jp-ui-font-color1, #333);
     }
-    .evo-object table.nested th.right {
+    .evo table.nested th.right {
         text-align: right;
         padding-right: 0;
     }
-    .evo-object table.nested td {
+    .evo table.nested td {
         padding: 3px 12px 3px 0;
         color: var(--jp-ui-font-color1, #111);
         text-align: left;
     }
-    .evo-object table.nested td.right {
+    .evo table.nested td.right {
         text-align: right;
         padding-right: 0;
     }
-    .evo-object .section {
+    .evo table.nested tr.alt-row {
+        background-color: var(--jp-layout-color2, #f5f5f5);
+    }
+    .evo .section {
         margin-top: 8px;
     }
-    .evo-object .section-heading {
+    .evo .section-heading {
         font-weight: 600;
         margin-bottom: 6px;
         color: var(--jp-ui-font-color1, #333);
     }
-    .evo-object .indent {
+    .evo .indent {
         margin-left: 16px;
+    }
+    
+    /* Task result specific styles */
+    .evo .attr-highlight {
+        background: #e3f2fd;
+        padding: 2px 8px;
+        border-radius: 3px;
+        font-family: monospace;
+        font-weight: 600;
+        color: #1565c0;
+    }
+    .evo .message {
+        background: #e8f5e9;
+        padding: 6px 10px;
+        border-radius: 3px;
+        color: #2e7d32;
+        margin-bottom: 12px;
+        font-size: 12px;
+    }
+    .evo .success {
+        color: #2e7d32;
+    }
+    .evo .subtitle {
+        font-size: 12px;
+        color: #666;
+        margin-bottom: 8px;
     }
 </style>
 """
 
 
-def build_container(content: str) -> str:
+def build_container(content: str, css_class: str = "evo") -> str:
     """Wrap content in a styled container div.
     
     :param content: HTML content to wrap.
+    :param css_class: CSS class for the container (default: "evo").
     :return: Wrapped HTML string.
     """
-    return f'{STYLESHEET}<div class="evo-object">{content}</div>'
+    return f'{STYLESHEET}<div class="{css_class}">{content}</div>'
 
 
 def build_title(text: str, links: list[tuple[str, str]] | None = None) -> str:
@@ -221,7 +254,7 @@ def build_object_html(title: str, rows: list[tuple[str, str]], extra_content: st
     """
     html_parts = [
         STYLESHEET,
-        '<div class="evo-object">',
+        '<div class="evo">',
         build_title(title),
         build_table(rows),
         extra_content,

@@ -27,6 +27,7 @@ import pandas as pd
 from pydantic import TypeAdapter
 
 from evo.common import IContext, IFeedback
+from evo.common.styles.html import STYLESHEET, build_nested_table, build_table_row, build_table_row_vtop, build_title
 from evo.common.utils import NoFeedback
 
 from evo.objects import SchemaVersion
@@ -244,15 +245,13 @@ class BlockModelAttributes:
 
     def _repr_html_(self) -> str:
         """Return an HTML representation for Jupyter notebooks."""
-        from .._html_styles import STYLESHEET, build_nested_table
-
         if len(self._attributes) == 0:
-            return f'{STYLESHEET}<div class="evo-object">No attributes available.</div>'
+            return f'{STYLESHEET}<div class="evo">No attributes available.</div>'
 
         headers = ["Name", "Type", "Unit"]
         rows = [[attr.name, attr.attribute_type, attr.unit or ""] for attr in self._attributes]
         table_html = build_nested_table(headers, rows)
-        return f'{STYLESHEET}<div class="evo-object">{table_html}</div>'
+        return f'{STYLESHEET}<div class="evo">{table_html}</div>'
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -481,7 +480,6 @@ class BlockModel(BaseSpatialObject, ConstructableObject[BlockModelData]):
 
     def _repr_html_(self) -> str:
         """Return an HTML representation for Jupyter notebooks."""
-        from .._html_styles import STYLESHEET, build_nested_table, build_table_row, build_table_row_vtop, build_title
 
         doc = self.as_dict()
 
@@ -541,7 +539,7 @@ class BlockModel(BaseSpatialObject, ConstructableObject[BlockModelData]):
             attrs_table = build_nested_table(["Name", "Type", "Unit"], attr_rows)
             attributes_html = f'<div style="margin-top: 8px;"><strong>Attributes ({len(attrs)}):</strong></div>{attrs_table}'
 
-        return f'{STYLESHEET}<div class="evo-object">{build_title(name, title_links)}{main_table}{attributes_html}</div>'
+        return f'{STYLESHEET}<div class="evo">{build_title(name, title_links)}{main_table}{attributes_html}</div>'
 
     def _get_block_model_client(self) -> BlockModelAPIClient:
         """Get a BlockModelAPIClient for the current context."""

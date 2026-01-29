@@ -25,7 +25,7 @@ from evo import jmespath
 from evo.common import Environment, IContext, StaticContext
 from evo.objects import DownloadedObject, ObjectMetadata, ObjectReference, ObjectSchema, SchemaVersion
 
-from .._html_styles import STYLESHEET, build_nested_table, build_table_row, build_table_row_vtop, build_title
+from evo.common.styles.html import STYLESHEET, build_nested_table, build_table_row, build_table_row_vtop, build_title
 from ._adapters import AttributesAdapter, CategoryTableAdapter, DatasetAdapter, TableAdapter
 from ._property import SchemaProperty
 from ._utils import (
@@ -627,7 +627,7 @@ class _BaseObject:
         # Build final HTML
         return (
             f'{STYLESHEET}'
-            f'<div class="evo-object">'
+            f'<div class="evo">'
             f'{build_title(name, title_links if title_links else None)}'
             f'{main_table}'
             f'</div>'
