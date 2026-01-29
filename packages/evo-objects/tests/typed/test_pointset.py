@@ -327,3 +327,178 @@ class TestPointSet(TestWithConnector):
             refreshed_df = await refreshed.locations.to_dataframe()
             pd.testing.assert_frame_equal(original_df, refreshed_df)
 
+
+class TestAttributeTarget(TestWithConnector):
+    """Tests for Attribute and PendingAttribute target functionality."""
+
+    def setUp(self) -> None:
+        TestWithConnector.setUp(self)
+        self.environment = Environment(hub_url=BASE_URL, org_id=ORG.id, workspace_id=WORKSPACE_ID)
+        self.context = StaticContext.from_environment(
+            environment=self.environment,
+            connector=self.connector,
+        )
+
+    @contextlib.contextmanager
+    def _mock_geoscience_objects(self):
+        mock_client = MockClient(self.environment)
+        with (
+            patch("evo.objects.typed.dataset.get_data_client", lambda _: mock_client),
+            patch("evo.objects.typed.base.create_geoscience_object", mock_client.create_geoscience_object),
+            patch("evo.objects.typed.base.replace_geoscience_object", mock_client.replace_geoscience_object),
+            patch("evo.objects.typed.base.download_geoscience_object", mock_client.from_reference),
+        ):
+            yield mock_client
+
+    async def test_existing_attribute_exists_property(self):
+        """Test that existing attributes have exists=True."""
+        data = PointSetData(
+            name="Test PointSet",
+            locations=pd.DataFrame({
+                "x": [1.0, 2.0, 3.0],
+                "y": [4.0, 5.0, 6.0],
+                "z": [7.0, 8.0, 9.0],
+                "grade": [10.0, 20.0, 30.0],
+            }),
+        )
+
+        with self._mock_geoscience_objects():
+            pointset = await PointSet.create(context=self.context, data=data)
+
+        attr = pointset.attributes["grade"]
+        self.assertTrue(attr.exists)
+
+    async def test_pending_attribute_exists_property(self):
+        """Test that pending (non-existent) attributes have exists=False."""
+        data = PointSetData(
+            name="Test PointSet",
+            locations=pd.DataFrame({
+                "x": [1.0, 2.0, 3.0],
+                "y": [4.0, 5.0, 6.0],
+                "z": [7.0, 8.0, 9.0],
+            }),
+        )
+
+        with self._mock_geoscience_objects():
+            pointset = await PointSet.create(context=self.context, data=data)
+
+        # Accessing a non-existent attribute should return PendingAttribute
+        attr = pointset.attributes["new_attribute"]
+        self.assertFalse(attr.exists)
+
+    async def test_existing_attribute_to_target_dict(self):
+        """Test that existing attributes serialize to update operation."""
+        data = PointSetData(
+            name="Test PointSet",
+            locations=pd.DataFrame({
+                "x": [1.0, 2.0, 3.0],
+                "y": [4.0, 5.0, 6.0],
+                "z": [7.0, 8.0, 9.0],
+                "grade": [10.0, 20.0, 30.0],
+            }),
+        )
+
+        with self._mock_geoscience_objects():
+            pointset = await PointSet.create(context=self.context, data=data)
+
+        attr = pointset.attributes["grade"]
+        target_dict = attr.to_target_dict()
+
+        self.assertEqual(target_dict["operation"], "update")
+        self.assertIn("reference", target_dict)
+        # Reference uses key (UUID), not name, so just check it's a valid JMESPath
+        self.assertIn("attributes", target_dict["reference"])
+
+    async def test_pending_attribute_to_target_dict(self):
+        """Test that pending attributes serialize to create operation."""
+        data = PointSetData(
+            name="Test PointSet",
+            locations=pd.DataFrame({
+                "x": [1.0, 2.0, 3.0],
+                "y": [4.0, 5.0, 6.0],
+                "z": [7.0, 8.0, 9.0],
+            }),
+        )
+
+        with self._mock_geoscience_objects():
+            pointset = await PointSet.create(context=self.context, data=data)
+
+        attr = pointset.attributes["new_attribute"]
+        target_dict = attr.to_target_dict()
+
+        self.assertEqual(target_dict["operation"], "create")
+        self.assertEqual(target_dict["name"], "new_attribute")
+
+    async def test_pending_attribute_expression(self):
+        """Test that pending attributes have correct JMESPath expression."""
+        data = PointSetData(
+            name="Test PointSet",
+            locations=pd.DataFrame({
+                "x": [1.0, 2.0, 3.0],
+                "y": [4.0, 5.0, 6.0],
+                "z": [7.0, 8.0, 9.0],
+            }),
+        )
+
+        with self._mock_geoscience_objects():
+            pointset = await PointSet.create(context=self.context, data=data)
+
+        attr = pointset.attributes["new_attribute"]
+        self.assertIn("new_attribute", attr.expression)
+        self.assertIn("attributes", attr.expression)
+
+    async def test_pending_attribute_has_obj_reference(self):
+        """Test that pending attributes have access to parent object."""
+        data = PointSetData(
+            name="Test PointSet",
+            locations=pd.DataFrame({
+                "x": [1.0, 2.0, 3.0],
+                "y": [4.0, 5.0, 6.0],
+                "z": [7.0, 8.0, 9.0],
+            }),
+        )
+
+        with self._mock_geoscience_objects():
+            pointset = await PointSet.create(context=self.context, data=data)
+
+        attr = pointset.attributes["new_attribute"]
+        # PendingAttribute should have access to _obj through parent
+        self.assertIsNotNone(attr._obj)
+
+    async def test_pending_attribute_repr(self):
+        """Test the string representation of PendingAttribute."""
+        data = PointSetData(
+            name="Test PointSet",
+            locations=pd.DataFrame({
+                "x": [1.0, 2.0, 3.0],
+                "y": [4.0, 5.0, 6.0],
+                "z": [7.0, 8.0, 9.0],
+            }),
+        )
+
+        with self._mock_geoscience_objects():
+            pointset = await PointSet.create(context=self.context, data=data)
+
+        attr = pointset.attributes["new_attribute"]
+        repr_str = repr(attr)
+        self.assertIn("PendingAttribute", repr_str)
+        self.assertIn("new_attribute", repr_str)
+        self.assertIn("exists=False", repr_str)
+
+    async def test_attributes_getitem_by_index_raises_for_out_of_bounds(self):
+        """Test that accessing by invalid index raises IndexError."""
+        data = PointSetData(
+            name="Test PointSet",
+            locations=pd.DataFrame({
+                "x": [1.0, 2.0, 3.0],
+                "y": [4.0, 5.0, 6.0],
+                "z": [7.0, 8.0, 9.0],
+            }),
+        )
+
+        with self._mock_geoscience_objects():
+            pointset = await PointSet.create(context=self.context, data=data)
+
+        with self.assertRaises(IndexError):
+            _ = pointset.attributes[999]
+

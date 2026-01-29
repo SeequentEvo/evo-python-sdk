@@ -51,6 +51,7 @@ __all__ = [
     "BlockModelAttributes",
     "BlockModelData",
     "BlockModelGeometry",
+    "BlockModelPendingAttribute",
     "RegularBlockModelData",
 ]
 
@@ -66,21 +67,160 @@ class BlockModelGeometry:
     rotation: tuple[float, float, float] | None = None
 
 
-@dataclass(frozen=True, kw_only=True)
 class BlockModelAttribute:
-    """An attribute on a block model."""
+    """An attribute on a block model.
 
-    name: str
-    attribute_type: str
-    block_model_column_uuid: UUID | None = None
-    unit: str | None = None
+    This class represents an existing attribute on a block model. It stores a reference
+    to the parent BlockModel via `_obj`, similar to how `Attribute` in dataset.py works.
+    """
+
+    def __init__(
+        self,
+        name: str,
+        attribute_type: str,
+        block_model_column_uuid: UUID | None = None,
+        unit: str | None = None,
+        obj: "BlockModel | None" = None,
+    ):
+        self._name = name
+        self._attribute_type = attribute_type
+        self._block_model_column_uuid = block_model_column_uuid
+        self._unit = unit
+        self._obj = obj  # Reference to parent BlockModel, similar to Attribute._obj
+
+    @property
+    def name(self) -> str:
+        """The name of this attribute."""
+        return self._name
+
+    @property
+    def attribute_type(self) -> str:
+        """The type of this attribute."""
+        return self._attribute_type
+
+    @property
+    def block_model_column_uuid(self) -> UUID | None:
+        """The UUID of the column in the block model service."""
+        return self._block_model_column_uuid
+
+    @property
+    def unit(self) -> str | None:
+        """The unit of this attribute."""
+        return self._unit
+
+    @property
+    def exists(self) -> bool:
+        """Whether this attribute exists on the block model.
+
+        :return: True for existing attributes.
+        """
+        return True
+
+    @property
+    def expression(self) -> str:
+        """The JMESPath expression to access this attribute from the object."""
+        return f"attributes[?name=='{self._name}']"
+
+
+    def to_target_dict(self) -> dict[str, str]:
+        """Serialize this attribute as a target for compute tasks.
+
+        For existing attributes, returns an update operation referencing this attribute by name.
+
+        :return: A dictionary with operation type and reference.
+        """
+        return {
+            "operation": "update",
+            "reference": self.expression,
+        }
+
+    def __repr__(self) -> str:
+        return f"BlockModelAttribute(name={self._name!r}, attribute_type={self._attribute_type!r}, unit={self._unit!r})"
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, BlockModelAttribute):
+            return NotImplemented
+        return (
+            self._name == other._name
+            and self._attribute_type == other._attribute_type
+            and self._block_model_column_uuid == other._block_model_column_uuid
+            and self._unit == other._unit
+        )
+
+    def __hash__(self) -> int:
+        return hash((self._name, self._attribute_type, self._block_model_column_uuid, self._unit))
+
+
+class BlockModelPendingAttribute:
+    """A placeholder for an attribute that doesn't exist yet on a Block Model.
+
+    This is returned when accessing an attribute by name that doesn't exist.
+    It can be used as a target for compute tasks, which will create the attribute.
+
+    Stores a reference to the parent BlockModel via `_obj`, similar to how
+    `BlockModelAttribute` and `Attribute` (in dataset.py) work.
+    """
+
+    def __init__(self, obj: "BlockModel", name: str) -> None:
+        """
+        :param obj: The BlockModel this pending attribute belongs to.
+        :param name: The name of the attribute to create.
+        """
+        self._obj = obj  # Reference to parent BlockModel
+        self._name = name
+
+    @property
+    def name(self) -> str:
+        """The name of this attribute."""
+        return self._name
+
+    @property
+    def expression(self) -> str:
+        """The JMESPath expression to access this attribute from the object."""
+        return f"attributes[?name=='{self._name}']"
+
+    @property
+    def exists(self) -> bool:
+        """Whether this attribute exists on the block model.
+
+        :return: False for pending attributes.
+        """
+        return False
+
+
+    def to_target_dict(self) -> dict[str, str]:
+        """Serialize this attribute as a target for compute tasks.
+
+        For pending attributes, returns a create operation with the attribute name.
+
+        :return: A dictionary with operation type and name.
+        """
+        return {
+            "operation": "create",
+            "name": self._name,
+        }
+
+    def __repr__(self) -> str:
+        return f"BlockModelPendingAttribute(name={self._name!r}, exists=False)"
 
 
 class BlockModelAttributes:
     """A collection of attributes on a block model with pretty-printing support."""
 
-    def __init__(self, attributes: list[BlockModelAttribute]):
-        self._attributes = attributes
+    def __init__(self, attributes: list[BlockModelAttribute], block_model: "BlockModel | None" = None):
+        self._block_model = block_model
+        # Set _obj reference on each attribute to the parent BlockModel
+        self._attributes = []
+        for attr in attributes:
+            # Create a new attribute with _obj reference to the block model
+            attr_with_obj = BlockModelAttribute(
+                name=attr.name,
+                attribute_type=attr.attribute_type,
+                block_model_column_uuid=attr.block_model_column_uuid,
+                unit=attr.unit,
+                obj=block_model,
+            )
+            self._attributes.append(attr_with_obj)
 
     def __iter__(self):
         return iter(self._attributes)
@@ -88,12 +228,14 @@ class BlockModelAttributes:
     def __len__(self):
         return len(self._attributes)
 
-    def __getitem__(self, index_or_name: int | str) -> BlockModelAttribute:
+    def __getitem__(self, index_or_name: int | str) -> BlockModelAttribute | BlockModelPendingAttribute:
         if isinstance(index_or_name, str):
             for attr in self._attributes:
                 if attr.name == index_or_name:
                     return attr
-            raise KeyError(f"Attribute '{index_or_name}' not found")
+            # Return a BlockModelPendingAttribute for non-existent attributes accessed by name
+            # Pass the block model directly as _obj
+            return BlockModelPendingAttribute(self._block_model, index_or_name)
         return self._attributes[index_or_name]
 
     def __repr__(self) -> str:
@@ -324,7 +466,7 @@ class BlockModel(BaseSpatialObject, ConstructableObject[BlockModelData]):
     @property
     def attributes(self) -> BlockModelAttributes:
         """The attributes available on this block model."""
-        return BlockModelAttributes(_parse_attributes(self._attributes_raw))
+        return BlockModelAttributes(_parse_attributes(self._attributes_raw), block_model=self)
 
     def get_attribute(self, name: str) -> BlockModelAttribute | None:
         """Get an attribute by name.
@@ -502,10 +644,6 @@ class BlockModel(BaseSpatialObject, ConstructableObject[BlockModelData]):
         Use this after a remote operation (like kriging) has updated the block model
         to see the newly added attributes.
 
-        This method:
-        1. Reloads the geoscience object metadata
-        2. Fetches the latest version's attributes from the Block Model Service
-
         :return: A new BlockModel instance with refreshed data.
 
         Example:
@@ -513,42 +651,12 @@ class BlockModel(BaseSpatialObject, ConstructableObject[BlockModelData]):
             >>> block_model = await block_model.refresh()
             >>> block_model.attributes  # Now shows the new attributes
         """
-        from . import object_from_reference
+        from . import object_from_uuid
 
-        # Reload the object from the server using its reference URL
-        refreshed = await object_from_reference(self._context, self.metadata.url)
-
-        # Also fetch the latest attributes from the Block Model Service
-        # The geoscience object might not have the latest attributes if they were
-        # added by the Block Model Service (e.g., via kriging)
-        try:
-            client = refreshed._get_block_model_client()
-            versions = await client.list_versions(refreshed.block_model_uuid)
-            if versions:
-                latest_version = versions[0]  # List is ordered newest to oldest
-                # Convert Column objects to the expected _attributes_raw format
-                # Filter out geometry columns (i, j, k, x, y, z)
-                geometry_cols = {"i", "j", "k", "x", "y", "z"}
-                updated_attrs = []
-                for col in latest_version.columns:
-                    if col.title.lower() not in geometry_cols:
-                        # Only include col_id if it looks like a valid UUID (36 chars with dashes)
-                        col_uuid = None
-                        if col.col_id and len(col.col_id) == 36 and '-' in col.col_id:
-                            col_uuid = col.col_id
-                        updated_attrs.append({
-                            "name": col.title,
-                            "attribute_type": col.data_type.value if hasattr(col.data_type, 'value') else str(col.data_type),
-                            "block_model_column_uuid": col_uuid,
-                            "unit": col.unit_id,
-                        })
-                # Update the _attributes_raw on the refreshed object
-                refreshed._attributes_raw = updated_attrs
-        except Exception:
-            # If we can't fetch from Block Model Service, just use what we got from geoscience object
-            pass
-
-        return refreshed
+        # Reload the object from the server using its UUID (gets latest version)
+        # Note: We use object_from_uuid instead of object_from_reference to ensure
+        # we get the latest version, not the version that was originally loaded
+        return await object_from_uuid(self._context, self.metadata.id)
 
     async def add_attribute(
         self,
