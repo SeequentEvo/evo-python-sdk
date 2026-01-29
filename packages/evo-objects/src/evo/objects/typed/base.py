@@ -102,7 +102,7 @@ class DatasetProperty(Generic[_T]):
 
 
 def _get_url_prefix(environment: Environment) -> str:
-    return f"{environment.hub_url}/geoscience-object/orgs/{environment.org_id}/workspaces/{environment.workspace_id}/objects"
+    return f"{environment.hub_url.rstrip('/')}/geoscience-object/orgs/{environment.org_id}/workspaces/{environment.workspace_id}/objects"
 
 
 async def object_from_reference(

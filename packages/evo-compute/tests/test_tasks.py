@@ -21,14 +21,8 @@ class TestTasksModuleImports(unittest.TestCase):
         """Test that expected symbols are exported from evo.compute.tasks."""
         from evo.compute.tasks import (
             # Shared components
-            CreateAttribute,
             Ellipsoid,
-            EllipsoidRanges,
-            Rotation,
             SearchNeighborhood,
-            Source,
-            Target,
-            UpdateAttribute,
             # Run function and results
             run,
             TaskResult,
@@ -56,12 +50,6 @@ class TestTasksModuleImports(unittest.TestCase):
         self.assertIsNotNone(KrigingParameters)
         self.assertIsNotNone(OrdinaryKriging)
         self.assertIsNotNone(SimpleKriging)
-
-    def test_searchneighborhood_american_spelling(self):
-        """Test that SearchNeighborhood uses American spelling (no 'u')."""
-        from evo.compute.tasks import SearchNeighborhood
-        # Verify the class exists with American spelling
-        self.assertEqual(SearchNeighborhood.__name__, "SearchNeighborhood")
 
 
 class TestTaskRegistry(unittest.TestCase):

@@ -159,7 +159,7 @@ class KrigingParameters:
         >>>
         >>> params = KrigingParameters(
         ...     source=pointset.attributes["grade"],  # Source attribute
-        ...     target=Target.new_attribute(block_model, "kriged_grade"),
+        ...     target=block_model.attributes["kriged_grade"],  # Target attribute (creates if doesn't exist)
         ...     variogram=variogram,  # Variogram model
         ...     search=SearchNeighborhood(
         ...         ellipsoid=Ellipsoid(ranges=EllipsoidRanges(200, 150, 100)),
@@ -187,15 +187,20 @@ class KrigingParameters:
     def __init__(
         self,
         source: Source | Any,  # Also accepts Attribute from evo.objects.typed
-        target: Target,
+        target: Target | Any,  # Also accepts Attribute/PendingAttribute from evo.objects.typed
         variogram: GeoscienceObjectReference,
         search: SearchNeighborhood,
         method: SimpleKriging | OrdinaryKriging | None = None,
     ):
-        # Handle Attribute type from evo.objects.typed.dataset
+        # Handle Attribute/PendingAttribute types from evo.objects.typed.dataset
         if hasattr(source, "_obj") and hasattr(source, "expression"):
             # source is an Attribute, construct a Source object
             source = Source(object=source._obj.metadata.url, attribute=source.expression)
+
+        # Handle target attribute types (Attribute, PendingAttribute, BlockModelAttribute, BlockModelPendingAttribute)
+        if hasattr(target, "to_target_dict"):
+            # target is an attribute type with to_target_dict() method
+            target = _target_from_attribute(target)
 
         self.source = source
         self.target = target
@@ -214,6 +219,37 @@ class KrigingParameters:
         }
 
 
+def _target_from_attribute(attr: Any) -> Target:
+    """Convert an attribute object to a Target.
+
+    Handles Attribute, PendingAttribute (from evo.objects.typed.dataset) and
+    BlockModelAttribute, BlockModelPendingAttribute (from evo.objects.typed.block_model_ref).
+
+    All attribute types use `_obj` to reference their parent object:
+    - For Attribute/PendingAttribute: _obj is a DownloadedObject
+    - For BlockModelAttribute/BlockModelPendingAttribute: _obj is a BlockModel
+
+    Args:
+        attr: An attribute object with to_target_dict() method and _obj reference.
+
+    Returns:
+        A Target instance configured based on the attribute.
+    """
+    # All attribute types now use _obj to reference their parent object
+    if not hasattr(attr, "_obj") or attr._obj is None:
+        raise TypeError(
+            f"Cannot determine target object from attribute type {type(attr).__name__}. "
+            "Attribute must have an _obj reference to its parent object."
+        )
+
+    target_object = attr._obj
+
+    # Get the attribute specification dict
+    attr_dict = attr.to_target_dict()
+
+    return Target(object=target_object, attribute=attr_dict)
+
+
 # =============================================================================
 # Kriging Result Types
 # =============================================================================
@@ -226,9 +262,6 @@ class _KrigingAttribute:
     reference: str
     name: str
 
-    def __init__(self, reference: str, name: str):
-        self.reference = reference
-        self.name = name
 
 
 @dataclass
@@ -241,19 +274,6 @@ class _KrigingTarget:
     schema_id: str
     attribute: _KrigingAttribute
 
-    def __init__(
-        self,
-        reference: str,
-        name: str,
-        description: Any,
-        schema_id: str,
-        attribute: _KrigingAttribute,
-    ):
-        self.reference = reference
-        self.name = name
-        self.description = description
-        self.schema_id = schema_id
-        self.attribute = attribute
 
 
 # =============================================================================
@@ -261,7 +281,6 @@ class _KrigingTarget:
 # =============================================================================
 
 
-@dataclass
 class TaskResult:
     """Base class for compute task results.
 
@@ -630,7 +649,6 @@ class TaskResults:
         return "\n".join(lines)
 
 
-@dataclass
 class KrigingResult(TaskResult):
     """Result of a kriging task.
 
@@ -647,6 +665,15 @@ class KrigingResult(TaskResult):
         >>> # Or load the target object for more control
         >>> target = await result.get_target_object()
     """
+
+    def __init__(self, message: str, target: _KrigingTarget):
+        """Initialize a KrigingResult.
+
+        Args:
+            message: A message describing what happened in the task.
+            target: The target information from the kriging result.
+        """
+        super().__init__(message=message, target=target)
 
     def _get_result_type_name(self) -> str:
         """Get the display name for this result type."""

@@ -143,12 +143,40 @@ parameter_sets = []
 for max_samples in max_samples_values:
     params = KrigingParameters(
         source=source_pointset.attributes["grade"],  # Access attribute from pointset
-        target=Target.new_attribute(block_model, attribute_name=f"Samples={max_samples}"),
+        # Use block_model.attributes[] for target - creates if doesn't exist, updates if it does
+        target=block_model.attributes[f"Samples={max_samples}"],
         variogram=variogram,
         search=SearchNeighbourhood(ellipsoid=search_ellipsoid, max_samples=max_samples),
     )
     parameter_sets.append(params)
     print(f"Prepared scenario with max_samples={max_samples}")
+```
+
+**Using existing Block Model attributes:**
+
+When targeting an **existing** block model with attributes that were created in a previous run:
+```python
+# Load existing block model
+block_model = await object_from_uuid(manager, "YOUR-BLOCK-MODEL-UUID")
+
+# View existing attributes
+block_model.attributes  # Shows attributes like Samples=5, Samples=10, etc.
+
+# Target existing attributes for update - use block_model.attributes[]
+# This works whether the attribute exists or not:
+# - If attribute doesn't exist: creates a new attribute
+# - If attribute exists: updates the existing attribute
+params = KrigingParameters(
+    source=source_pointset.attributes["grade"],
+    target=block_model.attributes["Samples=5"],  # Will update existing attribute
+    variogram=variogram,
+    search=SearchNeighbourhood(ellipsoid=search_ellipsoid, max_samples=5),
+)
+```
+
+**Important:** After running kriging that modifies the block model, always **refresh** to get the latest state:
+```python
+block_model = await block_model.refresh()
 ```
 
 For **single run** (alternative):
@@ -163,7 +191,10 @@ from evo.objects.typed.ellipsoid import Rotation as EllipsoidRotation
 
 kriging_params = KrigingParameters(
     source=source_pointset.attributes["grade"],  # Access attribute from pointset
-    target=Target.new_attribute(target_object, attribute_name="kriged_grade"),
+    # Option 1: Use block_model.attributes[] (preferred - works for both new and existing)
+    target=block_model.attributes["kriged_grade"],
+    # Option 2: Use Target.new_attribute (only for creating new attributes)
+    # target=Target.new_attribute(target_object, attribute_name="kriged_grade"),
     variogram=variogram,
     search=SearchNeighbourhood(
         ellipsoid=Ellipsoid(
@@ -247,6 +278,7 @@ print(df[scenario_columns].describe())
 - Use `object_from_uuid()` or `object_from_path()` to load objects
 - Use pretty printing (just output the object) to display objects - it shows Portal/Viewer links
 - Use `BlockModel` as the target for kriging (preferred over grids)
+- Use `block_model.attributes["name"]` to target attributes (works for both new and existing)
 - Use `run_kriging_multiple()` for scenario analysis
 - Use `block_model.refresh()` after modifications to see new attributes
 - Use `block_model.to_dataframe()` to get data (preferred over `get_data()`)
@@ -257,6 +289,7 @@ print(df[scenario_columns].describe())
 - Don't use `display_object_links()` - pretty printing is preferred
 - Don't use `TypedClass.from_reference()` directly - use `object_from_uuid()` or `object_from_path()`
 - Don't forget to refresh objects after kriging to see new attributes
+- Don't forget `block_model = await block_model.refresh()` - refresh returns a new instance
 
 ## Example: Complete Kriging Notebook Outline
 

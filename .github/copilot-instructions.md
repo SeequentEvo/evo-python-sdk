@@ -444,10 +444,24 @@ When users ask to run compute tasks (especially kriging), follow the patterns in
 2. **Load source objects** using `object_from_uuid()` and review with pretty printing
 3. **Load or create a variogram** using `object_from_uuid()` or `Variogram.create()`
 4. **Create a target BlockModel** (preferred over grids) or use existing one
-5. **Define kriging parameters** - use `run()` with list of parameters for multiple scenarios
-6. **Run kriging** - `run()` shows progress feedback by default ("Running x/y...")
+5. **Define kriging parameters** - use `block_model.attributes["name"]` for targets (works for both new and existing attributes)
+6. **Run kriging** - use `run()` with list of parameters for multiple scenarios, it shows progress feedback by default ("Running x/y...")
 7. **Refresh and review** - reload block model to see new attributes, view with pretty printing
-8. **Basic analysis** - query data with `get_data()`, show statistics
+8. **Basic analysis** - query data with `to_dataframe()`, show statistics
+
+**Targeting Block Model attributes:**
+```python
+# Use block_model.attributes[] for target - creates if doesn't exist, updates if it does
+params = KrigingParameters(
+    source=source_pointset.attributes["grade"],
+    target=block_model.attributes["kriged_grade"],  # Preferred pattern
+    variogram=variogram,
+    search=SearchNeighbourhood(ellipsoid=search_ellipsoid, max_samples=20),
+)
+
+# After kriging, ALWAYS refresh to get the updated block model:
+block_model = await block_model.refresh()
+```
 
 **Example kriging imports:**
 ```python
@@ -512,7 +526,7 @@ from evo.compute.tasks.kriging import KrigingParameters
 
 params = KrigingParameters(
     source=pointset.attributes["grade"],
-    target=Target.new_attribute(block_model, "kriged_grade"),
+    target=block_model.attributes["kriged_grade"],
     variogram=variogram,
     search=SearchNeighborhood(
         ellipsoid=var_ell.scaled(2.0),
