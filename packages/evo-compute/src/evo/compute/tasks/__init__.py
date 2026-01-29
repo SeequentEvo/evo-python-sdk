@@ -129,6 +129,9 @@ async def run(
         ... ])
         >>> results[0]  # Access first result
     """
+    import asyncio
+    from .common.runner import _registry
+
     # Convert single parameter to list for uniform handling
     is_single = not isinstance(parameters, list)
     param_list = [parameters] if is_single else parameters
@@ -142,15 +145,11 @@ async def run(
     if isinstance(fb, _DefaultFeedback):
         try:
             from evo.notebooks import FeedbackWidget
-            actual_fb: IFeedback = FeedbackWidget(label=f"Tasks")
+            actual_fb: IFeedback = FeedbackWidget(label="Tasks")
         except ImportError:
             actual_fb = NoFeedback
     else:
         actual_fb = fb
-
-    # Custom wrapper to track and update progress
-    from .common.runner import _registry
-    import asyncio
 
     # Validate all parameters have registered runners upfront
     runners = []
@@ -158,34 +157,37 @@ async def run(
         runner = _registry.get_runner_for_params(params)
         runners.append(runner)
 
-    async def _run_one(i: int, params: Any, runner) -> tuple[int, Any]:
+    # Split feedback across tasks for proper progress aggregation
+    per_task_fb = split_feedback(actual_fb, [1.0] * total)
+
+    async def _run_one(i: int, params: Any, runner, task_fb: IFeedback) -> tuple[int, Any]:
         result = await runner(context, params)
+        # Mark this task's portion as complete (progress bar updates automatically via split_feedback)
+        task_fb.progress(1.0)
         return i, result
 
     tasks = [
-        asyncio.create_task(_run_one(i, params, runner))
+        asyncio.create_task(_run_one(i, params, runner, per_task_fb[i]))
         for i, (params, runner) in enumerate(zip(param_list, runners))
     ]
 
     results: list[Any | None] = [None] * total
-
     done_count = 0
+
     for fut in asyncio.as_completed(tasks):
         try:
             i, res = await fut
             results[i] = res
             done_count += 1
-            # Update progress
-            progress = done_count / total
-            actual_fb.progress(progress, f"Running {done_count}/{total}...")
+            # Update message with correct count (progress bar is handled by split_feedback)
+            actual_fb.progress(done_count / total, f"Running {done_count}/{total}...")
         except Exception:
-            done_count += 1
             # Cancel remaining to fail fast
             for t in tasks:
                 t.cancel()
             raise
 
-    # Final update
+    # Final completion message
     actual_fb.progress(1.0, f"Completed {total}/{total}")
 
     # Return single result or wrapped results
