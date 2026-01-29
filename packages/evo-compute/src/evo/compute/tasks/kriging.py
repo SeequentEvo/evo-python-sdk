@@ -226,9 +226,6 @@ class _KrigingAttribute:
     reference: str
     name: str
 
-    def __init__(self, reference: str, name: str):
-        self.reference = reference
-        self.name = name
 
 
 @dataclass
@@ -241,19 +238,6 @@ class _KrigingTarget:
     schema_id: str
     attribute: _KrigingAttribute
 
-    def __init__(
-        self,
-        reference: str,
-        name: str,
-        description: Any,
-        schema_id: str,
-        attribute: _KrigingAttribute,
-    ):
-        self.reference = reference
-        self.name = name
-        self.description = description
-        self.schema_id = schema_id
-        self.attribute = attribute
 
 
 # =============================================================================
@@ -261,7 +245,6 @@ class _KrigingTarget:
 # =============================================================================
 
 
-@dataclass
 class TaskResult:
     """Base class for compute task results.
 
@@ -630,7 +613,6 @@ class TaskResults:
         return "\n".join(lines)
 
 
-@dataclass
 class KrigingResult(TaskResult):
     """Result of a kriging task.
 
@@ -647,6 +629,15 @@ class KrigingResult(TaskResult):
         >>> # Or load the target object for more control
         >>> target = await result.get_target_object()
     """
+
+    def __init__(self, message: str, target: _KrigingTarget):
+        """Initialize a KrigingResult.
+
+        Args:
+            message: A message describing what happened in the task.
+            target: The target information from the kriging result.
+        """
+        super().__init__(message=message, target=target)
 
     def _get_result_type_name(self) -> str:
         """Get the display name for this result type."""

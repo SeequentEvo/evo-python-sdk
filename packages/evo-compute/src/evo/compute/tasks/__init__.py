@@ -138,27 +138,60 @@ async def run(
 
     total = len(param_list)
 
-    # Create default feedback
+    # Create default feedback widget
     if isinstance(fb, _DefaultFeedback):
         try:
             from evo.notebooks import FeedbackWidget
-            actual_fb: IFeedback = FeedbackWidget(label=f"Running 0/{total}...")
+            actual_fb: IFeedback = FeedbackWidget(label=f"Tasks")
         except ImportError:
             actual_fb = NoFeedback
     else:
         actual_fb = fb
 
-    # Use the task registry to run tasks
-    results = await run_tasks(context, param_list, fb=actual_fb)
+    # Custom wrapper to track and update progress
+    from .common.runner import _registry
+    import asyncio
 
-    # Update feedback on completion
-    if isinstance(fb, _DefaultFeedback) and hasattr(actual_fb, "description"):
-        actual_fb.description = f"Running {total}/{total}..."
+    # Validate all parameters have registered runners upfront
+    runners = []
+    for params in param_list:
+        runner = _registry.get_runner_for_params(params)
+        runners.append(runner)
+
+    async def _run_one(i: int, params: Any, runner) -> tuple[int, Any]:
+        result = await runner(context, params)
+        return i, result
+
+    tasks = [
+        asyncio.create_task(_run_one(i, params, runner))
+        for i, (params, runner) in enumerate(zip(param_list, runners))
+    ]
+
+    results: list[Any | None] = [None] * total
+
+    done_count = 0
+    for fut in asyncio.as_completed(tasks):
+        try:
+            i, res = await fut
+            results[i] = res
+            done_count += 1
+            # Update progress
+            progress = done_count / total
+            actual_fb.progress(progress, f"Running {done_count}/{total}...")
+        except Exception:
+            done_count += 1
+            # Cancel remaining to fail fast
+            for t in tasks:
+                t.cancel()
+            raise
+
+    # Final update
+    actual_fb.progress(1.0, f"Completed {total}/{total}")
 
     # Return single result or wrapped results
     if is_single:
         return results[0]
-    return TaskResults(results)
+    return TaskResults([r for r in results if r is not None])
 
 
 __all__ = [
