@@ -30,6 +30,7 @@ from uuid import UUID
 import pandas as pd
 
 from evo.common import IContext, IFeedback
+from evo.common.styles.html import STYLESHEET, build_title, build_table
 from evo.common.utils import NoFeedback
 
 if TYPE_CHECKING:
@@ -322,60 +323,16 @@ class ReportResult:
             cells = "".join([f"<td>{v if pd.notna(v) else ''}</td>" for v in row])
             rows_html.append(f"<tr {row_class}>{cells}</tr>")
 
-        html = f"""
-<style>
-    .evo-object {{
-        border: 1px solid #ccc;
-        border-radius: 3px;
-        padding: 16px;
-        margin: 8px 0;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-        font-size: 13px;
-        display: inline-block;
-        max-width: 800px;
-        background-color: var(--jp-layout-color1, #fff);
-    }}
-    .evo-object .title {{
-        font-size: 15px;
-        font-weight: 600;
-        margin-bottom: 12px;
-        color: var(--jp-ui-font-color1, #111);
-    }}
-    .evo-object table.nested {{
-        border-collapse: collapse;
-        font-size: 12px;
-        margin-bottom: 0;
-        margin-top: 4px;
-        width: 100%;
-    }}
-    .evo-object table.nested th {{
-        padding: 3px 12px 3px 0;
-        text-align: left;
-        font-weight: 600;
-        color: var(--jp-ui-font-color1, #333);
-        border-bottom: 1px solid #ddd;
-    }}
-    .evo-object table.nested td {{
-        padding: 3px 12px 3px 0;
-        color: var(--jp-ui-font-color1, #111);
-        text-align: left;
-    }}
-    .evo-object table.nested tr.alt-row {{
-        background-color: var(--jp-layout-color2, #f5f5f5);
-    }}
-    .evo-object .subtitle {{
-        font-size: 12px;
-        color: #666;
-        margin-bottom: 8px;
-    }}
-</style>
-<div class="evo-object">
-    <div class="title">📊 Report Result (Version {self.version_id})</div>
-    <div class="subtitle">Created: {self.created_at.strftime('%Y-%m-%d %H:%M:%S')} | Rows: {len(df)}</div>
-    <table class="nested">
-        <tr>{header_html}</tr>
-        {''.join(rows_html)}
-    </table>
+        subtitle = f'<div class="subtitle">Created: {self.created_at.strftime("%Y-%m-%d %H:%M:%S")} | Rows: {len(df)}</div>'
+        
+        html = f"""{STYLESHEET}
+<div class="evo">
+{build_title("📊 Report Result (Version " + str(self.version_id) + ")")}
+{subtitle}
+<table class="nested">
+    <tr>{header_html}</tr>
+    {''.join(rows_html)}
+</table>
 </div>
 """
         return html
@@ -525,103 +482,24 @@ class Report:
             </table>
             """
 
-        # Check for last run info
-        last_run_html = ""
-        if hasattr(self._specification, "last_result_created_at") and self._specification.last_result_created_at:
-            last_run_html = f'<tr><td class="label">Last run:</td><td class="value">{self._specification.last_result_created_at.strftime("%Y-%m-%d %H:%M:%S")}</td></tr>'
-
-        # Build main info table
+        # Build main info table rows
         block_model_display = f"{self._block_model_name} ({self._block_model_uuid})" if self._block_model_name else str(self._block_model_uuid)
+        rows = [
+            ("Report ID:", str(self.id)),
+            ("Block Model:", block_model_display),
+            ("Revision:", str(self.revision)),
+        ]
+        
+        # Add last run if available
+        if hasattr(self._specification, "last_result_created_at") and self._specification.last_result_created_at:
+            rows.append(("Last run:", self._specification.last_result_created_at.strftime("%Y-%m-%d %H:%M:%S")))
 
-        html = f"""
-<style>
-    .evo-object {{
-        border: 1px solid #ccc;
-        border-radius: 3px;
-        padding: 16px;
-        margin: 8px 0;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-        font-size: 13px;
-        display: inline-block;
-        max-width: 800px;
-        background-color: var(--jp-layout-color1, #fff);
-    }}
-    .evo-object .title {{
-        font-size: 15px;
-        font-weight: 600;
-        margin-bottom: 12px;
-        color: var(--jp-ui-font-color1, #111);
-        display: flex;
-        align-items: baseline;
-        gap: 8px;
-    }}
-    .evo-object .title-links {{
-        font-size: 12px;
-        font-weight: normal;
-        color: #666;
-    }}
-    .evo-object .title-links a {{
-        color: #666;
-        text-decoration: none;
-    }}
-    .evo-object .title-links a:hover {{
-        color: #0066cc;
-        text-decoration: underline;
-    }}
-    .evo-object table {{
-        border-collapse: collapse;
-        width: 100%;
-        margin-bottom: 8px;
-    }}
-    .evo-object td.label {{
-        padding: 3px 8px 3px 0;
-        font-weight: 600;
-        white-space: nowrap;
-        vertical-align: top;
-        color: var(--jp-ui-font-color1, #333);
-        text-align: left;
-    }}
-    .evo-object td.value {{
-        padding: 3px 0;
-        color: var(--jp-ui-font-color1, #111);
-        text-align: left;
-    }}
-    .evo-object table.nested {{
-        border-collapse: collapse;
-        font-size: 12px;
-        margin-bottom: 0;
-        margin-top: 4px;
-        width: 100%;
-    }}
-    .evo-object table.nested th {{
-        padding: 3px 12px 3px 0;
-        text-align: left;
-        font-weight: 600;
-        color: var(--jp-ui-font-color1, #333);
-        border-bottom: 1px solid #ddd;
-    }}
-    .evo-object table.nested td {{
-        padding: 3px 12px 3px 0;
-        color: var(--jp-ui-font-color1, #111);
-        text-align: left;
-    }}
-    .evo-object table.nested tr.alt-row {{
-        background-color: var(--jp-layout-color2, #f5f5f5);
-    }}
-</style>
-<div class="evo-object">
-    <div class="title">
-        <span>📊 {self.name}</span>
-        <span class="title-links"><a href="{blocksync_url}" target="_blank">BlockSync</a></span>
-    </div>
-    <table>
-        <tr><td class="label">Report ID:</td><td class="value">{self.id}</td></tr>
-        <tr><td class="label">Block Model:</td><td class="value">{block_model_display}</td></tr>
-        <tr><td class="label">Revision:</td><td class="value">{self.revision}</td></tr>
-        {last_run_html}
-    </table>
-    {categories_html}
-    {columns_html}
+        html = f"""{STYLESHEET}
+<div class="evo">
+{build_title(f"📊 {self.name}", [("BlockSync", blocksync_url)])}
+{build_table(rows)}
+{categories_html}
+{columns_html}
 </div>
 """
         return html

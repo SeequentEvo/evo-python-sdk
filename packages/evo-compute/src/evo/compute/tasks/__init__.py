@@ -9,7 +9,32 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-"""Task-specific clients for Evo Compute."""
+"""Task-specific clients for Evo Compute.
+
+This module provides a unified interface for running compute tasks. Tasks are
+dispatched based on their parameter types using a registry system.
+
+Example:
+    >>> from evo.compute.tasks import run, SearchNeighborhood, Target
+    >>> from evo.compute.tasks.kriging import KrigingParameters
+    >>>
+    >>> # Run a single task
+    >>> result = await run(manager, KrigingParameters(...))
+    >>>
+    >>> # Run multiple tasks (same or different types)
+    >>> results = await run(manager, [
+    ...     KrigingParameters(...),
+    ...     KrigingParameters(...),
+    ... ])
+"""
+
+from __future__ import annotations
+
+from typing import Any, overload
+
+from evo.common import IContext
+from evo.common.interfaces import IFeedback
+from evo.common.utils import NoFeedback, split_feedback
 
 # Shared components from common module
 from .common import (
@@ -17,23 +42,159 @@ from .common import (
     Ellipsoid,
     EllipsoidRanges,
     Rotation,
-    run_multiple,
-    SearchNeighbourhood,
+    SearchNeighborhood,
     Source,
     Target,
     UpdateAttribute,
+    run_tasks,
 )
 
-# Kriging-specific
+# Import kriging module to trigger registration
+from . import kriging as _kriging_module  # noqa: F401
+
+# Result types from kriging (these are general enough for other tasks too)
 from .kriging import (
-    KrigingMethod,
-    KrigingParameters,
     KrigingResult,
-    OrdinaryKriging,
-    run_kriging,
-    run_kriging_multiple,
-    SimpleKriging,
+    TaskResult,
+    TaskResults,
 )
+
+
+class _DefaultFeedback:
+    """Marker class to indicate default feedback should be used."""
+    pass
+
+
+DEFAULT_FEEDBACK = _DefaultFeedback()
+
+
+@overload
+async def run(
+    context: IContext,
+    parameters: Any,
+    *,
+    fb: IFeedback | _DefaultFeedback = ...,
+) -> TaskResult: ...
+
+
+@overload
+async def run(
+    context: IContext,
+    parameters: list[Any],
+    *,
+    fb: IFeedback | _DefaultFeedback = ...,
+) -> TaskResults: ...
+
+
+async def run(
+    context: IContext,
+    parameters: Any | list[Any],
+    *,
+    fb: IFeedback | _DefaultFeedback = DEFAULT_FEEDBACK,
+) -> TaskResult | TaskResults:
+    """
+    Run one or more compute tasks.
+
+    Tasks are dispatched to the appropriate runner based on the parameter type.
+    This allows running different task types together in a single call.
+
+    Args:
+        context: The context providing connector and org_id
+        parameters: A single parameter object or list of parameters (can be mixed types)
+        fb: Feedback interface for progress updates. If not provided, uses default
+            feedback showing "Running x/y..."
+
+    Returns:
+        TaskResult for a single task, or TaskResults for multiple tasks
+
+    Example (single task):
+        >>> from evo.compute.tasks import run, SearchNeighborhood, Target
+        >>> from evo.compute.tasks.kriging import KrigingParameters
+        >>>
+        >>> params = KrigingParameters(
+        ...     source=pointset.attributes["grade"],
+        ...     target=Target.new_attribute(block_model, "kriged_grade"),
+        ...     variogram=variogram,
+        ...     search=SearchNeighborhood(
+        ...         ellipsoid=var_ell.scaled(2.0),
+        ...         max_samples=20,
+        ...     ),
+        ... )
+        >>> result = await run(manager, params)
+
+    Example (multiple tasks):
+        >>> results = await run(manager, [
+        ...     KrigingParameters(...),
+        ...     KrigingParameters(...),
+        ... ])
+        >>> results[0]  # Access first result
+    """
+    import asyncio
+    from .common.runner import _registry
+
+    # Convert single parameter to list for uniform handling
+    is_single = not isinstance(parameters, list)
+    param_list = [parameters] if is_single else parameters
+
+    if len(param_list) == 0:
+        return TaskResults([])
+
+    total = len(param_list)
+
+    # Create default feedback widget
+    if isinstance(fb, _DefaultFeedback):
+        try:
+            from evo.notebooks import FeedbackWidget
+            actual_fb: IFeedback = FeedbackWidget(label="Tasks")
+        except ImportError:
+            actual_fb = NoFeedback
+    else:
+        actual_fb = fb
+
+    # Validate all parameters have registered runners upfront
+    runners = []
+    for params in param_list:
+        runner = _registry.get_runner_for_params(params)
+        runners.append(runner)
+
+    # Split feedback across tasks for proper progress aggregation
+    per_task_fb = split_feedback(actual_fb, [1.0] * total)
+
+    async def _run_one(i: int, params: Any, runner, task_fb: IFeedback) -> tuple[int, Any]:
+        result = await runner(context, params)
+        # Mark this task's portion as complete (progress bar updates automatically via split_feedback)
+        task_fb.progress(1.0)
+        return i, result
+
+    tasks = [
+        asyncio.create_task(_run_one(i, params, runner, per_task_fb[i]))
+        for i, (params, runner) in enumerate(zip(param_list, runners))
+    ]
+
+    results: list[Any | None] = [None] * total
+    done_count = 0
+
+    for fut in asyncio.as_completed(tasks):
+        try:
+            i, res = await fut
+            results[i] = res
+            done_count += 1
+            # Update message with correct count (progress bar is handled by split_feedback)
+            actual_fb.progress(done_count / total, f"Running {done_count}/{total}...")
+        except Exception:
+            # Cancel remaining to fail fast
+            for t in tasks:
+                t.cancel()
+            raise
+
+    # Final completion message
+    actual_fb.progress(1.0, f"Completed {total}/{total}")
+
+    # Return single result or wrapped results
+    if is_single:
+        return results[0]
+    return TaskResults([r for r in results if r is not None])
+
 
 __all__ = [
     # Shared components
@@ -41,18 +202,14 @@ __all__ = [
     "Ellipsoid",
     "EllipsoidRanges",
     "Rotation",
-    "run_multiple",
-    "SearchNeighbourhood",
+    "SearchNeighborhood",
     "Source",
     "Target",
     "UpdateAttribute",
-    # Kriging
-    "KrigingMethod",
-    "KrigingParameters",
+    # Run function and results
+    "run",
+    "TaskResult",
+    "TaskResults",
     "KrigingResult",
-    "OrdinaryKriging",
-    "run_kriging",
-    "run_kriging_multiple",
-    "SimpleKriging",
 ]
 

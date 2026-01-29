@@ -13,8 +13,8 @@
 
 from evo.objects.typed.ellipsoid import Ellipsoid, EllipsoidRanges, Rotation
 
-from .run_multiple import run_multiple
-from .search import SearchNeighbourhood
+from .runner import TaskRegistry, get_task_runner, register_task_runner, run_tasks
+from .search import SearchNeighborhood
 from .source_target import CreateAttribute, Source, Target, UpdateAttribute
 
 __all__ = [
@@ -22,10 +22,13 @@ __all__ = [
     "Ellipsoid",
     "EllipsoidRanges",
     "Rotation",
-    "run_multiple",
-    "SearchNeighbourhood",
+    "SearchNeighborhood",
     "Source",
     "Target",
+    "TaskRegistry",
     "UpdateAttribute",
+    "get_task_runner",
+    "register_task_runner",
+    "run_tasks",
 ]
 

@@ -16,35 +16,31 @@ This module provides typed dataclass models and convenience functions for runnin
 the Kriging task (geostatistics/kriging).
 
 Example:
-    >>> from evo.compute.tasks import (
-    ...     run_kriging,
-    ...     KrigingParameters,
-    ...     Target,
-    ...     SearchNeighbourhood,
-    ...     Ellipsoid,
-    ...     EllipsoidRanges,
-    ... )
+    >>> from evo.compute.tasks import run, SearchNeighborhood, Ellipsoid, EllipsoidRanges
+    >>> from evo.compute.tasks.kriging import KrigingParameters
     >>>
     >>> params = KrigingParameters(
     ...     source=pointset.attributes["grade"],
     ...     target=Target.new_attribute(block_model, "kriged_grade"),
     ...     variogram=variogram,
-    ...     search=SearchNeighbourhood(
+    ...     search=SearchNeighborhood(
     ...         ellipsoid=Ellipsoid(ranges=EllipsoidRanges(200, 150, 100)),
     ...         max_samples=20,
     ...     ),
     ... )
-    >>> job_result = await run_kriging(manager, params)
+    >>> result = await run(manager, params)
 """
 
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, TypeVar, overload
 
 from evo.common import IContext
 from evo.common.interfaces import IFeedback
-from evo.common.utils import NoFeedback, Retry
+from evo.common.styles.html import STYLESHEET, build_nested_table, build_table, build_title
+from evo.common.utils import NoFeedback, Retry, split_feedback
 
 from ..client import JobClient
 
@@ -54,8 +50,7 @@ from .common import (
     Ellipsoid,
     EllipsoidRanges,
     Rotation,
-    run_multiple,
-    SearchNeighbourhood,
+    SearchNeighborhood,
     Source,
     Target,
     UpdateAttribute,
@@ -63,24 +58,16 @@ from .common import (
 from .common.source_target import GeoscienceObjectReference, _serialize_object_reference
 
 __all__ = [
-    # Shared components (re-exported for convenience)
-    "CreateAttribute",
-    "Ellipsoid",
-    "EllipsoidRanges",
-    "Rotation",
-    "SearchNeighbourhood",
-    "Source",
-    "Target",
-    "UpdateAttribute",
-    # Kriging-specific
+    # Kriging-specific (users import from evo.compute.tasks.kriging)
     "KrigingMethod",
     "KrigingParameters",
-    "KrigingResult",
     "OrdinaryKriging",
-    "run_kriging",
-    "run_kriging_multiple",
     "SimpleKriging",
 ]
+
+
+# Type variable for generic result type
+TResult = TypeVar("TResult", bound="TaskResult")
 
 
 # =============================================================================
@@ -168,11 +155,14 @@ class KrigingParameters:
     Defines all inputs needed to run a kriging interpolation task.
 
     Example:
+        >>> from evo.compute.tasks import run, SearchNeighborhood, Ellipsoid, EllipsoidRanges
+        >>> from evo.compute.tasks.kriging import KrigingParameters
+        >>>
         >>> params = KrigingParameters(
         ...     source=pointset.attributes["grade"],  # Source attribute
         ...     target=block_model.attributes["kriged_grade"],  # Target attribute (creates if doesn't exist)
         ...     variogram=variogram,  # Variogram model
-        ...     search=SearchNeighbourhood(
+        ...     search=SearchNeighborhood(
         ...         ellipsoid=Ellipsoid(ranges=EllipsoidRanges(200, 150, 100)),
         ...         max_samples=20,
         ...     ),
@@ -189,8 +179,8 @@ class KrigingParameters:
     variogram: GeoscienceObjectReference
     """Model of the covariance within the domain (Variogram object or reference)."""
 
-    search: SearchNeighbourhood
-    """Search neighbourhood parameters."""
+    search: SearchNeighborhood
+    """Search neighborhood parameters."""
 
     method: SimpleKriging | OrdinaryKriging | None = None
     """The kriging method to use. Defaults to ordinary kriging if not specified."""
@@ -200,7 +190,7 @@ class KrigingParameters:
         source: Source | Any,  # Also accepts Attribute from evo.objects.typed
         target: Target | Any,  # Also accepts Attribute/PendingAttribute from evo.objects.typed
         variogram: GeoscienceObjectReference,
-        search: SearchNeighbourhood,
+        search: SearchNeighborhood,
         method: SimpleKriging | OrdinaryKriging | None = None,
     ):
         # Handle Attribute/PendingAttribute types from evo.objects.typed.dataset
@@ -273,9 +263,6 @@ class _KrigingAttribute:
     reference: str
     name: str
 
-    def __init__(self, reference: str, name: str):
-        self.reference = reference
-        self.name = name
 
 
 @dataclass
@@ -288,37 +275,20 @@ class _KrigingTarget:
     schema_id: str
     attribute: _KrigingAttribute
 
-    def __init__(
-        self,
-        reference: str,
-        name: str,
-        description: Any,
-        schema_id: str,
-        attribute: _KrigingAttribute,
-    ):
-        self.reference = reference
-        self.name = name
-        self.description = description
-        self.schema_id = schema_id
-        self.attribute = attribute
 
 
-@dataclass
-class KrigingResult:
-    """Result of a kriging task.
+# =============================================================================
+# Base Task Result Classes
+# =============================================================================
 
-    Contains information about the completed kriging operation and provides
-    convenient methods to access the target object and its data.
 
-    Example:
-        >>> job_result = await run_kriging(manager, params)
-        >>> job_result  # Pretty-prints the result
-        >>>
-        >>> # Get data directly as DataFrame (simplest approach)
-        >>> df = await job_result.to_dataframe()
-        >>>
-        >>> # Or load the target object for more control
-        >>> target = await job_result.get_target_object()
+class TaskResult:
+    """Base class for compute task results.
+
+    Provides common functionality for all task results including:
+    - Pretty-printing in Jupyter notebooks
+    - Portal URL extraction
+    - Access to target object and data
     """
 
     message: str
@@ -366,14 +336,14 @@ class KrigingResult:
 
         Args:
             context: Optional context to use. If not provided, uses the context
-                    from when the kriging task was run.
+                    from when the task was run.
 
         Returns:
             The typed geoscience object (e.g., Regular3DGrid, RegularMasked3DGrid, BlockModel)
 
         Example:
-            >>> job_result = await run_kriging(manager, params)
-            >>> target = await job_result.get_target_object()
+            >>> result = await run(manager, params)
+            >>> target = await result.get_target_object()
             >>> target  # Pretty-prints with Portal/Viewer links
         """
         from evo.objects.typed import object_from_reference
@@ -382,28 +352,28 @@ class KrigingResult:
         if ctx is None:
             raise ValueError(
                 "No context available. Either pass a context to get_target_object() "
-                "or ensure the result was returned from run_kriging()."
+                "or ensure the result was returned from run()."
             )
         return await object_from_reference(ctx, self._target.reference)
 
     async def to_dataframe(self, context: IContext | None = None, columns: list[str] | None = None):
-        """Get the kriging results as a DataFrame.
+        """Get the task results as a DataFrame.
 
-        This is the simplest way to access the kriging output data. It loads
+        This is the simplest way to access the task output data. It loads
         the target object and returns its data as a pandas DataFrame.
 
         Args:
             context: Optional context to use. If not provided, uses the context
-                    from when the kriging task was run.
+                    from when the task was run.
             columns: Optional list of column names to include. If None, includes
                     all columns. Use ["*"] to explicitly request all columns.
 
         Returns:
-            A pandas DataFrame containing the kriging results.
+            A pandas DataFrame containing the task results.
 
         Example:
-            >>> job_result = await run_kriging(manager, params)
-            >>> df = await job_result.to_dataframe()
+            >>> result = await run(manager, params)
+            >>> df = await result.to_dataframe()
             >>> df.head()
         """
         target_obj = await self.get_target_object(context)
@@ -432,8 +402,6 @@ class KrigingResult:
             from urllib.parse import urlparse
 
             parsed = urlparse(ref)
-            if parsed.scheme != "evo":
-                return None
             parts = parsed.path.split("/")
             if "orgs" in parts and "workspaces" in parts and "objects" in parts:
                 org_idx = parts.index("orgs") + 1
@@ -452,104 +420,38 @@ class KrigingResult:
             pass
         return None
 
+    def _get_result_type_name(self) -> str:
+        """Get the display name for this result type."""
+        return "Task"
+
     def _repr_html_(self) -> str:
         """Generate HTML representation for Jupyter notebooks."""
+
         portal_url = self._get_portal_url()
+        links = [("Portal", portal_url)] if portal_url else None
 
-        links_html = ""
-        if portal_url:
-            links_html = f'<a href="{portal_url}" target="_blank">Portal</a>'
-
-        html = """
-<style>
-    .kriging-result {
-        border: 1px solid #ccc;
-        border-radius: 3px;
-        padding: 16px;
-        margin: 8px 0;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-        font-size: 13px;
-        display: inline-block;
-        max-width: 800px;
-        background-color: var(--jp-layout-color1, #fff);
-    }
-    .kriging-result .title {
-        font-size: 15px;
-        font-weight: 600;
-        margin-bottom: 12px;
-        color: var(--jp-ui-font-color1, #111);
-        display: flex;
-        align-items: baseline;
-        gap: 8px;
-    }
-    .kriging-result .title-links {
-        font-size: 12px;
-        font-weight: normal;
-    }
-    .kriging-result .title-links a {
-        color: #666;
-        text-decoration: none;
-    }
-    .kriging-result .title-links a:hover {
-        color: #0066cc;
-        text-decoration: underline;
-    }
-    .kriging-result table {
-        border-collapse: collapse;
-        width: 100%;
-    }
-    .kriging-result td.label {
-        padding: 3px 8px 3px 0;
-        font-weight: 600;
-        white-space: nowrap;
-        vertical-align: top;
-        color: var(--jp-ui-font-color1, #333);
-    }
-    .kriging-result td.value {
-        padding: 3px 0;
-        color: var(--jp-ui-font-color1, #111);
-    }
-    .kriging-result .attr-highlight {
-        background: #e3f2fd;
-        padding: 2px 8px;
-        border-radius: 3px;
-        font-family: monospace;
-        font-weight: 600;
-        color: #1565c0;
-    }
-    .kriging-result .message {
-        background: #e8f5e9;
-        padding: 6px 10px;
-        border-radius: 3px;
-        color: #2e7d32;
-        margin-bottom: 12px;
-        font-size: 12px;
-    }
-</style>
-<div class="kriging-result">
+        title = f"✓ {self._get_result_type_name()} Result"
+        
+        rows = [
+            ("Target:", self.target_name),
+            ("Schema:", self.schema_type),
+            ("Attribute:", f'<span class="attr-highlight">{self.attribute_name}</span>'),
+        ]
+        
+        html = f"""{STYLESHEET}
+<div class="evo">
+{build_title(title, links)}
+<div class="message">{self.message}</div>
+{build_table(rows)}
+</div>
 """
-        title = "✓ Kriging Result"
-        if links_html:
-            html += f'<div class="title"><span>{title}</span><span class="title-links">{links_html}</span></div>'
-        else:
-            html += f'<div class="title">{title}</div>'
-
-        html += f'<div class="message">{self.message}</div>'
-
-        html += '<table>'
-        html += f'<tr><td class="label">Target:</td><td class="value">{self.target_name}</td></tr>'
-        html += f'<tr><td class="label">Schema:</td><td class="value">{self.schema_type}</td></tr>'
-        html += f'<tr><td class="label">Attribute:</td><td class="value"><span class="attr-highlight">{self.attribute_name}</span></td></tr>'
-        html += '</table>'
-
-        html += '</div>'
         return html
 
     def __repr__(self) -> str:
         """String representation."""
         portal_url = self._get_portal_url()
         lines = [
-            "✓ Kriging Result",
+            f"✓ {self._get_result_type_name()} Result",
             f"  Message:   {self.message}",
             f"  Target:    {self.target_name}",
             f"  Attribute: {self.attribute_name}",
@@ -557,6 +459,109 @@ class KrigingResult:
         if portal_url:
             lines.append(f"  Portal:    {portal_url}")
         return "\n".join(lines)
+
+
+class TaskResults:
+    """Container for multiple task results with pretty-printing support.
+
+    Provides iteration and indexing support for accessing individual results.
+
+    Example:
+        >>> results = await run(manager, [params1, params2, params3])
+        >>> results  # Pretty-prints all results
+        >>> results[0]  # Access first result
+        >>> for result in results:
+        ...     print(result.attribute_name)
+    """
+
+    def __init__(self, results: list[TaskResult]):
+        self._results = results
+
+    @property
+    def results(self) -> list[TaskResult]:
+        """The list of task results."""
+        return self._results
+
+    def __len__(self) -> int:
+        return len(self._results)
+
+    def __iter__(self):
+        return iter(self._results)
+
+    def __getitem__(self, index: int) -> TaskResult:
+        return self._results[index]
+
+    def _repr_html_(self) -> str:
+        """Generate HTML representation for Jupyter notebooks."""
+
+        if not self._results:
+            return "<div>No results</div>"
+
+        result_type = self._results[0]._get_result_type_name() if self._results else "Task"
+        title = f"✓ {len(self._results)} {result_type} Results"
+
+        # Build table data
+        headers = ["#", "Target", "Attribute", "Schema", "Link"]
+        rows = [
+            [
+                str(i + 1),
+                result.target_name,
+                f'<span class="attr-highlight">{result.attribute_name}</span>',
+                result.schema_type,
+                f'<a href="{result._get_portal_url()}" target="_blank">Portal</a>' if result._get_portal_url() else "N/A",
+            ]
+            for i, result in enumerate(self._results)
+        ]
+
+        table = build_nested_table(headers, rows)
+
+        return f"""{STYLESHEET}
+<div class="evo">
+{build_title(title)}
+{table}
+</div>
+"""
+
+    def __repr__(self) -> str:
+        """String representation."""
+        if not self._results:
+            return "TaskResults([])"
+        result_type = self._results[0]._get_result_type_name()
+        lines = [f"✓ {len(self._results)} {result_type} Results:"]
+        for i, result in enumerate(self._results):
+            lines.append(f"  [{i}] {result.target_name} → {result.attribute_name}")
+        return "\n".join(lines)
+
+
+class KrigingResult(TaskResult):
+    """Result of a kriging task.
+
+    Contains information about the completed kriging operation and provides
+    convenient methods to access the target object and its data.
+
+    Example:
+        >>> result = await run(manager, params)
+        >>> result  # Pretty-prints the result
+        >>>
+        >>> # Get data directly as DataFrame (simplest approach)
+        >>> df = await result.to_dataframe()
+        >>>
+        >>> # Or load the target object for more control
+        >>> target = await result.get_target_object()
+    """
+
+    def __init__(self, message: str, target: _KrigingTarget):
+        """Initialize a KrigingResult.
+
+        Args:
+            message: A message describing what happened in the task.
+            target: The target information from the kriging result.
+        """
+        super().__init__(message=message, target=target)
+
+    def _get_result_type_name(self) -> str:
+        """Get the display name for this result type."""
+        return "Kriging"
 
 
 # =============================================================================
@@ -583,7 +588,7 @@ def _parse_kriging_result(data: dict[str, Any]) -> KrigingResult:
     return KrigingResult(message=data["message"], target=target)
 
 
-async def run_kriging(
+async def _run_single_kriging(
     context: IContext,
     parameters: KrigingParameters,
     *,
@@ -591,46 +596,7 @@ async def run_kriging(
     retry: Retry | None = None,
     fb: IFeedback = NoFeedback,
 ) -> KrigingResult:
-    """
-    Run a kriging compute task.
-
-    Kriging is a geostatistical interpolation method that estimates values at
-    unsampled locations using a weighted average of nearby known values.
-
-    For more information, see:
-    https://developer.seequent.com/docs/guides/geostatistics-tasks/tasks/kriging
-
-    Args:
-        context: The context providing connector and org_id
-        parameters: The kriging task parameters
-        polling_interval_seconds: Interval between status checks when waiting
-        retry: Retry strategy for waiting (if None, uses default)
-        fb: Feedback interface for progress updates
-
-    Returns:
-        The kriging task result
-
-    Example:
-        >>> from evo.compute.tasks import (
-        ...     run_kriging,
-        ...     KrigingParameters,
-        ...     Target,
-        ...     SearchNeighbourhood,
-        ...     Ellipsoid,
-        ...     EllipsoidRanges,
-        ... )
-        >>>
-        >>> params = KrigingParameters(
-        ...     source=pointset.attributes["grade"],
-        ...     target=Target.new_attribute(block_model, "kriged_grade"),
-        ...     variogram=variogram,
-        ...     search=SearchNeighbourhood(
-        ...         ellipsoid=Ellipsoid(ranges=EllipsoidRanges(200, 150, 100)),
-        ...         max_samples=20,
-        ...     ),
-        ... )
-        >>> job_result = await run_kriging(manager, params)
-    """
+    """Internal function to run a single kriging task."""
     connector = context.get_connector()
     org_id = context.get_org_id()
 
@@ -664,47 +630,15 @@ async def run_kriging(
     return result
 
 
-async def run_kriging_multiple(
-    context: IContext,
-    parameters: list[KrigingParameters],
-    *,
-    polling_interval_seconds: float = 0.5,
-    retry: Retry | None = None,
-    fb: IFeedback = NoFeedback,
-) -> list[KrigingResult]:
+async def _run_kriging_for_registry(context: IContext, parameters: KrigingParameters) -> KrigingResult:
+    """Simplified runner function for task registry (no extra options).
+
+    This is the function registered with the TaskRegistry. For more control
+    over polling and retry behavior, use the full `run()` function.
     """
-    Run multiple kriging compute tasks concurrently.
+    return await _run_single_kriging(context, parameters)
 
-    This function submits multiple kriging tasks and waits for all to complete.
-    Progress is aggregated across all tasks.
 
-    Args:
-        context: The context providing connector and org_id
-        parameters: List of kriging task parameters
-        polling_interval_seconds: Interval between status checks when waiting
-        retry: Retry strategy for waiting (if None, uses default)
-        fb: Feedback interface for progress updates
-
-    Returns:
-        List of kriging task results in the same order as the input parameters
-
-    Example:
-        >>> # Create parameter sets for different scenarios
-        >>> param_sets = [
-        ...     KrigingParameters(..., search=SearchNeighbourhood(..., max_samples=10)),
-        ...     KrigingParameters(..., search=SearchNeighbourhood(..., max_samples=20)),
-        ...     KrigingParameters(..., search=SearchNeighbourhood(..., max_samples=30)),
-        ... ]
-        >>>
-        >>> results = await run_kriging_multiple(manager, param_sets, fb=fb)
-    """
-    async def _run_one(ctx: IContext, params: KrigingParameters) -> KrigingResult:
-        return await run_kriging(
-            ctx,
-            params,
-            polling_interval_seconds=polling_interval_seconds,
-            retry=retry,
-        )
-
-    return await run_multiple(context, parameters, _run_one, fb=fb)
-
+# Register kriging task runner with the task registry
+from .common.runner import register_task_runner
+register_task_runner(KrigingParameters, _run_kriging_for_registry)

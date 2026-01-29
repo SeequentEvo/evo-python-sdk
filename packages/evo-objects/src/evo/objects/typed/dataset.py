@@ -21,6 +21,7 @@ import pandas as pd
 
 from evo import jmespath
 from evo.common import IContext, IFeedback
+from evo.common.styles.html import STYLESHEET, build_nested_table
 from evo.common.utils import NoFeedback, iter_with_fb, split_feedback
 from evo.objects import DownloadedObject
 from evo.objects.utils.table_formats import (
@@ -32,7 +33,6 @@ from evo.objects.utils.table_formats import (
 )
 from evo.objects.utils.types import AttributeInfo
 
-from .._html_styles import STYLESHEET, build_nested_table
 from ._adapters import AttributesAdapter, BaseAdapter, CategoryTableAdapter, DatasetAdapter, TableAdapter
 from ._utils import assign_jmespath_value, get_data_client
 from .exceptions import ObjectValidationError
@@ -414,7 +414,7 @@ class Attributes(Sequence[Attribute]):
         :return: An html table with name and type.
         """
         if len(self._attributes) == 0:
-            return f'{STYLESHEET}<div class="evo-object">No attributes available.</div>'
+            return f'{STYLESHEET}<div class="evo">No attributes available.</div>'
         
         # Get all attribute info dictionaries
         attr_infos = [attr.as_dict() for attr in self._attributes]
@@ -433,7 +433,7 @@ class Attributes(Sequence[Attribute]):
         
         # Use nested table for a clean header/row structure
         table_html = build_nested_table(headers, rows)
-        return f'{STYLESHEET}<div class="evo-object">{table_html}</div>'
+        return f'{STYLESHEET}<div class="evo">{table_html}</div>'
 
     async def to_dataframe(self, *keys: str, fb: IFeedback = NoFeedback) -> pd.DataFrame:
         """Load a DataFrame containing the values from the specified attributes in the object.

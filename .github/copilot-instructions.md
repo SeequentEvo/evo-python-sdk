@@ -445,8 +445,8 @@ When users ask to run compute tasks (especially kriging), follow the patterns in
 3. **Load or create a variogram** using `object_from_uuid()` or `Variogram.create()`
 4. **Create a target BlockModel** (preferred over grids) or use existing one
 5. **Define kriging parameters** - use `block_model.attributes["name"]` for targets (works for both new and existing attributes)
-6. **Run kriging** with `FeedbackWidget` for progress
-7. **Refresh and review** - `block_model = await block_model.refresh()` to see new attributes
+6. **Run kriging** - use `run()` with list of parameters for multiple scenarios, it shows progress feedback by default ("Running x/y...")
+7. **Refresh and review** - reload block model to see new attributes, view with pretty printing
 8. **Basic analysis** - query data with `to_dataframe()`, show statistics
 
 **Targeting Block Model attributes:**
@@ -465,26 +465,25 @@ block_model = await block_model.refresh()
 
 **Example kriging imports:**
 ```python
-from evo.compute.tasks import (
-    run_kriging, run_kriging_multiple,
-    KrigingParameters, Source, Target,
-    SearchNeighbourhood,
-)
+from evo.compute.tasks import run, Source, Target, SearchNeighborhood, Ellipsoid, EllipsoidRanges
+from evo.compute.tasks.kriging import KrigingParameters  # Kriging-specific
 from evo.objects.typed import (
     object_from_uuid, BlockModel, RegularBlockModelData, Point3, Size3i, Size3d,
     Variogram, VariogramData, SphericalStructure, Anisotropy,
-    Ellipsoid, EllipsoidRanges,  # For search ellipsoids and visualization
-    VariogramEllipsoidRanges,    # For variogram structure definition
+    EllipsoidRanges as VariogramEllipsoidRanges,  # For variogram structure definition
 )
 from evo.objects.typed.ellipsoid import Rotation as EllipsoidRotation
 from evo.blockmodels import Units
-from evo.notebooks import ServiceManagerWidget, FeedbackWidget
+from evo.notebooks import ServiceManagerWidget
 ```
 
 **Ellipsoid visualization pattern:**
 ```python
-# Get ellipsoid from variogram structure
-var_ell = variogram.get_ellipsoid()  # Returns Ellipsoid from first structure
+# Get ellipsoid from variogram structure with largest range (default)
+var_ell = variogram.get_ellipsoid()
+
+# Or explicitly select a structure by index
+var_ell = variogram.get_ellipsoid(structure_index=0)
 
 # Scale for search neighborhood (typically 2x variogram range)
 search_ell = var_ell.scaled(2.0)
@@ -504,8 +503,8 @@ line = go.Scatter3d(x=x, y=y, z=z, mode="lines", name="Variogram")
 
 **Variogram curve visualization:**
 ```python
-# Get variogram curves for 2D plotting
-major, semi_maj, minor = variogram.get_variogram_curves()
+# Get variogram curves for 2D plotting (principal directions)
+major, semi_maj, minor = variogram.get_principal_directions()
 
 import plotly.graph_objects as go
 fig = go.Figure()
@@ -514,6 +513,63 @@ fig.add_trace(go.Scatter(x=semi_maj.distance, y=semi_maj.semivariance, name="Sem
 fig.add_trace(go.Scatter(x=major.distance, y=major.semivariance, name="Major"))
 fig.update_layout(xaxis_title="Distance", yaxis_title="Semivariance")
 fig.show()
+
+# Get variogram curve in arbitrary direction
+distance, semivariance = variogram.get_direction(azimuth=45, dip=30)
+fig.add_trace(go.Scatter(x=distance, y=semivariance, name="Az=45°, Dip=30°"))
+```
+
+**Running kriging (single task):**
+```python
+from evo.compute.tasks import run, Target, SearchNeighborhood
+from evo.compute.tasks.kriging import KrigingParameters
+
+params = KrigingParameters(
+    source=pointset.attributes["grade"],
+    target=block_model.attributes["kriged_grade"],
+    variogram=variogram,
+    search=SearchNeighborhood(
+        ellipsoid=var_ell.scaled(2.0),
+        max_samples=20,
+    ),
+)
+
+# Run with default progress feedback
+result = await run(manager, params)
+result  # Pretty-print shows Portal link
+```
+
+**Running multiple kriging tasks:**
+```python
+# Create parameter sets for different scenarios
+param_sets = [
+    KrigingParameters(..., search=SearchNeighborhood(..., max_samples=10)),
+    KrigingParameters(..., search=SearchNeighborhood(..., max_samples=20)),
+    KrigingParameters(..., search=SearchNeighborhood(..., max_samples=30)),
+]
+
+# Run all concurrently - progress shows "Running x/y..."
+results = await run(manager, param_sets)
+results  # Pretty-print shows all results in a table
+results[0]  # Access individual result
+```
+
+**Task Registry (for SDK developers):**
+
+The `run()` function uses a task registry to dispatch to the appropriate runner based on parameter types. This enables running different task types together in the future:
+
+```python
+# Task runners register themselves when imported
+from evo.compute.tasks.common.runner import register_task_runner
+
+# Example: how kriging registers itself (done automatically on import)
+register_task_runner(KrigingParameters, _run_kriging_for_registry)
+
+# Future: mixed task types can run together
+results = await run(manager, [
+    KrigingParameters(...),
+    SimulationParameters(...),  # future task type
+])
 ```
 
 ## Block Model Reports
@@ -649,8 +705,10 @@ class MassUnits:
 **Existing typed objects to reference:**
 - `PointSet` - Simple object with locations dataset and attributes
 - `Variogram` - Complex nested structures (structures, anisotropy, rotation)
-  - `variogram.get_ellipsoid(structure_index=0)` - Get Ellipsoid for visualization/search
-  - `variogram.get_variogram_curves()` - Get curve data for 2D plotting
+  - `variogram.get_ellipsoid()` - Get Ellipsoid from structure with largest volume (default)
+  - `variogram.get_ellipsoid(structure_index=0)` - Get Ellipsoid from specific structure
+  - `variogram.get_principal_directions()` - Get curve data for 2D plotting (major, semi_major, minor)
+  - `variogram.get_direction(azimuth, dip)` - Get curve in arbitrary direction
 - `Ellipsoid` - 3D ellipsoid for search neighborhoods and visualization
   - `Ellipsoid(ranges=EllipsoidRanges(...), rotation=Rotation(...))` - Create directly
   - `ellipsoid.scaled(factor)` - Create scaled copy (e.g., for search neighborhood)
