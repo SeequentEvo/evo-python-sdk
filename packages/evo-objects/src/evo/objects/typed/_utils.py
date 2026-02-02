@@ -86,17 +86,11 @@ def delete_jmespath_value(document: dict[str, Any], path: jmespath.ParsedResult 
     document.pop(last_field_name, None)
 
 
-def get_data_client(context: IContext | DownloadedObject) -> ObjectDataClient:
+def get_data_client(context: IContext) -> ObjectDataClient:
     """Get an ObjectDataClient for the current context."""
-    if isinstance(context, DownloadedObject):
-        connector = context._connector
-        environment = context.metadata.environment
-        cache = context._cache
-    else:
-        connector = context.get_connector()
-        environment = context.get_environment()
-        cache = context.get_cache()
-    return ObjectDataClient(connector=connector, environment=environment, cache=cache)
+    connector = context.get_connector()
+    environment = context.get_environment()
+    return ObjectDataClient(connector=connector, environment=environment, cache=context.get_cache())
 
 
 def _response_to_downloaded_object(
@@ -125,7 +119,7 @@ async def create_geoscience_object(
         if parent is not None:
             raise ValueError("Cannot specify both 'parent' and 'path'.")
         if not path.endswith(".json"):
-            raise ValueError("`path` must end in `.json`.")
+            path += ".json"
     else:
         name = object_dict["name"]
 
@@ -191,3 +185,11 @@ async def replace_geoscience_object(
         response = await _update_geoscience_object(environment, objects_api, get_response.object.uuid, object_dict)
 
     return _response_to_downloaded_object(response, environment, connector, context.get_cache())
+
+
+async def download_geoscience_object(context: IContext, reference: ObjectReference) -> DownloadedObject:
+    return await DownloadedObject.from_reference(
+        connector=context.get_connector(),
+        reference=reference,
+        cache=context.get_cache(),
+    )

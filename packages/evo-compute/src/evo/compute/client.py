@@ -84,7 +84,6 @@ class JobClient(Generic[T_Result]):
         task: str,
         job_id: UUID,
         result_type: type[T_Result] = dict,
-        preview: bool = False,
     ) -> None:
         """
         :param connector: The API connector to use.
@@ -93,7 +92,6 @@ class JobClient(Generic[T_Result]):
         :param task: The task to be executed.
         :param job_id: The job ID.
         :param result_type: The type to validate the result against.
-        :param preview: Whether to use preview mode and include necessary header information.
         """
         self._connector = connector
         self._org_id = org_id
@@ -104,7 +102,6 @@ class JobClient(Generic[T_Result]):
         self._type_adapter = TypeAdapter(result_type)
         self._mutex = asyncio.Lock()
         self._results: T_Result | JobError | None = None
-        self._preview = preview
 
     @property
     def id(self) -> UUID:
@@ -129,17 +126,8 @@ class JobClient(Generic[T_Result]):
     def __repr__(self) -> str:
         return self.url
 
-    def _get_headers(self) -> dict[str, str]:
-        """Get the headers dictionary for API requests.
-
-        :return: Headers dictionary with preview header if enabled.
-        """
-        return {"API-Preview": "opt-in"} if self._preview else {}
-
     @staticmethod
-    def from_url(
-        connector: APIConnector, url: str, result_type: type[T_Result] = dict, preview: bool = False
-    ) -> JobClient[T_Result]:
+    def from_url(connector: APIConnector, url: str, result_type: type[T_Result] = dict) -> JobClient[T_Result]:
         """Create a job client from a status URL.
 
         The URL hostname must match the connector base URL.
@@ -147,7 +135,6 @@ class JobClient(Generic[T_Result]):
         :param connector: The API connector to use.
         :param url: The status URL of a submitted job.
         :param result_type: The type to validate the result against.
-        :param preview: Whether to use preview mode and include necessary header information.
 
         :return: A client for managing the referenced job.
         """
@@ -163,7 +150,7 @@ class JobClient(Generic[T_Result]):
                     except ValueError:
                         raise ValueError(f"Invalid {key.removesuffix('_id')} ID in URL: {url}") from None
 
-        return JobClient(connector=connector, **path_params, result_type=result_type, preview=preview)
+        return JobClient(connector=connector, **path_params, result_type=result_type)
 
     @staticmethod
     async def submit(
@@ -173,7 +160,6 @@ class JobClient(Generic[T_Result]):
         task: str,
         parameters: Mapping[str, Any],
         result_type: type[T_Result] = dict,
-        preview: bool = False,
     ) -> JobClient[T_Result]:
         """Trigger an asynchronous task within a specific topic with the given parameters.
 
@@ -182,20 +168,17 @@ class JobClient(Generic[T_Result]):
         :param task: The task to be executed.
         :param parameters: The parameters for the task.
         :param result_type: The type to validate the result against.
-        :param preview: Whether to use preview mode and include necessary header information.
 
         :return: The job that was created.
 
         :raises UnknownResponseError: If the Location header is missing or invalid.
         """
-
         async with connector:
             response = await TasksApi(connector).execute_task(
                 org_id=str(org_id),
                 topic=topic,
                 task=task,
                 execute_task_request={"parameters": dict(parameters)},
-                additional_headers={"API-Preview": "opt-in"} if preview else {},
             )
 
         # Location header is the status endpoint of the created job.
@@ -203,7 +186,7 @@ class JobClient(Generic[T_Result]):
         try:
             job_url = response.headers["Location"]
             job_url = connector.base_url + job_url.removeprefix(connector.base_url).removeprefix("/")
-            return JobClient.from_url(connector, job_url, result_type, preview=preview)
+            return JobClient.from_url(connector, job_url, result_type)
         except (KeyError, ValueError):
             raise UnknownResponseError(
                 status=response.status, reason=response.reason, content=None, headers=response.headers
@@ -220,7 +203,6 @@ class JobClient(Generic[T_Result]):
                 topic=self._topic,
                 task=self._task,
                 job_id=self._job_id,
-                additional_headers=self._get_headers(),
             )
 
         if response.error:
@@ -259,7 +241,6 @@ class JobClient(Generic[T_Result]):
                         topic=self._topic,
                         task=self._task,
                         job_id=self._job_id,
-                        additional_headers=self._get_headers(),
                     )
 
                 with _validating_pydantic_model(response):
@@ -313,7 +294,6 @@ class JobClient(Generic[T_Result]):
                 topic=self._topic,
                 task=self._task,
                 job_id=self._job_id,
-                additional_headers=self._get_headers(),
             )
 
     async def wait_for_results(

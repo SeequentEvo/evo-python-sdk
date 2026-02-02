@@ -10,7 +10,20 @@
 #  limitations under the License.
 
 from .client import BlockModelAPIClient
+from .typed import BoundingBox, Point3, RegularBlockModel, RegularBlockModelData, Size3d, Size3i, Units, get_available_units
+from .urls import get_blocksync_base_url, get_blocksync_block_model_url, get_blocksync_block_model_url_from_environment
 
 __all__ = [
     "BlockModelAPIClient",
+    "BoundingBox",
+    "Point3",
+    "RegularBlockModel",
+    "RegularBlockModelData",
+    "Size3d",
+    "Size3i",
+    "Units",
+    "get_available_units",
+    "get_blocksync_base_url",
+    "get_blocksync_block_model_url",
+    "get_blocksync_block_model_url_from_environment",
 ]

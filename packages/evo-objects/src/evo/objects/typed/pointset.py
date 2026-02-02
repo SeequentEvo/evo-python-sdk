@@ -19,6 +19,7 @@ import pandas as pd
 from evo.common.interfaces import IFeedback
 from evo.common.utils import NoFeedback
 from evo.objects import SchemaVersion
+from evo.objects.typed.attributes import Attributes
 from evo.objects.utils.table_formats import FLOAT_ARRAY_3, KnownTableFormat
 
 from ._data import DataTable, DataTableAndAttributes
@@ -116,3 +117,23 @@ class PointSet(BaseSpatialObject):
     def num_points(self) -> int:
         """The number of points in this pointset."""
         return self.locations.length
+
+    @property
+    def attributes(self) -> Attributes:
+        return self.locations.attributes
+
+    async def coordinates(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
+        """Get the coordinates dataframe for the pointset.
+
+        Returns:
+            A DataFrame with 'x', 'y', 'z' columns representing point coordinates.
+        """
+        return await self.locations._table.get_dataframe(fb=fb)
+
+    async def to_dataframe(self, *keys: str, fb: IFeedback = NoFeedback) -> pd.DataFrame:
+        """Get the full dataframe for the pointset, including coordinates and attributes.
+
+        Returns:
+            A DataFrame with 'x', 'y', 'z' columns and any additional attribute columns.
+        """
+        return await self.locations.to_dataframe(*keys, fb=fb)

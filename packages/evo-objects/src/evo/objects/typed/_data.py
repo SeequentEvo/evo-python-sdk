@@ -99,6 +99,23 @@ class DataTableAndAttributes(SchemaModel):
         else:
             return table_df
 
+    async def to_dataframe(self, *keys: str, fb: IFeedback = NoFeedback) -> pd.DataFrame:
+        """Load a DataFrame containing the values and attributes.
+
+        This is an alias for get_dataframe for backwards compatibility.
+
+        :param keys: Optional attribute keys to include. If not specified, all attributes are included.
+        :param fb: Optional feedback object to report download progress.
+        :return: DataFrame with data columns (e.g., X, Y, Z) and additional columns for attributes.
+        """
+        table_df = await self._table.get_dataframe(fb=fb)
+        if self.attributes is not None and len(self.attributes) > 0:
+            attr_df = await self.attributes.get_dataframe(*keys, fb=fb)
+            combined_df = pd.concat([table_df, attr_df], axis=1)
+            return combined_df
+        else:
+            return table_df
+
     async def set_dataframe(self, df: pd.DataFrame, fb: IFeedback = NoFeedback) -> None:
         """Set the table data and attributes from a DataFrame.
 

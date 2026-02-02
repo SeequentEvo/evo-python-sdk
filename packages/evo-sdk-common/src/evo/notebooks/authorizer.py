@@ -11,7 +11,6 @@
 
 import contextlib
 import json
-import warnings
 from collections.abc import AsyncIterator
 from typing import Generic, TypeVar
 
@@ -29,6 +28,7 @@ logger = logging.getLogger("notebooks.oauth")
 _TOKEN_KEY = "NotebookOAuth.token"
 
 _T_token = TypeVar("_T_token", bound=oauth.AccessToken)
+
 
 
 class _OAuthEnv(Generic[_T_token]):
@@ -105,10 +105,6 @@ class AuthorizationCodeAuthorizer(_NotebookAuthorizerMixin[oauth.AccessToken], o
         :param scopes: The OAuth scopes to request.
         :param env: The environment to store the OAuth token in.
         """
-        warnings.warn(
-            "The evo.notebooks.AuthorizationCodeAuthorizer is not secure, and should only ever be used in Jupyter"
-            " notebooks in a private environment."
-        )
         super().__init__(oauth_connector=oauth_connector, redirect_url=redirect_url, scopes=scopes)
         self._env = _OAuthEnv(env)
 

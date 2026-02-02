@@ -22,6 +22,7 @@ from uuid import UUID
 from evo.common import Environment, ResourceMetadata
 from evo.workspaces import ServiceUser
 
+from evo.common.styles.html import build_object_html
 from .exceptions import SchemaIDFormatError
 
 __all__ = [

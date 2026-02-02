@@ -11,9 +11,11 @@
 
 from .client import JobClient
 from .data import JobProgress, JobStatusEnum
+from . import tasks
 
 __all__ = [
     "JobClient",
     "JobProgress",
     "JobStatusEnum",
+    "tasks",
 ]

@@ -9,12 +9,23 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from .widgets import FeedbackWidget, HubSelectorWidget, OrgSelectorWidget, ServiceManagerWidget, WorkspaceSelectorWidget
+from evo.common.utils import split_feedback
+
+from .widgets import (
+    FeedbackWidget,
+    HubSelectorWidget,
+    ObjectSearchWidget,
+    OrgSelectorWidget,
+    ServiceManagerWidget,
+    WorkspaceSelectorWidget,
+)
 
 __all__ = [
     "FeedbackWidget",
     "HubSelectorWidget",
+    "ObjectSearchWidget",
     "OrgSelectorWidget",
     "ServiceManagerWidget",
+    "split_feedback",
     "WorkspaceSelectorWidget",
 ]

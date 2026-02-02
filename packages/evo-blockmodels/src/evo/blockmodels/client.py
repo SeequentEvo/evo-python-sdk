@@ -29,11 +29,10 @@ from .data import (
     FullySubBlockedGridDefinition,
     OctreeGridDefinition,
     RegularGridDefinition,
-    SubBlockedGridDefinition,
     Version,
 )
 from .endpoints import models
-from .endpoints.api import ColumnOperationsApi, JobsApi, MetadataApi, OperationsApi, VersionsApi
+from .endpoints.api import ColumnOperationsApi, JobsApi, MetadataApi, OperationsApi, ReportsApi, VersionsApi
 from .endpoints.models import (
     AnyUrl,
     BBox,
@@ -46,11 +45,9 @@ from .endpoints.models import (
     JobResponse,
     JobStatus,
     Location,
-    OctreeSubblocks,
     OutputOptionsParquet,
     QueryCriteria,
     QueryDownload,
-    RegularSubblocks,
     Rotation,
     RotationAxis,
     Size3D,
@@ -90,24 +87,7 @@ def _version_from_model(version: models.Version) -> Version:
     )
 
 
-_GEOMETRY_COLUMNS = {
-    "i",
-    "j",
-    "k",
-    "sidx",
-    "start_si",
-    "start_sj",
-    "start_sk",
-    "end_si",
-    "end_sj",
-    "end_sk",
-    "x",
-    "y",
-    "z",
-    "dx",
-    "dy",
-    "dz",
-}
+_GEOMETRY_COLUMNS = {"i", "j", "k", "x", "y", "z"}
 
 
 class BlockModelAPIClient(BaseAPIClient):
@@ -127,6 +107,7 @@ class BlockModelAPIClient(BaseAPIClient):
         self._operations_api = OperationsApi(connector)
         self._column_operations_api = ColumnOperationsApi(connector)
         self._metadata_api = MetadataApi(connector)
+        self._reports_api = ReportsApi(connector)
         self._cache = cache
 
     @classmethod
@@ -245,40 +226,13 @@ class BlockModelAPIClient(BaseAPIClient):
     ):
         match grid_definition:
             case RegularGridDefinition(n_blocks=n_blocks, block_size=block_size):
-                size_options = SizeOptionsRegular(
+                size_option = SizeOptionsRegular(
                     model_type="regular",
                     n_blocks=Size3D(nx=n_blocks[0], ny=n_blocks[1], nz=n_blocks[2]),
                     block_size=BlockSize(x=block_size[0], y=block_size[1], z=block_size[2]),
                 )
-            case FullySubBlockedGridDefinition(
-                n_parent_blocks=n_parent_blocks, n_subblocks_per_parent=n_subblocks, parent_block_size=parent_block_size
-            ):
-                size_options = SizeOptionsFullySubBlocked(
-                    model_type="fully-sub-blocked",
-                    n_parent_blocks=Size3D(nx=n_parent_blocks[0], ny=n_parent_blocks[1], nz=n_parent_blocks[2]),
-                    n_subblocks_per_parent=RegularSubblocks(nx=n_subblocks[0], ny=n_subblocks[1], nz=n_subblocks[2]),
-                    parent_block_size=BlockSize(x=parent_block_size[0], y=parent_block_size[1], z=parent_block_size[2]),
-                )
-            case FlexibleGridDefinition(
-                n_parent_blocks=n_parent_blocks, n_subblocks_per_parent=n_subblocks, parent_block_size=parent_block_size
-            ):
-                size_options = SizeOptionsFlexible(
-                    model_type="flexible",
-                    n_parent_blocks=Size3D(nx=n_parent_blocks[0], ny=n_parent_blocks[1], nz=n_parent_blocks[2]),
-                    n_subblocks_per_parent=RegularSubblocks(nx=n_subblocks[0], ny=n_subblocks[1], nz=n_subblocks[2]),
-                    parent_block_size=BlockSize(x=parent_block_size[0], y=parent_block_size[1], z=parent_block_size[2]),
-                )
-            case OctreeGridDefinition(
-                n_parent_blocks=n_parent_blocks, n_subblocks_per_parent=n_subblocks, parent_block_size=parent_block_size
-            ):
-                size_options = SizeOptionsOctree(
-                    model_type="variable-octree",
-                    n_parent_blocks=Size3D(nx=n_parent_blocks[0], ny=n_parent_blocks[1], nz=n_parent_blocks[2]),
-                    n_subblocks_per_parent=OctreeSubblocks(nx=n_subblocks[0], ny=n_subblocks[1], nz=n_subblocks[2]),
-                    parent_block_size=BlockSize(x=parent_block_size[0], y=parent_block_size[1], z=parent_block_size[2]),
-                )
             case _:
-                raise NotImplementedError(f"Unknown grid definition type '{type(grid_definition).__name__}'")
+                raise NotImplementedError("Only regular models are supported at the moment")
         create_result = await self._operations_api.create_block_model(
             workspace_id=str(self._environment.workspace_id),
             org_id=str(self._environment.org_id),
@@ -296,7 +250,7 @@ class BlockModelAPIClient(BaseAPIClient):
                 block_rotation=[
                     Rotation(axis=RotationAxis(axis), angle=angle) for axis, angle in grid_definition.rotations
                 ],
-                size_options=size_options,
+                size_options=size_option,
             ),
         )
         job_id = _job_id_from_url(create_result.job_url)
@@ -311,7 +265,6 @@ class BlockModelAPIClient(BaseAPIClient):
 
         cache_location = get_cache_location_for_upload(self._cache, self._environment, job_id)
         pyarrow.parquet.write_table(data, cache_location)
-
         # Upload the data
         upload = BlockModelUpload(self._connector, self._environment, bm_id, job_id, upload_url)
         await upload.upload_from_path(cache_location, self._connector.transport)
@@ -367,6 +320,19 @@ class BlockModelAPIClient(BaseAPIClient):
         )
 
         return [self._bm_from_model(m) for m in response.results]
+
+    async def get_block_model(self, bm_id: UUID) -> BlockModel:
+        """Get a block model by ID.
+
+        :param bm_id: The ID of the block model to retrieve.
+        :return: The BlockModel metadata.
+        """
+        response = await self._metadata_api.retrieve_block_model(
+            bm_id=str(bm_id),
+            workspace_id=str(self._environment.workspace_id),
+            org_id=str(self._environment.org_id),
+        )
+        return self._bm_from_model(response)
 
     async def list_all_block_models(self, page_limit: int | None = 100) -> list[BlockModel]:
         """Return all block models for the current workspace, following paginated responses.
@@ -520,23 +486,16 @@ class BlockModelAPIClient(BaseAPIClient):
         )
 
         if initial_data is not None:
-            if isinstance(grid_definition, SubBlockedGridDefinition):
-                geometry_change = True
-            else:
-                geometry_change = None
-            version = await self._add_new_columns(create_result.bm_uuid, initial_data, units, geometry_change)
+            version = await self.add_new_columns(create_result.bm_uuid, initial_data, units)
         return self._bm_from_model(create_result), version
 
-    async def _add_new_columns(
+    async def add_new_columns(
         self,
         bm_id: UUID,
         data: Table,
         units: dict[str, str] | None = None,
-        geometry_change: bool | None = None,
     ):
         """Add new columns to an existing block model.
-
-        For sub-blocked models, this will not change the sub-blocking structure. Thus the block within the data must match existing sub-blocks in the model.
 
         Units for the columns can be provided in the `units` dictionary.
 
@@ -545,7 +504,6 @@ class BlockModelAPIClient(BaseAPIClient):
         :param bm_id: The ID of the block model to add columns to.
         :param data: The data containing the new columns to add.
         :param units: A dictionary mapping column names within `data` to units.
-        :param geometry_change: Whether the geometry of the block model is changing.
         :raises CacheNotConfiguredException: If the cache is not configured.
         :return: The new version of the block model with the added columns.
         """
@@ -574,53 +532,12 @@ class BlockModelAPIClient(BaseAPIClient):
             update_data_lite_input=models.UpdateDataLiteInput(
                 columns=columns,
                 update_type=models.UpdateType.replace,
-                geometry_change=geometry_change,
             ),
         )
         version = await self._upload_data(bm_id, update_response.job_uuid, str(update_response.upload_url), data)
         return _version_from_model(version)
 
-    async def add_new_subblocked_columns(
-        self,
-        bm_id: UUID,
-        data: Table,
-        units: dict[str, str] | None = None,
-    ):
-        """Add new columns to an existing sub-blocked block model. This will not change the sub-blocking structure, thus the provided data must match existing sub-blocks in the model.
-
-        Units for the columns can be provided in the `units` dictionary.
-
-        This method requires the `pyarrow` package to be installed, and the 'cache' parameter to be set in the constructor.
-
-        :param bm_id: The ID of the block model to add columns to.
-        :param data: The data containing the new columns to add.
-        :param units: A dictionary mapping column names within `data` to units.
-        :raises CacheNotConfiguredException: If the cache is not configured.
-        :return: The new version of the block model with the added columns.
-        """
-        return await self._add_new_columns(bm_id, data, units, geometry_change=False)
-
-    async def add_new_columns(
-        self,
-        bm_id: UUID,
-        data: Table,
-        units: dict[str, str] | None = None,
-    ):
-        """Add new columns to an existing regular block model.
-
-        Units for the columns can be provided in the `units` dictionary.
-
-        This method requires the `pyarrow` package to be installed, and the 'cache' parameter to be set in the constructor.
-
-        :param bm_id: The ID of the block model to add columns to.
-        :param data: The data containing the new columns to add.
-        :param units: A dictionary mapping column names within `data` to units.
-        :raises CacheNotConfiguredException: If the cache is not configured.
-        :return: The new version of the block model with the added columns.
-        """
-        return await self._add_new_columns(bm_id, data, units, geometry_change=None)
-
-    async def _update_columns(
+    async def update_block_model_columns(
         self,
         bm_id: UUID,
         data: Table,
@@ -628,8 +545,22 @@ class BlockModelAPIClient(BaseAPIClient):
         update_columns: set[str] | None = None,
         delete_columns: set[str] | None = None,
         units: dict[str, str] | None = None,
-        geometry_change: bool | None = None,
     ) -> Version:
+        """Add, update, or delete block model columns.
+
+        Units for the columns can be provided in the `units` dictionary.
+
+        This method requires the `pyarrow` package to be installed, and the 'cache' parameter to be set in the constructor.
+
+        :param bm_id: The ID of the block model to add columns to.
+        :param data: The data containing the new columns to add.
+        :param new_columns: A list of new column names to add to the block model.
+        :param update_columns: A set of column names to update in the block model.
+        :param delete_columns: A set of column names to delete from the block model.
+        :param units: A dictionary mapping column names within `data` to units.
+        :raises CacheNotConfiguredException: If the cache is not configured.
+        :return: The new version of the block model with the added columns.
+        """
         if self._cache is None:
             raise CacheNotConfiguredException(
                 "Cache must be configured to use this method. Please set the 'cache' parameter in the constructor."
@@ -669,72 +600,10 @@ class BlockModelAPIClient(BaseAPIClient):
             update_data_lite_input=models.UpdateDataLiteInput(
                 columns=columns,
                 update_type=models.UpdateType.replace,
-                geometry_change=geometry_change,
             ),
         )
         version = await self._upload_data(bm_id, update_response.job_uuid, str(update_response.upload_url), data)
         return _version_from_model(version)
-
-    async def update_block_model_columns(
-        self,
-        bm_id: UUID,
-        data: Table,
-        new_columns: list[str],
-        update_columns: set[str] | None = None,
-        delete_columns: set[str] | None = None,
-        units: dict[str, str] | None = None,
-    ) -> Version:
-        """Add, update, or delete regular block model columns.
-
-        Units for the columns can be provided in the `units` dictionary.
-
-        This method requires the `pyarrow` package to be installed, and the 'cache' parameter to be set in the constructor.
-
-        :param bm_id: The ID of the block model to add columns to.
-        :param data: The data containing the new columns to add.
-        :param new_columns: A list of new column names to add to the block model.
-        :param update_columns: A set of column names to update in the block model.
-        :param delete_columns: A set of column names to delete from the block model.
-        :param units: A dictionary mapping column names within `data` to units.
-        :raises CacheNotConfiguredException: If the cache is not configured.
-        :return: The new version of the block model with the added columns.
-        """
-        return await self._update_columns(
-            bm_id, data, new_columns, update_columns, delete_columns, units, geometry_change=None
-        )
-
-    async def update_subblocked_columns(
-        self,
-        bm_id: UUID,
-        data: Table,
-        new_columns: list[str],
-        update_columns: set[str] | None = None,
-        delete_columns: set[str] | None = None,
-        units: dict[str, str] | None = None,
-        geometry_change: bool = False,
-    ) -> Version:
-        """Add, update, or delete sub-blocked block model columns.
-
-        Whether the sub-blocking structure changes can be specified with the `geometry_change` parameter.
-
-        If `True`, the geometry of the sub-blocked model changes, but all existing sub-blocks columns must either be updated or deleted.
-        If `False`, the geometry of the sub-blocked model does not change, but the provided data must match existing sub-blocks in the model.
-
-        Units for the columns can be provided in the `units` dictionary.
-
-        This method requires the `pyarrow` package to be installed, and the 'cache' parameter to be set in the constructor.
-
-        :param bm_id: The ID of the block model to add columns to.
-        :param data: The data containing the new columns to add.
-        :param new_columns: A list of new column names to add to the block model.
-        :param update_columns: A set of column names to update in the block model.
-        :param delete_columns: A set of column names to delete from the block model.
-        :param units: A dictionary mapping column names within `data` to units.
-        :param geometry_change: Whether the geometry of the sub-blocked model changes.
-        """
-        return await self._update_columns(
-            bm_id, data, new_columns, update_columns, delete_columns, units, geometry_change=geometry_change
-        )
 
     async def update_column_metadata(
         self,

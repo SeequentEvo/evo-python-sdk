@@ -48,6 +48,7 @@ logger = logging.getLogger(__name__)
 __all__ = [
     "FeedbackWidget",
     "HubSelectorWidget",
+    "ObjectSearchWidget",
     "OrgSelectorWidget",
     "ServiceManagerWidget",
     "WorkspaceSelectorWidget",
@@ -512,3 +513,410 @@ class FeedbackWidget(IFeedback):
         self._progress.description = f"{progress * 100:5.1f}%"
         if message is not None:
             self._msg.value = message
+
+
+class ObjectSearchWidget(widgets.VBox):
+    """A widget for searching and selecting geoscience objects by name.
+
+    This widget provides a user-friendly interface for discovering objects in an Evo workspace
+    without requiring knowledge of UUIDs or the low-level ObjectAPIClient.
+
+    Features:
+    - Text search with debounced input (300ms delay)
+    - Optional filtering by object type (e.g., "pointset", "block-model")
+    - Displays matching objects in a dropdown
+    - Shows metadata, versions, and attributes for the selected object
+    - Caches object list per workspace to minimize API calls
+
+    Example usage:
+        ```python
+        from evo.notebooks import ServiceManagerWidget, ObjectSearchWidget
+        from evo.objects.typed import PointSet
+
+        manager = await ServiceManagerWidget.with_auth_code(client_id="...").login()
+
+        # Search for pointsets containing "Ag" in the name
+        picker = ObjectSearchWidget(manager, search="Ag", object_type="pointset")
+
+        # Once user selects an object, load it as a typed PointSet
+        pointset = await PointSet.from_reference(manager, picker.selected_reference)
+        df = await pointset.locations.as_dataframe()
+        ```
+    """
+
+    # Mapping of sub_classification to user-friendly names
+    _TYPE_DISPLAY_NAMES: dict[str, str] = {
+        "pointset": "Pointset",
+        "block-model": "Block Model",
+        "regular-3d-grid": "Regular 3D Grid",
+        "regular-masked-3d-grid": "Regular Masked 3D Grid",
+        "tensor-3d-grid": "Tensor 3D Grid",
+        "drilling-campaign": "Drilling Campaign",
+        "downhole-collection": "Downhole Collection",
+        "triangulated-surface-mesh": "Triangulated Surface Mesh",
+        "variogram": "Variogram",
+    }
+
+    def __init__(
+        self,
+        context: IContext,
+        search: str = "",
+        object_type: str | None = None,
+        auto_display: bool = True,
+    ) -> None:
+        """Create a new ObjectSearchWidget.
+
+        :param context: The context (e.g., ServiceManagerWidget) providing environment and connector.
+        :param search: Initial search text to filter objects by name.
+        :param object_type: Optional object type filter (e.g., "pointset", "block-model").
+        :param auto_display: Whether to automatically display the widget (default True).
+        """
+        self._context = context
+        self._object_type = object_type
+        self._cached_objects: list[Any] = []  # List of ObjectMetadata
+        self._cache_workspace_id: UUID | None = None
+        self._debounce_task: asyncio.Task | None = None
+        self._selected_metadata: Any | None = None  # ObjectMetadata
+
+        # Build UI components
+        self._search_input = widgets.Text(
+            value=search,
+            placeholder="Type to search objects by name...",
+            description="Search:",
+            layout=widgets.Layout(width="400px"),
+        )
+        self._search_input.observe(self._on_search_change, names="value")
+
+        type_options = [("All types", None)] + [
+            (display_name, type_key) for type_key, display_name in self._TYPE_DISPLAY_NAMES.items()
+        ]
+        self._type_filter = widgets.Dropdown(
+            options=type_options,
+            value=object_type,
+            description="Type:",
+            layout=widgets.Layout(width="250px"),
+        )
+        self._type_filter.observe(self._on_type_change, names="value")
+
+        self._results_dropdown = widgets.Dropdown(
+            options=[("No results", None)],
+            value=None,
+            description="Object:",
+            layout=widgets.Layout(width="500px"),
+            disabled=True,
+        )
+        self._results_dropdown.observe(self._on_selection_change, names="value")
+
+        self._loading_indicator = widgets.Label("")
+        self._status_label = widgets.Label("")
+
+        # Metadata display area
+        self._metadata_output = widgets.Output(layout=widgets.Layout(width="100%", border="1px solid #ddd"))
+
+        # Layout
+        search_row = widgets.HBox([self._search_input, self._type_filter, self._loading_indicator])
+        results_row = widgets.HBox([self._results_dropdown, self._status_label])
+
+        super().__init__([search_row, results_row, self._metadata_output])
+
+        # Trigger initial search if search text provided
+        if search:
+            asyncio.ensure_future(self._perform_search())
+
+        if auto_display:
+            display(self)
+
+    @property
+    def selected_reference(self) -> Any | None:
+        """Get the ObjectReference for the selected object.
+
+        Returns None if no object is selected.
+        Use this with typed object classes like PointSet.from_reference().
+        """
+        if self._selected_metadata is None:
+            return None
+        return self._selected_metadata.url
+
+    @property
+    def selected_name(self) -> str | None:
+        """Get the name of the selected object, or None if nothing is selected."""
+        if self._selected_metadata is None:
+            return None
+        return self._selected_metadata.name
+
+    @property
+    def selected_metadata(self) -> Any | None:
+        """Get the full ObjectMetadata for the selected object, or None if nothing is selected."""
+        return self._selected_metadata
+
+    def _on_search_change(self, change: dict) -> None:
+        """Handle search input changes with debouncing."""
+        if self._debounce_task is not None:
+            self._debounce_task.cancel()
+        self._debounce_task = asyncio.ensure_future(self._debounced_search())
+
+    async def _debounced_search(self) -> None:
+        """Wait for debounce delay then perform search."""
+        await asyncio.sleep(0.3)  # 300ms debounce
+        await self._perform_search()
+
+    def _on_type_change(self, change: dict) -> None:
+        """Handle type filter changes."""
+        self._object_type = change["new"]
+        # Clear cache to force re-fetch with new filter
+        self._cached_objects = []
+        self._cache_workspace_id = None
+        asyncio.ensure_future(self._perform_search())
+
+    def _on_selection_change(self, change: dict) -> None:
+        """Handle object selection changes."""
+        selected_id = change["new"]
+        if selected_id is None:
+            self._selected_metadata = None
+            self._clear_metadata_display()
+            return
+
+        # Find the selected object in cached objects
+        for obj in self._cached_objects:
+            if obj.id == selected_id:
+                self._selected_metadata = obj
+                asyncio.ensure_future(self._display_metadata(obj))
+                break
+
+    async def _perform_search(self) -> None:
+        """Perform the object search and update results."""
+        self._loading_indicator.value = "Loading..."
+        self._results_dropdown.disabled = True
+
+        try:
+            # Fetch objects if cache is invalid
+            current_workspace_id = self._context.get_environment().workspace_id
+            if self._cache_workspace_id != current_workspace_id or not self._cached_objects:
+                await self._fetch_objects()
+                self._cache_workspace_id = current_workspace_id
+
+            # Filter by search text (case-insensitive partial match)
+            search_text = self._search_input.value.lower().strip()
+            filtered = self._cached_objects
+
+            if search_text:
+                filtered = [obj for obj in filtered if search_text in obj.name.lower()]
+
+            # Update dropdown
+            if filtered:
+                options = [
+                    (f"{obj.name} ({self._get_type_display(obj.schema_id.sub_classification)})", obj.id)
+                    for obj in filtered
+                ]
+                self._results_dropdown.options = options
+                self._results_dropdown.value = options[0][1]  # Select first result
+                self._results_dropdown.disabled = False
+                self._status_label.value = f"Found {len(filtered)} object(s)"
+            else:
+                self._results_dropdown.options = [("No matching objects", None)]
+                self._results_dropdown.value = None
+                self._results_dropdown.disabled = True
+                self._status_label.value = "No results"
+                self._clear_metadata_display()
+
+        except Exception as e:
+            self._status_label.value = f"Error: {e}"
+            logger.exception("Error searching objects")
+        finally:
+            self._loading_indicator.value = ""
+
+    async def _fetch_objects(self) -> None:
+        """Fetch all objects from the workspace (with pagination)."""
+        # Lazy import to avoid circular dependencies
+        from evo.objects import ObjectAPIClient
+
+        client = ObjectAPIClient.from_context(self._context)
+
+        # Fetch all objects with pagination
+        all_objects = await client.list_all_objects(limit_per_request=500)
+
+        # Filter by object type client-side (API requires full schema path with version)
+        if self._object_type:
+            self._cached_objects = [
+                obj for obj in all_objects
+                if obj.schema_id.sub_classification == self._object_type
+            ]
+        else:
+            self._cached_objects = all_objects
+
+    def _get_type_display(self, sub_classification: str) -> str:
+        """Get user-friendly display name for an object type."""
+        return self._TYPE_DISPLAY_NAMES.get(sub_classification, sub_classification)
+
+    def _clear_metadata_display(self) -> None:
+        """Clear the metadata display area."""
+        self._metadata_output.clear_output()
+
+    async def _display_metadata(self, obj: Any) -> None:
+        """Display metadata, versions, and attributes for the selected object."""
+        self._metadata_output.clear_output()
+
+        with self._metadata_output:
+            try:
+                # Basic metadata
+                print("=" * 60)
+                print(f"📦 {obj.name}")
+                print("=" * 60)
+                print(f"Type:        {self._get_type_display(obj.schema_id.sub_classification)}")
+                print(f"Path:        {obj.path}")
+                print(f"Object ID:   {obj.id}")
+                print(f"Schema:      {obj.schema_id}")
+
+
+                print()
+                print(f"Created:     {obj.created_at.strftime('%Y-%m-%d %H:%M:%S')}", end="")
+                if obj.created_by and obj.created_by.name:
+                    print(f" by {obj.created_by.name}")
+                else:
+                    print()
+
+                print(f"Modified:    {obj.modified_at.strftime('%Y-%m-%d %H:%M:%S')}", end="")
+                if obj.modified_by and obj.modified_by.name:
+                    print(f" by {obj.modified_by.name}")
+                else:
+                    print()
+
+                if obj.stage:
+                    print(f"Stage:       {obj.stage.name}")
+
+                # Fetch and display versions
+                print()
+                print("-" * 60)
+                print("📋 Versions")
+                print("-" * 60)
+                await self._display_versions(obj)
+
+                # Fetch and display spatial info and attributes from downloaded object
+                print()
+                await self._display_attributes(obj)
+
+            except Exception as e:
+                print(f"Error loading details: {e}")
+                logger.exception("Error displaying object metadata")
+
+    async def _display_versions(self, obj: Any) -> None:
+        """Fetch and display versions for the object."""
+        try:
+            from evo.objects import ObjectAPIClient
+
+            client = ObjectAPIClient.from_context(self._context)
+            versions = await client.list_versions_by_id(obj.id)
+
+            if not versions:
+                print("  No versions found")
+                return
+
+            for i, version in enumerate(versions):
+                version_label = "latest" if i == 0 else f"v{len(versions) - i}"
+                created_str = version.created_at.strftime("%Y-%m-%d %H:%M")
+
+                # Handle created_by as either ServiceUser object or string
+                if version.created_by:
+                    if hasattr(version.created_by, 'name') and version.created_by.name:
+                        created_by = version.created_by.name
+                    else:
+                        created_by = str(version.created_by)
+                else:
+                    created_by = "unknown"
+
+                stage_str = f" [{version.stage.name}]" if version.stage else ""
+                print(f"  {version_label}: {created_str} by {created_by}{stage_str}")
+
+        except Exception as e:
+            print(f"  Error loading versions: {e}")
+
+    async def _display_attributes(self, obj: Any) -> None:
+        """Fetch and display attributes for the latest version of the object."""
+        try:
+            from evo.objects import ObjectAPIClient
+
+            client = ObjectAPIClient.from_context(self._context)
+            downloaded = await client.download_object_by_id(obj.id)
+            obj_dict = downloaded.as_dict()
+
+            # Display spatial info from downloaded object
+            crs = obj_dict.get("coordinate_reference_system")
+            if crs:
+                if isinstance(crs, dict):
+                    epsg = crs.get("epsg_code")
+                    if epsg:
+                        print(f"CRS:         EPSG:{epsg}")
+                elif isinstance(crs, str):
+                    print(f"CRS:         {crs}")
+
+            bbox = obj_dict.get("bounding_box")
+            if bbox and isinstance(bbox, dict):
+                print(f"Bounding Box:")
+                print(f"  X: [{bbox.get('min_x', 0):.2f}, {bbox.get('max_x', 0):.2f}]")
+                print(f"  Y: [{bbox.get('min_y', 0):.2f}, {bbox.get('max_y', 0):.2f}]")
+                print(f"  Z: [{bbox.get('min_z', 0):.2f}, {bbox.get('max_z', 0):.2f}]")
+
+            # Extract attributes based on object type
+            print()
+            print("-" * 60)
+            print("📊 Attributes")
+            print("-" * 60)
+            attributes = self._extract_attributes(downloaded, obj.schema_id.sub_classification)
+
+            if not attributes:
+                print("  No attributes found")
+                return
+
+            for attr_name, attr_type in attributes:
+                print(f"  • {attr_name} ({attr_type})")
+
+        except Exception as e:
+            print(f"  Error loading attributes: {e}")
+
+    def _extract_attributes(self, downloaded_object: Any, sub_classification: str) -> list[tuple[str, str]]:
+        """Extract attribute names and types from a downloaded object based on its type."""
+        attributes = []
+
+        def _extract_from_list(attrs: Any, suffix: str = "") -> None:
+            """Helper to extract attributes from a list of attribute dicts."""
+            if not isinstance(attrs, list):
+                return
+            for attr in attrs:
+                if isinstance(attr, dict):
+                    name = attr.get("name", "unknown")
+                    attr_type = attr.get("attribute_type", "unknown")
+                    display_name = f"{name}{suffix}" if suffix else name
+                    attributes.append((display_name, attr_type))
+
+        try:
+            obj_dict = downloaded_object.as_dict()
+
+            # Different object types store attributes in different places
+            if sub_classification == "pointset":
+                # Pointsets have attributes in locations.attributes
+                locations = obj_dict.get("locations")
+                if isinstance(locations, dict):
+                    _extract_from_list(locations.get("attributes", []))
+
+            elif sub_classification in ("regular-3d-grid", "regular-masked-3d-grid", "tensor-3d-grid"):
+                # Grids have cell_attributes and vertex_attributes
+                _extract_from_list(obj_dict.get("cell_attributes", []), " (cell)")
+                _extract_from_list(obj_dict.get("vertex_attributes", []), " (vertex)")
+
+            elif sub_classification == "block-model":
+                # Block models reference the Block Model Service
+                bm_ref = obj_dict.get("block_model_reference")
+                if isinstance(bm_ref, dict):
+                    _extract_from_list(bm_ref.get("attributes", []))
+
+            else:
+                # Generic fallback - look for common attribute patterns
+                for key in ("attributes", "cell_attributes", "vertex_attributes"):
+                    if key in obj_dict:
+                        _extract_from_list(obj_dict[key])
+
+        except Exception as e:
+            logger.debug(f"Error extracting attributes: {e}")
+
+        return attributes
+

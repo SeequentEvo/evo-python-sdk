@@ -18,6 +18,7 @@ import pandas as pd
 
 from evo import jmespath
 from evo.common import IContext, IFeedback
+from evo.common.styles.html import STYLESHEET, build_nested_table
 from evo.common.utils import NoFeedback, iter_with_fb
 from evo.objects import DownloadedObject
 from evo.objects.utils.table_formats import (
@@ -35,6 +36,7 @@ from .exceptions import DataLoaderError, ObjectValidationError
 __all__ = [
     "Attribute",
     "Attributes",
+    "PendingAttribute",
 ]
 
 
@@ -93,6 +95,46 @@ class Attribute(SchemaModel):
         """The type of this attribute."""
         return self._attribute_type
 
+    @property
+    def expression(self) -> str:
+        """The JMESPath expression to access this attribute from the object.
+
+        Used by compute tasks (e.g., kriging) to reference the attribute.
+        """
+        base_path = self._context.schema_path or "attributes"
+        print(f"{base_path}[?key=='{self.key}']")
+        return f"{base_path}[?key=='{self.key}']"
+
+    @property
+    def exists(self) -> bool:
+        """Whether this attribute exists on the object.
+
+        :return: True for existing attributes.
+        """
+        return True
+
+    def to_target_dict(self) -> dict[str, str]:
+        """Serialize this attribute as a target for compute tasks.
+
+        For existing attributes, returns an update operation referencing this attribute.
+
+        :return: A dictionary with operation type and reference.
+        """
+        return {
+            "operation": "update",
+            "reference": self.expression,
+        }
+
+    def to_source_dict(self) -> dict[str, Any]:
+        """Serialize this attribute as a source for compute tasks.
+
+        :return: A dictionary with object reference URL and attribute expression.
+        """
+        return {
+            "object": str(self._obj.metadata.url),
+            "attribute": self.expression,
+        }
+
     async def get_dataframe(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
         """Load a DataFrame containing the values for this attribute from the object.
 
@@ -104,6 +146,18 @@ class Attribute(SchemaModel):
         if self._context.is_data_modified(self._data):
             raise DataLoaderError("Data was modified since the object was downloaded")
         return await self._obj.download_attribute_dataframe(self.as_dict(), fb=fb)
+
+    async def to_dataframe(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
+        """Load a DataFrame containing the values for this attribute from the object.
+
+        This is an alias for get_dataframe for consistency with other typed objects.
+
+        :param fb: Optional feedback object to report download progress.
+
+        :return: The loaded DataFrame with values for this attribute, applying lookup table and NaN values as specified.
+            The column name will be updated to match the attribute name.
+        """
+        return await self.get_dataframe(fb=fb)
 
     async def set_attribute_values(
         self, df: pd.DataFrame, infer_attribute_type: bool = False, fb: IFeedback = NoFeedback
@@ -146,8 +200,85 @@ class Attribute(SchemaModel):
             attr_doc["nan_description"] = {"values": []}
 
 
+class PendingAttribute:
+    """A placeholder for an attribute that doesn't exist yet on a Geoscience Object.
+
+    This is returned when accessing an attribute by name that doesn't exist.
+    It can be used as a target for compute tasks, which will create the attribute.
+    """
+
+    def __init__(self, parent: "Attributes", name: str) -> None:
+        """
+        :param parent: The Attributes collection this pending attribute belongs to.
+        :param name: The name of the attribute to create.
+        """
+        self._parent = parent
+        self._name = name
+
+    @property
+    def name(self) -> str:
+        """The name of this attribute."""
+        return self._name
+
+    @property
+    def expression(self) -> str:
+        """The JMESPath expression to access this attribute from the object."""
+        return f"attributes[?name=='{self._name}']"
+
+    @property
+    def exists(self) -> bool:
+        """Whether this attribute exists on the object.
+
+        :return: False for pending attributes.
+        """
+        return False
+
+    @property
+    def _obj(self) -> "DownloadedObject | None":
+        """The DownloadedObject containing this attribute's parent object.
+
+        Delegates to the parent Attributes collection.
+        """
+        return self._parent._obj
+
+    def to_target_dict(self) -> dict[str, str]:
+        """Serialize this attribute as a target for compute tasks.
+
+        For pending attributes, returns a create operation with the attribute name.
+
+        :return: A dictionary with operation type and name.
+        """
+        return {
+            "operation": "create",
+            "name": self._name,
+        }
+
+    def __repr__(self) -> str:
+        return f"PendingAttribute(name={self._name!r}, exists=False)"
+
+
 class Attributes(SchemaList[Attribute]):
     """A collection of Geoscience Object Attributes"""
+
+    _schema_path: str | None = None
+    """The full JMESPath to this attributes list within the parent object schema."""
+
+    def __getitem__(self, index_or_name: int | str) -> Attribute | PendingAttribute:
+        """Get an attribute by index or name.
+
+        :param index_or_name: Either an integer index or the name/key of the attribute.
+        :return: The attribute at the specified index or with the specified name/key.
+            If a string is provided and no matching attribute exists, returns a PendingAttribute
+            that can be used as a target for compute tasks.
+        :raises IndexError: If the integer index is out of range.
+        """
+        if isinstance(index_or_name, str):
+            for attr in self:
+                if attr.name == index_or_name or attr.key == index_or_name:
+                    return attr
+            # Return a PendingAttribute for non-existent attributes accessed by name
+            return PendingAttribute(self, index_or_name)
+        return super().__getitem__(index_or_name)
 
     @classmethod
     async def _data_to_schema(
@@ -211,6 +342,49 @@ class Attributes(SchemaList[Attribute]):
             based on the attribute names.
         """
         parts = [await attribute.get_dataframe(fb=fb_part) for attribute, fb_part in iter_with_fb(self, fb)]
+        return pd.concat(parts, axis=1) if len(parts) > 0 else pd.DataFrame()
+
+    def _repr_html_(self) -> str:
+        """Return an HTML representation for Jupyter notebooks.
+
+        Uses AttributeInfo from as_dict() to display comprehensive attribute information.
+
+        :return: An html table with name and type.
+        """
+        if len(self) == 0:
+            return f'{STYLESHEET}<div class="evo">No attributes available.</div>'
+
+        # Get all attribute info dictionaries
+        attr_infos = [attr.as_dict() for attr in self]
+
+        # Build data rows with headers
+        headers = ["Name", "Type"]
+        rows = []
+        for info in attr_infos:
+            attribute_type = info["attribute_type"]
+            attribute_str = (
+                f"{info['attribute_type']} ({info['values']['data_type']})"
+                if attribute_type != "category"
+                else attribute_type
+            )
+            rows.append([info["name"], attribute_str])
+
+        # Use nested table for a clean header/row structure
+        table_html = build_nested_table(headers, rows)
+        return f'{STYLESHEET}<div class="evo">{table_html}</div>'
+
+    async def to_dataframe(self, *keys: str, fb: IFeedback = NoFeedback) -> pd.DataFrame:
+        """Load a DataFrame containing the values from the specified attributes in the object.
+
+        :param keys: Optional list of attribute keys to filter the attributes by. If no keys are provided, all
+            attributes will be loaded.
+        :param fb: Optional feedback object to report download progress.
+
+        :return: A DataFrame containing the values from the specified attributes. Column name(s) will be updated
+            based on the attribute names.
+        """
+        attributes = [self[key] for key in keys] if keys else list(self)
+        parts = [await attribute.to_dataframe(fb=fb_part) for attribute, fb_part in iter_with_fb(attributes, fb)]
         return pd.concat(parts, axis=1) if len(parts) > 0 else pd.DataFrame()
 
     async def append_attribute(self, df: pd.DataFrame, fb: IFeedback = NoFeedback):
