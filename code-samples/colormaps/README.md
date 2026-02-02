@@ -17,9 +17,12 @@ This directory contains two complementary Jupyter notebooks demonstrating how to
 5. (API version only) Inspect raw JSON payloads for transparency and troubleshooting.
 
 ## Prerequisites
+
 - A Seequent account with Evo entitlements.
 - An Evo application (client ID + redirect URL).
-- Python 3.10–3.12 and the project dependencies installed (from repository root).
+- The Python package manager `uv` installed.
+
+Take a look at `code-samples/README.md` for more detailed information.
 
 ## Quick Start
 From the `code-samples` directory:
