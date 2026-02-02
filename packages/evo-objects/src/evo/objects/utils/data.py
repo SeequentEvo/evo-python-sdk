@@ -132,7 +132,10 @@ class ObjectDataClient:
         fb.progress(1)
 
     def save_table(
-        self, table: pa.Table, table_format: KnownTableFormat | Iterable[KnownTableFormat] | None = None
+        self,
+        table: pa.Table,
+        table_format: KnownTableFormat | Iterable[KnownTableFormat] | None = None,
+        allow_casting: bool = False,
     ) -> dict:
         """Save a pyarrow table to a file, returning the table info as a dictionary.
 
@@ -141,16 +144,24 @@ class ObjectDataClient:
             If a single KnownTableFormat is provided, that format will be used.
             Otherwise, the format will be inferred from the table, either by checking against the provided formats or by
             checking against all known formats.
+        :param allow_casting: Whether to allow casting the table to match the expected format. Casting will fail if there
+            is any data loss during the cast operation. This parameter can only be used when a single table_format is provided,
+            otherwise a ValueError will be raised.
         :return: Information about the saved table.
 
         :raises TableFormatError: If the provided table does not match any of the specified formats. If
             no table formats are specified, raised when the table does not match any known format.
         :raises StorageFileNotFoundError: If the destination does not exist or is not a directory.
+        :raises ValueError: If allow_casting is True and multiple table formats are provided.
         """
         from .table_formats import get_known_format
 
         if not isinstance(table_format, KnownTableFormat):
+            if allow_casting:
+                raise ValueError("allow_casting can only be used when a single table_format is provided")
             table_format = get_known_format(table, table_formats=table_format)
+        if allow_casting:
+            table = table_format.cast_table(table)
         table_info = table_format.save_table(table=table, destination=self.cache_location)
         return table_info
 
@@ -159,6 +170,7 @@ class ObjectDataClient:
         table: pa.Table,
         fb: IFeedback = NoFeedback,
         table_format: KnownTableFormat | Iterable[KnownTableFormat] | None = None,
+        allow_casting: bool = False,
     ) -> dict:
         """Upload pyarrow table to the geoscience object service, returning a GO model of the uploaded data.
 
@@ -168,13 +180,17 @@ class ObjectDataClient:
             If a single KnownTableFormat is provided, that format will be used.
             Otherwise, the format will be inferred from the table, either by checking against the provided formats or by
             checking against all known formats.
+        :param allow_casting: Whether to allow casting the table to match the expected format. Casting will fail if there
+            is any data loss during the cast operation. This parameter can only be used when a single table_format is provided,
+            otherwise a ValueError will be raised.
 
         :return: A description of the uploaded data.
 
         :raises TableFormatError: If the provided table does not match any of the specified formats. If
             no table formats are specified, raised when the table does not match any known format.
+        :raises ValueError: If allow_casting is True and multiple table formats are provided.
         """
-        table_info = self.save_table(table, table_format)
+        table_info = self.save_table(table, table_format, allow_casting=allow_casting)
         upload = ObjectDataUpload(connector=self._connector, environment=self._environment, name=table_info["data"])
         try:
             await upload.upload_from_cache(cache=self._cache, transport=self._connector.transport, fb=fb)
@@ -282,7 +298,10 @@ class ObjectDataClient:
         # Optional support for pandas dataframes. Depends on both pyarrow and pandas.
 
         def save_dataframe(
-            self, dataframe: pd.DataFrame, table_format: KnownTableFormat | Iterable[KnownTableFormat] | None = None
+            self,
+            dataframe: pd.DataFrame,
+            table_format: KnownTableFormat | Iterable[KnownTableFormat] | None = None,
+            allow_casting: bool = False,
         ) -> dict:
             """Save a pandas dataframe to a file, returning the table info as a dictionary.
 
@@ -291,20 +310,27 @@ class ObjectDataClient:
                 If a single KnownTableFormat is provided, that format will be used.
                 Otherwise, the format will be inferred from the table, either by checking against the provided formats or by
                 checking against all known formats.
+            :param allow_casting: Whether to allow casting the table to match the expected format. Casting will fail if there
+                is any data loss during the cast operation. This parameter can only be used when a single table_format is provided,
+                otherwise a ValueError will be raised.
 
             :return: Information about the saved table.
 
             :raises TableFormatError: If the provided table does not match any of the specified formats. If
                 no table formats are specified, raised when the table does not match any known format.
             :raises StorageFileNotFoundError: If the destination does not exist or is not a directory.
+            :raises ValueError: If allow_casting is True and multiple table formats are provided.
             """
-            return self.save_table(pa.Table.from_pandas(dataframe), table_format=table_format)
+            return self.save_table(
+                pa.Table.from_pandas(dataframe), table_format=table_format, allow_casting=allow_casting
+            )
 
         async def upload_dataframe(
             self,
             dataframe: pd.DataFrame,
             fb: IFeedback = NoFeedback,
             table_format: KnownTableFormat | Iterable[KnownTableFormat] | None = None,
+            allow_casting: bool = False,
         ) -> dict:
             """Upload pandas dataframe to the geoscience object service, returning a GO model of the uploaded data.
 
@@ -314,13 +340,19 @@ class ObjectDataClient:
                 If a single KnownTableFormat is provided, that format will be used.
                 Otherwise, the format will be inferred from the table, either by checking against the provided formats or by
                 checking against all known formats.
+            :param allow_casting: Whether to allow casting the table to match the expected format. Casting will fail if there
+                is any data loss during the cast operation. This parameter can only be used when a single table_format is provided,
+                otherwise a ValueError will be raised.
 
             :return: A description of the uploaded data.
 
             :raises TableFormatError: If the provided table does not match any of the specified formats. If
                 no table formats are specified, raised when the table does not match any known format.
+            :raises ValueError: If allow_casting is True and multiple table formats are provided.
             """
-            table_info = await self.upload_table(pa.Table.from_pandas(dataframe), table_format=table_format, fb=fb)
+            table_info = await self.upload_table(
+                pa.Table.from_pandas(dataframe), table_format=table_format, fb=fb, allow_casting=allow_casting
+            )
             return table_info
 
         async def upload_category_dataframe(self, dataframe: pd.DataFrame, fb: IFeedback = NoFeedback) -> CategoryInfo:
