@@ -1,6 +1,6 @@
-# Colour Map Examples
+# Colormap Examples
 
-This directory contains two complementary Jupyter notebooks demonstrating how to work with **Evo Colour Maps** either via the high‑level Python SDK or via direct (low‑level) API calls. It now also includes a concise Quick Start and expanded troubleshooting guidance.
+This directory contains two complementary Jupyter notebooks demonstrating how to work with **Evo Colormaps** either via the high‑level Python SDK or via direct (low‑level) API calls. It now also includes a concise Quick Start and expanded troubleshooting guidance.
 
 ## Notebooks
 
@@ -10,10 +10,10 @@ This directory contains two complementary Jupyter notebooks demonstrating how to
 | `api-examples.ipynb` | Direct API calls using `APIConnector.call_api()` | Learning raw endpoints, debugging, custom request handling |
 
 ## What You Can Do
-1. Authenticate with Evo (Authorization Code flow).
+1. Authenticate with Evo.
 2. List objects in a workspace.
-3. Retrieve colour map associations for a selected object.
-4. Fetch colour map metadata (attribute controls, gradient controls, RGB colours).
+3. Retrieve colormap associations for a selected object.
+4. Fetch colormap metadata (attribute controls, gradient controls, RGB colours).
 5. (API version only) Inspect raw JSON payloads for transparency and troubleshooting.
 
 ## Prerequisites
@@ -22,23 +22,15 @@ This directory contains two complementary Jupyter notebooks demonstrating how to
 - Python 3.10–3.12 and the project dependencies installed (from repository root).
 
 ## Quick Start
-From the repository root (one level above `samples/`):
+From the `code-samples` directory:
 ```bash
-# 1. Install dependencies (uv preferred, falls back to pip)
-uv sync || pip install -e .
+# 1. Create a Python environment and install dependencies with uv
+uv sync
 
-# 2. Export required environment variables (example)
-export EVO_CLIENT_ID="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-export EVO_REDIRECT_URL="http://localhost:8765/callback"
-export EVO_WORKSPACE_ID="workspace-guid"
-
-# (Optional) If you already have a token
-# export EVO_ACCESS_TOKEN="eyJhbGciOi..."
-
-# 3. Launch Jupyter (choose your notebook UI)
+# 2. Launch Jupyter (choose your notebook UI)
 uv run jupyter lab  # or: uv run jupyter notebook
 
-# 4. Open either notebook inside samples/colormaps
+# 3. Open either notebook inside code-samples/colormaps
 open samples/colormaps/sdk-examples.ipynb
 open samples/colormaps/api-examples.ipynb
 ```
