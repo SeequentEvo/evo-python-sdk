@@ -45,3 +45,9 @@ If using VS Code, you can simply open the notebooks directly; the Python / ipyke
   - Inspect raw responses / headers.
   - Prototype new or beta endpoints not yet wrapped by the SDK.
   - Implement custom pagination, retries, or diagnostics.
+
+## Additional Resources
+
+- [Seequent Developer Portal](https://developer.seequent.com)
+- [Apps and tokens guide](https://developer.seequent.com/docs/guides/getting-started/apps-and-tokens)
+- [Colormaps documentation](https://developer.seequent.com/docs/guides/colormap)
