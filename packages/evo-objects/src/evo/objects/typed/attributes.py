@@ -102,7 +102,6 @@ class Attribute(SchemaModel):
         Used by compute tasks (e.g., kriging) to reference the attribute.
         """
         base_path = self._context.schema_path or "attributes"
-        print(f"{base_path}[?key=='{self.key}']")
         return f"{base_path}[?key=='{self.key}']"
 
     @property

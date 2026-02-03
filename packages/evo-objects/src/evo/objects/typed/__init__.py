@@ -57,7 +57,6 @@ from .variogram import (
     VariogramRotation,
     VariogramStructure,
 )
-from .visualise import visualise_objects
 
 __all__ = [
     "Attribute",
@@ -106,5 +105,4 @@ __all__ = [
     "object_from_path",
     "object_from_reference",
     "object_from_uuid",
-    "visualise_objects",
 ]
