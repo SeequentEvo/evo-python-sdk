@@ -1,0 +1,25 @@
+{
+    "links": {
+        "first": "https://unittest.localhost/workspace/orgs/00000000-0000-0000-0000-000000000000/members/invitations?limit=2&offset=0",
+        "next": null,
+        "previous": "https://unittest.localhost/workspace/orgs/00000000-0000-0000-0000-000000000000/members/invitations?limit=2&offset=0",
+        "count": 1
+    },
+    "results": [
+        {
+            "id": "00000000-0000-0000-0000-000000000003",
+            "email": "external.user3@gmail.com",
+            "invited_by_email": "admin.user@bentley.com",
+            "status": "Pending",
+            "created_date": "2026-01-01T12:00:00.000000Z",
+            "expiration_date": "2026-01-15T12:00:00.000000Z",
+            "roles": [
+                {
+                    "id": "00000000-0000-0000-0000-000000000001",
+                    "name": "Evo User",
+                    "description": "evo user"
+                }
+            ]
+        }
+    ]
+}
