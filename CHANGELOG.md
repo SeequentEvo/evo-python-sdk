@@ -1,5 +1,10 @@
 # Changelog
 
+## evo-files@v0.2.4
+## What's Changed
+
+* Sample file api notebooks update by @shivangj10 in https://github.com/SeequentEvo/evo-python-sdk/pull/179
+
 ## evo-sdk-common@v0.5.13
 ## What's Changed
 ### evo-sdk-common
