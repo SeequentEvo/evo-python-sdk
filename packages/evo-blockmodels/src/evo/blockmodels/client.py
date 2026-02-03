@@ -46,16 +46,18 @@ from .endpoints.models import (
     JobResponse,
     JobStatus,
     Location,
+    OctreeSubblocks,
     OutputOptionsParquet,
     QueryCriteria,
     QueryDownload,
+    RegularSubblocks,
     Rotation,
     RotationAxis,
     Size3D,
     SizeOptionsFlexible,
     SizeOptionsFullySubBlocked,
     SizeOptionsOctree,
-    SizeOptionsRegular, RegularSubblocks, OctreeSubblocks,
+    SizeOptionsRegular,
 )
 from .exceptions import CacheNotConfiguredException, JobFailedException, MissingColumnInTable
 from .io import BlockModelDownload, BlockModelUpload, get_cache_location_for_upload
@@ -545,8 +547,11 @@ class BlockModelAPIClient(BaseAPIClient):
         units: dict[str, str] | None = None,
     ):
         """Add new columns to an existing sub-blocked block model. This will not change the sub-blocking structure, thus the provided data must match existing sub-blocks in the model.
+
         Units for the columns can be provided in the `units` dictionary.
+
         This method requires the `pyarrow` package to be installed, and the 'cache' parameter to be set in the constructor.
+
         :param bm_id: The ID of the block model to add columns to.
         :param data: The data containing the new columns to add.
         :param units: A dictionary mapping column names within `data` to units.
@@ -615,18 +620,74 @@ class BlockModelAPIClient(BaseAPIClient):
         units: dict[str, str] | None = None,
     ):
         """Add new columns to an existing regular block model.
+
         Units for the columns can be provided in the `units` dictionary.
+
         This method requires the `pyarrow` package to be installed, and the 'cache' parameter to be set in the constructor.
+
         :param bm_id: The ID of the block model to add columns to.
         :param data: The data containing the new columns to add.
-        :param new_columns: A list of new column names to add to the block model.
-        :param update_columns: A set of column names to update in the block model.
-        :param delete_columns: A set of column names to delete from the block model.
         :param units: A dictionary mapping column names within `data` to units.
         :raises CacheNotConfiguredException: If the cache is not configured.
         :return: The new version of the block model with the added columns.
         """
         return await self._add_new_columns(bm_id, data, units, geometry_change=None)
+
+    async def _update_columns(
+        self,
+        bm_id: UUID,
+        data: Table,
+        new_columns: list[str],
+        update_columns: set[str] | None = None,
+        delete_columns: set[str] | None = None,
+        units: dict[str, str] | None = None,
+        geometry_change: bool | None = None,
+    ) -> Version:
+        if self._cache is None:
+            raise CacheNotConfiguredException(
+                "Cache must be configured to use this method. Please set the 'cache' parameter in the constructor."
+            )
+
+        schema = data.schema
+        if units is None:
+            units = {}
+        data_type_map = {name: data_type for name, data_type in zip(schema.names, schema.types)}
+
+        if update_columns is None:
+            update_columns = set()
+
+        if delete_columns is None:
+            delete_columns = set()
+
+        # Check for any new or updated columns that are not in the data
+        missing = (set(new_columns) | update_columns) - data_type_map.keys()
+        if missing:
+            raise MissingColumnInTable(f"Columns {missing} are not present in the provided table.")
+
+        columns = models.UpdateColumnsLiteInput(
+            new=[
+                models.ColumnLite(
+                    title=new_column, data_type=convert_dtype(data_type_map[new_column]), unit_id=units.get(new_column)
+                )
+                for new_column in new_columns
+            ],
+            update=list(update_columns),
+            delete=list(delete_columns),
+            rename=[],
+        )
+        update_response = await self._column_operations_api.update_block_model_from_latest_version(
+            org_id=str(self._environment.org_id),
+            workspace_id=str(self._environment.workspace_id),
+            bm_id=str(bm_id),
+            update_data_lite_input=models.UpdateDataLiteInput(
+                columns=columns,
+                update_type=models.UpdateType.replace,
+                geometry_change=geometry_change,
+            ),
+        )
+        version = await self._upload_data(bm_id, update_response.job_uuid, str(update_response.upload_url), data)
+        return _version_from_model(version)
+
 
     async def update_block_model_columns(
         self,
@@ -667,11 +728,16 @@ class BlockModelAPIClient(BaseAPIClient):
         geometry_change: bool = False,
     ) -> Version:
         """Add, update, or delete sub-blocked block model columns.
+
         Whether the sub-blocking structure changes can be specified with the `geometry_change` parameter.
+
         If `True`, the geometry of the sub-blocked model changes, but all existing sub-blocks columns must either be updated or deleted.
         If `False`, the geometry of the sub-blocked model does not change, but the provided data must match existing sub-blocks in the model.
+
         Units for the columns can be provided in the `units` dictionary.
+
         This method requires the `pyarrow` package to be installed, and the 'cache' parameter to be set in the constructor.
+
         :param bm_id: The ID of the block model to add columns to.
         :param data: The data containing the new columns to add.
         :param new_columns: A list of new column names to add to the block model.
