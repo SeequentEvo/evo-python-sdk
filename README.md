@@ -162,7 +162,7 @@ We rely on an open, friendly, inclusive environment. To help us ensure this rema
 
 ## License
 
-The Python SDK for Evo is open source and licensed under the [Apache 2.0 license.](./LICENSE.md).
+The Python SDK for Evo is open source and licensed under the [Apache 2.0 license](./LICENSE.md).
 
 Copyright © 2025 Bentley Systems, Incorporated.
 
