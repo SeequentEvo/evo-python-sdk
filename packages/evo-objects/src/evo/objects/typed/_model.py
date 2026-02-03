@@ -110,6 +110,14 @@ class SchemaProperty(Generic[_T]):
         """Dump a value using the TypeAdapter."""
         return self._type_adapter.dump_python(value)
 
+    @property
+    def jmespath_expr(self) -> str:
+        return self._jmespath_expr
+
+    def dump_value(self, value: _T) -> Any:
+        """Dump a value using the TypeAdapter."""
+        return self._type_adapter.dump_python(value)
+
     @overload
     def __get__(self, instance: None, owner: type[SchemaModel]) -> SchemaProperty[_T]: ...
 

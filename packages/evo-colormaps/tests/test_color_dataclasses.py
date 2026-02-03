@@ -31,32 +31,42 @@ class TestValidateColors(unittest.TestCase):
 
     def test_colors_out_of_range(self):
         colors = [[256, 240, 219], [238, 217, 196], [217, 185, 155]]
-        with self.assertRaises(ValueError):
+        with self.assertRaisesRegex(ValueError, "Each color must have exactly 3 values, each in the range 0-255"):
             _validate_colors(colors)
 
     def test_colors_incorrect_length(self):
         colors = [[255, 240], [238, 217, 196], [217, 185, 155]]
-        with self.assertRaises(ValueError):
+        with self.assertRaisesRegex(ValueError, "Each color must have exactly 3 values, each in the range 0-255"):
             _validate_colors(colors)
 
     def test_colors_too_many_entries(self):
         colors = [[255, 240, 219]] * 1025
-        with self.assertRaises(ValueError):
+        with self.assertRaisesRegex(ValueError, "Colors must have between 2 and 1024 entries"):
             _validate_colors(colors)
+
+    def test_colors_too_many_entries_maximum(self):
+        colors = [[255, 240, 219]] * 667
+        with self.assertRaisesRegex(ValueError, "Colors must have between 2 and 666 entries"):
+            _validate_colors(colors, maximum=666)
 
     def test_colors_too_few_entries(self):
         colors = [[255, 240, 219]]
-        with self.assertRaises(ValueError):
+        with self.assertRaisesRegex(ValueError, "Colors must have between 2 and 1024 entries"):
             _validate_colors(colors)
+
+    def test_colors_too_few_entries_minimum(self):
+        colors = [[255, 240, 219]] * 122
+        with self.assertRaisesRegex(ValueError, "Colors must have between 123 and 1024 entries"):
+            _validate_colors(colors, minimum=123)
 
     def test_colors_wrong_numeric_data_type(self):
         colors = [[255, 240, 219], [238, 217, 196], [217, 185, 155], [1.0, 0.5, 0.2]]
-        with self.assertRaises(ValueError):
+        with self.assertRaisesRegex(ValueError, "Each color must have exactly 3 values, each in the range 0-255"):
             _validate_colors(colors)
 
     def test_colors_wrong_data_type(self):
         colors = [[255, 240, 219], [238, 217, 196], [217, 185, 155], ["a", "b", "c"]]
-        with self.assertRaises(ValueError):
+        with self.assertRaisesRegex(ValueError, "Each color must have exactly 3 values, each in the range 0-255"):
             _validate_colors(colors)
 
     @parameterized.expand(
