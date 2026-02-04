@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass
-from typing import Annotated, Any
+from typing import TYPE_CHECKING, Annotated, Any
 
 import numpy as np
 import pandas as pd
@@ -30,6 +30,9 @@ from ._utils import assign_jmespath_value, get_data_client
 from .attributes import Attributes
 from .exceptions import DataLoaderError, ObjectValidationError
 from .types import Size3i
+
+if TYPE_CHECKING:
+    pass  # Attributes is imported directly above
 
 __all__ = [
     "MaskedCells",
@@ -170,3 +173,20 @@ class RegularMasked3DGrid(BaseRegular3DGrid):
     creation_schema_version = SchemaVersion(major=1, minor=3, patch=0)
 
     cells: Annotated[MaskedCells, SchemaLocation("")]
+
+    @property
+    def attributes(self) -> Attributes:
+        """The cell attributes of this grid (alias for cells.attributes)."""
+        return self.cells.attributes
+
+    async def to_dataframe(self, *keys: str, fb: IFeedback = NoFeedback) -> pd.DataFrame:
+        """Get a dataframe containing the cell attributes.
+
+        :param keys: Optional list of attribute keys to include. If not provided, all attributes are included.
+        :param fb: Optional feedback object to report download progress.
+        :return: A DataFrame with cell attribute columns.
+        """
+        if keys:
+            return await self.cells.to_dataframe(*keys, fb=fb)
+        return await self.cells.to_dataframe(fb=fb)
+

@@ -12,15 +12,20 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Annotated
+from typing import TYPE_CHECKING, Annotated
 
 import pandas as pd
 
+from evo.common.interfaces import IFeedback
+from evo.common.utils import NoFeedback
 from evo.objects import SchemaVersion
 
 from ._grid import BaseRegular3DGrid, BaseRegular3DGridData, Cells3D, Vertices3D
 from ._model import SchemaLocation
 from .exceptions import ObjectValidationError
+
+if TYPE_CHECKING:
+    from .attributes import Attributes
 
 __all__ = [
     "Regular3DGrid",
@@ -60,3 +65,25 @@ class Regular3DGrid(BaseRegular3DGrid):
 
     cells: Annotated[Cells3D, SchemaLocation("")]
     vertices: Annotated[Vertices3D, SchemaLocation("")]
+
+    @property
+    def attributes(self) -> "Attributes":
+        """The cell attributes of this grid (alias for cells.attributes)."""
+        return self.cells.attributes
+
+    @property
+    def vertex_attributes(self) -> "Attributes":
+        """The vertex attributes of this grid."""
+        return self.vertices.attributes
+
+    async def to_dataframe(self, *keys: str, fb: IFeedback = NoFeedback) -> pd.DataFrame:
+        """Get a dataframe containing the cell attributes.
+
+        :param keys: Optional list of attribute keys to include. If not provided, all attributes are included.
+        :param fb: Optional feedback object to report download progress.
+        :return: A DataFrame with cell attribute columns.
+        """
+        if keys:
+            return await self.cells.to_dataframe(*keys, fb=fb)
+        return await self.cells.to_dataframe(fb=fb)
+

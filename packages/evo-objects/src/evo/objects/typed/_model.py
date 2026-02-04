@@ -14,7 +14,7 @@ from __future__ import annotations
 import copy
 from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Annotated, Any, Generic, TypeVar, get_args, get_origin, get_type_hints, overload
+from typing import Annotated, Any, Callable, Generic, TypeVar, get_args, get_origin, get_type_hints, overload
 
 from pydantic import TypeAdapter
 
@@ -43,6 +43,9 @@ class ModelContext:
     data_modified: set[str] = field(default_factory=set)
     """Flags indicating which data fields have been modified.
     """
+
+    schema_path: str = ""
+    """The current JMESPath within the schema (used for nested models)."""
 
     def mark_modified(self, data_ref: str) -> None:
         """Mark that a specific data field has been modified and should not be loaded."""
@@ -93,9 +96,19 @@ class SchemaProperty(Generic[_T]):
         self,
         jmespath_expr: str,
         type_adapter: TypeAdapter[_T],
+        default_factory: Callable[[], _T] | None = None,
     ) -> None:
         self._jmespath_expr = jmespath_expr
         self._type_adapter = type_adapter
+        self._default_factory = default_factory
+
+    @property
+    def jmespath_expr(self) -> str:
+        return self._jmespath_expr
+
+    def dump_value(self, value: _T) -> Any:
+        """Dump a value using the TypeAdapter."""
+        return self._type_adapter.dump_python(value)
 
     @property
     def jmespath_expr(self) -> str:
@@ -116,6 +129,8 @@ class SchemaProperty(Generic[_T]):
             return self
 
         value = instance.search(self._jmespath_expr)
+        if value is None and self._default_factory is not None:
+            return self._default_factory()
         if isinstance(value, (jmespath.JMESPathArrayProxy, jmespath.JMESPathObjectProxy)):
             value = value.raw
         # Use TypeAdapter to validate and apply defaults from Field annotations
@@ -123,6 +138,14 @@ class SchemaProperty(Generic[_T]):
 
     def __set__(self, instance: SchemaModel, value: Any) -> None:
         _set_property_value(self, instance._document, value)
+
+    def apply_to(self, document: dict[str, Any], value: _T) -> None:
+        """Apply the property value to a document dictionary.
+
+        :param document: The document dictionary to update.
+        :param value: The value to set.
+        """
+        _set_property_value(self, document, value)
 
 
 def _set_property_value(schema_property: SchemaProperty, document: dict[str, Any], value: Any) -> None:
@@ -288,7 +311,28 @@ class SchemaModel:
                     sub_document = sub_document.raw
             else:
                 sub_document = self._document
-            setattr(self, sub_model_name, metadata.model_type(self._context, sub_document))
+                # Compute full path for nested context
+                if metadata.jmespath_expr:
+                    if self._context.schema_path:
+                        full_path = f"{self._context.schema_path}.{metadata.jmespath_expr}"
+                    else:
+                        full_path = metadata.jmespath_expr
+                else:
+                    full_path = self._context.schema_path
+
+                # Create nested context with updated schema_path
+                nested_context = ModelContext(
+                    obj=self._context.obj,
+                    root_model=self._context.root_model,
+                    data_modified=self._context.data_modified,
+                    schema_path=full_path,
+                )
+
+                sub_model = metadata.model_type(nested_context, sub_document)
+                # Set _schema_path on models that support it (e.g., Attributes)
+                if hasattr(sub_model, "_schema_path"):
+                    sub_model._schema_path = full_path
+                setattr(self, sub_model_name, sub_model)
 
     def validate(self) -> None:
         """Validate the model is valid."""

@@ -125,7 +125,7 @@ async def create_geoscience_object(
         if parent is not None:
             raise ValueError("Cannot specify both 'parent' and 'path'.")
         if not path.endswith(".json"):
-            raise ValueError("`path` must end in `.json`.")
+            path += ".json"
     else:
         name = object_dict["name"]
 
@@ -191,3 +191,10 @@ async def replace_geoscience_object(
         response = await _update_geoscience_object(environment, objects_api, get_response.object.uuid, object_dict)
 
     return _response_to_downloaded_object(response, environment, connector, context.get_cache())
+
+async def download_geoscience_object(context: IContext, reference: ObjectReference) -> DownloadedObject:
+    return await DownloadedObject.from_reference(
+        connector=context.get_connector(),
+        reference=reference,
+        cache=context.get_cache(),
+    )
