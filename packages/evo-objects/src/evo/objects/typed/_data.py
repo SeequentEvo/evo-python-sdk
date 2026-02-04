@@ -33,6 +33,16 @@ class DataTable(SchemaModel):
             raise DataLoaderError("Data was modified since the object was downloaded")
         return await self._obj.download_dataframe(self.as_dict(), fb=fb, column_names=self.data_columns)
 
+    async def to_dataframe(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
+        """Load a DataFrame containing values for this table.
+
+        This is an alias for get_dataframe.
+
+        :param fb: Optional feedback object to report download progress.
+        :return: The loaded DataFrame with values for this table.
+        """
+        return await self.get_dataframe(fb=fb)
+
     async def set_dataframe(self, df: pd.DataFrame, fb: IFeedback = NoFeedback) -> None:
         """Update the values of this table.
 
@@ -94,6 +104,21 @@ class DataTableAndAttributes(SchemaModel):
         table_df = await self._table.get_dataframe(fb=fb)
         if self.attributes is not None and len(self.attributes) > 0:
             attr_df = await self.attributes.get_dataframe(fb=fb)
+            combined_df = pd.concat([table_df, attr_df], axis=1)
+            return combined_df
+        else:
+            return table_df
+
+    async def to_dataframe(self, *keys: str, fb: IFeedback = NoFeedback) -> pd.DataFrame:
+        """Load a DataFrame containing the values and attributes.
+
+        :param keys: Optional attribute keys to include. If not specified, all attributes are included.
+        :param fb: Optional feedback object to report download progress.
+        :return: DataFrame with data columns (e.g., X, Y, Z) and additional columns for attributes.
+        """
+        table_df = await self._table.get_dataframe(fb=fb)
+        if self.attributes is not None and len(self.attributes) > 0:
+            attr_df = await self.attributes.get_dataframe(*keys, fb=fb)
             combined_df = pd.concat([table_df, attr_df], axis=1)
             return combined_df
         else:

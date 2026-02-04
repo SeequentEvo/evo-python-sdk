@@ -34,6 +34,8 @@ class MockDownloadedObject(DownloadedObject):
             object_id=uuid.UUID(object_dict["uuid"]),
         )
         self._metadata.version_id = version_id
+        self._metadata.environment = mock_client.environment
+        self._metadata.id = uuid.UUID(object_dict["uuid"])
 
     @property
     def metadata(self):
