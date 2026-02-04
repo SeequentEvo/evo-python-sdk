@@ -12,9 +12,10 @@ This directory contains two complementary Jupyter notebooks demonstrating how to
 ## What You Can Do
 1. Authenticate with Evo.
 2. List objects in a workspace.
-3. Retrieve colormap associations for a selected object.
-4. Fetch colormap metadata (attribute controls, gradient controls, RGB colours).
-5. (API version only) Inspect raw JSON payloads for transparency and troubleshooting.
+3. Create a new colormap and associate it with an object attribute.
+4. Retrieve colormap associations for a selected object.
+5. Fetch colormap metadata (attribute controls, gradient controls, RGB colours).
+6. (API version only) Inspect raw JSON payloads for transparency and troubleshooting.
 
 ## Prerequisites
 
