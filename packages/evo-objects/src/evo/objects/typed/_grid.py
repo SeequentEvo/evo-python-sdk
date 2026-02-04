@@ -130,6 +130,17 @@ class Cells3D(SchemaModel):
         """Load a DataFrame containing the cell attribute values."""
         return await self.attributes.get_dataframe(fb=fb)
 
+    async def to_dataframe(self, *keys: str, fb: IFeedback = NoFeedback) -> pd.DataFrame:
+        """Load a DataFrame containing the cell attribute values.
+
+        :param keys: Optional list of attribute keys to include. If not provided, all attributes are included.
+        :param fb: Optional feedback object to report download progress.
+        :return: A DataFrame with cell attribute columns.
+        """
+        if keys:
+            return await self.attributes.get_dataframe(*keys, fb=fb)
+        return await self.attributes.get_dataframe(fb=fb)
+
     async def set_dataframe(self, df: pd.DataFrame, fb: IFeedback = NoFeedback) -> None:
         """Set the cell attributes from a DataFrame."""
         if df.shape[0] != self.expected_length:
@@ -163,6 +174,17 @@ class Vertices3D(SchemaModel):
 
     async def get_dataframe(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
         """Load a DataFrame containing the vertex attribute values."""
+        return await self.attributes.get_dataframe(fb=fb)
+
+    async def to_dataframe(self, *keys: str, fb: IFeedback = NoFeedback) -> pd.DataFrame:
+        """Load a DataFrame containing the vertex attribute values.
+
+        :param keys: Optional list of attribute keys to include. If not provided, all attributes are included.
+        :param fb: Optional feedback object to report download progress.
+        :return: A DataFrame with vertex attribute columns.
+        """
+        if keys:
+            return await self.attributes.get_dataframe(*keys, fb=fb)
         return await self.attributes.get_dataframe(fb=fb)
 
     async def set_dataframe(self, df: pd.DataFrame, fb: IFeedback = NoFeedback) -> None:

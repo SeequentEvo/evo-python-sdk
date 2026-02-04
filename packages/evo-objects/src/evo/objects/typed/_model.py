@@ -311,28 +311,29 @@ class SchemaModel:
                     sub_document = sub_document.raw
             else:
                 sub_document = self._document
-                # Compute full path for nested context
-                if metadata.jmespath_expr:
-                    if self._context.schema_path:
-                        full_path = f"{self._context.schema_path}.{metadata.jmespath_expr}"
-                    else:
-                        full_path = metadata.jmespath_expr
+
+            # Compute full path for nested context
+            if metadata.jmespath_expr:
+                if self._context.schema_path:
+                    full_path = f"{self._context.schema_path}.{metadata.jmespath_expr}"
                 else:
-                    full_path = self._context.schema_path
+                    full_path = metadata.jmespath_expr
+            else:
+                full_path = self._context.schema_path
 
-                # Create nested context with updated schema_path
-                nested_context = ModelContext(
-                    obj=self._context.obj,
-                    root_model=self._context.root_model,
-                    data_modified=self._context.data_modified,
-                    schema_path=full_path,
-                )
+            # Create nested context with updated schema_path
+            nested_context = ModelContext(
+                obj=self._context.obj,
+                root_model=self._context.root_model,
+                data_modified=self._context.data_modified,
+                schema_path=full_path,
+            )
 
-                sub_model = metadata.model_type(nested_context, sub_document)
-                # Set _schema_path on models that support it (e.g., Attributes)
-                if hasattr(sub_model, "_schema_path"):
-                    sub_model._schema_path = full_path
-                setattr(self, sub_model_name, sub_model)
+            sub_model = metadata.model_type(nested_context, sub_document)
+            # Set _schema_path on models that support it (e.g., Attributes)
+            if hasattr(sub_model, "_schema_path"):
+                sub_model._schema_path = full_path
+            setattr(self, sub_model_name, sub_model)
 
     def validate(self) -> None:
         """Validate the model is valid."""
