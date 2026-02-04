@@ -601,13 +601,13 @@ class _BaseObject:
             if sub_model is not None and hasattr(sub_model, 'validate'):
                 sub_model.validate()
 
-    def _metadata_repr_html_(self) -> str:
+    def _metadata_repr_html_(self) -> tuple[str, list[tuple[str, str]]]:
         """Return an HTML representation of common metadata for Jupyter notebooks.
 
-        This renders the title with Portal/Viewer links, Object ID, Schema, and Tags.
-        Subclasses should call this method and append their specific content.
+        This renders the title with Portal/Viewer links and builds metadata rows.
+        Subclasses should call this method and extend the rows with their specific content.
 
-        :return: HTML string with stylesheet, opening div, title, and metadata table.
+        :return: Tuple of (HTML string with stylesheet, opening div, and title, list of (label, value) rows).
         """
         doc = self.as_dict()
 
@@ -630,27 +630,20 @@ class _BaseObject:
             tags_str = ", ".join(f"{k}: {v}" for k, v in tags.items())
             rows.append(("Tags:", tags_str))
 
-        # Build the metadata table
-        table_rows = [build_table_row(label, value) for label, value in rows]
-        metadata_table = f'<table>{"".join(table_rows)}</table>'
-
-        # Return opening HTML with stylesheet, container div, title, and metadata
-        return (
+        # Return opening HTML with stylesheet, container div, title, and the rows
+        opening_html = (
             f'{STYLESHEET}'
             f'<div class="evo">'
             f'{build_title(name, title_links)}'
-            f'{metadata_table}'
         )
+        return opening_html, rows
 
     def _repr_html_(self) -> str:
         """Return an HTML representation for Jupyter notebooks."""
         doc = self.as_dict()
 
         # Start with common metadata
-        html = self._metadata_repr_html_()
-
-        # Build object-specific rows
-        rows = []
+        opening_html, rows = self._metadata_repr_html_()
 
         # Add bounding box if present (as nested table)
         if bbox := doc.get("bounding_box"):
@@ -667,14 +660,31 @@ class _BaseObject:
             crs_str = f"EPSG:{crs.get('epsg_code')}" if isinstance(crs, dict) else str(crs)
             rows.append(("CRS:", crs_str))
 
-        # Build object-specific table if there are rows
-        if rows:
-            table_rows = []
-            for label, value in rows:
-                if label == "Bounding box:":
-                    table_rows.append(build_table_row_vtop(label, value))
-                else:
-                    table_rows.append(build_table_row(label, value))
+        # Build datasets section - add as rows to the main table
+        for dataset_name in self._sub_models:
+            dataset = getattr(self, dataset_name, None)
+            if dataset and hasattr(dataset, 'attributes') and len(dataset.attributes) > 0:
+                # Build attribute rows
+                attr_rows = []
+                for attr in dataset.attributes:
+                    attr_info = attr.as_dict()
+                    attr_name = attr_info.get("name", "Unknown")
+                    attr_type = attr_info.get("attribute_type", "Unknown")
+                    attr_rows.append([attr_name, attr_type])
+
+                attrs_table = build_nested_table(["Attribute", "Type"], attr_rows)
+                rows.append((f"{dataset_name}:", attrs_table))
+
+        # Build unified table with all rows
+        table_rows = []
+        for label, value in rows:
+            if label in ("Bounding box:",) or label.endswith(":") and isinstance(value, str) and "<table" in value:
+                table_rows.append(build_table_row_vtop(label, value))
+            else:
+                table_rows.append(build_table_row(label, value))
+
+        html = opening_html
+        if table_rows:
             html += f'<table>{"".join(table_rows)}</table>'
 
         # Close the container div

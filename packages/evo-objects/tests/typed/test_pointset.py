@@ -274,3 +274,52 @@ class TestPointSet(TestWithConnector):
             self.assertEqual(object_json["locations"]["attributes"][0]["attribute_type"], "scalar")
             self.assertEqual(object_json["locations"]["attributes"][1]["name"], "category")
             self.assertEqual(object_json["locations"]["attributes"][1]["attribute_type"], "category")
+
+    async def test_repr_html_includes_attributes(self):
+        """Test that _repr_html_ includes the locations attributes table."""
+        with self._mock_geoscience_objects():
+            obj = await PointSet.create(context=self.context, data=self.example_pointset)
+
+            html = obj._repr_html_()
+
+            # Verify basic metadata is present
+            self.assertIn("Test PointSet", html)
+            self.assertIn("Object ID:", html)
+            self.assertIn("Schema:", html)
+
+            # Verify bounding box section
+            self.assertIn("Bounding box:", html)
+
+            # Verify CRS section
+            self.assertIn("CRS:", html)
+
+            # Verify locations attributes table
+            self.assertIn("locations:", html)
+            self.assertIn("Attribute", html)
+            self.assertIn("Type", html)
+            self.assertIn("value", html)
+            self.assertIn("scalar", html)
+            self.assertIn("category", html)
+
+    async def test_repr_html_no_attributes(self):
+        """Test that _repr_html_ works correctly when there are no attributes."""
+        df = pd.DataFrame(
+            {
+                "x": [0.0, 1.0, 0.0],
+                "y": [0.0, 0.0, 1.0],
+                "z": [0.0, 0.0, 0.0],
+            }
+        )
+        data = PointSetData(name="No Attributes PointSet", locations=df)
+
+        with self._mock_geoscience_objects():
+            obj = await PointSet.create(context=self.context, data=data)
+
+            html = obj._repr_html_()
+
+            # Verify basic metadata is present
+            self.assertIn("No Attributes PointSet", html)
+            self.assertIn("Object ID:", html)
+
+            # Verify no locations section when there are no attributes
+            self.assertNotIn("locations:", html)
