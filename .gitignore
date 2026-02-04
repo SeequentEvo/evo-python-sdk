@@ -31,3 +31,4 @@ samples/*/download*/data/*
 
 # macOS invisible files
 .DS_Store
+drilling_campaign.xlsx
