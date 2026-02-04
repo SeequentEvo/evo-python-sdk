@@ -807,7 +807,7 @@ test = [
 
 [[package]]
 name = "evo-colormaps"
-version = "0.0.2"
+version = "0.0.3"
 source = { editable = "packages/evo-colormaps" }
 dependencies = [
     { name = "evo-sdk-common" },

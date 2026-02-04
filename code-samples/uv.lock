@@ -674,15 +674,15 @@ notebooks = [
 
 [[package]]
 name = "evo-files"
-version = "0.2.3"
+version = "0.2.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "evo-sdk-common" },
     { name = "pydantic" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/a7/f3/0a3f7d0b1788bff1268a7a4f2c32e161ea02dae0aea8c1e3d08c0a4a78fe/evo_files-0.2.3.tar.gz", hash = "sha256:f0e6843f03c6923b81ff8b6a9224f64a453d89c3055c38998469cf1c00709b82", size = 15200, upload-time = "2025-11-16T20:50:53.232Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/df/08/c76c3047e79ca2be4f55810ba462453d42857bd86972413a58c6d1c2e9b0/evo_files-0.2.4.tar.gz", hash = "sha256:8a3a9a240a8cec819d0d4f2c71ba937e192ad86d26060a354b6b6e0929161541", size = 15481, upload-time = "2026-02-04T00:35:28.539Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/9b/56/bb795f0da4979e7693e63e726853d71e047dc28d536f4d12a2762cd4ddd0/evo_files-0.2.3-py3-none-any.whl", hash = "sha256:c8a90888cefa8289fd3416bdc9ac84e5f84cde62b953a822e5cd6bab58eb61d1", size = 21238, upload-time = "2025-11-16T20:50:51.78Z" },
+    { url = "https://files.pythonhosted.org/packages/bc/14/96c4e066cb44f9084244591f1187a149a51620efac6369508370e21fbd9f/evo_files-0.2.4-py3-none-any.whl", hash = "sha256:8c4b8656768afec9a78c9bb8d5c8d54911ab9ceaa723bfe32efdaa72fb750f76", size = 21538, upload-time = "2026-02-04T00:35:27.543Z" },
 ]
 
 [package.optional-dependencies]

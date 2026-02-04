@@ -34,8 +34,8 @@ uv sync
 uv run jupyter lab  # or: uv run jupyter notebook
 
 # 3. Open either notebook inside code-samples/colormaps
-open samples/colormaps/sdk-examples.ipynb
-open samples/colormaps/api-examples.ipynb
+open code-samples/colormaps/sdk-examples.ipynb
+open code-samples/colormaps/api-examples.ipynb
 ```
 If using VS Code, you can simply open the notebooks directly; the Python / ipykernel environment should point at the synced virtual environment.
 
