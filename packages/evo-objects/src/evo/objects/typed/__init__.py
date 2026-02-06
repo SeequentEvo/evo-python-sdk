@@ -12,7 +12,6 @@
 from .attributes import Attribute, Attributes
 from .base import BaseObject
 from .pointset import (
-    Locations,
     PointSet,
     PointSetData,
 )
@@ -21,7 +20,6 @@ from .regular_grid import (
     Regular3DGridData,
 )
 from .regular_masked_grid import (
-    MaskedCells,
     RegularMasked3DGrid,
     RegularMasked3DGridData,
 )
@@ -29,6 +27,10 @@ from .spatial import BaseSpatialObject
 from .tensor_grid import (
     Tensor3DGrid,
     Tensor3DGridData,
+)
+from .triangle_mesh import (
+    TriangleMesh,
+    TriangleMeshData,
 )
 from .types import BoundingBox, CoordinateReferenceSystem, EpsgCode, Point3, Rotation, Size3d, Size3i
 
@@ -40,8 +42,6 @@ __all__ = [
     "BoundingBox",
     "CoordinateReferenceSystem",
     "EpsgCode",
-    "Locations",
-    "MaskedCells",
     "Point3",
     "PointSet",
     "PointSetData",
@@ -54,4 +54,6 @@ __all__ = [
     "Size3i",
     "Tensor3DGrid",
     "Tensor3DGridData",
+    "TriangleMesh",
+    "TriangleMeshData",
 ]
