@@ -37,6 +37,9 @@ class ModelContext:
     obj: DownloadedObject
     """The DownloadedObject associated with this context."""
 
+    root_model: SchemaModel
+    """The root SchemaModel for this context."""
+
     data_modified: set[str] = field(default_factory=set)
     """Flags indicating which data fields have been modified.
     """
@@ -94,6 +97,14 @@ class SchemaProperty(Generic[_T]):
         self._jmespath_expr = jmespath_expr
         self._type_adapter = type_adapter
 
+    @property
+    def jmespath_expr(self) -> str:
+        return self._jmespath_expr
+
+    def dump_value(self, value: _T) -> Any:
+        """Dump a value using the TypeAdapter."""
+        return self._type_adapter.dump_python(value)
+
     @overload
     def __get__(self, instance: None, owner: type[SchemaModel]) -> SchemaProperty[_T]: ...
 
@@ -111,17 +122,45 @@ class SchemaProperty(Generic[_T]):
         return self._type_adapter.validate_python(value)
 
     def __set__(self, instance: SchemaModel, value: Any) -> None:
-        self.apply_to(instance._document, value)
+        _set_property_value(self, instance._document, value)
 
-    def apply_to(self, document: dict[str, Any], value: _T) -> None:
-        dumped_value = self._type_adapter.dump_python(value)
 
-        if dumped_value is None:
-            # Remove the property from the document if the value is None
-            delete_jmespath_value(document, self._jmespath_expr)
+def _set_property_value(schema_property: SchemaProperty, document: dict[str, Any], value: Any) -> None:
+    """Set the value of a SchemaProperty by name.
+
+    :param property_name: The name of the property to set.
+    :param value: The value to set the property to.
+    """
+    dumped_value = schema_property.dump_value(value)
+
+    if dumped_value is None:
+        # Remove the property from the document if the value is None
+        delete_jmespath_value(document, schema_property.jmespath_expr)
+    else:
+        # Update the document with the new value
+        assign_jmespath_value(document, schema_property.jmespath_expr, dumped_value)
+
+
+class SchemaBuilder:
+    """Helper class to build a schema document by applying SchemaProperty values."""
+
+    def __init__(self, schema_model_cls: type[SchemaModel], context: ModelContext) -> None:
+        self.document: dict[str, Any] = {}
+        self._properties = schema_model_cls._schema_properties
+        self._sub_models = schema_model_cls._sub_models
+        self._context = context
+
+    def set_property(self, name: str, value: Any) -> None:
+        schema_property = self._properties[name]
+        _set_property_value(schema_property, self.document, value)
+
+    async def set_sub_model_value(self, name: str, data: Any) -> None:
+        metadata = self._sub_models[name]
+        sub_document = await metadata.model_type._data_to_schema(data, context=self._context)
+        if metadata.jmespath_expr:
+            assign_jmespath_value(self.document, metadata.jmespath_expr, sub_document)
         else:
-            # Update the document with the new value
-            assign_jmespath_value(document, self._jmespath_expr, dumped_value)
+            self.document.update(sub_document)
 
 
 def _get_base_type(annotation: Any) -> tuple[Any, SchemaLocation | None, DataLocation | None]:
@@ -217,7 +256,7 @@ class SchemaModel:
         :param document: The document dictionary representing the Geoscience Object.
         """
         if isinstance(context, DownloadedObject):
-            self._context = ModelContext(obj=context)
+            self._context = ModelContext(obj=context, root_model=self)
         else:
             self._context = context
         self._document = document
@@ -269,22 +308,17 @@ class SchemaModel:
         :param context: The context used for any data upload operations.
         :return: The dictionary representation of the data.
         """
-        result: dict[str, Any] = {}
-        for key, prop in cls._schema_properties.items():
+        builder = SchemaBuilder(cls, context)
+        for key in cls._schema_properties.keys():
             value = getattr(data, key, None)
-            prop.apply_to(result, value)
-        for metadata in cls._sub_models.values():
+            builder.set_property(key, value)
+        for name, metadata in cls._sub_models.items():
             if metadata.data_field:
                 sub_data = getattr(data, metadata.data_field, None)
             else:
                 sub_data = data
-
-            sub_dict = await metadata.model_type._data_to_schema(sub_data, context)
-            if metadata.jmespath_expr:
-                assign_jmespath_value(result, metadata.jmespath_expr, sub_dict)
-            else:
-                result.update(sub_dict)
-        return result
+            await builder.set_sub_model_value(name, sub_data)
+        return builder.document
 
     def search(self, expression: str) -> Any:
         """Search the model using a JMESPath expression.
@@ -311,12 +345,12 @@ class SchemaList(Sequence[_M]):
 
     _item_type: type[_M]
 
-    def __init__(self, context: ModelContext | DownloadedObject, document: list[Any] | None) -> None:
+    def __init__(self, context: ModelContext | DownloadedObject, document: list[Any]) -> None:
         if isinstance(context, DownloadedObject):
-            self._context = ModelContext(obj=context)
+            self._context = ModelContext(obj=context, root_model=self)
         else:
             self._context = context
-        self._document = document if document is not None else []
+        self._document = document
 
     @property
     def _obj(self) -> DownloadedObject:

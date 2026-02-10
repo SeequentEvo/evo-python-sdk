@@ -1,7 +1,7 @@
 [project]
 name = "evo-files"
 description = "Python SDK for using the Seequent Evo File API"
-version = "0.2.3"
+version = "0.2.4"
 requires-python = ">=3.10"
 license-files = ["LICENSE.md"]
 dynamic = ["readme"]

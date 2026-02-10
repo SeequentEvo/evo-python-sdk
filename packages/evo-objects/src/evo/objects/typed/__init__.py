@@ -11,6 +11,11 @@
 
 from .attributes import Attribute, Attributes
 from .base import BaseObject
+from .pointset import (
+    Locations,
+    PointSet,
+    PointSetData,
+)
 from .regular_grid import (
     Regular3DGrid,
     Regular3DGridData,
@@ -35,8 +40,11 @@ __all__ = [
     "BoundingBox",
     "CoordinateReferenceSystem",
     "EpsgCode",
+    "Locations",
     "MaskedCells",
     "Point3",
+    "PointSet",
+    "PointSetData",
     "Regular3DGrid",
     "Regular3DGridData",
     "RegularMasked3DGrid",
