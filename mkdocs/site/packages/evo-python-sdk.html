@@ -65,7 +65,7 @@
             
             <li class="nav-item" data-bs-level="1"><a href="#evo-python-sdk" class="nav-link">evo-python-sdk</a>
               <ul class="nav flex-column">
-            <li class="nav-item" data-bs-level="2"><a href="#prerequisites" class="nav-link">Prerequisites</a>
+            <li class="nav-item" data-bs-level="2"><a href="#getting-started-with-evo-code-samples" class="nav-link">Getting started with Evo code samples</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -81,27 +81,12 @@
                     <div class="col-md-9" role="main">
 
 <h1 id="evo-python-sdk">evo-python-sdk</h1>
-<p><a href="https://github.com/SeequentEvo/evo-python-sdk">GitHub Repository</a></p>
-<h2 id="prerequisites">Prerequisites</h2>
-<p>Before you get started, make sure you have:</p>
-<ul>
-<li>
-<p><strong>A registered Evo app</strong></p>
-<p><em>Evo apps</em> provide the credentials necessary to generate Evo access tokens, which in turn provide access to your Evo data. An app can be created by you or by a member of your team.</p>
-<p>Register an Evo app in the <a href="https://developer.bentley.com/my-apps">Bentley Developer Portal</a>. For in-depth instructions, follow this <a href="https://developer.seequent.com/docs/guides/getting-started/apps-and-tokens">guide</a> on the Seequent Developer Portal.</p>
-<p>NOTE: You must have a <strong>Bentley developer account</strong> in order to create apps. If you try to register an app using the link above but find that you don't have permission, contact your account administrator to get access.</p>
-</li>
-<li>
-<p><strong>A local copy of this repository</strong></p>
-<p>Clone the repository using Git or download it as a ZIP file from the green <strong>Code</strong> button at the top of the page.</p>
-</li>
-<li>
-<p><strong>A Python code editor, eg. VS Code, PyCharm</strong></p>
-<p>For running and editing the sample notebooks and other source code files.</p>
-</li>
-</ul>
+<p><a href="https://github.com/SeequentEvo/evo-python-sdk">GitHub repository</a></p>
+<h2 id="getting-started-with-evo-code-samples">Getting started with Evo code samples</h2>
+<p>For detailed information about creating Evo apps, the authentication setup, available code samples, and step-by-step guides for working with the Jupyter notebooks, please refer to the <a href="https://github.com/SeequentEvo/evo-python-sdk/tree/main/code-samples"><strong>code-samples</strong></a> section of the repository. </p>
+<p>This comprehensive guide will walk you through everything required to get started with Evo APIs. </p>
 <h2 id="getting-started-with-evo-sdk-development">Getting started with Evo SDK development</h2>
-<p>This repository contains a number of sub-packages. You may choose to install the <code>evo-sdk</code> package, which includes all
+<p>The evo-python-sdk contains a number of sub-packages. You may choose to install the <code>evo-sdk</code> package, which includes all
 sub-packages and optional dependencies (e.g. Jupyter notebook support), or choose a specific package to install:</p>
 <table>
 <thead>
@@ -118,7 +103,7 @@ sub-packages and optional dependencies (e.g. Jupyter notebook support), or choos
 <td>A metapackage that installs all available Seequent Evo SDKs, including Jupyter notebook examples.</td>
 </tr>
 <tr>
-<td>evo-sdk-common</td>
+<td>evo-sdk-common (<a href="evo-python-sdk/evo-sdk-common/discovery">discovery</a> and <a href="evo-python-sdk/evo-sdk-common/workspaces">workspaces</a>)</td>
 <td><a href="https://pypi.org/project/evo-sdk-common/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/evo-sdk-common" /></a></td>
 <td>A shared library that provides common functionality for integrating with Seequent's client SDKs.</td>
 </tr>
@@ -148,7 +133,40 @@ sub-packages and optional dependencies (e.g. Jupyter notebook support), or choos
 <td>A service client to send jobs to the Compute Tasks API.</td>
 </tr>
 </tbody>
-</table></div>
+</table>
+<h3 id="getting-started">Getting started</h3>
+<p>Now that you have installed the Evo SDK, you can get started by configuring your API connector, and performing a
+basic API call to list the organizations that you have access to:</p>
+<pre><code class="language-python">from evo.aio import AioTransport
+from evo.oauth import OAuthConnector, AuthorizationCodeAuthorizer
+from evo.discovery import DiscoveryAPIClient
+from evo.common import APIConnector
+import asyncio
+
+transport = AioTransport(user_agent=&quot;Your Application Name&quot;)
+connector = OAuthConnector(transport=transport, client_id=&quot;&lt;YOUR_CLIENT_ID&gt;&quot;)
+authorizer = AuthorizationCodeAuthorizer(oauth_connector=connector, redirect_url=&quot;http://localhost:3000/signin-callback&quot;)
+
+async def main():
+    await authorizer.login()
+    await discovery()
+
+async def discovery():
+    async with APIConnector(&quot;https://discover.api.seequent.com&quot;, transport, authorizer) as api_connector:
+        discovery_client = DiscoveryAPIClient(api_connector)
+        organizations = await discovery_client.list_organizations()
+        print(&quot;Organizations:&quot;, organizations)
+
+asyncio.run(main())
+</code></pre>
+<p>For next steps and more information about using Evo, see:
+* <code>evo-sdk-common</code> (<a href="evo-python-sdk/evo-sdk-common/discovery"><code>discovery</code></a> and <a href="evo-python-sdk/evo-sdk-common/workspaces"><code>workspaces</code></a>): providing the foundation for all Evo SDKs, as well as tools
+  for performing arbitrary Seequent Evo API requests
+* <a href="evo-python-sdk/evo-files"><code>evo-files</code></a>: for interacting with the File API
+* <a href="evo-python-sdk/evo-objects"><code>evo-objects</code></a>: for interacting with the Geoscience Object API
+* <a href="evo-python-sdk/evo-colormaps"><code>evo-colormaps</code></a>: for interacting with the Colormap API
+* <a href="evo-python-sdk/evo-blockmodels"><code>evo-blockmodels</code></a>: for interacting with the Block Model API
+* <a href="evo-python-sdk/evo-compute"><code>evo-compute</code></a>: for interacting with the Compute Tasks API</p></div>
             </div>
         </div>
 
