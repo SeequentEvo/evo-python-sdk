@@ -391,3 +391,39 @@ class KnownTableFormat(BaseTableFormat):
         except (TableFormatError, SchemaValidationError) as error:
             logger.error(f"Could not load table because {error}")
             raise
+
+    def cast_table(self, table: pa.Table) -> pa.Table:
+        """Cast the columns of a pyarrow table to match this format.
+
+        Casting will fail if there is any data loss during the cast operation.
+
+        :param table: The table to cast.
+
+        :return: A new pyarrow table with columns cast to match this format.
+
+        :raises TableFormatError: If the provided table cannot be cast to this format.
+        """
+        if not self._multi_dimensional and self.width != table.num_columns:
+            raise TableFormatError(
+                f"Column count ({table.num_columns}) does not match expectation ({self.width}) for {self.name}"
+            )
+
+        # Attempt to cast each column individually.
+        cast_columns = []
+        for column_index in range(table.num_columns):
+            column = table.column(column_index)
+            expected_type = self._columns[
+                0 if self._multi_dimensional else column_index
+            ].type  # Use first column type for multi-dimensional formats.
+
+            # Prevent float to int casting, as this will fail most of the time due to data loss.
+            if not pa.types.is_floating(expected_type) and pa.types.is_floating(column.type):
+                raise TableFormatError(f"Cannot cast floating point column {column_index} to type '{expected_type}'")
+
+            try:
+                cast_column = column.cast(expected_type)
+            except pa.ArrowInvalid as error:
+                raise TableFormatError(f"Could not cast column {column_index} to type '{expected_type}'") from error
+            cast_columns.append(cast_column)
+
+        return pa.table(cast_columns, names=table.schema.names)

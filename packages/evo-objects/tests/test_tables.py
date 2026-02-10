@@ -344,3 +344,140 @@ class TestComplexFormats(unittest.TestCase):
             known_format.save_table(self.sample_table, self.data_dir)
 
         self.assertFalse(self.parquet_file.is_file())
+
+
+class TestCastTable(unittest.TestCase):
+    """Test the cast_table method of KnownTableFormat."""
+
+    def test_cast_int64_to_uint64_success(self) -> None:
+        """Test casting int64 to uint64 when values are non-negative."""
+        # Create a table with int64 columns containing only non-negative values
+        table = pa.table(
+            {
+                "n0": pa.array([0, 1, 2, 3, 4], type=pa.int64()),
+                "n1": pa.array([1, 2, 3, 4, 5], type=pa.int64()),
+                "n2": pa.array([2, 3, 4, 5, 6], type=pa.int64()),
+            }
+        )
+
+        # Create a format that expects uint64
+        target_format = KnownTableFormat(
+            name="test-format", columns=[pa.uint64(), pa.uint64(), pa.uint64()], field_names=None
+        )
+
+        # Cast should succeed
+        cast_table = target_format.cast_table(table)
+
+        # Verify the cast table has the correct types
+        self.assertEqual(cast_table.num_columns, 3)
+        self.assertEqual(cast_table.num_rows, 5)
+        for column in cast_table.itercolumns():
+            self.assertEqual(column.type, pa.uint64())
+
+        # Verify the values are preserved
+        self.assertEqual(cast_table.column("n0").to_pylist(), [0, 1, 2, 3, 4])
+        self.assertEqual(cast_table.column("n1").to_pylist(), [1, 2, 3, 4, 5])
+        self.assertEqual(cast_table.column("n2").to_pylist(), [2, 3, 4, 5, 6])
+
+    def test_cast_int64_to_uint64_negative_values_fails(self) -> None:
+        """Test that casting int64 with negative values to uint64 fails."""
+        # Create a table with int64 columns containing negative values
+        table = pa.table(
+            {
+                "n0": pa.array([-1, 0, 1], type=pa.int64()),
+                "n1": pa.array([0, 1, 2], type=pa.int64()),
+                "n2": pa.array([1, 2, 3], type=pa.int64()),
+            }
+        )
+
+        # Create a format that expects uint64
+        target_format = KnownTableFormat(
+            name="test-format", columns=[pa.uint64(), pa.uint64(), pa.uint64()], field_names=None
+        )
+
+        # Cast should fail due to negative value
+        with self.assertRaises(TableFormatError) as ctx:
+            target_format.cast_table(table)
+
+        self.assertIn("Could not cast column 0 to type 'uint64'", str(ctx.exception))
+
+    def test_cast_float64_to_int(self) -> None:
+        """Test casting float64 to int32 fails."""
+        # Create a table with float64 values
+        table = pa.table(
+            {
+                "col0": pa.array([1.0, 2.0, 3.0, 4.0], type=pa.float64()),
+            }
+        )
+
+        # Create a format that expects int32
+        target_format = KnownTableFormat(name="test-format", columns=[pa.int32()], field_names=None)
+
+        # Cast should fail, we specifically do not allow float to int casts
+        with self.assertRaises(TableFormatError) as ctx:
+            target_format.cast_table(table)
+
+        self.assertIn("Cannot cast floating point column 0 to type 'int32'", str(ctx.exception))
+
+    def test_cast_multidimensional_format(self) -> None:
+        """Test casting with multidimensional formats."""
+        # Create a table with int64 columns
+        table = pa.table(
+            {
+                "x": pa.array([0, 1, 2], type=pa.int64()),
+                "y": pa.array([3, 4, 5], type=pa.int64()),
+                "z": pa.array([6, 7, 8], type=pa.int64()),
+            }
+        )
+
+        # Create a multidimensional format that expects uint64
+        target_format = KnownTableFormat(name="test-format", columns=[pa.uint32(), ...], field_names=None)
+
+        # Cast should succeed
+        cast_table = target_format.cast_table(table)
+
+        # Verify all columns have the correct type
+        self.assertEqual(cast_table.num_columns, 3)
+        for column in cast_table.itercolumns():
+            self.assertEqual(column.type, pa.uint32())
+
+    def test_cast_wrong_number_of_columns_fails(self) -> None:
+        """Test that casting fails when column count doesn't match."""
+        # Create a table with 2 columns
+        table = pa.table(
+            {
+                "col0": pa.array([1, 2, 3], type=pa.int64()),
+                "col1": pa.array([4, 5, 6], type=pa.int64()),
+            }
+        )
+
+        # Create a format that expects 3 columns
+        target_format = KnownTableFormat(
+            name="test-format", columns=[pa.uint64(), pa.uint64(), pa.uint64()], field_names=None
+        )
+
+        # Cast should fail due to column count mismatch
+        with self.assertRaises(TableFormatError) as ctx:
+            target_format.cast_table(table)
+
+        self.assertIn("Column count (2) does not match expectation (3)", str(ctx.exception))
+
+    def test_cast_mixed_types(self) -> None:
+        """Test casting with mixed column types."""
+        # Create a table with different types
+        table = pa.table(
+            {
+                "id": pa.array([1, 2, 3], type=pa.int64()),
+                "value": pa.array(["a", "b", "c"], type=pa.string()),
+            }
+        )
+
+        # Create a format with matching types
+        target_format = KnownTableFormat(name="test-format", columns=[pa.int32(), pa.string()], field_names=None)
+
+        # Cast should succeed
+        cast_table = target_format.cast_table(table)
+
+        # Verify types are preserved
+        self.assertEqual(cast_table.column("id").type, pa.int32())
+        self.assertEqual(cast_table.column("value").type, pa.string())

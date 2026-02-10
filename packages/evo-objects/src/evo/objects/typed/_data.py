@@ -55,7 +55,9 @@ class DataTable(SchemaModel):
             )
 
         data_client = get_data_client(context)
-        return await data_client.upload_dataframe(data, table_format=cls.table_format, fb=fb)
+        return await data_client.upload_dataframe(
+            data, table_format=cls.table_format, fb=fb, allow_casting=cls.table_format is not None
+        )
 
 
 class DataTableAndAttributes(SchemaModel):
