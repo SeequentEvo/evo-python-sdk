@@ -36,7 +36,7 @@ from evo.common import APIConnector
 import asyncio
 
 transport = AioTransport(user_agent="Your Application Name")
-connector = OAuthConnector(transport=transport, client_id="<YOUR_CLIENT_ID>")
+connector = OAuthConnector(transport=transport, client_id="\<YOUR_CLIENT_ID\>")
 authorizer = AuthorizationCodeAuthorizer(oauth_connector=connector, redirect_url="http://localhost:3000/signin-callback")
 
 async def main():
@@ -53,6 +53,7 @@ asyncio.run(main())
 ```
 
 For next steps and more information about using Evo, see:
+
 * `evo-sdk-common` ([`discovery`](evo-python-sdk/evo-sdk-common/discovery) and [`workspaces`](evo-python-sdk/evo-sdk-common/workspaces)): providing the foundation for all Evo SDKs, as well as tools
   for performing arbitrary Seequent Evo API requests
 * [`evo-files`](evo-python-sdk/evo-files): for interacting with the File API

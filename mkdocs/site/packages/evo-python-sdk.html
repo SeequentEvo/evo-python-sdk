@@ -144,7 +144,7 @@ from evo.common import APIConnector
 import asyncio
 
 transport = AioTransport(user_agent=&quot;Your Application Name&quot;)
-connector = OAuthConnector(transport=transport, client_id=&quot;&lt;YOUR_CLIENT_ID&gt;&quot;)
+connector = OAuthConnector(transport=transport, client_id=&quot;\&lt;YOUR_CLIENT_ID\&gt;&quot;)
 authorizer = AuthorizationCodeAuthorizer(oauth_connector=connector, redirect_url=&quot;http://localhost:3000/signin-callback&quot;)
 
 async def main():
@@ -159,14 +159,16 @@ async def discovery():
 
 asyncio.run(main())
 </code></pre>
-<p>For next steps and more information about using Evo, see:
-* <code>evo-sdk-common</code> (<a href="evo-python-sdk/evo-sdk-common/discovery"><code>discovery</code></a> and <a href="evo-python-sdk/evo-sdk-common/workspaces"><code>workspaces</code></a>): providing the foundation for all Evo SDKs, as well as tools
-  for performing arbitrary Seequent Evo API requests
-* <a href="evo-python-sdk/evo-files"><code>evo-files</code></a>: for interacting with the File API
-* <a href="evo-python-sdk/evo-objects"><code>evo-objects</code></a>: for interacting with the Geoscience Object API
-* <a href="evo-python-sdk/evo-colormaps"><code>evo-colormaps</code></a>: for interacting with the Colormap API
-* <a href="evo-python-sdk/evo-blockmodels"><code>evo-blockmodels</code></a>: for interacting with the Block Model API
-* <a href="evo-python-sdk/evo-compute"><code>evo-compute</code></a>: for interacting with the Compute Tasks API</p></div>
+<p>For next steps and more information about using Evo, see:</p>
+<ul>
+<li><code>evo-sdk-common</code> (<a href="evo-python-sdk/evo-sdk-common/discovery"><code>discovery</code></a> and <a href="evo-python-sdk/evo-sdk-common/workspaces"><code>workspaces</code></a>): providing the foundation for all Evo SDKs, as well as tools
+  for performing arbitrary Seequent Evo API requests</li>
+<li><a href="evo-python-sdk/evo-files"><code>evo-files</code></a>: for interacting with the File API</li>
+<li><a href="evo-python-sdk/evo-objects"><code>evo-objects</code></a>: for interacting with the Geoscience Object API</li>
+<li><a href="evo-python-sdk/evo-colormaps"><code>evo-colormaps</code></a>: for interacting with the Colormap API</li>
+<li><a href="evo-python-sdk/evo-blockmodels"><code>evo-blockmodels</code></a>: for interacting with the Block Model API</li>
+<li><a href="evo-python-sdk/evo-compute"><code>evo-compute</code></a>: for interacting with the Compute Tasks API</li>
+</ul></div>
             </div>
         </div>
 
