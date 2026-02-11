@@ -402,10 +402,7 @@
 
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">from_url</span><span class="p">(</span>
-    <span class="n">connector</span><span class="p">:</span> <span class="n">APIConnector</span><span class="p">,</span>
-    <span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">result_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">T_Result</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">,</span>
-    <span class="n">preview</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">connector</span><span class="p">:</span> <span class="n">APIConnector</span><span class="p">,</span> <span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">result_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">T_Result</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">preview</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">JobClient</span><span class="p">[</span><span class="n">T_Result</span><span class="p">]</span>
 </code></pre></div>
 
@@ -861,9 +858,7 @@
 
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">wait_for_results</span><span class="p">(</span>
-    <span class="n">polling_interval_seconds</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
-    <span class="n">retry</span><span class="p">:</span> <span class="n">Retry</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">fb</span><span class="p">:</span> <span class="n">IFeedback</span> <span class="o">=</span> <span class="n">NoFeedback</span><span class="p">,</span>
+    <span class="n">polling_interval_seconds</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">retry</span><span class="p">:</span> <span class="n">Retry</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">fb</span><span class="p">:</span> <span class="n">IFeedback</span> <span class="o">=</span> <span class="n">NoFeedback</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">T_Result</span>
 </code></pre></div>
 
