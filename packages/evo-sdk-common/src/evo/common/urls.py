@@ -202,10 +202,6 @@ def serialize_object_reference(value: Any) -> str:
     if isinstance(value, str):
         return value
 
-    # Check for ObjectReference (it's a str subclass with extra attributes)
-    if hasattr(value, "hub_url") and hasattr(value, "org_id"):
-        return str(value)
-
     # Check for typed objects with metadata.url (e.g., PointSet, BlockModel, Regular3DGrid)
     if hasattr(value, "metadata") and hasattr(value.metadata, "url"):
         return str(value.metadata.url)

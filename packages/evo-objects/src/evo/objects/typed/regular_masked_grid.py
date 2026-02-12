@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Annotated, Any
+from typing import Annotated, Any
 
 import numpy as np
 import pandas as pd
@@ -31,8 +31,6 @@ from .attributes import Attributes
 from .exceptions import DataLoaderError, ObjectValidationError
 from .types import Size3i
 
-if TYPE_CHECKING:
-    pass  # Attributes is imported directly above
 
 __all__ = [
     "MaskedCells",
