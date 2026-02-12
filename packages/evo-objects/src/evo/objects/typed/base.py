@@ -45,29 +45,6 @@ __all__ = [
 ]
 
 
-def _get_annotation_metadata(annotation: Any) -> tuple[Any, SchemaLocation | None, DataLocation | None]:
-    """Extract the base type, SchemaLocation, and DataLocation from an annotation.
-
-    :param annotation: The type annotation to process.
-    :return: A tuple of (base_type, schema_location, data_location).
-    """
-    if get_origin(annotation) is Annotated:
-        args = get_args(annotation)
-        if len(args) < 2:
-            return annotation, None, None
-
-        schema_location: SchemaLocation | None = None
-        data_location: DataLocation | None = None
-        for item in args[1:]:
-            if isinstance(item, SchemaLocation):
-                schema_location = item
-            elif isinstance(item, DataLocation):
-                data_location = item
-
-        return args[0], schema_location, data_location
-    return annotation, None, None
-
-
 def _get_url_prefix(environment: Environment) -> str:
     return f"{environment.hub_url.rstrip('/')}/geoscience-object/orgs/{environment.org_id}/workspaces/{environment.workspace_id}/objects"
 
@@ -247,7 +224,7 @@ class _BaseObject(SchemaModel):
 
 
     @classmethod
-    async def _data_to_dict(cls, data: BaseObjectData, context: IContext) -> dict[str, Any]:
+    async def _data_to_schema(cls, data: BaseObjectData, context: IContext) -> dict[str, Any]:
         """Convert the provided data to a dictionary suitable for creating a Geoscience Object.
 
         :param data: The BaseObjectData to convert.
@@ -286,14 +263,6 @@ class _BaseObject(SchemaModel):
                     result.update(sub_document)
 
         return result
-
-    @classmethod
-    async def _data_to_schema(cls, data: BaseObjectData, context: IContext) -> dict[str, Any]:
-        """Convert the provided data to a dictionary suitable for creating a Geoscience Object.
-
-        This is an alias for _data_to_dict, providing compatibility with the new SchemaModel pattern.
-        """
-        return await cls._data_to_dict(data, context)
 
     @classmethod
     async def _create(
@@ -452,7 +421,7 @@ class _BaseObject(SchemaModel):
     def search(self, expression: str) -> Any:
         """Search the object metadata using a JMESPath expression.
 
-        :param expression: The JMESPath expression to use for the search.
+        :param expression: The JMESPath expression to use for the search. For example "locations.coordinates".
 
         :return: The result of the search.
         """
@@ -648,6 +617,3 @@ class BaseObject(_BaseObject):
         """
         object_type = cls._get_object_type_from_data(data)
         return await object_type._replace(context, reference, data, create_if_missing=True)
-
-
-
