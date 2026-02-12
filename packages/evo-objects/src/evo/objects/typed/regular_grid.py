@@ -83,7 +83,5 @@ class Regular3DGrid(BaseRegular3DGrid):
         :param fb: Optional feedback object to report download progress.
         :return: A DataFrame with cell attribute columns.
         """
-        if keys:
-            return await self.cells.to_dataframe(*keys, fb=fb)
-        return await self.cells.to_dataframe(fb=fb)
+        return await self.cells.to_dataframe(*keys, fb=fb)
 

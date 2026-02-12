@@ -80,13 +80,13 @@ class CoordinateTable(DataTable):
     table_format: ClassVar[KnownTableFormat] = FLOAT_ARRAY_3
     data_columns: ClassVar[list[str]] = _COORDINATE_COLUMNS
 
-    async def set_dataframe(self, df: pd.DataFrame, fb: IFeedback = NoFeedback):
+    async def from_dataframe(self, df: pd.DataFrame, fb: IFeedback = NoFeedback):
         """Update the coordinate values and recalculate the bounding box.
 
         :param df: DataFrame containing x, y, z coordinate columns.
         :param fb: Optional feedback object to report upload progress.
         """
-        await super().set_dataframe(df, fb)
+        await super().from_dataframe(df, fb)
 
         # Update the bounding box in the parent object context
         self._context.root_model.bounding_box = _bounding_box_from_dataframe(df)

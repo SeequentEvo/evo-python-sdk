@@ -94,7 +94,7 @@ class Attribute(SchemaModel):
         """The type of this attribute."""
         return self._attribute_type
 
-    async def get_dataframe(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
+    async def to_dataframe(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
         """Load a DataFrame containing the values for this attribute from the object.
 
         :param fb: Optional feedback object to report download progress.
@@ -106,17 +106,6 @@ class Attribute(SchemaModel):
             raise DataLoaderError("Data was modified since the object was downloaded")
         return await self._obj.download_attribute_dataframe(self.as_dict(), fb=fb)
 
-    async def to_dataframe(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
-        """Load a DataFrame containing the values for this attribute from the object.
-
-        This is an alias for get_dataframe for consistency with other typed objects.
-
-        :param fb: Optional feedback object to report download progress.
-
-        :return: The loaded DataFrame with values for this attribute, applying lookup table and NaN values as specified.
-            The column name will be updated to match the attribute name.
-        """
-        return await self.get_dataframe(fb=fb)
 
     async def set_attribute_values(
         self, df: pd.DataFrame, infer_attribute_type: bool = False, fb: IFeedback = NoFeedback
@@ -230,18 +219,6 @@ class Attributes(SchemaList[Attribute]):
 
             attributes_list.append(attr_doc)
 
-    async def get_dataframe(self, *keys: str, fb: IFeedback = NoFeedback) -> pd.DataFrame:
-        """Load a DataFrame containing the values from the specified attributes in the object.
-
-        :param keys: Optional list of attribute keys to filter the attributes by. If no keys are provided, all
-            attributes will be loaded.
-        :param fb: Optional feedback object to report download progress.
-
-        :return: A DataFrame containing the values from the specified attributes. Column name(s) will be updated
-            based on the attribute names.
-        """
-        parts = [await attribute.get_dataframe(fb=fb_part) for attribute, fb_part in iter_with_fb(self, fb)]
-        return pd.concat(parts, axis=1) if len(parts) > 0 else pd.DataFrame()
 
     async def to_dataframe(self, *keys: str, fb: IFeedback = NoFeedback) -> pd.DataFrame:
         """Load a DataFrame containing the values from the specified attributes in the object.
@@ -345,17 +322,4 @@ class Attributes(SchemaList[Attribute]):
         table_html = build_nested_table(headers, rows)
         return f'{STYLESHEET}<div class="evo">{table_html}</div>'
 
-    async def to_dataframe(self, *keys: str, fb: IFeedback = NoFeedback) -> pd.DataFrame:
-        """Load a DataFrame containing the values from the specified attributes in the object.
-
-        :param keys: Optional list of attribute keys to filter the attributes by. If no keys are provided, all
-            attributes will be loaded.
-        :param fb: Optional feedback object to report download progress.
-
-        :return: A DataFrame containing the values from the specified attributes. Column name(s) will be updated
-            based on the attribute names.
-        """
-        attributes = [self[key] for key in keys] if keys else list(self)
-        parts = [await attribute.to_dataframe(fb=fb_part) for attribute, fb_part in iter_with_fb(attributes, fb)]
-        return pd.concat(parts, axis=1) if len(parts) > 0 else pd.DataFrame()
 

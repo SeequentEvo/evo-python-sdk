@@ -87,10 +87,6 @@ class MaskedCells(SchemaModel):
             raise DataLoaderError(f"Expected mask array to have dtype 'bool', but got '{array.dtype}'")
         return array
 
-    async def get_dataframe(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
-        """Load a DataFrame containing the cell attribute values."""
-        return await self.attributes.get_dataframe(fb=fb)
-
     async def to_dataframe(self, *keys: str, fb: IFeedback = NoFeedback) -> pd.DataFrame:
         """Load a DataFrame containing the cell attribute values.
 
@@ -98,11 +94,9 @@ class MaskedCells(SchemaModel):
         :param fb: Optional feedback object to report download progress.
         :return: A DataFrame with cell attribute columns.
         """
-        if keys:
-            return await self.attributes.get_dataframe(*keys, fb=fb)
-        return await self.attributes.get_dataframe(fb=fb)
+        return await self.attributes.to_dataframe(*keys, fb=fb)
 
-    async def set_dataframe(
+    async def from_dataframe(
         self, df: pd.DataFrame, mask: np.ndarray | None = None, *, fb: IFeedback = NoFeedback
     ) -> None:
         """Set the cell attributes from a DataFrame.
@@ -197,7 +191,5 @@ class RegularMasked3DGrid(BaseRegular3DGrid):
         :param fb: Optional feedback object to report download progress.
         :return: A DataFrame with cell attribute columns.
         """
-        if keys:
-            return await self.cells.to_dataframe(*keys, fb=fb)
-        return await self.cells.to_dataframe(fb=fb)
+        return await self.cells.to_dataframe(*keys, fb=fb)
 

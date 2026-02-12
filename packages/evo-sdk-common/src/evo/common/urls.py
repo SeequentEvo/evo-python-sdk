@@ -19,6 +19,7 @@ from urllib.parse import urlparse
 
 if TYPE_CHECKING:
     from evo.common import Environment
+    from evo.common.interfaces import IContext
 
 __all__ = [
     "get_evo_base_url",
@@ -27,6 +28,7 @@ __all__ = [
     "get_portal_url_from_environment",
     "get_portal_url_from_reference",
     "get_viewer_url",
+    "get_viewer_url_for_objects",
     "get_viewer_url_from_environment",
     "get_viewer_url_from_reference",
     "parse_object_reference_url",
@@ -144,6 +146,48 @@ def get_viewer_url_from_environment(
         object_ids=object_ids,
         hub_url=environment.hub_url,
     )
+
+
+def get_viewer_url_for_objects(context: IContext, objects: list[Any]) -> str:
+    """Generate the Evo Viewer URL for a list of objects.
+
+    This is a convenience function that extracts object IDs from various object types
+    and generates a viewer URL to view them together.
+
+    :param context: The context (e.g., manager) containing the environment information.
+    :param objects: List of objects to view. Supports typed objects (e.g., PointSet, Regular3DGrid),
+        ObjectReference, DownloadedObject, ObjectMetadata, or string object IDs.
+    :return: The complete viewer URL for viewing all objects together.
+    :raises ValueError: If the objects list is empty.
+    :raises TypeError: If an object type is not supported.
+
+    Example::
+
+        from evo.common.urls import get_viewer_url_for_objects
+
+        # View multiple objects together
+        url = get_viewer_url_for_objects(manager, [pointset, grid, blockmodel])
+        print(url)  # Opens all objects in the viewer
+    """
+    if not objects:
+        raise ValueError("At least one object is required")
+
+    object_ids: list[str] = []
+    for obj in objects:
+        if isinstance(obj, str):
+            # Assume it's already an object ID
+            object_ids.append(obj)
+        elif hasattr(obj, "metadata") and hasattr(obj.metadata, "id"):
+            # Typed objects (e.g., PointSet, Regular3DGrid)
+            object_ids.append(str(obj.metadata.id))
+        elif hasattr(obj, "id"):
+            # DownloadedObject or ObjectMetadata
+            object_ids.append(str(obj.id))
+        else:
+            raise TypeError(f"Cannot extract object ID from type {type(obj)}")
+
+    environment = context.get_environment()
+    return get_viewer_url_from_environment(environment, object_ids)
 
 
 def serialize_object_reference(value: Any) -> str:

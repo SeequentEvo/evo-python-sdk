@@ -15,10 +15,8 @@ import copy
 import sys
 import weakref
 from dataclasses import dataclass
-from typing import Annotated, Any, ClassVar, Generic, TypeVar, get_args, get_origin, get_type_hints, overload
+from typing import Annotated, Any, ClassVar, get_args, get_origin
 from uuid import UUID
-
-from pydantic import TypeAdapter
 
 from evo import jmespath
 from evo.common import Environment, IContext, StaticContext
@@ -26,13 +24,12 @@ from evo.common.styles.html import STYLESHEET, build_nested_table, build_table_r
 from evo.common.urls import get_portal_url_from_environment, get_viewer_url_from_environment
 from evo.objects import DownloadedObject, ObjectMetadata, ObjectReference, ObjectSchema, SchemaVersion
 
-from ._model import DataLocation, ModelContext, SchemaList, SchemaLocation, SchemaModel, SchemaProperty, SubModelMetadata
+from ._model import DataLocation, ModelContext, SchemaLocation, SchemaModel
 from ._utils import (
     create_geoscience_object,
     download_geoscience_object,
     replace_geoscience_object,
 )
-from .types import BoundingBox, CoordinateReferenceSystem, EpsgCode
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -42,14 +39,10 @@ else:
 __all__ = [
     "BaseObject",
     "BaseObjectData",
-    "ConstructableObject",
     "object_from_path",
     "object_from_reference",
     "object_from_uuid",
 ]
-
-_T = TypeVar("_T")
-
 
 
 def _get_annotation_metadata(annotation: Any) -> tuple[Any, SchemaLocation | None, DataLocation | None]:
@@ -197,14 +190,12 @@ async def object_from_uuid(
     return await object_from_reference(context, reference)
 
 
-class _BaseObject:
+class _BaseObject(SchemaModel):
     """Base class for high-level Geoscience Objects."""
 
     _sub_classification_lookup: ClassVar[weakref.WeakValueDictionary[str, type[_BaseObject]]] = (
         weakref.WeakValueDictionary()
     )
-    _schema_properties: ClassVar[dict[str, SchemaProperty[Any]]] = {}
-    _sub_models: ClassVar[dict[str, SubModelMetadata]] = {}
 
     _data_class: ClassVar[type[BaseObjectData] | None] = None
     _data_class_lookup: ClassVar[weakref.WeakValueDictionary[type[BaseObjectData], type[_BaseObject]]] = (
@@ -228,21 +219,15 @@ class _BaseObject:
         :param context: The context containing the environment, connector, and cache to use.
         :param obj: The DownloadedObject representing the Geoscience Object.
         """
-        self._context = context
-        self._obj = obj
-        self._document = obj.as_dict()
-
-        # Initialize ModelContext for annotation-based sub-models
-        self._model_context = ModelContext(obj=obj, root_model=self)
-
-        self._reset_from_object()
+        self._api_context = context
+        super().__init__(obj, obj.as_dict())
 
         # Check whether the object that was loaded is valid
         self.validate()
 
     @classmethod
     def __init_subclass__(cls, **kwargs):
-        super().__init_subclass__()
+        super().__init_subclass__(**kwargs)
         if cls.sub_classification is not None:
             existing_cls = cls._sub_classification_lookup.get(cls.sub_classification)
             if existing_cls is not None:
@@ -260,59 +245,6 @@ class _BaseObject:
                 )
             cls._data_class_lookup[cls._data_class] = cls
 
-        # Gather schema properties and sub-models from parent classes
-        cls._schema_properties = {}
-        cls._sub_models = {}
-        for parent in cls.__bases__:
-            if issubclass(parent, _BaseObject):
-                cls._schema_properties.update(parent._schema_properties)
-                cls._sub_models.update(parent._sub_models)
-
-        # Process directly assigned SchemaProperty descriptors
-        for key, prop in cls.__dict__.items():
-            if isinstance(prop, SchemaProperty):
-                cls._schema_properties[key] = prop
-
-        # Process Annotated[..., SchemaLocation(...)] annotations for sub-models and properties
-        try:
-            hints = get_type_hints(cls, include_extras=True)
-        except Exception:
-            return
-
-        for field_name, annotation in hints.items():
-            # Skip if already processed as a direct property
-            if field_name in cls._schema_properties:
-                continue
-
-            # Extract SchemaLocation and DataLocation from Annotated types
-            base_type, schema_location, data_location = _get_annotation_metadata(annotation)
-
-            if schema_location is None:
-                continue
-
-            # Check if base type is a SchemaModel or SchemaList (sub-model)
-            bare_base_type = get_origin(base_type) or base_type
-            try:
-                is_sub_model = isinstance(bare_base_type, type) and issubclass(bare_base_type, (SchemaModel, SchemaList))
-            except TypeError:
-                is_sub_model = False
-
-            if is_sub_model:
-                data_field = data_location.field_path if data_location else None
-                cls._sub_models[field_name] = SubModelMetadata(
-                    model_type=base_type,
-                    jmespath_expr=schema_location.jmespath_expr,
-                    data_field=data_field,
-                )
-            else:
-                # Create a SchemaProperty for simple annotated fields
-                type_adapter = TypeAdapter(annotation)
-                prop = SchemaProperty(
-                    jmespath_expr=schema_location.jmespath_expr,
-                    type_adapter=type_adapter,
-                )
-                setattr(cls, field_name, prop)
-                cls._schema_properties[field_name] = prop
 
     @classmethod
     async def _data_to_dict(cls, data: BaseObjectData, context: IContext) -> dict[str, Any]:
@@ -515,7 +447,7 @@ class _BaseObject:
             >>> obj = await obj.refresh()
             >>> obj.attributes  # Now shows the latest attributes
         """
-        return await self.from_reference(self._context, self.metadata.url)
+        return await self.from_reference(self._api_context, self.metadata.url)
 
     def search(self, expression: str) -> Any:
         """Search the object metadata using a JMESPath expression.
@@ -532,63 +464,12 @@ class _BaseObject:
         :raise ObjectValidationError: If the object isn't valid.
         """
         self.validate()
-        self._obj = await self._obj.update(self._document)
+        obj = await self._obj.update(self._document)
 
         # Reset the ModelContext to clear modified flags after successful update
-        self._model_context = ModelContext(obj=self._obj, root_model=self)
+        self._context = ModelContext(obj=obj, root_model=self)
 
-        self._reset_from_object()
-
-    def _reset_from_object(self) -> None:
-        """Reset the object state from the underlying document."""
-        self._rebuild_sub_models()
-
-    def _rebuild_models(self) -> None:
-        """Alias for _rebuild_sub_models for compatibility with SchemaModel interface."""
-        self._rebuild_sub_models()
-
-    def _rebuild_sub_models(self) -> None:
-        """Rebuild any annotation-based sub-models to reflect changes in the underlying document."""
-        for sub_model_name, metadata in self._sub_models.items():
-            if metadata.jmespath_expr:
-                sub_document = jmespath.search(metadata.jmespath_expr, self._document)
-                if sub_document is None:
-                    # Initialize an empty list/dict for the sub-model if not present
-                    if issubclass(metadata.model_type, SchemaList):
-                        sub_document = []
-                    else:
-                        sub_document = {}
-                    from ._utils import assign_jmespath_value
-                    assign_jmespath_value(self._document, metadata.jmespath_expr, sub_document)
-                else:
-                    # Unwrap jmespath proxy to get raw data for mutation
-                    if hasattr(sub_document, 'raw'):
-                        sub_document = sub_document.raw
-            else:
-                sub_document = self._document
-
-            # Compute full path for nested context
-            if metadata.jmespath_expr:
-                if self._model_context.schema_path:
-                    full_path = f"{self._model_context.schema_path}.{metadata.jmespath_expr}"
-                else:
-                    full_path = metadata.jmespath_expr
-            else:
-                full_path = self._model_context.schema_path
-
-            # Create nested context with updated schema_path
-            nested_context = ModelContext(
-                obj=self._model_context.obj,
-                root_model=self._model_context.root_model,
-                data_modified=self._model_context.data_modified,
-                schema_path=full_path,
-            )
-
-            sub_model = metadata.model_type(nested_context, sub_document)
-            # Set _schema_path on models that support it (e.g., Attributes)
-            if hasattr(sub_model, "_schema_path"):
-                sub_model._schema_path = full_path
-            setattr(self, sub_model_name, sub_model)
+        self._rebuild_models()
 
     def validate(self) -> None:
         """Validate the object to check if it is in a valid state.
@@ -769,56 +650,4 @@ class BaseObject(_BaseObject):
         return await object_type._replace(context, reference, data, create_if_missing=True)
 
 
-class ConstructableObject(BaseObject, Generic[_T]):
-    # The class methods in this class technically violate Liskov Substitution Principle,
-    # as they narrow the type of the 'data' parameter.
-    #
-    @classmethod
-    async def create(
-        cls,
-        context: IContext,
-        data: _T,
-        parent: str | None = None,
-        path: str | None = None,
-    ) -> Self:
-        """Create a new object.
-
-        :param context: The context containing the environment, connector, and cache to use.
-        :param data: The data that will be used to create the object.
-        :param parent: Optional parent path for the object.
-        :param path: Full path to the object, can't be used with parent.
-        """
-        return await cls._create(context, data, parent, path)
-
-    @classmethod
-    async def replace(
-        cls,
-        context: IContext,
-        reference: str,
-        data: _T,
-    ) -> Self:
-        """Replace an existing object.
-
-        :param context: The context containing the environment, connector, and cache to use.
-        :param reference: The reference of the object to replace.
-        :param data: The data that will be used to create the object.
-        """
-        return await cls._replace(context, reference, data)
-
-    @classmethod
-    async def create_or_replace(
-        cls,
-        context: IContext,
-        reference: str,
-        data: _T,
-    ) -> Self:
-        """Create or replace an existing object.
-
-        If the object identified by `reference` exists, it will be replaced. Otherwise, a new object will be created.
-
-        :param context: The context containing the environment, connector, and cache to use.
-        :param reference: The reference of the object to create or replace.
-        :param data: The data that will be used to create the object.
-        """
-        return await cls._replace(context, reference, data, create_if_missing=True)
 

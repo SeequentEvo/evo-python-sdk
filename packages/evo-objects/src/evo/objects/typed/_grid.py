@@ -126,10 +126,6 @@ class Cells3D(SchemaModel):
     def expected_length(self) -> int:
         return self.size.total_size
 
-    async def get_dataframe(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
-        """Load a DataFrame containing the cell attribute values."""
-        return await self.attributes.get_dataframe(fb=fb)
-
     async def to_dataframe(self, *keys: str, fb: IFeedback = NoFeedback) -> pd.DataFrame:
         """Load a DataFrame containing the cell attribute values.
 
@@ -137,11 +133,9 @@ class Cells3D(SchemaModel):
         :param fb: Optional feedback object to report download progress.
         :return: A DataFrame with cell attribute columns.
         """
-        if keys:
-            return await self.attributes.get_dataframe(*keys, fb=fb)
-        return await self.attributes.get_dataframe(fb=fb)
+        return await self.attributes.to_dataframe(*keys, fb=fb)
 
-    async def set_dataframe(self, df: pd.DataFrame, fb: IFeedback = NoFeedback) -> None:
+    async def from_dataframe(self, df: pd.DataFrame, fb: IFeedback = NoFeedback) -> None:
         """Set the cell attributes from a DataFrame."""
         if df.shape[0] != self.expected_length:
             raise ObjectValidationError(
@@ -172,10 +166,6 @@ class Vertices3D(SchemaModel):
     def expected_length(self) -> int:
         return self.size.total_size
 
-    async def get_dataframe(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
-        """Load a DataFrame containing the vertex attribute values."""
-        return await self.attributes.get_dataframe(fb=fb)
-
     async def to_dataframe(self, *keys: str, fb: IFeedback = NoFeedback) -> pd.DataFrame:
         """Load a DataFrame containing the vertex attribute values.
 
@@ -183,11 +173,9 @@ class Vertices3D(SchemaModel):
         :param fb: Optional feedback object to report download progress.
         :return: A DataFrame with vertex attribute columns.
         """
-        if keys:
-            return await self.attributes.get_dataframe(*keys, fb=fb)
-        return await self.attributes.get_dataframe(fb=fb)
+        return await self.attributes.to_dataframe(*keys, fb=fb)
 
-    async def set_dataframe(self, df: pd.DataFrame, fb: IFeedback = NoFeedback) -> None:
+    async def from_dataframe(self, df: pd.DataFrame, fb: IFeedback = NoFeedback) -> None:
         """Set the vertex attributes from a DataFrame."""
         if df.shape[0] != self.expected_length:
             raise ObjectValidationError(
