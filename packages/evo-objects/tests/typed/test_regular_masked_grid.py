@@ -46,7 +46,6 @@ class TestRegularMaskedGrid(TestWithConnector):
             patch("evo.objects.typed.regular_masked_grid.get_data_client", lambda _: mock_client),
             patch("evo.objects.typed.base.create_geoscience_object", mock_client.create_geoscience_object),
             patch("evo.objects.typed.base.replace_geoscience_object", mock_client.replace_geoscience_object),
-            patch("evo.objects.typed.base.download_geoscience_object", mock_client.from_reference),
             patch("evo.objects.DownloadedObject.from_context", mock_client.from_reference),
         ):
             yield mock_client

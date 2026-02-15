@@ -27,7 +27,6 @@ from evo.objects import DownloadedObject, ObjectMetadata, ObjectReference, Objec
 from ._model import DataLocation, ModelContext, SchemaLocation, SchemaModel
 from ._utils import (
     create_geoscience_object,
-    download_geoscience_object,
     replace_geoscience_object,
 )
 
@@ -82,7 +81,7 @@ async def object_from_reference(
         org_id=reference.org_id,
         workspace_id=reference.workspace_id,
     )
-    obj = await download_geoscience_object(reference_context, reference)
+    obj = await DownloadedObject.from_context(reference_context, reference)
     
     # Look up the class directly from the sub-classification
     selected_cls = _BaseObject._sub_classification_lookup.get(obj.metadata.schema_id.sub_classification)
@@ -362,7 +361,7 @@ class _BaseObject(SchemaModel):
             org_id=reference.org_id,
             workspace_id=reference.workspace_id,
         )
-        obj = await download_geoscience_object(reference_context, reference)
+        obj = await DownloadedObject.from_context(reference_context, reference)
         return cls._adapt(reference_context, obj)
 
     @property
