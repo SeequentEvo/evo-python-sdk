@@ -56,6 +56,14 @@ class BaseSpatialObject(BaseObject):
         """Create a object dictionary suitable for creating a new Geoscience Object."""
         object_dict = await super()._data_to_schema(data, context)
         object_dict["bounding_box"] = cls._bbox_type_adapter.dump_python(data.compute_bounding_box())
+        # Always set coordinate_reference_system, defaulting to "unspecified" if None
+        crs = data.coordinate_reference_system
+        if crs is None:
+            object_dict["coordinate_reference_system"] = "unspecified"
+        elif isinstance(crs, int):
+            object_dict["coordinate_reference_system"] = {"epsg_code": crs}
+        else:
+            object_dict["coordinate_reference_system"] = crs
         return object_dict
 
     # The bounding box is defined as regular a property so that subclasses can override it if needed

@@ -27,6 +27,18 @@ from .data import (
 )
 from .interfaces import IAuthorizer, ICache, IContext, IFeedback, ITransport
 from .service import BaseAPIClient
+from .urls import (
+    get_evo_base_url,
+    get_hub_code,
+    get_portal_url,
+    get_portal_url_from_environment,
+    get_portal_url_from_reference,
+    get_viewer_url,
+    get_viewer_url_from_environment,
+    get_viewer_url_from_reference,
+    parse_object_reference_url,
+    serialize_object_reference,
+)
 
 __all__ = [
     "APIConnector",
@@ -51,4 +63,14 @@ __all__ = [
     "ServiceStatus",
     "ServiceUser",
     "StaticContext",
+    "get_evo_base_url",
+    "get_hub_code",
+    "get_portal_url",
+    "get_portal_url_from_environment",
+    "get_portal_url_from_reference",
+    "get_viewer_url",
+    "get_viewer_url_from_environment",
+    "get_viewer_url_from_reference",
+    "parse_object_reference_url",
+    "serialize_object_reference",
 ]

@@ -45,6 +45,7 @@ class TestPointSet(TestWithConnector):
             patch("evo.objects.typed._data.get_data_client", lambda _: mock_client),
             patch("evo.objects.typed.base.create_geoscience_object", mock_client.create_geoscience_object),
             patch("evo.objects.typed.base.replace_geoscience_object", mock_client.replace_geoscience_object),
+            patch("evo.objects.typed.base.download_geoscience_object", mock_client.from_reference),
             patch("evo.objects.DownloadedObject.from_context", mock_client.from_reference),
         ):
             yield mock_client
@@ -80,7 +81,7 @@ class TestPointSet(TestWithConnector):
         self.assertEqual(result.name, "Test PointSet")
         self.assertEqual(result.num_points, 5)
 
-        attr_df = await result.locations.get_dataframe()
+        attr_df = await result.locations.to_dataframe()
         pd.testing.assert_frame_equal(attr_df, self.example_pointset.locations)
 
     @parameterized.expand([BaseObject, PointSet])
@@ -110,7 +111,7 @@ class TestPointSet(TestWithConnector):
         self.assertEqual(result.name, "Test PointSet")
         self.assertEqual(result.num_points, 5)
 
-        actual_df = await result.locations.get_dataframe()
+        actual_df = await result.locations.to_dataframe()
         pd.testing.assert_frame_equal(actual_df, df)
 
     @parameterized.expand([BaseObject, PointSet])
@@ -128,7 +129,7 @@ class TestPointSet(TestWithConnector):
         self.assertEqual(result.name, "Test PointSet")
         self.assertEqual(result.num_points, 5)
 
-        actual_df = await result.locations.get_dataframe()
+        actual_df = await result.locations.to_dataframe()
         pd.testing.assert_frame_equal(actual_df, self.example_pointset.locations)
 
     @parameterized.expand([BaseObject, PointSet])
@@ -140,7 +141,7 @@ class TestPointSet(TestWithConnector):
             self.assertEqual(result.name, "Test PointSet")
             self.assertEqual(result.num_points, 5)
 
-            actual_df = await result.locations.get_dataframe()
+            actual_df = await result.locations.to_dataframe()
             pd.testing.assert_frame_equal(actual_df, self.example_pointset.locations)
 
     def test_bounding_box_from_data(self):
@@ -221,14 +222,14 @@ class TestPointSet(TestWithConnector):
                     "new_value": [10.0, 20.0, 30.0, 40.0, 50.0],
                 }
             )
-            await obj.locations.set_dataframe(new_df)
+            await obj.locations.from_dataframe(new_df)
 
             # Verify the data was updated
             self.assertEqual(obj.num_points, 5)
             self._assert_bounding_box_equal(obj.bounding_box, 0.0, 1.0, -0.5, 1.0, 0.0, 3.0)
 
             await obj.update()
-            df = await obj.locations.get_dataframe()
+            df = await obj.locations.to_dataframe()
             pd.testing.assert_frame_equal(df, new_df)
 
     async def test_validate_attribute_length(self):
@@ -273,3 +274,52 @@ class TestPointSet(TestWithConnector):
             self.assertEqual(object_json["locations"]["attributes"][0]["attribute_type"], "scalar")
             self.assertEqual(object_json["locations"]["attributes"][1]["name"], "category")
             self.assertEqual(object_json["locations"]["attributes"][1]["attribute_type"], "category")
+
+    async def test_repr_html_includes_attributes(self):
+        """Test that _repr_html_ includes the locations attributes table."""
+        with self._mock_geoscience_objects():
+            obj = await PointSet.create(context=self.context, data=self.example_pointset)
+
+            html = obj._repr_html_()
+
+            # Verify basic metadata is present
+            self.assertIn("Test PointSet", html)
+            self.assertIn("Object ID:", html)
+            self.assertIn("Schema:", html)
+
+            # Verify bounding box section
+            self.assertIn("Bounding box:", html)
+
+            # Verify CRS section
+            self.assertIn("CRS:", html)
+
+            # Verify locations attributes table
+            self.assertIn("locations:", html)
+            self.assertIn("Attribute", html)
+            self.assertIn("Type", html)
+            self.assertIn("value", html)
+            self.assertIn("scalar", html)
+            self.assertIn("category", html)
+
+    async def test_repr_html_no_attributes(self):
+        """Test that _repr_html_ works correctly when there are no attributes."""
+        df = pd.DataFrame(
+            {
+                "x": [0.0, 1.0, 0.0],
+                "y": [0.0, 0.0, 1.0],
+                "z": [0.0, 0.0, 0.0],
+            }
+        )
+        data = PointSetData(name="No Attributes PointSet", locations=df)
+
+        with self._mock_geoscience_objects():
+            obj = await PointSet.create(context=self.context, data=data)
+
+            html = obj._repr_html_()
+
+            # Verify basic metadata is present
+            self.assertIn("No Attributes PointSet", html)
+            self.assertIn("Object ID:", html)
+
+            # Verify no locations section when there are no attributes
+            self.assertNotIn("locations:", html)

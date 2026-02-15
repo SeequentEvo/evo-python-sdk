@@ -47,6 +47,7 @@ class TestRegularGrid(TestWithConnector):
             patch("evo.objects.typed.attributes.get_data_client", lambda _: mock_client),
             patch("evo.objects.typed.base.create_geoscience_object", mock_client.create_geoscience_object),
             patch("evo.objects.typed.base.replace_geoscience_object", mock_client.replace_geoscience_object),
+            patch("evo.objects.typed.base.download_geoscience_object", mock_client.from_reference),
             patch("evo.objects.DownloadedObject.from_context", mock_client.from_reference),
         ):
             yield mock_client
@@ -81,9 +82,9 @@ class TestRegularGrid(TestWithConnector):
         self.assertEqual(result.cell_size, Size3d(2.5, 5, 5))
         self.assertEqual(result.rotation, Rotation(90, 0, 0))
 
-        cell_df = await result.cells.get_dataframe()
+        cell_df = await result.cells.to_dataframe()
         pd.testing.assert_frame_equal(cell_df, self.example_grid.cell_data)
-        vertices_df = await result.vertices.get_dataframe()
+        vertices_df = await result.vertices.to_dataframe()
         pd.testing.assert_frame_equal(vertices_df, self.example_grid.vertex_data)
 
     @parameterized.expand([BaseObject, Regular3DGrid])
@@ -105,9 +106,9 @@ class TestRegularGrid(TestWithConnector):
         self.assertEqual(result.cell_size, Size3d(2.5, 5, 5))
         self.assertEqual(result.rotation, Rotation(90, 0, 0))
 
-        cell_df = await result.cells.get_dataframe()
+        cell_df = await result.cells.to_dataframe()
         pd.testing.assert_frame_equal(cell_df, data.cell_data)
-        vertices_df = await result.vertices.get_dataframe()
+        vertices_df = await result.vertices.to_dataframe()
         self.assertEqual(vertices_df.shape[0], 0)  # No vertex data provided
 
     @parameterized.expand([BaseObject, Regular3DGrid])
@@ -128,9 +129,9 @@ class TestRegularGrid(TestWithConnector):
         self.assertEqual(result.cell_size, Size3d(2.5, 5, 5))
         self.assertEqual(result.rotation, Rotation(90, 0, 0))
 
-        cell_df = await result.cells.get_dataframe()
+        cell_df = await result.cells.to_dataframe()
         pd.testing.assert_frame_equal(cell_df, self.example_grid.cell_data)
-        vertices_df = await result.vertices.get_dataframe()
+        vertices_df = await result.vertices.to_dataframe()
         pd.testing.assert_frame_equal(vertices_df, self.example_grid.vertex_data)
 
     @parameterized.expand([BaseObject, Regular3DGrid])
@@ -146,9 +147,9 @@ class TestRegularGrid(TestWithConnector):
             self.assertEqual(result.cell_size, Size3d(2.5, 5, 5))
             self.assertEqual(result.rotation, Rotation(90, 0, 0))
 
-            cell_df = await result.cells.get_dataframe()
+            cell_df = await result.cells.to_dataframe()
             pd.testing.assert_frame_equal(cell_df, self.example_grid.cell_data)
-            vertices_df = await result.vertices.get_dataframe()
+            vertices_df = await result.vertices.to_dataframe()
             pd.testing.assert_frame_equal(vertices_df, self.example_grid.vertex_data)
 
     async def test_update(self):
@@ -158,7 +159,7 @@ class TestRegularGrid(TestWithConnector):
             self.assertEqual(obj.metadata.version_id, "1")
             obj.name = "Updated Grid"
             obj.origin = Point3(1, 1, 1)
-            await obj.cells.set_dataframe(
+            await obj.cells.from_dataframe(
                 pd.DataFrame(
                     {
                         "value": np.ones(10 * 10 * 5),
@@ -167,7 +168,7 @@ class TestRegularGrid(TestWithConnector):
             )
 
             with self.assertRaises(DataLoaderError):
-                await obj.cells.get_dataframe()
+                await obj.cells.to_dataframe()
 
             await obj.update()
 
@@ -175,7 +176,7 @@ class TestRegularGrid(TestWithConnector):
             self.assertEqual(obj.origin, Point3(1, 1, 1))
             self.assertEqual(obj.metadata.version_id, "2")
 
-            cell_df = await obj.cells.get_dataframe()
+            cell_df = await obj.cells.to_dataframe()
             pd.testing.assert_frame_equal(
                 cell_df,
                 pd.DataFrame(
@@ -192,7 +193,7 @@ class TestRegularGrid(TestWithConnector):
         with self._mock_geoscience_objects():
             obj = await Regular3DGrid.create(context=self.context, data=self.example_grid)
             with self.assertRaises(ObjectValidationError):
-                await obj.cells.set_dataframe(
+                await obj.cells.from_dataframe(
                     pd.DataFrame(
                         {
                             "value": np.random.rand(11 * 10 * 5),
@@ -361,3 +362,47 @@ class TestRegularGrid(TestWithConnector):
             self.assertEqual(len(object_json["vertex_attributes"]), 1)
             self.assertEqual(object_json["vertex_attributes"][0]["name"], "elevation")
             self.assertEqual(object_json["vertex_attributes"][0]["attribute_type"], "scalar")
+
+    async def test_repr_html_includes_cell_attributes(self):
+        """Test that _repr_html_ includes the cell attributes table."""
+        with self._mock_geoscience_objects():
+            obj = await Regular3DGrid.create(context=self.context, data=self.example_grid)
+
+            html = obj._repr_html_()
+
+            # Verify basic metadata is present
+            self.assertIn("Test Grid", html)
+            self.assertIn("Object ID:", html)
+            self.assertIn("Schema:", html)
+
+            # Verify bounding box section
+            self.assertIn("Bounding box:", html)
+
+            # Verify CRS section
+            self.assertIn("CRS:", html)
+
+            # Verify cell attributes table (via the 'attributes' property which points to cells.attributes)
+            self.assertIn("Attribute", html)
+            self.assertIn("Type", html)
+            self.assertIn("value", html)
+            self.assertIn("scalar", html)
+            self.assertIn("cat", html)
+            self.assertIn("category", html)
+
+    async def test_repr_html_no_attributes(self):
+        """Test that _repr_html_ works correctly when there are no cell attributes."""
+        data = dataclasses.replace(self.example_grid, cell_data=None, vertex_data=None)
+
+        with self._mock_geoscience_objects():
+            obj = await Regular3DGrid.create(context=self.context, data=data)
+
+            html = obj._repr_html_()
+
+            # Verify basic metadata is present
+            self.assertIn("Test Grid", html)
+            self.assertIn("Object ID:", html)
+
+            # Verify no cell_attributes section when there are no attributes
+            # The attributes table header shouldn't appear if there are no attributes
+            self.assertNotIn("cell_attributes:", html)
+
