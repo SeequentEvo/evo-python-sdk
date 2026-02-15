@@ -24,11 +24,9 @@ from evo.objects import SchemaVersion
 
 from ._grid import Base3DGrid, Base3DGridData, Cells3D, Vertices3D
 from ._model import SchemaLocation
+from .attributes import Attributes
 from .exceptions import ObjectValidationError
 from .types import BoundingBox, Size3d
-
-if TYPE_CHECKING:
-    from .attributes import Attributes
 
 __all__ = [
     "Tensor3DGrid",

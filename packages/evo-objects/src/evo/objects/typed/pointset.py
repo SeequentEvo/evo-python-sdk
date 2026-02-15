@@ -23,12 +23,11 @@ from evo.objects.utils.table_formats import FLOAT_ARRAY_3, KnownTableFormat
 
 from ._data import DataTable, DataTableAndAttributes
 from ._model import DataLocation, SchemaLocation
+from .attributes import Attributes
 from .exceptions import ObjectValidationError
 from .spatial import BaseSpatialObject, BaseSpatialObjectData
 from .types import BoundingBox
 
-if TYPE_CHECKING:
-    from .attributes import Attributes
 
 __all__ = [
     "Locations",

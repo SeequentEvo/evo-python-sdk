@@ -45,10 +45,6 @@ __all__ = [
 ]
 
 
-def _get_url_prefix(environment: Environment) -> str:
-    return f"{environment.hub_url.rstrip('/')}/geoscience-object/orgs/{environment.org_id}/workspaces/{environment.workspace_id}/objects"
-
-
 async def object_from_reference(
     context: IContext,
     reference: ObjectReference | str,
@@ -129,7 +125,7 @@ async def object_from_path(
         obj = await object_from_path(context, "my-folder/pointset.json", version="abc123")
     """
     version = "?version=" + version if version else ""
-    reference = ObjectReference(_get_url_prefix(context.get_environment()) + f"/path/{path}{version}")
+    reference = ObjectReference.new(context.get_environment(), object_path=path, version_id=version)
     return await object_from_reference(context, reference)
 
 
@@ -163,7 +159,7 @@ async def object_from_uuid(
         obj = await object_from_uuid(context, "b208a6c9-6881-4b97-b02d-acb5d81299bb", version="abc123")
     """
     version = "?version=" + version if version else ""
-    reference = ObjectReference(_get_url_prefix(context.get_environment()) + f"/{uuid}{version}")
+    reference = ObjectReference.new(context.get_environment(), object_id=uuid, version_id=version)
     return await object_from_reference(context, reference)
 
 

@@ -22,10 +22,9 @@ from evo.objects import SchemaVersion
 
 from ._grid import BaseRegular3DGrid, BaseRegular3DGridData, Cells3D, Vertices3D
 from ._model import SchemaLocation
+from .attributes import Attributes
 from .exceptions import ObjectValidationError
 
-if TYPE_CHECKING:
-    from .attributes import Attributes
 
 __all__ = [
     "Regular3DGrid",
