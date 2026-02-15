@@ -19,7 +19,7 @@ from unittest.mock import Mock
 
 import pandas as pd
 
-from evo.common import Environment, IContext
+from evo.common import APIConnector, Environment, ICache, IContext
 from evo.objects import DownloadedObject, ObjectReference, ObjectSchema
 
 
@@ -36,10 +36,26 @@ class MockDownloadedObject(DownloadedObject):
         self._metadata.version_id = version_id
         self._metadata.environment = mock_client.environment
         self._metadata.id = uuid.UUID(object_dict["uuid"])
+        # Store connector and cache for IContext implementation
+        self._connector: APIConnector = Mock(spec=APIConnector)
+        self._connector.base_url = mock_client.environment.hub_url
+        self._cache: ICache | None = None
 
     @property
     def metadata(self):
         return self._metadata
+
+    def get_environment(self) -> Environment:
+        return self._metadata.environment
+
+    def get_org_id(self) -> uuid.UUID:
+        return self._metadata.environment.org_id
+
+    def get_connector(self) -> APIConnector:
+        return self._connector
+
+    def get_cache(self) -> ICache | None:
+        return self._cache
 
     def as_dict(self):
         return self.object_dict
