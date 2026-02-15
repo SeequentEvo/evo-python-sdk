@@ -39,24 +39,16 @@ __all__ = [
 def get_evo_base_url(hub_url: str) -> str:
     """Determine the Evo base URL from an API hub URL.
 
-    :param hub_url: The hub URL (e.g., "https://350mt.api.integration.seequent.com").
-    :return: The Evo base URL (e.g., "https://evo.integration.seequent.com").
+    :param hub_url: The hub URL (e.g., "https://350mt.api.seequent.com").
+    :return: The Evo base URL (e.g., "https://evo.seequent.com").
     """
-    parsed = urlparse(hub_url)
-    hostname = parsed.hostname or ""
-
-    if "integration" in hostname:
-        return "https://evo.integration.seequent.com"
-    elif "test" in hostname:
-        return "https://evo.test.seequent.com"
-    else:
-        return "https://evo.seequent.com"
+    return "https://evo.seequent.com"
 
 
 def get_hub_code(hub_url: str) -> str:
     """Extract the hub code from a hub URL.
 
-    :param hub_url: The hub URL (e.g., "https://350mt.api.integration.seequent.com").
+    :param hub_url: The hub URL (e.g., "https://350mt.api.seequent.com").
     :return: The hub code (e.g., "350mt").
     :raises ValueError: If the hub code cannot be extracted.
     """

@@ -28,17 +28,6 @@ from evo.common.urls import (
 class TestGetEvoBaseUrl(unittest.TestCase):
     """Tests for get_evo_base_url function."""
 
-    def test_integration_environment(self):
-        """Integration environment hub URL returns integration portal URL."""
-        hub_url = "https://350mt.api.integration.seequent.com"
-        result = get_evo_base_url(hub_url)
-        self.assertEqual(result, "https://evo.integration.seequent.com")
-
-    def test_test_environment(self):
-        """Test environment hub URL returns test portal URL."""
-        hub_url = "https://350mt.api.test.seequent.com"
-        result = get_evo_base_url(hub_url)
-        self.assertEqual(result, "https://evo.test.seequent.com")
 
     def test_production_environment(self):
         """Production environment hub URL returns production portal URL."""
@@ -56,9 +45,9 @@ class TestGetEvoBaseUrl(unittest.TestCase):
 class TestGetHubCode(unittest.TestCase):
     """Tests for get_hub_code function."""
 
-    def test_extracts_hub_code_from_integration_url(self):
-        """Hub code is extracted from integration URL."""
-        hub_url = "https://350mt.api.integration.seequent.com"
+    def test_extracts_hub_code_from_url(self):
+        """Hub code is extracted from URL."""
+        hub_url = "https://350mt.api.seequent.com"
         result = get_hub_code(hub_url)
         self.assertEqual(result, "350mt")
 
@@ -83,11 +72,11 @@ class TestGetPortalUrl(unittest.TestCase):
             org_id="org-123",
             workspace_id="ws-456",
             object_id="obj-789",
-            hub_url="https://350mt.api.integration.seequent.com",
+            hub_url="https://350mt.api.seequent.com",
         )
         self.assertEqual(
             result,
-            "https://evo.integration.seequent.com/org-123/data/ws-456/objects/obj-789",
+            "https://evo.seequent.com/org-123/data/ws-456/objects/obj-789",
         )
 
     def test_production_portal_url(self):
@@ -113,11 +102,11 @@ class TestGetViewerUrl(unittest.TestCase):
             org_id="org-123",
             workspace_id="ws-456",
             object_ids="obj-789",
-            hub_url="https://350mt.api.integration.seequent.com",
+            hub_url="https://350mt.api.seequent.com",
         )
         self.assertEqual(
             result,
-            "https://evo.integration.seequent.com/org-123/workspaces/350mt/ws-456/viewer?id=obj-789",
+            "https://evo.seequent.com/org-123/workspaces/350mt/ws-456/viewer?id=obj-789",
         )
 
     def test_generates_multi_object_viewer_url(self):
@@ -126,11 +115,11 @@ class TestGetViewerUrl(unittest.TestCase):
             org_id="org-123",
             workspace_id="ws-456",
             object_ids=["obj-1", "obj-2", "obj-3"],
-            hub_url="https://350mt.api.integration.seequent.com",
+            hub_url="https://350mt.api.seequent.com",
         )
         self.assertEqual(
             result,
-            "https://evo.integration.seequent.com/org-123/workspaces/350mt/ws-456/viewer?id=obj-1,obj-2,obj-3",
+            "https://evo.seequent.com/org-123/workspaces/350mt/ws-456/viewer?id=obj-1,obj-2,obj-3",
         )
 
     def test_production_viewer_url(self):
@@ -150,15 +139,15 @@ class TestGetViewerUrl(unittest.TestCase):
 class TestParseObjectReferenceUrl(unittest.TestCase):
     """Tests for parse_object_reference_url function."""
 
-    def test_parses_integration_reference_url(self):
-        """Object reference URL is parsed correctly for integration."""
-        ref_url = "https://350mt.api.integration.seequent.com/geoscience-object/orgs/org-123/workspaces/ws-456/objects/obj-789"
+    def test_parses_reference_url(self):
+        """Object reference URL is parsed correctly."""
+        ref_url = "https://350mt.api.seequent.com/geoscience-object/orgs/org-123/workspaces/ws-456/objects/obj-789"
         org_id, workspace_id, object_id, hub_url = parse_object_reference_url(ref_url)
 
         self.assertEqual(org_id, "org-123")
         self.assertEqual(workspace_id, "ws-456")
         self.assertEqual(object_id, "obj-789")
-        self.assertEqual(hub_url, "https://350mt.api.integration.seequent.com")
+        self.assertEqual(hub_url, "https://350mt.api.seequent.com")
 
     def test_parses_production_reference_url(self):
         """Object reference URL is parsed correctly for production."""
@@ -172,7 +161,7 @@ class TestParseObjectReferenceUrl(unittest.TestCase):
 
     def test_raises_on_invalid_path(self):
         """Raises ValueError for URLs with invalid path format."""
-        invalid_url = "https://350mt.api.integration.seequent.com/invalid/path"
+        invalid_url = "https://350mt.api.seequent.com/invalid/path"
         with self.assertRaises(ValueError) as ctx:
             parse_object_reference_url(invalid_url)
         self.assertIn("does not match expected format", str(ctx.exception))
@@ -183,12 +172,12 @@ class TestGetPortalUrlFromReference(unittest.TestCase):
 
     def test_generates_portal_url_from_reference(self):
         """Portal URL is generated from object reference URL."""
-        ref_url = "https://350mt.api.integration.seequent.com/geoscience-object/orgs/org-123/workspaces/ws-456/objects/obj-789"
+        ref_url = "https://350mt.api.seequent.com/geoscience-object/orgs/org-123/workspaces/ws-456/objects/obj-789"
         result = get_portal_url_from_reference(ref_url)
 
         self.assertEqual(
             result,
-            "https://evo.integration.seequent.com/org-123/data/ws-456/objects/obj-789",
+            "https://evo.seequent.com/org-123/data/ws-456/objects/obj-789",
         )
 
 
@@ -197,12 +186,12 @@ class TestGetViewerUrlFromReference(unittest.TestCase):
 
     def test_generates_viewer_url_from_reference(self):
         """Viewer URL is generated from object reference URL."""
-        ref_url = "https://350mt.api.integration.seequent.com/geoscience-object/orgs/org-123/workspaces/ws-456/objects/obj-789"
+        ref_url = "https://350mt.api.seequent.com/geoscience-object/orgs/org-123/workspaces/ws-456/objects/obj-789"
         result = get_viewer_url_from_reference(ref_url)
 
         self.assertEqual(
             result,
-            "https://evo.integration.seequent.com/org-123/workspaces/350mt/ws-456/viewer?id=obj-789",
+            "https://evo.seequent.com/org-123/workspaces/350mt/ws-456/viewer?id=obj-789",
         )
 
 
@@ -221,15 +210,13 @@ class TestSerializeObjectReference(unittest.TestCase):
             serialize_object_reference(12345)
         self.assertIn("Cannot serialize object reference", str(ctx.exception))
 
-    def test_serializes_object_with_hub_url_and_org_id(self):
-        """Objects with hub_url and org_id attributes are serialized."""
+    def test_serializes_object_with_url_and_org_id(self):
+        """Objects with url and org_id attributes are serialized."""
 
         class MockObjectReference:
-            hub_url = "https://test.com"
+            url = "mock://reference"
             org_id = "org-123"
 
-            def __str__(self):
-                return "mock://reference"
 
         result = serialize_object_reference(MockObjectReference())
         self.assertEqual(result, "mock://reference")
