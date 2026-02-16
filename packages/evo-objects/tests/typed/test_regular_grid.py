@@ -361,5 +361,3 @@ class TestRegularGrid(TestWithConnector):
             self.assertEqual(len(object_json["vertex_attributes"]), 1)
             self.assertEqual(object_json["vertex_attributes"][0]["name"], "elevation")
             self.assertEqual(object_json["vertex_attributes"][0]["attribute_type"], "scalar")
-
-

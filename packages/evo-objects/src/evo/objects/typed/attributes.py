@@ -105,7 +105,6 @@ class Attribute(SchemaModel):
             raise DataLoaderError("Data was modified since the object was downloaded")
         return await self._obj.download_attribute_dataframe(self.as_dict(), fb=fb)
 
-
     async def set_attribute_values(
         self, df: pd.DataFrame, infer_attribute_type: bool = False, fb: IFeedback = NoFeedback
     ) -> None:
@@ -149,6 +148,7 @@ class Attribute(SchemaModel):
 
 class Attributes(SchemaList[Attribute]):
     """A collection of Geoscience Object Attributes"""
+
     _schema_path: str | None = None
     """The full JMESPath to this attributes list within the parent object schema."""
 
@@ -217,7 +217,6 @@ class Attributes(SchemaList[Attribute]):
             await Attribute._upload_attribute_values(attr_doc, col_df, attribute_type, data_client)
 
             attributes_list.append(attr_doc)
-
 
     async def to_dataframe(self, *keys: str, fb: IFeedback = NoFeedback) -> pd.DataFrame:
         """Load a DataFrame containing the values from the specified attributes in the object.
@@ -294,6 +293,3 @@ class Attributes(SchemaList[Attribute]):
                 raise ObjectValidationError(
                     f"Attribute '{attribute.name}' length ({attribute_length}) does not match expected length ({expected_length})"
                 )
-
-
-

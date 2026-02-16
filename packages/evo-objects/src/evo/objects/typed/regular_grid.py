@@ -82,4 +82,3 @@ class Regular3DGrid(BaseRegular3DGrid):
         :return: A DataFrame with cell attribute columns.
         """
         return await self.cells.to_dataframe(*keys, fb=fb)
-

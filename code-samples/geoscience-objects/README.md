@@ -2,6 +2,12 @@
 
 The `publish-*` directories contain Jupyter notebooks with sample code for uploading geoscience objects to Evo. For example, `publish-triangular-mesh/publish-triangular-mesh.ipynb` Jupyter notebook will demonstrate how to upload a triangular mesh object.
 
+## Recommended Starting Point
+
+**New users should start with `simplified-object-interactions/`** - This example demonstrates the recommended approach for most users and geologists using the typed objects API (`PointSet`, `Regular3DGrid`, etc.) with the `evo.widgets` extension for rich HTML display. It provides a simpler, more intuitive way to upload and download geoscience objects.
+
+The `publish-*` examples use the lower-level `evo-schemas` approach, which offers more control but requires more boilerplate code.
+
 ## Requirements
 
 * Python ^3.10

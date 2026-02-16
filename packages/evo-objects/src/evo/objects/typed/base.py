@@ -67,10 +67,10 @@ async def object_from_reference(
         # Create reference from URL
         ref = ObjectReference("evo://org/workspace/object/b208a6c9-6881-4b97-b02d-acb5d81299bb")
         obj = await object_from_reference(context, ref)
-        
+
         # obj will be a PointSet if the object is a pointset,
         # a Regular3DGrid if it's a regular-3d-grid, etc.
-    """        
+    """
     # Context for the reference's workspace
     reference = ObjectReference(reference)
     reference_context = StaticContext(
@@ -80,7 +80,7 @@ async def object_from_reference(
         workspace_id=reference.workspace_id,
     )
     obj = await DownloadedObject.from_context(reference_context, reference)
-    
+
     # Look up the class directly from the sub-classification
     selected_cls = _BaseObject._sub_classification_lookup.get(obj.metadata.schema_id.sub_classification)
     if selected_cls is None:
@@ -88,7 +88,7 @@ async def object_from_reference(
             f"No typed class found for sub-classification '{obj.metadata.schema_id.sub_classification}'. "
             f"Available types: {list(_BaseObject._sub_classification_lookup.keys())}"
         )
-    
+
     return selected_cls(obj)
 
 
@@ -117,7 +117,7 @@ async def object_from_path(
 
         # Download latest version by path
         obj = await object_from_path(context, "my-folder/pointset.json")
-        
+
         # Download specific version
         obj = await object_from_path(context, "my-folder/pointset.json", version="abc123")
     """
@@ -151,7 +151,7 @@ async def object_from_uuid(
 
         # Download latest version by UUID
         obj = await object_from_uuid(context, "b208a6c9-6881-4b97-b02d-acb5d81299bb")
-        
+
         # Download specific version
         obj = await object_from_uuid(context, "b208a6c9-6881-4b97-b02d-acb5d81299bb", version="abc123")
     """
@@ -214,7 +214,6 @@ class _BaseObject(SchemaModel):
                 )
             cls._data_class_lookup[cls._data_class] = cls
 
-
     @classmethod
     async def _data_to_schema(cls, data: BaseObjectData, context: IContext) -> dict[str, Any]:
         """Convert the provided data to a dictionary suitable for creating a Geoscience Object.
@@ -248,6 +247,7 @@ class _BaseObject(SchemaModel):
                 sub_data = data
             if sub_data is not None:
                 from ._utils import assign_jmespath_value
+
                 sub_document = await metadata.model_type._data_to_schema(sub_data, context)
                 if metadata.jmespath_expr:
                     assign_jmespath_value(result, metadata.jmespath_expr, sub_document)
@@ -421,9 +421,8 @@ class _BaseObject(SchemaModel):
         # Validate sub-models
         for sub_model_name in self._sub_models:
             sub_model = getattr(self, sub_model_name, None)
-            if sub_model is not None and hasattr(sub_model, 'validate'):
+            if sub_model is not None and hasattr(sub_model, "validate"):
                 sub_model.validate()
-
 
 
 @dataclass(kw_only=True, frozen=True)

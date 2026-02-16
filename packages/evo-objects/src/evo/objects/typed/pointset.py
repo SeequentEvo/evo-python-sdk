@@ -139,4 +139,3 @@ class PointSet(BaseSpatialObject):
         :return: A DataFrame with 'x', 'y', 'z' columns and any additional attribute columns.
         """
         return await self.locations.to_dataframe(*keys, fb=fb)
-

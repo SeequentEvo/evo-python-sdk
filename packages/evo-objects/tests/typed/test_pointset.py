@@ -273,4 +273,3 @@ class TestPointSet(TestWithConnector):
             self.assertEqual(object_json["locations"]["attributes"][0]["attribute_type"], "scalar")
             self.assertEqual(object_json["locations"]["attributes"][1]["name"], "category")
             self.assertEqual(object_json["locations"]["attributes"][1]["attribute_type"], "category")
-
