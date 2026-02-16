@@ -6,6 +6,8 @@ The `publish-*` directories contain Jupyter notebooks with sample code for uploa
 
 **New users should start with `simplified-object-interactions/`** - This example demonstrates the recommended approach for most users and geologists using the typed objects API (`PointSet`, `Regular3DGrid`, etc.) with the `evo.widgets` extension for rich HTML display. It provides a simpler, more intuitive way to upload and download geoscience objects.
 
+**For geostatistical workflows, see `running-kriging-compute/`** - This example demonstrates a complete workflow including creating pointsets, variogram models, and visualizing them together with Plotly. It also includes WIP sections for kriging estimation using Evo Compute.
+
 The `publish-*` examples use the lower-level `evo-schemas` approach, which offers more control but requires more boilerplate code.
 
 ## Requirements

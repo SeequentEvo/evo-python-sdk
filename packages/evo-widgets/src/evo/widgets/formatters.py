@@ -99,9 +99,9 @@ def _build_html_from_rows(
     html += '<div class="evo">'
     html += build_title(name, title_links)
     if table_rows:
-        html += f'<table>{"".join(table_rows)}</table>'
+        html += f"<table>{''.join(table_rows)}</table>"
     html += extra_content
-    html += '</div>'
+    html += "</div>"
 
     return html
 
@@ -121,9 +121,9 @@ def format_base_object(obj: Any) -> str:
     # Add bounding box if present (as nested table)
     if bbox := doc.get("bounding_box"):
         bbox_rows = [
-            ["<strong>X:</strong>", bbox.get('min_x', 0), bbox.get('max_x', 0)],
-            ["<strong>Y:</strong>", bbox.get('min_y', 0), bbox.get('max_y', 0)],
-            ["<strong>Z:</strong>", bbox.get('min_z', 0), bbox.get('max_z', 0)],
+            ["<strong>X:</strong>", bbox.get("min_x", 0), bbox.get("max_x", 0)],
+            ["<strong>Y:</strong>", bbox.get("min_y", 0), bbox.get("max_y", 0)],
+            ["<strong>Z:</strong>", bbox.get("min_z", 0), bbox.get("max_z", 0)],
         ]
         bbox_table = build_nested_table(["", "Min", "Max"], bbox_rows)
         rows.append(("Bounding box:", bbox_table))
@@ -134,10 +134,10 @@ def format_base_object(obj: Any) -> str:
         rows.append(("CRS:", crs_str))
 
     # Build datasets section - add as rows to the main table
-    sub_models = getattr(obj, '_sub_models', [])
+    sub_models = getattr(obj, "_sub_models", [])
     for dataset_name in sub_models:
         dataset = getattr(obj, dataset_name, None)
-        if dataset and hasattr(dataset, 'attributes') and len(dataset.attributes) > 0:
+        if dataset and hasattr(dataset, "attributes") and len(dataset.attributes) > 0:
             # Build attribute rows
             attr_rows = []
             for attr in dataset.attributes:
@@ -197,19 +197,19 @@ def format_variogram(obj: Any) -> str:
     name, title_links, rows = _get_base_metadata(obj)
 
     # Add variogram specific rows
-    sill = getattr(obj, 'sill', doc.get('sill', 0))
-    nugget = getattr(obj, 'nugget', doc.get('nugget', 0))
-    is_rotation_fixed = getattr(obj, 'is_rotation_fixed', doc.get('is_rotation_fixed', False))
+    sill = getattr(obj, "sill", doc.get("sill", 0))
+    nugget = getattr(obj, "nugget", doc.get("nugget", 0))
+    is_rotation_fixed = getattr(obj, "is_rotation_fixed", doc.get("is_rotation_fixed", False))
 
     rows.append(("Sill:", f"{sill:.4g}"))
     rows.append(("Nugget:", f"{nugget:.4g}"))
     rows.append(("Rotation Fixed:", str(is_rotation_fixed)))
 
     # Add optional fields
-    attribute = getattr(obj, 'attribute', doc.get('attribute'))
-    domain = getattr(obj, 'domain', doc.get('domain'))
-    modelling_space = getattr(obj, 'modelling_space', doc.get('modelling_space'))
-    data_variance = getattr(obj, 'data_variance', doc.get('data_variance'))
+    attribute = getattr(obj, "attribute", doc.get("attribute"))
+    domain = getattr(obj, "domain", doc.get("domain"))
+    modelling_space = getattr(obj, "modelling_space", doc.get("modelling_space"))
+    data_variance = getattr(obj, "data_variance", doc.get("data_variance"))
 
     if attribute:
         rows.append(("Attribute:", attribute))
@@ -222,7 +222,7 @@ def format_variogram(obj: Any) -> str:
 
     # Build structures section
     extra_content = ""
-    structures = getattr(obj, 'structures', doc.get('structures', []))
+    structures = getattr(obj, "structures", doc.get("structures", []))
     if structures:
         struct_rows = []
         for i, struct in enumerate(structures):
@@ -237,23 +237,29 @@ def format_variogram(obj: Any) -> str:
             ranges = anisotropy.get("ellipsoid_ranges", {})
             rotation = anisotropy.get("rotation", {})
 
-            range_str = f"({ranges.get('major', 0):.1f}, {ranges.get('semi_major', 0):.1f}, {ranges.get('minor', 0):.1f})"
+            range_str = (
+                f"({ranges.get('major', 0):.1f}, {ranges.get('semi_major', 0):.1f}, {ranges.get('minor', 0):.1f})"
+            )
             # Rotation order: dip, dip_az, pitch
             rot_str = f"({rotation.get('dip', 0):.1f}°, {rotation.get('dip_azimuth', 0):.1f}°, {rotation.get('pitch', 0):.1f}°)"
 
-            struct_rows.append([
-                f"{i+1}",
-                vtype,
-                f"{contribution:.4g}",
-                f"{standardized_sill:.2f}",
-                range_str,
-                rot_str,
-            ])
+            struct_rows.append(
+                [
+                    f"{i + 1}",
+                    vtype,
+                    f"{contribution:.4g}",
+                    f"{standardized_sill:.2f}",
+                    range_str,
+                    rot_str,
+                ]
+            )
 
         structures_table = build_nested_table(
             ["#", "Type", "Contribution", "Std. Sill", "Ranges (maj, semi, min)", "Rotation (dip, dip_az, pitch)"],
-            struct_rows
+            struct_rows,
         )
-        extra_content = f'<div style="margin-top: 8px;"><strong>Structures ({len(structures)}):</strong></div>{structures_table}'
+        extra_content = (
+            f'<div style="margin-top: 8px;"><strong>Structures ({len(structures)}):</strong></div>{structures_table}'
+        )
 
     return _build_html_from_rows(name, title_links, rows, extra_content)

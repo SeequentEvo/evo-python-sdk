@@ -357,9 +357,9 @@ class Ellipsoid:
         u, v = np.meshgrid(u, v)
 
         # Leapfrog convention: major=X, semi_major=Y, minor=Z
-        x = self.ranges.major * np.cos(u) * np.sin(v)       # major along X
+        x = self.ranges.major * np.cos(u) * np.sin(v)  # major along X
         y = self.ranges.semi_major * np.sin(u) * np.sin(v)  # semi_major along Y
-        z = self.ranges.minor * np.cos(v)                    # minor along Z
+        z = self.ranges.minor * np.cos(v)  # minor along Z
 
         points = np.array([x.flatten(), y.flatten(), z.flatten()])
         rotated = rot_matrix @ points
@@ -388,7 +388,7 @@ class Ellipsoid:
         all_z = np.empty(total_points)
 
         # XY plane (major-semi_major): horizontal slice
-        x = self.ranges.major * np.cos(theta)       # major along X
+        x = self.ranges.major * np.cos(theta)  # major along X
         y = self.ranges.semi_major * np.sin(theta)  # semi_major along Y
         z = np.zeros_like(theta)
         rotated = rot_matrix @ np.array([x, y, z])
@@ -400,14 +400,14 @@ class Ellipsoid:
         all_z[n_points] = np.nan
 
         # XZ plane (major-minor): vertical slice along major axis
-        x = self.ranges.major * np.cos(theta)       # major along X
+        x = self.ranges.major * np.cos(theta)  # major along X
         y = np.zeros_like(theta)
-        z = self.ranges.minor * np.sin(theta)       # minor along Z
+        z = self.ranges.minor * np.sin(theta)  # minor along Z
         rotated = rot_matrix @ np.array([x, y, z])
         offset = n_points + 1
-        all_x[offset:offset + n_points] = rotated[0] + center[0]
-        all_y[offset:offset + n_points] = rotated[1] + center[1]
-        all_z[offset:offset + n_points] = rotated[2] + center[2]
+        all_x[offset : offset + n_points] = rotated[0] + center[0]
+        all_y[offset : offset + n_points] = rotated[1] + center[1]
+        all_z[offset : offset + n_points] = rotated[2] + center[2]
         all_x[offset + n_points] = np.nan
         all_y[offset + n_points] = np.nan
         all_z[offset + n_points] = np.nan
@@ -415,15 +415,14 @@ class Ellipsoid:
         # YZ plane (semi_major-minor): vertical slice along semi_major axis
         x = np.zeros_like(theta)
         y = self.ranges.semi_major * np.cos(theta)  # semi_major along Y
-        z = self.ranges.minor * np.sin(theta)       # minor along Z
+        z = self.ranges.minor * np.sin(theta)  # minor along Z
         rotated = rot_matrix @ np.array([x, y, z])
         offset = 2 * (n_points + 1)
-        all_x[offset:offset + n_points] = rotated[0] + center[0]
-        all_y[offset:offset + n_points] = rotated[1] + center[1]
-        all_z[offset:offset + n_points] = rotated[2] + center[2]
+        all_x[offset : offset + n_points] = rotated[0] + center[0]
+        all_y[offset : offset + n_points] = rotated[1] + center[1]
+        all_z[offset : offset + n_points] = rotated[2] + center[2]
         all_x[offset + n_points] = np.nan
         all_y[offset + n_points] = np.nan
         all_z[offset + n_points] = np.nan
 
         return all_x, all_y, all_z
-

@@ -421,7 +421,8 @@ class Variogram(BaseObject):
             >>> x, y, z = var_ell.surface_points(center=(100, 200, 50))
             >>> mesh = go.Mesh3d(x=x, y=y, z=z, alphahull=0, opacity=0.3)
         """
-        from .types import Ellipsoid, EllipsoidRanges as EllipsoidRangesObj, Rotation
+        from .types import Ellipsoid, Rotation
+        from .types import EllipsoidRanges as EllipsoidRangesObj
 
         if not self.structures:
             raise ValueError("Variogram has no structures")
@@ -433,11 +434,7 @@ class Variogram(BaseObject):
             for i, struct in enumerate(self.structures):
                 anisotropy = struct.get("anisotropy", {})
                 ranges = anisotropy.get("ellipsoid_ranges", {})
-                volume = (
-                    ranges.get("major", 1.0) *
-                    ranges.get("semi_major", 1.0) *
-                    ranges.get("minor", 1.0)
-                )
+                volume = ranges.get("major", 1.0) * ranges.get("semi_major", 1.0) * ranges.get("minor", 1.0)
                 if volume > max_volume:
                     max_volume = volume
                     structure_index = i
@@ -578,11 +575,13 @@ class Variogram(BaseObject):
 
         # Direction vector in world coordinates
         # X = east, Y = north, Z = up
-        direction = np.array([
-            np.sin(az_rad) * np.cos(dip_rad),  # X (east)
-            np.cos(az_rad) * np.cos(dip_rad),  # Y (north)
-            -np.sin(dip_rad),                   # Z (down is positive dip)
-        ])
+        direction = np.array(
+            [
+                np.sin(az_rad) * np.cos(dip_rad),  # X (east)
+                np.cos(az_rad) * np.cos(dip_rad),  # Y (north)
+                -np.sin(dip_rad),  # Z (down is positive dip)
+            ]
+        )
 
         # Calculate effective range in this direction for each structure
         # Using anisotropic transform: range = 1 / ||A^(-1) * direction||
@@ -609,11 +608,13 @@ class Variogram(BaseObject):
 
             # Apply anisotropic scaling (divide by ranges)
             if major > 0 and semi_major > 0 and minor > 0:
-                scaled_dir = np.array([
-                    local_dir[0] / major,
-                    local_dir[1] / semi_major,
-                    local_dir[2] / minor,
-                ])
+                scaled_dir = np.array(
+                    [
+                        local_dir[0] / major,
+                        local_dir[1] / semi_major,
+                        local_dir[2] / minor,
+                    ]
+                )
                 # Effective range = 1 / ||scaled_direction||
                 norm = np.linalg.norm(scaled_dir)
                 if norm > 0:
@@ -648,11 +649,13 @@ class Variogram(BaseObject):
             local_dir = rot_matrix.T @ direction
 
             if major > 0 and semi_major > 0 and minor > 0:
-                scaled_dir = np.array([
-                    local_dir[0] / major,
-                    local_dir[1] / semi_major,
-                    local_dir[2] / minor,
-                ])
+                scaled_dir = np.array(
+                    [
+                        local_dir[0] / major,
+                        local_dir[1] / semi_major,
+                        local_dir[2] / minor,
+                    ]
+                )
                 norm = np.linalg.norm(scaled_dir)
                 effective_range = 1.0 / norm if norm > 0 else major
             else:
@@ -661,6 +664,3 @@ class Variogram(BaseObject):
             gamma += _evaluate_structure(vtype, h, contribution, effective_range, alpha)
 
         return h, gamma
-
-
-

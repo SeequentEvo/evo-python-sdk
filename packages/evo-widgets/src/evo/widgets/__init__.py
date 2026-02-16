@@ -91,8 +91,8 @@ def _register_formatters(ipython: InteractiveShell) -> None:
 
     # Register formatter for Variogram (overrides BaseObject for variogram-specific rendering)
     html_formatter.for_type_by_name(
-        'evo.objects.typed.variogram',
-        'Variogram',
+        "evo.objects.typed.variogram",
+        "Variogram",
         format_variogram,
     )
 

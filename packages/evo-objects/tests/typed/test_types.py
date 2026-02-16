@@ -254,4 +254,3 @@ class TestEllipsoid(TestCase):
         x2, y2, z2 = ell_rot.wireframe_points()
         # Rotated should have different coordinates
         self.assertFalse(np.allclose(x1, x2, equal_nan=True))
-

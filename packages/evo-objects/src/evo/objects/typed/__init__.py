@@ -10,7 +10,7 @@
 #  limitations under the License.
 
 from .attributes import Attribute, Attributes
-from .base import object_from_path, object_from_reference, object_from_uuid, BaseObject
+from .base import BaseObject, object_from_path, object_from_reference, object_from_uuid
 from .pointset import (
     Locations,
     PointSet,
@@ -55,7 +55,6 @@ from .variogram import (
     VariogramStructure,
 )
 
-
 __all__ = [
     "Attribute",
     "Attributes",
@@ -70,6 +69,7 @@ __all__ = [
     "ExponentialStructure",
     "GaussianStructure",
     "GeneralisedCauchyStructure",
+    "LinearStructure",
     "Locations",
     "MaskedCells",
     "Point3",

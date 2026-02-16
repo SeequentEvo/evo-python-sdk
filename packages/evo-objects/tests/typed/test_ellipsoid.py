@@ -27,7 +27,6 @@ from evo.objects.typed.variogram import (
 )
 
 
-
 class TestEllipsoidWireframe(unittest.TestCase):
     """Tests for ellipsoid wireframe generation."""
 
@@ -144,7 +143,7 @@ class TestVariogramMethods(unittest.TestCase):
     def _create_mock_variogram(self, structures):
         """Create a mock variogram object with given structure dicts."""
         from unittest.mock import MagicMock
-        from evo.objects.typed.variogram import Variogram
+
         variogram = MagicMock()
         variogram.structures = structures
         variogram.nugget = 0.1
@@ -619,7 +618,6 @@ class TestEllipsoidClass(unittest.TestCase):
         self.assertEqual(d["rotation"]["dip_azimuth"], 45)
 
 
-
 class TestEllipsoidWireframeAxisAlignment(unittest.TestCase):
     """Parameterized tests for ellipsoid wireframe axis alignment after rotation.
 
@@ -630,25 +628,33 @@ class TestEllipsoidWireframeAxisAlignment(unittest.TestCase):
     def _get_axis_extent(self, wireframe_points: tuple, axis: str) -> float:
         """Get the extent (max - min) of wireframe points along a given axis."""
         x, y, z = wireframe_points
-        axis_map = {'x': x, 'y': y, 'z': z}
+        axis_map = {"x": x, "y": y, "z": z}
         values = axis_map[axis]
         valid = ~np.isnan(values)
         return np.max(values[valid]) - np.min(values[valid])
 
-    @parameterized.expand([
-        # (dip, dip_azimuth, pitch, major_axis, semi_major_axis, minor_axis, description)
-        (90, 0, 0, 'x', 'z', 'y', "Dip 90: major=X, semi_major=Z, minor=Y"),
-        (0, 90, 0, 'y', 'x', 'z', "Dip azimuth 90: major=Y, semi_major=X, minor=Z"),
-        (0, 0, 90, 'y', 'x', 'z', "Pitch 90: major=Y, semi_major=X, minor=Z"),
-        (0, 90, 90, 'x', 'y', 'z', "Dip azimuth 90, pitch 90: major=X, semi_major=Y, minor=Z"),
-        (90, 90, 90, 'z', 'y', 'x', "Dip 90, dip_azimuth 90, pitch 90: major=Z, semi_major=Y, minor=X"),
-        (90, 90, 0, 'y', 'z', 'x', "Dip 90, dip_azimuth 90: major=Y, semi_major=Z, minor=X"),
-        (90, 0, 90, 'z', 'x', 'y', "Dip 90, pitch 90: major=Z, semi_major=X, minor=Y"),
-    ])
+    @parameterized.expand(
+        [
+            # (dip, dip_azimuth, pitch, major_axis, semi_major_axis, minor_axis, description)
+            (90, 0, 0, "x", "z", "y", "Dip 90: major=X, semi_major=Z, minor=Y"),
+            (0, 90, 0, "y", "x", "z", "Dip azimuth 90: major=Y, semi_major=X, minor=Z"),
+            (0, 0, 90, "y", "x", "z", "Pitch 90: major=Y, semi_major=X, minor=Z"),
+            (0, 90, 90, "x", "y", "z", "Dip azimuth 90, pitch 90: major=X, semi_major=Y, minor=Z"),
+            (90, 90, 90, "z", "y", "x", "Dip 90, dip_azimuth 90, pitch 90: major=Z, semi_major=Y, minor=X"),
+            (90, 90, 0, "y", "z", "x", "Dip 90, dip_azimuth 90: major=Y, semi_major=Z, minor=X"),
+            (90, 0, 90, "z", "x", "y", "Dip 90, pitch 90: major=Z, semi_major=X, minor=Y"),
+        ]
+    )
     # fmt: on
     def test_simple_axis_alignment(
-        self, dip: float, dip_azimuth: float, pitch: float,
-        major_axis: str, semi_major_axis: str, minor_axis: str, description: str
+        self,
+        dip: float,
+        dip_azimuth: float,
+        pitch: float,
+        major_axis: str,
+        semi_major_axis: str,
+        minor_axis: str,
+        description: str,
     ):
         """Test that wireframe axes align correctly after simple rotations."""
         # Use 4:2:1 ratio for clear axis identification
@@ -665,41 +671,74 @@ class TestEllipsoidWireframeAxisAlignment(unittest.TestCase):
         # Check major axis extent (should be 2*major_range = 800)
         major_extent = self._get_axis_extent(wireframe, major_axis)
         self.assertAlmostEqual(
-            major_extent, 2 * major_range, delta=major_range * 0.1,
-            msg=f"{description}: Major axis extent on {major_axis} should be ~{2*major_range}, got {major_extent}"
+            major_extent,
+            2 * major_range,
+            delta=major_range * 0.1,
+            msg=f"{description}: Major axis extent on {major_axis} should be ~{2 * major_range}, got {major_extent}",
         )
 
         # Check semi_major axis extent (should be 2*semi_major_range = 400)
         semi_major_extent = self._get_axis_extent(wireframe, semi_major_axis)
         self.assertAlmostEqual(
-            semi_major_extent, 2 * semi_major_range, delta=semi_major_range * 0.1,
-            msg=f"{description}: Semi-major axis extent on {semi_major_axis} should be ~{2*semi_major_range}, got {semi_major_extent}"
+            semi_major_extent,
+            2 * semi_major_range,
+            delta=semi_major_range * 0.1,
+            msg=f"{description}: Semi-major axis extent on {semi_major_axis} should be ~{2 * semi_major_range}, got {semi_major_extent}",
         )
 
         # Check minor axis extent (should be 2*minor_range = 200)
         minor_extent = self._get_axis_extent(wireframe, minor_axis)
         self.assertAlmostEqual(
-            minor_extent, 2 * minor_range, delta=minor_range * 0.1,
-            msg=f"{description}: Minor axis extent on {minor_axis} should be ~{2*minor_range}, got {minor_extent}"
+            minor_extent,
+            2 * minor_range,
+            delta=minor_range * 0.1,
+            msg=f"{description}: Minor axis extent on {minor_axis} should be ~{2 * minor_range}, got {minor_extent}",
         )
 
-    @parameterized.expand([
-        # (major, semi_major, minor, dip_azimuth, dip, pitch, center, expected_major_p1, expected_semi_p1, expected_minor_p1, description)
-        (134.0, 90.0, 40.0, 100.0, 65.0, 75.0, (500, 500, 100),
-         (440, 475, 217), (495, 413, 79), (536, 494, 117),
-         "Complex case 1: ranges=(134, 90, 40), rotation=(dip=65, dip_az=100, pitch=75)"),
-        (100.0, 50.0, 10.0, 300.0, 13.0, 105.0, (500, 500, 100),
-         (569, 431, 122), (535, 536, 103), (498, 501, 110),
-         "Complex case 2: ranges=(100, 50, 10), rotation=(dip=13, dip_az=300, pitch=105)"),
-    ])
+    @parameterized.expand(
+        [
+            # (major, semi_major, minor, dip_azimuth, dip, pitch, center, expected_major_p1, expected_semi_p1, expected_minor_p1, description)
+            (
+                134.0,
+                90.0,
+                40.0,
+                100.0,
+                65.0,
+                75.0,
+                (500, 500, 100),
+                (440, 475, 217),
+                (495, 413, 79),
+                (536, 494, 117),
+                "Complex case 1: ranges=(134, 90, 40), rotation=(dip=65, dip_az=100, pitch=75)",
+            ),
+            (
+                100.0,
+                50.0,
+                10.0,
+                300.0,
+                13.0,
+                105.0,
+                (500, 500, 100),
+                (569, 431, 122),
+                (535, 536, 103),
+                (498, 501, 110),
+                "Complex case 2: ranges=(100, 50, 10), rotation=(dip=13, dip_az=300, pitch=105)",
+            ),
+        ]
+    )
     def test_complex_rotation_endpoints(
-        self, major: float, semi_major: float, minor: float,
-        dip_azimuth: float, dip: float, pitch: float,
+        self,
+        major: float,
+        semi_major: float,
+        minor: float,
+        dip_azimuth: float,
+        dip: float,
+        pitch: float,
         center: tuple[float, float, float],
         expected_major_p1: tuple[float, float, float],
         expected_semi_p1: tuple[float, float, float],
         expected_minor_p1: tuple[float, float, float] | None,
-        description: str
+        description: str,
     ):
         """Test ellipsoid axis endpoints against known reference values.
 
@@ -724,25 +763,31 @@ class TestEllipsoidWireframeAxisAlignment(unittest.TestCase):
         tolerance = 1.0
 
         # Check major axis endpoint
-        for i, (axis, computed, expected) in enumerate(zip(['X', 'Y', 'Z'], major_p1, expected_major_p1)):
+        for i, (axis, computed, expected) in enumerate(zip(["X", "Y", "Z"], major_p1, expected_major_p1)):
             self.assertAlmostEqual(
-                computed, expected, delta=tolerance,
-                msg=f"{description}: Major P1 {axis} should be ~{expected}, got {computed:.1f}"
+                computed,
+                expected,
+                delta=tolerance,
+                msg=f"{description}: Major P1 {axis} should be ~{expected}, got {computed:.1f}",
             )
 
         # Check semi-major axis endpoint
-        for i, (axis, computed, expected) in enumerate(zip(['X', 'Y', 'Z'], semi_p1, expected_semi_p1)):
+        for i, (axis, computed, expected) in enumerate(zip(["X", "Y", "Z"], semi_p1, expected_semi_p1)):
             self.assertAlmostEqual(
-                computed, expected, delta=tolerance,
-                msg=f"{description}: Semi P1 {axis} should be ~{expected}, got {computed:.1f}"
+                computed,
+                expected,
+                delta=tolerance,
+                msg=f"{description}: Semi P1 {axis} should be ~{expected}, got {computed:.1f}",
             )
 
         # Check minor axis endpoint (if expected values provided)
         if expected_minor_p1 is not None:
-            for i, (axis, computed, expected) in enumerate(zip(['X', 'Y', 'Z'], minor_p1, expected_minor_p1)):
+            for i, (axis, computed, expected) in enumerate(zip(["X", "Y", "Z"], minor_p1, expected_minor_p1)):
                 self.assertAlmostEqual(
-                    computed, expected, delta=tolerance,
-                    msg=f"{description}: Minor P1 {axis} should be ~{expected}, got {computed:.1f}"
+                    computed,
+                    expected,
+                    delta=tolerance,
+                    msg=f"{description}: Minor P1 {axis} should be ~{expected}, got {computed:.1f}",
                 )
 
     def test_identity_rotation_baseline(self):
@@ -757,19 +802,31 @@ class TestEllipsoidWireframeAxisAlignment(unittest.TestCase):
         )
         wireframe = ell.wireframe_points()
 
-        x_extent = self._get_axis_extent(wireframe, 'x')
-        y_extent = self._get_axis_extent(wireframe, 'y')
-        z_extent = self._get_axis_extent(wireframe, 'z')
+        x_extent = self._get_axis_extent(wireframe, "x")
+        y_extent = self._get_axis_extent(wireframe, "y")
+        z_extent = self._get_axis_extent(wireframe, "z")
 
         # X should have major extent (800)
-        self.assertAlmostEqual(x_extent, 2 * major_range, delta=major_range * 0.1,
-                               msg=f"X extent should be ~{2*major_range}, got {x_extent}")
+        self.assertAlmostEqual(
+            x_extent,
+            2 * major_range,
+            delta=major_range * 0.1,
+            msg=f"X extent should be ~{2 * major_range}, got {x_extent}",
+        )
         # Y should have semi_major extent (400)
-        self.assertAlmostEqual(y_extent, 2 * semi_major_range, delta=semi_major_range * 0.1,
-                               msg=f"Y extent should be ~{2*semi_major_range}, got {y_extent}")
+        self.assertAlmostEqual(
+            y_extent,
+            2 * semi_major_range,
+            delta=semi_major_range * 0.1,
+            msg=f"Y extent should be ~{2 * semi_major_range}, got {y_extent}",
+        )
         # Z should have minor extent (200)
-        self.assertAlmostEqual(z_extent, 2 * minor_range, delta=minor_range * 0.1,
-                               msg=f"Z extent should be ~{2*minor_range}, got {z_extent}")
+        self.assertAlmostEqual(
+            z_extent,
+            2 * minor_range,
+            delta=minor_range * 0.1,
+            msg=f"Z extent should be ~{2 * minor_range}, got {z_extent}",
+        )
 
 
 if __name__ == "__main__":

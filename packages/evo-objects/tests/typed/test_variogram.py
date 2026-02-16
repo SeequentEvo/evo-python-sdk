@@ -22,18 +22,18 @@ from evo.common import Environment, StaticContext
 from evo.common.test_tools import BASE_URL, ORG, WORKSPACE_ID, TestWithConnector
 from evo.objects import ObjectReference
 from evo.objects.typed import (
-    Variogram,
-    VariogramData,
-    SphericalStructure,
-    ExponentialStructure,
-    GaussianStructure,
     CubicStructure,
-    LinearStructure,
-    SpheroidalStructure,
-    GeneralisedCauchyStructure,
     Ellipsoid,
     EllipsoidRanges,
+    ExponentialStructure,
+    GaussianStructure,
+    GeneralisedCauchyStructure,
+    LinearStructure,
     Rotation,
+    SphericalStructure,
+    SpheroidalStructure,
+    Variogram,
+    VariogramData,
 )
 from evo.objects.typed.base import BaseObject
 
@@ -314,42 +314,63 @@ class TestVariogram(TestWithConnector):
 
     def test_all_structure_types(self):
         """Test that all structure types have correct variogram_type."""
-        self.assertEqual(SphericalStructure(
-            contribution=1.0,
-            anisotropy=Ellipsoid(ranges=EllipsoidRanges(major=1, semi_major=1, minor=1)),
-        ).variogram_type, "spherical")
+        self.assertEqual(
+            SphericalStructure(
+                contribution=1.0,
+                anisotropy=Ellipsoid(ranges=EllipsoidRanges(major=1, semi_major=1, minor=1)),
+            ).variogram_type,
+            "spherical",
+        )
 
-        self.assertEqual(ExponentialStructure(
-            contribution=1.0,
-            anisotropy=Ellipsoid(ranges=EllipsoidRanges(major=1, semi_major=1, minor=1)),
-        ).variogram_type, "exponential")
+        self.assertEqual(
+            ExponentialStructure(
+                contribution=1.0,
+                anisotropy=Ellipsoid(ranges=EllipsoidRanges(major=1, semi_major=1, minor=1)),
+            ).variogram_type,
+            "exponential",
+        )
 
-        self.assertEqual(GaussianStructure(
-            contribution=1.0,
-            anisotropy=Ellipsoid(ranges=EllipsoidRanges(major=1, semi_major=1, minor=1)),
-        ).variogram_type, "gaussian")
+        self.assertEqual(
+            GaussianStructure(
+                contribution=1.0,
+                anisotropy=Ellipsoid(ranges=EllipsoidRanges(major=1, semi_major=1, minor=1)),
+            ).variogram_type,
+            "gaussian",
+        )
 
-        self.assertEqual(CubicStructure(
-            contribution=1.0,
-            anisotropy=Ellipsoid(ranges=EllipsoidRanges(major=1, semi_major=1, minor=1)),
-        ).variogram_type, "cubic")
+        self.assertEqual(
+            CubicStructure(
+                contribution=1.0,
+                anisotropy=Ellipsoid(ranges=EllipsoidRanges(major=1, semi_major=1, minor=1)),
+            ).variogram_type,
+            "cubic",
+        )
 
-        self.assertEqual(LinearStructure(
-            contribution=1.0,
-            anisotropy=Ellipsoid(ranges=EllipsoidRanges(major=1, semi_major=1, minor=1)),
-        ).variogram_type, "linear")
+        self.assertEqual(
+            LinearStructure(
+                contribution=1.0,
+                anisotropy=Ellipsoid(ranges=EllipsoidRanges(major=1, semi_major=1, minor=1)),
+            ).variogram_type,
+            "linear",
+        )
 
-        self.assertEqual(SpheroidalStructure(
-            contribution=1.0,
-            alpha=5,
-            anisotropy=Ellipsoid(ranges=EllipsoidRanges(major=1, semi_major=1, minor=1)),
-        ).variogram_type, "spheroidal")
+        self.assertEqual(
+            SpheroidalStructure(
+                contribution=1.0,
+                alpha=5,
+                anisotropy=Ellipsoid(ranges=EllipsoidRanges(major=1, semi_major=1, minor=1)),
+            ).variogram_type,
+            "spheroidal",
+        )
 
-        self.assertEqual(GeneralisedCauchyStructure(
-            contribution=1.0,
-            alpha=7,
-            anisotropy=Ellipsoid(ranges=EllipsoidRanges(major=1, semi_major=1, minor=1)),
-        ).variogram_type, "generalisedcauchy")
+        self.assertEqual(
+            GeneralisedCauchyStructure(
+                contribution=1.0,
+                alpha=7,
+                anisotropy=Ellipsoid(ranges=EllipsoidRanges(major=1, semi_major=1, minor=1)),
+            ).variogram_type,
+            "generalisedcauchy",
+        )
 
     async def test_linear_structure(self):
         """Test creating a variogram with linear structure."""
@@ -460,4 +481,3 @@ class TestVariogram(TestWithConnector):
         self.assertEqual(result["variogram_type"], "linear")
         self.assertEqual(result["contribution"], 0.5)
         self.assertNotIn("alpha", result)  # Linear doesn't have alpha
-
