@@ -8,7 +8,7 @@ For detailed information about creating Evo apps, the authentication setup, avai
 
 This comprehensive guide will walk you through everything required to get started with Evo APIs. 
 
-## Getting started with Evo SDK development
+## Getting started with the Evo SDK
 
 The evo-python-sdk contains a number of sub-packages. You may choose to install the `evo-sdk` package, which includes all
 sub-packages and optional dependencies (e.g. Jupyter notebook support), or choose a specific package to install:

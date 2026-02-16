@@ -41,15 +41,18 @@ def on_startup(command: str, dirty: bool) -> None:
         file_path_parts = module_parts[:-1]
         source_file_path = "/".join(file_path_parts) + ".py"
         github_url = f"{GITHUB_BASE_URL}/{source_file_path}"
-        entries_by_dir[doc_dir].append((class_name, module_path, github_url))
+
+        src_idx = module_parts.index("src")
+        namespace = ".".join(module_parts[src_idx + 1 :])
+        entries_by_dir[doc_dir].append((class_name, module_path, github_url, namespace))
 
     for doc_dir, entries in entries_by_dir.items():
-        for class_name, module_path, github_url in entries:
+        for class_name, module_path, github_url, namespace in entries:
             doc_path = (
                 docs_packages_dir / f"{doc_dir}.md"
                 if len(entries) == 1
                 else docs_packages_dir / f"{doc_dir}/{class_name}.md"
             )
             doc_path.parent.mkdir(parents=True, exist_ok=True)
-            doc_path.write_text(f"[GitHub source]({github_url})\n::: {module_path}\n")
+            doc_path.write_text(f"[GitHub source]({github_url})\n::: {namespace}\n")
             log.info(f"Generated: {doc_path.relative_to(mkdocs_dir)}")
