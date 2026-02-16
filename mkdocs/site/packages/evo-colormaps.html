@@ -182,6 +182,415 @@
 <div class="doc doc-object doc-function">
 
 
+<h3 id="evo.colormaps.client.ColormapAPIClient.get_service_health" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">get_service_health</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_service_health</span><span class="p">(</span><span class="n">check_type</span><span class="p">:</span> <span class="n">HealthCheckType</span> <span class="o">=</span> <span class="n">HealthCheckType</span><span class="o">.</span><span class="n">FULL</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ServiceHealth</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Get the health of the service.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>check_type</code>
+            </td>
+            <td>
+                  <code><span title="evo.common.HealthCheckType">HealthCheckType</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The type of health check to perform.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="evo.common.HealthCheckType.FULL">FULL</span></code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="evo.common.ServiceHealth">ServiceHealth</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A ServiceHealth object.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>EvoApiException</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the API returns an unexpected status code.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code>ClientValueError</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the response is not a valid service health check response.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.colormaps.client.ColormapAPIClient.create_colormap" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">create_colormap</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">create_colormap</span><span class="p">(</span><span class="n">colormap</span><span class="p">:</span> <span class="n">ContinuousColormap</span> <span class="o">|</span> <span class="n">DiscreteColormap</span> <span class="o">|</span> <span class="n">CategoryColormap</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ColormapMetadata</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Create a new colormap.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>colormap</code>
+            </td>
+            <td>
+                  <code><span title="evo.colormaps.data.ContinuousColormap">ContinuousColormap</span> | <span title="evo.colormaps.data.DiscreteColormap">DiscreteColormap</span> | <span title="evo.colormaps.data.CategoryColormap">CategoryColormap</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The colormap data.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>name</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The name of the colormap.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="evo.colormaps.data.ColormapMetadata">ColormapMetadata</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The created colormap.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>UnknownColormapType</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the colormap type is not recognized.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code>EvoApiException</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the API returns an unexpected status code.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.colormaps.client.ColormapAPIClient.get_colormap_by_id" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">get_colormap_by_id</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_colormap_by_id</span><span class="p">(</span><span class="n">colormap_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ColormapMetadata</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Get a colormap by ID.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>colormap_id</code>
+            </td>
+            <td>
+                  <code><span title="uuid.UUID">UUID</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The UUID of the colormap.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="evo.colormaps.data.ColormapMetadata">ColormapMetadata</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A ColormapMetadata object representation of the colormap.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>EvoApiException</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the API returns an unexpected status code.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.colormaps.client.ColormapAPIClient.get_colormap_collection" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">get_colormap_collection</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_colormap_collection</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ColormapMetadata</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Get all the colormaps in the current workspace.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="list">list</span>[<span title="evo.colormaps.data.ColormapMetadata">ColormapMetadata</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A list of ColormapMetadata object representations of the colormaps.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>EvoApiException</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the API returns an unexpected status code.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
 <h3 id="evo.colormaps.client.ColormapAPIClient.create_association" class="doc doc-heading">
             <span class="doc doc-object-name doc-function-name">create_association</span>
 
@@ -416,133 +825,6 @@
 <div class="doc doc-object doc-function">
 
 
-<h3 id="evo.colormaps.client.ColormapAPIClient.create_colormap" class="doc doc-heading">
-            <span class="doc doc-object-name doc-function-name">create_colormap</span>
-
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-async"><code>async</code></small>
-  </span>
-
-</h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">create_colormap</span><span class="p">(</span><span class="n">colormap</span><span class="p">:</span> <span class="n">ContinuousColormap</span> <span class="o">|</span> <span class="n">DiscreteColormap</span> <span class="o">|</span> <span class="n">CategoryColormap</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ColormapMetadata</span>
-</code></pre></div>
-
-    <div class="doc doc-contents ">
-
-        <p>Create a new colormap.</p>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>colormap</code>
-            </td>
-            <td>
-                  <code><span title="evo.colormaps.data.ContinuousColormap">ContinuousColormap</span> | <span title="evo.colormaps.data.DiscreteColormap">DiscreteColormap</span> | <span title="evo.colormaps.data.CategoryColormap">CategoryColormap</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The colormap data.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>name</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The name of the colormap.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-    <p><span class="doc-section-title">Returns:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                  <code><span title="evo.colormaps.data.ColormapMetadata">ColormapMetadata</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The created colormap.</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-<p><span class="doc-section-title">Raises:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                  <code>UnknownColormapType</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>If the colormap type is not recognized.</p>
-              </div>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                  <code>EvoApiException</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>If the API returns an unexpected status code.</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
 <h3 id="evo.colormaps.client.ColormapAPIClient.get_association" class="doc doc-heading">
             <span class="doc doc-object-name doc-function-name">get_association</span>
 
@@ -747,288 +1029,6 @@
             <td>
               <div class="doc-md-description">
                 <p>If the API returns an unexpected status code.</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-<h3 id="evo.colormaps.client.ColormapAPIClient.get_colormap_by_id" class="doc doc-heading">
-            <span class="doc doc-object-name doc-function-name">get_colormap_by_id</span>
-
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-async"><code>async</code></small>
-  </span>
-
-</h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_colormap_by_id</span><span class="p">(</span><span class="n">colormap_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ColormapMetadata</span>
-</code></pre></div>
-
-    <div class="doc doc-contents ">
-
-        <p>Get a colormap by ID.</p>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>colormap_id</code>
-            </td>
-            <td>
-                  <code><span title="uuid.UUID">UUID</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The UUID of the colormap.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-    <p><span class="doc-section-title">Returns:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                  <code><span title="evo.colormaps.data.ColormapMetadata">ColormapMetadata</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>A ColormapMetadata object representation of the colormap.</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-<p><span class="doc-section-title">Raises:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                  <code>EvoApiException</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>If the API returns an unexpected status code.</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-<h3 id="evo.colormaps.client.ColormapAPIClient.get_colormap_collection" class="doc doc-heading">
-            <span class="doc doc-object-name doc-function-name">get_colormap_collection</span>
-
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-async"><code>async</code></small>
-  </span>
-
-</h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_colormap_collection</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ColormapMetadata</span><span class="p">]</span>
-</code></pre></div>
-
-    <div class="doc doc-contents ">
-
-        <p>Get all the colormaps in the current workspace.</p>
-
-
-    <p><span class="doc-section-title">Returns:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                  <code><span title="list">list</span>[<span title="evo.colormaps.data.ColormapMetadata">ColormapMetadata</span>]</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>A list of ColormapMetadata object representations of the colormaps.</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-<p><span class="doc-section-title">Raises:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                  <code>EvoApiException</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>If the API returns an unexpected status code.</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-<h3 id="evo.colormaps.client.ColormapAPIClient.get_service_health" class="doc doc-heading">
-            <span class="doc doc-object-name doc-function-name">get_service_health</span>
-
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-async"><code>async</code></small>
-  </span>
-
-</h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_service_health</span><span class="p">(</span><span class="n">check_type</span><span class="p">:</span> <span class="n">HealthCheckType</span> <span class="o">=</span> <span class="n">HealthCheckType</span><span class="o">.</span><span class="n">FULL</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ServiceHealth</span>
-</code></pre></div>
-
-    <div class="doc doc-contents ">
-
-        <p>Get the health of the service.</p>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>check_type</code>
-            </td>
-            <td>
-                  <code><span title="evo.common.HealthCheckType">HealthCheckType</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The type of health check to perform.</p>
-              </div>
-            </td>
-            <td>
-                  <code><span title="evo.common.HealthCheckType.FULL">FULL</span></code>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-    <p><span class="doc-section-title">Returns:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                  <code><span title="evo.common.ServiceHealth">ServiceHealth</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>A ServiceHealth object.</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-<p><span class="doc-section-title">Raises:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                  <code>EvoApiException</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>If the API returns an unexpected status code.</p>
-              </div>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                  <code>ClientValueError</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>If the response is not a valid service health check response.</p>
               </div>
             </td>
           </tr>

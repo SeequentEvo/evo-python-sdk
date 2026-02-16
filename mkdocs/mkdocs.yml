@@ -29,3 +29,4 @@ plugins:
             separate_signature: true
             show_signature_annotations: true
             line_length: 120
+            members_order: source

@@ -182,320 +182,6 @@
 <div class="doc doc-object doc-function">
 
 
-<h3 id="evo.files.client.FileAPIClient.delete_file_by_id" class="doc doc-heading">
-            <span class="doc doc-object-name doc-function-name">delete_file_by_id</span>
-
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-async"><code>async</code></small>
-  </span>
-
-</h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">delete_file_by_id</span><span class="p">(</span><span class="n">file_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
-</code></pre></div>
-
-    <div class="doc doc-contents ">
-
-        <p>Deletes a file by ID.</p>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>file_id</code>
-            </td>
-            <td>
-                  <code><span title="uuid.UUID">UUID</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>UUID of the file to delete.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-<h3 id="evo.files.client.FileAPIClient.delete_file_by_path" class="doc doc-heading">
-            <span class="doc doc-object-name doc-function-name">delete_file_by_path</span>
-
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-async"><code>async</code></small>
-  </span>
-
-</h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">delete_file_by_path</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
-</code></pre></div>
-
-    <div class="doc doc-contents ">
-
-        <p>Deletes a file by path.</p>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>path</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Path of the file to delete.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-<h3 id="evo.files.client.FileAPIClient.get_file_by_id" class="doc doc-heading">
-            <span class="doc doc-object-name doc-function-name">get_file_by_id</span>
-
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-async"><code>async</code></small>
-  </span>
-
-</h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_file_by_id</span><span class="p">(</span><span class="n">file_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">version_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">deleted</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FileMetadata</span>
-</code></pre></div>
-
-    <div class="doc doc-contents ">
-
-        <p>Get a file by its ID.</p>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>file_id</code>
-            </td>
-            <td>
-                  <code><span title="uuid.UUID">UUID</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>UUID of a file</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>version_id</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span> | None</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>ID of the desired file version. By default, the response will return the latest version.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>deleted</code>
-            </td>
-            <td>
-                  <code><span title="bool">bool</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Optional flag to include deleted files.</p>
-              </div>
-            </td>
-            <td>
-                  <code>False</code>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-    <p><span class="doc-section-title">Returns:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                  <code><span title="evo.files.data.FileMetadata">FileMetadata</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>A FileMetadata representation of the file on the service</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-<h3 id="evo.files.client.FileAPIClient.get_file_by_path" class="doc doc-heading">
-            <span class="doc doc-object-name doc-function-name">get_file_by_path</span>
-
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-async"><code>async</code></small>
-  </span>
-
-</h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_file_by_path</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">version_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FileMetadata</span>
-</code></pre></div>
-
-    <div class="doc doc-contents ">
-
-        <p>Get a file by its path.</p>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>path</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The path to the file.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>version_id</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span> | None</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>ID of the desired file version. By default, the response will return the latest version.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-    <p><span class="doc-section-title">Returns:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                  <code><span title="evo.files.data.FileMetadata">FileMetadata</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>A FileMetadata representation of the file on the service.</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
 <h3 id="evo.files.client.FileAPIClient.get_service_health" class="doc doc-heading">
             <span class="doc doc-object-name doc-function-name">get_service_health</span>
 
@@ -593,117 +279,6 @@
             <td>
               <div class="doc-md-description">
                 <p>If the response is not a valid service health check response.</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-<h3 id="evo.files.client.FileAPIClient.list_all_files" class="doc doc-heading">
-            <span class="doc doc-object-name doc-function-name">list_all_files</span>
-
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-async"><code>async</code></small>
-  </span>
-
-</h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">list_all_files</span><span class="p">(</span><span class="n">limit_per_request</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5000</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">deleted</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">FileMetadata</span><span class="p">]</span>
-</code></pre></div>
-
-    <div class="doc doc-contents ">
-
-        <p>List all files in the workspace.</p>
-<p>This method makes multiple calls to the <code>list_files</code> endpoint until all files have been listed.</p>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>limit_per_request</code>
-            </td>
-            <td>
-                  <code><span title="int">int</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The maximum number of files to list in one request.</p>
-              </div>
-            </td>
-            <td>
-                  <code>5000</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>name</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span> | None</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Filter files by name.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>deleted</code>
-            </td>
-            <td>
-                  <code><span title="bool">bool</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Only include deleted files in the listing.</p>
-              </div>
-            </td>
-            <td>
-                  <code>False</code>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-    <p><span class="doc-section-title">Returns:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                  <code><span title="list">list</span>[<span title="evo.files.data.FileMetadata">FileMetadata</span>]</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>A list of all files in the workspace.</p>
               </div>
             </td>
           </tr>
@@ -846,6 +421,399 @@ If there are no files starting at <code>offset</code>, the page will be empty.</
 <div class="doc doc-object doc-function">
 
 
+<h3 id="evo.files.client.FileAPIClient.list_all_files" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">list_all_files</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">list_all_files</span><span class="p">(</span><span class="n">limit_per_request</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5000</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">deleted</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">FileMetadata</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>List all files in the workspace.</p>
+<p>This method makes multiple calls to the <code>list_files</code> endpoint until all files have been listed.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>limit_per_request</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The maximum number of files to list in one request.</p>
+              </div>
+            </td>
+            <td>
+                  <code>5000</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>name</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Filter files by name.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>deleted</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Only include deleted files in the listing.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="list">list</span>[<span title="evo.files.data.FileMetadata">FileMetadata</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A list of all files in the workspace.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.files.client.FileAPIClient.get_file_by_path" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">get_file_by_path</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_file_by_path</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">version_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FileMetadata</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Get a file by its path.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>path</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The path to the file.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>version_id</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>ID of the desired file version. By default, the response will return the latest version.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="evo.files.data.FileMetadata">FileMetadata</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A FileMetadata representation of the file on the service.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.files.client.FileAPIClient.get_file_by_id" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">get_file_by_id</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_file_by_id</span><span class="p">(</span><span class="n">file_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">version_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">deleted</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FileMetadata</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Get a file by its ID.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>file_id</code>
+            </td>
+            <td>
+                  <code><span title="uuid.UUID">UUID</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>UUID of a file</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>version_id</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>ID of the desired file version. By default, the response will return the latest version.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>deleted</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional flag to include deleted files.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="evo.files.data.FileMetadata">FileMetadata</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A FileMetadata representation of the file on the service</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.files.client.FileAPIClient.list_versions_by_path" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">list_versions_by_path</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">list_versions_by_path</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">FileVersion</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>List the versions of a file by path.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>path</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The path to the file.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="list">list</span>[<span title="evo.files.data.FileVersion">FileVersion</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A sorted list of file versions. The latest version is the first element of the list.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
 <h3 id="evo.files.client.FileAPIClient.list_versions_by_id" class="doc doc-heading">
             <span class="doc doc-object-name doc-function-name">list_versions_by_id</span>
 
@@ -940,8 +908,8 @@ If there are no files starting at <code>offset</code>, the page will be empty.</
 <div class="doc doc-object doc-function">
 
 
-<h3 id="evo.files.client.FileAPIClient.list_versions_by_path" class="doc doc-heading">
-            <span class="doc doc-object-name doc-function-name">list_versions_by_path</span>
+<h3 id="evo.files.client.FileAPIClient.prepare_download_by_path" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">prepare_download_by_path</span>
 
 
   <span class="doc doc-labels">
@@ -949,12 +917,12 @@ If there are no files starting at <code>offset</code>, the page will be empty.</
   </span>
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">list_versions_by_path</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">FileVersion</span><span class="p">]</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">prepare_download_by_path</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">version_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FileAPIDownload</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>List the versions of a file by path.</p>
+        <p>Prepares a file for download by path.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -977,11 +945,27 @@ If there are no files starting at <code>offset</code>, the page will be empty.</
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The path to the file.</p>
+                <p>Path to the file.</p>
               </div>
             </td>
             <td>
                 <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>version_id</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Versions of the file.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
             </td>
           </tr>
       </tbody>
@@ -999,11 +983,11 @@ If there are no files starting at <code>offset</code>, the page will be empty.</
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><span title="list">list</span>[<span title="evo.files.data.FileVersion">FileVersion</span>]</code>
+                  <code><span title="evo.files.io.FileAPIDownload">FileAPIDownload</span></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>A sorted list of file versions. The latest version is the first element of the list.</p>
+                <p>A FileAPIDownload object.</p>
               </div>
             </td>
           </tr>
@@ -1128,8 +1112,8 @@ If there are no files starting at <code>offset</code>, the page will be empty.</
 <div class="doc doc-object doc-function">
 
 
-<h3 id="evo.files.client.FileAPIClient.prepare_download_by_path" class="doc doc-heading">
-            <span class="doc doc-object-name doc-function-name">prepare_download_by_path</span>
+<h3 id="evo.files.client.FileAPIClient.prepare_upload_by_path" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">prepare_upload_by_path</span>
 
 
   <span class="doc doc-labels">
@@ -1137,12 +1121,12 @@ If there are no files starting at <code>offset</code>, the page will be empty.</
   </span>
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">prepare_download_by_path</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">version_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FileAPIDownload</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">prepare_upload_by_path</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FileAPIUpload</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>Prepares a file for download by path.</p>
+        <p>Prepares a file for upload by path. If the file already exists, a new version will be created.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -1165,27 +1149,11 @@ If there are no files starting at <code>offset</code>, the page will be empty.</
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Path to the file.</p>
+                <p>Path the file is being uploaded to.</p>
               </div>
             </td>
             <td>
                 <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>version_id</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span> | None</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Versions of the file.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
             </td>
           </tr>
       </tbody>
@@ -1203,11 +1171,11 @@ If there are no files starting at <code>offset</code>, the page will be empty.</
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><span title="evo.files.io.FileAPIDownload">FileAPIDownload</span></code>
+                  <code><span title="evo.files.io.FileAPIUpload">FileAPIUpload</span></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>A FileAPIDownload object.</p>
+                <p>A FileAPIUpload object.</p>
               </div>
             </td>
           </tr>
@@ -1261,84 +1229,6 @@ will be created.</p>
             <td>
               <div class="doc-md-description">
                 <p>UUID of the file.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-    <p><span class="doc-section-title">Returns:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                  <code><span title="evo.files.io.FileAPIUpload">FileAPIUpload</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>A FileAPIUpload object.</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-<h3 id="evo.files.client.FileAPIClient.prepare_upload_by_path" class="doc doc-heading">
-            <span class="doc doc-object-name doc-function-name">prepare_upload_by_path</span>
-
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-async"><code>async</code></small>
-  </span>
-
-</h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">prepare_upload_by_path</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FileAPIUpload</span>
-</code></pre></div>
-
-    <div class="doc doc-contents ">
-
-        <p>Prepares a file for upload by path. If the file already exists, a new version will be created.</p>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>path</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Path the file is being uploaded to.</p>
               </div>
             </td>
             <td>
@@ -1444,6 +1334,116 @@ will be created.</p>
               <div class="doc-md-description">
                 <p>FileMetadata if the file path changed during restore (HTTP 303), None if the file was restored without path change (HTTP 204).</p>
               </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.files.client.FileAPIClient.delete_file_by_path" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">delete_file_by_path</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">delete_file_by_path</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Deletes a file by path.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>path</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Path of the file to delete.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.files.client.FileAPIClient.delete_file_by_id" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">delete_file_by_id</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">delete_file_by_id</span><span class="p">(</span><span class="n">file_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Deletes a file by ID.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>file_id</code>
+            </td>
+            <td>
+                  <code><span title="uuid.UUID">UUID</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>UUID of the file to delete.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
             </td>
           </tr>
       </tbody>
