@@ -39,7 +39,7 @@ def build_title(text: str, links: list[tuple[str, str]] | None = None) -> str:
     :return: HTML string.
     """
     if links:
-        link_html = ' | '.join([f'<a href="{url}" target="_blank">{label}</a>' for label, url in links])
+        link_html = " | ".join([f'<a href="{url}" target="_blank">{label}</a>' for label, url in links])
         return f'<div class="title"><span>{text}</span><span class="title-links">{link_html}</span></div>'
     return f'<div class="title">{text}</div>'
 
@@ -82,7 +82,7 @@ def build_table(rows: list[tuple[str, str]]) -> str:
     :return: HTML string for a complete table.
     """
     table_rows = [build_table_row(label, value) for label, value in rows]
-    return f'<table>{"".join(table_rows)}</table>'
+    return f"<table>{''.join(table_rows)}</table>"
 
 
 def build_nested_table(headers: list[str], rows: list[list[str]], css_class: str = "") -> str:
@@ -98,7 +98,7 @@ def build_nested_table(headers: list[str], rows: list[list[str]], css_class: str
     # Build header row
     header_cells = []
     for i, header in enumerate(headers):
-        header_cells.append(f'<th>{header}</th>')
+        header_cells.append(f"<th>{header}</th>")
 
     # Build data rows
     data_rows = []
@@ -110,15 +110,10 @@ def build_nested_table(headers: list[str], rows: list[list[str]], css_class: str
                 formatted_cell = f"{cell:.2f}"
             else:
                 formatted_cell = str(cell)
-            cells.append(f'<td>{formatted_cell}</td>')
-        data_rows.append(f'<tr>{"".join(cells)}</tr>')
+            cells.append(f"<td>{formatted_cell}</td>")
+        data_rows.append(f"<tr>{''.join(cells)}</tr>")
 
-    return (
-        f'<table{class_attr}>'
-        f'<tr>{"".join(header_cells)}</tr>'
-        f'{"".join(data_rows)}'
-        f'</table>'
-    )
+    return f"<table{class_attr}><tr>{''.join(header_cells)}</tr>{''.join(data_rows)}</table>"
 
 
 def build_object_html(title: str, rows: list[tuple[str, str]], extra_content: str = "") -> str:
@@ -129,13 +124,5 @@ def build_object_html(title: str, rows: list[tuple[str, str]], extra_content: st
     :param extra_content: Additional HTML content to append after the table (optional).
     :return: Complete HTML string with stylesheet.
     """
-    html_parts = [
-        STYLESHEET,
-        '<div class="evo">',
-        build_title(title),
-        build_table(rows),
-        extra_content,
-        '</div>'
-    ]
-    return ''.join(html_parts)
-
+    html_parts = [STYLESHEET, '<div class="evo">', build_title(title), build_table(rows), extra_content, "</div>"]
+    return "".join(html_parts)

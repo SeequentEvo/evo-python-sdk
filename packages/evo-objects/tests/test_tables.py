@@ -47,7 +47,7 @@ def tearDownModule() -> None:
         CACHE.clear_cache()
         CACHE.root.rmdir()
     except Exception:
-        pass   # Already cleaned up
+        pass  # Already cleaned up
 
 
 def setUpModule() -> None:

@@ -160,4 +160,3 @@ class Tensor3DGrid(Base3DGrid):
         :return: A DataFrame with cell attribute columns.
         """
         return await self.cells.to_dataframe(*keys, fb=fb)
-

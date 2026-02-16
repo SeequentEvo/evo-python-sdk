@@ -161,10 +161,7 @@ class TestBuildNestedTable(unittest.TestCase):
         result = build_nested_table(headers, rows, css_class="extra")
         self.assertEqual(
             result,
-            '<table class="nested extra">'
-            "<tr><th>Col</th></tr>"
-            "<tr><td>val</td></tr>"
-            "</table>",
+            '<table class="nested extra"><tr><th>Col</th></tr><tr><td>val</td></tr></table>',
         )
 
 
@@ -206,4 +203,3 @@ class TestBuildObjectHtml(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

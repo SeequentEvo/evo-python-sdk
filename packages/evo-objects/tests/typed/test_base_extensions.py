@@ -72,11 +72,13 @@ class TestRefreshOnPointSet(TestWithConnector):
         """Test that refresh() returns the same type as the original object."""
         data = PointSetData(
             name="Test PointSet",
-            locations=pd.DataFrame({
-                "x": [1.0, 2.0, 3.0],
-                "y": [4.0, 5.0, 6.0],
-                "z": [7.0, 8.0, 9.0],
-            }),
+            locations=pd.DataFrame(
+                {
+                    "x": [1.0, 2.0, 3.0],
+                    "y": [4.0, 5.0, 6.0],
+                    "z": [7.0, 8.0, 9.0],
+                }
+            ),
         )
 
         with self._mock_geoscience_objects():
@@ -90,11 +92,13 @@ class TestRefreshOnPointSet(TestWithConnector):
         """Test that refresh() preserves object name."""
         data = PointSetData(
             name="Test PointSet",
-            locations=pd.DataFrame({
-                "x": [1.0, 2.0],
-                "y": [3.0, 4.0],
-                "z": [5.0, 6.0],
-            }),
+            locations=pd.DataFrame(
+                {
+                    "x": [1.0, 2.0],
+                    "y": [3.0, 4.0],
+                    "z": [5.0, 6.0],
+                }
+            ),
         )
 
         with self._mock_geoscience_objects():
@@ -105,12 +109,14 @@ class TestRefreshOnPointSet(TestWithConnector):
 
     async def test_refresh_preserves_data(self):
         """Test that refresh() preserves object data."""
-        locations_df = pd.DataFrame({
-            "x": np.random.rand(10),
-            "y": np.random.rand(10),
-            "z": np.random.rand(10),
-            "value": np.random.rand(10),
-        })
+        locations_df = pd.DataFrame(
+            {
+                "x": np.random.rand(10),
+                "y": np.random.rand(10),
+                "z": np.random.rand(10),
+                "value": np.random.rand(10),
+            }
+        )
         data = PointSetData(name="Test PointSet", locations=locations_df)
 
         with self._mock_geoscience_objects():
@@ -152,9 +158,11 @@ class TestRefreshOnRegular3DGrid(TestWithConnector):
             origin=Point3(0.0, 0.0, 0.0),
             cell_size=Size3d(1.0, 1.0, 1.0),
             size=Size3i(5, 5, 5),
-            cell_data=pd.DataFrame({
-                "value": np.random.rand(125),  # 5x5x5 = 125 cells
-            }),
+            cell_data=pd.DataFrame(
+                {
+                    "value": np.random.rand(125),  # 5x5x5 = 125 cells
+                }
+            ),
         )
 
         with self._mock_geoscience_objects():
@@ -163,4 +171,3 @@ class TestRefreshOnRegular3DGrid(TestWithConnector):
 
         self.assertIsInstance(refreshed, Regular3DGrid)
         self.assertEqual(refreshed.name, original.name)
-

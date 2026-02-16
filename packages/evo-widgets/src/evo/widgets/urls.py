@@ -55,7 +55,7 @@ def get_hub_code(hub_url: str) -> str:
     :raises ValueError: If the hub code cannot be extracted.
     """
     parsed = urlparse(hub_url)
-    hostname_parts = parsed.hostname.split('.') if parsed.hostname else []
+    hostname_parts = parsed.hostname.split(".") if parsed.hostname else []
     if len(hostname_parts) < 1:
         raise ValueError(f"Invalid URL: cannot extract hub code from hostname '{parsed.hostname}'")
     return hostname_parts[0]
@@ -225,7 +225,7 @@ def parse_object_reference_url(object_reference: str) -> tuple[str, str, str, st
 
     # Extract org_id, workspace_id, and object_id from path
     # Path format: /geoscience-object/orgs/{org_id}/workspaces/{workspace_id}/objects/{object_id}
-    path_pattern = r'/geoscience-object/orgs/([^/]+)/workspaces/([^/]+)/objects/([^/?]+)'
+    path_pattern = r"/geoscience-object/orgs/([^/]+)/workspaces/([^/]+)/objects/([^/?]+)"
     match = re.match(path_pattern, parsed.path)
 
     if not match:
@@ -256,4 +256,3 @@ def get_viewer_url_from_reference(object_reference: str) -> str:
     """
     org_id, workspace_id, object_id, hub_url = parse_object_reference_url(object_reference)
     return get_viewer_url(org_id, workspace_id, object_id, hub_url)
-

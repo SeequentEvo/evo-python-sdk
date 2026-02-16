@@ -72,9 +72,9 @@ def format_base_object(obj: Any) -> str:
     # Add bounding box if present (as nested table)
     if bbox := doc.get("bounding_box"):
         bbox_rows = [
-            ["<strong>X:</strong>", bbox.get('min_x', 0), bbox.get('max_x', 0)],
-            ["<strong>Y:</strong>", bbox.get('min_y', 0), bbox.get('max_y', 0)],
-            ["<strong>Z:</strong>", bbox.get('min_z', 0), bbox.get('max_z', 0)],
+            ["<strong>X:</strong>", bbox.get("min_x", 0), bbox.get("max_x", 0)],
+            ["<strong>Y:</strong>", bbox.get("min_y", 0), bbox.get("max_y", 0)],
+            ["<strong>Z:</strong>", bbox.get("min_z", 0), bbox.get("max_z", 0)],
         ]
         bbox_table = build_nested_table(["", "Min", "Max"], bbox_rows)
         rows.append(("Bounding box:", bbox_table))
@@ -85,10 +85,10 @@ def format_base_object(obj: Any) -> str:
         rows.append(("CRS:", crs_str))
 
     # Build datasets section - add as rows to the main table
-    sub_models = getattr(obj, '_sub_models', [])
+    sub_models = getattr(obj, "_sub_models", [])
     for dataset_name in sub_models:
         dataset = getattr(obj, dataset_name, None)
-        if dataset and hasattr(dataset, 'attributes') and len(dataset.attributes) > 0:
+        if dataset and hasattr(dataset, "attributes") and len(dataset.attributes) > 0:
             # Build attribute rows
             attr_rows = []
             for attr in dataset.attributes:
@@ -112,8 +112,8 @@ def format_base_object(obj: Any) -> str:
     html += '<div class="evo">'
     html += build_title(name, title_links)
     if table_rows:
-        html += f'<table>{"".join(table_rows)}</table>'
-    html += '</div>'
+        html += f"<table>{''.join(table_rows)}</table>"
+    html += "</div>"
 
     return html
 
@@ -147,4 +147,3 @@ def format_attributes_collection(obj: Any) -> str:
     # Use nested table for a clean header/row structure
     table_html = build_nested_table(headers, rows)
     return f'{STYLESHEET}<div class="evo">{table_html}</div>'
-

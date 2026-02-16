@@ -78,20 +78,20 @@ def _register_formatters(ipython: InteractiveShell) -> None:
 
     :param ipython: The IPython shell instance.
     """
-    html_formatter = ipython.display_formatter.formatters['text/html']
+    html_formatter = ipython.display_formatter.formatters["text/html"]
 
     # Register formatter for BaseObject and all subclasses (typed objects like PointSet, TensorGrid)
     # Using for_type_by_name avoids importing the class directly
     html_formatter.for_type_by_name(
-        'evo.objects.typed.base',
-        '_BaseObject',
+        "evo.objects.typed.base",
+        "_BaseObject",
         format_base_object,
     )
 
     # Register formatter for Attributes collection
     html_formatter.for_type_by_name(
-        'evo.objects.typed.attributes',
-        'Attributes',
+        "evo.objects.typed.attributes",
+        "Attributes",
         format_attributes_collection,
     )
 
@@ -101,7 +101,7 @@ def _unregister_formatters(ipython: InteractiveShell) -> None:
 
     :param ipython: The IPython shell instance.
     """
-    html_formatter = ipython.display_formatter.formatters['text/html']
+    html_formatter = ipython.display_formatter.formatters["text/html"]
 
     # Remove registered formatters by type name
     # Note: IPython doesn't have a direct "unregister by name" method,
@@ -148,4 +148,3 @@ def unload_ipython_extension(ipython: InteractiveShell) -> None:
     :param ipython: The IPython shell instance.
     """
     _unregister_formatters(ipython)
-
