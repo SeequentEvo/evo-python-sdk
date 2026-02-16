@@ -83,9 +83,9 @@ def workspace_model(
     :param base_url: The base URL of the hub.
     :return: A Workspace instance.
     """
-    bounding_box = None
+    parsed_bounding_box = None
     if model.bounding_box:
-        bounding_box = bounding_box(model.bounding_box)
+        parsed_bounding_box = bounding_box(model.bounding_box)
 
     return Workspace(
         id=model.id,
@@ -94,11 +94,11 @@ def workspace_model(
         display_name=model.name,
         description=model.description,
         user_role=WorkspaceRole[str(model.current_user_role.value)] if model.current_user_role else None,
-        created_at=model.created_at,
+        created_at=model.created_at.replace(tzinfo=timezone.utc),
         created_by=ServiceUser.from_model(model.created_by),
-        updated_at=model.updated_at,
+        updated_at=model.updated_at.replace(tzinfo=timezone.utc),
         updated_by=ServiceUser.from_model(model.updated_by),
-        bounding_box=bounding_box,
+        bounding_box=parsed_bounding_box,
         default_coordinate_system=model.default_coordinate_system,
         labels=model.labels,
     )

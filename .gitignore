@@ -37,3 +37,6 @@ mkdocs/site/*
 !mkdocs/site/packages/
 !mkdocs/site/packages/**
 !mkdocs/site/
+
+# Other
+drilling_campaign.xlsx

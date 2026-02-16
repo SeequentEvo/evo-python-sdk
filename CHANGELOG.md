@@ -1,5 +1,18 @@
 # Changelog
 
+## evo-files@v0.2.4
+## What's Changed
+
+* Sample File API notebooks update by @shivangj10 in https://github.com/SeequentEvo/evo-python-sdk/pull/179
+
+## evo-sdk-commonv0.5.15
+## What's Changed
+### Other Changes
+* Fix uv.lock by @GriffinBaxterSeequent in https://github.com/SeequentEvo/evo-python-sdk/pull/190
+* Fix workspace bounding box parsing by @sachinseizer in https://github.com/SeequentEvo/evo-python-sdk/pull/191
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-sdk-common@v0.5.14...evo-sdk-common@v0.5.15
+
 ## evo-sdk-common@v0.5.14
 ## What's Changed
 ### Other Changes

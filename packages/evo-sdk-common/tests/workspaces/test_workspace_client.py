@@ -20,6 +20,8 @@ from evo.common.utils import get_header_metadata
 from evo.workspaces import (
     AddedInstanceUsers,
     BasicWorkspace,
+    BoundingBox,
+    Coordinate,
     InstanceRole,
     InstanceRoleWithPermissions,
     InstanceUser,
@@ -44,7 +46,7 @@ BASE_PATH = f"/workspace/orgs/{ORG_UUID}"
 TEST_USER = ServiceUser(id=USER_ID, name="Test User", email="test.user@unit.test")
 
 
-def _test_workspace(ws_id: UUID, name: str) -> Workspace:
+def _test_workspace(ws_id: UUID, name: str, bounding_box: BoundingBox | None = None) -> Workspace:
     """Factory method to create test workspace objects."""
     return Workspace(
         id=ws_id,
@@ -57,6 +59,7 @@ def _test_workspace(ws_id: UUID, name: str) -> Workspace:
         created_by=TEST_USER,
         updated_at=utc_datetime(2020, 1, 1),
         updated_by=TEST_USER,
+        bounding_box=bounding_box,
     )
 
 
@@ -116,6 +119,23 @@ def _test_instance_user_invitation(
 TEST_WORKSPACE_A = _test_workspace(UUID(int=0xA), "Test Workspace A")
 TEST_WORKSPACE_B = _test_workspace(UUID(int=0xB), "Test Workspace B")
 TEST_WORKSPACE_C = _test_workspace(UUID(int=0xC), "Test Workspace C")
+TEST_WORKSPACE_D = _test_workspace(
+    UUID(int=0xD),
+    "Test Workspace D",
+    bounding_box=BoundingBox(
+        coordinates=[
+            [
+                Coordinate(longitude=100, latitude=0),
+                Coordinate(longitude=101, latitude=0),
+                Coordinate(longitude=101, latitude=1),
+                Coordinate(longitude=100, latitude=1),
+                Coordinate(longitude=100, latitude=0),
+            ]
+        ],
+        type="Polygon",
+    ),
+)
+
 TEST_BASIC_WORKSPACE_A = _test_basic_workspace(UUID(int=0xA), "Test Workspace A")
 TEST_BASIC_WORKSPACE_B = _test_basic_workspace(UUID(int=0xB), "Test Workspace B")
 TEST_BASIC_WORKSPACE_C = _test_basic_workspace(UUID(int=0xC), "Test Workspace C")
@@ -203,6 +223,33 @@ class TestWorkspaceClient(TestWithConnector):
             },
         )
         self.assertEqual(TEST_WORKSPACE_A, new_workspace)
+
+    async def test_create_workspace_with_bounding_box(self):
+        with self.transport.set_http_response(201, json.dumps(load_test_data("new_workspace_with_bounding_box.json"))):
+            new_workspace = await self.workspace_client.create_workspace(
+                name="Test Workspace",
+                description="test workspace",
+                bounding_box_coordinates=[(100, 0), (101, 0), (101, 1), (100, 1), (100, 0)],
+            )
+        self.assert_request_made(
+            method=RequestMethod.POST,
+            path=f"{BASE_PATH}/workspaces",
+            headers={
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+            },
+            body={
+                "bounding_box": {
+                    "coordinates": [[[100, 0], [101, 0], [101, 1], [100, 1], [100, 0]]],
+                    "type": "Polygon",
+                },
+                "default_coordinate_system": "",
+                "description": "test workspace",
+                "labels": None,
+                "name": "Test Workspace",
+            },
+        )
+        self.assertEqual(TEST_WORKSPACE_D, new_workspace)
 
     async def test_update_workspace(self):
         with self.transport.set_http_response(200, json.dumps(load_test_data("new_workspace.json"))):
