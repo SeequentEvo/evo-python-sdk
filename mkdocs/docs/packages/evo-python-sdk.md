@@ -4,7 +4,7 @@
 
 ## Getting started with Evo code samples
 
-For detailed information about creating Evo apps, the authentication setup, available code samples, and step-by-step guides for working with the Jupyter notebooks, please refer to the [**code-samples**](https://github.com/SeequentEvo/evo-python-sdk/tree/main/code-samples) section of the repository. 
+For detailed information about creating Evo apps, the authentication setup, available code samples, and step-by-step guides for working with the Jupyter notebooks, please refer to the [**Quick start guide**](https://developer.seequent.com/docs/guides/getting-started/quick-start-guide), or [**code-samples**](https://github.com/SeequentEvo/evo-python-sdk/tree/main/code-samples) section of the repository. 
 
 This comprehensive guide will walk you through everything required to get started with Evo APIs. 
 
