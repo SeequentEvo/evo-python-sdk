@@ -5,6 +5,7 @@ description = "Python SDK for using Seequent Evo"
 requires-python = ">=3.10"
 dependencies = [
     "evo-sdk-common[aiohttp,notebooks,jmespath]>=0.5.12",
+    "evo-widgets>=0.1.0",
     "evo-blockmodels[aiohttp,notebooks,pyarrow]>=0.1.0",
     "evo-objects[aiohttp,notebooks,utils]>=0.3.3",
     "evo-files[aiohttp,notebooks]>=0.2.3",
@@ -49,6 +50,7 @@ required-version = ">=0.9.0,<0.10.0"
 
 [tool.uv.sources]
 evo-sdk-common = { workspace = true }
+evo-widgets = { workspace = true }
 evo-colormaps = { workspace = true }
 evo-files = { workspace = true }
 evo-objects = { workspace = true }

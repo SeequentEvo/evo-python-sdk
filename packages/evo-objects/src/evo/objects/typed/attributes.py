@@ -18,7 +18,6 @@ import pandas as pd
 
 from evo import jmespath
 from evo.common import IContext, IFeedback
-from evo.common.styles.html import STYLESHEET, build_nested_table
 from evo.common.utils import NoFeedback, iter_with_fb
 from evo.objects import DownloadedObject
 from evo.objects.utils.table_formats import (
@@ -296,30 +295,5 @@ class Attributes(SchemaList[Attribute]):
                     f"Attribute '{attribute.name}' length ({attribute_length}) does not match expected length ({expected_length})"
                 )
 
-    def _repr_html_(self) -> str:
-        """Return an HTML representation for Jupyter notebooks.
-
-        :return: An HTML table with name and type for each attribute.
-        """
-        if len(self) == 0:
-            return f'{STYLESHEET}<div class="evo">No attributes available.</div>'
-
-        # Get all attribute info dictionaries
-        attr_infos = [attr.as_dict() for attr in self]
-
-        # Build data rows with headers
-        headers = ["Name", "Type"]
-        rows = []
-        for info in attr_infos:
-            attribute_type = info["attribute_type"]
-            if attribute_type != "category":
-                attribute_str = f"{info['attribute_type']} ({info['values']['data_type']})"
-            else:
-                attribute_str = attribute_type
-            rows.append([info["name"], attribute_str])
-
-        # Use nested table for a clean header/row structure
-        table_html = build_nested_table(headers, rows)
-        return f'{STYLESHEET}<div class="evo">{table_html}</div>'
 
 

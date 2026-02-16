@@ -9,7 +9,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-"""URL generation utilities for Evo Portal and Viewer links."""
+"""URL generation utilities for Evo Portal and Viewer links.
+
+This module provides functions to generate URLs for viewing objects in the Evo Portal and Viewer.
+"""
 
 from __future__ import annotations
 
@@ -18,18 +21,17 @@ from typing import TYPE_CHECKING, Any
 from urllib.parse import urlparse
 
 if TYPE_CHECKING:
-    from evo.common import Environment
     from evo.common.interfaces import IContext
 
 __all__ = [
     "get_evo_base_url",
     "get_hub_code",
     "get_portal_url",
-    "get_portal_url_from_environment",
+    "get_portal_url_for_object",
     "get_portal_url_from_reference",
     "get_viewer_url",
+    "get_viewer_url_for_object",
     "get_viewer_url_for_objects",
-    "get_viewer_url_from_environment",
     "get_viewer_url_from_reference",
     "parse_object_reference_url",
     "serialize_object_reference",
@@ -107,35 +109,34 @@ def get_viewer_url(
     return f"{evo_base_url}/{org_id}/workspaces/{hub_code}/{workspace_id}/viewer?id={ids_param}"
 
 
-def get_portal_url_from_environment(environment: Environment, object_id: str) -> str:
-    """Generate the Evo Portal URL from an Environment object.
+def get_portal_url_for_object(obj: Any) -> str:
+    """Generate the Evo Portal URL for an object.
 
-    :param environment: The environment containing org_id, workspace_id, and hub_url.
-    :param object_id: The object ID.
+    :param obj: An object with a `metadata` attribute containing `environment` and `id`.
     :return: The complete portal URL.
+    :raises AttributeError: If the object doesn't have the required metadata.
     """
+    environment = obj.metadata.environment
     return get_portal_url(
         org_id=str(environment.org_id),
         workspace_id=str(environment.workspace_id),
-        object_id=str(object_id),
+        object_id=str(obj.metadata.id),
         hub_url=environment.hub_url,
     )
 
 
-def get_viewer_url_from_environment(
-    environment: Environment,
-    object_ids: str | list[str],
-) -> str:
-    """Generate the Evo Viewer URL from an Environment object.
+def get_viewer_url_for_object(obj: Any) -> str:
+    """Generate the Evo Viewer URL for an object.
 
-    :param environment: The environment containing org_id, workspace_id, and hub_url.
-    :param object_ids: Single object ID or list of object IDs.
+    :param obj: An object with a `metadata` attribute containing `environment` and `id`.
     :return: The complete viewer URL.
+    :raises AttributeError: If the object doesn't have the required metadata.
     """
+    environment = obj.metadata.environment
     return get_viewer_url(
         org_id=str(environment.org_id),
         workspace_id=str(environment.workspace_id),
-        object_ids=object_ids,
+        object_ids=str(obj.metadata.id),
         hub_url=environment.hub_url,
     )
 
@@ -155,7 +156,7 @@ def get_viewer_url_for_objects(context: IContext, objects: list[Any]) -> str:
 
     Example::
 
-        from evo.common.urls import get_viewer_url_for_objects
+        from evo.widgets import get_viewer_url_for_objects
 
         # View multiple objects together
         url = get_viewer_url_for_objects(manager, [pointset, grid, blockmodel])
@@ -179,7 +180,12 @@ def get_viewer_url_for_objects(context: IContext, objects: list[Any]) -> str:
             raise TypeError(f"Cannot extract object ID from type {type(obj)}")
 
     environment = context.get_environment()
-    return get_viewer_url_from_environment(environment, object_ids)
+    return get_viewer_url(
+        org_id=str(environment.org_id),
+        workspace_id=str(environment.workspace_id),
+        object_ids=object_ids,
+        hub_url=environment.hub_url,
+    )
 
 
 def serialize_object_reference(value: Any) -> str:
@@ -250,3 +256,4 @@ def get_viewer_url_from_reference(object_reference: str) -> str:
     """
     org_id, workspace_id, object_id, hub_url = parse_object_reference_url(object_reference)
     return get_viewer_url(org_id, workspace_id, object_id, hub_url)
+

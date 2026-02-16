@@ -15,16 +15,14 @@ import copy
 import sys
 import weakref
 from dataclasses import dataclass
-from typing import Annotated, Any, ClassVar, get_args, get_origin
+from typing import Annotated, Any, ClassVar
 from uuid import UUID
 
 from evo import jmespath
-from evo.common import Environment, IContext, StaticContext
-from evo.common.styles.html import STYLESHEET, build_nested_table, build_table_row, build_table_row_vtop, build_title
-from evo.common.urls import get_portal_url_from_environment, get_viewer_url_from_environment
+from evo.common import IContext, StaticContext
 from evo.objects import DownloadedObject, ObjectMetadata, ObjectReference, ObjectSchema, SchemaVersion
 
-from ._model import DataLocation, ModelContext, SchemaLocation, SchemaModel
+from ._model import ModelContext, SchemaLocation, SchemaModel
 from ._utils import (
     create_geoscience_object,
     replace_geoscience_object,
@@ -371,25 +369,6 @@ class _BaseObject(SchemaModel):
         """
         return self._obj.metadata
 
-
-    @property
-    def viewer_url(self) -> str:
-        """The URL to view the object in the Evo Viewer.
-
-        :return: The viewer URL.
-        """
-        environment = self._obj.metadata.environment
-        return get_viewer_url_from_environment(environment, str(self._obj.metadata.id))
-
-    @property
-    def portal_url(self) -> str:
-        """The URL to view the object in the Evo Portal.
-
-        :return: The portal URL.
-        """
-        environment = self._obj.metadata.environment
-        return get_portal_url_from_environment(environment, str(self._obj.metadata.id))
-
     def as_dict(self) -> dict[str, Any]:
         """Get the Geoscience Object as a dictionary.
 
@@ -445,95 +424,6 @@ class _BaseObject(SchemaModel):
             if sub_model is not None and hasattr(sub_model, 'validate'):
                 sub_model.validate()
 
-    def _metadata_repr_html_(self) -> tuple[str, list[tuple[str, str]]]:
-        """Return an HTML representation of common metadata for Jupyter notebooks.
-
-        This renders the title with Portal/Viewer links and builds metadata rows.
-        Subclasses should call this method and extend the rows with their specific content.
-
-        :return: Tuple of (HTML string with stylesheet, opening div, and title, list of (label, value) rows).
-        """
-        doc = self.as_dict()
-
-        # Get basic info
-        name = doc.get("name", "Unnamed")
-        schema = doc.get("schema", "Unknown")
-        obj_id = doc.get("uuid", "Unknown")
-
-        # Build title links for viewer and portal
-        title_links = [("Portal", self.portal_url), ("Viewer", self.viewer_url)]
-
-        # Build metadata rows
-        rows = [
-            ("Object ID:", str(obj_id)),
-            ("Schema:", schema),
-        ]
-
-        # Add tags if present
-        if tags := doc.get("tags"):
-            tags_str = ", ".join(f"{k}: {v}" for k, v in tags.items())
-            rows.append(("Tags:", tags_str))
-
-        # Return opening HTML with stylesheet, container div, title, and the rows
-        opening_html = (
-            f'{STYLESHEET}'
-            f'<div class="evo">'
-            f'{build_title(name, title_links)}'
-        )
-        return opening_html, rows
-
-    def _repr_html_(self) -> str:
-        """Return an HTML representation for Jupyter notebooks."""
-        doc = self.as_dict()
-
-        # Start with common metadata
-        opening_html, rows = self._metadata_repr_html_()
-
-        # Add bounding box if present (as nested table)
-        if bbox := doc.get("bounding_box"):
-            bbox_rows = [
-                ["<strong>X:</strong>", bbox.get('min_x', 0), bbox.get('max_x', 0)],
-                ["<strong>Y:</strong>", bbox.get('min_y', 0), bbox.get('max_y', 0)],
-                ["<strong>Z:</strong>", bbox.get('min_z', 0), bbox.get('max_z', 0)],
-            ]
-            bbox_table = build_nested_table(["", "Min", "Max"], bbox_rows)
-            rows.append(("Bounding box:", bbox_table))
-
-        # Add CRS if present
-        if crs := doc.get("coordinate_reference_system"):
-            crs_str = f"EPSG:{crs.get('epsg_code')}" if isinstance(crs, dict) else str(crs)
-            rows.append(("CRS:", crs_str))
-
-        # Build datasets section - add as rows to the main table
-        for dataset_name in self._sub_models:
-            dataset = getattr(self, dataset_name, None)
-            if dataset and hasattr(dataset, 'attributes') and len(dataset.attributes) > 0:
-                # Build attribute rows
-                attr_rows = []
-                for attr in dataset.attributes:
-                    attr_info = attr.as_dict()
-                    attr_name = attr_info.get("name", "Unknown")
-                    attr_type = attr_info.get("attribute_type", "Unknown")
-                    attr_rows.append([attr_name, attr_type])
-
-                attrs_table = build_nested_table(["Attribute", "Type"], attr_rows)
-                rows.append((f"{dataset_name}:", attrs_table))
-
-        # Build unified table with all rows
-        table_rows = []
-        for label, value in rows:
-            if label in ("Bounding box:",) or label.endswith(":") and isinstance(value, str) and "<table" in value:
-                table_rows.append(build_table_row_vtop(label, value))
-            else:
-                table_rows.append(build_table_row(label, value))
-
-        html = opening_html
-        if table_rows:
-            html += f'<table>{"".join(table_rows)}</table>'
-
-        # Close the container div
-        html += '</div>'
-        return html
 
 
 @dataclass(kw_only=True, frozen=True)

@@ -11,137 +11,14 @@
 
 """Shared HTML styles for Jupyter notebook representations across all Evo SDK packages."""
 
-# CSS Stylesheet for all HTML representations (objects, task results, etc.)
-STYLESHEET = """
-<style>
-    .evo {
-        border: 1px solid #ccc;
-        border-radius: 3px;
-        padding: 16px;
-        margin: 8px 0;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-        font-size: 13px;
-        display: inline-block;
-        max-width: 800px;
-        background-color: var(--jp-layout-color1, #fff);
-    }
-    .evo .title {
-        font-size: 15px;
-        font-weight: 600;
-        margin-bottom: 12px;
-        color: var(--jp-ui-font-color1, #111);
-        display: flex;
-        align-items: baseline;
-        gap: 8px;
-    }
-    .evo .title-links {
-        font-size: 12px;
-        font-weight: normal;
-    }
-    .evo .title-links a {
-        color: #0066cc !important;
-        text-decoration: none;
-    }
-    .evo .title-links a:hover {
-        text-decoration: underline;
-    }
-    .evo table {
-        border-collapse: collapse;
-        width: auto;
-        margin-bottom: 8px;
-        table-layout: auto;
-    }
-    .evo td.label {
-        padding: 3px 8px 3px 0;
-        font-weight: 600;
-        white-space: nowrap;
-        vertical-align: top;
-        color: var(--jp-ui-font-color1, #333);
-        text-align: left;
-        width: 0.1%;
-    }
-    .evo td.label-vtop {
-        padding: 3px 8px 3px 0;
-        font-weight: 600;
-        white-space: nowrap;
-        vertical-align: top;
-        color: var(--jp-ui-font-color1, #333);
-        text-align: left;
-        width: 0.1%;
-    }
-    .evo td.value {
-        padding: 3px 0;
-        color: var(--jp-ui-font-color1, #111);
-        text-align: left;
-        width: auto;
-    }
-    .evo table.nested {
-        border-collapse: collapse;
-        font-size: 12px;
-        margin-bottom: 0;
-        width: auto;
-    }
-    .evo table.nested th {
-        padding: 3px 12px 3px 0;
-        text-align: left;
-        font-weight: 600;
-        color: var(--jp-ui-font-color1, #333);
-    }
-    .evo table.nested th.right {
-        text-align: right;
-        padding-right: 0;
-    }
-    .evo table.nested td {
-        padding: 3px 12px 3px 0;
-        color: var(--jp-ui-font-color1, #111);
-        text-align: left;
-    }
-    .evo table.nested td.right {
-        text-align: right;
-        padding-right: 0;
-    }
-    .evo table.nested tr.alt-row {
-        background-color: var(--jp-layout-color2, #f5f5f5);
-    }
-    .evo .section {
-        margin-top: 8px;
-    }
-    .evo .section-heading {
-        font-weight: 600;
-        margin-bottom: 6px;
-        color: var(--jp-ui-font-color1, #333);
-    }
-    .evo .indent {
-        margin-left: 16px;
-    }
+from pathlib import Path
 
-    /* Task result specific styles */
-    .evo .attr-highlight {
-        background: #e3f2fd;
-        padding: 2px 8px;
-        border-radius: 3px;
-        font-family: monospace;
-        font-weight: 600;
-        color: #1565c0;
-    }
-    .evo .message {
-        background: #e8f5e9;
-        padding: 6px 10px;
-        border-radius: 3px;
-        color: #2e7d32;
-        margin-bottom: 12px;
-        font-size: 12px;
-    }
-    .evo .success {
-        color: #2e7d32;
-    }
-    .evo .subtitle {
-        font-size: 12px;
-        color: #666;
-        margin-bottom: 8px;
-    }
-</style>
-"""
+# Load CSS from external file
+_CSS_PATH = Path(__file__).parent / "assets" / "styles.css"
+_CSS_CONTENT = _CSS_PATH.read_text(encoding="utf-8")
+
+# CSS Stylesheet wrapped in style tags for HTML representations
+STYLESHEET = f"<style>\n{_CSS_CONTENT}</style>\n"
 
 
 def build_container(content: str, css_class: str = "evo") -> str:
@@ -261,3 +138,4 @@ def build_object_html(title: str, rows: list[tuple[str, str]], extra_content: st
         '</div>'
     ]
     return ''.join(html_parts)
+
