@@ -84,11 +84,16 @@ class MaskedCells(SchemaModel):
             raise DataLoaderError(f"Expected mask array to have dtype 'bool', but got '{array.dtype}'")
         return array
 
-    async def get_dataframe(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
-        """Load a DataFrame containing the cell attribute values."""
-        return await self.attributes.get_dataframe(fb=fb)
+    async def to_dataframe(self, *keys: str, fb: IFeedback = NoFeedback) -> pd.DataFrame:
+        """Load a DataFrame containing the cell attribute values.
 
-    async def set_dataframe(
+        :param keys: Optional list of attribute keys to include. If not provided, all attributes are included.
+        :param fb: Optional feedback object to report download progress.
+        :return: A DataFrame with cell attribute columns.
+        """
+        return await self.attributes.to_dataframe(*keys, fb=fb)
+
+    async def from_dataframe(
         self, df: pd.DataFrame, mask: np.ndarray | None = None, *, fb: IFeedback = NoFeedback
     ) -> None:
         """Set the cell attributes from a DataFrame.
@@ -170,3 +175,18 @@ class RegularMasked3DGrid(BaseRegular3DGrid):
     creation_schema_version = SchemaVersion(major=1, minor=3, patch=0)
 
     cells: Annotated[MaskedCells, SchemaLocation("")]
+
+    @property
+    def attributes(self) -> Attributes:
+        """The cell attributes of this grid (alias for cells.attributes)."""
+        return self.cells.attributes
+
+    async def to_dataframe(self, *keys: str, fb: IFeedback = NoFeedback) -> pd.DataFrame:
+        """Get a dataframe containing the cell attributes.
+
+        :param keys: Optional list of attribute keys to include. If not provided, all attributes are included.
+        :param fb: Optional feedback object to report download progress.
+        :return: A DataFrame with cell attribute columns.
+        """
+        return await self.cells.to_dataframe(*keys, fb=fb)
+

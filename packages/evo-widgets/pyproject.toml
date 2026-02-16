@@ -1,0 +1,67 @@
+[project]
+name = "evo-widgets"
+description = "Widgets and presentation layer for Evo SDK - HTML rendering and IPython formatters for Jupyter notebooks"
+version = "0.1.0"
+requires-python = ">=3.10"
+license-files = ["LICENSE.md"]
+dynamic = ["readme"]
+authors = [
+    { name = "Seequent", email = "support@seequent.com" }
+]
+
+dependencies = [
+    "evo-sdk-common>=0.5.8",
+    "ipython>=7.0.0",
+]
+
+[project.urls]
+Source = "https://github.com/SeequentEvo/evo-python-sdk"
+Tracker = "https://github.com/SeequentEvo/evo-python-sdk/issues"
+Homepage = "https://www.seequent.com/"
+Documentation = "https://developer.seequent.com/"
+
+[dependency-groups]
+test = [
+    "evo-widgets",
+    "evo-objects[aiohttp,utils]",
+    "pytest",
+    "pytest-asyncio",
+]
+dev = [
+    "bumpver",
+    "coverage[toml]",
+    "ruff==0.14.0",
+    {include-group="test"},
+]
+
+[tool.ruff]
+src = ["src", "tests"]
+line-length = 120
+
+[tool.ruff.lint]
+extend-select = ["I", "RUF022"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["evo"]
+
+[build-system]
+requires = ["hatchling", "hatch-fancy-pypi-readme"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.sdist]
+include = ["/src"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/evo"]
+artifacts = ["src/evo/widgets/assets/*"]
+
+[tool.hatch.metadata.hooks.fancy-pypi-readme]
+content-type = "text/markdown"
+
+[[tool.hatch.metadata.hooks.fancy-pypi-readme.fragments]]
+path = "README.md"
+
+[[tool.hatch.metadata.hooks.fancy-pypi-readme.substitutions]]
+pattern = '\[(.+?)\]\(((?!https?://)\S+?)\)'
+replacement = '[\1](https://github.com/SeequentEvo/evo-python-sdk/tree/main/packages/$HFPR_PACKAGE_NAME/\g<2>)'
+

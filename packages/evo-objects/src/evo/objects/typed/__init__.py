@@ -10,7 +10,7 @@
 #  limitations under the License.
 
 from .attributes import Attribute, Attributes
-from .base import BaseObject
+from .base import BaseObject, object_from_path, object_from_reference, object_from_uuid
 from .pointset import (
     Locations,
     PointSet,
@@ -54,4 +54,7 @@ __all__ = [
     "Size3i",
     "Tensor3DGrid",
     "Tensor3DGridData",
+    "object_from_path",
+    "object_from_reference",
+    "object_from_uuid",
 ]

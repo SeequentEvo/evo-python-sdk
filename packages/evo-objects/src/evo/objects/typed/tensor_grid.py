@@ -18,10 +18,13 @@ import numpy as np
 import pandas as pd
 from pydantic import AfterValidator, PlainSerializer
 
+from evo.common.interfaces import IFeedback
+from evo.common.utils import NoFeedback
 from evo.objects import SchemaVersion
 
 from ._grid import Base3DGrid, Base3DGridData, Cells3D, Vertices3D
 from ._model import SchemaLocation
+from .attributes import Attributes
 from .exceptions import ObjectValidationError
 from .types import BoundingBox, Size3d
 
@@ -138,3 +141,23 @@ class Tensor3DGrid(Base3DGrid):
             dz=float(np.sum(self.cell_sizes_z)),
         )
         return BoundingBox.from_extent(self.origin, extent, self.rotation)
+
+    @property
+    def attributes(self) -> "Attributes":
+        """The cell attributes of this grid (alias for cells.attributes)."""
+        return self.cells.attributes
+
+    @property
+    def vertex_attributes(self) -> "Attributes":
+        """The vertex attributes of this grid."""
+        return self.vertices.attributes
+
+    async def to_dataframe(self, *keys: str, fb: IFeedback = NoFeedback) -> pd.DataFrame:
+        """Get a dataframe containing the cell attributes.
+
+        :param keys: Optional list of attribute keys to include. If not provided, all attributes are included.
+        :param fb: Optional feedback object to report download progress.
+        :return: A DataFrame with cell attribute columns.
+        """
+        return await self.cells.to_dataframe(*keys, fb=fb)
+

@@ -80,7 +80,7 @@ class TestPointSet(TestWithConnector):
         self.assertEqual(result.name, "Test PointSet")
         self.assertEqual(result.num_points, 5)
 
-        attr_df = await result.locations.get_dataframe()
+        attr_df = await result.locations.to_dataframe()
         pd.testing.assert_frame_equal(attr_df, self.example_pointset.locations)
 
     @parameterized.expand([BaseObject, PointSet])
@@ -110,7 +110,7 @@ class TestPointSet(TestWithConnector):
         self.assertEqual(result.name, "Test PointSet")
         self.assertEqual(result.num_points, 5)
 
-        actual_df = await result.locations.get_dataframe()
+        actual_df = await result.locations.to_dataframe()
         pd.testing.assert_frame_equal(actual_df, df)
 
     @parameterized.expand([BaseObject, PointSet])
@@ -128,7 +128,7 @@ class TestPointSet(TestWithConnector):
         self.assertEqual(result.name, "Test PointSet")
         self.assertEqual(result.num_points, 5)
 
-        actual_df = await result.locations.get_dataframe()
+        actual_df = await result.locations.to_dataframe()
         pd.testing.assert_frame_equal(actual_df, self.example_pointset.locations)
 
     @parameterized.expand([BaseObject, PointSet])
@@ -140,7 +140,7 @@ class TestPointSet(TestWithConnector):
             self.assertEqual(result.name, "Test PointSet")
             self.assertEqual(result.num_points, 5)
 
-            actual_df = await result.locations.get_dataframe()
+            actual_df = await result.locations.to_dataframe()
             pd.testing.assert_frame_equal(actual_df, self.example_pointset.locations)
 
     def test_bounding_box_from_data(self):
@@ -221,14 +221,14 @@ class TestPointSet(TestWithConnector):
                     "new_value": [10.0, 20.0, 30.0, 40.0, 50.0],
                 }
             )
-            await obj.locations.set_dataframe(new_df)
+            await obj.locations.from_dataframe(new_df)
 
             # Verify the data was updated
             self.assertEqual(obj.num_points, 5)
             self._assert_bounding_box_equal(obj.bounding_box, 0.0, 1.0, -0.5, 1.0, 0.0, 3.0)
 
             await obj.update()
-            df = await obj.locations.get_dataframe()
+            df = await obj.locations.to_dataframe()
             pd.testing.assert_frame_equal(df, new_df)
 
     async def test_validate_attribute_length(self):
@@ -273,3 +273,4 @@ class TestPointSet(TestWithConnector):
             self.assertEqual(object_json["locations"]["attributes"][0]["attribute_type"], "scalar")
             self.assertEqual(object_json["locations"]["attributes"][1]["name"], "category")
             self.assertEqual(object_json["locations"]["attributes"][1]["attribute_type"], "category")
+
