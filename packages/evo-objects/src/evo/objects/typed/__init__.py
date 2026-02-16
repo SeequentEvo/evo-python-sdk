@@ -10,7 +10,7 @@
 #  limitations under the License.
 
 from .attributes import Attribute, Attributes
-from .base import BaseObject, object_from_path, object_from_reference, object_from_uuid
+from .base import object_from_path, object_from_reference, object_from_uuid, BaseObject
 from .pointset import (
     Locations,
     PointSet,
@@ -30,7 +30,31 @@ from .tensor_grid import (
     Tensor3DGrid,
     Tensor3DGridData,
 )
-from .types import BoundingBox, CoordinateReferenceSystem, EpsgCode, Point3, Rotation, Size3d, Size3i
+from .types import (
+    BoundingBox,
+    CoordinateReferenceSystem,
+    Ellipsoid,
+    EllipsoidRanges,
+    EpsgCode,
+    Point3,
+    Rotation,
+    Size3d,
+    Size3i,
+)
+from .variogram import (
+    CubicStructure,
+    ExponentialStructure,
+    GaussianStructure,
+    GeneralisedCauchyStructure,
+    LinearStructure,
+    SphericalStructure,
+    SpheroidalStructure,
+    Variogram,
+    VariogramCurveData,
+    VariogramData,
+    VariogramStructure,
+)
+
 
 __all__ = [
     "Attribute",
@@ -39,7 +63,13 @@ __all__ = [
     "BaseSpatialObject",
     "BoundingBox",
     "CoordinateReferenceSystem",
+    "CubicStructure",
+    "Ellipsoid",
+    "EllipsoidRanges",
     "EpsgCode",
+    "ExponentialStructure",
+    "GaussianStructure",
+    "GeneralisedCauchyStructure",
     "Locations",
     "MaskedCells",
     "Point3",
@@ -52,8 +82,14 @@ __all__ = [
     "Rotation",
     "Size3d",
     "Size3i",
+    "SphericalStructure",
+    "SpheroidalStructure",
     "Tensor3DGrid",
     "Tensor3DGridData",
+    "Variogram",
+    "VariogramCurveData",
+    "VariogramData",
+    "VariogramStructure",
     "object_from_path",
     "object_from_reference",
     "object_from_uuid",

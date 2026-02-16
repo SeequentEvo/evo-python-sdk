@@ -14,7 +14,7 @@
 import unittest
 from unittest.mock import MagicMock
 
-from evo.widgets.formatters import format_attributes_collection, format_base_object
+from evo.widgets.formatters import format_attributes_collection, format_base_object, format_variogram
 
 
 class TestFormatBaseObject(unittest.TestCase):
@@ -159,6 +159,192 @@ class TestFormatAttributes(unittest.TestCase):
         self.assertIn("float64", html)
         self.assertIn("rock_type", html)
         self.assertIn("category", html)
+
+
+class TestFormatVariogram(unittest.TestCase):
+    """Tests for the format_variogram function."""
+
+    def _create_mock_variogram(self, **kwargs):
+        """Create a mock variogram object with the given properties."""
+        obj = MagicMock()
+
+        # Default values
+        defaults = {
+            "name": "Test Variogram",
+            "schema": "objects/variogram/v1.1.0",
+            "uuid": "12345-abcd",
+            "sill": 1.5,
+            "nugget": 0.2,
+            "is_rotation_fixed": True,
+            "attribute": None,
+            "domain": None,
+            "modelling_space": None,
+            "data_variance": None,
+            "structures": [
+                {
+                    "variogram_type": "spherical",
+                    "contribution": 0.8,
+                    "anisotropy": {
+                        "ellipsoid_ranges": {"major": 100.0, "semi_major": 50.0, "minor": 25.0},
+                        "rotation": {"dip": 0.0, "dip_azimuth": 0.0, "pitch": 0.0},
+                    },
+                }
+            ],
+            "tags": None,
+        }
+        defaults.update(kwargs)
+
+        # Set up as_dict return value
+        obj.as_dict.return_value = {
+            "name": defaults["name"],
+            "schema": defaults["schema"],
+            "uuid": defaults["uuid"],
+            "sill": defaults["sill"],
+            "nugget": defaults["nugget"],
+            "is_rotation_fixed": defaults["is_rotation_fixed"],
+            "structures": defaults["structures"],
+            "tags": defaults["tags"],
+        }
+        if defaults["attribute"]:
+            obj.as_dict.return_value["attribute"] = defaults["attribute"]
+        if defaults["domain"]:
+            obj.as_dict.return_value["domain"] = defaults["domain"]
+        if defaults["modelling_space"]:
+            obj.as_dict.return_value["modelling_space"] = defaults["modelling_space"]
+        if defaults["data_variance"] is not None:
+            obj.as_dict.return_value["data_variance"] = defaults["data_variance"]
+
+        # Set up direct attributes
+        obj.sill = defaults["sill"]
+        obj.nugget = defaults["nugget"]
+        obj.is_rotation_fixed = defaults["is_rotation_fixed"]
+        obj.attribute = defaults["attribute"]
+        obj.domain = defaults["domain"]
+        obj.modelling_space = defaults["modelling_space"]
+        obj.data_variance = defaults["data_variance"]
+        obj.structures = defaults["structures"]
+
+        # Set up metadata for URL generation
+        obj.metadata = MagicMock()
+        obj.metadata.environment = MagicMock()
+        obj.metadata.environment.org_id = "org-123"
+        obj.metadata.environment.workspace_id = "ws-456"
+        obj.metadata.environment.hub_url = "https://test.api.seequent.com"
+        obj.metadata.id = defaults["uuid"]
+
+        return obj
+
+    def test_formats_variogram_with_basic_properties(self):
+        """Test formatting a variogram with basic properties."""
+        obj = self._create_mock_variogram()
+
+        html = format_variogram(obj)
+
+        self.assertIn("Test Variogram", html)
+        self.assertIn("objects/variogram/v1.1.0", html)
+        self.assertIn("12345-abcd", html)
+        self.assertIn("Sill:", html)
+        self.assertIn("1.5", html)
+        self.assertIn("Nugget:", html)
+        self.assertIn("0.2", html)
+        self.assertIn("Rotation Fixed:", html)
+        self.assertIn("True", html)
+
+    def test_formats_variogram_with_optional_fields(self):
+        """Test formatting a variogram with optional fields."""
+        obj = self._create_mock_variogram(
+            attribute="gold_grade",
+            domain="ore_zone",
+            modelling_space="data",
+            data_variance=1.5,
+        )
+
+        html = format_variogram(obj)
+
+        self.assertIn("Attribute:", html)
+        self.assertIn("gold_grade", html)
+        self.assertIn("Domain:", html)
+        self.assertIn("ore_zone", html)
+        self.assertIn("Modelling Space:", html)
+        self.assertIn("data", html)
+        self.assertIn("Data Variance:", html)
+
+    def test_formats_variogram_structures(self):
+        """Test that variogram structures are rendered."""
+        obj = self._create_mock_variogram(
+            structures=[
+                {
+                    "variogram_type": "spherical",
+                    "contribution": 0.8,
+                    "anisotropy": {
+                        "ellipsoid_ranges": {"major": 100.0, "semi_major": 50.0, "minor": 25.0},
+                        "rotation": {"dip": 0.0, "dip_azimuth": 0.0, "pitch": 0.0},
+                    },
+                },
+                {
+                    "variogram_type": "exponential",
+                    "contribution": 0.5,
+                    "anisotropy": {
+                        "ellipsoid_ranges": {"major": 200.0, "semi_major": 100.0, "minor": 50.0},
+                        "rotation": {"dip": 10.0, "dip_azimuth": 45.0, "pitch": 5.0},
+                    },
+                },
+            ]
+        )
+
+        html = format_variogram(obj)
+
+        self.assertIn("Structures (2):", html)
+        self.assertIn("spherical", html)
+        self.assertIn("exponential", html)
+        self.assertIn("0.8", html)
+        self.assertIn("0.5", html)
+
+    def test_formats_variogram_without_optional_fields(self):
+        """Test that optional fields are not shown when not present."""
+        obj = self._create_mock_variogram()
+
+        html = format_variogram(obj)
+
+        self.assertNotIn("Attribute:", html)
+        self.assertNotIn("Domain:", html)
+        self.assertNotIn("Modelling Space:", html)
+        self.assertNotIn("Data Variance:", html)
+
+    def test_formats_variogram_with_tags(self):
+        """Test formatting a variogram with tags."""
+        obj = self._create_mock_variogram(tags={"project": "mining", "stage": "exploration"})
+
+        html = format_variogram(obj)
+
+        self.assertIn("Tags:", html)
+        self.assertIn("project", html)
+        self.assertIn("mining", html)
+
+    def test_formats_variogram_structure_ranges(self):
+        """Test that structure ranges are properly formatted."""
+        obj = self._create_mock_variogram(
+            structures=[
+                {
+                    "variogram_type": "spherical",
+                    "contribution": 1.0,
+                    "anisotropy": {
+                        "ellipsoid_ranges": {"major": 150.5, "semi_major": 75.2, "minor": 30.8},
+                        "rotation": {"dip": 15.0, "dip_azimuth": 90.0, "pitch": 0.0},
+                    },
+                },
+            ]
+        )
+
+        html = format_variogram(obj)
+
+        # Check ranges are formatted
+        self.assertIn("150.5", html)
+        self.assertIn("75.2", html)
+        self.assertIn("30.8", html)
+        # Check rotation values are included
+        self.assertIn("15.0", html)
+        self.assertIn("90.0", html)
 
 
 if __name__ == "__main__":

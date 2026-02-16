@@ -33,7 +33,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .formatters import format_attributes_collection, format_base_object
+from .formatters import format_attributes_collection, format_base_object, format_variogram
 from .urls import (
     get_evo_base_url,
     get_hub_code,
@@ -54,6 +54,7 @@ if TYPE_CHECKING:
 __all__ = [
     "format_attributes_collection",
     "format_base_object",
+    "format_variogram",
     "get_evo_base_url",
     "get_hub_code",
     "get_portal_url",
@@ -88,6 +89,13 @@ def _register_formatters(ipython: InteractiveShell) -> None:
         format_base_object,
     )
 
+    # Register formatter for Variogram (overrides BaseObject for variogram-specific rendering)
+    html_formatter.for_type_by_name(
+        'evo.objects.typed.variogram',
+        'Variogram',
+        format_variogram,
+    )
+
     # Register formatter for Attributes collection
     html_formatter.for_type_by_name(
         'evo.objects.typed.attributes',
@@ -110,8 +118,10 @@ def _unregister_formatters(ipython: InteractiveShell) -> None:
         # Try to get the actual types and remove them
         from evo.objects.typed.attributes import Attributes
         from evo.objects.typed.base import _BaseObject
+        from evo.objects.typed.variogram import Variogram
 
         html_formatter.type_printers.pop(_BaseObject, None)
+        html_formatter.type_printers.pop(Variogram, None)
         html_formatter.type_printers.pop(Attributes, None)
     except ImportError:
         # If types can't be imported, try to clean up by string name
