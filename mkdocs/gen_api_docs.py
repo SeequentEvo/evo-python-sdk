@@ -10,6 +10,7 @@
 #  limitations under the License.
 
 import logging
+from collections import defaultdict
 from pathlib import Path
 
 GITHUB_BASE_URL = "https://github.com/SeequentEvo/evo-python-sdk/blob/main"
@@ -30,19 +31,25 @@ def on_startup(command: str, dirty: bool) -> None:
             old_md.unlink()
             log.info(f"Deleted old doc: {old_md.relative_to(mkdocs_dir)}")
 
+    entries_by_dir = defaultdict(list)
     for module_path in api_clients:
         module_parts = module_path.split(".")
         _, package, _, _, sub_package, *rest = module_parts
-        doc_name = f"{package}/{sub_package}" if package == "evo-sdk-common" else package
+        doc_dir = f"{package}/{sub_package}" if package == "evo-sdk-common" else package
+        class_name = module_parts[-1]
 
         file_path_parts = module_parts[:-1]
         source_file_path = "/".join(file_path_parts) + ".py"
         github_url = f"{GITHUB_BASE_URL}/{source_file_path}"
+        entries_by_dir[doc_dir].append((class_name, module_path, github_url))
 
-        doc_path = docs_packages_dir / f"{doc_name}.md"
-        doc_path.parent.mkdir(parents=True, exist_ok=True)
-        content = f"[GitHub source]({github_url})\n::: {module_path}\n"
-
-        with doc_path.open("x") as f:
-            f.write(content)
-        log.info(f"Generated: {doc_path.relative_to(mkdocs_dir)}")
+    for doc_dir, entries in entries_by_dir.items():
+        for class_name, module_path, github_url in entries:
+            doc_path = (
+                docs_packages_dir / f"{doc_dir}.md"
+                if len(entries) == 1
+                else docs_packages_dir / f"{doc_dir}/{class_name}.md"
+            )
+            doc_path.parent.mkdir(parents=True, exist_ok=True)
+            doc_path.write_text(f"[GitHub source]({github_url})\n::: {module_path}\n")
+            log.info(f"Generated: {doc_path.relative_to(mkdocs_dir)}")

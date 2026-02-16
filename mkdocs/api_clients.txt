@@ -4,4 +4,5 @@ packages.evo-compute.src.evo.compute.client.JobClient
 packages.evo-sdk-common.src.evo.discovery.client.DiscoveryAPIClient
 packages.evo-files.src.evo.files.client.FileAPIClient
 packages.evo-objects.src.evo.objects.client.api_client.ObjectAPIClient
+packages.evo-objects.src.evo.objects.client.object_client.DownloadedObject
 packages.evo-sdk-common.src.evo.workspaces.client.WorkspaceAPIClient
