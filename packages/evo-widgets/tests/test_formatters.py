@@ -12,9 +12,135 @@
 """Tests for evo.widgets.formatters module."""
 
 import unittest
+from datetime import datetime
 from unittest.mock import MagicMock
+from uuid import UUID
 
-from evo.widgets.formatters import format_attributes_collection, format_base_object, format_variogram
+from evo.widgets.formatters import (
+    _format_bounding_box,
+    _format_crs,
+    _get_base_metadata,
+    format_attributes_collection,
+    format_base_object,
+    format_block_model,
+    format_block_model_attributes,
+    format_block_model_version,
+    format_report,
+    format_report_result,
+    format_variogram,
+)
+
+
+class TestHelperFunctions(unittest.TestCase):
+    """Tests for the helper functions."""
+
+    def test_format_bounding_box(self):
+        """Test formatting a bounding box as HTML table."""
+        bbox = {
+            "min_x": 0.0,
+            "max_x": 100.5,
+            "min_y": 10.0,
+            "max_y": 200.75,
+            "min_z": -50.0,
+            "max_z": 50.25,
+        }
+
+        html = _format_bounding_box(bbox)
+
+        self.assertIn("Min", html)
+        self.assertIn("Max", html)
+        self.assertIn("0.00", html)
+        self.assertIn("100.50", html)
+        self.assertIn("10.00", html)
+        self.assertIn("200.75", html)
+        self.assertIn("-50.00", html)
+        self.assertIn("50.25", html)
+
+    def test_format_crs_with_epsg_code(self):
+        """Test formatting CRS with EPSG code."""
+        crs = {"epsg_code": 4326}
+        result = _format_crs(crs)
+        self.assertEqual(result, "EPSG:4326")
+
+    def test_format_crs_with_string(self):
+        """Test formatting CRS as string."""
+        crs = "WGS84"
+        result = _format_crs(crs)
+        self.assertEqual(result, "WGS84")
+
+    def test_format_crs_with_dict_no_epsg(self):
+        """Test formatting CRS dict without EPSG code."""
+        crs = {"ogc_wkt": "some wkt string"}
+        result = _format_crs(crs)
+        self.assertIn("ogc_wkt", result)
+
+    def test_get_base_metadata_basic(self):
+        """Test extracting base metadata from an object."""
+        obj = MagicMock()
+        obj.as_dict.return_value = {
+            "name": "Test Object",
+            "schema": "test-schema",
+            "uuid": "12345-abcd",
+        }
+        obj.metadata = MagicMock()
+        obj.metadata.environment = MagicMock()
+        obj.metadata.environment.org_id = "org-123"
+        obj.metadata.environment.workspace_id = "ws-456"
+        obj.metadata.environment.hub_url = "https://test.api.seequent.com"
+        obj.metadata.id = "12345-abcd"
+
+        name, title_links, rows = _get_base_metadata(obj)
+
+        self.assertEqual(name, "Test Object")
+        self.assertIsNotNone(title_links)
+        self.assertEqual(len(title_links), 2)  # Portal and Viewer
+        self.assertEqual(rows[0], ("Object ID:", "12345-abcd"))
+        self.assertEqual(rows[1], ("Schema:", "test-schema"))
+
+    def test_get_base_metadata_with_extra_links(self):
+        """Test extracting base metadata with extra links."""
+        obj = MagicMock()
+        obj.as_dict.return_value = {
+            "name": "Test Object",
+            "schema": "test-schema",
+            "uuid": "12345-abcd",
+        }
+        obj.metadata = MagicMock()
+        obj.metadata.environment = MagicMock()
+        obj.metadata.environment.org_id = "org-123"
+        obj.metadata.environment.workspace_id = "ws-456"
+        obj.metadata.environment.hub_url = "https://test.api.seequent.com"
+        obj.metadata.id = "12345-abcd"
+
+        extra_links = [("BlockSync", "https://blocksync.seequent.com/test")]
+        name, title_links, rows = _get_base_metadata(obj, extra_links=extra_links)
+
+        self.assertEqual(len(title_links), 3)  # Portal, Viewer, and BlockSync
+        self.assertEqual(title_links[2], ("BlockSync", "https://blocksync.seequent.com/test"))
+
+    def test_get_base_metadata_with_tags(self):
+        """Test extracting base metadata with tags."""
+        obj = MagicMock()
+        obj.as_dict.return_value = {
+            "name": "Test Object",
+            "schema": "test-schema",
+            "uuid": "12345-abcd",
+            "tags": {"key1": "value1", "key2": "value2"},
+        }
+        obj.metadata = MagicMock()
+        obj.metadata.environment = MagicMock()
+        obj.metadata.environment.org_id = "org-123"
+        obj.metadata.environment.workspace_id = "ws-456"
+        obj.metadata.environment.hub_url = "https://test.api.seequent.com"
+        obj.metadata.id = "12345-abcd"
+
+        name, title_links, rows = _get_base_metadata(obj)
+
+        # Should have 3 rows: Object ID, Schema, Tags
+        self.assertEqual(len(rows), 3)
+        self.assertEqual(rows[2][0], "Tags:")
+        self.assertIn("key1", rows[2][1])
+        self.assertIn("value1", rows[2][1])
 
 
 class TestFormatBaseObject(unittest.TestCase):
@@ -345,6 +471,468 @@ class TestFormatVariogram(unittest.TestCase):
         # Check rotation values are included
         self.assertIn("15.0", html)
         self.assertIn("90.0", html)
+
+
+class TestFormatBlockModelVersion(unittest.TestCase):
+    """Tests for the format_block_model_version function."""
+
+    def _create_mock_version(self, **kwargs):
+        """Create a mock Version object."""
+        defaults = {
+            "version_id": 1,
+            "version_uuid": UUID("12345678-1234-1234-1234-123456789abc"),
+            "bm_uuid": UUID("abcd1234-1234-1234-1234-123456789abc"),
+            "parent_version_id": None,
+            "base_version_id": None,
+            "created_at": datetime(2025, 1, 15, 10, 30, 0),
+            "comment": "Initial version",
+            "columns": [],
+        }
+        defaults.update(kwargs)
+
+        obj = MagicMock()
+        obj.version_id = defaults["version_id"]
+        obj.version_uuid = defaults["version_uuid"]
+        obj.bm_uuid = defaults["bm_uuid"]
+        obj.parent_version_id = defaults["parent_version_id"]
+        obj.base_version_id = defaults["base_version_id"]
+        obj.created_at = defaults["created_at"]
+        obj.comment = defaults["comment"]
+        obj.columns = defaults["columns"]
+        obj.bbox = None
+
+        # Create mock user
+        created_by = MagicMock()
+        created_by.name = "Test User"
+        created_by.email = "test@example.com"
+        created_by.id = "user-123"
+        obj.created_by = created_by
+
+        return obj
+
+    def test_formats_version_basic_info(self):
+        """Test formatting a version with basic information."""
+        obj = self._create_mock_version()
+
+        html = format_block_model_version(obj)
+
+        self.assertIn("Version ID", html)
+        self.assertIn("1", html)
+        self.assertIn("Version UUID", html)
+        self.assertIn("Block Model UUID", html)
+        self.assertIn("Created At", html)
+        self.assertIn("2025-01-15", html)
+        self.assertIn("Created By", html)
+        self.assertIn("Test User", html)
+        self.assertIn("Comment", html)
+        self.assertIn("Initial version", html)
+
+    def test_formats_version_with_columns(self):
+        """Test formatting a version with columns."""
+        col1 = MagicMock()
+        col1.title = "Au"
+        col1.data_type = MagicMock()
+        col1.data_type.value = "Float64"
+        col1.unit_id = "g/t"
+
+        col2 = MagicMock()
+        col2.title = "density"
+        col2.data_type = MagicMock()
+        col2.data_type.value = "Float64"
+        col2.unit_id = "t/m3"
+
+        obj = self._create_mock_version(columns=[col1, col2])
+
+        html = format_block_model_version(obj)
+
+        self.assertIn("Columns", html)
+        self.assertIn("Au", html)
+        self.assertIn("Float64", html)
+        self.assertIn("g/t", html)
+        self.assertIn("density", html)
+        self.assertIn("t/m3", html)
+
+    def test_formats_version_with_bbox(self):
+        """Test formatting a version with bounding box."""
+        bbox = MagicMock()
+        bbox.i_minmax = MagicMock()
+        bbox.i_minmax.min = 0
+        bbox.i_minmax.max = 10
+        bbox.j_minmax = MagicMock()
+        bbox.j_minmax.min = 0
+        bbox.j_minmax.max = 20
+        bbox.k_minmax = MagicMock()
+        bbox.k_minmax.min = 0
+        bbox.k_minmax.max = 5
+
+        obj = self._create_mock_version()
+        obj.bbox = bbox
+
+        html = format_block_model_version(obj)
+
+        self.assertIn("Bounding Box", html)
+        self.assertIn("10", html)
+        self.assertIn("20", html)
+
+
+class TestFormatBlockModel(unittest.TestCase):
+    """Tests for the format_block_model function."""
+
+    def _create_mock_block_model(self, **kwargs):
+        """Create a mock BlockModel object."""
+        defaults = {
+            "name": "Test Block Model",
+            "schema": "objects/block-model/v1.0.0",
+            "uuid": "12345-abcd",
+            "block_model_uuid": UUID("abcd1234-1234-1234-1234-123456789abc"),
+            "bounding_box": None,
+            "coordinate_reference_system": None,
+            "tags": None,
+        }
+        defaults.update(kwargs)
+
+        obj = MagicMock()
+        obj.as_dict.return_value = {
+            "name": defaults["name"],
+            "schema": defaults["schema"],
+            "uuid": defaults["uuid"],
+        }
+        if defaults["bounding_box"]:
+            obj.as_dict.return_value["bounding_box"] = defaults["bounding_box"]
+        if defaults["coordinate_reference_system"]:
+            obj.as_dict.return_value["coordinate_reference_system"] = defaults["coordinate_reference_system"]
+        if defaults["tags"]:
+            obj.as_dict.return_value["tags"] = defaults["tags"]
+
+        obj.block_model_uuid = defaults["block_model_uuid"]
+
+        # Set up geometry
+        geometry = MagicMock()
+        origin = MagicMock()
+        origin.x = 0.0
+        origin.y = 0.0
+        origin.z = 0.0
+        geometry.origin = origin
+
+        n_blocks = MagicMock()
+        n_blocks.nx = 10
+        n_blocks.ny = 20
+        n_blocks.nz = 5
+        geometry.n_blocks = n_blocks
+
+        block_size = MagicMock()
+        block_size.dx = 2.5
+        block_size.dy = 5.0
+        block_size.dz = 5.0
+        geometry.block_size = block_size
+
+        geometry.rotation = None
+        obj.geometry = geometry
+
+        # Set up attributes
+        obj.attributes = []
+
+        # Set up inner _obj for metadata
+        inner_obj = MagicMock()
+        inner_obj.metadata = MagicMock()
+        inner_obj.metadata.environment = MagicMock()
+        inner_obj.metadata.environment.org_id = "org-123"
+        inner_obj.metadata.environment.workspace_id = "ws-456"
+        inner_obj.metadata.environment.hub_url = "https://test.api.seequent.com"
+        inner_obj.metadata.id = defaults["uuid"]
+        obj._obj = inner_obj
+
+        # Set up metadata on obj for URL generation
+        obj.metadata = inner_obj.metadata
+
+        return obj
+
+    def test_formats_block_model_basic_info(self):
+        """Test formatting a block model with basic information."""
+        obj = self._create_mock_block_model()
+
+        html = format_block_model(obj)
+
+        self.assertIn("Test Block Model", html)
+        self.assertIn("objects/block-model/v1.0.0", html)
+        self.assertIn("12345-abcd", html)
+        self.assertIn("Block Model UUID:", html)
+
+    def test_formats_block_model_geometry(self):
+        """Test formatting a block model with geometry information."""
+        obj = self._create_mock_block_model()
+
+        html = format_block_model(obj)
+
+        self.assertIn("Geometry:", html)
+        self.assertIn("Origin:", html)
+        self.assertIn("N Blocks:", html)
+        self.assertIn("Block Size:", html)
+        self.assertIn("(10, 20, 5)", html)  # n_blocks
+        self.assertIn("2.50", html)  # block_size.dx
+
+    def test_formats_block_model_with_rotation(self):
+        """Test formatting a block model with rotation."""
+        obj = self._create_mock_block_model()
+        obj.geometry.rotation = (45.0, 30.0, 15.0)
+
+        html = format_block_model(obj)
+
+        self.assertIn("Rotation:", html)
+        self.assertIn("45.00", html)
+        self.assertIn("30.00", html)
+        self.assertIn("15.00", html)
+
+    def test_formats_block_model_with_bounding_box(self):
+        """Test formatting a block model with bounding box."""
+        obj = self._create_mock_block_model(
+            bounding_box={
+                "min_x": 0.0,
+                "max_x": 25.0,
+                "min_y": 0.0,
+                "max_y": 100.0,
+                "min_z": 0.0,
+                "max_z": 25.0,
+            }
+        )
+
+        html = format_block_model(obj)
+
+        self.assertIn("Bounding Box:", html)
+        self.assertIn("25.00", html)
+        self.assertIn("100.00", html)
+
+    def test_formats_block_model_with_crs(self):
+        """Test formatting a block model with CRS."""
+        obj = self._create_mock_block_model(coordinate_reference_system={"epsg_code": 28354})
+
+        html = format_block_model(obj)
+
+        self.assertIn("CRS:", html)
+        self.assertIn("EPSG:28354", html)
+
+    def test_formats_block_model_with_attributes(self):
+        """Test formatting a block model with attributes."""
+        attr1 = MagicMock()
+        attr1.name = "Au"
+        attr1.attribute_type = "Float64"
+        attr1.unit = "g/t"
+
+        attr2 = MagicMock()
+        attr2.name = "density"
+        attr2.attribute_type = "Float64"
+        attr2.unit = "t/m3"
+
+        obj = self._create_mock_block_model()
+        obj.attributes = [attr1, attr2]
+
+        html = format_block_model(obj)
+
+        self.assertIn("Attributes (2):", html)
+        self.assertIn("Au", html)
+        self.assertIn("Float64", html)
+        self.assertIn("g/t", html)
+        self.assertIn("density", html)
+        self.assertIn("t/m3", html)
+
+
+class TestFormatBlockModelAttributes(unittest.TestCase):
+    """Tests for the format_block_model_attributes function."""
+
+    def test_formats_empty_attributes(self):
+        """Test formatting empty block model attributes collection."""
+        obj = MagicMock()
+        obj.__len__ = MagicMock(return_value=0)
+
+        html = format_block_model_attributes(obj)
+
+        self.assertIn("No attributes available", html)
+
+    def test_formats_attributes_collection(self):
+        """Test formatting a collection of block model attributes."""
+        attr1 = MagicMock()
+        attr1.name = "Au"
+        attr1.attribute_type = "Float64"
+        attr1.unit = "g/t"
+
+        attr2 = MagicMock()
+        attr2.name = "density"
+        attr2.attribute_type = "Float64"
+        attr2.unit = None
+
+        obj = MagicMock()
+        obj.__len__ = MagicMock(return_value=2)
+        obj.__iter__ = MagicMock(return_value=iter([attr1, attr2]))
+
+        html = format_block_model_attributes(obj)
+
+        self.assertIn("Name", html)
+        self.assertIn("Type", html)
+        self.assertIn("Unit", html)
+        self.assertIn("Au", html)
+        self.assertIn("Float64", html)
+        self.assertIn("g/t", html)
+        self.assertIn("density", html)
+
+
+class TestFormatReport(unittest.TestCase):
+    """Tests for the format_report function."""
+
+    def _create_mock_report(self, **kwargs):
+        """Create a mock Report object."""
+        defaults = {
+            "id": UUID("12345678-1234-1234-1234-123456789abc"),
+            "name": "Test Report",
+            "revision": 1,
+            "block_model_uuid": UUID("abcd1234-1234-1234-1234-123456789abc"),
+            "block_model_name": "Test Block Model",
+            "columns": [],
+            "categories": [],
+            "last_result_created_at": None,
+        }
+        defaults.update(kwargs)
+
+        obj = MagicMock()
+        obj.id = defaults["id"]
+        obj.name = defaults["name"]
+        obj.revision = defaults["revision"]
+        obj._block_model_uuid = defaults["block_model_uuid"]
+        obj._block_model_name = defaults["block_model_name"]
+
+        # Set up specification
+        spec = MagicMock()
+        spec.columns = defaults["columns"]
+        spec.categories = defaults["categories"]
+        spec.last_result_created_at = defaults["last_result_created_at"]
+        obj._specification = spec
+
+        # Set up context for URL generation
+        context = MagicMock()
+        env = MagicMock()
+        env.org_id = "org-123"
+        env.workspace_id = "ws-456"
+        env.hub_url = "https://test.api.seequent.com"
+        context.get_environment.return_value = env
+        obj._context = context
+
+        return obj
+
+    def test_formats_report_basic_info(self):
+        """Test formatting a report with basic information."""
+        obj = self._create_mock_report()
+
+        html = format_report(obj)
+
+        self.assertIn("Test Report", html)
+        self.assertIn("Report ID:", html)
+        self.assertIn("Block Model:", html)
+        self.assertIn("Test Block Model", html)
+        self.assertIn("Revision:", html)
+        self.assertIn("1", html)
+
+    def test_formats_report_with_columns(self):
+        """Test formatting a report with column specifications."""
+        col1 = MagicMock()
+        col1.label = "Au Grade"
+        col1.aggregation = "MASS_AVERAGE"
+        col1.output_unit_id = "g/t"
+
+        col2 = MagicMock()
+        col2.label = "Tonnage"
+        col2.aggregation = "SUM"
+        col2.output_unit_id = "t"
+
+        obj = self._create_mock_report(columns=[col1, col2])
+
+        html = format_report(obj)
+
+        self.assertIn("Columns:", html)
+        self.assertIn("Au Grade", html)
+        self.assertIn("MASS_AVERAGE", html)
+        self.assertIn("g/t", html)
+        self.assertIn("Tonnage", html)
+        self.assertIn("SUM", html)
+
+    def test_formats_report_with_categories(self):
+        """Test formatting a report with category specifications."""
+        cat1 = MagicMock()
+        cat1.label = "Domain"
+        cat1.values = ["ore", "waste"]
+
+        cat2 = MagicMock()
+        cat2.label = "Rock Type"
+        cat2.values = None
+
+        obj = self._create_mock_report(categories=[cat1, cat2])
+
+        html = format_report(obj)
+
+        self.assertIn("Categories:", html)
+        self.assertIn("Domain", html)
+        self.assertIn("ore", html)
+        self.assertIn("waste", html)
+        self.assertIn("Rock Type", html)
+        self.assertIn("(all)", html)
+
+    def test_formats_report_with_last_run(self):
+        """Test formatting a report with last run timestamp."""
+        obj = self._create_mock_report(last_result_created_at=datetime(2025, 1, 15, 10, 30, 0))
+
+        html = format_report(obj)
+
+        self.assertIn("Last run:", html)
+        self.assertIn("2025-01-15", html)
+
+
+class TestFormatReportResult(unittest.TestCase):
+    """Tests for the format_report_result function."""
+
+    def _create_mock_report_result(self, **kwargs):
+        """Create a mock ReportResult object."""
+        import pandas as pd
+
+        defaults = {
+            "version_id": 1,
+            "created_at": datetime(2025, 1, 15, 10, 30, 0),
+            "dataframe": pd.DataFrame(
+                {"cutoff": [0.0, 0.5], "Domain": ["ore", "waste"], "Tonnage": [1000.0, 500.0], "Au Grade": [2.5, 1.2]}
+            ),
+        }
+        defaults.update(kwargs)
+
+        obj = MagicMock()
+        obj.version_id = defaults["version_id"]
+        obj.created_at = defaults["created_at"]
+        obj.to_dataframe.return_value = defaults["dataframe"]
+
+        return obj
+
+    def test_formats_report_result_basic_info(self):
+        """Test formatting a report result with basic information."""
+        obj = self._create_mock_report_result()
+
+        html = format_report_result(obj)
+
+        self.assertIn("Report Result", html)
+        self.assertIn("Version 1", html)
+        self.assertIn("Created:", html)
+        self.assertIn("2025-01-15", html)
+        self.assertIn("Rows: 2", html)
+
+    def test_formats_report_result_table(self):
+        """Test formatting a report result with data table."""
+        obj = self._create_mock_report_result()
+
+        html = format_report_result(obj)
+
+        self.assertIn("cutoff", html)
+        self.assertIn("Domain", html)
+        self.assertIn("Tonnage", html)
+        self.assertIn("Au Grade", html)
+        self.assertIn("ore", html)
+        self.assertIn("waste", html)
+        self.assertIn("1000", html)
+        self.assertIn("2.5", html)
 
 
 if __name__ == "__main__":

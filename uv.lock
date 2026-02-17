@@ -739,7 +739,7 @@ wheels = [
 
 [[package]]
 name = "evo-blockmodels"
-version = "0.1.1"
+version = "0.2.0"
 source = { editable = "packages/evo-blockmodels" }
 dependencies = [
     { name = "evo-sdk-common" },
@@ -754,6 +754,7 @@ notebooks = [
     { name = "evo-sdk-common", extra = ["notebooks"] },
 ]
 pyarrow = [
+    { name = "pandas" },
     { name = "pyarrow" },
 ]
 
@@ -781,6 +782,7 @@ requires-dist = [
     { name = "evo-sdk-common", editable = "packages/evo-sdk-common" },
     { name = "evo-sdk-common", extras = ["aiohttp"], marker = "extra == 'aiohttp'", editable = "packages/evo-sdk-common" },
     { name = "evo-sdk-common", extras = ["notebooks"], marker = "extra == 'notebooks'", editable = "packages/evo-sdk-common" },
+    { name = "pandas", marker = "extra == 'pyarrow'", specifier = ">=2.0.0" },
     { name = "pyarrow", marker = "extra == 'pyarrow'", specifier = ">=19.0.0" },
     { name = "pydantic", specifier = ">=2,<3" },
 ]
@@ -993,9 +995,10 @@ test = [
 
 [[package]]
 name = "evo-objects"
-version = "0.3.3"
+version = "0.4.0"
 source = { editable = "packages/evo-objects" }
 dependencies = [
+    { name = "evo-blockmodels" },
     { name = "evo-sdk-common", extra = ["jmespath"] },
     { name = "pydantic" },
 ]
@@ -1003,6 +1006,9 @@ dependencies = [
 [package.optional-dependencies]
 aiohttp = [
     { name = "evo-sdk-common", extra = ["aiohttp"] },
+]
+blockmodels = [
+    { name = "evo-blockmodels", extra = ["pyarrow"] },
 ]
 notebooks = [
     { name = "evo-sdk-common", extra = ["notebooks"] },
@@ -1038,6 +1044,8 @@ test = [
 
 [package.metadata]
 requires-dist = [
+    { name = "evo-blockmodels", editable = "packages/evo-blockmodels" },
+    { name = "evo-blockmodels", extras = ["pyarrow"], marker = "extra == 'blockmodels'", editable = "packages/evo-blockmodels" },
     { name = "evo-sdk-common", extras = ["aiohttp"], marker = "extra == 'aiohttp'", editable = "packages/evo-sdk-common" },
     { name = "evo-sdk-common", extras = ["jmespath"], editable = "packages/evo-sdk-common" },
     { name = "evo-sdk-common", extras = ["notebooks"], marker = "extra == 'notebooks'", editable = "packages/evo-sdk-common" },
@@ -1047,7 +1055,7 @@ requires-dist = [
     { name = "pyarrow-stubs", marker = "extra == 'utils'" },
     { name = "pydantic", specifier = ">=2,<3" },
 ]
-provides-extras = ["aiohttp", "notebooks", "utils"]
+provides-extras = ["aiohttp", "notebooks", "utils", "blockmodels"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -1221,7 +1229,7 @@ test = [
 
 [[package]]
 name = "evo-widgets"
-version = "0.1.0"
+version = "0.2.0"
 source = { editable = "packages/evo-widgets" }
 dependencies = [
     { name = "evo-sdk-common" },
