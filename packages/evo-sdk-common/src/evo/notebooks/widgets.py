@@ -47,7 +47,6 @@ logger = logging.getLogger(__name__)
 
 __all__ = [
     "FeedbackWidget",
-    "HubSelectorWidget",
     "OrgSelectorWidget",
     "ServiceManagerWidget",
     "WorkspaceSelectorWidget",
@@ -168,52 +167,27 @@ class OrgSelectorWidget(_UUIDSelectorWidget):
 
     def _on_selected(self, value: UUID | None) -> None:
         self._manager.set_current_organization(value)
-
-
-class HubSelectorWidget(DropdownSelectorWidget[str]):
-    UNSELECTED = ("Select Hub", "")
-
-    def __init__(self, env: DotEnv, manager: ServiceManager, org_selector: OrgSelectorWidget) -> None:
-        self._manager = manager
-        super().__init__("Hub", env)
-        org_selector.dropdown_widget.observe(self._on_org_selected, names="value")
-
-    def _on_org_selected(self, _: dict) -> None:
-        self.refresh()
-        # Auto-select the first hub if available and none is selected
-        if self.dropdown_widget.value == self.UNSELECTED[1] and len(self.dropdown_widget.options) > 1:
-            # Set to first available hub
-            self.selected = self.dropdown_widget.options[1][1]
-
-    def _get_options(self) -> list[tuple[str, str]]:
-        return [(hub.display_name, hub.code) for hub in self._manager.list_hubs()]
-
-    def _on_selected(self, value: str | None) -> None:
-        self._manager.set_current_hub(value)
-
-    @classmethod
-    def _serialize(cls, value: str) -> str:
-        return value
-
-    @classmethod
-    def _deserialize(cls, value: str) -> str:
-        return value
+        # Auto-select the first hub for the selected organization
+        if value is not None:
+            hubs = self._manager.list_hubs()
+            if hubs:
+                self._manager.set_current_hub(hubs[0].code)
 
 
 class WorkspaceSelectorWidget(_UUIDSelectorWidget):
     UNSELECTED = ("Select Workspace", _NULL_UUID)
 
-    def __init__(self, env: DotEnv, manager: ServiceManager, hub_selector: HubSelectorWidget) -> None:
+    def __init__(self, env: DotEnv, manager: ServiceManager, org_selector: OrgSelectorWidget) -> None:
         self._manager = manager
         super().__init__("Workspace", env)
-        hub_selector.dropdown_widget.observe(self._on_hub_selected, names="value")
+        org_selector.dropdown_widget.observe(self._on_org_selected, names="value")
 
     async def refresh_workspaces(self) -> None:
         with self._loading():
             await self._manager.refresh_workspaces()
             self.refresh()
 
-    def _on_hub_selected(self, _: dict) -> asyncio.Future:
+    def _on_org_selected(self, _: dict) -> asyncio.Future:
         self.disabled = True
         return asyncio.ensure_future(self.refresh_workspaces())
 
@@ -255,8 +229,7 @@ class ServiceManagerWidget(widgets.HBox, IContext, metaclass=_ServiceManagerWidg
         self._btn = build_button_widget("Sign In")
         self._btn.on_click(self._on_click)
         self._org_selector = OrgSelectorWidget(env, self._service_manager)
-        self._hub_selector = HubSelectorWidget(env, self._service_manager, self._org_selector)
-        self._workspace_selector = WorkspaceSelectorWidget(env, self._service_manager, self._hub_selector)
+        self._workspace_selector = WorkspaceSelectorWidget(env, self._service_manager, self._org_selector)
 
         self._loading_widget = build_img_widget("loading.gif")
         self._loading_widget.layout.display = "none"
@@ -399,14 +372,11 @@ class ServiceManagerWidget(widgets.HBox, IContext, metaclass=_ServiceManagerWidg
     @contextlib.contextmanager
     def _loading_services(self) -> Iterator[None]:
         self._org_selector.disabled = True
-        self._hub_selector.disabled = True
         self._workspace_selector.disabled = True
         try:
             yield
         finally:
             self._org_selector.refresh()
-            # Explicitly refresh the hub selector to ensure a hub is selected for the chosen org
-            self._hub_selector.refresh()
 
     @contextlib.contextmanager
     def _prompt(self) -> Iterator[widgets.Output]:
