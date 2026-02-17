@@ -113,11 +113,11 @@ class TestGetPortalUrlFromReference(unittest.TestCase):
 
     def test_generates_portal_url_from_reference(self):
         """Portal URL is generated from object reference URL."""
-        ref_url = "https://350mt.api.seequent.com/geoscience-object/orgs/org-123/workspaces/ws-456/objects/obj-789"
+        ref_url = "https://350mt.api.seequent.com/geoscience-object/orgs/00000000-0000-0000-0000-000000000123/workspaces/00000000-0000-0000-0000-000000000456/objects/00000000-0000-0000-0000-000000000789"
         result = get_portal_url_from_reference(ref_url)
         self.assertEqual(
             result,
-            "https://evo.seequent.com/org-123/data/ws-456/objects/obj-789",
+            "https://evo.seequent.com/00000000-0000-0000-0000-000000000123/data/00000000-0000-0000-0000-000000000456/objects/00000000-0000-0000-0000-000000000789",
         )
 
 
@@ -126,11 +126,11 @@ class TestGetViewerUrlFromReference(unittest.TestCase):
 
     def test_generates_viewer_url_from_reference(self):
         """Viewer URL is generated from object reference URL."""
-        ref_url = "https://350mt.api.seequent.com/geoscience-object/orgs/org-123/workspaces/ws-456/objects/obj-789"
+        ref_url = "https://350mt.api.seequent.com/geoscience-object/orgs/00000000-0000-0000-0000-000000000123/workspaces/00000000-0000-0000-0000-000000000456/objects/00000000-0000-0000-0000-000000000789"
         result = get_viewer_url_from_reference(ref_url)
         self.assertEqual(
             result,
-            "https://evo.seequent.com/org-123/workspaces/350mt/ws-456/viewer?id=obj-789",
+            "https://evo.seequent.com/00000000-0000-0000-0000-000000000123/workspaces/350mt/00000000-0000-0000-0000-000000000456/viewer?id=00000000-0000-0000-0000-000000000789",
         )
 
 
