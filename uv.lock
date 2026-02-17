@@ -1081,7 +1081,6 @@ dependencies = [
     { name = "evo-objects", extra = ["aiohttp", "notebooks", "utils"] },
     { name = "evo-sdk-common", extra = ["aiohttp", "jmespath", "notebooks"] },
     { name = "jupyter" },
-    { name = "mkdocstrings-python" },
 ]
 
 [package.dev-dependencies]
@@ -1089,6 +1088,7 @@ dev = [
     { name = "bumpver" },
     { name = "coverage", extra = ["toml"] },
     { name = "freezegun" },
+    { name = "mkdocstrings-python" },
     { name = "parameterized" },
     { name = "pre-commit" },
     { name = "pytest" },
@@ -1111,7 +1111,6 @@ requires-dist = [
     { name = "evo-objects", extras = ["aiohttp", "notebooks", "utils"], editable = "packages/evo-objects" },
     { name = "evo-sdk-common", extras = ["aiohttp", "notebooks", "jmespath"], editable = "packages/evo-sdk-common" },
     { name = "jupyter" },
-    { name = "mkdocstrings-python" },
 ]
 
 [package.metadata.requires-dev]
@@ -1119,6 +1118,7 @@ dev = [
     { name = "bumpver" },
     { name = "coverage", extras = ["toml"] },
     { name = "freezegun" },
+    { name = "mkdocstrings-python" },
     { name = "parameterized", specifier = "==0.9.0" },
     { name = "pre-commit", specifier = ">=4" },
     { name = "pytest" },
