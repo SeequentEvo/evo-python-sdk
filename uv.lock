@@ -1234,14 +1234,12 @@ dev = [
     { name = "bumpver" },
     { name = "coverage", extra = ["toml"] },
     { name = "evo-objects", extra = ["aiohttp", "utils"] },
-    { name = "evo-widgets" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "ruff" },
 ]
 test = [
     { name = "evo-objects", extra = ["aiohttp", "utils"] },
-    { name = "evo-widgets" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
 ]
@@ -1257,14 +1255,12 @@ dev = [
     { name = "bumpver" },
     { name = "coverage", extras = ["toml"] },
     { name = "evo-objects", extras = ["aiohttp", "utils"], editable = "packages/evo-objects" },
-    { name = "evo-widgets", editable = "packages/evo-widgets" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "ruff", specifier = "==0.14.0" },
 ]
 test = [
     { name = "evo-objects", extras = ["aiohttp", "utils"], editable = "packages/evo-objects" },
-    { name = "evo-widgets", editable = "packages/evo-widgets" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
 ]

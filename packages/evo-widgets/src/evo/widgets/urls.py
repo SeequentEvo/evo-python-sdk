@@ -16,9 +16,10 @@ This module provides functions to generate URLs for viewing objects in the Evo P
 
 from __future__ import annotations
 
-import re
 from typing import TYPE_CHECKING, Any
 from urllib.parse import urlparse
+
+from evo.objects import ObjectReference
 
 if TYPE_CHECKING:
     from evo.common.interfaces import IContext
@@ -33,7 +34,6 @@ __all__ = [
     "get_viewer_url_for_object",
     "get_viewer_url_for_objects",
     "get_viewer_url_from_reference",
-    "parse_object_reference_url",
     "serialize_object_reference",
 ]
 
@@ -211,41 +211,14 @@ def serialize_object_reference(value: Any) -> str:
     raise TypeError(f"Cannot serialize object reference of type {type(value)}")
 
 
-def parse_object_reference_url(object_reference: str) -> tuple[str, str, str, str]:
-    """Parse an object reference URL into its components.
-
-    :param object_reference: A geoscience object reference URL.
-    :return: Tuple of (org_id, workspace_id, object_id, hub_url).
-    :raises ValueError: If the URL format is invalid.
-    """
-    parsed = urlparse(object_reference)
-
-    # Reconstruct hub_url from the hostname
-    hub_url = f"{parsed.scheme}://{parsed.hostname}"
-
-    # Extract org_id, workspace_id, and object_id from path
-    # Path format: /geoscience-object/orgs/{org_id}/workspaces/{workspace_id}/objects/{object_id}
-    path_pattern = r"/geoscience-object/orgs/([^/]+)/workspaces/([^/]+)/objects/([^/?]+)"
-    match = re.match(path_pattern, parsed.path)
-
-    if not match:
-        raise ValueError(f"Invalid object reference URL: path '{parsed.path}' does not match expected format")
-
-    org_id = match.group(1)
-    workspace_id = match.group(2)
-    object_id = match.group(3)
-
-    return org_id, workspace_id, object_id, hub_url
-
-
 def get_portal_url_from_reference(object_reference: str) -> str:
     """Generate the Evo Portal URL from an object reference URL.
 
     :param object_reference: A geoscience object reference URL.
     :return: The complete portal URL.
     """
-    org_id, workspace_id, object_id, hub_url = parse_object_reference_url(object_reference)
-    return get_portal_url(org_id, workspace_id, object_id, hub_url)
+    ref = ObjectReference(object_reference)
+    return get_portal_url(ref.org_id, ref.workspace_id, ref.object_id, ref.hub_url)
 
 
 def get_viewer_url_from_reference(object_reference: str) -> str:
@@ -254,5 +227,5 @@ def get_viewer_url_from_reference(object_reference: str) -> str:
     :param object_reference: A geoscience object reference URL.
     :return: The complete viewer URL.
     """
-    org_id, workspace_id, object_id, hub_url = parse_object_reference_url(object_reference)
-    return get_viewer_url(org_id, workspace_id, object_id, hub_url)
+    ref = ObjectReference(object_reference)
+    return get_viewer_url(ref.org_id, ref.workspace_id, ref.object_id, ref.hub_url)

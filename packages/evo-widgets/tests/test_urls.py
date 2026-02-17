@@ -24,7 +24,6 @@ from evo.widgets.urls import (
     get_viewer_url_for_object,
     get_viewer_url_for_objects,
     get_viewer_url_from_reference,
-    parse_object_reference_url,
     serialize_object_reference,
 )
 
@@ -107,26 +106,6 @@ class TestGetViewerUrl(unittest.TestCase):
             result,
             "https://evo.seequent.com/org-123/workspaces/350mt/ws-456/viewer?id=obj-1,obj-2,obj-3",
         )
-
-
-class TestParseObjectReferenceUrl(unittest.TestCase):
-    """Tests for parse_object_reference_url function."""
-
-    def test_parses_reference_url(self):
-        """Object reference URL is parsed correctly."""
-        ref_url = "https://350mt.api.seequent.com/geoscience-object/orgs/org-123/workspaces/ws-456/objects/obj-789"
-        org_id, workspace_id, object_id, hub_url = parse_object_reference_url(ref_url)
-
-        self.assertEqual(org_id, "org-123")
-        self.assertEqual(workspace_id, "ws-456")
-        self.assertEqual(object_id, "obj-789")
-        self.assertEqual(hub_url, "https://350mt.api.seequent.com")
-
-    def test_raises_on_invalid_path(self):
-        """Raises ValueError for URLs with invalid path format."""
-        with self.assertRaises(ValueError) as ctx:
-            parse_object_reference_url("https://350mt.api.seequent.com/invalid/path")
-        self.assertIn("does not match expected format", str(ctx.exception))
 
 
 class TestGetPortalUrlFromReference(unittest.TestCase):
