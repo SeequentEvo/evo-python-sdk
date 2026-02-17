@@ -96,7 +96,6 @@ class TestVersionRepr(unittest.TestCase):
         self.assertIn("Version(id=3", repr_str)
         self.assertNotIn("bbox=i[", repr_str)
 
-
     def test_repr_with_email_fallback(self) -> None:
         """Test that repr falls back to email when name is None."""
         columns = [
@@ -296,4 +295,3 @@ class TestColumnRepr(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

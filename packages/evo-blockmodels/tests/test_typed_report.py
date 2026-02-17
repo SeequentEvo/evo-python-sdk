@@ -114,7 +114,6 @@ class TestReportResult(TestWithConnector):
         self.assertEqual(df.iloc[0]["Domain"], "LMS1")
         self.assertEqual(df.iloc[0]["Au Grade"], 2.5)
 
-
     def test_repr(self) -> None:
         """Test string representation of report result."""
         result = ReportResult(
@@ -243,5 +242,3 @@ class TestMassUnits(TestWithConnector):
             mass_unit_id=MassUnits.TONNES,
         )
         self.assertEqual(data.mass_unit_id, "t")
-
-

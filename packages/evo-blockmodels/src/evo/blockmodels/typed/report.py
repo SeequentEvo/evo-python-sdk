@@ -387,7 +387,6 @@ class Report:
 
         return BlockModelAPIClient.from_context(self._context)
 
-
     @classmethod
     async def create(
         cls,

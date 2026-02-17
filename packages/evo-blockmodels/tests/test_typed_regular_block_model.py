@@ -281,13 +281,15 @@ class TestRegularBlockModelCreate(TestWithConnector, TestWithStorage):
             )
         )
 
-        cell_data = pd.DataFrame({
-            "i": [1, 2, 3],
-            "j": [4, 5, 6],
-            "k": [7, 8, 9],
-            "col1": ["A", "B", "B"],
-            "col2": [4.5, 5.3, 6.2],
-        })
+        cell_data = pd.DataFrame(
+            {
+                "i": [1, 2, 3],
+                "j": [4, 5, 6],
+                "k": [7, 8, 9],
+                "col1": ["A", "B", "B"],
+                "col2": [4.5, 5.3, 6.2],
+            }
+        )
 
         data = RegularBlockModelData(
             name="Test BM",
@@ -336,12 +338,14 @@ class TestRegularBlockModelGet(TestWithConnector, TestWithStorage):
         from evo.blockmodels.data import BlockModel as BlockModelData
         from evo.blockmodels.data import RegularGridDefinition
 
-        test_df = pd.DataFrame({
-            "x": [0.5, 1.5, 2.5],
-            "y": [0.5, 1.5, 2.5],
-            "z": [0.5, 1.5, 2.5],
-            "col1": ["A", "B", "C"],
-        })
+        test_df = pd.DataFrame(
+            {
+                "x": [0.5, 1.5, 2.5],
+                "y": [0.5, 1.5, 2.5],
+                "z": [0.5, 1.5, 2.5],
+                "col1": ["A", "B", "C"],
+            }
+        )
         test_table = pyarrow.Table.from_pandas(test_df)
 
         with (
@@ -388,6 +392,7 @@ class TestRegularBlockModelGet(TestWithConnector, TestWithStorage):
     def _create_version(self, version_id: int, version_uuid: uuid.UUID):
         """Helper to create a Version object for testing."""
         from evo.blockmodels.data import Version
+
         return Version(
             bm_uuid=BM_UUID,
             version_id=version_id,
@@ -410,12 +415,14 @@ class TestRegularBlockModelGet(TestWithConnector, TestWithStorage):
 
         version_uuid = uuid.uuid4()
 
-        test_df = pd.DataFrame({
-            "x": [0.5, 1.5, 2.5],
-            "y": [0.5, 1.5, 2.5],
-            "z": [0.5, 1.5, 2.5],
-            "col1": ["A", "B", "C"],
-        })
+        test_df = pd.DataFrame(
+            {
+                "x": [0.5, 1.5, 2.5],
+                "y": [0.5, 1.5, 2.5],
+                "z": [0.5, 1.5, 2.5],
+                "col1": ["A", "B", "C"],
+            }
+        )
         test_table = pyarrow.Table.from_pandas(test_df)
 
         with (
@@ -522,11 +529,13 @@ class TestRegularBlockModelUpdateAttributes(TestWithConnector, TestWithStorage):
             columns=[],
             geoscience_version_id="2",
         )
-        cell_data = pd.DataFrame({
-            "i": [1, 2, 3],
-            "j": [4, 5, 6],
-            "k": [7, 8, 9],
-        })
+        cell_data = pd.DataFrame(
+            {
+                "i": [1, 2, 3],
+                "j": [4, 5, 6],
+                "k": [7, 8, 9],
+            }
+        )
 
         block_model = RegularBlockModel(
             client=client,
@@ -536,13 +545,15 @@ class TestRegularBlockModelUpdateAttributes(TestWithConnector, TestWithStorage):
         )
 
         # Update with new columns
-        new_data = pd.DataFrame({
-            "i": [1, 2, 3],
-            "j": [4, 5, 6],
-            "k": [7, 8, 9],
-            "col1": ["A", "B", "B"],
-            "col2": [4.5, 5.3, 6.2],
-        })
+        new_data = pd.DataFrame(
+            {
+                "i": [1, 2, 3],
+                "j": [4, 5, 6],
+                "k": [7, 8, 9],
+                "col1": ["A", "B", "B"],
+                "col2": [4.5, 5.3, 6.2],
+            }
+        )
 
         with mock.patch("evo.common.io.upload.StorageDestination") as mock_destination:
             mock_destination.upload_file = mock.AsyncMock()
@@ -599,4 +610,3 @@ class TestTypedTypes(TestWithConnector):
         self.assertEqual(bbox.y_max, 40)
         self.assertEqual(bbox.z_min, 0)
         self.assertEqual(bbox.z_max, 90)
-

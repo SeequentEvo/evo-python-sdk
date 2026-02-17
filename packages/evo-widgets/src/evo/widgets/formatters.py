@@ -105,7 +105,7 @@ def _format_crs(crs: Any) -> str:
     :return: Formatted CRS string.
     """
     if isinstance(crs, dict):
-        return f"EPSG:{crs.get('epsg_code')}" if crs.get('epsg_code') else str(crs)
+        return f"EPSG:{crs.get('epsg_code')}" if crs.get("epsg_code") else str(crs)
     return str(crs)
 
 
@@ -561,4 +561,3 @@ def format_block_model(obj: Any) -> str:
 
     html += "</div>"
     return html
-
