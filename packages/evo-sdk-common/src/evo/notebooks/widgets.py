@@ -157,11 +157,11 @@ class _UUIDSelectorWidget(DropdownSelectorWidget[UUID]):
 
 
 class OrgSelectorWidget(_UUIDSelectorWidget):
-    UNSELECTED = ("Select Organisation", _NULL_UUID)
+    UNSELECTED = ("Select Instance", _NULL_UUID)
 
     def __init__(self, env: DotEnv, manager: ServiceManager) -> None:
         self._manager = manager
-        super().__init__("Organisation", env)
+        super().__init__("Instance", env)
 
     def _get_options(self) -> list[tuple[str, UUID]]:
         return [(org.display_name, org.id) for org in self._manager.list_organizations()]
@@ -180,6 +180,10 @@ class HubSelectorWidget(DropdownSelectorWidget[str]):
 
     def _on_org_selected(self, _: dict) -> None:
         self.refresh()
+        # Auto-select the first hub if available and none is selected
+        if self.dropdown_widget.value == self.UNSELECTED[1] and len(self.dropdown_widget.options) > 1:
+            # Set to first available hub
+            self.selected = self.dropdown_widget.options[1][1]
 
     def _get_options(self) -> list[tuple[str, str]]:
         return [(hub.display_name, hub.code) for hub in self._manager.list_hubs()]
@@ -264,7 +268,6 @@ class ServiceManagerWidget(widgets.HBox, IContext, metaclass=_ServiceManagerWidg
             [
                 widgets.HBox([build_img_widget("EvoBadgeCharcoal_FV.png"), self._btn, self._loading_widget]),
                 widgets.HBox([self._org_selector]),
-                widgets.HBox([self._hub_selector]),
                 widgets.HBox([self._workspace_selector]),
             ]
         )
@@ -402,6 +405,7 @@ class ServiceManagerWidget(widgets.HBox, IContext, metaclass=_ServiceManagerWidg
             yield
         finally:
             self._org_selector.refresh()
+            # Explicitly refresh the hub selector to ensure a hub is selected for the chosen org
             self._hub_selector.refresh()
 
     @contextlib.contextmanager
