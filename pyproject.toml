@@ -32,6 +32,7 @@ dev = [
     "ruff==0.14.0",              # keep in sync with .pre-commit-config.yaml
     "bumpver",
     "coverage[toml]",
+    "mkdocstrings-python",
     { include-group = "test" },
 ]
 
