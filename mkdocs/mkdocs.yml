@@ -9,11 +9,24 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from .widgets import FeedbackWidget, OrgSelectorWidget, ServiceManagerWidget, WorkspaceSelectorWidget
+site_name: Evo Python SDK
 
-__all__ = [
-    "FeedbackWidget",
-    "OrgSelectorWidget",
-    "ServiceManagerWidget",
-    "WorkspaceSelectorWidget",
-]
+use_directory_urls: false
+
+hooks:
+  - gen_api_docs.py
+
+plugins:
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          options:
+            docstring_style: sphinx
+            show_source: false
+            show_bases: false
+            show_root_heading: true
+            separate_signature: true
+            show_signature_annotations: true
+            line_length: 120
+            members_order: source

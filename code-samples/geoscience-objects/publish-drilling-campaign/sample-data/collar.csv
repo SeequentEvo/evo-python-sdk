@@ -1,5 +1,0 @@
-hole_id,x,y,z,final,target,current,Comments
-phase_001,0.0,0.0,-3.0,240.0,200.0,0.0,My first comment
-phase_002,100.0,10.0,5.0,230.0,200.0,0.0,Second comment
-phase_003,0.0,20.0,0.0,210.0,200.0,0.0,Third comment
-phase_004,-50.0,30.0,0.0,220.0,200.0,0.0,Quad

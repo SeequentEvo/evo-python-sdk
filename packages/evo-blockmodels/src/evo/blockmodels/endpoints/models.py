@@ -2136,7 +2136,7 @@ class UpdateBlockModel(CustomBaseModel):
     """
     name: Annotated[StrictStr | None, Field(max_length=100, min_length=3, title="Name")] = None
     """
-    Name of the block model. This may not contain `/` nor `\`. If the name is changed, leading and trailing whitespace will be automatically removed.
+    Name of the block model. This may not contain `/` nor `\\`. If the name is changed, leading and trailing whitespace will be automatically removed.
     """
     size_unit_id: Annotated[StrictStr | None, Field(title="Size Unit ID")] = None
     """
@@ -2440,14 +2440,14 @@ class CreateData(CustomBaseModel):
     model_origin: Location
     name: Annotated[StrictStr, Field(title="Name")]
     """
-    Name of the block model. This may not contain `/` nor `\`. Leading and trailing whitespace will be automatically removed.
+    Name of the block model. This may not contain `/` nor `\\`. Leading and trailing whitespace will be automatically removed.
     """
     object_path: Annotated[StrictStr | None, Field(examples=["/path/to/folder"], title="Object Path")] = None
     """
     
     Path of the folder in Geoscience Object Service to create the reference object in.
 
-    This may not contain relative elements like `.` or `..`. It may not contain double slashes `//`, nor backslashes `\`,
+    This may not contain relative elements like `.` or `..`. It may not contain double slashes `//`, nor backslashes `\\`,
     nor elements ending in `.`.
 
     """

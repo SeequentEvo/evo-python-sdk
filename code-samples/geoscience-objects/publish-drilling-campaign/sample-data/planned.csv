@@ -1,5 +1,0 @@
-hole_id,distance,azimuth,dip,lift rate,drift rate,deviation rate distance
-phase_001,240.0,0.0,90.0,0.0,0.0,10.0
-phase_002,230.0,0.0,90.0,1.0,4.0,10.0
-phase_003,210.0,270.0,60.0,0.0,0.0,10.0
-phase_004,220.0,270.0,60.0,-3.0,-1.0,10.0
