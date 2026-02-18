@@ -24,6 +24,12 @@ jobs:
         run: |
           pip install mkdocs mkdocstrings-python
 
+      - name: Install uv
+        run: ./scripts/install-uv.sh
+
+      - name: Sync Python dependencies with uv
+        run: uv sync
+
       - name: Build MkDocs documentation
         run: |
           mkdocs build --config-file mkdocs/mkdocs.yml --site-dir site
