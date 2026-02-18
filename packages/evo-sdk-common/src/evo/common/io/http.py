@@ -299,8 +299,8 @@ class HTTPSource(HTTPIOBase, ISource):
         :param retry: A Retry object with a wait strategy. If None, a default Retry is created. If a chunk is successfully
             transferred the attempt counter will be reset.
         :param overwrite: whether to overwrite an existing local file
-        :param fb: feedback to track the download, by tracking writes to the file
         :param additional_headers: Additional headers to include in each request.
+        :param fb: feedback to track the download, by tracking writes to the file
 
         :raises FileNameTooLongError: If the filename is too long.
         :raises ValueError: if the file already exists and overwrite is False

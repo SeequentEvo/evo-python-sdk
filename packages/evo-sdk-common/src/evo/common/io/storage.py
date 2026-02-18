@@ -200,8 +200,8 @@ class StorageDestination(HTTPIOBase, IDestination):
             is `min(32, os.cpu_count() + 4)`
         :param retry: A Retry object with a wait strategy. If None, a default Retry is created. If a chunk is successfully
             transferred the attempt counter will be reset.
-        :param fb: feedback to track the upload, by tracking reads from the file only
         :param additional_headers: Additional headers to include in each request.
+        :param fb: feedback to track the upload, by tracking reads from the file only
 
         :raises ValueError: if the file to upload does not exist
         :raises ChunkedIOException: if a non-recoverable exception occurred.
