@@ -20,19 +20,15 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v6
 
-      - name: Install mkdocs and mkdocstrings-python
-        run: |
-          pip install mkdocs mkdocstrings-python
-
       - name: Install uv
         run: ./scripts/install-uv.sh
 
       - name: Sync Python dependencies with uv
-        run: uv sync
+        run: uv sync --group dev
 
       - name: Build MkDocs documentation
         run: |
-          mkdocs build --config-file mkdocs/mkdocs.yml --site-dir site
+          uv run mkdocs build --config-file mkdocs/mkdocs.yml --site-dir site
 
       - name: Check for changes
         id: changes
