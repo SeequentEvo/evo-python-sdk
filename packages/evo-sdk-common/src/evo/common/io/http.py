@@ -283,6 +283,7 @@ class HTTPSource(HTTPIOBase, ISource):
         max_workers: int | None = None,
         retry: Retry | None = None,
         overwrite: bool = False,
+        additional_headers: dict[str, str] | None = None,
         fb: IFeedback = NoFeedback,
     ) -> None:
         """Download an HTTP resource to a file with the given filename.
@@ -299,6 +300,7 @@ class HTTPSource(HTTPIOBase, ISource):
             transferred the attempt counter will be reset.
         :param overwrite: whether to overwrite an existing local file
         :param fb: feedback to track the download, by tracking writes to the file
+        :param additional_headers: Additional headers to include in each request.
 
         :raises FileNameTooLongError: If the filename is too long.
         :raises ValueError: if the file already exists and overwrite is False
@@ -314,7 +316,7 @@ class HTTPSource(HTTPIOBase, ISource):
             retry = Retry(logger=logger)
         manager = ChunkedIOManager(retry=retry, max_workers=max_workers)
 
-        async with HTTPSource(url_generator, transport) as source:
+        async with HTTPSource(url_generator, transport, additional_headers=additional_headers) as source:
             tmp_file = None
             try:
                 with NamedTemporaryFile(delete=False, dir=dst_path.parent) as tmp_file:

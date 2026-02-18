@@ -89,6 +89,22 @@ class TestHTTPSource(TestISource, TestWithDownloadHandler):
             call_kwargs = mock_api_connector.call_args.kwargs
             self.assertEqual(additional_headers, call_kwargs.get("additional_headers"))
 
+    @mock.patch("evo.common.io.http.APIConnector", wraps=APIConnector)
+    async def test_download_file_passes_additional_headers_to_connector(self, mock_api_connector: mock.Mock) -> None:
+        """Test that download_file passes additional headers through to APIConnector."""
+        additional_headers = {"X-Custom-Header": "custom-value", "X-Another-Header": "another-value"}
+        test_data_file = self.CACHE_DIR / "test_data_download_headers.csv"
+
+        await HTTPSource.download_file(
+            test_data_file,
+            self.url_generator.get_new_url,
+            self.transport,
+            additional_headers=additional_headers,
+        )
+
+        mock_api_connector.assert_called_once()
+        self.assertEqual(additional_headers, mock_api_connector.call_args.kwargs.get("additional_headers"))
+
 
 # Delete base test classes to prevent discovery by unittest.
 del TestISource
