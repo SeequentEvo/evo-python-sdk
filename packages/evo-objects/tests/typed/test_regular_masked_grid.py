@@ -79,7 +79,7 @@ class TestRegularMaskedGrid(TestWithConnector):
         self.assertEqual(result.rotation, Rotation(90, 0, 0))
         self.assertEqual(result.cells.number_active, np.sum(self.example_mask))
 
-        cell_df = await result.cells.get_dataframe()
+        cell_df = await result.cells.to_dataframe()
         pd.testing.assert_frame_equal(cell_df, self.example_grid.cell_data)
 
     async def test_create_with_no_cell_data(self):
@@ -90,7 +90,7 @@ class TestRegularMaskedGrid(TestWithConnector):
         self.assertEqual(result.name, "Test Masked Grid")
         self.assertEqual(result.cells.number_active, np.sum(self.example_mask))
 
-        cell_df = await result.cells.get_dataframe()
+        cell_df = await result.cells.to_dataframe()
         self.assertEqual(cell_df.shape[0], 0)  # No cell data
 
     async def test_replace(self):
@@ -111,7 +111,7 @@ class TestRegularMaskedGrid(TestWithConnector):
         self.assertEqual(result.cell_size, Size3d(2.5, 5, 5))
         self.assertEqual(result.cells.number_active, np.sum(self.example_mask))
 
-        cell_df = await result.cells.get_dataframe()
+        cell_df = await result.cells.to_dataframe()
         pd.testing.assert_frame_equal(cell_df, data.cell_data)
 
     async def test_from_reference(self):
@@ -127,7 +127,7 @@ class TestRegularMaskedGrid(TestWithConnector):
             self.assertEqual(result.rotation, Rotation(90, 0, 0))
             self.assertEqual(result.cells.number_active, np.sum(self.example_mask))
 
-            cell_df = await result.cells.get_dataframe()
+            cell_df = await result.cells.to_dataframe()
             pd.testing.assert_frame_equal(cell_df, self.example_grid.cell_data)
 
     async def test_update_with_new_mask(self):
@@ -139,7 +139,7 @@ class TestRegularMaskedGrid(TestWithConnector):
             new_active_count = np.sum(new_mask)
 
             obj.name = "Updated Masked Grid"
-            await obj.cells.set_dataframe(
+            await obj.cells.from_dataframe(
                 pd.DataFrame(
                     {
                         "value": np.ones(new_active_count),
@@ -153,7 +153,7 @@ class TestRegularMaskedGrid(TestWithConnector):
             self.assertEqual(obj.name, "Updated Masked Grid")
             self.assertEqual(obj.cells.number_active, new_active_count)
 
-            cell_df = await obj.cells.get_dataframe()
+            cell_df = await obj.cells.to_dataframe()
             pd.testing.assert_frame_equal(
                 cell_df,
                 pd.DataFrame(
@@ -170,7 +170,7 @@ class TestRegularMaskedGrid(TestWithConnector):
             original_active_count = obj.cells.number_active
 
             # Update data without changing mask
-            await obj.cells.set_dataframe(
+            await obj.cells.from_dataframe(
                 pd.DataFrame(
                     {
                         "value": np.ones(original_active_count),
@@ -182,7 +182,7 @@ class TestRegularMaskedGrid(TestWithConnector):
 
             self.assertEqual(obj.cells.number_active, original_active_count)
 
-            cell_df = await obj.cells.get_dataframe()
+            cell_df = await obj.cells.to_dataframe()
             pd.testing.assert_frame_equal(
                 cell_df,
                 pd.DataFrame(
@@ -231,13 +231,13 @@ class TestRegularMaskedGrid(TestWithConnector):
                 ),
             )
 
-    async def test_set_dataframe_wrong_size(self):
+    async def test_from_dataframe_wrong_size(self):
         with self._mock_geoscience_objects():
             obj = await RegularMasked3DGrid.create(context=self.context, data=self.example_grid)
 
             # Try to set dataframe with wrong size (no new mask)
             with self.assertRaises(ObjectValidationError):
-                await obj.cells.set_dataframe(
+                await obj.cells.from_dataframe(
                     pd.DataFrame(
                         {
                             "value": np.random.rand(100),  # Wrong size
@@ -248,7 +248,7 @@ class TestRegularMaskedGrid(TestWithConnector):
             # Try to set dataframe with new mask but wrong data size
             new_mask = np.array([True] * 250 + [False] * 250, dtype=bool)
             with self.assertRaises(ObjectValidationError):
-                await obj.cells.set_dataframe(
+                await obj.cells.from_dataframe(
                     pd.DataFrame(
                         {
                             "value": np.random.rand(100),  # Should be 250
@@ -257,14 +257,14 @@ class TestRegularMaskedGrid(TestWithConnector):
                     mask=new_mask,
                 )
 
-    async def test_set_dataframe_wrong_mask_size(self):
+    async def test_from_dataframe_wrong_mask_size(self):
         with self._mock_geoscience_objects():
             obj = await RegularMasked3DGrid.create(context=self.context, data=self.example_grid)
 
             # Try to set new mask with wrong size
             bad_mask = np.array([True, False] * 100, dtype=bool)  # 200 elements instead of 500
             with self.assertRaises(ObjectValidationError):
-                await obj.cells.set_dataframe(
+                await obj.cells.from_dataframe(
                     pd.DataFrame(
                         {
                             "value": np.ones(100),
@@ -313,7 +313,7 @@ class TestRegularMaskedGrid(TestWithConnector):
             result = await RegularMasked3DGrid.create(context=self.context, data=data)
 
         self.assertEqual(result.cells.number_active, 500)
-        cell_df = await result.cells.get_dataframe()
+        cell_df = await result.cells.to_dataframe()
         self.assertEqual(cell_df.shape[0], 500)
 
     async def test_all_inactive_mask(self):
@@ -332,7 +332,7 @@ class TestRegularMaskedGrid(TestWithConnector):
             result = await RegularMasked3DGrid.create(context=self.context, data=data)
 
         self.assertEqual(result.cells.number_active, 0)
-        cell_df = await result.cells.get_dataframe()
+        cell_df = await result.cells.to_dataframe()
         self.assertEqual(cell_df.shape[0], 0)
 
     async def test_json(self):

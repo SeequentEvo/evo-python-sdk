@@ -43,8 +43,11 @@ CACHE: Cache
 
 def tearDownModule() -> None:
     """Fail-safe cleanup of the cache directory."""
-    CACHE.clear_cache()
-    CACHE.root.rmdir()
+    try:
+        CACHE.clear_cache()
+        CACHE.root.rmdir()
+    except Exception:
+        pass  # Already cleaned up
 
 
 def setUpModule() -> None:

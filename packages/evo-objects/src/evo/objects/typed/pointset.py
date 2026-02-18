@@ -23,6 +23,7 @@ from evo.objects.utils.table_formats import FLOAT_ARRAY_3, KnownTableFormat
 
 from ._data import DataTable, DataTableAndAttributes
 from ._model import DataLocation, SchemaLocation
+from .attributes import Attributes
 from .exceptions import ObjectValidationError
 from .spatial import BaseSpatialObject, BaseSpatialObjectData
 from .types import BoundingBox
@@ -77,13 +78,13 @@ class CoordinateTable(DataTable):
     table_format: ClassVar[KnownTableFormat] = FLOAT_ARRAY_3
     data_columns: ClassVar[list[str]] = _COORDINATE_COLUMNS
 
-    async def set_dataframe(self, df: pd.DataFrame, fb: IFeedback = NoFeedback):
+    async def from_dataframe(self, df: pd.DataFrame, fb: IFeedback = NoFeedback):
         """Update the coordinate values and recalculate the bounding box.
 
         :param df: DataFrame containing x, y, z coordinate columns.
         :param fb: Optional feedback object to report upload progress.
         """
-        await super().set_dataframe(df, fb)
+        await super().from_dataframe(df, fb)
 
         # Update the bounding box in the parent object context
         self._context.root_model.bounding_box = _bounding_box_from_dataframe(df)
@@ -116,3 +117,25 @@ class PointSet(BaseSpatialObject):
     def num_points(self) -> int:
         """The number of points in this pointset."""
         return self.locations.length
+
+    @property
+    def attributes(self) -> "Attributes":
+        """The attributes associated with the points in this pointset."""
+        return self.locations.attributes
+
+    async def coordinates(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
+        """Get the coordinates dataframe for the pointset.
+
+        :param fb: Optional feedback object to report download progress.
+        :return: A DataFrame with 'x', 'y', 'z' columns representing point coordinates.
+        """
+        return await self.locations._table.get_dataframe(fb=fb)
+
+    async def to_dataframe(self, *keys: str, fb: IFeedback = NoFeedback) -> pd.DataFrame:
+        """Get the full dataframe for the pointset, including coordinates and attributes.
+
+        :param keys: Optional list of attribute keys to include. If not provided, all attributes are included.
+        :param fb: Optional feedback object to report download progress.
+        :return: A DataFrame with 'x', 'y', 'z' columns and any additional attribute columns.
+        """
+        return await self.locations.to_dataframe(*keys, fb=fb)

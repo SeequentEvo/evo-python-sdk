@@ -17,6 +17,7 @@ members = [
     "evo-objects",
     "evo-sdk",
     "evo-sdk-common",
+    "evo-widgets",
 ]
 
 [[package]]
@@ -1080,6 +1081,7 @@ dependencies = [
     { name = "evo-files", extra = ["aiohttp", "notebooks"] },
     { name = "evo-objects", extra = ["aiohttp", "notebooks", "utils"] },
     { name = "evo-sdk-common", extra = ["aiohttp", "jmespath", "notebooks"] },
+    { name = "evo-widgets" },
     { name = "jupyter" },
 ]
 
@@ -1110,6 +1112,7 @@ requires-dist = [
     { name = "evo-files", extras = ["aiohttp", "notebooks"], editable = "packages/evo-files" },
     { name = "evo-objects", extras = ["aiohttp", "notebooks", "utils"], editable = "packages/evo-objects" },
     { name = "evo-sdk-common", extras = ["aiohttp", "notebooks", "jmespath"], editable = "packages/evo-sdk-common" },
+    { name = "evo-widgets", editable = "packages/evo-widgets" },
     { name = "jupyter" },
 ]
 
@@ -1216,6 +1219,52 @@ test = [
     { name = "freezegun" },
     { name = "parameterized", specifier = "==0.9.0" },
     { name = "pytest" },
+]
+
+[[package]]
+name = "evo-widgets"
+version = "0.1.0"
+source = { editable = "packages/evo-widgets" }
+dependencies = [
+    { name = "evo-sdk-common" },
+    { name = "ipython", version = "8.37.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "ipython", version = "9.6.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "bumpver" },
+    { name = "coverage", extra = ["toml"] },
+    { name = "evo-objects", extra = ["aiohttp", "utils"] },
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+    { name = "ruff" },
+]
+test = [
+    { name = "evo-objects", extra = ["aiohttp", "utils"] },
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "evo-sdk-common", editable = "packages/evo-sdk-common" },
+    { name = "ipython", specifier = ">=7.0.0" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "bumpver" },
+    { name = "coverage", extras = ["toml"] },
+    { name = "evo-objects", extras = ["aiohttp", "utils"], editable = "packages/evo-objects" },
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+    { name = "ruff", specifier = "==0.14.0" },
+]
+test = [
+    { name = "evo-objects", extras = ["aiohttp", "utils"], editable = "packages/evo-objects" },
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
 ]
 
 [[package]]

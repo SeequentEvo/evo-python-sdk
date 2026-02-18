@@ -93,7 +93,7 @@ class Attribute(SchemaModel):
         """The type of this attribute."""
         return self._attribute_type
 
-    async def get_dataframe(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
+    async def to_dataframe(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
         """Load a DataFrame containing the values for this attribute from the object.
 
         :param fb: Optional feedback object to report download progress.
@@ -149,6 +149,24 @@ class Attribute(SchemaModel):
 class Attributes(SchemaList[Attribute]):
     """A collection of Geoscience Object Attributes"""
 
+    _schema_path: str | None = None
+    """The full JMESPath to this attributes list within the parent object schema."""
+
+    def __getitem__(self, index_or_name: int | str) -> Attribute:
+        """Get an attribute by index or name.
+
+        :param index_or_name: Either an integer index or the name/key of the attribute.
+        :return: The attribute at the specified index or with the specified name/key.
+            If a string is provided and no matching attribute exists, returns a PendingAttribute
+            that can be used as a target for compute tasks.
+        :raises IndexError: If the integer index is out of range.
+        """
+        if isinstance(index_or_name, str):
+            for attr in self:
+                if attr.name == index_or_name or attr.key == index_or_name:
+                    return attr
+        return super().__getitem__(index_or_name)
+
     @classmethod
     async def _data_to_schema(
         cls,
@@ -200,7 +218,7 @@ class Attributes(SchemaList[Attribute]):
 
             attributes_list.append(attr_doc)
 
-    async def get_dataframe(self, *keys: str, fb: IFeedback = NoFeedback) -> pd.DataFrame:
+    async def to_dataframe(self, *keys: str, fb: IFeedback = NoFeedback) -> pd.DataFrame:
         """Load a DataFrame containing the values from the specified attributes in the object.
 
         :param keys: Optional list of attribute keys to filter the attributes by. If no keys are provided, all
@@ -210,7 +228,8 @@ class Attributes(SchemaList[Attribute]):
         :return: A DataFrame containing the values from the specified attributes. Column name(s) will be updated
             based on the attribute names.
         """
-        parts = [await attribute.get_dataframe(fb=fb_part) for attribute, fb_part in iter_with_fb(self, fb)]
+        attributes = [self[key] for key in keys] if keys else list(self)
+        parts = [await attribute.to_dataframe(fb=fb_part) for attribute, fb_part in iter_with_fb(attributes, fb)]
         return pd.concat(parts, axis=1) if len(parts) > 0 else pd.DataFrame()
 
     async def append_attribute(self, df: pd.DataFrame, fb: IFeedback = NoFeedback):
