@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        
+        <link rel="shortcut icon" href="../img/favicon.ico">
+        <title>evo-python-sdk - Evo Python SDK</title>
+        <link href="../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../css/fontawesome.min.css" rel="stylesheet">
+        <link href="../css/brands.min.css" rel="stylesheet">
+        <link href="../css/solid.min.css" rel="stylesheet">
+        <link href="../css/v4-font-face.min.css" rel="stylesheet">
+        <link href="../css/base.css" rel="stylesheet">
+        <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" >
+        <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
+        <link href="../assets/_mkdocstrings.css" rel="stylesheet">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+        <script>hljs.highlightAll();</script> 
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="..">Evo Python SDK</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar-collapse" aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+
+                    <ul class="nav navbar-nav ms-md-auto">
+                            <li class="nav-item">
+                                <a rel="prev" href="evo-files.html" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="evo-objects/DownloadedObject.html" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-bs-toggle="collapse" data-bs-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-bs-level="1"><a href="#evo-python-sdk" class="nav-link">evo-python-sdk</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-bs-level="2"><a href="#getting-started-with-evo-code-samples" class="nav-link">Getting started with Evo code samples</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#getting-started-with-the-evo-sdk" class="nav-link">Getting started with the Evo SDK</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<h1 id="evo-python-sdk">evo-python-sdk</h1>
+<p><a href="https://github.com/SeequentEvo/evo-python-sdk">GitHub repository</a></p>
+<h2 id="getting-started-with-evo-code-samples">Getting started with Evo code samples</h2>
+<p>For detailed information about creating Evo apps, the authentication setup, available code samples, and step-by-step guides for working with the Jupyter notebooks, please refer to the <a href="https://developer.seequent.com/docs/guides/getting-started/quick-start-guide"><strong>Quick start guide</strong></a>, or <a href="https://github.com/SeequentEvo/evo-python-sdk/tree/main/code-samples"><strong>code-samples</strong></a> section of the repository. </p>
+<p>This comprehensive guide will walk you through everything required to get started with Evo APIs. </p>
+<h2 id="getting-started-with-the-evo-sdk">Getting started with the Evo SDK</h2>
+<p>The evo-python-sdk contains a number of sub-packages. You may choose to install the <code>evo-sdk</code> package, which includes all
+sub-packages and optional dependencies (e.g. Jupyter notebook support), or choose a specific package to install:</p>
+<table>
+<thead>
+<tr>
+<th>Package</th>
+<th>Version</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>evo-sdk</td>
+<td><a href="https://pypi.org/project/evo-sdk/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/evo-sdk" /></a></td>
+<td>A metapackage that installs all available Seequent Evo SDKs, including Jupyter notebook examples.</td>
+</tr>
+<tr>
+<td>evo-sdk-common (<a href="evo-python-sdk/evo-sdk-common/discovery">discovery</a> and <a href="evo-python-sdk/evo-sdk-common/workspaces">workspaces</a>)</td>
+<td><a href="https://pypi.org/project/evo-sdk-common/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/evo-sdk-common" /></a></td>
+<td>A shared library that provides common functionality for integrating with Seequent's client SDKs.</td>
+</tr>
+<tr>
+<td><a href="evo-python-sdk/evo-files">evo-files</a></td>
+<td><a href="https://pypi.org/project/evo-files/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/evo-files" /></a></td>
+<td>A service client for interacting with the Evo File API.</td>
+</tr>
+<tr>
+<td><a href="evo-python-sdk/evo-objects">evo-objects</a></td>
+<td><a href="https://pypi.org/project/evo-objects/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/evo-objects" /></a></td>
+<td>A geoscience object service client library designed to help get up and running with the Geoscience Object API.</td>
+</tr>
+<tr>
+<td><a href="evo-python-sdk/evo-colormaps">evo-colormaps</a></td>
+<td><a href="https://pypi.org/project/evo-colormaps/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/evo-colormaps" /></a></td>
+<td>A service client to create colour mappings and associate them to geoscience data with the Colormap API.</td>
+</tr>
+<tr>
+<td><a href="evo-python-sdk/evo-blockmodels">evo-blockmodels</a></td>
+<td><a href="https://pypi.org/project/evo-blockmodels/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/evo-blockmodels" /></a></td>
+<td>The Block Model API provides the ability to manage and report on block models in your Evo workspaces.</td>
+</tr>
+<tr>
+<td><a href="evo-python-sdk/evo-compute">evo-compute</a></td>
+<td><a href="https://pypi.org/project/evo-compute/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/evo-compute" /></a></td>
+<td>A service client to send jobs to the Compute Tasks API.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="getting-started">Getting started</h3>
+<p>Now that you have installed the Evo SDK, you can get started by configuring your API connector, and performing a
+basic API call to list the organizations that you have access to:</p>
+<pre><code class="language-python">from evo.aio import AioTransport
+from evo.oauth import OAuthConnector, AuthorizationCodeAuthorizer
+from evo.discovery import DiscoveryAPIClient
+from evo.common import APIConnector
+import asyncio
+
+transport = AioTransport(user_agent=&quot;Your Application Name&quot;)
+connector = OAuthConnector(transport=transport, client_id=&quot;\&lt;YOUR_CLIENT_ID\&gt;&quot;)
+authorizer = AuthorizationCodeAuthorizer(oauth_connector=connector, redirect_url=&quot;http://localhost:3000/signin-callback&quot;)
+
+async def main():
+    await authorizer.login()
+    await discovery()
+
+async def discovery():
+    async with APIConnector(&quot;https://discover.api.seequent.com&quot;, transport, authorizer) as api_connector:
+        discovery_client = DiscoveryAPIClient(api_connector)
+        organizations = await discovery_client.list_organizations()
+        print(&quot;Organizations:&quot;, organizations)
+
+asyncio.run(main())
+</code></pre>
+<p>For next steps and more information about using Evo, see:</p>
+<ul>
+<li><code>evo-sdk-common</code> (<a href="evo-python-sdk/evo-sdk-common/discovery"><code>discovery</code></a> and <a href="evo-python-sdk/evo-sdk-common/workspaces"><code>workspaces</code></a>): providing the foundation for all Evo SDKs, as well as tools
+  for performing arbitrary Seequent Evo API requests</li>
+<li><a href="evo-python-sdk/evo-files"><code>evo-files</code></a>: for interacting with the File API</li>
+<li><a href="evo-python-sdk/evo-objects"><code>evo-objects</code></a>: for interacting with the Geoscience Object API</li>
+<li><a href="evo-python-sdk/evo-colormaps"><code>evo-colormaps</code></a>: for interacting with the Colormap API</li>
+<li><a href="evo-python-sdk/evo-blockmodels"><code>evo-blockmodels</code></a>: for interacting with the Block Model API</li>
+<li><a href="evo-python-sdk/evo-compute"><code>evo-compute</code></a>: for interacting with the Compute Tasks API</li>
+</ul></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script src="../js/bootstrap.bundle.min.js"></script>
+        <script>
+            var base_url = "..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../js/base.js"></script>
+
+        <div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>

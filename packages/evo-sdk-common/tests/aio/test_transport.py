@@ -661,7 +661,7 @@ class TestTransportRequest(unittest.IsolatedAsyncioTestCase):
             await transport.open()
 
             # Make a request
-            await transport.request(RequestMethod.GET, "https://example.com", HTTPHeaderDict())
+            await transport.request(RequestMethod.GET, self.url)
 
             # Check that the context was recreated
             self.assertIsNotNone(transport._AioTransport__context)

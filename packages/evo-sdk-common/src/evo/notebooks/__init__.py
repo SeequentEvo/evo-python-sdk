@@ -9,11 +9,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from .widgets import FeedbackWidget, HubSelectorWidget, OrgSelectorWidget, ServiceManagerWidget, WorkspaceSelectorWidget
+from .widgets import FeedbackWidget, OrgSelectorWidget, ServiceManagerWidget, WorkspaceSelectorWidget
 
 __all__ = [
     "FeedbackWidget",
-    "HubSelectorWidget",
     "OrgSelectorWidget",
     "ServiceManagerWidget",
     "WorkspaceSelectorWidget",

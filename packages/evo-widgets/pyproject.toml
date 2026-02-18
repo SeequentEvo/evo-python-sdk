@@ -22,7 +22,6 @@ Documentation = "https://developer.seequent.com/"
 
 [dependency-groups]
 test = [
-    "evo-widgets",
     "evo-objects[aiohttp,utils]",
     "pytest",
     "pytest-asyncio",

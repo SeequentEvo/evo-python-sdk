@@ -16,9 +16,10 @@ This module provides functions to generate URLs for viewing objects in the Evo P
 
 from __future__ import annotations
 
-import re
 from typing import TYPE_CHECKING, Any
 from urllib.parse import urlparse
+
+from evo.objects import ObjectReference
 
 if TYPE_CHECKING:
     from evo.common.interfaces import IContext
@@ -244,8 +245,8 @@ def get_portal_url_from_reference(object_reference: str) -> str:
     :param object_reference: A geoscience object reference URL.
     :return: The complete portal URL.
     """
-    org_id, workspace_id, object_id, hub_url = parse_object_reference_url(object_reference)
-    return get_portal_url(org_id, workspace_id, object_id, hub_url)
+    ref = ObjectReference(object_reference)
+    return get_portal_url(ref.org_id, ref.workspace_id, ref.object_id, ref.hub_url)
 
 
 def get_viewer_url_from_reference(object_reference: str) -> str:
@@ -254,5 +255,5 @@ def get_viewer_url_from_reference(object_reference: str) -> str:
     :param object_reference: A geoscience object reference URL.
     :return: The complete viewer URL.
     """
-    org_id, workspace_id, object_id, hub_url = parse_object_reference_url(object_reference)
-    return get_viewer_url(org_id, workspace_id, object_id, hub_url)
+    ref = ObjectReference(object_reference)
+    return get_viewer_url(ref.org_id, ref.workspace_id, ref.object_id, ref.hub_url)
