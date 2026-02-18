@@ -9,6 +9,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+from unittest import mock
+
+from evo.common.connector import APIConnector
 from evo.common.io import HTTPSource
 from evo.common.test_tools import TestWithDownloadHandler
 
@@ -73,6 +76,18 @@ class TestHTTPSource(TestISource, TestWithDownloadHandler):
         await HTTPSource.download_file(str(test_data_file), self.url_generator.get_new_url, self.transport)
         self.assertTrue(test_data_file.exists())
         self.assertEqual(TEST_DATA, test_data_file.read_bytes())
+
+    @mock.patch("evo.common.io.http.APIConnector", wraps=APIConnector)
+    async def test_additional_headers_passed_to_connector(self, mock_api_connector: mock.Mock) -> None:
+        """Test that additional headers are passed through to APIConnector."""
+        additional_headers = {"X-Custom-Header": "custom-value", "X-Another-Header": "another-value"}
+        source = HTTPSource(self.url_generator.get_new_url, self.transport, additional_headers=additional_headers)
+
+        async with source:
+            # Verify APIConnector was called with the additional headers
+            mock_api_connector.assert_called_once()
+            call_kwargs = mock_api_connector.call_args.kwargs
+            self.assertEqual(additional_headers, call_kwargs.get("additional_headers"))
 
 
 # Delete base test classes to prevent discovery by unittest.
