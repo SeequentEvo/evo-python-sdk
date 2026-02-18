@@ -9,6 +9,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import copy
 import json
 from unittest import mock
 from uuid import UUID
@@ -68,6 +69,10 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
             mock_get_known_format.assert_not_called()
         else:
             mock_get_known_format.assert_called_once_with(mock_table, table_formats=None)
+
+        # Verify cast_table was NOT called(allow_casting=False by default)
+        mock_known_format.cast_table.assert_not_called()
+
         mock_known_format.save_table.assert_called_once_with(
             table=mock_table, destination=self.data_client.cache_location
         )
@@ -100,6 +105,40 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
         mock_destination.upload_file.assert_not_called()
         self.transport.assert_no_requests()
         self.assertIs(mock_table_info, actual_table_info)
+
+    def test_save_table_with_allow_casting_true(self) -> None:
+        """Test saving a table with allow_casting=True casts the table before saving."""
+        with mock.patch("evo.common.io.upload.StorageDestination"):
+            sample_table, _ = get_sample_table_and_bytes(table_formats.INTEGER_ARRAY_1_INT32, 1)
+            schema = pa.schema([pa.field(sample_table.schema.names[0], pa.int64())])
+            casted_table = sample_table.cast(schema)
+
+            # To allow isinstance checks to work, replace the method on a copy of the known format.
+            mock_known_format = copy.copy(table_formats.INTEGER_ARRAY_1_INT64)
+            mock_known_format.save_table = mock.Mock(return_value={})
+
+            self.data_client.save_table(sample_table, table_format=mock_known_format, allow_casting=True)
+
+        # Verify save_table was called with the casted table
+        mock_known_format.save_table.assert_called_once_with(
+            table=casted_table, destination=self.data_client.cache_location
+        )
+
+    def test_save_table_with_allow_casting_without_single_format_raises(self) -> None:
+        """Test that allow_casting=True raises ValueError when not providing a single table format."""
+        mock_table = mock.Mock()
+
+        # Test with no table format
+        with self.assertRaises(ValueError) as ctx:
+            self.data_client.save_table(mock_table, table_format=None, allow_casting=True)
+        self.assertIn("allow_casting can only be used when a single table_format is provided", str(ctx.exception))
+
+        # Test with multiple table formats
+        with self.assertRaises(ValueError) as ctx:
+            self.data_client.save_table(
+                mock_table, table_format=[table_formats.FLOAT_ARRAY_2, table_formats.FLOAT_ARRAY_3], allow_casting=True
+            )
+        self.assertIn("allow_casting can only be used when a single table_format is provided", str(ctx.exception))
 
     @parameterized.expand(
         [
@@ -199,11 +238,12 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
 
     @parameterized.expand(
         [
-            ("with_explicit_table_format", True),
-            ("with_implicit_table_format", False),
+            ("with_explicit_table_format_no_cast", True, False),
+            ("with_implicit_table_format_no_cast", False, False),
+            ("with_explicit_table_format", True, True),
         ]
     )
-    async def test_upload_table(self, _name: str, pass_table_format: bool) -> None:
+    async def test_upload_table(self, _name: str, pass_table_format: bool, cast: bool) -> None:
         """Test uploading tabular data using pyarrow or pandas."""
         put_data_response = load_test_data("put_data.json")
         with (
@@ -213,6 +253,8 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
         ):
             mock_table = mock.Mock()
             mock_get_known_format.return_value = mock_known_format = mock.Mock(spec=KnownTableFormat)
+            mock_casted_table = mock.Mock()
+            mock_known_format.cast_table.return_value = mock_casted_table
             mock_known_format.save_table.return_value = mock_table_info = {}
             mock_table_info["data"] = mock_data_id = put_data_response[0]["name"]
 
@@ -228,7 +270,9 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
             mock_destination.upload_file.side_effect = _mock_upload_file_side_effect
 
             if pass_table_format:
-                actual_table_info = await self.data_client.upload_table(mock_table, table_format=mock_known_format)
+                actual_table_info = await self.data_client.upload_table(
+                    mock_table, table_format=mock_known_format, allow_casting=cast
+                )
             else:
                 actual_table_info = await self.data_client.upload_table(mock_table)
 
@@ -237,7 +281,7 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
         else:
             mock_get_known_format.assert_called_once_with(mock_table, table_formats=None)
         mock_known_format.save_table.assert_called_once_with(
-            table=mock_table, destination=self.data_client.cache_location
+            table=mock_casted_table if cast else mock_table, destination=self.data_client.cache_location
         )
         mock_destination.upload_file.assert_called_once()
         self.assert_request_made(
@@ -250,11 +294,12 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
 
     @parameterized.expand(
         [
-            ("with_explicit_table_format", True),
-            ("with_implicit_table_format", False),
+            ("with_explicit_table_format_no_cast", True, False),
+            ("with_implicit_table_format_no_cast", False, False),
+            ("with_explicit_table_format", True, True),
         ]
     )
-    async def test_upload_dataframe(self, _name: str, pass_table_format: bool) -> None:
+    async def test_upload_dataframe(self, _name: str, pass_table_format: bool, cast: bool) -> None:
         """Test uploading tabular data using pyarrow or pandas."""
         put_data_response = load_test_data("put_data.json")
         with (
@@ -265,6 +310,8 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
         ):
             mock_pyarrow_table.from_pandas.return_value = mock_table = mock.Mock()
             mock_get_known_format.return_value = mock_known_format = mock.Mock(spec=KnownTableFormat)
+            mock_casted_table = mock.Mock()
+            mock_known_format.cast_table.return_value = mock_casted_table
             mock_known_format.save_table.return_value = mock_table_info = {}
             mock_table_info["data"] = mock_data_id = put_data_response[0]["name"]
 
@@ -282,7 +329,7 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
             mock_dataframe = mock.Mock()
             if pass_table_format:
                 actual_table_info = await self.data_client.upload_dataframe(
-                    mock_dataframe, table_format=mock_known_format
+                    mock_dataframe, table_format=mock_known_format, allow_casting=cast
                 )
             else:
                 actual_table_info = await self.data_client.upload_dataframe(mock_dataframe)
@@ -292,7 +339,7 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
         else:
             mock_get_known_format.assert_called_once_with(mock_table, table_formats=None)
         mock_known_format.save_table.assert_called_once_with(
-            table=mock_table, destination=self.data_client.cache_location
+            table=mock_casted_table if cast else mock_table, destination=self.data_client.cache_location
         )
         mock_destination.upload_file.assert_called_once()
         self.assert_request_made(
@@ -383,6 +430,42 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
             body=[{"name": mock_data_id}],
         )
         self.assertIs(mock_table_info, actual_table_info)
+
+    async def test_upload_table_with_allow_casting_without_single_format_raises(self) -> None:
+        """Test that allow_casting=True raises ValueError when not providing a single table format."""
+        mock_table = mock.Mock()
+
+        # Test with no table format
+        with self.assertRaises(ValueError) as ctx:
+            await self.data_client.upload_table(mock_table, table_format=None, allow_casting=True)
+        self.assertIn("allow_casting can only be used when a single table_format is provided", str(ctx.exception))
+
+        # Test with multiple table formats
+        with self.assertRaises(ValueError) as ctx:
+            await self.data_client.upload_table(
+                mock_table, table_format=[table_formats.FLOAT_ARRAY_2, table_formats.FLOAT_ARRAY_3], allow_casting=True
+            )
+        self.assertIn("allow_casting can only be used when a single table_format is provided", str(ctx.exception))
+
+    async def test_upload_dataframe_with_allow_casting_without_single_format_raises(self) -> None:
+        """Test that allow_casting=True raises ValueError when not providing a single table format."""
+        with mock.patch("pyarrow.Table") as mock_pyarrow_table:
+            mock_dataframe = mock.Mock()
+            mock_pyarrow_table.from_pandas.return_value = mock.Mock()
+
+            # Test with no table format
+            with self.assertRaises(ValueError) as ctx:
+                await self.data_client.upload_dataframe(mock_dataframe, table_format=None, allow_casting=True)
+            self.assertIn("allow_casting can only be used when a single table_format is provided", str(ctx.exception))
+
+            # Test with multiple table formats
+            with self.assertRaises(ValueError) as ctx:
+                await self.data_client.upload_dataframe(
+                    mock_dataframe,
+                    table_format=[table_formats.FLOAT_ARRAY_2, table_formats.FLOAT_ARRAY_3],
+                    allow_casting=True,
+                )
+            self.assertIn("allow_casting can only be used when a single table_format is provided", str(ctx.exception))
 
     @parameterized.expand(
         [
