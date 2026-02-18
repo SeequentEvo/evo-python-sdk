@@ -91,13 +91,11 @@ class WorkspaceAPIClient:
         self,
         workspace_id: UUID,
         filter_user_id: UUID | None = None,
-        user_id: UUID | None = None,
     ) -> list[User]:
         response = await self._workspaces_api.list_user_roles(
             org_id=str(self._org_id),
             workspace_id=str(workspace_id),
-            filter_user_id=str(filter_user_id) if filter_user_id else None,
-            user_id=str(user_id) if user_id else None,
+            user_id=str(filter_user_id) if filter_user_id else None,
         )
 
         return [parse.user_model(item) for item in response.results]
@@ -147,13 +145,11 @@ class WorkspaceAPIClient:
         | dict[WorkspaceOrderByLiteral, OrderByOperatorLiteral]
         | None = None,
         filter_created_by: UUID | None = None,
-        created_by: UUID | None = None,
         created_at: str | None = None,
         updated_at: str | None = None,
         name: str | None = None,
         deleted: bool | None = None,
         filter_user_id: UUID | None = None,
-        user_id: UUID | None = None,
     ) -> Page[Workspace]:
         parsed_order_by = parse_order_by(order_by)  # type: ignore
         if not offset:
@@ -163,14 +159,12 @@ class WorkspaceAPIClient:
             limit=limit,
             offset=offset,
             order_by=parsed_order_by,
-            filter_created_by=str(filter_created_by) if filter_created_by else None,
-            created_by=str(created_by) if created_by else None,
+            created_by=str(filter_created_by) if filter_created_by else None,
             created_at=created_at,
             updated_at=updated_at,
             name=name,
             deleted=deleted,
-            filter_user_id=str(filter_user_id) if filter_user_id else None,
-            user_id=str(user_id) if user_id else None,
+            user_id=str(filter_user_id) if filter_user_id else None,
         )
 
         return Page(
@@ -186,13 +180,11 @@ class WorkspaceAPIClient:
         offset: int | None = None,
         order_by: dict[WorkspaceOrderByEnum, OrderByOperatorEnum] | None = None,
         filter_created_by: UUID | None = None,
-        created_by: UUID | None = None,
         created_at: str | None = None,
         updated_at: str | None = None,
         name: str | None = None,
         deleted: bool | None = None,
         filter_user_id: UUID | None = None,
-        user_id: UUID | None = None,
     ) -> list[Workspace]:
         workspaces: list[Workspace] = []
         if offset is None:
@@ -206,13 +198,11 @@ class WorkspaceAPIClient:
                 offset=offset,
                 order_by=order_by,
                 filter_created_by=filter_created_by,
-                created_by=created_by,
                 created_at=created_at,
                 updated_at=updated_at,
                 name=name,
                 deleted=deleted,
                 filter_user_id=filter_user_id,
-                user_id=user_id,
             )
             workspaces += workspace_page.items()
             offset += limit
@@ -229,13 +219,11 @@ class WorkspaceAPIClient:
         | dict[WorkspaceOrderByLiteral, OrderByOperatorLiteral]
         | None = None,
         filter_created_by: UUID | None = None,
-        created_by: UUID | None = None,
         created_at: str | None = None,
         updated_at: str | None = None,
         name: str | None = None,
         deleted: bool | None = None,
         filter_user_id: UUID | None = None,
-        user_id: UUID | None = None,
     ) -> Page[BasicWorkspace]:
         """
         Get an optionally paginated list of basic workspaces with optional filtering and sorting.
@@ -250,14 +238,12 @@ class WorkspaceAPIClient:
             limit=limit,
             offset=offset,
             order_by=parsed_order_by,
-            filter_created_by=str(filter_created_by) if filter_created_by else None,
-            created_by=str(created_by) if created_by else None,
+            created_by=str(filter_created_by) if filter_created_by else None,
             created_at=created_at,
             updated_at=updated_at,
             name=name,
             deleted=deleted,
-            filter_user_id=str(filter_user_id) if filter_user_id else None,
-            user_id=str(user_id) if user_id else None,
+            user_id=str(filter_user_id) if filter_user_id else None,
         )
 
         return Page(
