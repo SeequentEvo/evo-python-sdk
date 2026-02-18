@@ -44,7 +44,6 @@ from .urls import (
     get_viewer_url_for_object,
     get_viewer_url_for_objects,
     get_viewer_url_from_reference,
-    parse_object_reference_url,
     serialize_object_reference,
 )
 
@@ -65,7 +64,6 @@ __all__ = [
     "get_viewer_url_for_objects",
     "get_viewer_url_from_reference",
     "load_ipython_extension",
-    "parse_object_reference_url",
     "serialize_object_reference",
     "unload_ipython_extension",
 ]
