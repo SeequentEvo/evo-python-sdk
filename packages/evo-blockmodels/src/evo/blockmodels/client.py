@@ -117,8 +117,6 @@ class BlockModelAPIClient(BaseAPIClient):
 
         Some methods need a cache to store temporary files. If you want to use these methods, you must provide a cache.
 
-        TEST CHANGE
-
         :param environment: The environment object.
         :param connector: The connector object.
         :param cache: The cache to use for storing temporary files.
