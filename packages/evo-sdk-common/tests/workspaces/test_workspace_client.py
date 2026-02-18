@@ -437,12 +437,12 @@ class TestWorkspaceClient(TestWithConnector):
                     offset=10,
                     limit=20,
                     order_by=order_by,
-                    created_by=USER_ID,
+                    filter_created_by=USER_ID,
                     created_at=str(utc_datetime(2020, 1, 1)),
                     updated_at=str(utc_datetime(2020, 1, 1)),
                     name="Test Workspace A",
                     deleted=False,
-                    user_id=USER_ID,
+                    filter_user_id=USER_ID,
                 )
             self.assert_request_made(
                 method=RequestMethod.GET,
