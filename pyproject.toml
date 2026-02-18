@@ -11,6 +11,8 @@ dependencies = [
     "evo-colormaps[aiohttp,notebooks]>=0.0.2",
     "evo-compute[aiohttp,notebooks]>=0.0.1rc2",
     "jupyter",
+    "authlib>=1.6.8",
+    "pyjwt>=2.11.0",
 ]
 dynamic = ["readme"]
 
