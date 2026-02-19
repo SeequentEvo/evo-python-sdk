@@ -1071,7 +1071,7 @@ test = [
 
 [[package]]
 name = "evo-sdk"
-version = "0.1.18"
+version = "0.1.19"
 source = { editable = "." }
 dependencies = [
     { name = "evo-blockmodels", extra = ["aiohttp", "notebooks", "pyarrow"] },
@@ -1134,7 +1134,7 @@ test = [
 
 [[package]]
 name = "evo-sdk-common"
-version = "0.5.16"
+version = "0.5.17"
 source = { editable = "packages/evo-sdk-common" }
 dependencies = [
     { name = "pure-interface" },
