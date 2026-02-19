@@ -242,7 +242,9 @@ class SchemaModel:
 
             # To robustly check for SchemaModel/SchemaList, we need to strip any generic or Annotated wrappers
             bare_base_type = get_origin(base_type) or base_type
-            if issubclass(bare_base_type, (SchemaModel, SchemaList)):
+            # Check if it's a class before using issubclass (handles Literal, Union, etc.)
+            is_sub_model = isinstance(bare_base_type, type) and issubclass(bare_base_type, (SchemaModel, SchemaList))
+            if is_sub_model:
                 data_field = data_location.field_path if data_location else None
                 sub_models[field_name] = SubModelMetadata(
                     model_type=base_type,

@@ -18,7 +18,17 @@ import numpy.testing as npt
 from parameterized import parameterized
 from pydantic import TypeAdapter
 
-from evo.objects.typed import BoundingBox, CoordinateReferenceSystem, EpsgCode, Point3, Rotation, Size3d, Size3i
+from evo.objects.typed import (
+    BoundingBox,
+    CoordinateReferenceSystem,
+    Ellipsoid,
+    EllipsoidRanges,
+    EpsgCode,
+    Point3,
+    Rotation,
+    Size3d,
+    Size3i,
+)
 
 
 class TestTypes(TestCase):
@@ -128,3 +138,119 @@ class TestTypes(TestCase):
         self.assertAlmostEqual(box.max_x, 50.0)
         self.assertAlmostEqual(box.max_y, 0.0)
         self.assertAlmostEqual(box.max_z, 25.0)
+
+
+class TestEllipsoidRanges(TestCase):
+    """Tests for EllipsoidRanges class."""
+
+    def test_creation(self):
+        """Should create ellipsoid ranges."""
+        ranges = EllipsoidRanges(100, 50, 25)
+        self.assertEqual(ranges.major, 100)
+        self.assertEqual(ranges.semi_major, 50)
+        self.assertEqual(ranges.minor, 25)
+
+    def test_to_dict(self):
+        """Should serialize to dictionary."""
+        ranges = EllipsoidRanges(100, 50, 25)
+        d = ranges.to_dict()
+        self.assertEqual(d, {"major": 100, "semi_major": 50, "minor": 25})
+
+    def test_scaled(self):
+        """Should create scaled ranges."""
+        ranges = EllipsoidRanges(100, 50, 25)
+        scaled = ranges.scaled(2.0)
+        self.assertEqual(scaled.major, 200)
+        self.assertEqual(scaled.semi_major, 100)
+        self.assertEqual(scaled.minor, 50)
+
+
+class TestEllipsoid(TestCase):
+    """Tests for the Ellipsoid class."""
+
+    def test_basic_creation(self):
+        """Should create ellipsoid with ranges and rotation."""
+        ell = Ellipsoid(
+            ranges=EllipsoidRanges(100, 50, 25),
+            rotation=Rotation(45, 30, 0),
+        )
+        self.assertEqual(ell.ranges.major, 100)
+        self.assertEqual(ell.ranges.semi_major, 50)
+        self.assertEqual(ell.ranges.minor, 25)
+        self.assertEqual(ell.rotation.dip_azimuth, 45)
+
+    def test_default_rotation(self):
+        """Should use default rotation when not specified."""
+        ell = Ellipsoid(ranges=EllipsoidRanges(100, 50, 25))
+        self.assertEqual(ell.rotation.dip_azimuth, 0)
+        self.assertEqual(ell.rotation.dip, 0)
+        self.assertEqual(ell.rotation.pitch, 0)
+
+    def test_scaled(self):
+        """Should create scaled ellipsoid."""
+        ell = Ellipsoid(
+            ranges=EllipsoidRanges(100, 50, 25),
+            rotation=Rotation(45, 30, 0),
+        )
+        scaled = ell.scaled(2.0)
+        self.assertEqual(scaled.ranges.major, 200)
+        self.assertEqual(scaled.ranges.semi_major, 100)
+        self.assertEqual(scaled.ranges.minor, 50)
+        # Rotation should be preserved
+        self.assertEqual(scaled.rotation.dip_azimuth, 45)
+
+    def test_to_dict(self):
+        """Should serialize to dictionary."""
+        ell = Ellipsoid(
+            ranges=EllipsoidRanges(100, 50, 25),
+            rotation=Rotation(45, 30, 0),
+        )
+        d = ell.to_dict()
+        self.assertEqual(d["ellipsoid_ranges"]["major"], 100)
+        self.assertEqual(d["rotation"]["dip_azimuth"], 45)
+
+    def test_surface_points(self):
+        """Should generate surface points as 1D arrays."""
+        ell = Ellipsoid(ranges=EllipsoidRanges(100, 50, 25))
+        x, y, z = ell.surface_points(center=(0, 0, 0), n_points=10)
+        self.assertEqual(len(x), 100)  # 10 x 10
+        self.assertEqual(len(y), 100)
+        self.assertEqual(len(z), 100)
+
+    def test_surface_points_with_center(self):
+        """Should offset surface points by center."""
+        ell = Ellipsoid(ranges=EllipsoidRanges(100, 50, 25))
+        x1, y1, z1 = ell.surface_points(center=(0, 0, 0))
+        x2, y2, z2 = ell.surface_points(center=(100, 200, 50))
+        # Second ellipsoid should be offset
+        self.assertAlmostEqual(np.mean(x2) - np.mean(x1), 100, places=1)
+        self.assertAlmostEqual(np.mean(y2) - np.mean(y1), 200, places=1)
+        self.assertAlmostEqual(np.mean(z2) - np.mean(z1), 50, places=1)
+
+    def test_wireframe_points(self):
+        """Should generate wireframe points with NaN separators."""
+        ell = Ellipsoid(ranges=EllipsoidRanges(100, 50, 25))
+        x, y, z = ell.wireframe_points(center=(0, 0, 0))
+        # Should have NaN separators
+        self.assertTrue(np.any(np.isnan(x)))
+        self.assertTrue(np.any(np.isnan(y)))
+        self.assertTrue(np.any(np.isnan(z)))
+
+    def test_wireframe_bounds(self):
+        """Wireframe points should be within ellipsoid bounds."""
+        ell = Ellipsoid(ranges=EllipsoidRanges(100, 50, 25))
+        x, y, z = ell.wireframe_points(n_points=30)
+        # Filter out NaN separators
+        valid = ~np.isnan(x)
+        self.assertTrue(np.all(np.abs(x[valid]) <= 100 * 1.01))
+        self.assertTrue(np.all(np.abs(y[valid]) <= 50 * 1.01))
+        self.assertTrue(np.all(np.abs(z[valid]) <= 25 * 1.01))
+
+    def test_wireframe_with_rotation(self):
+        """Wireframe should apply rotation."""
+        ell_no_rot = Ellipsoid(ranges=EllipsoidRanges(100, 50, 25), rotation=Rotation(0, 0, 0))
+        ell_rot = Ellipsoid(ranges=EllipsoidRanges(100, 50, 25), rotation=Rotation(45, 30, 0))
+        x1, y1, z1 = ell_no_rot.wireframe_points()
+        x2, y2, z2 = ell_rot.wireframe_points()
+        # Rotated should have different coordinates
+        self.assertFalse(np.allclose(x1, x2, equal_nan=True))

@@ -42,7 +42,7 @@ For advanced use cases, you may need the lower-level `evo-schemas` approach (as 
 
 ## Sample Data
 
-The `sample-data/WP_assay.csv` file contains drill hole assay data with:
+The `sample-data/WP_assay.csv` file contains downhole assay data with:
 - X, Y, Z coordinates
 - Hole ID
 - Assay values (CU_pct, AU_gpt, DENSITY)
