@@ -12,12 +12,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Annotated, Any, NamedTuple, overload
+from typing import Annotated, Any, overload
 
 import numpy as np
 import numpy.typing as npt
 import pydantic
 from pydantic_core import core_schema
+
+# Import basic geometry types from evo.blockmodels and re-export
+from evo.blockmodels.typed.types import Point3, Size3d, Size3i
 
 __all__ = [
     "BoundingBox",
@@ -90,35 +93,6 @@ def _load_crs(value: Any) -> EpsgCode | str | None:
 CoordinateReferenceSystem = Annotated[
     EpsgCode | str | None, pydantic.PlainValidator(_load_crs), pydantic.PlainSerializer(_dump_crs)
 ]
-
-
-class Point3(NamedTuple):
-    """A 3D point defined by X, Y, and Z coordinates."""
-
-    x: float
-    y: float
-    z: float
-
-
-class Size3d(NamedTuple):
-    """A 3D size defined by dx, dy, and dz dimensions."""
-
-    dx: float
-    dy: float
-    dz: float
-
-
-class Size3i(NamedTuple):
-    """A 3D size defined by nx, ny, and nz integer dimensions."""
-
-    nx: int
-    ny: int
-    nz: int
-
-    @property
-    def total_size(self) -> int:
-        """The total size (number of elements) represented by this Size3i."""
-        return self.nx * self.ny * self.nz
 
 
 @dataclass(frozen=True)

@@ -33,7 +33,7 @@ from .data import (
     Version,
 )
 from .endpoints import models
-from .endpoints.api import ColumnOperationsApi, JobsApi, MetadataApi, OperationsApi, VersionsApi
+from .endpoints.api import ColumnOperationsApi, JobsApi, MetadataApi, OperationsApi, ReportsApi, VersionsApi
 from .endpoints.models import (
     AnyUrl,
     BBox,
@@ -127,6 +127,7 @@ class BlockModelAPIClient(BaseAPIClient):
         self._operations_api = OperationsApi(connector)
         self._column_operations_api = ColumnOperationsApi(connector)
         self._metadata_api = MetadataApi(connector)
+        self._reports_api = ReportsApi(connector)
         self._cache = cache
 
     @classmethod
@@ -311,7 +312,6 @@ class BlockModelAPIClient(BaseAPIClient):
 
         cache_location = get_cache_location_for_upload(self._cache, self._environment, job_id)
         pyarrow.parquet.write_table(data, cache_location)
-
         # Upload the data
         upload = BlockModelUpload(self._connector, self._environment, bm_id, job_id, upload_url)
         await upload.upload_from_path(cache_location, self._connector.transport)
@@ -367,6 +367,19 @@ class BlockModelAPIClient(BaseAPIClient):
         )
 
         return [self._bm_from_model(m) for m in response.results]
+
+    async def get_block_model(self, bm_id: UUID) -> BlockModel:
+        """Get a block model by ID.
+
+        :param bm_id: The ID of the block model to retrieve.
+        :return: The BlockModel metadata.
+        """
+        response = await self._metadata_api.retrieve_block_model(
+            bm_id=str(bm_id),
+            workspace_id=str(self._environment.workspace_id),
+            org_id=str(self._environment.org_id),
+        )
+        return self._bm_from_model(response)
 
     async def list_all_block_models(self, page_limit: int | None = 100) -> list[BlockModel]:
         """Return all block models for the current workspace, following paginated responses.
@@ -527,6 +540,26 @@ class BlockModelAPIClient(BaseAPIClient):
             version = await self._add_new_columns(create_result.bm_uuid, initial_data, units, geometry_change)
         return self._bm_from_model(create_result), version
 
+    async def add_new_subblocked_columns(
+        self,
+        bm_id: UUID,
+        data: Table,
+        units: dict[str, str] | None = None,
+    ):
+        """Add new columns to an existing sub-blocked block model. This will not change the sub-blocking structure, thus the provided data must match existing sub-blocks in the model.
+
+        Units for the columns can be provided in the `units` dictionary.
+
+        This method requires the `pyarrow` package to be installed, and the 'cache' parameter to be set in the constructor.
+
+        :param bm_id: The ID of the block model to add columns to.
+        :param data: The data containing the new columns to add.
+        :param units: A dictionary mapping column names within `data` to units.
+        :raises CacheNotConfiguredException: If the cache is not configured.
+        :return: The new version of the block model with the added columns.
+        """
+        return await self._add_new_columns(bm_id, data, units, geometry_change=False)
+
     async def _add_new_columns(
         self,
         bm_id: UUID,
@@ -579,26 +612,6 @@ class BlockModelAPIClient(BaseAPIClient):
         )
         version = await self._upload_data(bm_id, update_response.job_uuid, str(update_response.upload_url), data)
         return _version_from_model(version)
-
-    async def add_new_subblocked_columns(
-        self,
-        bm_id: UUID,
-        data: Table,
-        units: dict[str, str] | None = None,
-    ):
-        """Add new columns to an existing sub-blocked block model. This will not change the sub-blocking structure, thus the provided data must match existing sub-blocks in the model.
-
-        Units for the columns can be provided in the `units` dictionary.
-
-        This method requires the `pyarrow` package to be installed, and the 'cache' parameter to be set in the constructor.
-
-        :param bm_id: The ID of the block model to add columns to.
-        :param data: The data containing the new columns to add.
-        :param units: A dictionary mapping column names within `data` to units.
-        :raises CacheNotConfiguredException: If the cache is not configured.
-        :return: The new version of the block model with the added columns.
-        """
-        return await self._add_new_columns(bm_id, data, units, geometry_change=False)
 
     async def add_new_columns(
         self,

@@ -11,6 +11,14 @@
 
 from .attributes import Attribute, Attributes
 from .base import BaseObject, object_from_path, object_from_reference, object_from_uuid
+from .block_model_ref import (
+    BlockModel,
+    BlockModelAttribute,
+    BlockModelAttributes,
+    BlockModelData,
+    BlockModelGeometry,
+    RegularBlockModelData,
+)
 from .pointset import (
     Locations,
     PointSet,
@@ -60,6 +68,11 @@ __all__ = [
     "Attributes",
     "BaseObject",
     "BaseSpatialObject",
+    "BlockModel",
+    "BlockModelAttribute",
+    "BlockModelAttributes",
+    "BlockModelData",
+    "BlockModelGeometry",
     "BoundingBox",
     "CoordinateReferenceSystem",
     "CubicStructure",
@@ -77,6 +90,7 @@ __all__ = [
     "PointSetData",
     "Regular3DGrid",
     "Regular3DGridData",
+    "RegularBlockModelData",
     "RegularMasked3DGrid",
     "RegularMasked3DGridData",
     "Rotation",

@@ -1,4 +1,4 @@
-#  Copyright © 2025 Bentley Systems, Incorporated
+#  Copyright © 2026 Bentley Systems, Incorporated
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 #  You may obtain a copy of the License at
@@ -9,26 +9,37 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from .client import BlockModelAPIClient
-from .typed import (
-    BoundingBox,
-    Point3,
-    RegularBlockModel,
-    RegularBlockModelData,
-    Size3d,
-    Size3i,
-    Units,
-    get_available_units,
+"""Typed access for block models with pandas DataFrame support."""
+
+from .regular_block_model import RegularBlockModel, RegularBlockModelData
+from .report import (
+    Aggregation,
+    MassUnits,
+    Report,
+    ReportCategorySpec,
+    ReportColumnSpec,
+    ReportResult,
+    ReportSpecificationData,
 )
+from .types import BoundingBox, Point3, Size3d, Size3i
+from .units import UnitInfo, Units, UnitType, get_available_units
 
 __all__ = [
-    "BlockModelAPIClient",
+    "Aggregation",
     "BoundingBox",
+    "MassUnits",
     "Point3",
     "RegularBlockModel",
     "RegularBlockModelData",
+    "Report",
+    "ReportCategorySpec",
+    "ReportColumnSpec",
+    "ReportResult",
+    "ReportSpecificationData",
     "Size3d",
     "Size3i",
+    "UnitInfo",
+    "UnitType",
     "Units",
     "get_available_units",
 ]
