@@ -385,49 +385,30 @@ class Ellipsoid:
         """
         rot_matrix = self.rotation.as_rotation_matrix()
         theta = np.linspace(0, 2 * np.pi, n_points)
+        cos_theta = np.cos(theta)
+        sin_theta = np.sin(theta)
+        center_arr = np.array(center)[:, np.newaxis]
 
-        # Pre-allocate arrays for 3 planes, each with n_points + 1 (for NaN separator)
+        # Ellipse coefficient matrices: each row is [cos_coeff, sin_coeff] for x, y, z
+        planes = [
+            # XY plane (major-semi_major): horizontal slice
+            [[self.ranges.major, 0], [0, self.ranges.semi_major], [0, 0]],
+            # XZ plane (major-minor): vertical slice along major axis
+            [[self.ranges.major, 0], [0, 0], [0, self.ranges.minor]],
+            # YZ plane (semi_major-minor): vertical slice along semi_major axis
+            [[0, 0], [self.ranges.semi_major, 0], [0, self.ranges.minor]],
+        ]
+
+        # Pre-allocate array for 3 planes, each with n_points + 1 (for NaN separator)
         total_points = 3 * (n_points + 1)
-        all_x = np.empty(total_points)
-        all_y = np.empty(total_points)
-        all_z = np.empty(total_points)
+        result = np.empty((3, total_points))
 
-        # XY plane (major-semi_major): horizontal slice
-        x = self.ranges.major * np.cos(theta)  # major along X
-        y = self.ranges.semi_major * np.sin(theta)  # semi_major along Y
-        z = np.zeros_like(theta)
-        rotated = rot_matrix @ np.array([x, y, z])
-        all_x[:n_points] = rotated[0] + center[0]
-        all_y[:n_points] = rotated[1] + center[1]
-        all_z[:n_points] = rotated[2] + center[2]
-        all_x[n_points] = np.nan
-        all_y[n_points] = np.nan
-        all_z[n_points] = np.nan
+        trig = np.array([cos_theta, sin_theta])  # (2, n_points)
+        for i, coeffs in enumerate(planes):
+            points = np.array(coeffs) @ trig  # (3, n_points)
+            rotated = rot_matrix @ points + center_arr
+            offset = i * (n_points + 1)
+            result[:, offset : offset + n_points] = rotated
+            result[:, offset + n_points] = np.nan
 
-        # XZ plane (major-minor): vertical slice along major axis
-        x = self.ranges.major * np.cos(theta)  # major along X
-        y = np.zeros_like(theta)
-        z = self.ranges.minor * np.sin(theta)  # minor along Z
-        rotated = rot_matrix @ np.array([x, y, z])
-        offset = n_points + 1
-        all_x[offset : offset + n_points] = rotated[0] + center[0]
-        all_y[offset : offset + n_points] = rotated[1] + center[1]
-        all_z[offset : offset + n_points] = rotated[2] + center[2]
-        all_x[offset + n_points] = np.nan
-        all_y[offset + n_points] = np.nan
-        all_z[offset + n_points] = np.nan
-
-        # YZ plane (semi_major-minor): vertical slice along semi_major axis
-        x = np.zeros_like(theta)
-        y = self.ranges.semi_major * np.cos(theta)  # semi_major along Y
-        z = self.ranges.minor * np.sin(theta)  # minor along Z
-        rotated = rot_matrix @ np.array([x, y, z])
-        offset = 2 * (n_points + 1)
-        all_x[offset : offset + n_points] = rotated[0] + center[0]
-        all_y[offset : offset + n_points] = rotated[1] + center[1]
-        all_z[offset : offset + n_points] = rotated[2] + center[2]
-        all_x[offset + n_points] = np.nan
-        all_y[offset + n_points] = np.nan
-        all_z[offset + n_points] = np.nan
-
-        return all_x, all_y, all_z
+        return result[0], result[1], result[2]
