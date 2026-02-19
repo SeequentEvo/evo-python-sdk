@@ -319,27 +319,34 @@ class Ellipsoid:
     """An ellipsoid defining a spatial region."""
 
     ranges: EllipsoidRanges
-    rotation: Rotation | None = None
+    _rotation: Rotation | None = None
 
     def __init__(self, ranges: EllipsoidRanges, rotation: Rotation | None = None):
         self.ranges = ranges
-        self.rotation = rotation or Rotation(0, 0, 0)
+        self._rotation = rotation
+
+    @property
+    def rotation(self) -> Rotation:
+        """The rotation of the ellipsoid, defaulting to no rotation if not specified."""
+        return self._rotation or Rotation(0, 0, 0)
 
     def to_dict(self) -> dict[str, Any]:
-        rot = self.rotation or Rotation(0, 0, 0)
         return {
             "ellipsoid_ranges": self.ranges.to_dict(),
-            "rotation": {"dip_azimuth": rot.dip_azimuth, "dip": rot.dip, "pitch": rot.pitch},
+            "rotation": {
+                "dip_azimuth": self.rotation.dip_azimuth,
+                "dip": self.rotation.dip,
+                "pitch": self.rotation.pitch,
+            },
         }
 
     def scaled(self, factor: float) -> "Ellipsoid":
-        rot = self.rotation or Rotation(0, 0, 0)
         return Ellipsoid(
             ranges=self.ranges.scaled(factor),
             rotation=Rotation(
-                dip_azimuth=rot.dip_azimuth,
-                dip=rot.dip,
-                pitch=rot.pitch,
+                dip_azimuth=self.rotation.dip_azimuth,
+                dip=self.rotation.dip,
+                pitch=self.rotation.pitch,
             ),
         )
 
@@ -349,8 +356,7 @@ class Ellipsoid:
         n_points: int = 20,
     ) -> tuple[npt.NDArray[np.floating[Any]], npt.NDArray[np.floating[Any]], npt.NDArray[np.floating[Any]]]:
         """Generate surface mesh points for 3D visualization."""
-        rot = self.rotation or Rotation(0, 0, 0)
-        rot_matrix = rot.as_rotation_matrix()
+        rot_matrix = self.rotation.as_rotation_matrix()
 
         u = np.linspace(0, 2 * np.pi, n_points)
         v = np.linspace(0, np.pi, n_points)
@@ -377,8 +383,7 @@ class Ellipsoid:
         - Semi-major axis along Y
         - Minor axis along Z (up)
         """
-        rot = self.rotation or Rotation(0, 0, 0)
-        rot_matrix = rot.as_rotation_matrix()
+        rot_matrix = self.rotation.as_rotation_matrix()
         theta = np.linspace(0, 2 * np.pi, n_points)
 
         # Pre-allocate arrays for 3 planes, each with n_points + 1 (for NaN separator)
