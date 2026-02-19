@@ -78,7 +78,12 @@ class HTTPIOBase:
 
     _RENEWAL_SECONDS_THRESHOLD = 5 * 60  # Five minutes
 
-    def __init__(self, url_callback: Callable[[], Awaitable[str]], transport: ITransport) -> None:
+    def __init__(
+        self,
+        url_callback: Callable[[], Awaitable[str]],
+        transport: ITransport,
+        additional_headers: dict[str, str] | None = None,
+    ) -> None:
         """
         :param url_callback: An awaitable callback method that accepts no arguments and returns a new resource url.
             The callback is used to renew the resource url when the current one expires. Resource URLs are considered
@@ -92,6 +97,7 @@ class HTTPIOBase:
         self.__resource_path: str | None = None
         self.__query_params: list[tuple[str, Any]] = []
         self.__renewal_time: datetime | None = None
+        self.__additional_headers = additional_headers
 
     async def __get_new_url(self) -> str:
         """Get a new resource url.
@@ -120,7 +126,9 @@ class HTTPIOBase:
                 if not url.startswith("https://"):
                     raise ValueError("Unsupported URL scheme")
                 base_url = "https://" + urlparse(url).hostname
-                self.__connector = APIConnector(base_url=base_url, transport=self.__transport)
+                self.__connector = APIConnector(
+                    base_url=base_url, transport=self.__transport, additional_headers=self.__additional_headers
+                )
                 self.__update_url(url)
         await self.__connector.__aenter__()
         return self
@@ -210,8 +218,13 @@ class HTTPSource(HTTPIOBase, ISource):
     For more information on range requests, refer to https://developer.mozilla.org/en-US/docs/Web/HTTP/Range_requests.
     """
 
-    def __init__(self, url_callback: Callable[[], Awaitable[str]], transport: ITransport) -> None:
-        super().__init__(url_callback, transport)
+    def __init__(
+        self,
+        url_callback: Callable[[], Awaitable[str]],
+        transport: ITransport,
+        additional_headers: dict[str, str] | None = None,
+    ) -> None:
+        super().__init__(url_callback, transport, additional_headers)
         self._size: int | None = None
 
     async def __aenter__(self) -> HTTPSource:

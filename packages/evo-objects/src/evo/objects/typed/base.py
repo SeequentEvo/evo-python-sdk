@@ -121,7 +121,6 @@ async def object_from_path(
         # Download specific version
         obj = await object_from_path(context, "my-folder/pointset.json", version="abc123")
     """
-    version = "?version=" + version if version else ""
     reference = ObjectReference.new(context.get_environment(), object_path=path, version_id=version)
     return await object_from_reference(context, reference)
 
@@ -155,7 +154,6 @@ async def object_from_uuid(
         # Download specific version
         obj = await object_from_uuid(context, "b208a6c9-6881-4b97-b02d-acb5d81299bb", version="abc123")
     """
-    version = "?version=" + version if version else ""
     reference = ObjectReference.new(context.get_environment(), object_id=uuid, version_id=version)
     return await object_from_reference(context, reference)
 

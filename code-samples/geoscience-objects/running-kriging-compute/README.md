@@ -2,14 +2,14 @@
 
 This example demonstrates a complete geostatistical workflow using the Evo Python SDK:
 
-1. **Load drill hole assay data** as a PointSet
+1. **Load downhole assay data** as a PointSet
 2. **Define a variogram model** for spatial correlation
 3. **Visualize** the pointset and variogram together with Plotly
 4. **Run kriging estimation** using Evo Compute (WIP)
 
 ## Overview
 
-The workflow uses the WP_assay.csv dataset containing copper (CU_pct) and gold (AU_gpt) assay values from 55 drill holes. We'll:
+The workflow uses the WP_assay.csv dataset containing copper (CU_pct) and gold (AU_gpt) assay values from 55 downhole. We'll:
 
 - Create a `PointSet` from the CSV data
 - Define a nested spherical `Variogram` model for copper grades
@@ -19,7 +19,7 @@ The workflow uses the WP_assay.csv dataset containing copper (CU_pct) and gold (
 
 ## Dataset Characteristics
 
-- **8,332 sample points** from 55 drill holes
+- **8,332 sample points** from 55 downhole
 - **Spatial extent**: ~936m (X) × ~1,416m (Y) × ~855m (Z)
 - **Coordinate system**: EPSG:32650 (UTM Zone 50N)
 - **Target attribute**: CU_pct (copper percentage)
@@ -27,7 +27,7 @@ The workflow uses the WP_assay.csv dataset containing copper (CU_pct) and gold (
 
 ## Variogram Model
 
-The variogram uses two nested spherical structures aligned with the dominant orientation of the drill hole data:
+The variogram uses two nested spherical structures aligned with the dominant orientation of the downhole data:
 - **Nugget**: 0.08 (~10% nugget effect)
 - **Short-range structure**: Contribution 0.25, ranges 80m × 60m × 40m
 - **Long-range structure**: Contribution 0.51, ranges 250m × 180m × 100m

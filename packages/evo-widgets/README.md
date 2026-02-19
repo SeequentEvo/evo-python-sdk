@@ -102,7 +102,6 @@ from evo.widgets import (
     get_viewer_url,
     get_portal_url_from_reference,
     get_viewer_url_from_reference,
-    parse_object_reference_url,
     serialize_object_reference,
 )
 
@@ -119,8 +118,6 @@ ref_url = "https://350mt.api.seequent.com/geoscience-object/orgs/org-123/workspa
 portal_url = get_portal_url_from_reference(ref_url)
 viewer_url = get_viewer_url_from_reference(ref_url)
 
-# Parse object reference URLs
-org_id, workspace_id, object_id, hub_url = parse_object_reference_url(ref_url)
 ```
 
 ## API Reference
@@ -150,7 +147,6 @@ org_id, workspace_id, object_id, hub_url = parse_object_reference_url(ref_url)
 | `get_viewer_url(org_id, workspace_id, object_ids, hub_url)` | Generate Viewer URL from components |
 | `get_portal_url_from_reference(object_reference)` | Generate Portal URL from reference string |
 | `get_viewer_url_from_reference(object_reference)` | Generate Viewer URL from reference string |
-| `parse_object_reference_url(object_reference)` | Parse reference URL into components |
 | `serialize_object_reference(value)` | Serialize various object types to URL string |
 
 ### Formatters

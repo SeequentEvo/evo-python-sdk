@@ -104,8 +104,13 @@ class BlockList:
 class StorageDestination(HTTPIOBase, IDestination):
     """`evo.common.io.interfaces.IDestination` implementation for uploading to storage."""
 
-    def __init__(self, url_callback: Callable[[], Awaitable[str]], transport: ITransport) -> None:
-        super().__init__(url_callback, transport)
+    def __init__(
+        self,
+        url_callback: Callable[[], Awaitable[str]],
+        transport: ITransport,
+        additional_headers: dict[str, str] | None = None,
+    ) -> None:
+        super().__init__(url_callback, transport, additional_headers)
         self._block_list = BlockList()
         self._committed = False
 

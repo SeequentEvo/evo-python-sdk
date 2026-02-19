@@ -421,9 +421,6 @@ class Variogram(BaseObject):
             >>> x, y, z = var_ell.surface_points(center=(100, 200, 50))
             >>> mesh = go.Mesh3d(x=x, y=y, z=z, alphahull=0, opacity=0.3)
         """
-        from .types import Ellipsoid, Rotation
-        from .types import EllipsoidRanges as EllipsoidRangesObj
-
         if not self.structures:
             raise ValueError("Variogram has no structures")
 
@@ -448,7 +445,7 @@ class Variogram(BaseObject):
         rotation_dict = anisotropy.get("rotation", {})
 
         return Ellipsoid(
-            ranges=EllipsoidRangesObj(
+            ranges=EllipsoidRanges(
                 major=ranges_dict.get("major", 1.0),
                 semi_major=ranges_dict.get("semi_major", 1.0),
                 minor=ranges_dict.get("minor", 1.0),
