@@ -57,7 +57,7 @@ For next steps and more information about using Evo, see:
 * `evo-sdk-common` ([`discovery`](evo-python-sdk/evo-sdk-common/discovery) and [`workspaces`](evo-python-sdk/evo-sdk-common/workspaces)): providing the foundation for all Evo SDKs, as well as tools
   for performing arbitrary Seequent Evo API requests
 * [`evo-files`](evo-python-sdk/evo-files): for interacting with the File API
-* [`evo-objects`](evo-python-sdk/evo-objects): for interacting with the Geoscience Object API
+* `evo-objects`: for interacting with the Geoscience Object API
 * [`evo-colormaps`](evo-python-sdk/evo-colormaps): for interacting with the Colormap API
 * [`evo-blockmodels`](evo-python-sdk/evo-blockmodels): for interacting with the Block Model API
 * [`evo-compute`](evo-python-sdk/evo-compute): for interacting with the Compute Tasks API
