@@ -456,6 +456,7 @@ class AdminApi:
         workspace_id: str,
         org_id: str,
         filter_user_id: str | None = None,
+        user_id: str | None = None,
         additional_headers: dict[str, str] | None = None,
         request_timeout: int | float | tuple[int | float, int | float] | None = None,
     ) -> ListUserRoleResponse:  # noqa: F405
@@ -472,6 +473,9 @@ class AdminApi:
         :param filter_user_id: (optional) Filter to see the role of a specific user ID.
             Format: `uuid`
             Example: `'filter_user_id_example'`
+        :param user_id: (optional) Filter to see the role of a specific user ID.
+            Format: `uuid`
+            Example: `'user_id_example'`
         :param additional_headers: (optional) Additional headers to send with the request.
         :param request_timeout: (optional) Timeout setting for this request. If one number is provided, it will be the
             total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.
@@ -499,6 +503,8 @@ class AdminApi:
         _query_params = {}
         if filter_user_id is not None:
             _query_params["filter[user_id]"] = filter_user_id
+        if user_id is not None:
+            _query_params["user_id"] = user_id
 
         # Prepare the header parameters.
         _header_params = {
@@ -534,6 +540,7 @@ class AdminApi:
         sort: str | None = None,
         order_by: str | None = None,
         filter_created_by: str | None = None,
+        created_by: str | None = None,
         created_at: str | None = None,
         updated_at: str | None = None,
         filter_name: str | None = None,
@@ -563,6 +570,9 @@ class AdminApi:
         :param filter_created_by: (optional) Filter by workspace that a user has created, by user ID.
             Format: `uuid`
             Example: `'filter_created_by_example'`
+        :param created_by: (optional) Filter by workspace that a user has created, by user ID.
+            Format: `uuid`
+            Example: `'created_by_example'`
         :param created_at: (optional) Filter by the time workspace has created.
             Example: `'created_at_example'`
         :param updated_at: (optional) Filter by the latest time workspace was updated.
@@ -608,6 +618,8 @@ class AdminApi:
             _query_params["order_by"] = order_by
         if filter_created_by is not None:
             _query_params["filter[created_by]"] = filter_created_by
+        if created_by is not None:
+            _query_params["created_by"] = created_by
         if created_at is not None:
             _query_params["created_at"] = created_at
         if updated_at is not None:
@@ -652,12 +664,14 @@ class AdminApi:
         sort: str | None = None,
         order_by: str | None = None,
         filter_created_by: str | None = None,
+        created_by: str | None = None,
         created_at: str | None = None,
         updated_at: str | None = None,
         filter_name: str | None = None,
         name: str | None = None,
         deleted: bool | None = None,
         filter_user_id: str | None = None,
+        user_id: str | None = None,
         additional_headers: dict[str, str] | None = None,
         request_timeout: int | float | tuple[int | float, int | float] | None = None,
     ) -> ListWorkspacesResponse:  # noqa: F405
@@ -679,6 +693,9 @@ class AdminApi:
         :param filter_created_by: (optional) Filter by workspace that a user has created, by user ID.
             Format: `uuid`
             Example: `'filter_created_by_example'`
+        :param created_by: (optional) Filter by workspace that a user has created, by user ID.
+            Format: `uuid`
+            Example: `'created_by_example'`
         :param created_at: (optional) Filter by the time workspace has created.
             Example: `'created_at_example'`
         :param updated_at: (optional) Filter by the latest time workspace was updated.
@@ -692,6 +709,9 @@ class AdminApi:
         :param filter_user_id: (optional) Filter by workspaces that a user ID has access to.
             Format: `uuid`
             Example: `'filter_user_id_example'`
+        :param user_id: (optional) Filter by workspaces that a user ID has access to.
+            Format: `uuid`
+            Example: `'user_id_example'`
         :param additional_headers: (optional) Additional headers to send with the request.
         :param request_timeout: (optional) Timeout setting for this request. If one number is provided, it will be the
             total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.
@@ -726,6 +746,8 @@ class AdminApi:
             _query_params["order_by"] = order_by
         if filter_created_by is not None:
             _query_params["filter[created_by]"] = filter_created_by
+        if created_by is not None:
+            _query_params["created_by"] = created_by
         if created_at is not None:
             _query_params["created_at"] = created_at
         if updated_at is not None:
@@ -738,6 +760,8 @@ class AdminApi:
             _query_params["deleted"] = deleted
         if filter_user_id is not None:
             _query_params["filter[user_id]"] = filter_user_id
+        if user_id is not None:
+            _query_params["user_id"] = user_id
 
         # Prepare the header parameters.
         _header_params = {
