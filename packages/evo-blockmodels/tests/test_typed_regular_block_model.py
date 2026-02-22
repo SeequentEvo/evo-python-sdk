@@ -610,3 +610,538 @@ class TestTypedTypes(TestWithConnector):
         self.assertEqual(bbox.y_max, 40)
         self.assertEqual(bbox.z_min, 0)
         self.assertEqual(bbox.z_max, 90)
+
+
+def _make_block_model_instance(context, client):
+    """Helper to create a RegularBlockModel instance for testing base class methods."""
+    from evo.blockmodels.data import BlockModel as BlockModelData
+    from evo.blockmodels.data import RegularGridDefinition, Version
+
+    environment = context.get_environment()
+    metadata = BlockModelData(
+        environment=environment,
+        id=BM_UUID,
+        name="Test BM",
+        description="Test Block Model",
+        created_at=DATE,
+        created_by=USER,
+        grid_definition=RegularGridDefinition(
+            model_origin=[0, 0, 0],
+            rotations=[(RotationAxis.x, 20)],
+            n_blocks=[10, 10, 10],
+            block_size=[1.0, 1.0, 1.0],
+        ),
+        coordinate_reference_system="EPSG:4326",
+        size_unit_id="m",
+        bbox=BM_BBOX,
+        last_updated_at=DATE,
+        last_updated_by=USER,
+        geoscience_object_id=GOOSE_UUID,
+    )
+    version = Version(
+        bm_uuid=BM_UUID,
+        version_id=1,
+        version_uuid=FIRST_VERSION.version_uuid,
+        created_at=DATE,
+        created_by=USER,
+        comment="",
+        bbox=None,
+        base_version_id=None,
+        parent_version_id=0,
+        columns=[
+            models.Column(col_id=str(uuid.uuid4()), title="Au", data_type=models.DataType.Float64),
+            models.Column(col_id=str(uuid.uuid4()), title="density", data_type=models.DataType.Float64),
+        ],
+        geoscience_version_id="2",
+    )
+    cell_data = pd.DataFrame(
+        {
+            "i": [1, 2, 3],
+            "j": [4, 5, 6],
+            "k": [7, 8, 9],
+            "Au": [1.5, 2.3, 3.1],
+            "density": [2.7, 2.8, 2.6],
+        }
+    )
+
+    return RegularBlockModel(
+        client=client,
+        metadata=metadata,
+        version=version,
+        cell_data=cell_data,
+        context=context,
+    )
+
+
+class TestBaseTypedBlockModelToDataframe(TestWithConnector, TestWithStorage):
+    """Tests for BaseTypedBlockModel.to_dataframe method inherited by RegularBlockModel."""
+
+    def setUp(self) -> None:
+        TestWithConnector.setUp(self)
+        TestWithStorage.setUp(self)
+        self.setup_universal_headers(get_header_metadata("evo.blockmodels.client"))
+        self._context = StaticContext.from_environment(
+            environment=self.environment,
+            connector=self.connector,
+            cache=self.cache,
+        )
+
+    @property
+    def context(self):
+        return self._context
+
+    async def test_to_dataframe_default(self) -> None:
+        """Test to_dataframe with default parameters (latest version, all columns)."""
+        from evo.blockmodels import BlockModelAPIClient
+
+        test_df = pd.DataFrame({"x": [0.5, 1.5], "y": [0.5, 1.5], "z": [0.5, 1.5], "Au": [1.5, 2.3]})
+        test_table = pyarrow.Table.from_pandas(test_df)
+
+        client = BlockModelAPIClient.from_context(self.context)
+        block_model = _make_block_model_instance(self.context, client)
+
+        with mock.patch.object(BlockModelAPIClient, "query_block_model_as_table") as mock_query:
+            mock_query.return_value = test_table
+            df = await block_model.to_dataframe()
+
+        mock_query.assert_called_once()
+        call_kwargs = mock_query.call_args
+        self.assertEqual(call_kwargs.kwargs["bm_id"], BM_UUID)
+        self.assertEqual(call_kwargs.kwargs["columns"], ["*"])
+        self.assertIsNone(call_kwargs.kwargs["version_uuid"])
+        self.assertEqual(len(df), 2)
+        self.assertIn("Au", df.columns)
+
+    async def test_to_dataframe_specific_version(self) -> None:
+        """Test to_dataframe with a specific version UUID."""
+        from evo.blockmodels import BlockModelAPIClient
+
+        specific_version = uuid.uuid4()
+        test_df = pd.DataFrame({"x": [0.5], "y": [0.5], "z": [0.5], "Au": [1.5]})
+        test_table = pyarrow.Table.from_pandas(test_df)
+
+        client = BlockModelAPIClient.from_context(self.context)
+        block_model = _make_block_model_instance(self.context, client)
+
+        with mock.patch.object(BlockModelAPIClient, "query_block_model_as_table") as mock_query:
+            mock_query.return_value = test_table
+            await block_model.to_dataframe(version_uuid=specific_version)
+
+        call_kwargs = mock_query.call_args
+        self.assertEqual(call_kwargs.kwargs["version_uuid"], specific_version)
+
+    async def test_to_dataframe_selected_columns(self) -> None:
+        """Test to_dataframe with specific columns."""
+        from evo.blockmodels import BlockModelAPIClient
+
+        test_df = pd.DataFrame({"x": [0.5], "y": [0.5], "z": [0.5], "Au": [1.5]})
+        test_table = pyarrow.Table.from_pandas(test_df)
+
+        client = BlockModelAPIClient.from_context(self.context)
+        block_model = _make_block_model_instance(self.context, client)
+
+        with mock.patch.object(BlockModelAPIClient, "query_block_model_as_table") as mock_query:
+            mock_query.return_value = test_table
+            await block_model.to_dataframe(columns=["Au"])
+
+        call_kwargs = mock_query.call_args
+        self.assertEqual(call_kwargs.kwargs["columns"], ["Au"])
+
+
+class TestBaseTypedBlockModelAddAttribute(TestWithConnector, TestWithStorage):
+    """Tests for BaseTypedBlockModel.add_attribute method."""
+
+    def setUp(self) -> None:
+        TestWithConnector.setUp(self)
+        TestWithStorage.setUp(self)
+        self.setup_universal_headers(get_header_metadata("evo.blockmodels.client"))
+        self._context = StaticContext.from_environment(
+            environment=self.environment,
+            connector=self.connector,
+            cache=self.cache,
+        )
+
+    @property
+    def context(self):
+        return self._context
+
+    async def test_add_attribute(self) -> None:
+        """Test adding a new attribute to a block model."""
+        self.transport.set_request_handler(
+            UpdateTypedBlockModelRequestHandler(
+                update_result=UPDATE_RESULT,
+                job_response=JobResponse(
+                    job_status=JobStatus.COMPLETE,
+                    payload=SECOND_VERSION,
+                ),
+            )
+        )
+
+        from evo.blockmodels import BlockModelAPIClient
+
+        client = BlockModelAPIClient.from_context(self.context)
+        block_model = _make_block_model_instance(self.context, client)
+
+        new_data = pd.DataFrame(
+            {
+                "i": [1, 2, 3],
+                "j": [4, 5, 6],
+                "k": [7, 8, 9],
+                "Cu": [0.5, 0.7, 0.3],
+            }
+        )
+
+        with mock.patch("evo.common.io.upload.StorageDestination") as mock_destination:
+            mock_destination.upload_file = mock.AsyncMock()
+            version = await block_model.add_attribute(new_data, "Cu", unit="pct")
+            mock_destination.upload_file.assert_called_once()
+
+        self.assertEqual(version.version_id, 2)
+
+    async def test_add_attribute_without_unit(self) -> None:
+        """Test adding a new attribute without a unit."""
+        self.transport.set_request_handler(
+            UpdateTypedBlockModelRequestHandler(
+                update_result=UPDATE_RESULT,
+                job_response=JobResponse(
+                    job_status=JobStatus.COMPLETE,
+                    payload=SECOND_VERSION,
+                ),
+            )
+        )
+
+        from evo.blockmodels import BlockModelAPIClient
+
+        client = BlockModelAPIClient.from_context(self.context)
+        block_model = _make_block_model_instance(self.context, client)
+
+        new_data = pd.DataFrame(
+            {
+                "i": [1, 2, 3],
+                "j": [4, 5, 6],
+                "k": [7, 8, 9],
+                "category": ["A", "B", "C"],
+            }
+        )
+
+        with mock.patch("evo.common.io.upload.StorageDestination") as mock_destination:
+            mock_destination.upload_file = mock.AsyncMock()
+            version = await block_model.add_attribute(new_data, "category")
+            mock_destination.upload_file.assert_called_once()
+
+        self.assertEqual(version.version_id, 2)
+
+
+class TestBaseTypedBlockModelSetAttributeUnits(TestWithConnector, TestWithStorage):
+    """Tests for BaseTypedBlockModel.set_attribute_units method."""
+
+    def setUp(self) -> None:
+        TestWithConnector.setUp(self)
+        TestWithStorage.setUp(self)
+        self.setup_universal_headers(get_header_metadata("evo.blockmodels.client"))
+        self._context = StaticContext.from_environment(
+            environment=self.environment,
+            connector=self.connector,
+            cache=self.cache,
+        )
+
+    @property
+    def context(self):
+        return self._context
+
+    async def test_set_attribute_units(self) -> None:
+        """Test setting units for attributes on a block model."""
+        from evo.blockmodels import BlockModelAPIClient
+
+        client = BlockModelAPIClient.from_context(self.context)
+        block_model = _make_block_model_instance(self.context, client)
+
+        mock_version = _mock_version(2, uuid.uuid4(), "3")
+
+        with mock.patch.object(BlockModelAPIClient, "update_column_metadata") as mock_update:
+            mock_update.return_value = mock_version
+            version = await block_model.set_attribute_units({"Au": "g/t", "density": "t/m3"})
+
+        mock_update.assert_called_once_with(
+            bm_id=BM_UUID,
+            column_updates={"Au": "g/t", "density": "t/m3"},
+        )
+        self.assertEqual(version.version_id, 2)
+        # Internal version should be updated
+        self.assertEqual(block_model.version.version_id, 2)
+
+
+class TestBaseTypedBlockModelVersionsAndMetadata(TestWithConnector, TestWithStorage):
+    """Tests for BaseTypedBlockModel.get_versions and get_block_model_metadata methods."""
+
+    def setUp(self) -> None:
+        TestWithConnector.setUp(self)
+        TestWithStorage.setUp(self)
+        self.setup_universal_headers(get_header_metadata("evo.blockmodels.client"))
+        self._context = StaticContext.from_environment(
+            environment=self.environment,
+            connector=self.connector,
+            cache=self.cache,
+        )
+
+    @property
+    def context(self):
+        return self._context
+
+    async def test_get_versions(self) -> None:
+        """Test retrieving all versions of a block model."""
+        from evo.blockmodels import BlockModelAPIClient
+
+        client = BlockModelAPIClient.from_context(self.context)
+        block_model = _make_block_model_instance(self.context, client)
+
+        v1 = _mock_version(1, uuid.uuid4(), "2")
+        v2 = _mock_version(2, uuid.uuid4(), "3")
+
+        with mock.patch.object(BlockModelAPIClient, "list_versions") as mock_list:
+            mock_list.return_value = [v2, v1]
+            versions = await block_model.get_versions()
+
+        mock_list.assert_called_once_with(BM_UUID)
+        self.assertEqual(len(versions), 2)
+        self.assertEqual(versions[0].version_id, 2)
+        self.assertEqual(versions[1].version_id, 1)
+
+    async def test_get_block_model_metadata(self) -> None:
+        """Test retrieving full block model metadata."""
+        from evo.blockmodels import BlockModelAPIClient
+
+        client = BlockModelAPIClient.from_context(self.context)
+        block_model = _make_block_model_instance(self.context, client)
+
+        mock_metadata = _mock_block_model(self.environment)
+
+        with mock.patch.object(BlockModelAPIClient, "get_block_model") as mock_get:
+            mock_get.return_value = client._bm_from_model(mock_metadata)
+            metadata = await block_model.get_block_model_metadata()
+
+        mock_get.assert_called_once_with(BM_UUID)
+        self.assertEqual(metadata.id, BM_UUID)
+        self.assertEqual(metadata.name, "Test BM")
+
+
+class TestBaseTypedBlockModelColumnIdMap(TestWithConnector, TestWithStorage):
+    """Tests for BaseTypedBlockModel._get_column_id_map method."""
+
+    def setUp(self) -> None:
+        TestWithConnector.setUp(self)
+        TestWithStorage.setUp(self)
+        self.setup_universal_headers(get_header_metadata("evo.blockmodels.client"))
+        self._context = StaticContext.from_environment(
+            environment=self.environment,
+            connector=self.connector,
+            cache=self.cache,
+        )
+
+    @property
+    def context(self):
+        return self._context
+
+    def test_get_column_id_map(self) -> None:
+        """Test that _get_column_id_map correctly maps column names to UUIDs."""
+        from evo.blockmodels import BlockModelAPIClient
+
+        client = BlockModelAPIClient.from_context(self.context)
+        block_model = _make_block_model_instance(self.context, client)
+
+        col_id_map = block_model._get_column_id_map()
+
+        self.assertIn("Au", col_id_map)
+        self.assertIn("density", col_id_map)
+        self.assertEqual(len(col_id_map), 2)
+
+    def test_get_column_id_map_with_invalid_uuid(self) -> None:
+        """Test that _get_column_id_map skips columns with invalid UUIDs."""
+        from evo.blockmodels import BlockModelAPIClient
+        from evo.blockmodels.data import BlockModel as BlockModelData
+        from evo.blockmodels.data import RegularGridDefinition, Version
+
+        client = BlockModelAPIClient.from_context(self.context)
+
+        version = Version(
+            bm_uuid=BM_UUID,
+            version_id=1,
+            version_uuid=FIRST_VERSION.version_uuid,
+            created_at=DATE,
+            created_by=USER,
+            comment="",
+            bbox=None,
+            base_version_id=None,
+            parent_version_id=0,
+            columns=[
+                models.Column(col_id="i", title="i_idx", data_type=models.DataType.UInt32),
+                models.Column(col_id=str(uuid.uuid4()), title="Au", data_type=models.DataType.Float64),
+            ],
+            geoscience_version_id="2",
+        )
+
+        metadata = BlockModelData(
+            environment=self.environment,
+            id=BM_UUID,
+            name="Test BM",
+            description=None,
+            created_at=DATE,
+            created_by=USER,
+            grid_definition=RegularGridDefinition(
+                model_origin=[0, 0, 0],
+                rotations=[],
+                n_blocks=[10, 10, 10],
+                block_size=[1.0, 1.0, 1.0],
+            ),
+            coordinate_reference_system=None,
+            size_unit_id=None,
+            bbox=BM_BBOX,
+            last_updated_at=DATE,
+            last_updated_by=USER,
+            geoscience_object_id=GOOSE_UUID,
+        )
+
+        block_model = RegularBlockModel(
+            client=client,
+            metadata=metadata,
+            version=version,
+            cell_data=pd.DataFrame(),
+            context=self.context,
+        )
+
+        col_id_map = block_model._get_column_id_map()
+
+        # "i" column has non-UUID col_id, should be skipped
+        self.assertNotIn("i_idx", col_id_map)
+        self.assertIn("Au", col_id_map)
+        self.assertEqual(len(col_id_map), 1)
+
+
+class TestBaseTypedBlockModelRefresh(TestWithConnector, TestWithStorage):
+    """Tests for BaseTypedBlockModel.refresh method."""
+
+    def setUp(self) -> None:
+        TestWithConnector.setUp(self)
+        TestWithStorage.setUp(self)
+        self.setup_universal_headers(get_header_metadata("evo.blockmodels.client"))
+        self._context = StaticContext.from_environment(
+            environment=self.environment,
+            connector=self.connector,
+            cache=self.cache,
+        )
+
+    @property
+    def context(self):
+        return self._context
+
+    async def test_refresh(self) -> None:
+        """Test refreshing a block model updates metadata, data, and version."""
+        from evo.blockmodels import BlockModelAPIClient
+
+        client = BlockModelAPIClient.from_context(self.context)
+        block_model = _make_block_model_instance(self.context, client)
+
+        refreshed_df = pd.DataFrame(
+            {"x": [0.5, 1.5, 2.5], "y": [0.5, 1.5, 2.5], "z": [0.5, 1.5, 2.5], "Au": [5.0, 6.0, 7.0]}
+        )
+        refreshed_table = pyarrow.Table.from_pandas(refreshed_df)
+        new_version = _mock_version(2, uuid.uuid4(), "3")
+
+        mock_bm = _mock_block_model(self.environment)
+
+        with (
+            mock.patch.object(BlockModelAPIClient, "get_block_model") as mock_get,
+            mock.patch.object(BlockModelAPIClient, "query_block_model_as_table") as mock_query,
+            mock.patch.object(BlockModelAPIClient, "list_versions") as mock_list,
+        ):
+            mock_get.return_value = client._bm_from_model(mock_bm)
+            mock_query.return_value = refreshed_table
+            mock_list.return_value = [new_version]
+
+            await block_model.refresh()
+
+        self.assertEqual(block_model.version.version_id, 2)
+        self.assertEqual(len(block_model.cell_data), 3)
+        self.assertIn("Au", block_model.cell_data.columns)
+
+
+class TestBaseTypedBlockModelGetContext(TestWithConnector, TestWithStorage):
+    """Tests for RegularBlockModel._get_context method."""
+
+    def setUp(self) -> None:
+        TestWithConnector.setUp(self)
+        TestWithStorage.setUp(self)
+        self.setup_universal_headers(get_header_metadata("evo.blockmodels.client"))
+        self._context = StaticContext.from_environment(
+            environment=self.environment,
+            connector=self.connector,
+            cache=self.cache,
+        )
+
+    @property
+    def context(self):
+        return self._context
+
+    def test_get_context_returns_provided_context(self) -> None:
+        """Test _get_context returns the context provided at construction."""
+        from evo.blockmodels import BlockModelAPIClient
+
+        client = BlockModelAPIClient.from_context(self.context)
+        block_model = _make_block_model_instance(self.context, client)
+
+        ctx = block_model._get_context()
+        self.assertEqual(ctx.get_environment(), self.context.get_environment())
+
+    def test_get_context_builds_from_client_when_none(self) -> None:
+        """Test _get_context builds a StaticContext from client when no context provided."""
+        from evo.blockmodels import BlockModelAPIClient
+        from evo.blockmodels.data import BlockModel as BlockModelData
+        from evo.blockmodels.data import RegularGridDefinition, Version
+
+        client = BlockModelAPIClient.from_context(self.context)
+
+        metadata = BlockModelData(
+            environment=self.environment,
+            id=BM_UUID,
+            name="Test BM",
+            description=None,
+            created_at=DATE,
+            created_by=USER,
+            grid_definition=RegularGridDefinition(
+                model_origin=[0, 0, 0],
+                rotations=[],
+                n_blocks=[10, 10, 10],
+                block_size=[1.0, 1.0, 1.0],
+            ),
+            coordinate_reference_system=None,
+            size_unit_id=None,
+            bbox=BM_BBOX,
+            last_updated_at=DATE,
+            last_updated_by=USER,
+            geoscience_object_id=GOOSE_UUID,
+        )
+        version = Version(
+            bm_uuid=BM_UUID,
+            version_id=1,
+            version_uuid=FIRST_VERSION.version_uuid,
+            created_at=DATE,
+            created_by=USER,
+            comment="",
+            bbox=None,
+            base_version_id=None,
+            parent_version_id=0,
+            columns=[],
+            geoscience_version_id="2",
+        )
+
+        block_model = RegularBlockModel(
+            client=client,
+            metadata=metadata,
+            version=version,
+            cell_data=pd.DataFrame(),
+            context=None,  # No context provided
+        )
+
+        ctx = block_model._get_context()
+        self.assertIsNotNone(ctx)
+        self.assertEqual(ctx.get_environment(), self.environment)

@@ -27,10 +27,15 @@ from .data import (
 )
 from .interfaces import IAuthorizer, ICache, IContext, IFeedback, ITransport
 from .service import BaseAPIClient
+from .typed import BoundingBox as BoundingBox
+from .typed import Point3 as Point3
+from .typed import Size3d as Size3d
+from .typed import Size3i as Size3i
 
 __all__ = [
     "APIConnector",
     "BaseAPIClient",
+    "BoundingBox",
     "DependencyStatus",
     "EmptyResponse",
     "Environment",
@@ -45,10 +50,13 @@ __all__ = [
     "ITransport",
     "NoAuth",
     "Page",
+    "Point3",
     "RequestMethod",
     "ResourceMetadata",
     "ServiceHealth",
     "ServiceStatus",
     "ServiceUser",
+    "Size3d",
+    "Size3i",
     "StaticContext",
 ]

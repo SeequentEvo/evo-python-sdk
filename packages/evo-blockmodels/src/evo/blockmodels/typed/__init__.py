@@ -11,6 +11,7 @@
 
 """Typed access for block models with pandas DataFrame support."""
 
+from .base import BaseTypedBlockModel
 from .regular_block_model import RegularBlockModel, RegularBlockModelData
 from .report import (
     Aggregation,
@@ -26,6 +27,7 @@ from .units import UnitInfo, Units, UnitType, get_available_units
 
 __all__ = [
     "Aggregation",
+    "BaseTypedBlockModel",
     "BoundingBox",
     "MassUnits",
     "Point3",

@@ -11,6 +11,7 @@
 
 from .client import BlockModelAPIClient
 from .typed import (
+    BaseTypedBlockModel,
     BoundingBox,
     Point3,
     RegularBlockModel,
@@ -22,6 +23,7 @@ from .typed import (
 )
 
 __all__ = [
+    "BaseTypedBlockModel",
     "BlockModelAPIClient",
     "BoundingBox",
     "Point3",

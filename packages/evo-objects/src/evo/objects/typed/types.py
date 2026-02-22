@@ -19,8 +19,8 @@ import numpy.typing as npt
 import pydantic
 from pydantic_core import core_schema
 
-# Import basic geometry types from evo.blockmodels and re-export
-from evo.blockmodels.typed.types import Point3, Size3d, Size3i
+# Import basic geometry types from evo.common and re-export
+from evo.common.typed import Point3, Size3d, Size3i
 
 __all__ = [
     "BoundingBox",

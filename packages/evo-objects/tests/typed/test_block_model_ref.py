@@ -466,3 +466,116 @@ class TestBlockModelAttributeTarget(TestCase):
         pending = attrs["new_attribute"]
         self.assertIsInstance(pending, BlockModelPendingAttribute)
         self.assertEqual(pending._obj, mock_block_model)
+
+
+class TestBlockModelOptionalDependency(TestCase):
+    """Tests verifying that BlockModel metadata-only operations work regardless of
+    evo-blockmodels availability, and that data operations correctly use evo-blockmodels."""
+
+    def test_geometry_always_available(self):
+        """Test that geometry parsing works without data operations."""
+        from evo.objects.typed.block_model_ref import _parse_geometry
+
+        geometry_dict = {
+            "model_type": "regular",
+            "origin": [100.0, 200.0, 300.0],
+            "n_blocks": [10, 20, 30],
+            "block_size": [1.0, 2.0, 3.0],
+        }
+
+        geom = _parse_geometry(geometry_dict)
+        self.assertEqual(geom.model_type, "regular")
+        self.assertEqual(geom.origin.x, 100.0)
+
+    def test_attributes_always_available(self):
+        """Test that attribute parsing works without data operations."""
+        from evo.objects.typed.block_model_ref import _parse_attributes
+
+        attrs_list = [
+            {"name": "grade", "attribute_type": "Float64"},
+        ]
+
+        attrs = _parse_attributes(attrs_list)
+        self.assertEqual(len(attrs), 1)
+        self.assertEqual(attrs[0].name, "grade")
+
+    def test_block_model_data_compute_bounding_box(self):
+        """Test that bounding box computation works without blockmodels."""
+        geom = BlockModelGeometry(
+            model_type="regular",
+            origin=Point3(100.0, 200.0, 300.0),
+            n_blocks=Size3i(10, 20, 30),
+            block_size=Size3d(1.0, 2.0, 3.0),
+        )
+        data = BlockModelData(
+            name="Test",
+            block_model_uuid=uuid.uuid4(),
+            geometry=geom,
+        )
+        bbox = data.compute_bounding_box()
+        self.assertEqual(bbox.min_x, 100.0)
+        self.assertEqual(bbox.max_x, 110.0)
+
+    def test_require_blockmodels_function(self):
+        """Test that _require_blockmodels works when blockmodels IS available."""
+        from evo.objects.typed.block_model_ref import _BLOCKMODELS_AVAILABLE, _require_blockmodels
+
+        # In test environment, blockmodels should be available
+        self.assertTrue(_BLOCKMODELS_AVAILABLE)
+        # Should not raise when blockmodels is available
+        _require_blockmodels("Test operation")
+
+    def test_regular_block_model_data_importable(self):
+        """Test that RegularBlockModelData is importable from evo.objects.typed."""
+        from evo.objects.typed import RegularBlockModelData as RBD
+
+        data = RBD(
+            name="Test",
+            origin=Point3(0, 0, 0),
+            n_blocks=Size3i(10, 10, 10),
+            block_size=Size3d(1.0, 1.0, 1.0),
+        )
+        self.assertEqual(data.name, "Test")
+
+    def test_report_types_importable_when_blockmodels_available(self):
+        """Test that report types are importable from evo.objects.typed when blockmodels installed."""
+        from evo.objects.typed.block_model_ref import _BLOCKMODELS_AVAILABLE
+
+        if _BLOCKMODELS_AVAILABLE:
+            from evo.objects.typed import Report, ReportSpecificationData
+
+            self.assertIsNotNone(Report)
+            self.assertIsNotNone(ReportSpecificationData)
+
+    def test_common_types_from_evo_common(self):
+        """Test that Point3, Size3d, Size3i are available from evo.common.typed."""
+        from evo.common.typed import BoundingBox as CommonBBox
+        from evo.common.typed import Point3 as CommonPoint3
+        from evo.common.typed import Size3d as CommonSize3d
+        from evo.common.typed import Size3i as CommonSize3i
+
+        p = CommonPoint3(1.0, 2.0, 3.0)
+        self.assertEqual(p.x, 1.0)
+
+        s = CommonSize3i(10, 20, 30)
+        self.assertEqual(s.total_size, 6000)
+
+        sd = CommonSize3d(1.0, 2.0, 3.0)
+        self.assertEqual(sd.dx, 1.0)
+
+        bbox = CommonBBox.from_origin_and_size(p, s, sd)
+        self.assertEqual(bbox.x_min, 1.0)
+        self.assertEqual(bbox.x_max, 11.0)
+
+    def test_types_are_same_across_packages(self):
+        """Test that Point3/Size3d/Size3i from evo.common.typed and evo.objects.typed are the same type."""
+        from evo.common.typed import Point3 as CommonPoint3
+        from evo.common.typed import Size3d as CommonSize3d
+        from evo.common.typed import Size3i as CommonSize3i
+        from evo.objects.typed import Point3 as ObjectsPoint3
+        from evo.objects.typed import Size3d as ObjectsSize3d
+        from evo.objects.typed import Size3i as ObjectsSize3i
+
+        self.assertIs(CommonPoint3, ObjectsPoint3)
+        self.assertIs(CommonSize3d, ObjectsSize3d)
+        self.assertIs(CommonSize3i, ObjectsSize3i)

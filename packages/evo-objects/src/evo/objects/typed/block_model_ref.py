@@ -23,19 +23,6 @@ from dataclasses import dataclass, field
 from typing import Annotated, Any, Literal
 from uuid import UUID
 
-import pandas as pd
-
-from evo.blockmodels import BlockModelAPIClient
-from evo.blockmodels import RegularBlockModel as BMRegularBlockModel
-from evo.blockmodels import RegularBlockModelData as BMRegularBlockModelData
-from evo.blockmodels.data import BlockModel as BlockModelMetadata
-from evo.blockmodels.data import RegularGridDefinition, Version
-from evo.blockmodels.endpoints.models import ColumnHeaderType
-from evo.blockmodels.typed import Point3 as BMPoint3
-from evo.blockmodels.typed import Report, ReportSpecificationData
-from evo.blockmodels.typed import Size3d as BMSize3d
-from evo.blockmodels.typed import Size3i as BMSize3i
-from evo.blockmodels.typed._utils import dataframe_to_pyarrow
 from evo.common import IContext, IFeedback
 from evo.common.utils import NoFeedback
 from evo.objects import ObjectReference, SchemaVersion
@@ -49,6 +36,38 @@ if sys.version_info >= (3, 11):
     from typing import Self
 else:
     from typing_extensions import Self
+
+# Optional dependency: evo-blockmodels
+try:
+    import pandas as pd
+except ImportError:
+    _PD_AVAILABLE = False
+else:
+    _PD_AVAILABLE = True
+
+try:
+    from evo.blockmodels import BlockModelAPIClient
+    from evo.blockmodels import RegularBlockModel as BMRegularBlockModel
+    from evo.blockmodels import RegularBlockModelData as BMRegularBlockModelData
+    from evo.blockmodels.data import BlockModel as BlockModelMetadata
+    from evo.blockmodels.data import RegularGridDefinition, Version
+    from evo.blockmodels.typed import Point3 as BMPoint3
+    from evo.blockmodels.typed import Report, ReportSpecificationData
+    from evo.blockmodels.typed import Size3d as BMSize3d
+    from evo.blockmodels.typed import Size3i as BMSize3i
+    from evo.blockmodels.typed.base import BaseTypedBlockModel
+except ImportError:
+    _BLOCKMODELS_AVAILABLE = False
+else:
+    _BLOCKMODELS_AVAILABLE = True
+
+
+def _require_blockmodels(operation: str = "This operation") -> None:
+    """Raise ImportError if evo-blockmodels is not installed."""
+    if not _BLOCKMODELS_AVAILABLE:
+        raise ImportError(
+            f"{operation} requires the 'evo-blockmodels' package. Install it with: pip install evo-objects[blockmodels]"
+        )
 
 
 __all__ = [
@@ -247,33 +266,53 @@ class BlockModelAttributes:
         return f"BlockModelAttributes({names})"
 
 
-@dataclass(frozen=True, kw_only=True)
-class RegularBlockModelData:
-    """Data for creating a regular block model.
+if _BLOCKMODELS_AVAILABLE and _PD_AVAILABLE:
 
-    This creates a new block model in the Block Model Service and a corresponding
-    Geoscience Object reference.
+    @dataclass(frozen=True, kw_only=True)
+    class RegularBlockModelData:
+        """Data for creating a regular block model.
 
-    :param name: The name of the block model.
-    :param origin: The origin point (x, y, z) of the block model.
-    :param n_blocks: The number of blocks in each dimension (nx, ny, nz).
-    :param block_size: The size of each block (dx, dy, dz).
-    :param cell_data: DataFrame with block data. Must contain (x, y, z) or (i, j, k) columns.
-    :param description: Optional description.
-    :param crs: Coordinate reference system (e.g., "EPSG:28354").
-    :param size_unit_id: Unit for block sizes (e.g., "m").
-    :param units: Dictionary mapping column names to unit IDs.
-    """
+        This creates a new block model in the Block Model Service and a corresponding
+        Geoscience Object reference.
 
-    name: str
-    origin: Point3
-    n_blocks: Size3i
-    block_size: Size3d
-    cell_data: pd.DataFrame | None = None
-    description: str | None = None
-    crs: str | None = None
-    size_unit_id: str | None = None
-    units: dict[str, str] = field(default_factory=dict)
+        :param name: The name of the block model.
+        :param origin: The origin point (x, y, z) of the block model.
+        :param n_blocks: The number of blocks in each dimension (nx, ny, nz).
+        :param block_size: The size of each block (dx, dy, dz).
+        :param cell_data: DataFrame with block data. Must contain (x, y, z) or (i, j, k) columns.
+        :param description: Optional description.
+        :param crs: Coordinate reference system (e.g., "EPSG:28354").
+        :param size_unit_id: Unit for block sizes (e.g., "m").
+        :param units: Dictionary mapping column names to unit IDs.
+        """
+
+        name: str
+        origin: Point3
+        n_blocks: Size3i
+        block_size: Size3d
+        cell_data: "pd.DataFrame | None" = None
+        description: str | None = None
+        crs: str | None = None
+        size_unit_id: str | None = None
+        units: dict[str, str] = field(default_factory=dict)
+
+else:
+
+    @dataclass(frozen=True, kw_only=True)
+    class RegularBlockModelData:  # type: ignore[no-redef]
+        """Data for creating a regular block model.
+
+        Requires evo-blockmodels to be installed: pip install evo-objects[blockmodels]
+        """
+
+        name: str
+        origin: Point3
+        n_blocks: Size3i
+        block_size: Size3d
+        description: str | None = None
+        crs: str | None = None
+        size_unit_id: str | None = None
+        units: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -397,6 +436,10 @@ class BlockModel(BaseSpatialObject):
     This object acts as a proxy, allowing you to access block model data and attributes
     through the Block Model Service while the reference itself is stored as a Geoscience Object.
 
+    Metadata-only operations (geometry, attributes, name) always work. Data operations
+    (to_dataframe, add_attribute, create_report, etc.) require the evo-blockmodels package
+    to be installed: ``pip install evo-objects[blockmodels]``
+
     Example usage:
 
         # Create a new regular block model
@@ -416,10 +459,10 @@ class BlockModel(BaseSpatialObject):
         print(f"Origin: {bm.geometry.origin}")
         print(f"Size: {bm.geometry.n_blocks}")
 
-        # Access data through the Block Model Service
-        df = await bm.get_data(columns=["*"])
+        # Access data through the Block Model Service (requires evo-blockmodels)
+        df = await bm.to_dataframe(columns=["*"])
 
-        # Create a new attribute on the block model
+        # Create a new attribute on the block model (requires evo-blockmodels)
         await bm.add_attribute(data_df, "new_attribute")
     """
 
@@ -458,80 +501,65 @@ class BlockModel(BaseSpatialObject):
                 return attr
         return None
 
-    def _get_block_model_client(self) -> BlockModelAPIClient:
-        """Get a BlockModelAPIClient for the current context."""
+    def _get_block_model_client(self) -> "BlockModelAPIClient":
+        """Get a BlockModelAPIClient for the current context.
+
+        :raises ImportError: If evo-blockmodels is not installed.
+        """
+        _require_blockmodels("Accessing block model data")
         return BlockModelAPIClient.from_context(self._api_context)
 
-    async def get_block_model_metadata(self) -> BlockModelMetadata:
+    async def _get_or_create_typed_block_model(self) -> "BaseTypedBlockModel":
+        """Lazily create a typed block model delegate for data operations.
+
+        All data operations are delegated to a BaseTypedBlockModel instance
+        (currently RegularBlockModel), avoiding code duplication between the
+        reference object and typed objects in evo-blockmodels.
+
+        :raises ImportError: If evo-blockmodels is not installed.
+        """
+        _require_blockmodels("Accessing block model data")
+
+        if not hasattr(self, "_typed_bm") or self._typed_bm is None:
+            client = self._get_block_model_client()
+            bm_metadata = await client.get_block_model(self.block_model_uuid)
+            versions = await client.list_versions(self.block_model_uuid)
+            version = versions[0] if versions else None
+
+            self._typed_bm = BMRegularBlockModel(
+                client=client,
+                metadata=bm_metadata,
+                version=version,
+                cell_data=pd.DataFrame(),
+                context=self._api_context,
+            )
+
+        return self._typed_bm
+
+    async def get_block_model_metadata(self) -> "BlockModelMetadata":
         """Get the full block model metadata from the Block Model Service.
 
         :return: The BlockModel metadata from the Block Model Service.
+        :raises ImportError: If evo-blockmodels is not installed.
         """
-        client = self._get_block_model_client()
-        return await client.get_block_model(self.block_model_uuid)
+        typed_bm = await self._get_or_create_typed_block_model()
+        return await typed_bm.get_block_model_metadata()
 
-    async def get_versions(self) -> list[Version]:
+    async def get_versions(self) -> "list[Version]":
         """Get all versions of this block model.
 
         :return: List of versions, ordered from newest to oldest.
+        :raises ImportError: If evo-blockmodels is not installed.
         """
-        client = self._get_block_model_client()
-        return await client.list_versions(self.block_model_uuid)
-
-    async def get_data(
-        self,
-        columns: list[str] | None = None,
-        version_uuid: UUID | None | Literal["latest"] = "latest",
-        fb: IFeedback = NoFeedback,
-    ) -> pd.DataFrame:
-        """Get block model data as a DataFrame.
-
-        :param columns: List of column names to retrieve. Defaults to all columns ["*"].
-        :param version_uuid: Specific version to query. Use "latest" (default) to get the latest version,
-            or None to use the version referenced by this object.
-        :param fb: Optional feedback interface for progress reporting.
-        :return: DataFrame containing the block model data with user-friendly column names.
-        """
-        client = self._get_block_model_client()
-
-        fb.progress(0.0, "Querying block model data...")
-
-        # Determine which version to query
-        query_version: UUID | None = None
-        if version_uuid == "latest":
-            # Get the latest version (pass None to block model service)
-            query_version = None
-        elif version_uuid is None:
-            # Use the referenced version
-            query_version = self.block_model_version_uuid
-        else:
-            # Use the explicitly provided version
-            query_version = version_uuid
-
-        # Default to all columns
-        if columns is None:
-            columns = ["*"]
-
-        table = await client.query_block_model_as_table(
-            bm_id=self.block_model_uuid,
-            columns=columns,
-            version_uuid=query_version,
-            column_headers=ColumnHeaderType.name,  # Use column titles, not UUIDs
-        )
-
-        fb.progress(0.9, "Converting data...")
-
-        result = table.to_pandas()
-
-        fb.progress(1.0, "Data retrieved")
-        return result
+        typed_bm = await self._get_or_create_typed_block_model()
+        return await typed_bm.get_versions()
 
     async def to_dataframe(
         self,
         columns: list[str] | None = None,
-        version_uuid: UUID | None | Literal["latest"] = "latest",
+        version_uuid: "UUID | None | Literal['latest']" = "latest",
         fb: IFeedback = NoFeedback,
-    ) -> pd.DataFrame:
+    ) -> "pd.DataFrame":
         """Get block model data as a DataFrame.
 
         This is the preferred method for accessing block model data. It retrieves
@@ -542,12 +570,14 @@ class BlockModel(BaseSpatialObject):
             or None to use the version referenced by this object.
         :param fb: Optional feedback interface for progress reporting.
         :return: DataFrame containing the block model data with user-friendly column names.
+        :raises ImportError: If evo-blockmodels is not installed.
 
         Example:
             >>> df = await block_model.to_dataframe()
             >>> df.head()
         """
-        return await self.get_data(columns=columns, version_uuid=version_uuid, fb=fb)
+        typed_bm = await self._get_or_create_typed_block_model()
+        return await typed_bm.to_dataframe(columns=columns, version_uuid=version_uuid, fb=fb)
 
     async def refresh(self) -> "BlockModel":
         """Refresh this block model object with the latest data from the server.
@@ -562,18 +592,18 @@ class BlockModel(BaseSpatialObject):
             >>> block_model = await block_model.refresh()
             >>> block_model.attributes  # Now shows the new attributes
         """
-        # Reload the object from the server using its UUID (gets latest version)
-        # Note: We use object_from_uuid instead of object_from_reference to ensure
-        # we get the latest version, not the version that was originally loaded
+        # Refresh the typed block model delegate if it exists, so it's immediately up-to-date
+        if hasattr(self, "_typed_bm") and self._typed_bm is not None:
+            await self._typed_bm.refresh()
         return await object_from_uuid(self._api_context, self.metadata.id)
 
     async def add_attribute(
         self,
-        data: pd.DataFrame,
+        data: "pd.DataFrame",
         attribute_name: str,
         unit: str | None = None,
         fb: IFeedback = NoFeedback,
-    ) -> Version:
+    ) -> "Version":
         """Add a new attribute to the block model.
 
         The DataFrame must contain geometry columns (i, j, k) or (x, y, z) and the
@@ -584,35 +614,20 @@ class BlockModel(BaseSpatialObject):
         :param unit: Optional unit ID for the attribute (must be a valid unit ID from the Block Model Service).
         :param fb: Optional feedback interface for progress reporting.
         :return: The new version created by adding the attribute.
+        :raises ImportError: If evo-blockmodels is not installed.
         """
-        client = self._get_block_model_client()
-
-        fb.progress(0.0, "Preparing attribute data...")
-
-        # Convert to PyArrow table with proper uint32 casting for i,j,k
-        table = dataframe_to_pyarrow(data)
-
-        fb.progress(0.2, "Uploading attribute...")
-
-        units = {attribute_name: unit} if unit else None
-        version = await client.add_new_columns(
-            bm_id=self.block_model_uuid,
-            data=table,
-            units=units,
-        )
-
-        fb.progress(1.0, "Attribute added")
-        return version
+        typed_bm = await self._get_or_create_typed_block_model()
+        return await typed_bm.add_attribute(data, attribute_name, unit=unit, fb=fb)
 
     async def update_attributes(
         self,
-        data: pd.DataFrame,
+        data: "pd.DataFrame",
         new_columns: list[str] | None = None,
         update_columns: set[str] | None = None,
         delete_columns: set[str] | None = None,
         units: dict[str, str] | None = None,
         fb: IFeedback = NoFeedback,
-    ) -> Version:
+    ) -> "Version":
         """Update attributes on the block model.
 
         :param data: DataFrame containing geometry columns and attribute data.
@@ -622,27 +637,17 @@ class BlockModel(BaseSpatialObject):
         :param units: Dictionary mapping column names to unit IDs (must be valid unit IDs from the Block Model Service).
         :param fb: Optional feedback interface for progress reporting.
         :return: The new version created by the update.
+        :raises ImportError: If evo-blockmodels is not installed.
         """
-        client = self._get_block_model_client()
-
-        fb.progress(0.0, "Preparing update...")
-
-        # Convert to PyArrow table with proper uint32 casting for i,j,k
-        table = dataframe_to_pyarrow(data)
-
-        fb.progress(0.2, "Uploading changes...")
-
-        version = await client.update_block_model_columns(
-            bm_id=self.block_model_uuid,
-            data=table,
-            new_columns=new_columns or [],
+        typed_bm = await self._get_or_create_typed_block_model()
+        return await typed_bm.update_attributes(
+            data,
+            new_columns=new_columns,
             update_columns=update_columns,
             delete_columns=delete_columns,
             units=units,
+            fb=fb,
         )
-
-        fb.progress(1.0, "Attributes updated")
-        return version
 
     @classmethod
     async def _data_to_dict(cls, data: BlockModelData, context: IContext) -> dict[str, Any]:
@@ -703,7 +708,10 @@ class BlockModel(BaseSpatialObject):
         :param path: Optional path for the Geoscience Object.
         :param fb: Optional feedback interface for progress reporting.
         :return: A new BlockModel instance.
+        :raises ImportError: If evo-blockmodels is not installed.
         """
+        _require_blockmodels("Creating block models")
+
         fb.progress(0.0, "Creating block model...")
 
         # Convert to evo-blockmodels data format
@@ -761,7 +769,9 @@ class BlockModel(BaseSpatialObject):
         :param path: Optional path for the Geoscience Object.
         :param fb: Optional feedback interface for progress reporting.
         :return: A new BlockModel instance.
+        :raises ImportError: If evo-blockmodels is not installed.
         """
+        _require_blockmodels("Creating block model references from the Block Model Service")
         client = BlockModelAPIClient.from_context(context)
 
         fb.progress(0.0, "Fetching block model metadata...")
@@ -860,6 +870,7 @@ class BlockModel(BaseSpatialObject):
         :param units: Dictionary mapping attribute names to unit IDs (e.g., {"Au": "g/t", "density": "t/m3"}).
         :param fb: Optional feedback interface for progress reporting.
         :return: The updated BlockModel instance (refreshed from server).
+        :raises ImportError: If evo-blockmodels is not installed.
 
         Example:
             >>> from evo.blockmodels import Units
@@ -868,36 +879,9 @@ class BlockModel(BaseSpatialObject):
             ...     "density": Units.TONNES_PER_CUBIC_METRE,
             ... })
         """
-        fb.progress(0.0, "Updating attribute units...")
-
-        client = self._get_block_model_client()
-
-        fb.progress(0.3, "Applying unit updates...")
-
-        # Use the client's update_column_metadata method
-        await client.update_column_metadata(
-            bm_id=self.block_model_uuid,
-            column_updates=units,
-        )
-
-        fb.progress(0.9, "Refreshing block model...")
-
-        # Refresh to get updated metadata
-        result = await self.refresh()
-
-        fb.progress(1.0, "Units updated")
-        return result
-
-    def _get_column_id_map(self) -> dict[str, UUID]:
-        """Get a mapping of column names to their UUIDs.
-
-        :return: Dictionary mapping column names to UUIDs.
-        """
-        result = {}
-        for attr in self.attributes:
-            if attr.block_model_column_uuid:
-                result[attr.name] = attr.block_model_column_uuid
-        return result
+        typed_bm = await self._get_or_create_typed_block_model()
+        await typed_bm.set_attribute_units(units, fb=fb)
+        return await self.refresh()
 
     async def create_report(
         self,
@@ -913,6 +897,7 @@ class BlockModel(BaseSpatialObject):
         :param data: The report specification data.
         :param fb: Optional feedback interface for progress reporting.
         :return: A Report instance representing the created report.
+        :raises ImportError: If evo-blockmodels is not installed.
 
         Example:
             >>> from evo.blockmodels.typed import ReportSpecificationData, ReportColumnSpec, ReportCategorySpec
@@ -926,45 +911,15 @@ class BlockModel(BaseSpatialObject):
             ... ))
             >>> report  # Pretty-prints with BlockSync link
         """
-        fb.progress(0.0, "Preparing report specification...")
+        typed_bm = await self._get_or_create_typed_block_model()
+        return await typed_bm.create_report(data, fb=fb)
 
-        # Refresh to ensure we have latest column information
-        refreshed = await self.refresh()
-        column_id_map = refreshed._get_column_id_map()
-
-        fb.progress(0.2, "Creating report...")
-
-        report = await Report.create(
-            context=self._api_context,
-            block_model_uuid=self.block_model_uuid,
-            data=data,
-            column_id_map=column_id_map,
-            fb=fb,
-            block_model_name=self.name,
-        )
-
-        return report
-
-    async def list_reports(self, fb: IFeedback = NoFeedback) -> list["Report"]:
+    async def list_reports(self, fb: IFeedback = NoFeedback) -> "list[Report]":
         """List all report specifications for this block model.
 
         :param fb: Optional feedback interface for progress reporting.
         :return: List of Report instances.
+        :raises ImportError: If evo-blockmodels is not installed.
         """
-        fb.progress(0.0, "Fetching reports...")
-
-        client = self._get_block_model_client()
-        environment = self._api_context.get_environment()
-
-        result = await client._reports_api.list_block_model_report_specifications(
-            workspace_id=str(environment.workspace_id),
-            org_id=str(environment.org_id),
-            bm_id=str(self.block_model_uuid),
-        )
-
-        fb.progress(1.0, f"Found {result.total} reports")
-
-        return [
-            Report(self._api_context, self.block_model_uuid, spec, block_model_name=self.name)
-            for spec in result.results
-        ]
+        typed_bm = await self._get_or_create_typed_block_model()
+        return await typed_bm.list_reports(fb=fb)

@@ -108,3 +108,27 @@ __all__ = [
     "object_from_reference",
     "object_from_uuid",
 ]
+
+# Conditionally export report types when evo-blockmodels is installed
+try:
+    from evo.blockmodels.typed import (  # noqa: F401
+        Aggregation,
+        MassUnits,
+        Report,
+        ReportCategorySpec,
+        ReportColumnSpec,
+        ReportResult,
+        ReportSpecificationData,
+    )
+
+    __all__ += [
+        "Aggregation",
+        "MassUnits",
+        "Report",
+        "ReportCategorySpec",
+        "ReportColumnSpec",
+        "ReportResult",
+        "ReportSpecificationData",
+    ]
+except ImportError:
+    pass

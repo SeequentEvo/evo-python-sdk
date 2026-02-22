@@ -18,13 +18,14 @@ from uuid import UUID
 
 import pandas as pd
 
-from evo.common import IContext, IFeedback
+from evo.common import IContext, IFeedback, StaticContext
 from evo.common.utils import NoFeedback
 
 from ..client import BlockModelAPIClient
 from ..data import BlockModel, RegularGridDefinition, Version
 from ..endpoints.models import BBox, BBoxXYZ, RotationAxis
-from ._utils import dataframe_to_pyarrow, get_attribute_columns, pyarrow_to_dataframe
+from ._utils import dataframe_to_pyarrow, pyarrow_to_dataframe
+from .base import BaseTypedBlockModel
 from .types import Point3, Size3d, Size3i
 
 __all__ = [
@@ -63,7 +64,7 @@ class RegularBlockModelData:
     units: dict[str, str] = field(default_factory=dict)
 
 
-class RegularBlockModel:
+class RegularBlockModel(BaseTypedBlockModel):
     """A typed wrapper for regular block models providing pandas DataFrame access.
 
     This class provides a high-level interface for creating, retrieving, and updating
@@ -98,6 +99,7 @@ class RegularBlockModel:
         metadata: BlockModel,
         version: Version,
         cell_data: pd.DataFrame,
+        context: IContext | None = None,
     ) -> None:
         """Initialize a RegularBlockModel instance.
 
@@ -105,36 +107,10 @@ class RegularBlockModel:
         :param metadata: The block model metadata.
         :param version: The current version information.
         :param cell_data: The cell data as a pandas DataFrame.
+        :param context: Optional IContext for report and other operations.
         """
-        self._client = client
-        self._metadata = metadata
-        self._version = version
-        self._cell_data = cell_data
-
-    @property
-    def id(self) -> UUID:
-        """The unique identifier of the block model."""
-        return self._metadata.id
-
-    @property
-    def name(self) -> str:
-        """The name of the block model."""
-        return self._metadata.name
-
-    @property
-    def description(self) -> str | None:
-        """The description of the block model."""
-        return self._metadata.description
-
-    @property
-    def origin(self) -> Point3:
-        """The origin point of the block model grid."""
-        grid_def = self._metadata.grid_definition
-        return Point3(
-            x=grid_def.model_origin[0],
-            y=grid_def.model_origin[1],
-            z=grid_def.model_origin[2],
-        )
+        super().__init__(client=client, metadata=metadata, version=version, cell_data=cell_data)
+        self._context = context
 
     @property
     def n_blocks(self) -> Size3i:
@@ -165,20 +141,16 @@ class RegularBlockModel:
         """The rotations applied to the block model."""
         return list(self._metadata.grid_definition.rotations)
 
-    @property
-    def metadata(self) -> BlockModel:
-        """The full block model metadata."""
-        return self._metadata
-
-    @property
-    def version(self) -> Version:
-        """The current version information."""
-        return self._version
-
-    @property
-    def cell_data(self) -> pd.DataFrame:
-        """The cell data as a pandas DataFrame."""
-        return self._cell_data
+    def _get_context(self) -> IContext:
+        """Get the IContext for this block model."""
+        if self._context is not None:
+            return self._context
+        # Build a context from the client's internal state
+        return StaticContext.from_environment(
+            environment=self._client._environment,
+            connector=self._client._connector,
+            cache=self._client._cache,
+        )
 
     @classmethod
     async def create(
@@ -239,6 +211,7 @@ class RegularBlockModel:
             metadata=bm,
             version=version,
             cell_data=cell_data,
+            context=context,
         )
 
     @classmethod
@@ -293,12 +266,10 @@ class RegularBlockModel:
         cell_data = pyarrow_to_dataframe(table)
 
         # Get version information
-        versions = await client.list_versions(bm_id, limit=1)
+        versions = await client.list_versions(bm_id)
         if version_id is not None:
-            # Find the specific version
-            all_versions = await client.list_versions(bm_id)
             version = next(
-                (v for v in all_versions if v.version_uuid == version_id),
+                (v for v in versions if v.version_uuid == version_id),
                 versions[0] if versions else None,
             )
         else:
@@ -311,79 +282,5 @@ class RegularBlockModel:
             metadata=bm,
             version=version,
             cell_data=cell_data,
+            context=context,
         )
-
-    async def update_attributes(
-        self,
-        data: pd.DataFrame,
-        new_columns: list[str] | None = None,
-        update_columns: set[str] | None = None,
-        delete_columns: set[str] | None = None,
-        units: dict[str, str] | None = None,
-        fb: IFeedback = NoFeedback,
-    ) -> Version:
-        """Update attributes in the block model.
-
-        :param data: DataFrame containing the updated data with geometry columns.
-        :param new_columns: List of new column names to add.
-        :param update_columns: Set of existing column names to update.
-        :param delete_columns: Set of column names to delete.
-        :param units: Optional dictionary mapping column names to unit identifiers.
-        :param fb: Optional feedback interface for progress reporting.
-        :return: The new version created by the update.
-        """
-        fb.progress(0.0, "Preparing attribute update...")
-
-        # Convert DataFrame to PyArrow Table
-        table = dataframe_to_pyarrow(data)
-
-        fb.progress(0.2, "Uploading updated data...")
-
-        # Determine columns to add/update if not specified
-        if new_columns is None and update_columns is None:
-            # Auto-detect: all non-geometry columns are new
-            new_columns = get_attribute_columns(data)
-
-        # Call the client method
-        version = await self._client.update_block_model_columns(
-            bm_id=self._metadata.id,
-            data=table,
-            new_columns=new_columns or [],
-            update_columns=update_columns,
-            delete_columns=delete_columns,
-            units=units,
-        )
-
-        fb.progress(0.4, "Data uploaded, processing...")
-
-        # Update internal state
-        self._version = version
-        self._cell_data = data.copy()
-
-        fb.progress(1.0, "Attributes updated successfully")
-
-        return version
-
-    async def refresh(self, fb: IFeedback = NoFeedback) -> None:
-        """Refresh the block model data from the server.
-
-        :param fb: Optional feedback interface for progress reporting.
-        """
-        fb.progress(0.0, "Refreshing block model...")
-
-        # Re-fetch metadata
-        self._metadata = await self._client.get_block_model(self._metadata.id)
-
-        # Re-fetch data
-        table = await self._client.query_block_model_as_table(
-            bm_id=self._metadata.id,
-            columns=["*"],
-        )
-        self._cell_data = pyarrow_to_dataframe(table)
-
-        # Update version
-        versions = await self._client.list_versions(self._metadata.id, limit=1)
-        if versions:
-            self._version = versions[0]
-
-        fb.progress(1.0, "Block model refreshed")
