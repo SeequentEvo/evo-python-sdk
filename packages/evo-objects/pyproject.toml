@@ -24,7 +24,7 @@ Documentation = "https://developer.seequent.com/"
 aiohttp = ["evo-sdk-common[aiohttp]"]
 notebooks = ["evo-sdk-common[notebooks]"]
 utils = ["pyarrow", "pyarrow-stubs", "pandas", "numpy"]
-blockmodels = ["evo-blockmodels[pyarrow]>=0.2.0"]
+blockmodels = ["evo-blockmodels[utils]>=0.2.0"]
 
 [dependency-groups]
 # Dev dependencies. The version is left unspecified so the latest is installed.

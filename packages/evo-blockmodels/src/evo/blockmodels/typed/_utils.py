@@ -11,13 +11,10 @@
 
 """Utility functions for typed block model access."""
 
-from __future__ import annotations
+from typing import Any
 
-from typing import TYPE_CHECKING, Any
-
-if TYPE_CHECKING:
-    import pandas as pd
-    import pyarrow as pa
+import pandas as pd
+import pyarrow as pa
 
 __all__ = [
     "dataframe_to_pyarrow",
@@ -30,39 +27,16 @@ GEOMETRY_COLUMNS_XYZ = {"x", "y", "z"}
 GEOMETRY_COLUMNS = GEOMETRY_COLUMNS_IJK | GEOMETRY_COLUMNS_XYZ
 
 
-def _check_pyarrow_available() -> None:
-    """Check if pyarrow is available, raise ImportError with helpful message if not."""
-    try:
-        import pyarrow  # noqa: F401
-    except ImportError as e:
-        raise ImportError(
-            "pyarrow is required for this operation. Install it with: pip install evo-blockmodels[pyarrow]"
-        ) from e
-
-
-def _check_pandas_available() -> None:
-    """Check if pandas is available, raise ImportError with helpful message if not."""
-    try:
-        import pandas  # noqa: F401
-    except ImportError as e:
-        raise ImportError(
-            "pandas is required for this operation. Install it with: pip install evo-blockmodels[pyarrow]"
-        ) from e
-
-
-def pyarrow_to_dataframe(table: "pa.Table") -> "pd.DataFrame":
+def pyarrow_to_dataframe(table: pa.Table) -> pd.DataFrame:
     """Convert a PyArrow Table to a pandas DataFrame.
 
     :param table: The PyArrow Table to convert.
     :return: A pandas DataFrame.
-    :raises ImportError: If pyarrow or pandas is not installed.
     """
-    _check_pyarrow_available()
-    _check_pandas_available()
     return table.to_pandas()
 
 
-def dataframe_to_pyarrow(df: "pd.DataFrame") -> "pa.Table":
+def dataframe_to_pyarrow(df: pd.DataFrame) -> pa.Table:
     """Convert a pandas DataFrame to a PyArrow Table.
 
     Ensures geometry columns (i, j, k) are present and properly typed.
@@ -71,12 +45,7 @@ def dataframe_to_pyarrow(df: "pd.DataFrame") -> "pa.Table":
     :param df: The pandas DataFrame to convert.
     :return: A PyArrow Table.
     :raises ValueError: If required geometry columns are missing.
-    :raises ImportError: If pyarrow or pandas is not installed.
     """
-    _check_pyarrow_available()
-    _check_pandas_available()
-
-    import pyarrow as pa
 
     # Check for required geometry columns
     columns = set(df.columns)

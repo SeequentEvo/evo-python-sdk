@@ -19,10 +19,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from evo.common import IContext
+from evo.blockmodels import BlockModelAPIClient
+from evo.common import IContext
 
 __all__ = [
     "UnitInfo",
@@ -154,8 +153,6 @@ async def get_available_units(context: IContext) -> list[UnitInfo]:
         for unit in units:
             print(f"{unit.unit_id}: {unit.description} ({unit.symbol})")
     """
-    from evo.blockmodels import BlockModelAPIClient
-
     client = BlockModelAPIClient.from_context(context)
     units_api = client._units_api
 

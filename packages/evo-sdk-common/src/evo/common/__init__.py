@@ -27,10 +27,7 @@ from .data import (
 )
 from .interfaces import IAuthorizer, ICache, IContext, IFeedback, ITransport
 from .service import BaseAPIClient
-from .typed import BoundingBox as BoundingBox
-from .typed import Point3 as Point3
-from .typed import Size3d as Size3d
-from .typed import Size3i as Size3i
+from .typed import BoundingBox, Point3, Size3d, Size3i
 
 __all__ = [
     "APIConnector",

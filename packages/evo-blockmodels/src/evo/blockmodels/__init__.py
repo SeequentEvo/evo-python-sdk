@@ -10,27 +10,37 @@
 #  limitations under the License.
 
 from .client import BlockModelAPIClient
-from .typed import (
-    BaseTypedBlockModel,
-    BoundingBox,
-    Point3,
-    RegularBlockModel,
-    RegularBlockModelData,
-    Size3d,
-    Size3i,
-    Units,
-    get_available_units,
-)
 
 __all__ = [
-    "BaseTypedBlockModel",
     "BlockModelAPIClient",
-    "BoundingBox",
-    "Point3",
-    "RegularBlockModel",
-    "RegularBlockModelData",
-    "Size3d",
-    "Size3i",
-    "Units",
-    "get_available_units",
 ]
+
+# Typed access requires the 'utils' extra (pyarrow, pandas).
+# Install with: pip install evo-blockmodels[utils]
+try:
+    from .typed import (  # noqa: F401
+        BaseTypedBlockModel,
+        BoundingBox,
+        Point3,
+        RegularBlockModel,
+        RegularBlockModelData,
+        Size3d,
+        Size3i,
+        Units,
+        get_available_units,
+    )
+except ImportError:
+    _UTILS_AVAILABLE = False
+else:
+    _UTILS_AVAILABLE = True
+    __all__ += [
+        "BaseTypedBlockModel",
+        "BoundingBox",
+        "Point3",
+        "RegularBlockModel",
+        "RegularBlockModelData",
+        "Size3d",
+        "Size3i",
+        "Units",
+        "get_available_units",
+    ]

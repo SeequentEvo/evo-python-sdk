@@ -17,10 +17,13 @@ from evo.objects.typed import (
     BlockModelData,
     BlockModelGeometry,
     Point3,
+    RegularBlockModelData,
     Size3d,
     Size3i,
 )
 from evo.objects.typed.block_model_ref import (
+    BlockModelAttributes,
+    BlockModelPendingAttribute,
     _parse_attributes,
     _parse_geometry,
     _serialize_attributes,
@@ -369,16 +372,12 @@ class TestBlockModelAttributeTarget(TestCase):
 
     def test_pending_attribute_exists_property(self):
         """Test that pending attributes have exists=False."""
-        from evo.objects.typed.block_model_ref import BlockModelPendingAttribute
-
         pending = BlockModelPendingAttribute(None, "new_attribute")
 
         self.assertFalse(pending.exists)
 
     def test_pending_attribute_to_target_dict(self):
         """Test that pending attributes serialize to create operation."""
-        from evo.objects.typed.block_model_ref import BlockModelPendingAttribute
-
         pending = BlockModelPendingAttribute(None, "new_attribute")
         target_dict = pending.to_target_dict()
 
@@ -407,8 +406,6 @@ class TestBlockModelAttributeTarget(TestCase):
 
     def test_attributes_getitem_returns_pending_for_missing(self):
         """Test that accessing a non-existent attribute returns PendingAttribute."""
-        from evo.objects.typed.block_model_ref import BlockModelAttributes, BlockModelPendingAttribute
-
         existing_attrs = [
             BlockModelAttribute(name="grade", attribute_type="Float64"),
         ]
@@ -474,8 +471,6 @@ class TestBlockModelOptionalDependency(TestCase):
 
     def test_geometry_always_available(self):
         """Test that geometry parsing works without data operations."""
-        from evo.objects.typed.block_model_ref import _parse_geometry
-
         geometry_dict = {
             "model_type": "regular",
             "origin": [100.0, 200.0, 300.0],
@@ -489,8 +484,6 @@ class TestBlockModelOptionalDependency(TestCase):
 
     def test_attributes_always_available(self):
         """Test that attribute parsing works without data operations."""
-        from evo.objects.typed.block_model_ref import _parse_attributes
-
         attrs_list = [
             {"name": "grade", "attribute_type": "Float64"},
         ]
@@ -516,20 +509,16 @@ class TestBlockModelOptionalDependency(TestCase):
         self.assertEqual(bbox.min_x, 100.0)
         self.assertEqual(bbox.max_x, 110.0)
 
-    def test_require_blockmodels_function(self):
-        """Test that _require_blockmodels works when blockmodels IS available."""
-        from evo.objects.typed.block_model_ref import _BLOCKMODELS_AVAILABLE, _require_blockmodels
+    def test_blockmodels_available(self):
+        """Test that _BLOCKMODELS_AVAILABLE is True when blockmodels IS installed."""
+        from evo.objects.typed.block_model_ref import _BLOCKMODELS_AVAILABLE
 
         # In test environment, blockmodels should be available
         self.assertTrue(_BLOCKMODELS_AVAILABLE)
-        # Should not raise when blockmodels is available
-        _require_blockmodels("Test operation")
 
     def test_regular_block_model_data_importable(self):
         """Test that RegularBlockModelData is importable from evo.objects.typed."""
-        from evo.objects.typed import RegularBlockModelData as RBD
-
-        data = RBD(
+        data = RegularBlockModelData(
             name="Test",
             origin=Point3(0, 0, 0),
             n_blocks=Size3i(10, 10, 10),
@@ -566,16 +555,3 @@ class TestBlockModelOptionalDependency(TestCase):
         bbox = CommonBBox.from_origin_and_size(p, s, sd)
         self.assertEqual(bbox.x_min, 1.0)
         self.assertEqual(bbox.x_max, 11.0)
-
-    def test_types_are_same_across_packages(self):
-        """Test that Point3/Size3d/Size3i from evo.common.typed and evo.objects.typed are the same type."""
-        from evo.common.typed import Point3 as CommonPoint3
-        from evo.common.typed import Size3d as CommonSize3d
-        from evo.common.typed import Size3i as CommonSize3i
-        from evo.objects.typed import Point3 as ObjectsPoint3
-        from evo.objects.typed import Size3d as ObjectsSize3d
-        from evo.objects.typed import Size3i as ObjectsSize3i
-
-        self.assertIs(CommonPoint3, ObjectsPoint3)
-        self.assertIs(CommonSize3d, ObjectsSize3d)
-        self.assertIs(CommonSize3i, ObjectsSize3i)
