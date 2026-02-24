@@ -15,8 +15,6 @@ Provides shared functionality for all block model types (regular, sub-blocked, o
 including data access, attribute management, reports, and versioning.
 """
 
-from __future__ import annotations
-
 from abc import ABC, abstractmethod
 from typing import Literal
 from uuid import UUID

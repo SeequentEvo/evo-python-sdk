@@ -21,10 +21,12 @@ Reports require:
 
 from __future__ import annotations
 
+import asyncio
+import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import TYPE_CHECKING, Any
+from typing import Any
 from uuid import UUID
 
 import pandas as pd
@@ -32,15 +34,19 @@ import pandas as pd
 from evo.common import IContext, IFeedback
 from evo.common.utils import NoFeedback
 
-if TYPE_CHECKING:
-    from ..client import BlockModelAPIClient
-    from ..endpoints.models import (
-        ReportResult as APIReportResult,
-    )
-    from ..endpoints.models import (
-        ReportSpecificationWithJobUrl,
-        ReportSpecificationWithLastRunInfo,
-    )
+from ..client import BlockModelAPIClient
+from ..endpoints.models import (
+    CreateReportSpecification,
+    ReportAggregation,
+    ReportCategory,
+    ReportColumn,
+    ReportingJobSpec,
+    ReportSpecificationWithJobUrl,
+    ReportSpecificationWithLastRunInfo,
+)
+from ..endpoints.models import (
+    ReportResult as APIReportResult,
+)
 
 __all__ = [
     "Aggregation",
@@ -259,7 +265,7 @@ class ReportResult:
     result_sets: list[dict[str, Any]]
 
     @classmethod
-    def _from_api_result(cls, result: "APIReportResult") -> "ReportResult":
+    def _from_api_result(cls, result: APIReportResult) -> ReportResult:
         """Create a ReportResult from an API response."""
         return cls(
             result_uuid=result.report_result_uuid,
@@ -341,7 +347,7 @@ class Report:
         self,
         context: IContext,
         block_model_uuid: UUID,
-        specification: "ReportSpecificationWithLastRunInfo | ReportSpecificationWithJobUrl",
+        specification: ReportSpecificationWithLastRunInfo | ReportSpecificationWithJobUrl,
         block_model_name: str | None = None,
     ) -> None:
         """Initialize a Report instance.
@@ -381,9 +387,8 @@ class Report:
         """The revision number of the report specification."""
         return self._specification.revision
 
-    def _get_client(self) -> "BlockModelAPIClient":
+    def _get_client(self) -> BlockModelAPIClient:
         """Get a BlockModelAPIClient for the current context."""
-        from ..client import BlockModelAPIClient
 
         return BlockModelAPIClient.from_context(self._context)
 
@@ -396,7 +401,7 @@ class Report:
         column_id_map: dict[str, UUID],
         fb: IFeedback = NoFeedback,
         block_model_name: str | None = None,
-    ) -> "Report":
+    ) -> Report:
         """Create a new report specification.
 
         :param context: The context containing environment, connector, and cache.
@@ -407,12 +412,6 @@ class Report:
         :param block_model_name: The name of the block model (for display purposes).
         :return: A Report instance representing the created report.
         """
-        from ..endpoints.models import (
-            CreateReportSpecification,
-            ReportAggregation,
-            ReportCategory,
-            ReportColumn,
-        )
 
         fb.progress(0.0, "Creating report specification...")
 
@@ -479,7 +478,6 @@ class Report:
         fb.progress(0.3, "Submitting to Block Model Service...")
 
         # Call the API
-        from ..client import BlockModelAPIClient
 
         client = BlockModelAPIClient.from_context(context)
         environment = context.get_environment()
@@ -504,7 +502,6 @@ class Report:
         :param fb: Optional feedback interface for progress reporting.
         :return: The generated report result.
         """
-        from ..endpoints.models import ReportingJobSpec
 
         fb.progress(0.0, "Running report...")
 
@@ -555,8 +552,6 @@ class Report:
         :return: The latest report result.
         :raises TimeoutError: If no results are available within the timeout period.
         """
-        import asyncio
-        import time
 
         fb.progress(0.0, "Fetching latest result...")
 
