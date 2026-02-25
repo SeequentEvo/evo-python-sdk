@@ -268,14 +268,8 @@ class BlockModelData(BaseSpatialObjectData):
 
     def compute_bounding_box(self) -> BoundingBox:
         """Compute the bounding box from the geometry."""
-        geom = self.geometry
-        return BoundingBox(
-            min_x=geom.origin.x,
-            max_x=geom.origin.x + geom.n_blocks.nx * geom.block_size.dx,
-            min_y=geom.origin.y,
-            max_y=geom.origin.y + geom.n_blocks.ny * geom.block_size.dy,
-            min_z=geom.origin.z,
-            max_z=geom.origin.z + geom.n_blocks.nz * geom.block_size.dz,
+        return BoundingBox.from_regular_grid(
+            self.geometry.origin, self.geometry.n_blocks, self.geometry.block_size, self.geometry.rotation
         )
 
 
