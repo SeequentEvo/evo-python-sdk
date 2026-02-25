@@ -45,10 +45,10 @@ else:
 
 try:
     from evo.blockmodels import BlockModelAPIClient
-    from evo.blockmodels.typed import RegularBlockModel as BMRegularBlockModel
-    from evo.blockmodels.typed import RegularBlockModelData as BMRegularBlockModelData
     from evo.blockmodels.data import BlockModel as BlockModelMetadata
     from evo.blockmodels.data import Version
+    from evo.blockmodels.typed import RegularBlockModel as BMRegularBlockModel
+    from evo.blockmodels.typed import RegularBlockModelData as BMRegularBlockModelData
     from evo.blockmodels.typed import Report, ReportSpecificationData
     from evo.blockmodels.typed.base import BaseTypedBlockModel
 except ImportError:
