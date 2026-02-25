@@ -360,7 +360,7 @@ class BaseTypedBlockModel(ABC):
         """
         fb.progress(0.0, "Fetching reports...")
 
-        environment = self._client._environment
+        environment = self._metadata.environment
         context = self._get_context()
 
         result = await self._client._reports_api.list_block_model_report_specifications(

@@ -51,10 +51,7 @@ try:
     from evo.blockmodels import RegularBlockModelData as BMRegularBlockModelData
     from evo.blockmodels.data import BlockModel as BlockModelMetadata
     from evo.blockmodels.data import RegularGridDefinition, Version
-    from evo.blockmodels.typed import Point3 as BMPoint3
     from evo.blockmodels.typed import Report, ReportSpecificationData
-    from evo.blockmodels.typed import Size3d as BMSize3d
-    from evo.blockmodels.typed import Size3i as BMSize3i
     from evo.blockmodels.typed.base import BaseTypedBlockModel
 except ImportError:
     _BLOCKMODELS_AVAILABLE = False
@@ -133,23 +130,6 @@ class BlockModelAttribute:
         """
         return True
 
-    @property
-    def expression(self) -> str:
-        """The JMESPath expression to access this attribute from the object."""
-        return f"attributes[?name=='{self._name}']"
-
-    def to_target_dict(self) -> dict[str, str]:
-        """Serialize this attribute as a target for compute tasks.
-
-        For existing attributes, returns an update operation referencing this attribute by name.
-
-        :return: A dictionary with operation type and reference.
-        """
-        return {
-            "operation": "update",
-            "reference": self.expression,
-        }
-
     def __repr__(self) -> str:
         return f"BlockModelAttribute(name={self._name!r}, attribute_type={self._attribute_type!r}, unit={self._unit!r})"
 
@@ -191,29 +171,12 @@ class BlockModelPendingAttribute:
         return self._name
 
     @property
-    def expression(self) -> str:
-        """The JMESPath expression to access this attribute from the object."""
-        return f"attributes[?name=='{self._name}']"
-
-    @property
     def exists(self) -> bool:
         """Whether this attribute exists on the block model.
 
         :return: False for pending attributes.
         """
         return False
-
-    def to_target_dict(self) -> dict[str, str]:
-        """Serialize this attribute as a target for compute tasks.
-
-        For pending attributes, returns a create operation with the attribute name.
-
-        :return: A dictionary with operation type and name.
-        """
-        return {
-            "operation": "create",
-            "name": self._name,
-        }
 
     def __repr__(self) -> str:
         return f"BlockModelPendingAttribute(name={self._name!r}, exists=False)"
@@ -282,25 +245,7 @@ if _BLOCKMODELS_AVAILABLE and _PD_AVAILABLE:
         origin: Point3
         n_blocks: Size3i
         block_size: Size3d
-        cell_data: "pd.DataFrame | None" = None
-        description: str | None = None
-        crs: str | None = None
-        size_unit_id: str | None = None
-        units: dict[str, str] = field(default_factory=dict)
-
-else:
-
-    @dataclass(frozen=True, kw_only=True)
-    class RegularBlockModelData:  # type: ignore[no-redef]
-        """Data for creating a regular block model.
-
-        Requires evo-blockmodels to be installed: pip install evo-objects[blockmodels]
-        """
-
-        name: str
-        origin: Point3
-        n_blocks: Size3i
-        block_size: Size3d
+        cell_data: pd.DataFrame | None = None
         description: str | None = None
         crs: str | None = None
         size_unit_id: str | None = None
@@ -493,7 +438,7 @@ class BlockModel(BaseSpatialObject):
                 return attr
         return None
 
-    if _BLOCKMODELS_AVAILABLE:
+    if _BLOCKMODELS_AVAILABLE and _PD_AVAILABLE:
 
         def _get_block_model_client(self) -> BlockModelAPIClient:
             """Get a BlockModelAPIClient for the current context."""
@@ -562,25 +507,23 @@ class BlockModel(BaseSpatialObject):
             typed_bm = await self._get_or_create_typed_block_model()
             return await typed_bm.to_dataframe(columns=columns, version_uuid=version_uuid, fb=fb)
 
-    async def refresh(self) -> BlockModel:
-        """Refresh this block model object with the latest data from the server.
+        async def refresh(self) -> BlockModel:
+            """Refresh this block model object with the latest data from the server.
 
-        Use this after a remote operation (like kriging) has updated the block model
-        to see the newly added attributes.
+            Use this after a remote operation (like kriging) has updated the block model
+            to see the newly added attributes.
 
-        :return: A new BlockModel instance with refreshed data.
+            :return: A new BlockModel instance with refreshed data.
 
-        Example:
-            >>> # After running kriging that adds attributes...
-            >>> block_model = await block_model.refresh()
-            >>> block_model.attributes  # Now shows the new attributes
-        """
-        # Refresh the typed block model delegate if it exists, so it's immediately up-to-date
-        if hasattr(self, "_typed_bm") and self._typed_bm is not None:
-            await self._typed_bm.refresh()
-        return await object_from_uuid(self._api_context, self.metadata.id)
-
-    if _BLOCKMODELS_AVAILABLE:
+            Example:
+                >>> # After running kriging that adds attributes...
+                >>> block_model = await block_model.refresh()
+                >>> block_model.attributes  # Now shows the new attributes
+            """
+            # Refresh the typed block model delegate if it exists, so it's immediately up-to-date
+            if hasattr(self, "_typed_bm") and self._typed_bm is not None:
+                await self._typed_bm.refresh()
+            return await object_from_uuid(self._api_context, self.metadata.id)
 
         async def add_attribute(
             self,
@@ -632,49 +575,6 @@ class BlockModel(BaseSpatialObject):
                 fb=fb,
             )
 
-    @classmethod
-    async def _data_to_dict(cls, data: BlockModelData, context: IContext) -> dict[str, Any]:
-        """Convert BlockModelData to a dictionary for creating the Geoscience Object."""
-        if cls.creation_schema_version is None:
-            raise NotImplementedError("creation_schema_version must be defined")
-
-        result: dict[str, Any] = {
-            "schema": f"/objects/block-model/{cls.creation_schema_version}/block-model.schema.json",
-            "name": data.name,
-            "block_model_uuid": str(data.block_model_uuid),
-            "geometry": _serialize_geometry(data.geometry),
-        }
-
-        if data.description:
-            result["description"] = data.description
-
-        if data.block_model_version_uuid:
-            result["block_model_version_uuid"] = str(data.block_model_version_uuid)
-
-        if data.coordinate_reference_system:
-            if isinstance(data.coordinate_reference_system, EpsgCode):
-                result["coordinate_reference_system"] = {"epsg_code": int(data.coordinate_reference_system)}
-            else:
-                result["coordinate_reference_system"] = {"ogc_wkt": data.coordinate_reference_system}
-
-        if data.attributes:
-            result["attributes"] = _serialize_attributes(data.attributes)
-
-        # Compute and set bounding box
-        bbox = data.compute_bounding_box()
-        result["bounding_box"] = {
-            "min_x": bbox.min_x,
-            "max_x": bbox.max_x,
-            "min_y": bbox.min_y,
-            "max_y": bbox.max_y,
-            "min_z": bbox.min_z,
-            "max_z": bbox.max_z,
-        }
-
-        return result
-
-    if _BLOCKMODELS_AVAILABLE:
-
         @classmethod
         async def create_regular(
             cls,
@@ -700,9 +600,9 @@ class BlockModel(BaseSpatialObject):
             bm_data = BMRegularBlockModelData(
                 name=data.name,
                 description=data.description,
-                origin=BMPoint3(data.origin.x, data.origin.y, data.origin.z),
-                n_blocks=BMSize3i(data.n_blocks.nx, data.n_blocks.ny, data.n_blocks.nz),
-                block_size=BMSize3d(data.block_size.dx, data.block_size.dy, data.block_size.dz),
+                origin=Point3(data.origin.x, data.origin.y, data.origin.z),
+                n_blocks=Size3i(data.n_blocks.nx, data.n_blocks.ny, data.n_blocks.nz),
+                block_size=Size3d(data.block_size.dx, data.block_size.dy, data.block_size.dz),
                 cell_data=data.cell_data,
                 coordinate_reference_system=data.crs,
                 size_unit_id=data.size_unit_id,
@@ -727,114 +627,6 @@ class BlockModel(BaseSpatialObject):
             result = await cls.from_reference(context, object_ref)
 
             fb.progress(1.0, "Block model created")
-            return result
-
-        @classmethod
-        async def from_block_model(
-            cls,
-            context: IContext,
-            block_model_uuid: UUID,
-            name: str | None = None,
-            version_uuid: UUID | None = None,
-            path: str | None = None,
-            fb: IFeedback = NoFeedback,
-        ) -> Self:
-            """Create a BlockModel from an existing block model in the Block Model Service.
-
-            This fetches the block model metadata from the Block Model Service and creates
-            a corresponding Geoscience Object reference.
-
-            :param context: The context containing environment, connector, and cache.
-            :param block_model_uuid: UUID of the block model in the Block Model Service.
-            :param name: Optional name for the reference object. Defaults to the block model name.
-            :param version_uuid: Optional specific version to reference.
-            :param path: Optional path for the Geoscience Object.
-            :param fb: Optional feedback interface for progress reporting.
-            :return: A new BlockModel instance.
-            """
-            client = BlockModelAPIClient.from_context(context)
-
-            fb.progress(0.0, "Fetching block model metadata...")
-
-            # Get block model metadata
-            bm = await client.get_block_model(block_model_uuid)
-
-            fb.progress(0.3, "Fetching version information...")
-
-            # Get version info if not specified
-            if version_uuid is None:
-                versions = await client.list_versions(block_model_uuid)
-                if versions:
-                    version_uuid = versions[0].version_uuid
-
-            fb.progress(0.5, "Creating reference object...")
-
-            # Build geometry from the block model
-            grid_def = bm.grid_definition
-            if not isinstance(grid_def, RegularGridDefinition):
-                raise ValueError(f"Only regular block models are supported, got {type(grid_def).__name__}")
-
-            rotation_tuple = None
-            if grid_def.rotations:
-                # Convert rotations to (dip_azimuth, dip, pitch) - simplified
-                rotation_tuple = (0.0, 0.0, 0.0)  # Default, would need proper conversion
-
-            geometry = BlockModelGeometry(
-                model_type="regular",
-                origin=Point3(x=grid_def.model_origin[0], y=grid_def.model_origin[1], z=grid_def.model_origin[2]),
-                n_blocks=Size3i(nx=grid_def.n_blocks[0], ny=grid_def.n_blocks[1], nz=grid_def.n_blocks[2]),
-                block_size=Size3d(dx=grid_def.block_size[0], dy=grid_def.block_size[1], dz=grid_def.block_size[2]),
-                rotation=rotation_tuple,
-            )
-
-            # Build attributes from version info
-            attributes: list[BlockModelAttribute] = []
-            if version_uuid:
-                versions = await client.list_versions(block_model_uuid)
-                version = next((v for v in versions if v.version_uuid == version_uuid), None)
-                if version and version.columns:
-                    for col in version.columns:
-                        # Try to parse col_id as UUID, but it might not be valid for system columns
-                        col_uuid = None
-                        if col.col_id:
-                            try:
-                                col_uuid = UUID(col.col_id)
-                            except ValueError:
-                                # Not a valid UUID (e.g., system column), skip
-                                pass
-                        attributes.append(
-                            BlockModelAttribute(
-                                name=col.title,
-                                attribute_type=col.data_type.value if col.data_type else "Float64",
-                                block_model_column_uuid=col_uuid,
-                            )
-                        )
-
-            # Determine CRS
-            crs: EpsgCode | str | None = None
-            if bm.coordinate_reference_system:
-                if bm.coordinate_reference_system.startswith("EPSG:"):
-                    try:
-                        crs = EpsgCode(int(bm.coordinate_reference_system.split(":")[1]))
-                    except ValueError:
-                        crs = bm.coordinate_reference_system
-                else:
-                    crs = bm.coordinate_reference_system
-
-            ref_data = BlockModelData(
-                name=name or bm.name,
-                block_model_uuid=block_model_uuid,
-                block_model_version_uuid=version_uuid,
-                geometry=geometry,
-                attributes=attributes,
-                coordinate_reference_system=crs,
-            )
-
-            fb.progress(0.8, "Saving reference...")
-
-            result = await cls.create(context, ref_data, path=path)
-
-            fb.progress(1.0, "Block model reference created")
             return result
 
         async def set_attribute_units(

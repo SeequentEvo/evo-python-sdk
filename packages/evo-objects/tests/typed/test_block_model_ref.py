@@ -350,48 +350,11 @@ class TestBlockModelAttributeTarget(TestCase):
         )
         self.assertTrue(attr.exists)
 
-    def test_existing_attribute_to_target_dict(self):
-        """Test that existing attributes serialize to update operation with name-based reference."""
-        attr = BlockModelAttribute(
-            name="grade",
-            attribute_type="Float64",
-        )
-        target_dict = attr.to_target_dict()
-
-        self.assertEqual(target_dict["operation"], "update")
-        self.assertIn("reference", target_dict)
-        self.assertEqual(target_dict["reference"], "attributes[?name=='grade']")
-
-    def test_existing_attribute_expression(self):
-        """Test that existing attributes have correct JMESPath expression."""
-        attr = BlockModelAttribute(
-            name="grade",
-            attribute_type="Float64",
-        )
-        self.assertEqual(attr.expression, "attributes[?name=='grade']")
-
     def test_pending_attribute_exists_property(self):
         """Test that pending attributes have exists=False."""
         pending = BlockModelPendingAttribute(None, "new_attribute")
 
         self.assertFalse(pending.exists)
-
-    def test_pending_attribute_to_target_dict(self):
-        """Test that pending attributes serialize to create operation."""
-        pending = BlockModelPendingAttribute(None, "new_attribute")
-        target_dict = pending.to_target_dict()
-
-        self.assertEqual(target_dict["operation"], "create")
-        self.assertEqual(target_dict["name"], "new_attribute")
-
-    def test_pending_attribute_expression(self):
-        """Test that pending attributes have correct JMESPath expression."""
-        from evo.objects.typed.block_model_ref import BlockModelPendingAttribute
-
-        pending = BlockModelPendingAttribute(None, "new_attribute")
-
-        self.assertIn("new_attribute", pending.expression)
-        self.assertIn("attributes", pending.expression)
 
     def test_pending_attribute_repr(self):
         """Test the string representation of BlockModelPendingAttribute."""
