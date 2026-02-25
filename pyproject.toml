@@ -5,9 +5,9 @@ description = "Python SDK for using Seequent Evo"
 requires-python = ">=3.10"
 dependencies = [
     "evo-sdk-common[aiohttp,notebooks,jmespath]>=0.5.12",
-    "evo-widgets>=0.1.0",
-    "evo-blockmodels[aiohttp,notebooks,pyarrow]>=0.1.0",
-    "evo-objects[aiohttp,notebooks,utils]>=0.3.3",
+    "evo-widgets>=0.2.0",
+    "evo-blockmodels[aiohttp,notebooks,pyarrow]>=0.2.0",
+    "evo-objects[aiohttp,notebooks,utils]>=0.4.0",
     "evo-files[aiohttp,notebooks]>=0.2.3",
     "evo-colormaps[aiohttp,notebooks]>=0.0.2",
     "evo-compute[aiohttp,notebooks]>=0.0.1rc2",

@@ -33,8 +33,21 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .formatters import format_attributes_collection, format_base_object, format_variogram
+from .formatters import (
+    format_attributes_collection,
+    format_base_object,
+    format_block_model,
+    format_block_model_attributes,
+    format_block_model_version,
+    format_report,
+    format_report_result,
+    format_variogram,
+)
 from .urls import (
+    get_blocksync_base_url,
+    get_blocksync_block_model_url,
+    get_blocksync_block_model_url_from_environment,
+    get_blocksync_report_url,
     get_evo_base_url,
     get_hub_code,
     get_portal_url,
@@ -53,7 +66,16 @@ if TYPE_CHECKING:
 __all__ = [
     "format_attributes_collection",
     "format_base_object",
+    "format_block_model",
+    "format_block_model_attributes",
+    "format_block_model_version",
+    "format_report",
+    "format_report_result",
     "format_variogram",
+    "get_blocksync_base_url",
+    "get_blocksync_block_model_url",
+    "get_blocksync_block_model_url_from_environment",
+    "get_blocksync_report_url",
     "get_evo_base_url",
     "get_hub_code",
     "get_portal_url",
@@ -99,6 +121,38 @@ def _register_formatters(ipython: InteractiveShell) -> None:
         "evo.objects.typed.attributes",
         "Attributes",
         format_attributes_collection,
+    )
+
+    # Register formatters for block model types
+    html_formatter.for_type_by_name(
+        "evo.blockmodels.data",
+        "Version",
+        format_block_model_version,
+    )
+
+    html_formatter.for_type_by_name(
+        "evo.blockmodels.typed.report",
+        "Report",
+        format_report,
+    )
+
+    html_formatter.for_type_by_name(
+        "evo.blockmodels.typed.report",
+        "ReportResult",
+        format_report_result,
+    )
+
+    # Register formatters for BlockModel from evo-objects
+    html_formatter.for_type_by_name(
+        "evo.objects.typed.block_model_ref",
+        "BlockModel",
+        format_block_model,
+    )
+
+    html_formatter.for_type_by_name(
+        "evo.objects.typed.attributes",
+        "BlockModelAttributes",
+        format_block_model_attributes,
     )
 
 

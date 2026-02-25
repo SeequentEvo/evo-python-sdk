@@ -9,8 +9,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from .attributes import Attribute, Attributes
+from ._grid import BlockModelData, BlockModelGeometry
+from .attributes import Attribute, Attributes, BlockModelAttribute, BlockModelAttributes, BlockModelPendingAttribute
 from .base import BaseObject, object_from_path, object_from_reference, object_from_uuid
+from .block_model_ref import (
+    BlockModel,
+)
 from .pointset import (
     Locations,
     PointSet,
@@ -60,6 +64,12 @@ __all__ = [
     "Attributes",
     "BaseObject",
     "BaseSpatialObject",
+    "BlockModel",
+    "BlockModelAttribute",
+    "BlockModelAttributes",
+    "BlockModelData",
+    "BlockModelGeometry",
+    "BlockModelPendingAttribute",
     "BoundingBox",
     "CoordinateReferenceSystem",
     "CubicStructure",
@@ -94,3 +104,29 @@ __all__ = [
     "object_from_reference",
     "object_from_uuid",
 ]
+
+# Conditionally export report types when evo-blockmodels is installed
+try:
+    from evo.blockmodels.typed import (  # noqa: F401
+        Aggregation,
+        MassUnits,
+        RegularBlockModelData,
+        Report,
+        ReportCategorySpec,
+        ReportColumnSpec,
+        ReportResult,
+        ReportSpecificationData,
+    )
+
+    __all__ += [
+        "Aggregation",
+        "MassUnits",
+        "RegularBlockModelData",
+        "Report",
+        "ReportCategorySpec",
+        "ReportColumnSpec",
+        "ReportResult",
+        "ReportSpecificationData",
+    ]
+except ImportError:
+    pass
