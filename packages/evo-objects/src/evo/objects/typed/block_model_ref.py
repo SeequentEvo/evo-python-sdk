@@ -110,14 +110,9 @@ class BlockModel(BaseSpatialObject):
 
     block_model_version_uuid: Annotated[UUID | None, SchemaLocation("block_model_version_uuid")]
 
-    _geometry_raw: Annotated[BlockModelGeometry, SchemaLocation("geometry")]
+    geometry: Annotated[BlockModelGeometry, SchemaLocation("geometry")]
 
     _attributes_raw: Annotated[list[dict], SchemaLocation("attributes")] = []
-
-    @property
-    def geometry(self) -> BlockModelGeometry:
-        """The geometry definition of the block model."""
-        return self._geometry_raw
 
     @property
     def attributes(self) -> BlockModelAttributes:
