@@ -19,7 +19,6 @@ geometry, attributes, and data through the Block Model Service API.
 from __future__ import annotations
 
 import sys
-from dataclasses import dataclass, field
 from typing import Annotated, Literal
 from uuid import UUID
 
@@ -30,9 +29,14 @@ from evo.common.utils import NoFeedback
 from evo.objects import ObjectReference, SchemaVersion
 
 from . import object_from_uuid
+from ._grid import BlockModelData, BlockModelGeometry, RegularBlockModelData
 from ._model import SchemaLocation
-from .spatial import BaseSpatialObject, BaseSpatialObjectData
-from .types import BoundingBox, Point3, Size3d, Size3i
+from .attributes import (
+    BlockModelAttribute,
+    BlockModelAttributes,
+)
+from .spatial import BaseSpatialObject
+from .types import Point3, Size3d, Size3i
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -41,8 +45,8 @@ else:
 
 try:
     from evo.blockmodels import BlockModelAPIClient
-    from evo.blockmodels import RegularBlockModel as BMRegularBlockModel
-    from evo.blockmodels import RegularBlockModelData as BMRegularBlockModelData
+    from evo.blockmodels.typed import RegularBlockModel as BMRegularBlockModel
+    from evo.blockmodels.typed import RegularBlockModelData as BMRegularBlockModelData
     from evo.blockmodels.data import BlockModel as BlockModelMetadata
     from evo.blockmodels.data import Version
     from evo.blockmodels.typed import Report, ReportSpecificationData
@@ -55,304 +59,9 @@ else:
 
 __all__ = [
     "BlockModel",
-    "BlockModelAttribute",
-    "BlockModelAttributes",
     "BlockModelData",
-    "BlockModelGeometry",
-    "BlockModelPendingAttribute",
     "RegularBlockModelData",
 ]
-
-
-@dataclass(frozen=True, kw_only=True)
-class BlockModelGeometry:
-    """The geometry definition of a regular block model."""
-
-    model_type: str
-    origin: Point3
-    n_blocks: Size3i
-    block_size: Size3d
-    rotation: tuple[float, float, float] | None = None
-
-
-class BlockModelAttribute:
-    """An attribute on a block model.
-
-    This class represents an existing attribute on a block model. It stores a reference
-    to the parent BlockModel via `_obj`, similar to how `Attribute` in dataset.py works.
-    """
-
-    def __init__(
-        self,
-        name: str,
-        attribute_type: str,
-        block_model_column_uuid: UUID | None = None,
-        unit: str | None = None,
-        obj: "BlockModel | None" = None,
-    ):
-        self._name = name
-        self._attribute_type = attribute_type
-        self._block_model_column_uuid = block_model_column_uuid
-        self._unit = unit
-        self._obj = obj  # Reference to parent BlockModel, similar to Attribute._obj
-
-    @property
-    def name(self) -> str:
-        """The name of this attribute."""
-        return self._name
-
-    @property
-    def attribute_type(self) -> str:
-        """The type of this attribute."""
-        return self._attribute_type
-
-    @property
-    def block_model_column_uuid(self) -> UUID | None:
-        """The UUID of the column in the block model service."""
-        return self._block_model_column_uuid
-
-    @property
-    def unit(self) -> str | None:
-        """The unit of this attribute."""
-        return self._unit
-
-    @property
-    def exists(self) -> bool:
-        """Whether this attribute exists on the block model.
-
-        :return: True for existing attributes.
-        """
-        return True
-
-    def __repr__(self) -> str:
-        return f"BlockModelAttribute(name={self._name!r}, attribute_type={self._attribute_type!r}, unit={self._unit!r})"
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, BlockModelAttribute):
-            return NotImplemented
-        return (
-            self._name == other._name
-            and self._attribute_type == other._attribute_type
-            and self._block_model_column_uuid == other._block_model_column_uuid
-            and self._unit == other._unit
-        )
-
-    def __hash__(self) -> int:
-        return hash((self._name, self._attribute_type, self._block_model_column_uuid, self._unit))
-
-
-class BlockModelPendingAttribute:
-    """A placeholder for an attribute that doesn't exist yet on a Block Model.
-
-    This is returned when accessing an attribute by name that doesn't exist.
-    It can be used as a target for compute tasks, which will create the attribute.
-
-    Stores a reference to the parent BlockModel via `_obj`, similar to how
-    `BlockModelAttribute` and `Attribute` (in dataset.py) work.
-    """
-
-    def __init__(self, obj: "BlockModel", name: str) -> None:
-        """
-        :param obj: The BlockModel this pending attribute belongs to.
-        :param name: The name of the attribute to create.
-        """
-        self._obj = obj  # Reference to parent BlockModel
-        self._name = name
-
-    @property
-    def name(self) -> str:
-        """The name of this attribute."""
-        return self._name
-
-    @property
-    def exists(self) -> bool:
-        """Whether this attribute exists on the block model.
-
-        :return: False for pending attributes.
-        """
-        return False
-
-    def __repr__(self) -> str:
-        return f"BlockModelPendingAttribute(name={self._name!r}, exists=False)"
-
-
-class BlockModelAttributes:
-    """A collection of attributes on a block model with pretty-printing support."""
-
-    def __init__(self, attributes: list[BlockModelAttribute], block_model: "BlockModel | None" = None):
-        self._block_model = block_model
-        # Set _obj reference on each attribute to the parent BlockModel
-        self._attributes = []
-        for attr in attributes:
-            # Create a new attribute with _obj reference to the block model
-            attr_with_obj = BlockModelAttribute(
-                name=attr.name,
-                attribute_type=attr.attribute_type,
-                block_model_column_uuid=attr.block_model_column_uuid,
-                unit=attr.unit,
-                obj=block_model,
-            )
-            self._attributes.append(attr_with_obj)
-
-    def __iter__(self):
-        return iter(self._attributes)
-
-    def __len__(self):
-        return len(self._attributes)
-
-    def __getitem__(self, index_or_name: int | str) -> BlockModelAttribute | BlockModelPendingAttribute:
-        if isinstance(index_or_name, str):
-            for attr in self._attributes:
-                if attr.name == index_or_name:
-                    return attr
-            # Return a BlockModelPendingAttribute for non-existent attributes accessed by name
-            # Pass the block model directly as _obj
-            return BlockModelPendingAttribute(self._block_model, index_or_name)
-        return self._attributes[index_or_name]
-
-    def __repr__(self) -> str:
-        names = [attr.name for attr in self._attributes]
-        return f"BlockModelAttributes({names})"
-
-
-if _BLOCKMODELS_AVAILABLE:
-
-    @dataclass(frozen=True, kw_only=True)
-    class RegularBlockModelData:
-        """Data for creating a regular block model.
-
-        This creates a new block model in the Block Model Service and a corresponding
-        Geoscience Object reference.
-
-        :param name: The name of the block model.
-        :param origin: The origin point (x, y, z) of the block model.
-        :param n_blocks: The number of blocks in each dimension (nx, ny, nz).
-        :param block_size: The size of each block (dx, dy, dz).
-        :param cell_data: DataFrame with block data. Must contain (x, y, z) or (i, j, k) columns.
-        :param description: Optional description.
-        :param crs: Coordinate reference system (e.g., "EPSG:28354").
-        :param size_unit_id: Unit for block sizes (e.g., "m").
-        :param units: Dictionary mapping column names to unit IDs.
-        """
-
-        name: str
-        origin: Point3
-        n_blocks: Size3i
-        block_size: Size3d
-        cell_data: pd.DataFrame | None = None
-        description: str | None = None
-        crs: str | None = None
-        size_unit_id: str | None = None
-        units: dict[str, str] = field(default_factory=dict)
-
-
-@dataclass(frozen=True, kw_only=True)
-class BlockModelData(BaseSpatialObjectData):
-    """Data for creating a BlockModel reference.
-
-    A BlockModel is a reference to a block model stored in the Block Model Service.
-    This creates a Geoscience Object that points to an existing block model.
-
-    :param name: The name of the block model reference object.
-    :param block_model_uuid: The UUID of the block model in the Block Model Service.
-    :param block_model_version_uuid: Optional specific version UUID to reference.
-    :param geometry: The geometry definition of the block model.
-    :param attributes: List of attributes available on the block model.
-    :param coordinate_reference_system: Optional CRS for the block model.
-    """
-
-    block_model_uuid: UUID
-    block_model_version_uuid: UUID | None = None
-    geometry: BlockModelGeometry
-    attributes: list[BlockModelAttribute] = field(default_factory=list)
-
-    def compute_bounding_box(self) -> BoundingBox:
-        """Compute the bounding box from the geometry."""
-        return BoundingBox.from_regular_grid(
-            self.geometry.origin, self.geometry.n_blocks, self.geometry.block_size, self.geometry.rotation
-        )
-
-
-def _parse_geometry(geometry_dict: dict) -> BlockModelGeometry:
-    """Parse geometry from the schema format."""
-    model_type = geometry_dict.get("model_type", "regular")
-    origin = geometry_dict.get("origin", [0, 0, 0])
-    n_blocks = geometry_dict.get("n_blocks", [1, 1, 1])
-    block_size = geometry_dict.get("block_size", [1, 1, 1])
-    rotation = geometry_dict.get("rotation")
-
-    rotation_tuple = None
-    if rotation:
-        rotation_tuple = (
-            rotation.get("dip_azimuth", 0),
-            rotation.get("dip", 0),
-            rotation.get("pitch", 0),
-        )
-
-    return BlockModelGeometry(
-        model_type=model_type,
-        origin=Point3(x=origin[0], y=origin[1], z=origin[2]),
-        n_blocks=Size3i(nx=n_blocks[0], ny=n_blocks[1], nz=n_blocks[2]),
-        block_size=Size3d(dx=block_size[0], dy=block_size[1], dz=block_size[2]),
-        rotation=rotation_tuple,
-    )
-
-
-def _serialize_geometry(geometry: BlockModelGeometry) -> dict:
-    """Serialize geometry to the schema format."""
-    result = {
-        "model_type": geometry.model_type,
-        "origin": [geometry.origin.x, geometry.origin.y, geometry.origin.z],
-        "n_blocks": [geometry.n_blocks.nx, geometry.n_blocks.ny, geometry.n_blocks.nz],
-        "block_size": [geometry.block_size.dx, geometry.block_size.dy, geometry.block_size.dz],
-    }
-    if geometry.rotation:
-        result["rotation"] = {
-            "dip_azimuth": geometry.rotation[0],
-            "dip": geometry.rotation[1],
-            "pitch": geometry.rotation[2],
-        }
-    return result
-
-
-def _parse_attributes(attributes_list: list[dict]) -> list[BlockModelAttribute]:
-    """Parse attributes from the schema format."""
-    result = []
-    for attr in attributes_list:
-        col_uuid = attr.get("block_model_column_uuid")
-        # Try to parse as UUID, but handle invalid formats gracefully
-        parsed_uuid = None
-        if col_uuid:
-            try:
-                parsed_uuid = UUID(col_uuid)
-            except (ValueError, AttributeError):
-                # col_uuid is not a valid UUID format, skip it
-                pass
-        result.append(
-            BlockModelAttribute(
-                name=attr.get("name", ""),
-                attribute_type=attr.get("attribute_type", "Float64"),
-                block_model_column_uuid=parsed_uuid,
-                unit=attr.get("unit"),
-            )
-        )
-    return result
-
-
-def _serialize_attributes(attributes: list[BlockModelAttribute]) -> list[dict]:
-    """Serialize attributes to the schema format."""
-    result = []
-    for attr in attributes:
-        attr_dict = {
-            "name": attr.name,
-            "attribute_type": attr.attribute_type,
-        }
-        if attr.block_model_column_uuid:
-            attr_dict["block_model_column_uuid"] = str(attr.block_model_column_uuid)
-        if attr.unit:
-            attr_dict["unit"] = attr.unit
-        result.append(attr_dict)
-    return result
 
 
 class BlockModel(BaseSpatialObject):
@@ -401,19 +110,19 @@ class BlockModel(BaseSpatialObject):
 
     block_model_version_uuid: Annotated[UUID | None, SchemaLocation("block_model_version_uuid")]
 
-    _geometry_raw: Annotated[dict, SchemaLocation("geometry")]
+    _geometry_raw: Annotated[BlockModelGeometry, SchemaLocation("geometry")]
 
     _attributes_raw: Annotated[list[dict], SchemaLocation("attributes")] = []
 
     @property
     def geometry(self) -> BlockModelGeometry:
         """The geometry definition of the block model."""
-        return _parse_geometry(self._geometry_raw)
+        return self._geometry_raw
 
     @property
     def attributes(self) -> BlockModelAttributes:
         """The attributes available on this block model."""
-        return BlockModelAttributes(_parse_attributes(self._attributes_raw), block_model=self)
+        return BlockModelAttributes.from_schema(self._attributes_raw, block_model=self)
 
     def get_attribute(self, name: str) -> BlockModelAttribute | None:
         """Get an attribute by name.
@@ -592,7 +301,7 @@ class BlockModel(BaseSpatialObject):
                 n_blocks=Size3i(data.n_blocks.nx, data.n_blocks.ny, data.n_blocks.nz),
                 block_size=Size3d(data.block_size.dx, data.block_size.dy, data.block_size.dz),
                 cell_data=data.cell_data,
-                coordinate_reference_system=data.crs,
+                coordinate_reference_system=data.coordinate_reference_system,
                 size_unit_id=data.size_unit_id,
                 units=data.units,
             )

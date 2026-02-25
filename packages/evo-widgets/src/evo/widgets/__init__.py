@@ -150,7 +150,7 @@ def _register_formatters(ipython: InteractiveShell) -> None:
     )
 
     html_formatter.for_type_by_name(
-        "evo.objects.typed.block_model_ref",
+        "evo.objects.typed.attributes",
         "BlockModelAttributes",
         format_block_model_attributes,
     )

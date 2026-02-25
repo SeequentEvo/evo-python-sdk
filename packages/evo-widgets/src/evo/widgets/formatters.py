@@ -525,7 +525,7 @@ def format_block_model(obj: Any) -> str:
         geom_rows.append(
             [
                 "<strong>Rotation:</strong>",
-                f"({geom.rotation[0]:.2f}, {geom.rotation[1]:.2f}, {geom.rotation[2]:.2f})",
+                f"({geom.rotation.dip_azimuth:.2f}, {geom.rotation.dip:.2f}, {geom.rotation.pitch:.2f})",
             ]
         )
     geom_table = build_nested_table(["Property", "Value"], geom_rows)

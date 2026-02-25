@@ -674,7 +674,11 @@ class TestFormatBlockModel(unittest.TestCase):
     def test_formats_block_model_with_rotation(self):
         """Test formatting a block model with rotation."""
         obj = self._create_mock_block_model()
-        obj.geometry.rotation = (45.0, 30.0, 15.0)
+        rotation = MagicMock()
+        rotation.dip_azimuth = 45.0
+        rotation.dip = 30.0
+        rotation.pitch = 15.0
+        obj.geometry.rotation = rotation
 
         html = format_block_model(obj)
 
