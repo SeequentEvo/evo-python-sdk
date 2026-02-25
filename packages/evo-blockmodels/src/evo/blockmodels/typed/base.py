@@ -27,7 +27,7 @@ from evo.common.utils import NoFeedback
 from ..client import BlockModelAPIClient
 from ..data import BlockModel, Version
 from ..endpoints.models import ColumnHeaderType
-from ._utils import dataframe_to_pyarrow, get_attribute_columns, pyarrow_to_dataframe
+from ._utils import dataframe_to_pyarrow, get_attribute_columns
 from .report import Report, ReportSpecificationData
 from .types import Point3
 
@@ -388,7 +388,7 @@ class BaseTypedBlockModel(ABC):
             bm_id=self._metadata.id,
             columns=["*"],
         )
-        self._cell_data = pyarrow_to_dataframe(table)
+        self._cell_data = table.to_pandas()
 
         versions = await self._client.list_versions(self._metadata.id)
         if versions:

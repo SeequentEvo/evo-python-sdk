@@ -17,7 +17,6 @@ from .block_model_ref import (
     BlockModelAttributes,
     BlockModelData,
     BlockModelGeometry,
-    RegularBlockModelData,
 )
 from .pointset import (
     Locations,
@@ -90,7 +89,6 @@ __all__ = [
     "PointSetData",
     "Regular3DGrid",
     "Regular3DGridData",
-    "RegularBlockModelData",
     "RegularMasked3DGrid",
     "RegularMasked3DGridData",
     "Rotation",
@@ -114,6 +112,7 @@ try:
     from evo.blockmodels.typed import (  # noqa: F401
         Aggregation,
         MassUnits,
+        RegularBlockModelData,
         Report,
         ReportCategorySpec,
         ReportColumnSpec,
@@ -124,6 +123,7 @@ try:
     __all__ += [
         "Aggregation",
         "MassUnits",
+        "RegularBlockModelData",
         "Report",
         "ReportCategorySpec",
         "ReportColumnSpec",

@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import sys
 from dataclasses import dataclass, field
-from typing import Annotated, Any, Literal
+from typing import Annotated, Literal
 from uuid import UUID
 
 from evo.common import IContext, IFeedback
@@ -30,7 +30,7 @@ from evo.objects import ObjectReference, SchemaVersion
 from . import object_from_uuid
 from ._model import SchemaLocation
 from .spatial import BaseSpatialObject, BaseSpatialObjectData
-from .types import BoundingBox, EpsgCode, Point3, Size3d, Size3i
+from .types import BoundingBox, Point3, Size3d, Size3i
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -50,7 +50,7 @@ try:
     from evo.blockmodels import RegularBlockModel as BMRegularBlockModel
     from evo.blockmodels import RegularBlockModelData as BMRegularBlockModelData
     from evo.blockmodels.data import BlockModel as BlockModelMetadata
-    from evo.blockmodels.data import RegularGridDefinition, Version
+    from evo.blockmodels.data import Version
     from evo.blockmodels.typed import Report, ReportSpecificationData
     from evo.blockmodels.typed.base import BaseTypedBlockModel
 except ImportError:

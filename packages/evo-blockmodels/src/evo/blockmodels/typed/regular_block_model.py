@@ -24,7 +24,7 @@ from evo.common.utils import NoFeedback
 from ..client import BlockModelAPIClient
 from ..data import BlockModel, RegularGridDefinition, Version
 from ..endpoints.models import BBox, BBoxXYZ, RotationAxis
-from ._utils import dataframe_to_pyarrow, pyarrow_to_dataframe
+from ._utils import dataframe_to_pyarrow
 from .base import BaseTypedBlockModel
 from .types import Point3, Size3d, Size3i
 
@@ -263,7 +263,7 @@ class RegularBlockModel(BaseTypedBlockModel):
         fb.progress(0.8, "Converting data...")
 
         # Convert to DataFrame
-        cell_data = pyarrow_to_dataframe(table)
+        cell_data = table.to_pandas()
 
         # Get version information
         versions = await client.list_versions(bm_id)

@@ -18,10 +18,9 @@ from unittest import mock
 import pandas as pd
 import pyarrow
 
-from evo.blockmodels import RegularBlockModel, RegularBlockModelData
 from evo.blockmodels.endpoints import models
 from evo.blockmodels.endpoints.models import JobResponse, JobStatus, RotationAxis
-from evo.blockmodels.typed import Point3, Size3d, Size3i
+from evo.blockmodels.typed import Point3, Size3d, Size3i, RegularBlockModel, RegularBlockModelData
 from evo.common import ServiceUser, StaticContext
 from evo.common.data import HTTPHeaderDict, RequestMethod
 from evo.common.test_tools import BASE_URL, MockResponse, TestWithConnector, TestWithStorage

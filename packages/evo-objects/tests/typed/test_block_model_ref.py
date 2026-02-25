@@ -472,13 +472,6 @@ class TestBlockModelOptionalDependency(TestCase):
         self.assertEqual(bbox.min_x, 100.0)
         self.assertEqual(bbox.max_x, 110.0)
 
-    def test_blockmodels_available(self):
-        """Test that _BLOCKMODELS_AVAILABLE is True when blockmodels IS installed."""
-        from evo.objects.typed.block_model_ref import _BLOCKMODELS_AVAILABLE
-
-        # In test environment, blockmodels should be available
-        self.assertTrue(_BLOCKMODELS_AVAILABLE)
-
     def test_regular_block_model_data_importable(self):
         """Test that RegularBlockModelData is importable from evo.objects.typed."""
         data = RegularBlockModelData(

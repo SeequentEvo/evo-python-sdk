@@ -18,22 +18,12 @@ import pyarrow as pa
 
 __all__ = [
     "dataframe_to_pyarrow",
-    "pyarrow_to_dataframe",
 ]
 
 # Geometry columns for regular block models
 GEOMETRY_COLUMNS_IJK = {"i", "j", "k"}
 GEOMETRY_COLUMNS_XYZ = {"x", "y", "z"}
 GEOMETRY_COLUMNS = GEOMETRY_COLUMNS_IJK | GEOMETRY_COLUMNS_XYZ
-
-
-def pyarrow_to_dataframe(table: pa.Table) -> pd.DataFrame:
-    """Convert a PyArrow Table to a pandas DataFrame.
-
-    :param table: The PyArrow Table to convert.
-    :return: A pandas DataFrame.
-    """
-    return table.to_pandas()
 
 
 def dataframe_to_pyarrow(df: pd.DataFrame) -> pa.Table:
