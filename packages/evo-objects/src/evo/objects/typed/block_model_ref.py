@@ -23,6 +23,8 @@ from dataclasses import dataclass, field
 from typing import Annotated, Literal
 from uuid import UUID
 
+import pandas as pd
+
 from evo.common import IContext, IFeedback
 from evo.common.utils import NoFeedback
 from evo.objects import ObjectReference, SchemaVersion
@@ -36,14 +38,6 @@ if sys.version_info >= (3, 11):
     from typing import Self
 else:
     from typing_extensions import Self
-
-# Optional dependency: evo-blockmodels
-try:
-    import pandas as pd
-except ImportError:
-    _PD_AVAILABLE = False
-else:
-    _PD_AVAILABLE = True
 
 try:
     from evo.blockmodels import BlockModelAPIClient
@@ -221,7 +215,7 @@ class BlockModelAttributes:
         return f"BlockModelAttributes({names})"
 
 
-if _BLOCKMODELS_AVAILABLE and _PD_AVAILABLE:
+if _BLOCKMODELS_AVAILABLE:
 
     @dataclass(frozen=True, kw_only=True)
     class RegularBlockModelData:
@@ -438,7 +432,7 @@ class BlockModel(BaseSpatialObject):
                 return attr
         return None
 
-    if _BLOCKMODELS_AVAILABLE and _PD_AVAILABLE:
+    if _BLOCKMODELS_AVAILABLE:
 
         def _get_block_model_client(self) -> BlockModelAPIClient:
             """Get a BlockModelAPIClient for the current context."""
