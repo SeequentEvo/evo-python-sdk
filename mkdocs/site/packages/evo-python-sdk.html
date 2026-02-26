@@ -4,9 +4,9 @@
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-
-
+        
+        
+        
         <link rel="shortcut icon" href="../img/favicon.ico">
         <title>evo-python-sdk - Evo Python SDK</title>
         <link href="../css/bootstrap.min.css" rel="stylesheet">
@@ -19,7 +19,7 @@
         <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
         <link href="../assets/_mkdocstrings.css" rel="stylesheet">
         <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
-        <script>hljs.highlightAll();</script>
+        <script>hljs.highlightAll();</script> 
     </head>
 
     <body>
@@ -41,7 +41,7 @@
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a rel="next" href="evo-blockmodels/Introduction.html" class="nav-link">
+                                <a rel="next" href="evo-blockmodels/BlockModelAPIClient.html" class="nav-link">
                                     Next <i class="fa fa-arrow-right"></i>
                                 </a>
                             </li>
@@ -59,10 +59,10 @@
         </button>
     </div>
 
-
+    
     <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
         <ul class="nav flex-column">
-
+            
             <li class="nav-item" data-bs-level="1"><a href="#evo-python-sdk" class="nav-link">evo-python-sdk</a>
               <ul class="nav flex-column">
             <li class="nav-item" data-bs-level="2"><a href="#getting-started-with-evo-code-samples" class="nav-link">Getting started with Evo code samples</a>
@@ -71,14 +71,6 @@
             </li>
             <li class="nav-item" data-bs-level="2"><a href="#getting-started-with-the-evo-sdk" class="nav-link">Getting started with the Evo SDK</a>
               <ul class="nav flex-column">
-            <li class="nav-item" data-bs-level="3"><a href="#quick-start-for-notebooks" class="nav-link">Quick start for notebooks</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
-            <li class="nav-item" data-bs-level="3"><a href="#getting-started" class="nav-link">Getting started with SDK development</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
               </ul>
             </li>
               </ul>
@@ -91,12 +83,9 @@
 <h1 id="evo-python-sdk">evo-python-sdk</h1>
 <p><a href="https://github.com/SeequentEvo/evo-python-sdk">GitHub repository</a></p>
 <p><code>evo-python-sdk</code> is designed for developers, data scientists, geologists, and geostatisticians who want to work with Seequent Evo APIs and geoscience data.</p>
-
-
 <h2 id="getting-started-with-evo-code-samples">Getting started with Evo code samples</h2>
 <p>For detailed information about creating Evo apps, the authentication setup, available code samples, and step-by-step guides for working with the Jupyter notebooks, please refer to the <a href="https://developer.seequent.com/docs/guides/getting-started/quick-start-guide"><strong>Quick start guide</strong></a>, or <a href="https://github.com/SeequentEvo/evo-python-sdk/tree/main/code-samples"><strong>code-samples</strong></a> section of the repository. </p>
 <p>This comprehensive guide will walk you through everything required to get started with Evo APIs. </p>
-
 <h2 id="getting-started-with-the-evo-sdk">Getting started with the Evo SDK</h2>
 <p>The evo-python-sdk contains a number of sub-packages. You may choose to install the <code>evo-sdk</code> package, which includes all
 sub-packages and optional dependencies (e.g. Jupyter notebook support), or choose a specific package to install:</p>
@@ -151,41 +140,36 @@ sub-packages and optional dependencies (e.g. Jupyter notebook support), or choos
 </tr>
 </tbody>
 </table>
-
 <h3 id="quick-start-for-notebooks">Quick start for notebooks</h3>
 <p>Once you have an Evo app registered and the SDK installed, you can load and work with geoscience objects in just a few lines of code:</p>
 <pre><code class="language-python"># Authenticate with Evo
 from evo.notebooks import ServiceManagerWidget
 
 manager = await ServiceManagerWidget.with_auth_code(
-    client_id="&lt;your-client-id&gt;",
-    cache_location="./notebook-data",
+    client_id=&quot;&lt;your-client-id&gt;&quot;,
+    cache_location=&quot;./notebook-data&quot;,
 ).login()
 </code></pre>
-
 <pre><code class="language-python"># Enable rich HTML display for Evo objects in Jupyter
 %load_ext evo.widgets
 
 # Load an object by file path or UUID
 from evo.objects.typed import object_from_uuid, object_from_path
 
-obj = await object_from_path(manager, "&lt;your-object-path&gt;")
+obj = await object_from_path(manager, &quot;&lt;your-object-path&gt;&quot;)
 
 # OR
 
-obj = await object_from_uuid(manager, "&lt;your-object-uuid&gt;")
+obj = await object_from_uuid(manager, &quot;&lt;your-object-uuid&gt;&quot;)
 obj  # Displays object info with links to Evo Portal and Viewer
 </code></pre>
-
 <pre><code class="language-python"># Get data as a pandas DataFrame
 df = await obj.to_dataframe()
 df.head()
 </code></pre>
-
 <p>Typed objects like <code>PointSet</code>, <code>BlockModel</code>, and <code>Variogram</code> provide pretty-printed output in Jupyter with clickable links to view your data in Evo. As support for more geoscience objects is added, geologists and geostatisticians can interact with points, variograms, block models, grids, and more — all through intuitive Python classes.</p>
 <p>For a hands-on introduction, see the <a href="https://github.com/SeequentEvo/evo-python-sdk/tree/main/code-samples/geoscience-objects/simplified-object-interactions/">simplified object interactions</a> notebook. For a complete geostatistical workflow including variogram modelling and kriging estimation, see the <a href="https://github.com/SeequentEvo/evo-python-sdk/tree/main/code-samples/geoscience-objects/running-kriging-compute/">running kriging compute</a> notebook.</p>
-
-<h3 id="getting-started">Getting started with SDK development</h3>
+<h3 id="getting-started-with-sdk-development">Getting started with SDK development</h3>
 <p>Now that you have installed the Evo SDK, you can get started by configuring your API connector, and performing a
 basic API call to list the organizations that you have access to:</p>
 <pre><code class="language-python">from evo.aio import AioTransport
@@ -285,4 +269,3 @@ asyncio.run(main())
 
     </body>
 </html>
-
