@@ -83,20 +83,19 @@
 <h1 id="evo-blockmodels">evo-blockmodels</h1>
 <p><a href="https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-blockmodels/src/evo/blockmodels/">GitHub source</a></p>
 <p>The <code>evo-blockmodels</code> package provides both a low-level API client and typed Python classes for working with block models in Evo.</p>
-<p>!!! tip "Using block models from typed objects"
-    The full functionality of <code>evo-blockmodels</code> — creating, retrieving, updating attributes, running reports — is accessible directly from the <a href="../evo-objects/Introduction.html#blockmodel-via-evo-blockmodels"><code>BlockModel</code></a> object in <code>evo.objects.typed</code>. When <code>evo-blockmodels</code> is installed, <code>BlockModel</code> acts as a proxy and delegates data operations to the Block Model Service automatically.</p>
-<pre><code>```python
-from evo.objects.typed import object_from_path
+<div class="admonition tip">
+<p class="admonition-title">Using block models from typed objects</p>
+<p>The full functionality of <code>evo-blockmodels</code> — creating, retrieving, updating attributes, running reports — is accessible directly from the <a href="../evo-objects/Introduction.html#blockmodel-via-evo-blockmodels"><code>BlockModel</code></a> object in <code>evo.objects.typed</code>. When <code>evo-blockmodels</code> is installed, <code>BlockModel</code> acts as a proxy and delegates data operations to the Block Model Service automatically.</p>
+<pre><code class="language-python">from evo.objects.typed import object_from_path
 
 # Load any block model — full evo-blockmodels functionality is available
 bm = await object_from_path(manager, "my-folder/block-model")
 df = await bm.to_dataframe()
 await bm.add_attribute(data_df, "new_col")
 report = await bm.create_report(spec)
-```
-
-See the [evo-objects Introduction](../evo-objects/Introduction.md#blockmodel-via-evo-blockmodels) for the full API.
 </code></pre>
+<p>See the <a href="../evo-objects/Introduction.html#blockmodel-via-evo-blockmodels">evo-objects Introduction</a> for the full API.</p>
+</div>
 <p>See the <a href="TypedObjects.html">Typed Objects</a> page for the full typed API reference.</p>
 <h2 id="typed-block-models">Typed Block Models</h2>
 <p>The typed module provides intuitive classes for creating, retrieving, and updating regular block models with pandas DataFrame support.</p>
