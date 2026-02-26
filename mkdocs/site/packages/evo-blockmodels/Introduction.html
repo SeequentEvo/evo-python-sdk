@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        
+        <link rel="shortcut icon" href="../../img/favicon.ico">
+        <title>evo-blockmodels - Evo Python SDK</title>
+        <link href="../../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../../css/fontawesome.min.css" rel="stylesheet">
+        <link href="../../css/brands.min.css" rel="stylesheet">
+        <link href="../../css/solid.min.css" rel="stylesheet">
+        <link href="../../css/v4-font-face.min.css" rel="stylesheet">
+        <link href="../../css/base.css" rel="stylesheet">
+        <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" >
+        <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
+        <link href="../../assets/_mkdocstrings.css" rel="stylesheet">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+        <script>hljs.highlightAll();</script> 
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="../..">Evo Python SDK</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar-collapse" aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+
+                    <ul class="nav navbar-nav ms-md-auto">
+                            <li class="nav-item">
+                                <a rel="prev" href="BlockModelAPIClient.html" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="TypedObjects.html" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-bs-toggle="collapse" data-bs-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-bs-level="1"><a href="#evo-blockmodels" class="nav-link">evo-blockmodels</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-bs-level="2"><a href="#typed-block-models" class="nav-link">Typed Block Models</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#reports" class="nav-link">Reports</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<h1 id="evo-blockmodels">evo-blockmodels</h1>
+<p><a href="https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-blockmodels/src/evo/blockmodels/">GitHub source</a></p>
+<p>The <code>evo-blockmodels</code> package provides both a low-level API client and typed Python classes for working with block models in Evo.</p>
+<p>!!! tip "Using block models from typed objects"
+    The full functionality of <code>evo-blockmodels</code> — creating, retrieving, updating attributes, running reports — is accessible directly from the <a href="../evo-objects/Introduction.html#blockmodel-via-evo-blockmodels"><code>BlockModel</code></a> object in <code>evo.objects.typed</code>. When <code>evo-blockmodels</code> is installed, <code>BlockModel</code> acts as a proxy and delegates data operations to the Block Model Service automatically.</p>
+<pre><code>```python
+from evo.objects.typed import object_from_path
+
+# Load any block model — full evo-blockmodels functionality is available
+bm = await object_from_path(manager, "my-folder/block-model")
+df = await bm.to_dataframe()
+await bm.add_attribute(data_df, "new_col")
+report = await bm.create_report(spec)
+```
+
+See the [evo-objects Introduction](../evo-objects/Introduction.md#blockmodel-via-evo-blockmodels) for the full API.
+</code></pre>
+<p>See the <a href="TypedObjects.html">Typed Objects</a> page for the full typed API reference.</p>
+<h2 id="typed-block-models">Typed Block Models</h2>
+<p>The typed module provides intuitive classes for creating, retrieving, and updating regular block models with pandas DataFrame support.</p>
+<h3 id="creating-a-block-model">Creating a block model</h3>
+<pre><code class="language-python">from evo.blockmodels.typed import RegularBlockModel, RegularBlockModelData, Point3, Size3d, Size3i
+
+data = RegularBlockModelData(
+    name=&quot;My Block Model&quot;,
+    origin=Point3(0, 0, 0),
+    n_blocks=Size3i(10, 10, 10),
+    block_size=Size3d(1.0, 1.0, 1.0),
+    cell_data=my_dataframe,
+)
+block_model = await RegularBlockModel.create(context, data)
+</code></pre>
+<h3 id="retrieving-a-block-model">Retrieving a block model</h3>
+<pre><code class="language-python">block_model = await RegularBlockModel.get(context, block_model_id)
+df = block_model.cell_data  # pandas DataFrame with all cell attributes
+</code></pre>
+<h3 id="updating-attributes">Updating attributes</h3>
+<pre><code class="language-python">new_version = await block_model.update_attributes(
+    updated_dataframe,
+    new_columns=[&quot;new_col&quot;],
+)
+</code></pre>
+<h2 id="reports">Reports</h2>
+<p>Reports provide resource estimation summaries for block models — calculating tonnages, grades, and metal content grouped by category (e.g., geological domains, rock types).</p>
+<h3 id="creating-and-running-a-report">Creating and running a report</h3>
+<pre><code class="language-python">from evo.blockmodels.typed import (
+    Report, ReportSpecificationData, ReportColumnSpec, ReportCategorySpec,
+    Aggregation, MassUnits, Units,
+)
+
+spec = ReportSpecificationData(
+    name=&quot;Grade Report&quot;,
+    category=ReportCategorySpec(column_name=&quot;domain&quot;),
+    columns=[
+        ReportColumnSpec(
+            column_name=&quot;Au&quot;,
+            aggregation=Aggregation.MASS_AVERAGE,
+            output_unit_id=&quot;g/t&quot;,
+        ),
+    ],
+    mass_units=MassUnits.TONNES,
+)
+
+report = await Report.create(context, block_model, spec)
+result = await report.run(context)
+df = result.to_dataframe()  # Tonnages and grades by domain
+</code></pre></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script src="../../js/bootstrap.bundle.min.js"></script>
+        <script>
+            var base_url = "../..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../../js/base.js"></script>
+
+        <div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>

@@ -38,11 +38,80 @@ Before you get started, make sure you have:
 
 `evo-python-sdk` is designed for developers, data scientists, and technical users who want to work with Seequent Evo APIs and geoscience data. 
 
+This repository contains a number of sub-packages. You may choose to install the `evo-sdk` package, which includes all sub-packages and optional dependencies (e.g. Jupyter notebook support), or choose a specific package to install:
+
+| Package | Version | Import | Description |
+| --- | --- | --- | --- |
+| [evo-sdk](README.md) | <a href="https://pypi.org/project/evo-sdk/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/evo-sdk" /></a> | | A metapackage that installs all available Seequent Evo SDKs, including Jupyter notebook examples. |
+| [evo-sdk-common](packages/evo-sdk-common/README.md) | <a href="https://pypi.org/project/evo-sdk-common/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/evo-sdk-common" /></a> | `evo.common`, `evo.notebooks` | A shared library that provides common functionality for integrating with Seequent's client SDKs. |
+| [evo-files](packages/evo-files/README.md) | <a href="https://pypi.org/project/evo-files/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/evo-files" /></a> | `evo.files` | A service client for interacting with the Evo File API. |
+| [evo-objects](packages/evo-objects/README.md) | <a href="https://pypi.org/project/evo-objects/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/evo-objects" /></a> | `evo.objects` | A geoscience object service client library designed to help get up and running with the Geoscience Object API. |
+| [evo-colormaps](packages/evo-colormaps/README.md)  | <a href="https://pypi.org/project/evo-colormaps/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/evo-colormaps" /></a> | `evo.colormaps` | A service client to create colour mappings and associate them to geoscience data with the Colormap API.|
+| [evo-blockmodels](packages/evo-blockmodels/README.md) | <a href="https://pypi.org/project/evo-blockmodels/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/evo-blockmodels" /></a> | `evo.blockmodels` | The Block Model API provides the ability to manage and report on block models in your Evo workspaces. |
+| [evo-widgets](packages/evo-widgets/README.md) | <a href="https://pypi.org/project/evo-widgets/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/evo-widgets" /></a> | `evo.widgets` | Widgets and presentation layer — rich HTML rendering of typed geoscience objects in Jupyter notebooks. |
+| [evo-compute](packages/evo-compute/README.md)  | <a href="https://pypi.org/project/evo-compute/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/evo-compute" /></a> | `evo.compute` | A service client to send jobs to the Compute Tasks API.|
+
 * To quickly learn how to use Evo APIs, start with the [Getting started with Evo code samples](#getting-started-with-evo-code-samples) section, which contains practical, end-to-end Jupyter notebook examples for common workflows. Most new users should begin with this section.
 
 * If you are interested in the underlying SDKs or need to understand the implementation details, explore the [Getting started with Evo SDK development](#getting-started-with-evo-sdk-development) section, which contains the source code for each Evo SDK. 
 
 * To learn about contributing to this repository, take a look at the [Contributing](#contributing) section.
+
+## Quick start for notebooks
+
+Once you have an Evo app registered and the SDK installed, you can load and work with geoscience objects in just a few lines of code:
+
+```python
+# Authenticate with Evo
+from evo.notebooks import ServiceManagerWidget
+
+manager = await ServiceManagerWidget.with_auth_code(
+    client_id="<your-client-id>",
+    cache_location="./notebook-data",
+).login()
+```
+
+> **Output:**
+>
+> ![ServiceManagerWidget](docs/img/service-manager-widget.png)
+> 
+> *A browser window opens for authentication. After login, select your organization, hub, and workspace from the dropdowns.*
+
+```python
+# Enable rich HTML display for Evo objects in Jupyter
+%load_ext evo.widgets
+
+# Load an object by file path or UUID
+from evo.objects.typed import object_from_uuid, object_from_path
+
+obj = await object_from_path(manager, "<your-object-path>")
+
+# OR
+
+obj = await object_from_uuid(manager, "<your-object-uuid>")
+obj  # Displays object info with links to Evo Portal and Viewer
+```
+
+> **Output:**
+>
+> ![PointSet object display](docs/img/pointset-output.png)
+
+```python
+# Get data as a pandas DataFrame
+df = await obj.to_dataframe()
+df.head()
+```
+
+> **Output:**
+> |   | x | y | z | Ag_ppm Values |
+> |---|---|---|---|---|
+> | 0 | 10584.40 | 100608.98 | 214.70 | 12.5 |
+> | 1 | 10590.21 | 100615.43 | 220.15 | 8.3 |
+> | ... | ... | ... | ... | ... |
+
+Typed objects like `PointSet`, `BlockModel`, and `Variogram` provide pretty-printed output in Jupyter with clickable links to view your data in Evo. As support for more geoscience objects is added, geologists and geostatisticians can interact with points, variograms, block models, grids, and more — all through intuitive Python classes. To determine the path or UUID of an object, visit the [Evo Portal](https://evo.seequent.com) or use the `ObjectSearchWidget`.
+
+For a hands-on introduction, see the [simplified object interactions](code-samples/geoscience-objects/simplified-object-interactions/) notebook. For a complete geostatistical workflow including variogram modelling and kriging estimation, see the [running kriging compute](code-samples/geoscience-objects/running-kriging-compute/) notebook.
 
 ## Getting started with Evo code samples
 
@@ -52,18 +121,6 @@ This comprehensive guide will walk you through everything required to get starte
 
 ## Getting started with Evo SDK development
 
-This repository contains a number of sub-packages. You may choose to install the `evo-sdk` package, which includes all
-sub-packages and optional dependencies (e.g. Jupyter notebook support), or choose a specific package to install:
-
-| Package | Version | Description |
-| --- | --- | --- |
-| [evo-sdk](README.md) | <a href="https://pypi.org/project/evo-sdk/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/evo-sdk" /></a> | A metapackage that installs all available Seequent Evo SDKs, including Jupyter notebook examples. |
-| [evo-sdk-common](packages/evo-sdk-common/README.md) | <a href="https://pypi.org/project/evo-sdk-common/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/evo-sdk-common" /></a> | A shared library that provides common functionality for integrating with Seequent's client SDKs. |
-| [evo-files](packages/evo-files/README.md) | <a href="https://pypi.org/project/evo-files/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/evo-files" /></a> | A service client for interacting with the Evo File API. |
-| [evo-objects](packages/evo-objects/README.md) | <a href="https://pypi.org/project/evo-objects/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/evo-objects" /></a> | A geoscience object service client library designed to help get up and running with the Geoscience Object API. |
-| [evo-colormaps](packages/evo-colormaps/README.md)  | <a href="https://pypi.org/project/evo-colormaps/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/evo-colormaps" /></a> | A service client to create colour mappings and associate them to geoscience data with the Colormap API.|
-| [evo-blockmodels](packages/evo-blockmodels/README.md) | <a href="https://pypi.org/project/evo-blockmodels/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/evo-blockmodels" /></a> | The Block Model API provides the ability to manage and report on block models in your Evo workspaces. |
-| [evo-compute](packages/evo-compute/README.md)  | <a href="https://pypi.org/project/evo-compute/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/evo-compute" /></a> | A service client to send jobs to the Compute Tasks API.|
 
 ### Getting started
 

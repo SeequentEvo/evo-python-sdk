@@ -33,7 +33,7 @@ The variogram uses two nested spherical structures aligned with the dominant ori
 - **Long-range structure**: Contribution 0.51, ranges 250m × 180m × 100m
 - **Anisotropy**: Dip 70°, Azimuth 15° (NNE strike direction)
 
-## WIP: Kriging Compute
+## Kriging Compute
 
 The notebook includes work-in-progress sections demonstrating:
 - Creating a target `BlockModel` for estimation

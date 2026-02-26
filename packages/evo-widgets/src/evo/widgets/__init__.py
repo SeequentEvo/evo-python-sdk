@@ -41,6 +41,8 @@ from .formatters import (
     format_block_model_version,
     format_report,
     format_report_result,
+    format_task_result,
+    format_task_results,
     format_variogram,
 )
 from .urls import (
@@ -71,6 +73,8 @@ __all__ = [
     "format_block_model_version",
     "format_report",
     "format_report_result",
+    "format_task_result",
+    "format_task_results",
     "format_variogram",
     "get_blocksync_base_url",
     "get_blocksync_block_model_url",
@@ -153,6 +157,25 @@ def _register_formatters(ipython: InteractiveShell) -> None:
         "evo.objects.typed.attributes",
         "BlockModelAttributes",
         format_block_model_attributes,
+    )
+
+    # Register formatters for compute task results
+    html_formatter.for_type_by_name(
+        "evo.compute.tasks.kriging",
+        "TaskResult",
+        format_task_result,
+    )
+
+    html_formatter.for_type_by_name(
+        "evo.compute.tasks.kriging",
+        "TaskResults",
+        format_task_results,
+    )
+
+    html_formatter.for_type_by_name(
+        "evo.compute.tasks.kriging",
+        "KrigingResult",
+        format_task_result,
     )
 
 

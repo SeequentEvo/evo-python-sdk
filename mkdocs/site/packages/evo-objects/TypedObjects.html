@@ -1,0 +1,4761 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        
+        <link rel="shortcut icon" href="../../img/favicon.ico">
+        <title>Typed Objects - Evo Python SDK</title>
+        <link href="../../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../../css/fontawesome.min.css" rel="stylesheet">
+        <link href="../../css/brands.min.css" rel="stylesheet">
+        <link href="../../css/solid.min.css" rel="stylesheet">
+        <link href="../../css/v4-font-face.min.css" rel="stylesheet">
+        <link href="../../css/base.css" rel="stylesheet">
+        <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" >
+        <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
+        <link href="../../assets/_mkdocstrings.css" rel="stylesheet">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+        <script>hljs.highlightAll();</script> 
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="../..">Evo Python SDK</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar-collapse" aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+
+                    <ul class="nav navbar-nav ms-md-auto">
+                            <li class="nav-item">
+                                <a rel="prev" href="ObjectAPIClient.html" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="../evo-sdk-common/discovery/DiscoveryAPIClient.html" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-bs-toggle="collapse" data-bs-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-bs-level="1"><a href="#typed-objects" class="nav-link">Typed Objects</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-bs-level="2"><a href="#evo.objects.typed.base.object_from_path" class="nav-link">object_from_path</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#evo.objects.typed.base.object_from_uuid" class="nav-link">object_from_uuid</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#evo.objects.typed.base.object_from_reference" class="nav-link">object_from_reference</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#evo.objects.typed.pointset.PointSet" class="nav-link">PointSet</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#evo.objects.typed.pointset.PointSetData" class="nav-link">PointSetData</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#evo.objects.typed.regular_grid.Regular3DGrid" class="nav-link">Regular3DGrid</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#evo.objects.typed.regular_grid.Regular3DGridData" class="nav-link">Regular3DGridData</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#evo.objects.typed.regular_masked_grid.RegularMasked3DGrid" class="nav-link">RegularMasked3DGrid</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#evo.objects.typed.regular_masked_grid.RegularMasked3DGridData" class="nav-link">RegularMasked3DGridData</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#evo.objects.typed.tensor_grid.Tensor3DGrid" class="nav-link">Tensor3DGrid</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#evo.objects.typed.tensor_grid.Tensor3DGridData" class="nav-link">Tensor3DGridData</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#evo.objects.typed.variogram.Variogram" class="nav-link">Variogram</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#evo.objects.typed.variogram.VariogramData" class="nav-link">VariogramData</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#evo.objects.typed.block_model_ref.BlockModel" class="nav-link">BlockModel</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#evo.objects.typed.attributes.Attributes" class="nav-link">Attributes</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#evo.objects.typed.attributes.Attribute" class="nav-link">Attribute</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#evo.objects.typed.types.BoundingBox" class="nav-link">BoundingBox</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<h1 id="typed-objects">Typed Objects</h1>
+
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="evo.objects.typed.base.object_from_path" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">evo.objects.typed.base.object_from_path</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h2>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">object_from_path</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="n">IContext</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_BaseObject</span>
+</code></pre></div>
+
+    <div class="doc doc-contents first">
+
+        <p>Download a GeoscienceObject by its path and create the appropriate typed instance.</p>
+<p>This function downloads the object using its path (the hierarchical location/name
+in the workspace) and automatically selects the correct typed class (e.g., PointSet,
+Regular3DGrid) based on the object's sub-classification.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>context</code>
+            </td>
+            <td>
+                  <code><span title="evo.common.IContext">IContext</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The context for connecting to Evo APIs.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>path</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The object path (e.g., "my-folder/my-object.json" or "/my-folder/my-object.json").</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>version</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional version ID string to download a specific version.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="evo.objects.typed.base._BaseObject">_BaseObject</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A typed GeoscienceObject instance (PointSet, Regular3DGrid, etc.).</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>ValueError</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If no typed class is found for the object's sub-classification.  Example::  from evo.objects.typed import object_from_path  # Download latest version by path obj = await object_from_path(context, "my-folder/pointset.json")  # Download specific version obj = await object_from_path(context, "my-folder/pointset.json", version="abc123")</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="evo.objects.typed.base.object_from_uuid" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">evo.objects.typed.base.object_from_uuid</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h2>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">object_from_uuid</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="n">IContext</span><span class="p">,</span> <span class="n">uuid</span><span class="p">:</span> <span class="n">UUID</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> <span class="n">version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_BaseObject</span>
+</code></pre></div>
+
+    <div class="doc doc-contents first">
+
+        <p>Download a GeoscienceObject by its UUID and create the appropriate typed instance.</p>
+<p>This function downloads the object using its unique identifier (UUID) and automatically
+selects the correct typed class (e.g., PointSet, Regular3DGrid) based on the object's
+sub-classification.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>context</code>
+            </td>
+            <td>
+                  <code><span title="evo.common.IContext">IContext</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The context for connecting to Evo APIs.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>uuid</code>
+            </td>
+            <td>
+                  <code><span title="uuid.UUID">UUID</span> | <span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The UUID of the object to download (as a UUID object or string).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>version</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional version ID string to download a specific version.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="evo.objects.typed.base._BaseObject">_BaseObject</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A typed GeoscienceObject instance (PointSet, Regular3DGrid, etc.).</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>ValueError</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If no typed class is found for the object's sub-classification.  Example::  from evo.objects.typed import object_from_uuid  # Download latest version by UUID obj = await object_from_uuid(context, "b208a6c9-6881-4b97-b02d-acb5d81299bb")  # Download specific version obj = await object_from_uuid(context, "b208a6c9-6881-4b97-b02d-acb5d81299bb", version="abc123")</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="evo.objects.typed.base.object_from_reference" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">evo.objects.typed.base.object_from_reference</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h2>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">object_from_reference</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="n">IContext</span><span class="p">,</span> <span class="n">reference</span><span class="p">:</span> <span class="n">ObjectReference</span> <span class="o">|</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_BaseObject</span>
+</code></pre></div>
+
+    <div class="doc doc-contents first">
+
+        <p>Download a GeoscienceObject from an ObjectReference and create the appropriate typed instance.</p>
+<p>This function downloads the object from a full ObjectReference (which can contain path, UUID,
+version, etc.) and automatically selects the correct typed class (e.g., PointSet, Regular3DGrid)
+based on the object's sub-classification.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>context</code>
+            </td>
+            <td>
+                  <code><span title="evo.common.IContext">IContext</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The context for connecting to Evo APIs.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>reference</code>
+            </td>
+            <td>
+                  <code><span title="evo.objects.ObjectReference">ObjectReference</span> | <span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The ObjectReference identifying the object to download.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="evo.objects.typed.base._BaseObject">_BaseObject</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A typed GeoscienceObject instance (PointSet, Regular3DGrid, etc.).</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>ValueError</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If no typed class is found for the object's sub-classification.  Example::  from evo.objects.typed import object_from_reference from evo.objects import ObjectReference  # Create reference from URL ref = ObjectReference("evo://org/workspace/object/b208a6c9-6881-4b97-b02d-acb5d81299bb") obj = await object_from_reference(context, ref)  # obj will be a PointSet if the object is a pointset, # a Regular3DGrid if it's a regular-3d-grid, etc.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="evo.objects.typed.pointset.PointSet" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">evo.objects.typed.pointset.PointSet</span>
+
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>A GeoscienceObject representing a set of points in 3D space.</p>
+<p>The object contains a locations dataset with coordinates and optional attributes
+for each point.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.objects.typed.pointset.PointSet.num_points" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">num_points</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">num_points</span><span class="p">:</span> <span class="nb">int</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The number of points in this pointset.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.objects.typed.pointset.PointSet.attributes" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">attributes</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">attributes</span><span class="p">:</span> <span class="s1">&#39;Attributes&#39;</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The attributes associated with the points in this pointset.</p>
+
+    </div>
+
+</div>
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.typed.pointset.PointSet.coordinates" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">coordinates</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">coordinates</span><span class="p">(</span><span class="n">fb</span><span class="p">:</span> <span class="n">IFeedback</span> <span class="o">=</span> <span class="n">NoFeedback</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Get the coordinates dataframe for the pointset.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>fb</code>
+            </td>
+            <td>
+                  <code><span title="evo.common.interfaces.IFeedback">IFeedback</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional feedback object to report download progress.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="evo.common.utils.NoFeedback">NoFeedback</span></code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="pandas.DataFrame">DataFrame</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A DataFrame with 'x', 'y', 'z' columns representing point coordinates.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.typed.pointset.PointSet.to_dataframe" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">to_dataframe</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">to_dataframe</span><span class="p">(</span><span class="o">*</span><span class="n">keys</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">fb</span><span class="p">:</span> <span class="n">IFeedback</span> <span class="o">=</span> <span class="n">NoFeedback</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Get the full dataframe for the pointset, including coordinates and attributes.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>keys</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional list of attribute keys to include. If not provided, all attributes are included.</p>
+              </div>
+            </td>
+            <td>
+                  <code>()</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>fb</code>
+            </td>
+            <td>
+                  <code><span title="evo.common.interfaces.IFeedback">IFeedback</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional feedback object to report download progress.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="evo.common.utils.NoFeedback">NoFeedback</span></code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="pandas.DataFrame">DataFrame</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A DataFrame with 'x', 'y', 'z' columns and any additional attribute columns.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="evo.objects.typed.pointset.PointSetData" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">evo.objects.typed.pointset.PointSetData</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
+  </span>
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>Data class for creating a new PointSet object.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>name</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The name of the object.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>locations</code>
+            </td>
+            <td>
+                  <code><span title="pandas.DataFrame">DataFrame</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A DataFrame containing the point data. Must have 'x', 'y', 'z' columns for coordinates. Any additional columns will be treated as point attributes.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>coordinate_reference_system</code>
+            </td>
+            <td>
+                  <code><span title="evo.objects.typed.types.EpsgCode">EpsgCode</span> | <span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional EPSG code or WKT string for the coordinate reference system.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>description</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional description of the object.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>tags</code>
+            </td>
+            <td>
+                  <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="str">str</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional dictionary of tags for the object.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>extensions</code>
+            </td>
+            <td>
+                  <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="typing.Any">Any</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional dictionary of extensions for the object.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="evo.objects.typed.regular_grid.Regular3DGrid" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">evo.objects.typed.regular_grid.Regular3DGrid</span>
+
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>A GeoscienceObject representing a regular 3D grid.</p>
+<p>The object contains a dataset for both the cells and the vertices of the grid.</p>
+<p>Each of these datasets only contain attribute columns. The actual geometry of the grid is defined by
+the properties: origin, size, cell_size, and rotation.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.objects.typed.regular_grid.Regular3DGrid.attributes" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">attributes</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">attributes</span><span class="p">:</span> <span class="s1">&#39;Attributes&#39;</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The cell attributes of this grid (alias for cells.attributes).</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.objects.typed.regular_grid.Regular3DGrid.vertex_attributes" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">vertex_attributes</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">vertex_attributes</span><span class="p">:</span> <span class="s1">&#39;Attributes&#39;</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The vertex attributes of this grid.</p>
+
+    </div>
+
+</div>
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.typed.regular_grid.Regular3DGrid.to_dataframe" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">to_dataframe</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">to_dataframe</span><span class="p">(</span><span class="o">*</span><span class="n">keys</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">fb</span><span class="p">:</span> <span class="n">IFeedback</span> <span class="o">=</span> <span class="n">NoFeedback</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Get a dataframe containing the cell attributes.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>keys</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional list of attribute keys to include. If not provided, all attributes are included.</p>
+              </div>
+            </td>
+            <td>
+                  <code>()</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>fb</code>
+            </td>
+            <td>
+                  <code><span title="evo.common.interfaces.IFeedback">IFeedback</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional feedback object to report download progress.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="evo.common.utils.NoFeedback">NoFeedback</span></code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="pandas.DataFrame">DataFrame</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A DataFrame with cell attribute columns.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="evo.objects.typed.regular_grid.Regular3DGridData" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">evo.objects.typed.regular_grid.Regular3DGridData</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
+  </span>
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="evo.objects.typed.regular_masked_grid.RegularMasked3DGrid" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">evo.objects.typed.regular_masked_grid.RegularMasked3DGrid</span>
+
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>A GeoscienceObject representing a regular masked 3D grid.</p>
+<p>The object contains a dataset for the cells of the grid, where only active cells
+(as defined by the mask) have attribute values.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.objects.typed.regular_masked_grid.RegularMasked3DGrid.attributes" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">attributes</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">attributes</span><span class="p">:</span> <span class="n">Attributes</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The cell attributes of this grid (alias for cells.attributes).</p>
+
+    </div>
+
+</div>
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.typed.regular_masked_grid.RegularMasked3DGrid.to_dataframe" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">to_dataframe</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">to_dataframe</span><span class="p">(</span><span class="o">*</span><span class="n">keys</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">fb</span><span class="p">:</span> <span class="n">IFeedback</span> <span class="o">=</span> <span class="n">NoFeedback</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Get a dataframe containing the cell attributes.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>keys</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional list of attribute keys to include. If not provided, all attributes are included.</p>
+              </div>
+            </td>
+            <td>
+                  <code>()</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>fb</code>
+            </td>
+            <td>
+                  <code><span title="evo.common.IFeedback">IFeedback</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional feedback object to report download progress.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="evo.common.utils.NoFeedback">NoFeedback</span></code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="pandas.DataFrame">DataFrame</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A DataFrame with cell attribute columns.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="evo.objects.typed.regular_masked_grid.RegularMasked3DGridData" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">evo.objects.typed.regular_masked_grid.RegularMasked3DGridData</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
+  </span>
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="evo.objects.typed.tensor_grid.Tensor3DGrid" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">evo.objects.typed.tensor_grid.Tensor3DGrid</span>
+
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>A GeoscienceObject representing a tensor 3D grid.</p>
+<p>A tensor grid is a 3D grid where cells may have different sizes. The grid is defined
+by an origin, the number of cells in each direction, and arrays of cell sizes along
+each axis. The grid contains datasets for both cells and vertices.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.objects.typed.tensor_grid.Tensor3DGrid.attributes" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">attributes</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">attributes</span><span class="p">:</span> <span class="s1">&#39;Attributes&#39;</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The cell attributes of this grid (alias for cells.attributes).</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.objects.typed.tensor_grid.Tensor3DGrid.vertex_attributes" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">vertex_attributes</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">vertex_attributes</span><span class="p">:</span> <span class="s1">&#39;Attributes&#39;</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The vertex attributes of this grid.</p>
+
+    </div>
+
+</div>
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.typed.tensor_grid.Tensor3DGrid.compute_bounding_box" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">compute_bounding_box</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">compute_bounding_box</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">BoundingBox</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Compute the bounding box from the grid properties.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.typed.tensor_grid.Tensor3DGrid.to_dataframe" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">to_dataframe</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">to_dataframe</span><span class="p">(</span><span class="o">*</span><span class="n">keys</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">fb</span><span class="p">:</span> <span class="n">IFeedback</span> <span class="o">=</span> <span class="n">NoFeedback</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Get a dataframe containing the cell attributes.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>keys</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional list of attribute keys to include. If not provided, all attributes are included.</p>
+              </div>
+            </td>
+            <td>
+                  <code>()</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>fb</code>
+            </td>
+            <td>
+                  <code><span title="evo.common.interfaces.IFeedback">IFeedback</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional feedback object to report download progress.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="evo.common.utils.NoFeedback">NoFeedback</span></code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="pandas.DataFrame">DataFrame</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A DataFrame with cell attribute columns.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="evo.objects.typed.tensor_grid.Tensor3DGridData" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">evo.objects.typed.tensor_grid.Tensor3DGridData</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
+  </span>
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>Data for creating a Tensor3DGrid.</p>
+<p>A tensor grid is a 3D grid where cells may have different sizes.
+The grid is defined by an origin, the number of cells in each direction,
+and arrays of cell sizes along each axis.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.typed.tensor_grid.Tensor3DGridData.compute_bounding_box" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">compute_bounding_box</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">compute_bounding_box</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">BoundingBox</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Compute the bounding box from the origin, cell sizes, and rotation.</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="evo.objects.typed.variogram.Variogram" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">evo.objects.typed.variogram.Variogram</span>
+
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>A GeoscienceObject representing a variogram.</p>
+<p>The variogram describes the spatial correlation structure of a variable,
+used in geostatistical modeling and kriging interpolation.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.objects.typed.variogram.Variogram.sill" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">sill</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">sill</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">SchemaLocation</span><span class="p">(</span><span class="s1">&#39;sill&#39;</span><span class="p">)]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The variance of the variogram.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.objects.typed.variogram.Variogram.is_rotation_fixed" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">is_rotation_fixed</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">is_rotation_fixed</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="n">SchemaLocation</span><span class="p">(</span><span class="s1">&#39;is_rotation_fixed&#39;</span><span class="p">)]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Boolean value specifying whether all structure's rotations are the same.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.objects.typed.variogram.Variogram.structures" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">structures</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">structures</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span> <span class="n">SchemaLocation</span><span class="p">(</span><span class="s1">&#39;structures&#39;</span><span class="p">)]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>List of variogram structures (exponential, gaussian, spherical, etc.).</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.objects.typed.variogram.Variogram.nugget" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">nugget</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">nugget</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">SchemaLocation</span><span class="p">(</span><span class="s1">&#39;nugget&#39;</span><span class="p">)]</span> <span class="o">=</span> <span class="mf">0.0</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The variance between two samples separated by near-zero lag distance.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.objects.typed.variogram.Variogram.data_variance" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">data_variance</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">data_variance</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">SchemaLocation</span><span class="p">(</span><span class="s1">&#39;data_variance&#39;</span><span class="p">)]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The variance of the data, used for normalising or rescaling the variogram.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.objects.typed.variogram.Variogram.modelling_space" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">modelling_space</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">modelling_space</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Literal</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">,</span> <span class="s1">&#39;normalscore&#39;</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">SchemaLocation</span><span class="p">(</span><span class="s1">&#39;modelling_space&#39;</span><span class="p">)]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The modelling space the variogram model was fitted in.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.objects.typed.variogram.Variogram.domain" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">domain</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">domain</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">SchemaLocation</span><span class="p">(</span><span class="s1">&#39;domain&#39;</span><span class="p">)]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The domain the variogram is modelled for.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.objects.typed.variogram.Variogram.attribute" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">attribute</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">attribute</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">SchemaLocation</span><span class="p">(</span><span class="s1">&#39;attribute&#39;</span><span class="p">)]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The attribute the variogram is modelled for.</p>
+
+    </div>
+
+</div>
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.typed.variogram.Variogram.get_ellipsoid" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">get_ellipsoid</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_ellipsoid</span><span class="p">(</span><span class="n">structure_index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Ellipsoid&#39;</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Get an Ellipsoid from a variogram structure for visualization or search.</p>
+<p>Returns an Ellipsoid from evo.objects.typed that can be used for:
+- 3D visualization with surface_points() or wireframe_points()
+- Creating search ellipsoids via scaled()
+- Kriging search neighborhoods</p>
+<p>Args:
+    structure_index: Index of the structure to use. If None (default), selects
+                    the structure with the largest volume (major × semi_major × minor).</p>
+<p>Returns:
+    Ellipsoid configured with the structure's anisotropy ranges and rotation.</p>
+<p>Example:
+    &gt;&gt;&gt; # Get ellipsoid from structure with largest range (default)
+    &gt;&gt;&gt; var_ell = variogram.get_ellipsoid()
+    &gt;&gt;&gt;
+    &gt;&gt;&gt; # Or explicitly select a structure by index
+    &gt;&gt;&gt; var_ell = variogram.get_ellipsoid(structure_index=0)
+    &gt;&gt;&gt;
+    &gt;&gt;&gt; # Create search ellipsoid scaled by 2x
+    &gt;&gt;&gt; search_ell = var_ell.scaled(2.0)
+    &gt;&gt;&gt;
+    &gt;&gt;&gt; # Visualize with Plotly
+    &gt;&gt;&gt; x, y, z = var_ell.surface_points(center=(100, 200, 50))
+    &gt;&gt;&gt; mesh = go.Mesh3d(x=x, y=y, z=z, alphahull=0, opacity=0.3)</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.typed.variogram.Variogram.get_principal_directions" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">get_principal_directions</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_principal_directions</span><span class="p">(</span>
+    <span class="n">max_distance</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">n_points</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">200</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="s2">&quot;VariogramCurveData&quot;</span><span class="p">,</span> <span class="s2">&quot;VariogramCurveData&quot;</span><span class="p">,</span> <span class="s2">&quot;VariogramCurveData&quot;</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Generate variogram curve data for the three principal directions.</p>
+<p>Calculates the variogram model along the major, semi-major, and minor
+axis directions. Each direction uses the corresponding range from the
+anisotropy ellipsoid.</p>
+<p>Args:
+    max_distance: Maximum distance for the curves. If None, uses 1.2x the maximum range.
+    n_points: Number of points for smooth curves.</p>
+<p>Returns:
+    Tuple of (major_curve, semi_major_curve, minor_curve) as VariogramCurveData.</p>
+<p>Example with Plotly:
+    &gt;&gt;&gt; major, semi_maj, minor = variogram.get_principal_directions()
+    &gt;&gt;&gt; import plotly.graph_objects as go
+    &gt;&gt;&gt; fig = go.Figure()
+    &gt;&gt;&gt; fig.add_trace(go.Scatter(x=minor.distance, y=minor.semivariance,
+    ...                          name='Minor', line=dict(color='blue')))
+    &gt;&gt;&gt; fig.add_trace(go.Scatter(x=semi_maj.distance, y=semi_maj.semivariance,
+    ...                          name='Semi-major', line=dict(color='green')))
+    &gt;&gt;&gt; fig.add_trace(go.Scatter(x=major.distance, y=major.semivariance,
+    ...                          name='Major', line=dict(color='red')))
+    &gt;&gt;&gt; fig.update_layout(xaxis_title='Distance', yaxis_title='Semivariance')
+    &gt;&gt;&gt; fig.show()</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.typed.variogram.Variogram.get_direction" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">get_direction</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_direction</span><span class="p">(</span>
+    <span class="n">azimuth</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">dip</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">max_distance</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">n_points</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">200</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="s2">&quot;NDArray[np.floating[Any]]&quot;</span><span class="p">,</span> <span class="s2">&quot;NDArray[np.floating[Any]]&quot;</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Calculate variogram model curve in an arbitrary direction.</p>
+<p>Computes the variogram semivariance along a specified direction defined by
+azimuth and dip angles. The effective range in that direction is calculated
+using the anisotropic transform.</p>
+<p>Args:
+    azimuth: Azimuth angle in degrees (0-360), measured clockwise from north.
+    dip: Dip angle in degrees (-90 to 90), positive downward.
+    max_distance: Maximum distance for the curve. If None, uses 1.3x the
+                 effective range in the specified direction.
+    n_points: Number of points for smooth curve.</p>
+<p>Returns:
+    Tuple of (distance, semivariance) as numpy arrays, suitable for plotting.</p>
+<p>Example with Plotly:
+    &gt;&gt;&gt; distance, semivariance = variogram.get_direction(azimuth=45, dip=30)
+    &gt;&gt;&gt; import plotly.graph_objects as go
+    &gt;&gt;&gt; fig = go.Figure()
+    &gt;&gt;&gt; fig.add_trace(go.Scatter(x=distance, y=semivariance, name='Az=45°, Dip=30°'))
+    &gt;&gt;&gt; fig.update_layout(xaxis_title='Distance', yaxis_title='Semivariance')
+    &gt;&gt;&gt; fig.show()</p>
+<p>Example with Matplotlib:
+    &gt;&gt;&gt; distance, semivariance = variogram.get_direction(azimuth=0, dip=0)
+    &gt;&gt;&gt; import matplotlib.pyplot as plt
+    &gt;&gt;&gt; plt.plot(distance, semivariance)
+    &gt;&gt;&gt; plt.xlabel('Distance')
+    &gt;&gt;&gt; plt.ylabel('Semivariance')
+    &gt;&gt;&gt; plt.show()</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="evo.objects.typed.variogram.VariogramData" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">evo.objects.typed.variogram.VariogramData</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
+  </span>
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>Data for creating a Variogram.</p>
+<p>A variogram is a geostatistical model describing spatial correlation structure.
+The variogram model is defined by the nugget and multiple structures using the
+leapfrog-convention rotation.</p>
+<p>Note:
+    When using a variogram with kriging tasks, the following fields should be set:
+    - <code>modelling_space</code>: Set to "data" for original units or "normalscore" for gaussian space
+    - <code>data_variance</code>: Should match the sill value for non-normalized data</p>
+<p>Example using typed structures (recommended):
+    &gt;&gt;&gt; data = VariogramData(
+    ...     name="My Variogram",
+    ...     sill=1.0,
+    ...     nugget=0.1,
+    ...     is_rotation_fixed=True,
+    ...     modelling_space="data",  # Required for kriging
+    ...     data_variance=1.0,       # Required for kriging
+    ...     structures=[
+    ...         SphericalStructure(
+    ...             contribution=0.9,
+    ...             anisotropy=Ellipsoid(
+    ...                 ranges=EllipsoidRanges(major=200, semi_major=150, minor=100),
+    ...                 rotation=Rotation(dip_azimuth=0, dip=0, pitch=0),
+    ...             ),
+    ...         ),
+    ...     ],
+    ...     attribute="grade",
+    ... )</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.objects.typed.variogram.VariogramData.sill" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">sill</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">sill</span><span class="p">:</span> <span class="nb">float</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The variance of the variogram. Must be within a very small tolerance of the nugget
+plus the sum of all structure's contributions.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.objects.typed.variogram.VariogramData.is_rotation_fixed" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">is_rotation_fixed</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">is_rotation_fixed</span><span class="p">:</span> <span class="nb">bool</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Boolean value specifying whether all structure's rotations are the same.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.objects.typed.variogram.VariogramData.structures" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">structures</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">structures</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">VariogramStructure</span> <span class="o">|</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>A list of at least one mathematical model, which are parameterised to represent
+the spatial structure of the variogram model. Can use typed classes like
+SphericalStructure, ExponentialStructure, GaussianStructure, CubicStructure,
+or raw dictionaries.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.objects.typed.variogram.VariogramData.nugget" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">nugget</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">nugget</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The variance between two samples separated by near-zero lag distance, representing
+the randomness present. When plotted, this value is the y-intercept.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.objects.typed.variogram.VariogramData.data_variance" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">data_variance</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">data_variance</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The variance of the data, if different from the sill value, this is used for
+normalising or rescaling the variogram.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.objects.typed.variogram.VariogramData.modelling_space" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">modelling_space</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">modelling_space</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">,</span> <span class="s1">&#39;normalscore&#39;</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The modelling space the variogram model was fitted in - either 'data' for original
+units or 'normalscore' for gaussian space.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.objects.typed.variogram.VariogramData.domain" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">domain</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">domain</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The domain the variogram is modelled for.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.objects.typed.variogram.VariogramData.attribute" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">attribute</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">attribute</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The attribute the variogram is modelled for.</p>
+
+    </div>
+
+</div>
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.typed.variogram.VariogramData.get_structures_as_dicts" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">get_structures_as_dicts</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_structures_as_dicts</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Get structures as a list of dictionaries for serialization.</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="evo.objects.typed.block_model_ref.BlockModel" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">evo.objects.typed.block_model_ref.BlockModel</span>
+
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>A GeoscienceObject representing a block model.</p>
+<p>This object acts as a proxy, allowing you to access block model data and attributes
+through the Block Model Service while the reference itself is stored as a Geoscience Object.</p>
+<p>Metadata-only operations (geometry, attributes, name) always work. Data operations
+(to_dataframe, add_attribute, create_report, etc.) require the evo-blockmodels package
+to be installed: <code>pip install evo-objects[blockmodels]</code></p>
+<p>Example usage:</p>
+<pre><code># Create a new regular block model
+data = RegularBlockModelData(
+    name="My Block Model",
+    origin=Point3(x=0, y=0, z=0),
+    n_blocks=Size3i(nx=10, ny=10, nz=5),
+    block_size=Size3d(dx=2.5, dy=5.0, dz=5.0),
+    cell_data=my_dataframe,
+)
+bm = await BlockModel.create_regular(context, data)
+
+# Get an existing block model
+bm = await BlockModel.from_reference(context, reference)
+
+# Access geometry
+print(f"Origin: {bm.geometry.origin}")
+print(f"Size: {bm.geometry.n_blocks}")
+
+# Access data through the Block Model Service (requires evo-blockmodels)
+df = await bm.to_dataframe(columns=["*"])
+
+# Create a new attribute on the block model (requires evo-blockmodels)
+await bm.add_attribute(data_df, "new_attribute")
+</code></pre>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.objects.typed.block_model_ref.BlockModel.attributes" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">attributes</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">attributes</span><span class="p">:</span> <span class="n">BlockModelAttributes</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The attributes available on this block model.</p>
+
+    </div>
+
+</div>
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.typed.block_model_ref.BlockModel.get_attribute" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">get_attribute</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_attribute</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BlockModelAttribute</span> <span class="o">|</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Get an attribute by name.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>name</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The name of the attribute.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="evo.objects.typed.attributes.BlockModelAttribute">BlockModelAttribute</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The attribute, or None if not found.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.typed.block_model_ref.BlockModel.get_block_model_metadata" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">get_block_model_metadata</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_block_model_metadata</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">BlockModelMetadata</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Get the full block model metadata from the Block Model Service.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="evo.blockmodels.data.BlockModel">BlockModel</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The BlockModel metadata from the Block Model Service.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.typed.block_model_ref.BlockModel.get_versions" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">get_versions</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_versions</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Version</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Get all versions of this block model.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="list">list</span>[<span title="evo.blockmodels.data.Version">Version</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>List of versions, ordered from newest to oldest.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.typed.block_model_ref.BlockModel.to_dataframe" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">to_dataframe</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">to_dataframe</span><span class="p">(</span>
+    <span class="n">columns</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">version_uuid</span><span class="p">:</span> <span class="n">UUID</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">|</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;latest&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;latest&quot;</span><span class="p">,</span>
+    <span class="n">fb</span><span class="p">:</span> <span class="n">IFeedback</span> <span class="o">=</span> <span class="n">NoFeedback</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Get block model data as a DataFrame.</p>
+<p>This is the preferred method for accessing block model data. It retrieves
+the data from the Block Model Service and returns it as a pandas DataFrame.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>columns</code>
+            </td>
+            <td>
+                  <code><span title="list">list</span>[<span title="str">str</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>List of column names to retrieve. Defaults to all columns ["*"].</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>version_uuid</code>
+            </td>
+            <td>
+                  <code><span title="uuid.UUID">UUID</span> | None | <span title="typing.Literal">Literal</span>[&#39;latest&#39;]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Specific version to query. Use "latest" (default) to get the latest version, or None to use the version referenced by this object.</p>
+              </div>
+            </td>
+            <td>
+                  <code>&#39;latest&#39;</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>fb</code>
+            </td>
+            <td>
+                  <code><span title="evo.common.IFeedback">IFeedback</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional feedback interface for progress reporting.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="evo.common.utils.NoFeedback">NoFeedback</span></code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="pandas.DataFrame">DataFrame</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>DataFrame containing the block model data with user-friendly column names.  Example: &gt;&gt;&gt; df = await block_model.to_dataframe() &gt;&gt;&gt; df.head()</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.typed.block_model_ref.BlockModel.refresh" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">refresh</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">refresh</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">BlockModel</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Refresh this block model object with the latest data from the server.</p>
+<p>Use this after a remote operation (like kriging) has updated the block model
+to see the newly added attributes.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="evo.objects.typed.block_model_ref.BlockModel" href="#evo.objects.typed.block_model_ref.BlockModel">BlockModel</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A new BlockModel instance with refreshed data.  Example: &gt;&gt;&gt; # After running kriging that adds attributes... &gt;&gt;&gt; block_model = await block_model.refresh() &gt;&gt;&gt; block_model.attributes  # Now shows the new attributes</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.typed.block_model_ref.BlockModel.add_attribute" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">add_attribute</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">add_attribute</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">DataFrame</span><span class="p">,</span> <span class="n">attribute_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">unit</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">fb</span><span class="p">:</span> <span class="n">IFeedback</span> <span class="o">=</span> <span class="n">NoFeedback</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Version</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Add a new attribute to the block model.</p>
+<p>The DataFrame must contain geometry columns (i, j, k) or (x, y, z) and the
+attribute column to add.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>data</code>
+            </td>
+            <td>
+                  <code><span title="pandas.DataFrame">DataFrame</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>DataFrame containing geometry columns and the new attribute.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>attribute_name</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Name of the attribute column in the DataFrame to add.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>unit</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional unit ID for the attribute (must be a valid unit ID from the Block Model Service).</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>fb</code>
+            </td>
+            <td>
+                  <code><span title="evo.common.IFeedback">IFeedback</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional feedback interface for progress reporting.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="evo.common.utils.NoFeedback">NoFeedback</span></code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="evo.blockmodels.data.Version">Version</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The new version created by adding the attribute.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.typed.block_model_ref.BlockModel.update_attributes" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">update_attributes</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">update_attributes</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">DataFrame</span><span class="p">,</span>
+    <span class="n">new_columns</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">update_columns</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">delete_columns</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">units</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">fb</span><span class="p">:</span> <span class="n">IFeedback</span> <span class="o">=</span> <span class="n">NoFeedback</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Version</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Update attributes on the block model.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>data</code>
+            </td>
+            <td>
+                  <code><span title="pandas.DataFrame">DataFrame</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>DataFrame containing geometry columns and attribute data.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>new_columns</code>
+            </td>
+            <td>
+                  <code><span title="list">list</span>[<span title="str">str</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>List of new column names to add.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>update_columns</code>
+            </td>
+            <td>
+                  <code><span title="set">set</span>[<span title="str">str</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Set of existing column names to update.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>delete_columns</code>
+            </td>
+            <td>
+                  <code><span title="set">set</span>[<span title="str">str</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Set of column names to delete.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>units</code>
+            </td>
+            <td>
+                  <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="str">str</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Dictionary mapping column names to unit IDs (must be valid unit IDs from the Block Model Service).</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>fb</code>
+            </td>
+            <td>
+                  <code><span title="evo.common.IFeedback">IFeedback</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional feedback interface for progress reporting.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="evo.common.utils.NoFeedback">NoFeedback</span></code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="evo.blockmodels.data.Version">Version</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The new version created by the update.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.typed.block_model_ref.BlockModel.create_regular" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">create_regular</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">create_regular</span><span class="p">(</span>
+    <span class="n">context</span><span class="p">:</span> <span class="n">IContext</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">RegularBlockModelData</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">fb</span><span class="p">:</span> <span class="n">IFeedback</span> <span class="o">=</span> <span class="n">NoFeedback</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Create a new regular block model.</p>
+<p>This creates a block model in the Block Model Service and a corresponding
+Geoscience Object reference.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>context</code>
+            </td>
+            <td>
+                  <code><span title="evo.common.IContext">IContext</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The context containing environment, connector, and cache.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>data</code>
+            </td>
+            <td>
+                  <code><span title="evo.objects.typed._grid.RegularBlockModelData">RegularBlockModelData</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The data defining the regular block model to create.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>path</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional path for the Geoscience Object.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>fb</code>
+            </td>
+            <td>
+                  <code><span title="evo.common.IFeedback">IFeedback</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional feedback interface for progress reporting.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="evo.common.utils.NoFeedback">NoFeedback</span></code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="typing_extensions.Self">Self</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A new BlockModel instance.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.typed.block_model_ref.BlockModel.set_attribute_units" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">set_attribute_units</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">set_attribute_units</span><span class="p">(</span><span class="n">units</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">fb</span><span class="p">:</span> <span class="n">IFeedback</span> <span class="o">=</span> <span class="n">NoFeedback</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BlockModel</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Set units for attributes on this block model.</p>
+<p>This is required before creating reports, as reports need columns to have
+units defined.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>units</code>
+            </td>
+            <td>
+                  <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="str">str</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Dictionary mapping attribute names to unit IDs (e.g., {"Au": "g/t", "density": "t/m3"}).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>fb</code>
+            </td>
+            <td>
+                  <code><span title="evo.common.IFeedback">IFeedback</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional feedback interface for progress reporting.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="evo.common.utils.NoFeedback">NoFeedback</span></code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="evo.objects.typed.block_model_ref.BlockModel" href="#evo.objects.typed.block_model_ref.BlockModel">BlockModel</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The updated BlockModel instance (refreshed from server).  Example: &gt;&gt;&gt; from evo.blockmodels import Units &gt;&gt;&gt; block_model = await block_model.set_attribute_units({ ...     "Au": Units.GRAMS_PER_TONNE, ...     "density": Units.TONNES_PER_CUBIC_METRE, ... })</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.typed.block_model_ref.BlockModel.create_report" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">create_report</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">create_report</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">ReportSpecificationData</span><span class="p">,</span> <span class="n">fb</span><span class="p">:</span> <span class="n">IFeedback</span> <span class="o">=</span> <span class="n">NoFeedback</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Report</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Create a new report specification for this block model.</p>
+<p>Reports require:
+1. Columns to have units set (use <code>set_attribute_units()</code> first)
+2. At least one category column for grouping (e.g., domain, rock type)</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>data</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="evo.blockmodels.typed.report.ReportSpecificationData
+
+
+  
+      dataclass
+   (evo.blockmodels.typed.ReportSpecificationData)" href="../evo-blockmodels/TypedObjects.html#evo.blockmodels.typed.report.ReportSpecificationData">ReportSpecificationData</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The report specification data.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>fb</code>
+            </td>
+            <td>
+                  <code><span title="evo.common.IFeedback">IFeedback</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional feedback interface for progress reporting.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="evo.common.utils.NoFeedback">NoFeedback</span></code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="evo.blockmodels.typed.report.Report (evo.blockmodels.typed.Report)" href="../evo-blockmodels/TypedObjects.html#evo.blockmodels.typed.report.Report">Report</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A Report instance representing the created report.  Example: &gt;&gt;&gt; from evo.blockmodels.typed import ReportSpecificationData, ReportColumnSpec, ReportCategorySpec &gt;&gt;&gt; report = await block_model.create_report(ReportSpecificationData( ...     name="Gold Resource Report", ...     columns=[ReportColumnSpec(column_name="Au", aggregation="WEIGHTED_MEAN", output_unit_id="g/t")], ...     categories=[ReportCategorySpec(column_name="domain")], ...     mass_unit_id="t", ...     density_value=2.7, ...     density_unit_id="t/m3", ... )) &gt;&gt;&gt; report  # Pretty-prints with BlockSync link</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.typed.block_model_ref.BlockModel.list_reports" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">list_reports</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">list_reports</span><span class="p">(</span><span class="n">fb</span><span class="p">:</span> <span class="n">IFeedback</span> <span class="o">=</span> <span class="n">NoFeedback</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Report</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>List all report specifications for this block model.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>fb</code>
+            </td>
+            <td>
+                  <code><span title="evo.common.IFeedback">IFeedback</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional feedback interface for progress reporting.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="evo.common.utils.NoFeedback">NoFeedback</span></code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="list">list</span>[<a class="autorefs autorefs-internal" title="evo.blockmodels.typed.report.Report (evo.blockmodels.typed.Report)" href="../evo-blockmodels/TypedObjects.html#evo.blockmodels.typed.report.Report">Report</a>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>List of Report instances.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="evo.objects.typed.attributes.Attributes" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">evo.objects.typed.attributes.Attributes</span>
+
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>A collection of Geoscience Object Attributes</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.typed.attributes.Attributes.__getitem__" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">__getitem__</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">__getitem__</span><span class="p">(</span><span class="n">index_or_name</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Attribute</span> <span class="o">|</span> <span class="n">PendingAttribute</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Get an attribute by index or name.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>index_or_name</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span> | <span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Either an integer index or the name/key of the attribute.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="evo.objects.typed.attributes.Attribute" href="#evo.objects.typed.attributes.Attribute">Attribute</a> | <span title="evo.objects.typed.attributes.PendingAttribute">PendingAttribute</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The attribute at the specified index or with the specified name/key. If a string is provided and no matching attribute exists, returns a PendingAttribute that can be used as a target for compute tasks.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>IndexError</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the integer index is out of range.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.typed.attributes.Attributes.to_dataframe" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">to_dataframe</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">to_dataframe</span><span class="p">(</span><span class="o">*</span><span class="n">keys</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">fb</span><span class="p">:</span> <span class="n">IFeedback</span> <span class="o">=</span> <span class="n">NoFeedback</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Load a DataFrame containing the values from the specified attributes in the object.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>keys</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional list of attribute keys to filter the attributes by. If no keys are provided, all attributes will be loaded.</p>
+              </div>
+            </td>
+            <td>
+                  <code>()</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>fb</code>
+            </td>
+            <td>
+                  <code><span title="evo.common.IFeedback">IFeedback</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional feedback object to report download progress.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="evo.common.utils.NoFeedback">NoFeedback</span></code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="pandas.DataFrame">DataFrame</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A DataFrame containing the values from the specified attributes. Column name(s) will be updated based on the attribute names.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.typed.attributes.Attributes.append_attribute" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">append_attribute</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">append_attribute</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">DataFrame</span><span class="p">,</span> <span class="n">fb</span><span class="p">:</span> <span class="n">IFeedback</span> <span class="o">=</span> <span class="n">NoFeedback</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Add a new attribute to the object.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>df</code>
+            </td>
+            <td>
+                  <code><span title="pandas.DataFrame">DataFrame</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>DataFrame containing the values for the new attribute. The DataFrame should contain a single column.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>fb</code>
+            </td>
+            <td>
+                  <code><span title="evo.common.IFeedback">IFeedback</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional feedback object to report upload progress.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="evo.common.utils.NoFeedback">NoFeedback</span></code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>ValueError</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the DataFrame does not contain exactly one column.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.typed.attributes.Attributes.append_attributes" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">append_attributes</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">append_attributes</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">DataFrame</span><span class="p">,</span> <span class="n">fb</span><span class="p">:</span> <span class="n">IFeedback</span> <span class="o">=</span> <span class="n">NoFeedback</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Add new attributes to the object.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>df</code>
+            </td>
+            <td>
+                  <code><span title="pandas.DataFrame">DataFrame</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>DataFrame containing the values for the new attributes.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>fb</code>
+            </td>
+            <td>
+                  <code><span title="evo.common.IFeedback">IFeedback</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional feedback object to report upload progress.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="evo.common.utils.NoFeedback">NoFeedback</span></code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.typed.attributes.Attributes.set_attributes" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">set_attributes</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">set_attributes</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">DataFrame</span><span class="p">,</span> <span class="n">fb</span><span class="p">:</span> <span class="n">IFeedback</span> <span class="o">=</span> <span class="n">NoFeedback</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Set the attributes of the object to match the provided DataFrame.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>df</code>
+            </td>
+            <td>
+                  <code><span title="pandas.DataFrame">DataFrame</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>DataFrame containing the values for the new attributes.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>fb</code>
+            </td>
+            <td>
+                  <code><span title="evo.common.IFeedback">IFeedback</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional feedback object to report upload progress.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="evo.common.utils.NoFeedback">NoFeedback</span></code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.typed.attributes.Attributes.validate_lengths" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">validate_lengths</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">validate_lengths</span><span class="p">(</span><span class="n">expected_length</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Validate that all attributes have the expected length.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>expected_length</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The expected number of values for each attribute.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>ObjectValidationError</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If any attribute has a different length.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="evo.objects.typed.attributes.Attribute" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">evo.objects.typed.attributes.Attribute</span>
+
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>A Geoscience Object Attribute</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.objects.typed.attributes.Attribute.key" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">key</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">key</span><span class="p">:</span> <span class="nb">str</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The key used to identify this attribute.</p>
+<p>This is required to be unique within a group of attributes.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.objects.typed.attributes.Attribute.attribute_type" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">attribute_type</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">attribute_type</span><span class="p">:</span> <span class="nb">str</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The type of this attribute.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.objects.typed.attributes.Attribute.exists" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">exists</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">exists</span><span class="p">:</span> <span class="nb">bool</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Whether this attribute exists on the object.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>True for existing attributes.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+    </div>
+
+</div>
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.typed.attributes.Attribute.to_dataframe" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">to_dataframe</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">to_dataframe</span><span class="p">(</span><span class="n">fb</span><span class="p">:</span> <span class="n">IFeedback</span> <span class="o">=</span> <span class="n">NoFeedback</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Load a DataFrame containing the values for this attribute from the object.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>fb</code>
+            </td>
+            <td>
+                  <code><span title="evo.common.IFeedback">IFeedback</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional feedback object to report download progress.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="evo.common.utils.NoFeedback">NoFeedback</span></code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="pandas.DataFrame">DataFrame</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The loaded DataFrame with values for this attribute, applying lookup table and NaN values as specified. The column name will be updated to match the attribute name.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.typed.attributes.Attribute.set_attribute_values" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">set_attribute_values</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">set_attribute_values</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">DataFrame</span><span class="p">,</span> <span class="n">infer_attribute_type</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">fb</span><span class="p">:</span> <span class="n">IFeedback</span> <span class="o">=</span> <span class="n">NoFeedback</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Update the values of this attribute.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>df</code>
+            </td>
+            <td>
+                  <code><span title="pandas.DataFrame">DataFrame</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>DataFrame containing the new values for this attribute. The DataFrame should contain a single column.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>infer_attribute_type</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Whether to infer the attribute type from the DataFrame. If False, the existing attribute type will be used.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>fb</code>
+            </td>
+            <td>
+                  <code><span title="evo.common.IFeedback">IFeedback</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional feedback object to report upload progress.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="evo.common.utils.NoFeedback">NoFeedback</span></code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="evo.objects.typed.types.BoundingBox" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">evo.objects.typed.types.BoundingBox</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
+  </span>
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>A bounding box defined by minimum and maximum coordinates.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.objects.typed.types.BoundingBox.min" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">min</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nb">min</span><span class="p">:</span> <span class="n">Point3</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The minimum point of the bounding box.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.objects.typed.types.BoundingBox.max" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">max</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nb">max</span><span class="p">:</span> <span class="n">Point3</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The maximum point of the bounding box.</p>
+
+    </div>
+
+</div>
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.typed.types.BoundingBox.from_extent" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">from_extent</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">from_extent</span><span class="p">(</span><span class="n">origin</span><span class="p">:</span> <span class="n">Point3</span><span class="p">,</span> <span class="n">extent</span><span class="p">:</span> <span class="n">Size3d</span><span class="p">,</span> <span class="n">rotation</span><span class="p">:</span> <span class="n">Rotation</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BoundingBox</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Create a BoundingBox from an origin point and extent.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>origin</code>
+            </td>
+            <td>
+                  <code><span title="evo.common.typed.Point3">Point3</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The origin point of the box.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>extent</code>
+            </td>
+            <td>
+                  <code><span title="evo.common.typed.Size3d">Size3d</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The extent (dx, dy, dz) of the box.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>rotation</code>
+            </td>
+            <td>
+                  <code><span title="evo.objects.typed.types.Rotation">Rotation</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional rotation to apply to the box.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="evo.objects.typed.types.BoundingBox
+
+
+  
+      dataclass
+  " href="#evo.objects.typed.types.BoundingBox">BoundingBox</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The bounding box that encompasses the rotated box.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.typed.types.BoundingBox.from_regular_grid" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">from_regular_grid</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">from_regular_grid</span><span class="p">(</span><span class="n">origin</span><span class="p">:</span> <span class="n">Point3</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="n">Size3i</span><span class="p">,</span> <span class="n">cell_size</span><span class="p">:</span> <span class="n">Size3d</span><span class="p">,</span> <span class="n">rotation</span><span class="p">:</span> <span class="n">Rotation</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BoundingBox</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Create a BoundingBox for a regular 3D grid.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>origin</code>
+            </td>
+            <td>
+                  <code><span title="evo.common.typed.Point3">Point3</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The origin point of the grid.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>size</code>
+            </td>
+            <td>
+                  <code><span title="evo.common.typed.Size3i">Size3i</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The number of cells in each dimension.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>cell_size</code>
+            </td>
+            <td>
+                  <code><span title="evo.common.typed.Size3d">Size3d</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The size of each cell in each dimension.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>rotation</code>
+            </td>
+            <td>
+                  <code><span title="evo.objects.typed.types.Rotation">Rotation</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional rotation to apply to the grid.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="evo.objects.typed.types.BoundingBox
+
+
+  
+      dataclass
+  " href="#evo.objects.typed.types.BoundingBox">BoundingBox</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The bounding box that encompasses the grid.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script src="../../js/bootstrap.bundle.min.js"></script>
+        <script>
+            var base_url = "../..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../../js/base.js"></script>
+
+        <div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>

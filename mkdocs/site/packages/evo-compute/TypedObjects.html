@@ -1,0 +1,1801 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        
+        <link rel="shortcut icon" href="../../img/favicon.ico">
+        <title>Typed Objects - Evo Python SDK</title>
+        <link href="../../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../../css/fontawesome.min.css" rel="stylesheet">
+        <link href="../../css/brands.min.css" rel="stylesheet">
+        <link href="../../css/solid.min.css" rel="stylesheet">
+        <link href="../../css/v4-font-face.min.css" rel="stylesheet">
+        <link href="../../css/base.css" rel="stylesheet">
+        <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" >
+        <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
+        <link href="../../assets/_mkdocstrings.css" rel="stylesheet">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+        <script>hljs.highlightAll();</script> 
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="../..">Evo Python SDK</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar-collapse" aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+
+                    <ul class="nav navbar-nav ms-md-auto">
+                            <li class="nav-item">
+                                <a rel="prev" href="JobClient.html" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="../evo-files/FileAPIClient.html" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-bs-toggle="collapse" data-bs-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-bs-level="1"><a href="#typed-objects" class="nav-link">Typed Objects</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-bs-level="2"><a href="#evo.compute.tasks.kriging.KrigingParameters" class="nav-link">KrigingParameters</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#evo.compute.tasks.kriging.SimpleKriging" class="nav-link">SimpleKriging</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#evo.compute.tasks.kriging.OrdinaryKriging" class="nav-link">OrdinaryKriging</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#evo.compute.tasks.kriging.BlockDiscretisation" class="nav-link">BlockDiscretisation</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#evo.compute.tasks.kriging.RegionFilter" class="nav-link">RegionFilter</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#evo.compute.tasks.kriging.KrigingResult" class="nav-link">KrigingResult</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#evo.compute.tasks.kriging.TaskResult" class="nav-link">TaskResult</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#evo.compute.tasks.kriging.TaskResults" class="nav-link">TaskResults</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#evo.compute.tasks.common.search.SearchNeighborhood" class="nav-link">SearchNeighborhood</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#evo.compute.tasks.common.source_target.Source" class="nav-link">Source</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#evo.compute.tasks.common.source_target.Target" class="nav-link">Target</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<h1 id="typed-objects">Typed Objects</h1>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="evo.compute.tasks.kriging.KrigingParameters" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">evo.compute.tasks.kriging.KrigingParameters</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
+  </span>
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>Parameters for the kriging task.</p>
+<p>Defines all inputs needed to run a kriging interpolation task.</p>
+<p>Example:
+    &gt;&gt;&gt; from evo.compute.tasks import run, SearchNeighborhood, Ellipsoid, EllipsoidRanges
+    &gt;&gt;&gt; from evo.compute.tasks.kriging import KrigingParameters, RegionFilter
+    &gt;&gt;&gt;
+    &gt;&gt;&gt; params = KrigingParameters(
+    ...     source=pointset.attributes["grade"],  # Source attribute
+    ...     target=block_model.attributes["kriged_grade"],  # Target attribute (creates if doesn't exist)
+    ...     variogram=variogram,  # Variogram model
+    ...     search=SearchNeighborhood(
+    ...         ellipsoid=Ellipsoid(ranges=EllipsoidRanges(200, 150, 100)),
+    ...         max_samples=20,
+    ...     ),
+    ...     # method defaults to ordinary kriging
+    ... )
+    &gt;&gt;&gt;
+    &gt;&gt;&gt; # With region filter to restrict kriging to specific categories on target:
+    &gt;&gt;&gt; params_filtered = KrigingParameters(
+    ...     source=pointset.attributes["grade"],
+    ...     target=block_model.attributes["kriged_grade"],
+    ...     variogram=variogram,
+    ...     search=SearchNeighborhood(...),
+    ...     target_region_filter=RegionFilter(
+    ...         attribute=block_model.attributes["domain"],
+    ...         names=["LMS1", "LMS2"],
+    ...     ),
+    ... )</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.kriging.KrigingParameters.source" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">source</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">source</span><span class="p">:</span> <span class="n">Source</span> <span class="o">=</span> <span class="n">source</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The source object and attribute containing known values.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.kriging.KrigingParameters.target" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">target</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">target</span><span class="p">:</span> <span class="n">Target</span> <span class="o">=</span> <span class="n">target</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The target object and attribute to create or update with kriging results.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.kriging.KrigingParameters.variogram" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">variogram</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">variogram</span><span class="p">:</span> <span class="n">GeoscienceObjectReference</span> <span class="o">=</span> <span class="n">variogram</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Model of the covariance within the domain (Variogram object or reference).</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.kriging.KrigingParameters.search" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">search</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">search</span><span class="p">:</span> <span class="n">SearchNeighborhood</span> <span class="o">=</span> <span class="n">search</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Search neighborhood parameters.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.kriging.KrigingParameters.method" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">method</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">method</span><span class="p">:</span> <span class="n">SimpleKriging</span> <span class="o">|</span> <span class="n">OrdinaryKriging</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">method</span> <span class="ow">or</span> <span class="n">OrdinaryKriging</span><span class="p">()</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The kriging method to use. Defaults to ordinary kriging if not specified.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.kriging.KrigingParameters.target_region_filter" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">target_region_filter</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">target_region_filter</span><span class="p">:</span> <span class="n">RegionFilter</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">target_region_filter</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Optional region filter to restrict kriging to specific categories on the target object.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.kriging.KrigingParameters.block_discretisation" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">block_discretisation</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">block_discretisation</span><span class="p">:</span> <span class="n">BlockDiscretisation</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">block_discretisation</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Optional sub-block discretisation for block kriging.</p>
+<p>When provided, each target block is subdivided into nx × ny × nz sub-cells
+and the kriged value is averaged across these sub-cells. When omitted,
+point kriging is performed. Only applicable when the target is a 3D grid
+or block model.</p>
+
+    </div>
+
+</div>
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.compute.tasks.kriging.KrigingParameters.to_dict" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">to_dict</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">to_dict</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Serialize to dictionary.</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="evo.compute.tasks.kriging.SimpleKriging" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">evo.compute.tasks.kriging.SimpleKriging</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
+  </span>
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>Simple kriging method with a known constant mean.</p>
+<p>Use when the mean of the variable is known and constant across the domain.</p>
+<p>Example:
+    &gt;&gt;&gt; method = SimpleKriging(mean=100.0)</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.kriging.SimpleKriging.mean" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">mean</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">mean</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">mean</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The mean value, assumed to be constant across the domain.</p>
+
+    </div>
+
+</div>
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.compute.tasks.kriging.SimpleKriging.to_dict" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">to_dict</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">to_dict</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Serialize to dictionary.</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="evo.compute.tasks.kriging.OrdinaryKriging" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">evo.compute.tasks.kriging.OrdinaryKriging</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
+  </span>
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>Ordinary kriging method with unknown local mean.</p>
+<p>The most common kriging method. Estimates the local mean from nearby samples.
+This is the default kriging method if none is specified.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.compute.tasks.kriging.OrdinaryKriging.to_dict" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">to_dict</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">to_dict</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Serialize to dictionary.</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="evo.compute.tasks.kriging.BlockDiscretisation" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">evo.compute.tasks.kriging.BlockDiscretisation</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
+  </span>
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>Sub-block discretisation for block kriging.</p>
+<p>When provided, each target block is subdivided into <code>nx * ny * nz</code>
+sub-cells and the kriged value is averaged across these sub-cells.
+When omitted (<code>None</code>), point kriging is performed.</p>
+<p>Only applicable when the target is a 3D grid or block model.</p>
+<p>Each dimension must be an integer between 1 and 9 (inclusive).
+The default value of 1 in every direction is equivalent to point kriging.</p>
+<p>Example:
+    &gt;&gt;&gt; discretisation = BlockDiscretisation(nx=3, ny=3, nz=2)</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.kriging.BlockDiscretisation.nx" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">nx</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">nx</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">nx</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Number of subdivisions in the x direction (1–9).</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.kriging.BlockDiscretisation.ny" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">ny</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">ny</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">ny</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Number of subdivisions in the y direction (1–9).</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.kriging.BlockDiscretisation.nz" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">nz</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">nz</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">nz</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Number of subdivisions in the z direction (1–9).</p>
+
+    </div>
+
+</div>
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.compute.tasks.kriging.BlockDiscretisation.to_dict" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">to_dict</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">to_dict</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Serialize to dictionary.</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="evo.compute.tasks.kriging.RegionFilter" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">evo.compute.tasks.kriging.RegionFilter</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
+  </span>
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>Region filter for restricting kriging to specific categories on the target.</p>
+<p>Use either <code>names</code> OR <code>values</code>, not both:
+- <code>names</code>: Category names (strings) - used for CategoryAttribute with string lookup
+- <code>values</code>: Integer values - used for integer-indexed categories or BlockModel integer columns</p>
+<p>Example:
+    &gt;&gt;&gt; # Filter by category names (string lookup)
+    &gt;&gt;&gt; filter_by_name = RegionFilter(
+    ...     attribute=block_model.attributes["domain"],
+    ...     names=["LMS1", "LMS2"],
+    ... )
+    &gt;&gt;&gt;
+    &gt;&gt;&gt; # Filter by integer values (direct index matching)
+    &gt;&gt;&gt; filter_by_value = RegionFilter(
+    ...     attribute=block_model.attributes["domain"],
+    ...     values=[1, 2, 3],
+    ... )</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.kriging.RegionFilter.attribute" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">attribute</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">attribute</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="n">attribute</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The category attribute to filter on (from target object).</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.kriging.RegionFilter.names" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">names</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">names</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Category names to include (mutually exclusive with values).</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.kriging.RegionFilter.values" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">values</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">values</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Integer category keys to include (mutually exclusive with names).</p>
+
+    </div>
+
+</div>
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.compute.tasks.kriging.RegionFilter.to_dict" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">to_dict</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">to_dict</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Serialize to dictionary for the compute task API.</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="evo.compute.tasks.kriging.KrigingResult" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">evo.compute.tasks.kriging.KrigingResult</span>
+
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>Result of a kriging task.</p>
+<p>Contains information about the completed kriging operation and provides
+convenient methods to access the target object and its data.</p>
+<p>Example:
+    &gt;&gt;&gt; result = await run(manager, params)
+    &gt;&gt;&gt; result  # Pretty-prints the result
+    &gt;&gt;&gt;
+    &gt;&gt;&gt; # Get data directly as DataFrame (simplest approach)
+    &gt;&gt;&gt; df = await result.to_dataframe()
+    &gt;&gt;&gt;
+    &gt;&gt;&gt; # Or load the target object for more control
+    &gt;&gt;&gt; target = await result.get_target_object()</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.compute.tasks.kriging.KrigingResult.__init__" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">__init__</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">__init__</span><span class="p">(</span><span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">_KrigingTarget</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Initialize a KrigingResult.</p>
+<p>Args:
+    message: A message describing what happened in the task.
+    target: The target information from the kriging result.</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="evo.compute.tasks.kriging.TaskResult" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">evo.compute.tasks.kriging.TaskResult</span>
+
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>Base class for compute task results.</p>
+<p>Provides common functionality for all task results including:
+- Pretty-printing in Jupyter notebooks
+- Portal URL extraction
+- Access to target object and data</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.kriging.TaskResult.message" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">message</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">message</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">message</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>A message describing what happened in the task.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.kriging.TaskResult.target_name" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">target_name</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">target_name</span><span class="p">:</span> <span class="nb">str</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The name of the target object.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.kriging.TaskResult.target_reference" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">target_reference</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">target_reference</span><span class="p">:</span> <span class="nb">str</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Reference URL to the target object.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.kriging.TaskResult.attribute_name" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">attribute_name</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">attribute_name</span><span class="p">:</span> <span class="nb">str</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The name of the attribute that was created/updated.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.kriging.TaskResult.schema_type" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">schema_type</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">schema_type</span><span class="p">:</span> <span class="nb">str</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The schema type of the target object (e.g., 'regular-masked-3d-grid').</p>
+
+    </div>
+
+</div>
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.compute.tasks.kriging.TaskResult.get_target_object" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">get_target_object</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_target_object</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="n">IContext</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Load and return the target geoscience object.</p>
+<p>Args:
+    context: Optional context to use. If not provided, uses the context
+            from when the task was run.</p>
+<p>Returns:
+    The typed geoscience object (e.g., Regular3DGrid, RegularMasked3DGrid, BlockModel)</p>
+<p>Example:
+    &gt;&gt;&gt; result = await run(manager, params)
+    &gt;&gt;&gt; target = await result.get_target_object()
+    &gt;&gt;&gt; target  # Pretty-prints with Portal/Viewer links</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.compute.tasks.kriging.TaskResult.to_dataframe" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">to_dataframe</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">to_dataframe</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="n">IContext</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">columns</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Get the task results as a DataFrame.</p>
+<p>This is the simplest way to access the task output data. It loads
+the target object and returns its data as a pandas DataFrame.</p>
+<p>Args:
+    context: Optional context to use. If not provided, uses the context
+            from when the task was run.
+    columns: Optional list of column names to include. If None, includes
+            all columns. Use ["*"] to explicitly request all columns.</p>
+<p>Returns:
+    A pandas DataFrame containing the task results.</p>
+<p>Example:
+    &gt;&gt;&gt; result = await run(manager, params)
+    &gt;&gt;&gt; df = await result.to_dataframe()
+    &gt;&gt;&gt; df.head()</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.compute.tasks.kriging.TaskResult.__repr__" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">__repr__</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">__repr__</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>String representation.</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="evo.compute.tasks.kriging.TaskResults" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">evo.compute.tasks.kriging.TaskResults</span>
+
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>Container for multiple task results with pretty-printing support.</p>
+<p>Provides iteration and indexing support for accessing individual results.</p>
+<p>Example:
+    &gt;&gt;&gt; results = await run(manager, [params1, params2, params3])
+    &gt;&gt;&gt; results  # Pretty-prints all results
+    &gt;&gt;&gt; results[0]  # Access first result
+    &gt;&gt;&gt; for result in results:
+    ...     print(result.attribute_name)</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.kriging.TaskResults.results" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">results</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">TaskResult</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The list of task results.</p>
+
+    </div>
+
+</div>
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.compute.tasks.kriging.TaskResults.__repr__" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">__repr__</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">__repr__</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>String representation.</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="evo.compute.tasks.common.search.SearchNeighborhood" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">evo.compute.tasks.common.search.SearchNeighborhood</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
+  </span>
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>Search neighborhood parameters for geostatistical operations.</p>
+<p>Defines how to find nearby samples when performing spatial interpolation
+or estimation. Used by kriging, simulation, and other geostatistical tasks.</p>
+<p>The search neighborhood is defined by an ellipsoid (spatial extent and
+orientation) and constraints on the number of samples to use.</p>
+<p>Example:
+    &gt;&gt;&gt; search = SearchNeighborhood(
+    ...     ellipsoid=Ellipsoid(
+    ...         ranges=EllipsoidRanges(major=200.0, semi_major=150.0, minor=100.0),
+    ...         rotation=Rotation(dip_azimuth=45.0),
+    ...     ),
+    ...     max_samples=20,
+    ... )</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.common.search.SearchNeighborhood.ellipsoid" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">ellipsoid</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">ellipsoid</span><span class="p">:</span> <span class="n">Ellipsoid</span> <span class="o">=</span> <span class="n">ellipsoid</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The ellipsoid defining the spatial extent to search for samples.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.common.search.SearchNeighborhood.max_samples" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">max_samples</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">max_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">max_samples</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The maximum number of samples to use for each evaluation point.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.common.search.SearchNeighborhood.min_samples" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">min_samples</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">min_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">min_samples</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The minimum number of samples required. If fewer are found, the point may be skipped.</p>
+
+    </div>
+
+</div>
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.compute.tasks.common.search.SearchNeighborhood.to_dict" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">to_dict</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">to_dict</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Serialize to dictionary.</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="evo.compute.tasks.common.source_target.Source" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">evo.compute.tasks.common.source_target.Source</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
+  </span>
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>The source object and attribute containing known values.</p>
+<p>Used to specify where input data comes from for geostatistical operations.
+Can be initialized directly, or more commonly from a typed object's attribute.</p>
+<p>Example:
+    &gt;&gt;&gt; # From a typed object attribute (preferred):
+    &gt;&gt;&gt; source = pointset.attributes["grade"]
+    &gt;&gt;&gt;
+    &gt;&gt;&gt; # Or explicitly:
+    &gt;&gt;&gt; source = Source(object=pointset, attribute="grade")</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.common.source_target.Source.object" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">object</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nb">object</span><span class="p">:</span> <span class="n">GeoscienceObjectReference</span> <span class="o">=</span> <span class="nb">object</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Reference to the source geoscience object.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.common.source_target.Source.attribute" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">attribute</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">attribute</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">attribute</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Name of the attribute on the source object.</p>
+
+    </div>
+
+</div>
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.compute.tasks.common.source_target.Source.to_dict" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">to_dict</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">to_dict</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Serialize to dictionary.</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="evo.compute.tasks.common.source_target.Target" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">evo.compute.tasks.common.source_target.Target</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
+  </span>
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>The target object and attribute to create or update with results.</p>
+<p>Used to specify where output data should be written for geostatistical operations.</p>
+<p>Example:
+    &gt;&gt;&gt; # Create a new attribute on a target object:
+    &gt;&gt;&gt; target = Target.new_attribute(block_model, "kriged_grade")
+    &gt;&gt;&gt;
+    &gt;&gt;&gt; # Or update an existing attribute:
+    &gt;&gt;&gt; target = Target(object=grid, attribute=UpdateAttribute("existing_ref"))</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.common.source_target.Target.object" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">object</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nb">object</span><span class="p">:</span> <span class="n">GeoscienceObjectReference</span> <span class="o">=</span> <span class="nb">object</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Object to write results onto.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.common.source_target.Target.attribute" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">attribute</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">attribute</span><span class="p">:</span> <span class="n">CreateAttribute</span> <span class="o">|</span> <span class="n">UpdateAttribute</span> <span class="o">=</span> <span class="n">attribute</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Attribute specification (create new or update existing).</p>
+
+    </div>
+
+</div>
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.compute.tasks.common.source_target.Target.new_attribute" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">new_attribute</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">new_attribute</span><span class="p">(</span><span class="nb">object</span><span class="p">:</span> <span class="n">GeoscienceObjectReference</span><span class="p">,</span> <span class="n">attribute_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Target</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Create a Target that will create a new attribute on the target object.</p>
+<p>Args:
+    object: The target object to write results onto.
+    attribute_name: The name of the new attribute to create.</p>
+<p>Returns:
+    A Target instance configured to create a new attribute.</p>
+<p>Example:
+    &gt;&gt;&gt; target = Target.new_attribute(block_model, "kriged_grade")</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.compute.tasks.common.source_target.Target.to_dict" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">to_dict</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">to_dict</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Serialize to dictionary.</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script src="../../js/bootstrap.bundle.min.js"></script>
+        <script>
+            var base_url = "../..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../../js/base.js"></script>
+
+        <div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>
