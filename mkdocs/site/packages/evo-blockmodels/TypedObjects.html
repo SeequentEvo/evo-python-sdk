@@ -1,0 +1,2774 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        
+        <link rel="shortcut icon" href="../../img/favicon.ico">
+        <title>Typed Objects - Evo Python SDK</title>
+        <link href="../../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../../css/fontawesome.min.css" rel="stylesheet">
+        <link href="../../css/brands.min.css" rel="stylesheet">
+        <link href="../../css/solid.min.css" rel="stylesheet">
+        <link href="../../css/v4-font-face.min.css" rel="stylesheet">
+        <link href="../../css/base.css" rel="stylesheet">
+        <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" >
+        <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
+        <link href="../../assets/_mkdocstrings.css" rel="stylesheet">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+        <script>hljs.highlightAll();</script> 
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="../..">Evo Python SDK</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar-collapse" aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+
+                    <ul class="nav navbar-nav ms-md-auto">
+                            <li class="nav-item">
+                                <a rel="prev" href="Introduction.html" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="../evo-colormaps/ColormapAPIClient.html" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-bs-toggle="collapse" data-bs-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-bs-level="1"><a href="#typed-objects" class="nav-link">Typed Objects</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-bs-level="2"><a href="#evo.blockmodels.typed.regular_block_model.RegularBlockModel" class="nav-link">RegularBlockModel</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#evo.blockmodels.typed.regular_block_model.RegularBlockModelData" class="nav-link">RegularBlockModelData</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#evo.blockmodels.typed.report.Report" class="nav-link">Report</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#evo.blockmodels.typed.report.ReportSpecificationData" class="nav-link">ReportSpecificationData</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#evo.blockmodels.typed.report.ReportResult" class="nav-link">ReportResult</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#evo.blockmodels.typed.report.ReportColumnSpec" class="nav-link">ReportColumnSpec</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#evo.blockmodels.typed.report.ReportCategorySpec" class="nav-link">ReportCategorySpec</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#evo.blockmodels.typed.report.Aggregation" class="nav-link">Aggregation</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#evo.blockmodels.typed.units.Units" class="nav-link">Units</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#evo.blockmodels.typed.units.UnitInfo" class="nav-link">UnitInfo</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<h1 id="typed-objects">Typed Objects</h1>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="evo.blockmodels.typed.regular_block_model.RegularBlockModel" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">evo.blockmodels.typed.regular_block_model.RegularBlockModel</span>
+
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>A typed wrapper for regular block models providing pandas DataFrame access.</p>
+<p>This class provides a high-level interface for creating, retrieving, and updating
+regular block models with typed access to grid properties and cell data.</p>
+<p>Example usage:</p>
+<pre><code># Create a new block model
+data = RegularBlockModelData(
+    name="My Block Model",
+    origin=Point3(0, 0, 0),
+    n_blocks=Size3i(10, 10, 10),
+    block_size=Size3d(1.0, 1.0, 1.0),
+    cell_data=my_dataframe,
+)
+block_model = await RegularBlockModel.create(context, data)
+
+# Retrieve an existing block model
+block_model = await RegularBlockModel.get(context, bm_id)
+df = block_model.cell_data
+
+# Update attributes
+new_version = await block_model.update_attributes(
+    updated_dataframe,
+    new_columns=["new_col"],
+)
+</code></pre>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.blockmodels.typed.regular_block_model.RegularBlockModel.n_blocks" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">n_blocks</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">n_blocks</span><span class="p">:</span> <span class="n">Size3i</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The number of blocks in each dimension.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.blockmodels.typed.regular_block_model.RegularBlockModel.block_size" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">block_size</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">block_size</span><span class="p">:</span> <span class="n">Size3d</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The size of each block in each dimension.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.blockmodels.typed.regular_block_model.RegularBlockModel.rotations" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">rotations</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">rotations</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">RotationAxis</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The rotations applied to the block model.</p>
+
+    </div>
+
+</div>
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.blockmodels.typed.regular_block_model.RegularBlockModel.__init__" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">__init__</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">__init__</span><span class="p">(</span>
+    <span class="n">client</span><span class="p">:</span> <span class="n">BlockModelAPIClient</span><span class="p">,</span>
+    <span class="n">metadata</span><span class="p">:</span> <span class="n">BlockModel</span><span class="p">,</span>
+    <span class="n">version</span><span class="p">:</span> <span class="n">Version</span><span class="p">,</span>
+    <span class="n">cell_data</span><span class="p">:</span> <span class="n">DataFrame</span><span class="p">,</span>
+    <span class="n">context</span><span class="p">:</span> <span class="n">IContext</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Initialize a RegularBlockModel instance.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>client</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="evo.blockmodels.client.BlockModelAPIClient" href="BlockModelAPIClient.html#evo.blockmodels.client.BlockModelAPIClient">BlockModelAPIClient</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The BlockModelAPIClient used for API operations.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>metadata</code>
+            </td>
+            <td>
+                  <code><span title="evo.blockmodels.data.BlockModel">BlockModel</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The block model metadata.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>version</code>
+            </td>
+            <td>
+                  <code><span title="evo.blockmodels.data.Version">Version</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The current version information.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>cell_data</code>
+            </td>
+            <td>
+                  <code><span title="pandas.DataFrame">DataFrame</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The cell data as a pandas DataFrame.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>context</code>
+            </td>
+            <td>
+                  <code><span title="evo.common.IContext">IContext</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional IContext for report and other operations.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.blockmodels.typed.regular_block_model.RegularBlockModel.create" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">create</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">create</span><span class="p">(</span>
+    <span class="n">context</span><span class="p">:</span> <span class="n">IContext</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">RegularBlockModelData</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">fb</span><span class="p">:</span> <span class="n">IFeedback</span> <span class="o">=</span> <span class="n">NoFeedback</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RegularBlockModel</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Create a new regular block model.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>context</code>
+            </td>
+            <td>
+                  <code><span title="evo.common.IContext">IContext</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The context containing environment, connector, and cache.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>data</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="evo.blockmodels.typed.regular_block_model.RegularBlockModelData
+
+
+  
+      dataclass
+  " href="#evo.blockmodels.typed.regular_block_model.RegularBlockModelData">RegularBlockModelData</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The data defining the block model to create.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>path</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional path for the block model in the workspace.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>fb</code>
+            </td>
+            <td>
+                  <code><span title="evo.common.IFeedback">IFeedback</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional feedback interface for progress reporting.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="evo.common.utils.NoFeedback">NoFeedback</span></code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="evo.blockmodels.typed.regular_block_model.RegularBlockModel" href="#evo.blockmodels.typed.regular_block_model.RegularBlockModel">RegularBlockModel</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A RegularBlockModel instance representing the created block model.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>ValueError</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the data is invalid.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.blockmodels.typed.regular_block_model.RegularBlockModel.get" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">get</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get</span><span class="p">(</span>
+    <span class="n">context</span><span class="p">:</span> <span class="n">IContext</span><span class="p">,</span>
+    <span class="n">bm_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span>
+    <span class="n">version_id</span><span class="p">:</span> <span class="n">UUID</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">columns</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">bbox</span><span class="p">:</span> <span class="n">BBox</span> <span class="o">|</span> <span class="n">BBoxXYZ</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">fb</span><span class="p">:</span> <span class="n">IFeedback</span> <span class="o">=</span> <span class="n">NoFeedback</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RegularBlockModel</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Retrieve an existing regular block model.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>context</code>
+            </td>
+            <td>
+                  <code><span title="evo.common.IContext">IContext</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The context containing environment, connector, and cache.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>bm_id</code>
+            </td>
+            <td>
+                  <code><span title="uuid.UUID">UUID</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The UUID of the block model to retrieve.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>version_id</code>
+            </td>
+            <td>
+                  <code><span title="uuid.UUID">UUID</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional version UUID. Defaults to the latest version.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>columns</code>
+            </td>
+            <td>
+                  <code><span title="list">list</span>[<span title="str">str</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional list of columns to retrieve. Defaults to all columns ["*"].</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>bbox</code>
+            </td>
+            <td>
+                  <code><span title="evo.blockmodels.endpoints.models.BBox">BBox</span> | <span title="evo.blockmodels.endpoints.models.BBoxXYZ">BBoxXYZ</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional bounding box to filter the data.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>fb</code>
+            </td>
+            <td>
+                  <code><span title="evo.common.IFeedback">IFeedback</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional feedback interface for progress reporting.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="evo.common.utils.NoFeedback">NoFeedback</span></code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="evo.blockmodels.typed.regular_block_model.RegularBlockModel" href="#evo.blockmodels.typed.regular_block_model.RegularBlockModel">RegularBlockModel</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A RegularBlockModel instance.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>ValueError</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the block model is not a regular grid.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="evo.blockmodels.typed.regular_block_model.RegularBlockModelData" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">evo.blockmodels.typed.regular_block_model.RegularBlockModelData</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
+  </span>
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>Data class for creating a new regular block model.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>name</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The name of the block model.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>origin</code>
+            </td>
+            <td>
+                  <code><span title="evo.blockmodels.typed.types.Point3">Point3</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The origin point of the block model grid.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>n_blocks</code>
+            </td>
+            <td>
+                  <code><span title="evo.blockmodels.typed.types.Size3i">Size3i</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The number of blocks in each dimension (nx, ny, nz).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>block_size</code>
+            </td>
+            <td>
+                  <code><span title="evo.blockmodels.typed.types.Size3d">Size3d</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The size of each block in each dimension (dx, dy, dz).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>rotations</code>
+            </td>
+            <td>
+                  <code><span title="list">list</span>[<span title="tuple">tuple</span>[<span title="evo.blockmodels.endpoints.models.RotationAxis">RotationAxis</span>, <span title="float">float</span>]]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>List of rotations as (axis, angle) tuples. Angle is in degrees, positive angles indicate clockwise rotation when looking down the axis.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="list">list</span>()</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>cell_data</code>
+            </td>
+            <td>
+                  <code><span title="pandas.DataFrame">DataFrame</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional DataFrame containing block attribute data. Must include geometry columns (i, j, k) or (x, y, z) and attribute columns.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>description</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional description of the block model.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>coordinate_reference_system</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional coordinate reference system (e.g., "EPSG:4326").</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>size_unit_id</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional unit identifier for block sizes (e.g., "m").</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>units</code>
+            </td>
+            <td>
+                  <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="str">str</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional dictionary mapping column names to unit identifiers.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="dict">dict</span>()</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="evo.blockmodels.typed.report.Report" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">evo.blockmodels.typed.report.Report</span>
+
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>A typed wrapper for block model report specifications.</p>
+<p>Reports provide resource estimation summaries for block models. They calculate
+tonnages, grades, and metal content grouped by categories (e.g., geological domains).</p>
+<p>Example usage:</p>
+<pre><code># Create a report from a block model
+report = await block_model.create_report(ReportSpecificationData(
+    name="Resource Report",
+    columns=[ReportColumnSpec(column_name="Au", output_unit_id="g/t")],
+    categories=[ReportCategorySpec(column_name="domain")],
+    mass_unit_id="t",
+    density_value=2.7,
+    density_unit_id="t/m3",
+))
+
+# Pretty-print shows BlockSync link
+report
+
+# Get the latest result
+result = await report.get_latest_result()
+df = result.to_dataframe()
+</code></pre>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.blockmodels.typed.report.Report.id" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">id</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nb">id</span><span class="p">:</span> <span class="n">UUID</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The unique identifier of the report specification.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.blockmodels.typed.report.Report.name" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">name</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The name of the report.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.blockmodels.typed.report.Report.description" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">description</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The description of the report.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.blockmodels.typed.report.Report.block_model_uuid" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">block_model_uuid</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">block_model_uuid</span><span class="p">:</span> <span class="n">UUID</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The UUID of the block model this report is for.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.blockmodels.typed.report.Report.revision" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">revision</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">revision</span><span class="p">:</span> <span class="nb">int</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The revision number of the report specification.</p>
+
+    </div>
+
+</div>
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.blockmodels.typed.report.Report.__init__" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">__init__</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">__init__</span><span class="p">(</span>
+    <span class="n">context</span><span class="p">:</span> <span class="n">IContext</span><span class="p">,</span>
+    <span class="n">block_model_uuid</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span>
+    <span class="n">specification</span><span class="p">:</span> <span class="n">ReportSpecificationWithLastRunInfo</span> <span class="o">|</span> <span class="n">ReportSpecificationWithJobUrl</span><span class="p">,</span>
+    <span class="n">block_model_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Initialize a Report instance.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>context</code>
+            </td>
+            <td>
+                  <code><span title="evo.common.IContext">IContext</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The context containing environment, connector, and cache.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>block_model_uuid</code>
+            </td>
+            <td>
+                  <code><span title="uuid.UUID">UUID</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The UUID of the block model this report is for.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>specification</code>
+            </td>
+            <td>
+                  <code><span title="evo.blockmodels.endpoints.models.ReportSpecificationWithLastRunInfo">ReportSpecificationWithLastRunInfo</span> | <span title="evo.blockmodels.endpoints.models.ReportSpecificationWithJobUrl">ReportSpecificationWithJobUrl</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The report specification from the API.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>block_model_name</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The name of the block model (for display purposes).</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.blockmodels.typed.report.Report.create" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">create</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">create</span><span class="p">(</span>
+    <span class="n">context</span><span class="p">:</span> <span class="n">IContext</span><span class="p">,</span>
+    <span class="n">block_model_uuid</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">ReportSpecificationData</span><span class="p">,</span>
+    <span class="n">column_id_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">UUID</span><span class="p">],</span>
+    <span class="n">fb</span><span class="p">:</span> <span class="n">IFeedback</span> <span class="o">=</span> <span class="n">NoFeedback</span><span class="p">,</span>
+    <span class="n">block_model_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Report</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Create a new report specification.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>context</code>
+            </td>
+            <td>
+                  <code><span title="evo.common.IContext">IContext</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The context containing environment, connector, and cache.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>block_model_uuid</code>
+            </td>
+            <td>
+                  <code><span title="uuid.UUID">UUID</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The UUID of the block model to create the report for.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>data</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="evo.blockmodels.typed.report.ReportSpecificationData
+
+
+  
+      dataclass
+  " href="#evo.blockmodels.typed.report.ReportSpecificationData">ReportSpecificationData</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The report specification data.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>column_id_map</code>
+            </td>
+            <td>
+                  <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="uuid.UUID">UUID</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Mapping of column names to their UUIDs in the block model.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>fb</code>
+            </td>
+            <td>
+                  <code><span title="evo.common.IFeedback">IFeedback</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional feedback interface for progress reporting.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="evo.common.utils.NoFeedback">NoFeedback</span></code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>block_model_name</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The name of the block model (for display purposes).</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="evo.blockmodels.typed.report.Report" href="#evo.blockmodels.typed.report.Report">Report</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A Report instance representing the created report.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.blockmodels.typed.report.Report.run" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">run</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">run</span><span class="p">(</span><span class="n">version_uuid</span><span class="p">:</span> <span class="n">UUID</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">fb</span><span class="p">:</span> <span class="n">IFeedback</span> <span class="o">=</span> <span class="n">NoFeedback</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ReportResult</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Run the report to generate a new result.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>version_uuid</code>
+            </td>
+            <td>
+                  <code><span title="uuid.UUID">UUID</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional specific version UUID to run the report on. If None, runs on the latest version.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>fb</code>
+            </td>
+            <td>
+                  <code><span title="evo.common.IFeedback">IFeedback</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional feedback interface for progress reporting.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="evo.common.utils.NoFeedback">NoFeedback</span></code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="evo.blockmodels.typed.report.ReportResult
+
+
+  
+      dataclass
+  " href="#evo.blockmodels.typed.report.ReportResult">ReportResult</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The generated report result.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.blockmodels.typed.report.Report.refresh" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">refresh</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">refresh</span><span class="p">(</span><span class="n">fb</span><span class="p">:</span> <span class="n">IFeedback</span> <span class="o">=</span> <span class="n">NoFeedback</span><span class="p">,</span> <span class="n">timeout_seconds</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">120.0</span><span class="p">,</span> <span class="n">poll_interval_seconds</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ReportResult</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Get the most recent result for this report, waiting if necessary.</p>
+<p>If no results exist yet (e.g., report is still running), this method will
+poll until a result is available or the timeout is reached.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>fb</code>
+            </td>
+            <td>
+                  <code><span title="evo.common.IFeedback">IFeedback</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional feedback interface for progress reporting.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="evo.common.utils.NoFeedback">NoFeedback</span></code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>timeout_seconds</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Maximum time to wait for results (default 120 seconds).</p>
+              </div>
+            </td>
+            <td>
+                  <code>120.0</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>poll_interval_seconds</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Time between polling attempts (default 2 seconds).</p>
+              </div>
+            </td>
+            <td>
+                  <code>2.0</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="evo.blockmodels.typed.report.ReportResult
+
+
+  
+      dataclass
+  " href="#evo.blockmodels.typed.report.ReportResult">ReportResult</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The latest report result.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>TimeoutError</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If no results are available within the timeout period.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.blockmodels.typed.report.Report.list_results" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">list_results</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">list_results</span><span class="p">(</span><span class="n">limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span> <span class="n">fb</span><span class="p">:</span> <span class="n">IFeedback</span> <span class="o">=</span> <span class="n">NoFeedback</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ReportResult</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>List all results for this report.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>limit</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Maximum number of results to return.</p>
+              </div>
+            </td>
+            <td>
+                  <code>50</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>fb</code>
+            </td>
+            <td>
+                  <code><span title="evo.common.IFeedback">IFeedback</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional feedback interface for progress reporting.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="evo.common.utils.NoFeedback">NoFeedback</span></code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="list">list</span>[<a class="autorefs autorefs-internal" title="evo.blockmodels.typed.report.ReportResult
+
+
+  
+      dataclass
+  " href="#evo.blockmodels.typed.report.ReportResult">ReportResult</a>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>List of report results, ordered newest first.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="evo.blockmodels.typed.report.ReportSpecificationData" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">evo.blockmodels.typed.report.ReportSpecificationData</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
+  </span>
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>Data for creating a report specification.</p>
+<p>A report specification defines how to calculate resource estimates from a block model.
+It includes which columns to report on, how to categorize blocks, and density/mass settings.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>name</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The name of the report.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>columns</code>
+            </td>
+            <td>
+                  <code><span title="list">list</span>[<a class="autorefs autorefs-internal" title="evo.blockmodels.typed.report.ReportColumnSpec
+
+
+  
+      dataclass
+  " href="#evo.blockmodels.typed.report.ReportColumnSpec">ReportColumnSpec</a>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>List of columns to include in the report with their aggregation settings. Use <code>ReportColumnSpec</code> to define each column.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>mass_unit_id</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Unit ID for mass output. Common values: - "t" (tonnes) - use <code>MassUnits.TONNES</code> - "kg" (kilograms) - use <code>MassUnits.KILOGRAMS</code> - "oz" (ounces) - use <code>MassUnits.OUNCES</code></p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>categories</code>
+            </td>
+            <td>
+                  <code><span title="list">list</span>[<a class="autorefs autorefs-internal" title="evo.blockmodels.typed.report.ReportCategorySpec
+
+
+  
+      dataclass
+  " href="#evo.blockmodels.typed.report.ReportCategorySpec">ReportCategorySpec</a>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>List of category columns for grouping blocks. Use <code>ReportCategorySpec</code> to define each category.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="list">list</span>()</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>description</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional description of the report.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>density_value</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Fixed density value (requires <code>density_unit_id</code>). Do NOT use with <code>density_column_name</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>density_unit_id</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Unit ID for fixed density (e.g., "t/m3"). Only use with <code>density_value</code>, NOT with <code>density_column_name</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>density_column_name</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Name of the column containing block densities. Do NOT use with <code>density_value</code> or <code>density_unit_id</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>cutoff_column_name</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Name of the column to use for cut-off evaluation.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>cutoff_values</code>
+            </td>
+            <td>
+                  <code><span title="list">list</span>[<span title="float">float</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>List of cut-off values to evaluate.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>autorun</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Whether to automatically run the report when block model is updated.</p>
+              </div>
+            </td>
+            <td>
+                  <code>True</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>run_now</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Whether to run the report immediately after creation.  Example with density column: &gt;&gt;&gt; data = ReportSpecificationData( ...     name="Gold Resource Report", ...     columns=[ ...         ReportColumnSpec( ...             column_name="Au", ...             aggregation="MASS_AVERAGE",  # Use for grades ...             label="Au Grade", ...             output_unit_id="g/t", ...         ), ...     ], ...     categories=[ ...         ReportCategorySpec(column_name="domain", label="Domain"), ...     ], ...     mass_unit_id=MassUnits.TONNES, ...     density_column_name="density",  # Unit comes from column ... )  Example with fixed density: &gt;&gt;&gt; data = ReportSpecificationData( ...     name="Gold Resource Report", ...     columns=[...], ...     categories=[...], ...     mass_unit_id=MassUnits.TONNES, ...     density_value=2.7,  # Fixed density ...     density_unit_id="t/m3",  # Required with density_value ... )</p>
+              </div>
+            </td>
+            <td>
+                  <code>True</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="evo.blockmodels.typed.report.ReportResult" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">evo.blockmodels.typed.report.ReportResult</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
+  </span>
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>A result from running a report.</p>
+<p>Contains the calculated values for each category and cut-off combination.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.blockmodels.typed.report.ReportResult.to_dataframe" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">to_dataframe</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">to_dataframe</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Convert the report result to a pandas DataFrame.</p>
+<p>Returns a DataFrame with one row per category/cut-off combination,
+containing the aggregated values for each report column.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="pandas.DataFrame">DataFrame</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>DataFrame with report results.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.blockmodels.typed.report.ReportResult.__repr__" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">__repr__</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">__repr__</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return a string representation of the report result.</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="evo.blockmodels.typed.report.ReportColumnSpec" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">evo.blockmodels.typed.report.ReportColumnSpec</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
+  </span>
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>Specification for a column in a report.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>column_name</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The name of the column in the block model.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>aggregation</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="evo.blockmodels.typed.report.Aggregation" href="#evo.blockmodels.typed.report.Aggregation">Aggregation</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>How to aggregate the column values. Use <code>Aggregation</code> enum: - <code>Aggregation.MASS_AVERAGE</code> - Mass-weighted average (for grades) - <code>Aggregation.SUM</code> - Sum of values (for metal content)</p>
+              </div>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="SUM
+
+
+  
+      class-attribute
+      instance-attribute
+   (evo.blockmodels.typed.report.Aggregation.SUM)" href="#evo.blockmodels.typed.report.Aggregation.SUM">SUM</a></code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>label</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Display label for the column in the report.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>output_unit_id</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Unit ID for the output values. Use <code>Units</code> class constants: - <code>Units.GRAMS_PER_TONNE</code> - g/t (grades) - <code>Units.PERCENT</code> - % (grades) - <code>Units.PPM</code> - ppm (grades) - <code>Units.KILOGRAMS</code> - kg (metal content) - <code>Units.TONNES</code> - t (metal content) - <code>Units.TROY_OUNCES</code> - oz_tr (metal content)  Example: &gt;&gt;&gt; from evo.blockmodels import Units &gt;&gt;&gt; from evo.blockmodels.typed import Aggregation, ReportColumnSpec &gt;&gt;&gt; &gt;&gt;&gt; # For grade columns, use MASS_AVERAGE &gt;&gt;&gt; grade_col = ReportColumnSpec( ...     column_name="Au", ...     aggregation=Aggregation.MASS_AVERAGE, ...     label="Au Grade", ...     output_unit_id=Units.GRAMS_PER_TONNE, ... ) &gt;&gt;&gt; # For metal content columns, use SUM &gt;&gt;&gt; metal_col = ReportColumnSpec( ...     column_name="Au_metal", ...     aggregation=Aggregation.SUM, ...     label="Au Metal", ...     output_unit_id=Units.KILOGRAMS, ... )</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="evo.blockmodels.typed.report.ReportCategorySpec" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">evo.blockmodels.typed.report.ReportCategorySpec</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
+  </span>
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>Specification for a category column in a report.</p>
+<p>Category columns are used to group blocks for reporting (e.g., by domain, rock type).</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>column_name</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The name of the category column in the block model.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>label</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Display label for the category in the report.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>values</code>
+            </td>
+            <td>
+                  <code><span title="list">list</span>[<span title="str">str</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional list of category values to include. If None, all values are included.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="evo.blockmodels.typed.report.Aggregation" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">evo.blockmodels.typed.report.Aggregation</span>
+
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>Aggregation methods for report columns.</p>
+<p>Use these values for the <code>aggregation</code> parameter in <code>ReportColumnSpec</code>.</p>
+<p>Example:
+    &gt;&gt;&gt; col = ReportColumnSpec(
+    ...     column_name="Au",
+    ...     aggregation=Aggregation.MASS_AVERAGE,
+    ...     output_unit_id="g/t",
+    ... )</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.blockmodels.typed.report.Aggregation.SUM" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">SUM</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">SUM</span> <span class="o">=</span> <span class="s1">&#39;SUM&#39;</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Sum of values - use for metal content, volume, tonnage, etc.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.blockmodels.typed.report.Aggregation.MASS_AVERAGE" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">MASS_AVERAGE</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">MASS_AVERAGE</span> <span class="o">=</span> <span class="s1">&#39;MASS_AVERAGE&#39;</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Mass-weighted average - use for grades, densities, quality metrics, etc.</p>
+
+    </div>
+
+</div>
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="evo.blockmodels.typed.units.Units" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">evo.blockmodels.typed.units.Units</span>
+
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>Common unit IDs for block model attributes.</p>
+<p>These are the most commonly used unit IDs. For a complete list,
+use <code>get_available_units()</code> to query the Block Model Service.</p>
+<p>Example usage:
+    from evo.blockmodels.typed import Units</p>
+<pre><code># Create block model with units
+bm_data = RegularBlockModelData(
+    ...
+    units={
+        "grade": Units.GRAMS_PER_TONNE,
+        "density": Units.TONNES_PER_CUBIC_METRE,
+    },
+)
+
+# Add attribute with unit
+await bm_ref.add_attribute(df, "metal_content", unit=Units.KILOS_PER_CUBIC_METRE)
+</code></pre>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="evo.blockmodels.typed.units.UnitInfo" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">evo.blockmodels.typed.units.UnitInfo</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
+  </span>
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>Information about a unit.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.blockmodels.typed.units.UnitInfo.unit_id" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">unit_id</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">unit_id</span><span class="p">:</span> <span class="nb">str</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The unit ID to use when setting column units.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.blockmodels.typed.units.UnitInfo.symbol" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">symbol</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Display symbol for the unit.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.blockmodels.typed.units.UnitInfo.description" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">description</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">description</span><span class="p">:</span> <span class="nb">str</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Human-readable description of the unit.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.blockmodels.typed.units.UnitInfo.unit_type" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">unit_type</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">unit_type</span><span class="p">:</span> <span class="n">UnitType</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The type/category of this unit.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.blockmodels.typed.units.UnitInfo.conversion_factor" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">conversion_factor</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">conversion_factor</span><span class="p">:</span> <span class="nb">float</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Conversion factor to the reference unit for this unit type.</p>
+
+    </div>
+
+</div>
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script src="../../js/bootstrap.bundle.min.js"></script>
+        <script>
+            var base_url = "../..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../../js/base.js"></script>
+
+        <div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>

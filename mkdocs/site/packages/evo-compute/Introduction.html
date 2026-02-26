@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        
+        <link rel="shortcut icon" href="../../img/favicon.ico">
+        <title>evo-compute - Evo Python SDK</title>
+        <link href="../../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../../css/fontawesome.min.css" rel="stylesheet">
+        <link href="../../css/brands.min.css" rel="stylesheet">
+        <link href="../../css/solid.min.css" rel="stylesheet">
+        <link href="../../css/v4-font-face.min.css" rel="stylesheet">
+        <link href="../../css/base.css" rel="stylesheet">
+        <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" >
+        <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
+        <link href="../../assets/_mkdocstrings.css" rel="stylesheet">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+        <script>hljs.highlightAll();</script> 
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="../..">Evo Python SDK</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar-collapse" aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+
+                    <ul class="nav navbar-nav ms-md-auto">
+                            <li class="nav-item">
+                                <a rel="prev" href="../evo-colormaps/ColormapAPIClient.html" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="JobClient.html" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-bs-toggle="collapse" data-bs-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-bs-level="1"><a href="#evo-compute" class="nav-link">evo-compute</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-bs-level="2"><a href="#running-compute-tasks" class="nav-link">Running Compute Tasks</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#faq" class="nav-link">FAQ</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<h1 id="evo-compute">evo-compute</h1>
+<p><a href="https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-compute/src/evo/compute/">GitHub source</a></p>
+<p>The <code>evo-compute</code> package provides a client for running compute tasks on Evo. Tasks are submitted to the Compute Tasks API and polled for results.</p>
+<p>See the <a href="TypedObjects.html">Typed Objects</a> page for the full typed API reference.</p>
+<h2 id="running-compute-tasks">Running Compute Tasks</h2>
+<p>The <code>run()</code> function is the main entry point for executing compute tasks. It supports running a single task or multiple tasks concurrently.</p>
+<h3 id="single-task">Single task</h3>
+<pre><code class="language-python">from evo.compute.tasks import run, SearchNeighborhood, Ellipsoid, EllipsoidRanges
+from evo.compute.tasks.kriging import KrigingParameters
+
+params = KrigingParameters(
+    source=pointset.attributes[&quot;grade&quot;],
+    target=block_model.attributes[&quot;kriged_grade&quot;],  # Creates if new, updates if exists
+    variogram=variogram,
+    search=SearchNeighborhood(
+        ellipsoid=Ellipsoid(ranges=EllipsoidRanges(200, 150, 100)),
+        max_samples=20,
+    ),
+)
+result = await run(manager, params, preview=True)
+</code></pre>
+<h3 id="multiple-tasks">Multiple tasks</h3>
+<p>Run multiple kriging tasks concurrently — for example, estimating different attributes or using different parameters:</p>
+<pre><code class="language-python">from evo.compute.tasks import run, SearchNeighborhood
+from evo.compute.tasks.kriging import KrigingParameters
+
+results = await run(manager, [
+    KrigingParameters(
+        source=pointset.attributes[&quot;Au&quot;],
+        target=block_model.attributes[&quot;Au_kriged&quot;],
+        variogram=au_variogram,
+        search=SearchNeighborhood(...),
+    ),
+    KrigingParameters(
+        source=pointset.attributes[&quot;Cu&quot;],
+        target=block_model.attributes[&quot;Cu_kriged&quot;],
+        variogram=cu_variogram,
+        search=SearchNeighborhood(...),
+    ),
+], preview=True)
+
+results[0]  # First kriging result
+results[1]  # Second kriging result
+</code></pre>
+<h3 id="working-with-results">Working with results</h3>
+<p>Task results provide convenient methods to access the output:</p>
+<pre><code class="language-python"># Pretty-print the result
+result  # Shows ✓ Kriging Result with target and attribute info
+
+# Get the target object
+target = await result.get_target_object()
+
+# Get data as a DataFrame
+df = await result.to_dataframe()
+</code></pre>
+<p>For complete examples, see the <a href="https://github.com/SeequentEvo/evo-python-sdk/blob/main/code-samples/geoscience-objects/running-kriging-compute/running-kriging-compute.ipynb">kriging notebook</a> and the <a href="https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-compute/docs/examples/kriging_multiple.ipynb">multiple kriging notebook</a>.</p>
+<h2 id="faq">FAQ</h2>
+<h3 id="how-do-i-run-parallel-tasks-that-update-the-same-attribute">How do I run parallel tasks that update the same attribute?</h3>
+<p>You can set the target for a compute task using <code>block_model.attributes["name"]</code>. If the attribute does not yet exist, it will be <strong>created</strong>; if it already exists, it will be <strong>updated</strong>. This is determined by the local state of the object.</p>
+<p>When the first task creates a new attribute on the server, your <strong>local</strong> object doesn't know about it yet. If you then try to run more tasks targeting the same attribute name, the local object still thinks it doesn't exist and will try to create it again — causing a conflict.</p>
+<p>To avoid this:</p>
+<ol>
+<li>Run the <strong>first</strong> task to create the attribute.</li>
+<li><strong>Refresh</strong> the local object so it sees the newly created attribute.</li>
+<li>Run the <strong>remaining</strong> tasks — now <code>block_model.attributes["kriged_grade"]</code> resolves to the existing attribute and will update it.</li>
+</ol>
+<pre><code class="language-python">from evo.compute.tasks import run, SearchNeighborhood
+from evo.compute.tasks.kriging import KrigingParameters, RegionFilter
+
+# Step 1: Run the first task — attribute &quot;kriged_grade&quot; does not exist yet, so it is created
+first_result = await run(manager, KrigingParameters(
+    source=pointset.attributes[&quot;grade&quot;],
+    target=block_model.attributes[&quot;kriged_grade&quot;],
+    variogram=variogram,
+    search=SearchNeighborhood(...),
+    target_region_filter=RegionFilter(
+        attribute=block_model.attributes[&quot;domain&quot;],
+        names=[&quot;LMS1&quot;],
+    ),
+), preview=True)
+
+# Step 2: Refresh so the local object recognises the newly created attribute
+block_model = await block_model.refresh()
+
+# Step 3: Now &quot;kriged_grade&quot; exists locally — remaining tasks will update it
+results = await run(manager, [
+    KrigingParameters(
+        source=pointset.attributes[&quot;grade&quot;],
+        target=block_model.attributes[&quot;kriged_grade&quot;],  # Exists → update
+        variogram=variogram,
+        search=SearchNeighborhood(...),
+        target_region_filter=RegionFilter(
+            attribute=block_model.attributes[&quot;domain&quot;],
+            names=[&quot;LMS2&quot;],
+        ),
+    ),
+    KrigingParameters(
+        source=pointset.attributes[&quot;grade&quot;],
+        target=block_model.attributes[&quot;kriged_grade&quot;],  # Exists → update
+        variogram=variogram,
+        search=SearchNeighborhood(...),
+        target_region_filter=RegionFilter(
+            attribute=block_model.attributes[&quot;domain&quot;],
+            names=[&quot;LMS3&quot;],
+        ),
+    ),
+], preview=True)
+</code></pre>
+<p>!!! tip
+    If each task writes to a <strong>different</strong> attribute name, they can all run in parallel without refreshing — the compute service handles concurrent attribute creation on the same target object. See the <a href="https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-compute/docs/examples/kriging_multiple.ipynb">multiple kriging notebook</a> for an example.</p>
+<p>!!! note "Preview APIs"
+    Kriging and other compute tasks are currently preview features. You must pass <code>preview=True</code> when calling <code>run()</code>.
+    Preview APIs may change between releases. For more details, see:</p>
+<pre><code>- [Preview APIs](https://developer.seequent.com/docs/api/fundamentals/preview-apis) — how to opt in and what to expect
+- [API Lifecycle](https://developer.seequent.com/docs/api/fundamentals/lifecycle) — how Evo APIs evolve from preview to stable
+</code></pre></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script src="../../js/bootstrap.bundle.min.js"></script>
+        <script>
+            var base_url = "../..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../../js/base.js"></script>
+
+        <div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>

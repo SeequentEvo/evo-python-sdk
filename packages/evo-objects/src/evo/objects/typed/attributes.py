@@ -42,6 +42,7 @@ __all__ = [
     "BlockModelAttribute",
     "BlockModelAttributes",
     "BlockModelPendingAttribute",
+    "PendingAttribute",
 ]
 
 
@@ -100,6 +101,14 @@ class Attribute(SchemaModel):
         """The type of this attribute."""
         return self._attribute_type
 
+    @property
+    def exists(self) -> bool:
+        """Whether this attribute exists on the object.
+
+        :return: True for existing attributes.
+        """
+        return True
+
     async def to_dataframe(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
         """Load a DataFrame containing the values for this attribute from the object.
 
@@ -153,13 +162,53 @@ class Attribute(SchemaModel):
             attr_doc["nan_description"] = {"values": []}
 
 
+class PendingAttribute:
+    """A placeholder for an attribute that doesn't exist yet on a Geoscience Object.
+
+    This is returned when accessing an attribute by name that doesn't exist.
+    It can be used as a target for compute tasks, which will create the attribute.
+    """
+
+    def __init__(self, parent: "Attributes", name: str) -> None:
+        """
+        :param parent: The Attributes collection this pending attribute belongs to.
+        :param name: The name of the attribute to create.
+        """
+        self._parent = parent
+        self._name = name
+
+    @property
+    def name(self) -> str:
+        """The name of this attribute."""
+        return self._name
+
+    @property
+    def exists(self) -> bool:
+        """Whether this attribute exists on the object.
+
+        :return: False for pending attributes.
+        """
+        return False
+
+    @property
+    def _obj(self) -> "DownloadedObject | None":
+        """The DownloadedObject containing this attribute's parent object.
+
+        Delegates to the parent Attributes collection.
+        """
+        return self._parent._obj
+
+    def __repr__(self) -> str:
+        return f"PendingAttribute(name={self._name!r}, exists=False)"
+
+
 class Attributes(SchemaList[Attribute]):
     """A collection of Geoscience Object Attributes"""
 
     _schema_path: str | None = None
     """The full JMESPath to this attributes list within the parent object schema."""
 
-    def __getitem__(self, index_or_name: int | str) -> Attribute:
+    def __getitem__(self, index_or_name: int | str) -> Attribute | PendingAttribute:
         """Get an attribute by index or name.
 
         :param index_or_name: Either an integer index or the name/key of the attribute.
@@ -172,6 +221,8 @@ class Attributes(SchemaList[Attribute]):
             for attr in self:
                 if attr.name == index_or_name or attr.key == index_or_name:
                     return attr
+            # Return a PendingAttribute for non-existent attributes accessed by name
+            return PendingAttribute(self, index_or_name)
         return super().__getitem__(index_or_name)
 
     @classmethod
@@ -420,6 +471,14 @@ class BlockModelAttributes:
                 obj=block_model,
             )
             self._attributes.append(attr_with_obj)
+
+    @property
+    def exists(self) -> bool:
+        """Whether this attribute exists on the block model.
+
+        :return: True for existing attributes.
+        """
+        return True
 
     @classmethod
     def from_schema(cls, attributes_list: list[dict], block_model: BlockModel | None = None) -> BlockModelAttributes:

@@ -1,5 +1,52 @@
 # Changelog
 
+## evo-sdk@v0.2.0
+### What's Changed
+#### evo-sdk
+* **Typed object interactions** — Simplified interactions with a subset of Evo geoscience objects (Points, Grids, Block Models, Variograms) aimed at geologists and geostatisticians. Typed object interactions abstract API calls and make it easier to access data.
+* **evo-widgets** — New `evo-widgets` package with rich HTML rendering of typed objects in Jupyter notebooks. Load via `%load_ext evo.widgets` for pretty-printed output with clickable links to Evo Portal and Viewer.
+* **Kriging compute (preview)** — Support for running a preview version of Kriging estimation via `evo-compute`.
+* Updated README with Quick start for notebooks, typed object examples, and links to [simplified object interactions](code-samples/geoscience-objects/simplified-object-interactions/) and [running kriging compute](code-samples/geoscience-objects/running-kriging-compute/) notebooks.
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-sdk@v0.1.20...evo-sdk@v0.2.0
+
+## evo-objects@v0.4.0
+### What's Changed
+#### evo-objects
+* New typed objects support for simplified interactions with geoscience objects (`PointSet`, grids, variograms). Typed objects abstract API calls and provide intuitive Python classes for data access, including `to_dataframe()`, automatic bounding box calculation, and rich HTML display.
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-objects@v0.3.2...evo-objects@v0.4.0
+
+## evo-blockmodels@v0.2.0
+### What's Changed
+#### evo-blockmodels
+* Typed object support for interactions with block models and block model reports.
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-blockmodels@v0.1.0...evo-blockmodels@v0.2.0
+
+## evo-widgets@v0.2.0
+### What's Changed
+#### evo-widgets
+* First published release of `evo-widgets` 🎉
+* Rich HTML rendering of typed geoscience objects in Jupyter notebooks. Load via `%load_ext evo.widgets`.
+* Supports `PointSet`, `Regular3DGrid`, `TensorGrid`, `BlockModel`, and other typed objects inheriting from `_BaseObject`.
+* URL generation for Evo Portal and Viewer links (`get_portal_url_for_object`, `get_viewer_url_for_object`, `get_viewer_url_for_objects`).
+* Light/dark mode support via Jupyter theme CSS variables.
+
+## evo-compute@v0.0.2
+### What's Changed
+#### evo-compute
+* First preview compute task: Kriging estimation via Evo Compute.
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-compute@v0.0.1rc3...evo-compute@v0.0.2
+
+## evo-sdk-common@v0.5.19
+### What's Changed
+#### evo-sdk-common
+* Common typed object definitions moved to `evo-sdk-common` for shared use across packages.
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-sdk-common@v0.5.18...evo-sdk-common@v0.5.19
+
 ## evo-files@v0.2.4
 ## What's Changed
 

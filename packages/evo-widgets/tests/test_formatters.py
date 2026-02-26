@@ -20,6 +20,7 @@ from evo.widgets.formatters import (
     _format_bounding_box,
     _format_crs,
     _get_base_metadata,
+    _get_task_result_portal_url,
     format_attributes_collection,
     format_base_object,
     format_block_model,
@@ -27,6 +28,8 @@ from evo.widgets.formatters import (
     format_block_model_version,
     format_report,
     format_report_result,
+    format_task_result,
+    format_task_results,
     format_variogram,
 )
 
@@ -937,6 +940,312 @@ class TestFormatReportResult(unittest.TestCase):
         self.assertIn("waste", html)
         self.assertIn("1000", html)
         self.assertIn("2.5", html)
+
+
+class TestFormatTaskResult(unittest.TestCase):
+    """Tests for the format_task_result function."""
+
+    def _create_mock_task_result(self, **kwargs):
+        """Create a mock TaskResult object."""
+        defaults = {
+            "message": "Task completed successfully",
+            "target_name": "Test Grid",
+            "schema_type": "objects/regular-3d-grid/v1.0.0",
+            "attribute_name": "kriged_grade",
+            "target_reference": (
+                "https://350mt.api.seequent.com/geoscience-object"
+                "/orgs/12345678-1234-1234-1234-123456789abc"
+                "/workspaces/87654321-4321-4321-4321-abcdef123456"
+                "/objects/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+            ),
+        }
+        defaults.update(kwargs)
+
+        obj = MagicMock()
+        obj.message = defaults["message"]
+        obj.target_name = defaults["target_name"]
+        obj.schema_type = defaults["schema_type"]
+        obj.attribute_name = defaults["attribute_name"]
+
+        # Mock _target with reference for portal URL
+        obj._target = MagicMock()
+        obj._target.reference = defaults["target_reference"]
+
+        # Mock _get_result_type_name
+        obj._get_result_type_name = MagicMock(return_value="Kriging")
+
+        return obj
+
+    def test_formats_task_result_basic_info(self):
+        """Test formatting a task result with basic information."""
+        obj = self._create_mock_task_result()
+
+        html = format_task_result(obj)
+
+        self.assertIn("Kriging Result", html)
+        self.assertIn("Test Grid", html)
+        self.assertIn("objects/regular-3d-grid/v1.0.0", html)
+        self.assertIn("kriged_grade", html)
+        self.assertIn("Task completed successfully", html)
+        self.assertIn("attr-highlight", html)  # Attribute should be highlighted
+
+    def test_formats_task_result_with_portal_link(self):
+        """Test formatting a task result includes portal link."""
+        obj = self._create_mock_task_result()
+
+        html = format_task_result(obj)
+
+        self.assertIn("Portal", html)
+        self.assertIn("href=", html)
+
+    def test_formats_task_result_without_portal_link(self):
+        """Test formatting a task result without reference doesn't fail."""
+        obj = self._create_mock_task_result(target_reference=None)
+
+        html = format_task_result(obj)
+
+        # Should still render without crashing
+        self.assertIn("Kriging Result", html)
+        self.assertIn("Test Grid", html)
+
+    def test_formats_task_result_checkmark(self):
+        """Test formatting a task result shows checkmark for success."""
+        obj = self._create_mock_task_result()
+
+        html = format_task_result(obj)
+
+        self.assertIn("✓", html)
+
+    def test_formats_task_result_target_row(self):
+        """Test formatting includes Target row."""
+        obj = self._create_mock_task_result()
+
+        html = format_task_result(obj)
+
+        self.assertIn("Target:", html)
+        self.assertIn("Test Grid", html)
+
+    def test_formats_task_result_schema_row(self):
+        """Test formatting includes Schema row."""
+        obj = self._create_mock_task_result()
+
+        html = format_task_result(obj)
+
+        self.assertIn("Schema:", html)
+
+    def test_formats_task_result_attribute_row(self):
+        """Test formatting includes Attribute row."""
+        obj = self._create_mock_task_result()
+
+        html = format_task_result(obj)
+
+        self.assertIn("Attribute:", html)
+
+    def test_formats_task_result_without_get_result_type_name(self):
+        """Test formatting a task result that doesn't have _get_result_type_name."""
+        obj = self._create_mock_task_result()
+        del obj._get_result_type_name
+
+        html = format_task_result(obj)
+
+        # Should fall back to "Task"
+        self.assertIn("Task Result", html)
+
+
+class TestFormatTaskResults(unittest.TestCase):
+    """Tests for the format_task_results function."""
+
+    def _create_mock_task_result(self, **kwargs):
+        """Create a mock TaskResult object."""
+        defaults = {
+            "message": "Task completed successfully",
+            "target_name": "Test Grid",
+            "schema_type": "objects/regular-3d-grid/v1.0.0",
+            "attribute_name": "kriged_grade",
+            "target_reference": (
+                "https://350mt.api.seequent.com/geoscience-object"
+                "/orgs/12345678-1234-1234-1234-123456789abc"
+                "/workspaces/87654321-4321-4321-4321-abcdef123456"
+                "/objects/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+            ),
+            "result_type": "Kriging",
+        }
+        defaults.update(kwargs)
+
+        obj = MagicMock()
+        obj.message = defaults["message"]
+        obj.target_name = defaults["target_name"]
+        obj.schema_type = defaults["schema_type"]
+        obj.attribute_name = defaults["attribute_name"]
+        obj._target = MagicMock()
+        obj._target.reference = defaults["target_reference"]
+        obj._get_result_type_name = MagicMock(return_value=defaults["result_type"])
+
+        return obj
+
+    def test_formats_empty_results(self):
+        """Test formatting an empty results collection."""
+        obj = MagicMock()
+        obj._results = []
+
+        html = format_task_results(obj)
+
+        self.assertIn("No results", html)
+
+    def test_formats_single_result(self):
+        """Test formatting a collection with one result."""
+        result1 = self._create_mock_task_result(target_name="Grid 1", attribute_name="attr_1")
+
+        obj = MagicMock()
+        obj._results = [result1]
+
+        html = format_task_results(obj)
+
+        self.assertIn("1 Kriging Results", html)
+        self.assertIn("Grid 1", html)
+        self.assertIn("attr_1", html)
+        self.assertIn("✓", html)
+
+    def test_formats_multiple_results(self):
+        """Test formatting a collection with multiple results."""
+        result1 = self._create_mock_task_result(target_name="Grid 1", attribute_name="attr_1")
+        result2 = self._create_mock_task_result(target_name="Grid 2", attribute_name="attr_2")
+        result3 = self._create_mock_task_result(target_name="Grid 3", attribute_name="attr_3")
+
+        obj = MagicMock()
+        obj._results = [result1, result2, result3]
+
+        html = format_task_results(obj)
+
+        self.assertIn("3 Kriging Results", html)
+        self.assertIn("Grid 1", html)
+        self.assertIn("Grid 2", html)
+        self.assertIn("Grid 3", html)
+        self.assertIn("attr_1", html)
+        self.assertIn("attr_2", html)
+        self.assertIn("attr_3", html)
+
+    def test_formats_results_with_table_headers(self):
+        """Test formatting includes proper table headers."""
+        result1 = self._create_mock_task_result()
+
+        obj = MagicMock()
+        obj._results = [result1]
+
+        html = format_task_results(obj)
+
+        self.assertIn("#", html)
+        self.assertIn("Target", html)
+        self.assertIn("Attribute", html)
+        self.assertIn("Schema", html)
+        self.assertIn("Link", html)
+
+    def test_formats_results_with_portal_links(self):
+        """Test formatting includes portal links for each result."""
+        result1 = self._create_mock_task_result(target_name="Grid 1")
+        result2 = self._create_mock_task_result(target_name="Grid 2")
+
+        obj = MagicMock()
+        obj._results = [result1, result2]
+
+        html = format_task_results(obj)
+
+        # Should have portal links
+        self.assertIn("Portal", html)
+        self.assertIn("href=", html)
+
+    def test_formats_results_without_portal_link(self):
+        """Test formatting handles results without references."""
+        result1 = self._create_mock_task_result(target_reference=None)
+
+        obj = MagicMock()
+        obj._results = [result1]
+
+        html = format_task_results(obj)
+
+        self.assertIn("N/A", html)
+
+    def test_formats_results_row_numbers(self):
+        """Test formatting includes sequential row numbers."""
+        result1 = self._create_mock_task_result(target_name="Grid 1")
+        result2 = self._create_mock_task_result(target_name="Grid 2")
+
+        obj = MagicMock()
+        obj._results = [result1, result2]
+
+        html = format_task_results(obj)
+
+        # Row numbers
+        self.assertIn(">1<", html)
+        self.assertIn(">2<", html)
+
+
+class TestGetTaskResultPortalUrl(unittest.TestCase):
+    """Tests for the _get_task_result_portal_url helper function."""
+
+    def test_extracts_portal_url_from_valid_reference(self):
+        """Test extracting portal URL from a valid object reference."""
+        result = MagicMock()
+        result._target = MagicMock()
+        result._target.reference = (
+            "https://350mt.api.seequent.com/geoscience-object"
+            "/orgs/12345678-1234-1234-1234-123456789abc"
+            "/workspaces/87654321-4321-4321-4321-abcdef123456"
+            "/objects/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+        )
+
+        url = _get_task_result_portal_url(result)
+
+        self.assertIsNotNone(url)
+        self.assertIn("evo.seequent.com", url)
+
+    def test_returns_none_for_no_reference(self):
+        """Test returns None when target has no reference."""
+        result = MagicMock()
+        result._target = MagicMock()
+        result._target.reference = None
+
+        url = _get_task_result_portal_url(result)
+
+        self.assertIsNone(url)
+
+    def test_returns_none_for_invalid_reference(self):
+        """Test returns None for invalid reference URL."""
+        result = MagicMock()
+        result._target = MagicMock()
+        result._target.reference = "not-a-valid-url"
+
+        url = _get_task_result_portal_url(result)
+
+        self.assertIsNone(url)
+
+    def test_returns_none_when_no_target(self):
+        """Test returns None when result has no _target attribute."""
+        result = MagicMock(spec=[])  # Empty spec means no attributes
+
+        url = _get_task_result_portal_url(result)
+
+        self.assertIsNone(url)
+
+    def test_returns_none_for_non_string_reference(self):
+        """Test returns None when reference is not a string."""
+        result = MagicMock()
+        result._target = MagicMock()
+        result._target.reference = 12345  # Not a string
+
+        url = _get_task_result_portal_url(result)
+
+        self.assertIsNone(url)
+
+    def test_returns_none_for_empty_string_reference(self):
+        """Test returns None when reference is an empty string."""
+        result = MagicMock()
+        result._target = MagicMock()
+        result._target.reference = ""
+
+        url = _get_task_result_portal_url(result)
+
+        self.assertIsNone(url)
 
 
 if __name__ == "__main__":

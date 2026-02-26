@@ -26,7 +26,12 @@ from .html import (
     build_table_row_vtop,
     build_title,
 )
-from .urls import get_blocksync_block_model_url_from_environment, get_portal_url_for_object, get_viewer_url_for_object
+from .urls import (
+    get_blocksync_block_model_url_from_environment,
+    get_portal_url_for_object,
+    get_portal_url_from_reference,
+    get_viewer_url_for_object,
+)
 
 __all__ = [
     "format_attributes_collection",
@@ -36,6 +41,8 @@ __all__ = [
     "format_block_model_version",
     "format_report",
     "format_report_result",
+    "format_task_result",
+    "format_task_results",
     "format_variogram",
 ]
 
@@ -560,4 +567,113 @@ def format_block_model(obj: Any) -> str:
         html += f'<div style="margin-top: 8px;"><strong>Attributes ({len(attrs)}):</strong></div>{attrs_table}'
 
     html += "</div>"
+    return html
+
+
+# =============================================================================
+# Compute Task Result Formatters
+# =============================================================================
+
+
+def _get_task_result_portal_url(result: Any) -> str | None:
+    """Extract Portal URL from a task result's target reference.
+
+    :param result: A TaskResult object with _target.reference attribute.
+    :return: Portal URL string or None if not available.
+    """
+    # Check if result has _target attribute
+    target = getattr(result, "_target", None)
+    if target is None:
+        return None
+
+    # Check if target has reference attribute
+    ref = getattr(target, "reference", None)
+    if not ref or not isinstance(ref, str):
+        return None
+
+    # Try to generate portal URL from reference
+    try:
+        return get_portal_url_from_reference(ref)
+    except ValueError:
+        # Invalid reference URL format
+        return None
+
+
+def format_task_result(result: Any) -> str:
+    """Format a TaskResult as HTML.
+
+    This formatter handles TaskResult and KrigingResult objects from evo-compute,
+    displaying the task completion status, target information, and Portal links.
+
+    :param result: A TaskResult object with message, target_name, schema_type,
+        attribute_name, and _target attributes.
+    :return: HTML string for the task result.
+    """
+    portal_url = _get_task_result_portal_url(result)
+    links = [("Portal", portal_url)] if portal_url else None
+
+    # Get result type name (Task, Kriging, etc.)
+    result_type = result._get_result_type_name() if hasattr(result, "_get_result_type_name") else "Task"
+    title = f"✓ {result_type} Result"
+
+    rows = [
+        ("Target:", result.target_name),
+        ("Schema:", result.schema_type),
+        ("Attribute:", f'<span class="attr-highlight">{result.attribute_name}</span>'),
+    ]
+
+    table_rows = [build_table_row(label, value) for label, value in rows]
+
+    html = STYLESHEET
+    html += '<div class="evo">'
+    html += build_title(title, links)
+    html += f'<div class="message">{result.message}</div>'
+    html += f"<table>{''.join(table_rows)}</table>"
+    html += "</div>"
+
+    return html
+
+
+def format_task_results(results: Any) -> str:
+    """Format a TaskResults collection as HTML.
+
+    This formatter handles TaskResults objects from evo-compute,
+    displaying a table of all completed tasks with their status and Portal links.
+
+    :param results: A TaskResults object with _results list of TaskResult objects.
+    :return: HTML string for the task results collection.
+    """
+    result_list = results._results
+
+    if not result_list:
+        return "<div>No results</div>"
+
+    # Get result type from first result
+    result_type = result_list[0]._get_result_type_name() if hasattr(result_list[0], "_get_result_type_name") else "Task"
+    title = f"✓ {len(result_list)} {result_type} Results"
+
+    # Build table data
+    headers = ["#", "Target", "Attribute", "Schema", "Link"]
+    rows = []
+    for i, result in enumerate(result_list):
+        portal_url = _get_task_result_portal_url(result)
+        link_html = f'<a href="{portal_url}" target="_blank">Portal</a>' if portal_url else "N/A"
+        rows.append(
+            [
+                str(i + 1),
+                result.target_name,
+                f'<span class="attr-highlight">{result.attribute_name}</span>',
+                result.schema_type,
+                link_html,
+            ]
+        )
+
+    table = build_nested_table(headers, rows)
+
+    html = STYLESHEET
+    html += '<div class="evo">'
+    html += build_title(title)
+    html += table
+    html += "</div>"
+
     return html
