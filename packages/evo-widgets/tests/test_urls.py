@@ -13,8 +13,12 @@
 
 import unittest
 from unittest.mock import MagicMock
+from uuid import UUID
 
 from evo.widgets.urls import (
+    get_blocksync_base_url,
+    get_blocksync_block_model_url,
+    get_blocksync_report_url,
     get_evo_base_url,
     get_hub_code,
     get_portal_url,
@@ -262,6 +266,103 @@ class TestGetViewerUrlForObjects(unittest.TestCase):
         with self.assertRaises(TypeError) as ctx:
             get_viewer_url_for_objects(context, [object()])
         self.assertIn("Cannot extract object ID", str(ctx.exception))
+
+
+class TestGetBlocksyncBaseUrl(unittest.TestCase):
+    """Tests for get_blocksync_base_url function."""
+
+    def test_production_environment(self):
+        """Production environment hub URL returns production BlockSync URL."""
+        hub_url = "https://350mt.api.seequent.com"
+        result = get_blocksync_base_url(hub_url)
+        self.assertEqual(result, "https://blocksync.seequent.com")
+
+    def test_any_environment_returns_production(self):
+        """Any hub URL returns production BlockSync URL (no environment detection)."""
+        hub_url = "https://mining.api.seequent.com"
+        result = get_blocksync_base_url(hub_url)
+        self.assertEqual(result, "https://blocksync.seequent.com")
+
+
+class TestGetBlocksyncBlockModelUrl(unittest.TestCase):
+    """Tests for get_blocksync_block_model_url function."""
+
+    def test_generates_correct_url_with_strings(self):
+        """BlockSync block model URL is generated correctly with string IDs."""
+        result = get_blocksync_block_model_url(
+            org_id="org-123",
+            workspace_id="ws-456",
+            block_model_id="bm-789",
+            hub_url="https://350mt.api.seequent.com",
+        )
+        self.assertEqual(
+            result,
+            "https://blocksync.seequent.com/org-123/redirect?ws=ws-456&bm=bm-789",
+        )
+
+    def test_generates_correct_url_with_uuids(self):
+        """BlockSync block model URL is generated correctly with UUID objects."""
+        org_id = UUID("829e6621-0ab6-4d7d-96bb-2bb5b407a5fe")
+        workspace_id = UUID("783b6eef-01b9-42a7-aaf4-35e153e6fcbe")
+        block_model_id = UUID("9100d7dc-44e9-4e61-b427-159635dea22f")
+
+        result = get_blocksync_block_model_url(
+            org_id=org_id,
+            workspace_id=workspace_id,
+            block_model_id=block_model_id,
+            hub_url="https://350mt.api.seequent.com",
+        )
+        self.assertEqual(
+            result,
+            "https://blocksync.seequent.com/829e6621-0ab6-4d7d-96bb-2bb5b407a5fe"
+            "/redirect?ws=783b6eef-01b9-42a7-aaf4-35e153e6fcbe&bm=9100d7dc-44e9-4e61-b427-159635dea22f",
+        )
+
+    def test_lowercase_conversion(self):
+        """IDs are converted to lowercase in the URL."""
+        result = get_blocksync_block_model_url(
+            org_id="ORG-ABC",
+            workspace_id="WS-DEF",
+            block_model_id="BM-GHI",
+            hub_url="https://350mt.api.seequent.com",
+        )
+        self.assertEqual(
+            result,
+            "https://blocksync.seequent.com/org-abc/redirect?ws=ws-def&bm=bm-ghi",
+        )
+
+
+class TestGetBlocksyncReportUrl(unittest.TestCase):
+    """Tests for get_blocksync_report_url function."""
+
+    def test_generates_report_url(self):
+        """BlockSync report URL is generated correctly."""
+        result = get_blocksync_report_url(
+            org_id="org-123",
+            hub_code="350mt",
+            workspace_id="ws-456",
+            block_model_id="bm-789",
+            report_id="report-abc",
+        )
+        self.assertEqual(
+            result,
+            "https://blocksync.seequent.com/org-123/350mt/ws-456/blockmodel/bm-789/reports/report-abc",
+        )
+
+    def test_generates_report_url_with_result_id(self):
+        """BlockSync report URL includes result_id when provided."""
+        result = get_blocksync_report_url(
+            org_id="org-123",
+            hub_code="350mt",
+            workspace_id="ws-456",
+            block_model_id="bm-789",
+            report_id="report-abc",
+            result_id="result-xyz",
+        )
+        self.assertEqual(
+            result,
+            "https://blocksync.seequent.com/org-123/350mt/ws-456/blockmodel/bm-789/reports/report-abc?result_id=result-xyz",
+        )
 
 
 if __name__ == "__main__":

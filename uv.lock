@@ -739,7 +739,7 @@ wheels = [
 
 [[package]]
 name = "evo-blockmodels"
-version = "0.1.1"
+version = "0.2.0"
 source = { editable = "packages/evo-blockmodels" }
 dependencies = [
     { name = "evo-sdk-common" },
@@ -753,7 +753,8 @@ aiohttp = [
 notebooks = [
     { name = "evo-sdk-common", extra = ["notebooks"] },
 ]
-pyarrow = [
+utils = [
+    { name = "pandas" },
     { name = "pyarrow" },
 ]
 
@@ -761,17 +762,17 @@ pyarrow = [
 dev = [
     { name = "bumpver" },
     { name = "coverage", extra = ["toml"] },
-    { name = "evo-blockmodels", extra = ["aiohttp", "notebooks", "pyarrow"] },
+    { name = "evo-blockmodels", extra = ["aiohttp", "notebooks", "utils"] },
     { name = "parameterized" },
     { name = "pytest" },
     { name = "ruff" },
 ]
 notebooks = [
-    { name = "evo-blockmodels", extra = ["aiohttp", "notebooks", "pyarrow"] },
+    { name = "evo-blockmodels", extra = ["aiohttp", "notebooks", "utils"] },
     { name = "jupyter" },
 ]
 test = [
-    { name = "evo-blockmodels", extra = ["aiohttp", "pyarrow"] },
+    { name = "evo-blockmodels", extra = ["aiohttp", "utils"] },
     { name = "parameterized" },
     { name = "pytest" },
 ]
@@ -781,27 +782,28 @@ requires-dist = [
     { name = "evo-sdk-common", editable = "packages/evo-sdk-common" },
     { name = "evo-sdk-common", extras = ["aiohttp"], marker = "extra == 'aiohttp'", editable = "packages/evo-sdk-common" },
     { name = "evo-sdk-common", extras = ["notebooks"], marker = "extra == 'notebooks'", editable = "packages/evo-sdk-common" },
-    { name = "pyarrow", marker = "extra == 'pyarrow'", specifier = ">=19.0.0" },
+    { name = "pandas", marker = "extra == 'utils'", specifier = ">=2.0.0" },
+    { name = "pyarrow", marker = "extra == 'utils'", specifier = ">=19.0.0" },
     { name = "pydantic", specifier = ">=2,<3" },
 ]
-provides-extras = ["pyarrow", "aiohttp", "notebooks"]
+provides-extras = ["utils", "aiohttp", "notebooks"]
 
 [package.metadata.requires-dev]
 dev = [
     { name = "bumpver" },
     { name = "coverage", extras = ["toml"] },
-    { name = "evo-blockmodels", extras = ["aiohttp", "pyarrow"], editable = "packages/evo-blockmodels" },
+    { name = "evo-blockmodels", extras = ["aiohttp", "utils"], editable = "packages/evo-blockmodels" },
     { name = "evo-blockmodels", extras = ["notebooks"], editable = "packages/evo-blockmodels" },
     { name = "parameterized", specifier = "==0.9.0" },
     { name = "pytest" },
     { name = "ruff" },
 ]
 notebooks = [
-    { name = "evo-blockmodels", extras = ["aiohttp", "notebooks", "pyarrow"], editable = "packages/evo-blockmodels" },
+    { name = "evo-blockmodels", extras = ["aiohttp", "notebooks", "utils"], editable = "packages/evo-blockmodels" },
     { name = "jupyter" },
 ]
 test = [
-    { name = "evo-blockmodels", extras = ["aiohttp", "pyarrow"], editable = "packages/evo-blockmodels" },
+    { name = "evo-blockmodels", extras = ["aiohttp", "utils"], editable = "packages/evo-blockmodels" },
     { name = "parameterized", specifier = "==0.9.0" },
     { name = "pytest" },
 ]
@@ -993,7 +995,7 @@ test = [
 
 [[package]]
 name = "evo-objects"
-version = "0.3.3"
+version = "0.4.0"
 source = { editable = "packages/evo-objects" }
 dependencies = [
     { name = "evo-sdk-common", extra = ["jmespath"] },
@@ -1003,6 +1005,9 @@ dependencies = [
 [package.optional-dependencies]
 aiohttp = [
     { name = "evo-sdk-common", extra = ["aiohttp"] },
+]
+blockmodels = [
+    { name = "evo-blockmodels", extra = ["utils"] },
 ]
 notebooks = [
     { name = "evo-sdk-common", extra = ["notebooks"] },
@@ -1019,7 +1024,7 @@ utils = [
 dev = [
     { name = "bumpver" },
     { name = "coverage", extra = ["toml"] },
-    { name = "evo-objects", extra = ["aiohttp", "utils"] },
+    { name = "evo-objects", extra = ["aiohttp", "blockmodels", "utils"] },
     { name = "pandas" },
     { name = "parameterized" },
     { name = "pytest" },
@@ -1030,7 +1035,7 @@ notebooks = [
     { name = "jupyter" },
 ]
 test = [
-    { name = "evo-objects", extra = ["aiohttp", "utils"] },
+    { name = "evo-objects", extra = ["aiohttp", "blockmodels", "utils"] },
     { name = "pandas" },
     { name = "parameterized" },
     { name = "pytest" },
@@ -1038,6 +1043,7 @@ test = [
 
 [package.metadata]
 requires-dist = [
+    { name = "evo-blockmodels", extras = ["utils"], marker = "extra == 'blockmodels'", editable = "packages/evo-blockmodels" },
     { name = "evo-sdk-common", extras = ["aiohttp"], marker = "extra == 'aiohttp'", editable = "packages/evo-sdk-common" },
     { name = "evo-sdk-common", extras = ["jmespath"], editable = "packages/evo-sdk-common" },
     { name = "evo-sdk-common", extras = ["notebooks"], marker = "extra == 'notebooks'", editable = "packages/evo-sdk-common" },
@@ -1047,13 +1053,14 @@ requires-dist = [
     { name = "pyarrow-stubs", marker = "extra == 'utils'" },
     { name = "pydantic", specifier = ">=2,<3" },
 ]
-provides-extras = ["aiohttp", "notebooks", "utils"]
+provides-extras = ["aiohttp", "notebooks", "utils", "blockmodels"]
 
 [package.metadata.requires-dev]
 dev = [
     { name = "bumpver" },
     { name = "coverage", extras = ["toml"] },
     { name = "evo-objects", extras = ["aiohttp", "utils"], editable = "packages/evo-objects" },
+    { name = "evo-objects", extras = ["aiohttp", "utils", "blockmodels"], editable = "packages/evo-objects" },
     { name = "pandas" },
     { name = "parameterized", specifier = "==0.9.0" },
     { name = "pytest" },
@@ -1064,7 +1071,7 @@ notebooks = [
     { name = "jupyter" },
 ]
 test = [
-    { name = "evo-objects", extras = ["aiohttp", "utils"], editable = "packages/evo-objects" },
+    { name = "evo-objects", extras = ["aiohttp", "utils", "blockmodels"], editable = "packages/evo-objects" },
     { name = "pandas" },
     { name = "parameterized", specifier = "==0.9.0" },
     { name = "pytest" },
@@ -1072,10 +1079,10 @@ test = [
 
 [[package]]
 name = "evo-sdk"
-version = "0.1.19"
+version = "0.1.20"
 source = { editable = "." }
 dependencies = [
-    { name = "evo-blockmodels", extra = ["aiohttp", "notebooks", "pyarrow"] },
+    { name = "evo-blockmodels", extra = ["aiohttp", "notebooks"] },
     { name = "evo-colormaps", extra = ["aiohttp", "notebooks"] },
     { name = "evo-compute", extra = ["aiohttp", "notebooks"] },
     { name = "evo-files", extra = ["aiohttp", "notebooks"] },
@@ -1137,7 +1144,7 @@ test = [
 
 [[package]]
 name = "evo-sdk-common"
-version = "0.5.17"
+version = "0.5.18"
 source = { editable = "packages/evo-sdk-common" }
 dependencies = [
     { name = "pure-interface" },
@@ -1223,7 +1230,7 @@ test = [
 
 [[package]]
 name = "evo-widgets"
-version = "0.1.0"
+version = "0.2.0"
 source = { editable = "packages/evo-widgets" }
 dependencies = [
     { name = "evo-sdk-common" },

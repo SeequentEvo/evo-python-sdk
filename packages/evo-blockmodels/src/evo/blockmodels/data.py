@@ -230,3 +230,16 @@ class Version:
     """
     Columns within this version
     """
+
+    def __repr__(self) -> str:
+        """Return a concise string representation of the version."""
+        col_names = [c.title for c in self.columns]
+        bbox_str = ""
+        if self.bbox:
+            bbox_str = f", bbox=i[{self.bbox.i_minmax.min}-{self.bbox.i_minmax.max}] j[{self.bbox.j_minmax.min}-{self.bbox.j_minmax.max}] k[{self.bbox.k_minmax.min}-{self.bbox.k_minmax.max}]"
+        return (
+            f"Version(id={self.version_id}, "
+            f"created={self.created_at.strftime('%Y-%m-%d %H:%M:%S')}, "
+            f"by={self.created_by.name or self.created_by.email}{bbox_str}, "
+            f"columns={col_names})"
+        )

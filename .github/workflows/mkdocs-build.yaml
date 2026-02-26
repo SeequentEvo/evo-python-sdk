@@ -1,0 +1,52 @@
+name: Build and Commit MkDocs Documentation
+
+on:
+  push:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  mkdocs-build:
+    name: Build MkDocs documentation and commit changes
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    # Skip if the commit was made by github-actions[bot] (to prevent infinite loops)
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+
+      - name: Install uv
+        run: ./scripts/install-uv.sh
+
+      - name: Sync Python dependencies with uv
+        run: uv sync --group dev
+
+      - name: Build MkDocs documentation
+        run: |
+          uv run mkdocs build --config-file mkdocs/mkdocs.yml --site-dir site
+
+      - name: Check for changes
+        id: changes
+        run: |
+          if [ -n "$(git status --porcelain mkdocs)" ]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit and push changes
+        if: steps.changes.outputs.has_changes == 'true'
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const commitMessage = 'Update to MkDocs documentation';
+            const script = require('${{ github.workspace }}/.github/scripts/create-verified-commit.js');
+            const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');
+            await script({ github, context: { ...context, commitMessage, repo: { owner, repo } } });

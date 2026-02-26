@@ -1,7 +1,7 @@
 [project]
 name = "evo-widgets"
 description = "Widgets and presentation layer for Evo SDK - HTML rendering and IPython formatters for Jupyter notebooks"
-version = "0.1.0"
+version = "0.2.0"
 requires-python = ">=3.10"
 license-files = ["LICENSE.md"]
 dynamic = ["readme"]
