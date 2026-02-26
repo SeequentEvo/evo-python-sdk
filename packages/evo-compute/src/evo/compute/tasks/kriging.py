@@ -644,12 +644,6 @@ async def _run_single_kriging(
     connector = context.get_connector()
     org_id = context.get_org_id()
 
-    # Add API-Preview header when the caller has opted into preview APIs
-    if preview:
-        if connector._additional_headers is None:
-            connector._additional_headers = {}
-        connector._additional_headers["API-Preview"] = "opt-in"
-
     params_dict = parameters.to_dict()
 
     # Submit the job
@@ -660,6 +654,7 @@ async def _run_single_kriging(
         task="kriging",
         parameters=params_dict,
         result_type=dict,  # Get raw dict, we'll parse it ourselves
+        preview=preview,
     )
 
     # Wait for results

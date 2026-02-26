@@ -102,11 +102,6 @@ def serialize_object_reference(value: GeoscienceObjectReference) -> str:
     if isinstance(value, str):
         return value
 
-    # Check for ObjectReference (has __str__ that returns the URL)
-    type_name = type(value).__name__
-    if type_name == "ObjectReference":
-        return str(value)
-
     # Check for typed objects (BaseObject subclasses like PointSet, Regular3DGrid)
     if hasattr(value, "metadata") and hasattr(value.metadata, "url"):
         return value.metadata.url

@@ -92,7 +92,6 @@ class TestPreviewFlagSignatures(unittest.TestCase):
 def _mock_kriging_context():
     """Create a mock context + connector for kriging preview tests."""
     mock_connector = MagicMock()
-    mock_connector._additional_headers = None
 
     mock_context = MagicMock()
     mock_context.get_connector.return_value = mock_connector
@@ -119,49 +118,54 @@ def _mock_kriging_job():
 class TestPreviewFlagBehavior(unittest.IsolatedAsyncioTestCase):
     """Tests for the preview flag runtime behavior on _run_single_kriging."""
 
-    async def test_run_single_kriging_sets_header_when_preview_true(self):
-        """_run_single_kriging should set API-Preview header when preview=True."""
+    async def test_run_single_kriging_passes_preview_true_to_submit(self):
+        """_run_single_kriging should pass preview=True to JobClient.submit."""
         mock_context, mock_connector = _mock_kriging_context()
         mock_params = MagicMock(spec=KrigingParameters)
         mock_params.to_dict.return_value = {"source": {}, "target": {}}
 
         with patch(
             "evo.compute.tasks.kriging.JobClient.submit", new_callable=AsyncMock, return_value=_mock_kriging_job()
-        ):
+        ) as mock_submit:
             await _run_single_kriging(mock_context, mock_params, preview=True)
 
-        # Verify the header was set
-        self.assertIsNotNone(mock_connector._additional_headers)
-        self.assertEqual(mock_connector._additional_headers["API-Preview"], "opt-in")
+        # Verify preview=True was passed to JobClient.submit
+        mock_submit.assert_called_once()
+        _, kwargs = mock_submit.call_args
+        self.assertTrue(kwargs.get("preview", False))
 
-    async def test_run_single_kriging_does_not_set_header_when_preview_false(self):
-        """_run_single_kriging should NOT set API-Preview header when preview=False."""
+    async def test_run_single_kriging_passes_preview_false_to_submit(self):
+        """_run_single_kriging should pass preview=False to JobClient.submit when preview=False."""
         mock_context, mock_connector = _mock_kriging_context()
         mock_params = MagicMock(spec=KrigingParameters)
         mock_params.to_dict.return_value = {"source": {}, "target": {}}
 
         with patch(
             "evo.compute.tasks.kriging.JobClient.submit", new_callable=AsyncMock, return_value=_mock_kriging_job()
-        ):
+        ) as mock_submit:
             await _run_single_kriging(mock_context, mock_params, preview=False)
 
-        # Verify the header was NOT set
-        self.assertIsNone(mock_connector._additional_headers)
+        # Verify preview=False was passed to JobClient.submit
+        mock_submit.assert_called_once()
+        _, kwargs = mock_submit.call_args
+        self.assertFalse(kwargs.get("preview", True))
 
     async def test_run_single_kriging_default_preview_is_false(self):
-        """_run_single_kriging should default to preview=False and not set the header."""
+        """_run_single_kriging should default to preview=False when not specified."""
         mock_context, mock_connector = _mock_kriging_context()
         mock_params = MagicMock(spec=KrigingParameters)
         mock_params.to_dict.return_value = {"source": {}, "target": {}}
 
         with patch(
             "evo.compute.tasks.kriging.JobClient.submit", new_callable=AsyncMock, return_value=_mock_kriging_job()
-        ):
+        ) as mock_submit:
             # Call without preview kwarg — should default to False
             await _run_single_kriging(mock_context, mock_params)
 
-        # Verify the header was NOT set
-        self.assertIsNone(mock_connector._additional_headers)
+        # Verify preview=False was passed to JobClient.submit
+        mock_submit.assert_called_once()
+        _, kwargs = mock_submit.call_args
+        self.assertFalse(kwargs.get("preview", True))
 
 
 class TestKrigingResultInheritance(unittest.TestCase):
