@@ -9,6 +9,8 @@ authors = [
 ]
 
 dependencies = [
+    "evo-blockmodels[utils]",
+    "evo-objects[utils,blockmodels]",
     "evo-sdk-common",
     "pydantic>=2",
     "typing_extensions>=4.0",
