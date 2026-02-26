@@ -219,7 +219,13 @@
 
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">__init__</span><span class="p">(</span>
-    <span class="n">connector</span><span class="p">:</span> <span class="n">APIConnector</span><span class="p">,</span> <span class="n">org_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">topic</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">job_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">result_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">T_Result</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span>
+    <span class="n">connector</span><span class="p">:</span> <span class="n">APIConnector</span><span class="p">,</span>
+    <span class="n">org_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span>
+    <span class="n">topic</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">task</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">job_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span>
+    <span class="n">result_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">T_Result</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">,</span>
+    <span class="n">preview</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
 </code></pre></div>
 
@@ -335,6 +341,22 @@
                   <code><span title="dict">dict</span></code>
             </td>
           </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>preview</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Whether to use preview mode and include necessary header information.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
       </tbody>
     </table>
 
@@ -355,7 +377,9 @@
   </span>
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">from_url</span><span class="p">(</span><span class="n">connector</span><span class="p">:</span> <span class="n">APIConnector</span><span class="p">,</span> <span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">result_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">T_Result</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">JobClient</span><span class="p">[</span><span class="n">T_Result</span><span class="p">]</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">from_url</span><span class="p">(</span>
+    <span class="n">connector</span><span class="p">:</span> <span class="n">APIConnector</span><span class="p">,</span> <span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">result_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">T_Result</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">preview</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">JobClient</span><span class="p">[</span><span class="n">T_Result</span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -423,6 +447,22 @@
                   <code><span title="dict">dict</span></code>
             </td>
           </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>preview</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Whether to use preview mode and include necessary header information.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
       </tbody>
     </table>
 
@@ -474,6 +514,7 @@
     <span class="n">task</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">parameters</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
     <span class="n">result_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">T_Result</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">,</span>
+    <span class="n">preview</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">JobClient</span><span class="p">[</span><span class="n">T_Result</span><span class="p">]</span>
 </code></pre></div>
 
@@ -571,6 +612,22 @@
             </td>
             <td>
                   <code><span title="dict">dict</span></code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>preview</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Whether to use preview mode and include necessary header information.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
             </td>
           </tr>
       </tbody>
