@@ -191,7 +191,7 @@ class TestTaskResultsContainer(unittest.TestCase):
             reference="ref1",
             name="target1",
             description="desc",
-            schema_id="schema/1.0.0",
+            schema_id="/objects/regular-masked-3d-grid/1.0.0/regular-masked-3d-grid.schema.json",
             attribute=attr,
         )
         result1 = KrigingResult(message="msg1", target=target)
@@ -221,7 +221,7 @@ class TestTaskResultsContainer(unittest.TestCase):
             reference="ref1",
             name="target1",
             description="desc",
-            schema_id="schema/1.0.0",
+            schema_id="/objects/regular-masked-3d-grid/1.0.0/regular-masked-3d-grid.schema.json",
             attribute=attr,
         )
         result = KrigingResult(message="msg", target=target)
@@ -229,6 +229,37 @@ class TestTaskResultsContainer(unittest.TestCase):
         results = TaskResults([result])
 
         self.assertEqual(results.results, [result])
+
+
+class TestTaskResultSchemaType(unittest.TestCase):
+    """Tests for schema_type property using ObjectSchema parsing."""
+
+    def _make_result(self, schema_id: str):
+        from evo.compute.tasks.common.results import TaskAttribute, TaskResult, TaskTarget
+
+        attr = TaskAttribute(reference="ref", name="attr")
+        target = TaskTarget(reference="ref", name="target", description=None, schema_id=schema_id, attribute=attr)
+        return TaskResult(message="ok", target=target)
+
+    def test_schema_type_parses_valid_schema_id(self):
+        """schema_type should return the sub_classification for a valid schema ID."""
+        result = self._make_result("/objects/regular-masked-3d-grid/1.0.0/regular-masked-3d-grid.schema.json")
+        self.assertEqual(result.schema_type, "regular-masked-3d-grid")
+
+    def test_schema_type_parses_different_schema(self):
+        """schema_type should handle different object schema types."""
+        result = self._make_result("/objects/block-model/2.1.0/block-model.schema.json")
+        self.assertEqual(result.schema_type, "block-model")
+
+    def test_schema_type_falls_back_for_malformed_id(self):
+        """schema_type should return the raw schema_id when it cannot be parsed."""
+        result = self._make_result("some-unparseable-string")
+        self.assertEqual(result.schema_type, "some-unparseable-string")
+
+    def test_schema_type_falls_back_for_partial_id(self):
+        """schema_type should fall back gracefully for partial schema paths."""
+        result = self._make_result("schema/1.0.0")
+        self.assertEqual(result.schema_type, "schema/1.0.0")
 
 
 class TestKrigingMethod(unittest.TestCase):

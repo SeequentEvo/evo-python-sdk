@@ -34,7 +34,7 @@ Example:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, TypeVar
+from typing import Any
 
 from evo.common import IContext
 from evo.common.interfaces import IFeedback
@@ -55,6 +55,7 @@ from .common import (
     source_from_attribute,
     target_from_attribute,
 )
+from .common.results import TaskAttribute, TaskResult, TaskResults, TaskTarget, parse_task_target
 from .common.runner import register_task_runner
 
 __all__ = [
@@ -62,14 +63,19 @@ __all__ = [
     "BlockDiscretisation",
     "KrigingMethod",
     "KrigingParameters",
+    "KrigingResult",
     "OrdinaryKriging",
     "RegionFilter",
     "SimpleKriging",
+    # Re-exported from common for backwards compatibility
+    "TaskResult",
+    "TaskResults",
 ]
 
 
-# Type variable for generic result type
-TResult = TypeVar("TResult", bound="TaskResult")
+# Backwards-compatible aliases for the renamed internal dataclasses.
+_KrigingAttribute = TaskAttribute
+_KrigingTarget = TaskTarget
 
 
 # =============================================================================
@@ -385,197 +391,6 @@ class KrigingParameters:
 # =============================================================================
 
 
-@dataclass
-class _KrigingAttribute:
-    """Attribute containing the kriging result (internal)."""
-
-    reference: str
-    name: str
-
-
-@dataclass
-class _KrigingTarget:
-    """The target that was created or updated (internal)."""
-
-    reference: str
-    name: str
-    description: Any
-    schema_id: str
-    attribute: _KrigingAttribute
-
-
-# =============================================================================
-# Base Task Result Classes
-# =============================================================================
-
-
-class TaskResult:
-    """Base class for compute task results.
-
-    Provides common functionality for all task results including:
-    - Pretty-printing in Jupyter notebooks
-    - Portal URL extraction
-    - Access to target object and data
-    """
-
-    message: str
-    """A message describing what happened in the task."""
-
-    _target: _KrigingTarget
-    """Internal target information."""
-
-    _context: IContext | None = None
-    """The context used to run the task (for convenience methods)."""
-
-    def __init__(self, message: str, target: _KrigingTarget):
-        self.message = message
-        self._target = target
-        self._context = None
-
-    @property
-    def target_name(self) -> str:
-        """The name of the target object."""
-        return self._target.name
-
-    @property
-    def target_reference(self) -> str:
-        """Reference URL to the target object."""
-        return self._target.reference
-
-    @property
-    def attribute_name(self) -> str:
-        """The name of the attribute that was created/updated."""
-        return self._target.attribute.name
-
-    @property
-    def schema_type(self) -> str:
-        """The schema type of the target object (e.g., 'regular-masked-3d-grid')."""
-        schema = self._target.schema_id
-        if "/" in schema:
-            parts = schema.split("/")
-            for part in parts:
-                if part and not part.startswith("objects") and "." not in part and part[0].isalpha():
-                    return part
-        return schema
-
-    async def get_target_object(self, context: IContext | None = None):
-        """Load and return the target geoscience object.
-
-        Args:
-            context: Optional context to use. If not provided, uses the context
-                    from when the task was run.
-
-        Returns:
-            The typed geoscience object (e.g., Regular3DGrid, RegularMasked3DGrid, BlockModel)
-
-        Example:
-            >>> result = await run(manager, params)
-            >>> target = await result.get_target_object()
-            >>> target  # Pretty-prints with Portal/Viewer links
-        """
-        from evo.objects.typed import object_from_reference
-
-        ctx = context or self._context
-        if ctx is None:
-            raise ValueError(
-                "No context available. Either pass a context to get_target_object() "
-                "or ensure the result was returned from run()."
-            )
-        return await object_from_reference(ctx, self._target.reference)
-
-    async def to_dataframe(self, context: IContext | None = None, columns: list[str] | None = None):
-        """Get the task results as a DataFrame.
-
-        This is the simplest way to access the task output data. It loads
-        the target object and returns its data as a pandas DataFrame.
-
-        Args:
-            context: Optional context to use. If not provided, uses the context
-                    from when the task was run.
-            columns: Optional list of column names to include. If None, includes
-                    all columns. Use ["*"] to explicitly request all columns.
-
-        Returns:
-            A pandas DataFrame containing the task results.
-
-        Example:
-            >>> result = await run(manager, params)
-            >>> df = await result.to_dataframe()
-            >>> df.head()
-        """
-        target_obj = await self.get_target_object(context)
-
-        # Try different methods to get the dataframe based on object type
-        if hasattr(target_obj, "to_dataframe"):
-            # BlockModel, PointSet, and similar objects with to_dataframe
-            if columns is not None:
-                return await target_obj.to_dataframe(columns=columns)
-            return await target_obj.to_dataframe()
-        elif hasattr(target_obj, "cells") and hasattr(target_obj.cells, "to_dataframe"):
-            # Grid objects (Regular3DGrid, RegularMasked3DGrid, etc.)
-            return await target_obj.cells.to_dataframe()
-        else:
-            raise TypeError(
-                f"Don't know how to get DataFrame from {type(target_obj).__name__}. "
-                "Use get_target_object() and access the data manually."
-            )
-
-    def _get_result_type_name(self) -> str:
-        """Get the display name for this result type."""
-        return "Task"
-
-    def __repr__(self) -> str:
-        """String representation."""
-        lines = [
-            f"✓ {self._get_result_type_name()} Result",
-            f"  Message:   {self.message}",
-            f"  Target:    {self.target_name}",
-            f"  Attribute: {self.attribute_name}",
-        ]
-        return "\n".join(lines)
-
-
-class TaskResults:
-    """Container for multiple task results with pretty-printing support.
-
-    Provides iteration and indexing support for accessing individual results.
-
-    Example:
-        >>> results = await run(manager, [params1, params2, params3])
-        >>> results  # Pretty-prints all results
-        >>> results[0]  # Access first result
-        >>> for result in results:
-        ...     print(result.attribute_name)
-    """
-
-    def __init__(self, results: list[TaskResult]):
-        self._results = results
-
-    @property
-    def results(self) -> list[TaskResult]:
-        """The list of task results."""
-        return self._results
-
-    def __len__(self) -> int:
-        return len(self._results)
-
-    def __iter__(self):
-        return iter(self._results)
-
-    def __getitem__(self, index: int) -> TaskResult:
-        return self._results[index]
-
-    def __repr__(self) -> str:
-        """String representation."""
-        if not self._results:
-            return "TaskResults([])"
-        result_type = self._results[0]._get_result_type_name()
-        lines = [f"✓ {len(self._results)} {result_type} Results:"]
-        for i, result in enumerate(self._results):
-            lines.append(f"  [{i}] {result.target_name} → {result.attribute_name}")
-        return "\n".join(lines)
-
-
 class KrigingResult(TaskResult):
     """Result of a kriging task.
 
@@ -593,7 +408,7 @@ class KrigingResult(TaskResult):
         >>> target = await result.get_target_object()
     """
 
-    def __init__(self, message: str, target: _KrigingTarget):
+    def __init__(self, message: str, target: TaskTarget):
         """Initialize a KrigingResult.
 
         Args:
@@ -614,20 +429,7 @@ class KrigingResult(TaskResult):
 
 def _parse_kriging_result(data: dict[str, Any]) -> KrigingResult:
     """Parse the kriging result from the API response."""
-    target_data = data["target"]
-    attr_data = target_data["attribute"]
-
-    attribute = _KrigingAttribute(
-        reference=attr_data["reference"],
-        name=attr_data["name"],
-    )
-    target = _KrigingTarget(
-        reference=target_data["reference"],
-        name=target_data["name"],
-        description=target_data.get("description"),
-        schema_id=target_data["schema_id"],
-        attribute=attribute,
-    )
+    target = parse_task_target(data)
     return KrigingResult(message=data["message"], target=target)
 
 

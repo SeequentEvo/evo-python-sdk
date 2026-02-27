@@ -200,12 +200,14 @@ async def run_tasks(
     # Split feedback across tasks
     per_task_fb = split_feedback(fb, [1.0] * total)
 
-    async def _run_one(i: int, params: Any, runner: RunnerFunc) -> tuple[int, Any]:
+    async def _run_one(i: int, params: Any, runner: RunnerFunc, task_fb: IFeedback) -> tuple[int, Any]:
         result = await runner(context, params, preview=preview)
+        task_fb.progress(1.0)
         return i, result
 
     tasks = [
-        asyncio.create_task(_run_one(i, params, runner)) for i, (params, runner) in enumerate(zip(parameters, runners))
+        asyncio.create_task(_run_one(i, params, runner, per_task_fb[i]))
+        for i, (params, runner) in enumerate(zip(parameters, runners))
     ]
 
     results: list[Any | None] = [None] * total
@@ -216,12 +218,14 @@ async def run_tasks(
             i, res = await fut
             results[i] = res
             done_count += 1
-            per_task_fb[i].progress(1.0, f"Completed {done_count}/{total}")
+            fb.progress(done_count / total, f"Running {done_count}/{total}...")
         except Exception:
             done_count += 1
             # Cancel remaining to fail fast
             for t in tasks:
                 t.cancel()
             raise
+
+    fb.progress(1.0, f"Completed {total}/{total}")
 
     return [r for r in results if r is not None]

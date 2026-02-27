@@ -131,4 +131,3 @@ def on_startup(command: str, dirty: bool) -> None:
 
         doc_path.write_text("\n".join(lines))
         log.info(f"Generated typed objects doc: {doc_path.relative_to(mkdocs_dir)}")
-

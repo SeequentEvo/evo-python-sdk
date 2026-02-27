@@ -89,11 +89,11 @@
               <ul class="nav flex-column">
               </ul>
             </li>
-            <li class="nav-item" data-bs-level="2"><a href="#evo.compute.tasks.kriging.TaskResult" class="nav-link">TaskResult</a>
+            <li class="nav-item" data-bs-level="2"><a href="#evo.compute.tasks.common.results.TaskResult" class="nav-link">TaskResult</a>
               <ul class="nav flex-column">
               </ul>
             </li>
-            <li class="nav-item" data-bs-level="2"><a href="#evo.compute.tasks.kriging.TaskResults" class="nav-link">TaskResults</a>
+            <li class="nav-item" data-bs-level="2"><a href="#evo.compute.tasks.common.results.TaskResults" class="nav-link">TaskResults</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -926,7 +926,7 @@ convenient methods to access the target object and its data.</p>
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">__init__</span><span class="p">(</span><span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">_KrigingTarget</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">__init__</span><span class="p">(</span><span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">TaskTarget</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -953,8 +953,8 @@ convenient methods to access the target object and its data.</p>
 
 
 
-<h2 id="evo.compute.tasks.kriging.TaskResult" class="doc doc-heading">
-            <span class="doc doc-object-name doc-class-name">evo.compute.tasks.kriging.TaskResult</span>
+<h2 id="evo.compute.tasks.common.results.TaskResult" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">evo.compute.tasks.common.results.TaskResult</span>
 
 
 </h2>
@@ -992,7 +992,7 @@ convenient methods to access the target object and its data.</p>
 
 
 
-<h3 id="evo.compute.tasks.kriging.TaskResult.message" class="doc doc-heading">
+<h3 id="evo.compute.tasks.common.results.TaskResult.message" class="doc doc-heading">
             <span class="doc doc-object-name doc-attribute-name">message</span>
 
 
@@ -1016,7 +1016,7 @@ convenient methods to access the target object and its data.</p>
 
 
 
-<h3 id="evo.compute.tasks.kriging.TaskResult.target_name" class="doc doc-heading">
+<h3 id="evo.compute.tasks.common.results.TaskResult.target_name" class="doc doc-heading">
             <span class="doc doc-object-name doc-attribute-name">target_name</span>
 
 
@@ -1040,7 +1040,7 @@ convenient methods to access the target object and its data.</p>
 
 
 
-<h3 id="evo.compute.tasks.kriging.TaskResult.target_reference" class="doc doc-heading">
+<h3 id="evo.compute.tasks.common.results.TaskResult.target_reference" class="doc doc-heading">
             <span class="doc doc-object-name doc-attribute-name">target_reference</span>
 
 
@@ -1064,7 +1064,7 @@ convenient methods to access the target object and its data.</p>
 
 
 
-<h3 id="evo.compute.tasks.kriging.TaskResult.attribute_name" class="doc doc-heading">
+<h3 id="evo.compute.tasks.common.results.TaskResult.attribute_name" class="doc doc-heading">
             <span class="doc doc-object-name doc-attribute-name">attribute_name</span>
 
 
@@ -1088,7 +1088,7 @@ convenient methods to access the target object and its data.</p>
 
 
 
-<h3 id="evo.compute.tasks.kriging.TaskResult.schema_type" class="doc doc-heading">
+<h3 id="evo.compute.tasks.common.results.TaskResult.schema_type" class="doc doc-heading">
             <span class="doc doc-object-name doc-attribute-name">schema_type</span>
 
 
@@ -1103,6 +1103,8 @@ convenient methods to access the target object and its data.</p>
     <div class="doc doc-contents ">
 
         <p>The schema type of the target object (e.g., 'regular-masked-3d-grid').</p>
+<p>Uses <code>ObjectSchema.from_id</code> to parse the schema ID. Falls back to the
+raw <code>schema_id</code> string when it cannot be parsed.</p>
 
     </div>
 
@@ -1114,7 +1116,7 @@ convenient methods to access the target object and its data.</p>
 <div class="doc doc-object doc-function">
 
 
-<h3 id="evo.compute.tasks.kriging.TaskResult.get_target_object" class="doc doc-heading">
+<h3 id="evo.compute.tasks.common.results.TaskResult.get_target_object" class="doc doc-heading">
             <span class="doc doc-object-name doc-function-name">get_target_object</span>
 
 
@@ -1147,7 +1149,7 @@ convenient methods to access the target object and its data.</p>
 <div class="doc doc-object doc-function">
 
 
-<h3 id="evo.compute.tasks.kriging.TaskResult.to_dataframe" class="doc doc-heading">
+<h3 id="evo.compute.tasks.common.results.TaskResult.to_dataframe" class="doc doc-heading">
             <span class="doc doc-object-name doc-function-name">to_dataframe</span>
 
 
@@ -1184,7 +1186,7 @@ the target object and returns its data as a pandas DataFrame.</p>
 <div class="doc doc-object doc-function">
 
 
-<h3 id="evo.compute.tasks.kriging.TaskResult.__repr__" class="doc doc-heading">
+<h3 id="evo.compute.tasks.common.results.TaskResult.__repr__" class="doc doc-heading">
             <span class="doc doc-object-name doc-function-name">__repr__</span>
 
 
@@ -1213,8 +1215,8 @@ the target object and returns its data as a pandas DataFrame.</p>
 
 
 
-<h2 id="evo.compute.tasks.kriging.TaskResults" class="doc doc-heading">
-            <span class="doc doc-object-name doc-class-name">evo.compute.tasks.kriging.TaskResults</span>
+<h2 id="evo.compute.tasks.common.results.TaskResults" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">evo.compute.tasks.common.results.TaskResults</span>
 
 
 </h2>
@@ -1255,7 +1257,7 @@ the target object and returns its data as a pandas DataFrame.</p>
 
 
 
-<h3 id="evo.compute.tasks.kriging.TaskResults.results" class="doc doc-heading">
+<h3 id="evo.compute.tasks.common.results.TaskResults.results" class="doc doc-heading">
             <span class="doc doc-object-name doc-attribute-name">results</span>
 
 
@@ -1281,7 +1283,7 @@ the target object and returns its data as a pandas DataFrame.</p>
 <div class="doc doc-object doc-function">
 
 
-<h3 id="evo.compute.tasks.kriging.TaskResults.__repr__" class="doc doc-heading">
+<h3 id="evo.compute.tasks.common.results.TaskResults.__repr__" class="doc doc-heading">
             <span class="doc doc-object-name doc-function-name">__repr__</span>
 
 

@@ -161,13 +161,13 @@ def _register_formatters(ipython: InteractiveShell) -> None:
 
     # Register formatters for compute task results
     html_formatter.for_type_by_name(
-        "evo.compute.tasks.kriging",
+        "evo.compute.tasks.common.results",
         "TaskResult",
         format_task_result,
     )
 
     html_formatter.for_type_by_name(
-        "evo.compute.tasks.kriging",
+        "evo.compute.tasks.common.results",
         "TaskResults",
         format_task_results,
     )

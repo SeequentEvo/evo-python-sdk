@@ -30,12 +30,12 @@
       show_root_heading: true
       show_source: false
 
-::: evo.compute.tasks.kriging.TaskResult
+::: evo.compute.tasks.common.results.TaskResult
     options:
       show_root_heading: true
       show_source: false
 
-::: evo.compute.tasks.kriging.TaskResults
+::: evo.compute.tasks.common.results.TaskResults
     options:
       show_root_heading: true
       show_source: false

@@ -31,8 +31,8 @@ packages.evo-compute.src.evo.compute.tasks.kriging.OrdinaryKriging
 packages.evo-compute.src.evo.compute.tasks.kriging.BlockDiscretisation
 packages.evo-compute.src.evo.compute.tasks.kriging.RegionFilter
 packages.evo-compute.src.evo.compute.tasks.kriging.KrigingResult
-packages.evo-compute.src.evo.compute.tasks.kriging.TaskResult
-packages.evo-compute.src.evo.compute.tasks.kriging.TaskResults
+packages.evo-compute.src.evo.compute.tasks.common.results.TaskResult
+packages.evo-compute.src.evo.compute.tasks.common.results.TaskResults
 packages.evo-compute.src.evo.compute.tasks.common.search.SearchNeighborhood
 packages.evo-compute.src.evo.compute.tasks.common.source_target.Source
 packages.evo-compute.src.evo.compute.tasks.common.source_target.Target
