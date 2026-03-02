@@ -32,6 +32,23 @@ obj = await object_from_reference(manager, reference_url)
 
 The correct typed class (`PointSet`, `Regular3DGrid`, etc.) is selected automatically based on the object's schema.
 
+### Class hierarchy
+
+All typed geoscience objects inherit from [`BaseObject`](typed-objects/base/BaseObject), which provides common properties (name, description, tags) and operations (update, refresh, validate). Objects with spatial data extend [`BaseSpatialObject`](typed-objects/spatial/BaseSpatialObject), adding bounding box and coordinate reference system support.
+
+**Objects** — each has a corresponding `Data` class used for creation:
+
+| Object | Data class | Description |
+| --- | --- | --- |
+| [`PointSet`](evo-objects/typed-objects/pointset) | [`PointSetData`](evo-objects/typed-objects/pointset/PointSetData) | Point cloud with XYZ locations and attributes |
+| [`Regular3DGrid`](evo-objects/typed-objects/regular-grid/Regular3DGrid) | [`Regular3DGridData`](evo-objects/typed-objects/regular-grid/Regular3DGridData) | Uniform-cell 3D grid with cell and vertex data |
+| [`RegularMasked3DGrid`](evo-objects/typed-objects/regular-masked-grid/RegularMasked3DGrid) | [`RegularMasked3DGridData`](evo-objects/typed-objects/regular-masked-grid/RegularMasked3DGridData) | Regular grid with masked (inactive) cells |
+| [`Tensor3DGrid`](evo-objects/typed-objects/tensor-grid/Tensor3DGrid) | [`Tensor3DGridData`](evo-objects/typed-objects/tensor-grid/Tensor3DGridData) | Grid with variable cell sizes per axis |
+| [`Variogram`](evo-objects/typed-objects/variogram) | [`VariogramData`](evo-objects/typed-objects/variogram/VariogramData) | Variogram model for geostatistical analysis |
+| [`BlockModel`](evo-objects/typed-objects/block-model-ref/BlockModel) | — | Proxy to Block Model Service (see below) |
+
+**Supporting types** — see [common types](typed-objects/types/BoundingBox) (`BoundingBox`, `Rotation`, `Point3`, `Size3d`, etc.) and [attributes](typed-objects/attributes/Attributes) (`Attributes`, `Attribute`).
+
 ### BlockModel (via evo-blockmodels)
 
 The `BlockModel` type is a geoscience object that acts as a proxy to the Block Model Service. When `evo-blockmodels` is installed (`pip install evo-objects[blockmodels]`), the full range of block model operations is available directly on the `BlockModel` object — no need to use the low-level `BlockModelAPIClient`.
