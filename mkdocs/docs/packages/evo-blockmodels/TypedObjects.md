@@ -1,51 +1,41 @@
 # Typed Objects
 
+[GitHub source](https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-blockmodels/src/evo/blockmodels/typed/regular_block_model.py)
+
 ::: evo.blockmodels.typed.regular_block_model.RegularBlockModel
-    options:
-      show_root_heading: true
-      show_source: false
+
+[GitHub source](https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-blockmodels/src/evo/blockmodels/typed/regular_block_model.py)
 
 ::: evo.blockmodels.typed.regular_block_model.RegularBlockModelData
-    options:
-      show_root_heading: true
-      show_source: false
+
+[GitHub source](https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-blockmodels/src/evo/blockmodels/typed/report.py)
 
 ::: evo.blockmodels.typed.report.Report
-    options:
-      show_root_heading: true
-      show_source: false
+
+[GitHub source](https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-blockmodels/src/evo/blockmodels/typed/report.py)
 
 ::: evo.blockmodels.typed.report.ReportSpecificationData
-    options:
-      show_root_heading: true
-      show_source: false
+
+[GitHub source](https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-blockmodels/src/evo/blockmodels/typed/report.py)
 
 ::: evo.blockmodels.typed.report.ReportResult
-    options:
-      show_root_heading: true
-      show_source: false
+
+[GitHub source](https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-blockmodels/src/evo/blockmodels/typed/report.py)
 
 ::: evo.blockmodels.typed.report.ReportColumnSpec
-    options:
-      show_root_heading: true
-      show_source: false
+
+[GitHub source](https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-blockmodels/src/evo/blockmodels/typed/report.py)
 
 ::: evo.blockmodels.typed.report.ReportCategorySpec
-    options:
-      show_root_heading: true
-      show_source: false
+
+[GitHub source](https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-blockmodels/src/evo/blockmodels/typed/report.py)
 
 ::: evo.blockmodels.typed.report.Aggregation
-    options:
-      show_root_heading: true
-      show_source: false
+
+[GitHub source](https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-blockmodels/src/evo/blockmodels/typed/units.py)
 
 ::: evo.blockmodels.typed.units.Units
-    options:
-      show_root_heading: true
-      show_source: false
+
+[GitHub source](https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-blockmodels/src/evo/blockmodels/typed/units.py)
 
 ::: evo.blockmodels.typed.units.UnitInfo
-    options:
-      show_root_heading: true
-      show_source: false

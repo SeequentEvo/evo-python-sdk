@@ -1,56 +1,45 @@
 # Typed Objects
 
+[GitHub source](https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-compute/src/evo/compute/tasks/kriging.py)
+
 ::: evo.compute.tasks.kriging.KrigingParameters
-    options:
-      show_root_heading: true
-      show_source: false
+
+[GitHub source](https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-compute/src/evo/compute/tasks/kriging.py)
 
 ::: evo.compute.tasks.kriging.SimpleKriging
-    options:
-      show_root_heading: true
-      show_source: false
+
+[GitHub source](https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-compute/src/evo/compute/tasks/kriging.py)
 
 ::: evo.compute.tasks.kriging.OrdinaryKriging
-    options:
-      show_root_heading: true
-      show_source: false
+
+[GitHub source](https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-compute/src/evo/compute/tasks/kriging.py)
 
 ::: evo.compute.tasks.kriging.BlockDiscretisation
-    options:
-      show_root_heading: true
-      show_source: false
+
+[GitHub source](https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-compute/src/evo/compute/tasks/kriging.py)
 
 ::: evo.compute.tasks.kriging.RegionFilter
-    options:
-      show_root_heading: true
-      show_source: false
+
+[GitHub source](https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-compute/src/evo/compute/tasks/kriging.py)
 
 ::: evo.compute.tasks.kriging.KrigingResult
-    options:
-      show_root_heading: true
-      show_source: false
+
+[GitHub source](https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-compute/src/evo/compute/tasks/common/results.py)
 
 ::: evo.compute.tasks.common.results.TaskResult
-    options:
-      show_root_heading: true
-      show_source: false
+
+[GitHub source](https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-compute/src/evo/compute/tasks/common/results.py)
 
 ::: evo.compute.tasks.common.results.TaskResults
-    options:
-      show_root_heading: true
-      show_source: false
+
+[GitHub source](https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-compute/src/evo/compute/tasks/common/search.py)
 
 ::: evo.compute.tasks.common.search.SearchNeighborhood
-    options:
-      show_root_heading: true
-      show_source: false
+
+[GitHub source](https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-compute/src/evo/compute/tasks/common/source_target.py)
 
 ::: evo.compute.tasks.common.source_target.Source
-    options:
-      show_root_heading: true
-      show_source: false
+
+[GitHub source](https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-compute/src/evo/compute/tasks/common/source_target.py)
 
 ::: evo.compute.tasks.common.source_target.Target
-    options:
-      show_root_heading: true
-      show_source: false

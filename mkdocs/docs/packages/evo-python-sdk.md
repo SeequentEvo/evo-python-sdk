@@ -16,16 +16,16 @@ This comprehensive guide will walk you through everything required to get starte
 The evo-python-sdk contains a number of sub-packages. You may choose to install the `evo-sdk` package, which includes all
 sub-packages and optional dependencies (e.g. Jupyter notebook support), or choose a specific package to install:
 
-| Package | Version | Description |
-| --- | --- | --- |
-| evo-sdk | <a href="https://pypi.org/project/evo-sdk/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/evo-sdk" /></a> | A metapackage that installs all available Seequent Evo SDKs, including Jupyter notebook examples. |
-| evo-sdk-common ([discovery](evo-sdk-common/discovery/DiscoveryAPIClient.md) and [workspaces](evo-sdk-common/workspaces/WorkspaceAPIClient.md)) | <a href="https://pypi.org/project/evo-sdk-common/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/evo-sdk-common" /></a> | A shared library that provides common functionality for integrating with Seequent's client SDKs. |
-| evo-files ([api](evo-files/FileAPIClient.md)) | <a href="https://pypi.org/project/evo-files/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/evo-files" /></a> | A service client for interacting with the Evo File API. |
-| evo-objects ([introduction](evo-objects/Introduction.md), [typed objects](evo-objects/TypedObjects.md), [api](evo-objects/ObjectAPIClient.md)) | <a href="https://pypi.org/project/evo-objects/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/evo-objects" /></a> | Typed Python classes and an API client for geoscience objects — points, grids, variograms, and more. |
-| evo-colormaps ([api](evo-colormaps/ColormapAPIClient.md)) | <a href="https://pypi.org/project/evo-colormaps/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/evo-colormaps" /></a> | A service client to create colour mappings and associate them to geoscience data with the Colormap API.|
-| evo-blockmodels ([introduction](evo-blockmodels/Introduction.md), [typed objects](evo-blockmodels/TypedObjects.md), [api](evo-blockmodels/BlockModelAPIClient.md)) | <a href="https://pypi.org/project/evo-blockmodels/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/evo-blockmodels" /></a> | Typed block model interactions, reports, and an API client for managing block models in Evo. |
-| evo-widgets ([introduction](evo-widgets/Introduction.md)) | <a href="https://pypi.org/project/evo-widgets/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/evo-widgets" /></a> | Widgets and presentation layer — rich HTML rendering of typed geoscience objects in Jupyter notebooks. |
-| evo-compute ([introduction](evo-compute/Introduction.md), [typed objects](evo-compute/TypedObjects.md), [api](evo-compute/JobClient.md)) | <a href="https://pypi.org/project/evo-compute/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/evo-compute" /></a> | Run compute tasks (e.g. kriging estimation) via the Compute Tasks API.|
+| Package                                                                                                                                                                                                         | Version | Description |
+|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------| --- | --- |
+| evo-sdk                                                                                                                                                                                                         | <a href="https://pypi.org/project/evo-sdk/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/evo-sdk" /></a> | A metapackage that installs all available Seequent Evo SDKs, including Jupyter notebook examples. |
+| evo-sdk-common ([discovery](evo-python-sdk/evo-sdk-common/DiscoveryAPIClient) and [workspaces](evo-python-sdk/evo-sdk-common/WorkspaceAPIClient))                                    | <a href="https://pypi.org/project/evo-sdk-common/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/evo-sdk-common" /></a> | A shared library that provides common functionality for integrating with Seequent's client SDKs. |
+| evo-files ([api](evo-python-sdk/evo-files/FileAPIClient))                                                                                                                                                    | <a href="https://pypi.org/project/evo-files/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/evo-files" /></a> | A service client for interacting with the Evo File API. |
+| evo-objects ([introduction](evo-python-sdk/evo-objects), [typed objects](evo-python-sdk/evo-objects/TypedObjects), [api](evo-python-sdk/evo-objects/ObjectAPIClient))                     | <a href="https://pypi.org/project/evo-objects/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/evo-objects" /></a> | Typed Python classes and an API client for geoscience objects — points, grids, variograms, and more. |
+| evo-colormaps ([api](evo-python-sdk/evo-colormaps/ColormapAPIClient))                                                                                                                                        | <a href="https://pypi.org/project/evo-colormaps/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/evo-colormaps" /></a> | A service client to create colour mappings and associate them to geoscience data with the Colormap API.|
+| evo-blockmodels ([introduction](evo-python-sdk/evo-blockmodels), [typed objects](evo-python-sdk/evo-blockmodels/TypedObjects), [api](evo-python-sdk/evo-blockmodels/BlockModelAPIClient)) | <a href="https://pypi.org/project/evo-blockmodels/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/evo-blockmodels" /></a> | Typed block model interactions, reports, and an API client for managing block models in Evo. |
+| evo-widgets ([introduction](evo-python-sdk/evo-widgets))                                                                                                                                        | <a href="https://pypi.org/project/evo-widgets/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/evo-widgets" /></a> | Widgets and presentation layer — rich HTML rendering of typed geoscience objects in Jupyter notebooks. |
+| evo-compute ([introduction](evo-python-sdk/evo-compute), [typed objects](evo-python-sdk/evo-compute/TypedObjects), [api](evo-python-sdk/evo-compute/JobClient))                           | <a href="https://pypi.org/project/evo-compute/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/evo-compute" /></a> | Run compute tasks (e.g. kriging estimation) via the Compute Tasks API.|
 
 ### Quick start for notebooks
 
@@ -100,17 +100,17 @@ For next steps, start with the packages most relevant to your workflow:
 
 **Getting started — typed objects & visualisation:**
 
-* [`evo-objects`](evo-objects/Introduction.md): load and work with points, grids, variograms, and other geoscience objects as typed Python classes
-* [`evo-blockmodels`](evo-blockmodels/Introduction.md): create, query, and report on block models with typed interactions
-* [`evo-compute`](evo-compute/Introduction.md): run compute tasks such as kriging estimation
-* [`evo-widgets`](evo-widgets/Introduction.md): rich HTML rendering of typed geoscience objects in Jupyter notebooks
+* [`evo-objects`](evo-python-sdk/evo-objects): load and work with points, grids, variograms, and other geoscience objects as typed Python classes
+* [`evo-blockmodels`](evo-python-sdk/evo-blockmodels): create, query, and report on block models with typed interactions
+* [`evo-compute`](evo-python-sdk/evo-compute): run compute tasks such as kriging estimation
+* [`evo-widgets`](evo-python-sdk/evo-widgets): rich HTML rendering of typed geoscience objects in Jupyter notebooks
 
 **API clients [For developers]:**
 
-* `evo-sdk-common` ([`discovery`](evo-sdk-common/discovery/DiscoveryAPIClient.md) and [`workspaces`](evo-sdk-common/workspaces/WorkspaceAPIClient.md)): foundation for all Evo SDKs, including arbitrary API requests
-* [`evo-files`](evo-files/FileAPIClient.md): low-level File API client
-* [`evo-objects` API](evo-objects/ObjectAPIClient.md): low-level Geoscience Object API client
-* [`evo-colormaps`](evo-colormaps/ColormapAPIClient.md): Colormap API client
-* [`evo-blockmodels` API](evo-blockmodels/BlockModelAPIClient.md): low-level Block Model API client
-* [`evo-compute` API](evo-compute/JobClient.md): low-level Compute Tasks API client
+* `evo-sdk-common` ([`discovery`](evo-python-sdk/evo-sdk-common/DiscoveryAPIClient) and [`workspaces`](evo-python-sdk/evo-sdk-common/WorkspaceAPIClient)): foundation for all Evo SDKs, including arbitrary API requests
+* [`evo-files`](evo-python-sdk/evo-files/FileAPIClient): low-level File API client
+* [`evo-objects` API](evo-python-sdk/evo-objects/ObjectAPIClient): low-level Geoscience Object API client
+* [`evo-colormaps`](evo-python-sdk/evo-colormaps/ColormapAPIClient): Colormap API client
+* [`evo-blockmodels` API](evo-python-sdk/evo-blockmodels/BlockModelAPIClient): low-level Block Model API client
+* [`evo-compute` API](evo-python-sdk/evo-compute/JobClient): low-level Compute Tasks API client
 * [Seequent Developer Portal](https://developer.seequent.com/docs/guides/getting-started/quick-start-guide): guides, tutorials, and API references

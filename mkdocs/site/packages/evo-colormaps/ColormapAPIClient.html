@@ -36,12 +36,12 @@
 
                     <ul class="nav navbar-nav ms-md-auto">
                             <li class="nav-item">
-                                <a rel="prev" href="../evo-blockmodels/TypedObjects.html" class="nav-link">
+                                <a rel="prev" href="index.html" class="nav-link">
                                     <i class="fa fa-arrow-left"></i> Previous
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a rel="next" href="../evo-compute/Introduction.html" class="nav-link">
+                                <a rel="next" href="../evo-compute/index.html" class="nav-link">
                                     Next <i class="fa fa-arrow-right"></i>
                                 </a>
                             </li>
@@ -186,10 +186,6 @@
             <span class="doc doc-object-name doc-function-name">get_service_health</span>
 
 
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-async"><code>async</code></small>
-  </span>
-
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_service_health</span><span class="p">(</span><span class="n">check_type</span><span class="p">:</span> <span class="n">HealthCheckType</span> <span class="o">=</span> <span class="n">HealthCheckType</span><span class="o">.</span><span class="n">FULL</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ServiceHealth</span>
 </code></pre></div>
@@ -296,10 +292,6 @@
 <h3 id="evo.colormaps.client.ColormapAPIClient.create_colormap" class="doc doc-heading">
             <span class="doc doc-object-name doc-function-name">create_colormap</span>
 
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-async"><code>async</code></small>
-  </span>
 
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">create_colormap</span><span class="p">(</span><span class="n">colormap</span><span class="p">:</span> <span class="n">ContinuousColormap</span> <span class="o">|</span> <span class="n">DiscreteColormap</span> <span class="o">|</span> <span class="n">CategoryColormap</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ColormapMetadata</span>
@@ -424,10 +416,6 @@
             <span class="doc doc-object-name doc-function-name">get_colormap_by_id</span>
 
 
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-async"><code>async</code></small>
-  </span>
-
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_colormap_by_id</span><span class="p">(</span><span class="n">colormap_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ColormapMetadata</span>
 </code></pre></div>
@@ -525,10 +513,6 @@
             <span class="doc doc-object-name doc-function-name">get_colormap_collection</span>
 
 
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-async"><code>async</code></small>
-  </span>
-
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_colormap_collection</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ColormapMetadata</span><span class="p">]</span>
 </code></pre></div>
@@ -594,10 +578,6 @@
 <h3 id="evo.colormaps.client.ColormapAPIClient.create_association" class="doc doc-heading">
             <span class="doc doc-object-name doc-function-name">create_association</span>
 
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-async"><code>async</code></small>
-  </span>
 
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">create_association</span><span class="p">(</span><span class="n">object_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">association</span><span class="p">:</span> <span class="n">Association</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AssociationMetadata</span>
@@ -712,10 +692,6 @@
             <span class="doc doc-object-name doc-function-name">create_batch_associations</span>
 
 
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-async"><code>async</code></small>
-  </span>
-
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">create_batch_associations</span><span class="p">(</span><span class="n">object_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">associations</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Association</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">AssociationMetadata</span><span class="p">]</span>
 </code></pre></div>
@@ -829,10 +805,6 @@
             <span class="doc doc-object-name doc-function-name">get_association</span>
 
 
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-async"><code>async</code></small>
-  </span>
-
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_association</span><span class="p">(</span><span class="n">object_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">association_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AssociationMetadata</span>
 </code></pre></div>
@@ -945,10 +917,6 @@
 <h3 id="evo.colormaps.client.ColormapAPIClient.get_association_collection" class="doc doc-heading">
             <span class="doc doc-object-name doc-function-name">get_association_collection</span>
 
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-async"><code>async</code></small>
-  </span>
 
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_association_collection</span><span class="p">(</span><span class="n">object_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">AssociationMetadata</span><span class="p">]</span>

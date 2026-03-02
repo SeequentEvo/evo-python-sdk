@@ -4,8 +4,7 @@
 
 The `evo-blockmodels` package provides both a low-level API client and typed Python classes for working with block models in Evo.
 
-!!! tip "Using block models from typed objects"
-    The full functionality of `evo-blockmodels` — creating, retrieving, updating attributes, running reports — is accessible directly from the [`BlockModel`](../evo-objects/Introduction.md#blockmodel-via-evo-blockmodels) object in `evo.objects.typed`. When `evo-blockmodels` is installed, `BlockModel` acts as a proxy and delegates data operations to the Block Model Service automatically.
+The full functionality of `evo-blockmodels` — creating, retrieving, updating attributes, running reports — is accessible directly from the [`BlockModel`](../evo-objects/index.md#blockmodel-via-evo-blockmodels) object in `evo.objects.typed`. When `evo-blockmodels` is installed, `BlockModel` acts as a proxy and delegates data operations to the Block Model Service automatically.
 
     ```python
     from evo.objects.typed import object_from_path
@@ -17,7 +16,7 @@ The `evo-blockmodels` package provides both a low-level API client and typed Pyt
     report = await bm.create_report(spec)
     ```
 
-    See the [evo-objects Introduction](../evo-objects/Introduction.md#blockmodel-via-evo-blockmodels) for the full API.
+    See the [evo-objects Introduction](../evo-objects/index.md#blockmodel-via-evo-blockmodels) for the full API.
 
 See the [Typed Objects](TypedObjects.md) page for the full typed API reference.
 
@@ -75,7 +74,7 @@ spec = ReportSpecificationData(
         ReportColumnSpec(
             column_name="Au",
             aggregation=Aggregation.MASS_AVERAGE,
-            output_unit_id="g/t",
+            output_unit_id=Units.GRAMS_PER_TONNE,
         ),
     ],
     mass_units=MassUnits.TONNES,

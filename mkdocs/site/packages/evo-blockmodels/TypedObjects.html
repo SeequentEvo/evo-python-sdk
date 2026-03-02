@@ -36,12 +36,12 @@
 
                     <ul class="nav navbar-nav ms-md-auto">
                             <li class="nav-item">
-                                <a rel="prev" href="Introduction.html" class="nav-link">
+                                <a rel="prev" href="BlockModelAPIClient.html" class="nav-link">
                                     <i class="fa fa-arrow-left"></i> Previous
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a rel="next" href="../evo-colormaps/ColormapAPIClient.html" class="nav-link">
+                                <a rel="next" href="../evo-colormaps/index.html" class="nav-link">
                                     Next <i class="fa fa-arrow-right"></i>
                                 </a>
                             </li>
@@ -113,6 +113,7 @@
                     <div class="col-md-9" role="main">
 
 <h1 id="typed-objects">Typed Objects</h1>
+<p><a href="https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-blockmodels/src/evo/blockmodels/typed/regular_block_model.py">GitHub source</a></p>
 
 
 <div class="doc doc-object doc-class">
@@ -181,10 +182,6 @@ new_version = await block_model.update_attributes(
             <span class="doc doc-object-name doc-attribute-name">n_blocks</span>
 
 
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-property"><code>property</code></small>
-  </span>
-
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="n">n_blocks</span><span class="p">:</span> <span class="n">Size3i</span>
 </code></pre></div>
@@ -205,10 +202,6 @@ new_version = await block_model.update_attributes(
             <span class="doc doc-object-name doc-attribute-name">block_size</span>
 
 
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-property"><code>property</code></small>
-  </span>
-
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="n">block_size</span><span class="p">:</span> <span class="n">Size3d</span>
 </code></pre></div>
@@ -228,10 +221,6 @@ new_version = await block_model.update_attributes(
 <h3 id="evo.blockmodels.typed.regular_block_model.RegularBlockModel.rotations" class="doc doc-heading">
             <span class="doc doc-object-name doc-attribute-name">rotations</span>
 
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-property"><code>property</code></small>
-  </span>
 
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="n">rotations</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">RotationAxis</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span>
@@ -376,11 +365,6 @@ new_version = await block_model.update_attributes(
             <span class="doc doc-object-name doc-function-name">create</span>
 
 
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-async"><code>async</code></small>
-      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
-  </span>
-
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">create</span><span class="p">(</span>
     <span class="n">context</span><span class="p">:</span> <span class="n">IContext</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">RegularBlockModelData</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">fb</span><span class="p">:</span> <span class="n">IFeedback</span> <span class="o">=</span> <span class="n">NoFeedback</span>
@@ -424,12 +408,7 @@ new_version = await block_model.update_attributes(
                 <code>data</code>
             </td>
             <td>
-                  <code><a class="autorefs autorefs-internal" title="evo.blockmodels.typed.regular_block_model.RegularBlockModelData
-
-
-  
-      dataclass
-  " href="#evo.blockmodels.typed.regular_block_model.RegularBlockModelData">RegularBlockModelData</a></code>
+                  <code><a class="autorefs autorefs-internal" title="evo.blockmodels.typed.regular_block_model.RegularBlockModelData" href="#evo.blockmodels.typed.regular_block_model.RegularBlockModelData">RegularBlockModelData</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -532,11 +511,6 @@ new_version = await block_model.update_attributes(
 <h3 id="evo.blockmodels.typed.regular_block_model.RegularBlockModel.get" class="doc doc-heading">
             <span class="doc doc-object-name doc-function-name">get</span>
 
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-async"><code>async</code></small>
-      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
-  </span>
 
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">get</span><span class="p">(</span>
@@ -721,7 +695,8 @@ new_version = await block_model.update_attributes(
 
     </div>
 
-</div>
+</div><p><a href="https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-blockmodels/src/evo/blockmodels/typed/regular_block_model.py">GitHub source</a></p>
+
 
 <div class="doc doc-object doc-class">
 
@@ -730,10 +705,6 @@ new_version = await block_model.update_attributes(
 <h2 id="evo.blockmodels.typed.regular_block_model.RegularBlockModelData" class="doc doc-heading">
             <span class="doc doc-object-name doc-class-name">evo.blockmodels.typed.regular_block_model.RegularBlockModelData</span>
 
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
-  </span>
 
 </h2>
 
@@ -946,7 +917,8 @@ new_version = await block_model.update_attributes(
 
     </div>
 
-</div>
+</div><p><a href="https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-blockmodels/src/evo/blockmodels/typed/report.py">GitHub source</a></p>
+
 
 <div class="doc doc-object doc-class">
 
@@ -1011,10 +983,6 @@ df = result.to_dataframe()
             <span class="doc doc-object-name doc-attribute-name">id</span>
 
 
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-property"><code>property</code></small>
-  </span>
-
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nb">id</span><span class="p">:</span> <span class="n">UUID</span>
 </code></pre></div>
@@ -1034,10 +1002,6 @@ df = result.to_dataframe()
 <h3 id="evo.blockmodels.typed.report.Report.name" class="doc doc-heading">
             <span class="doc doc-object-name doc-attribute-name">name</span>
 
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-property"><code>property</code></small>
-  </span>
 
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
@@ -1059,10 +1023,6 @@ df = result.to_dataframe()
             <span class="doc doc-object-name doc-attribute-name">description</span>
 
 
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-property"><code>property</code></small>
-  </span>
-
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
 </code></pre></div>
@@ -1083,10 +1043,6 @@ df = result.to_dataframe()
             <span class="doc doc-object-name doc-attribute-name">block_model_uuid</span>
 
 
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-property"><code>property</code></small>
-  </span>
-
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="n">block_model_uuid</span><span class="p">:</span> <span class="n">UUID</span>
 </code></pre></div>
@@ -1106,10 +1062,6 @@ df = result.to_dataframe()
 <h3 id="evo.blockmodels.typed.report.Report.revision" class="doc doc-heading">
             <span class="doc doc-object-name doc-attribute-name">revision</span>
 
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-property"><code>property</code></small>
-  </span>
 
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="n">revision</span><span class="p">:</span> <span class="nb">int</span>
@@ -1237,11 +1189,6 @@ df = result.to_dataframe()
             <span class="doc doc-object-name doc-function-name">create</span>
 
 
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-async"><code>async</code></small>
-      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
-  </span>
-
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">create</span><span class="p">(</span>
     <span class="n">context</span><span class="p">:</span> <span class="n">IContext</span><span class="p">,</span>
@@ -1306,12 +1253,7 @@ df = result.to_dataframe()
                 <code>data</code>
             </td>
             <td>
-                  <code><a class="autorefs autorefs-internal" title="evo.blockmodels.typed.report.ReportSpecificationData
-
-
-  
-      dataclass
-  " href="#evo.blockmodels.typed.report.ReportSpecificationData">ReportSpecificationData</a></code>
+                  <code><a class="autorefs autorefs-internal" title="evo.blockmodels.typed.report.ReportSpecificationData" href="#evo.blockmodels.typed.report.ReportSpecificationData">ReportSpecificationData</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -1408,10 +1350,6 @@ df = result.to_dataframe()
             <span class="doc doc-object-name doc-function-name">run</span>
 
 
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-async"><code>async</code></small>
-  </span>
-
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">run</span><span class="p">(</span><span class="n">version_uuid</span><span class="p">:</span> <span class="n">UUID</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">fb</span><span class="p">:</span> <span class="n">IFeedback</span> <span class="o">=</span> <span class="n">NoFeedback</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ReportResult</span>
 </code></pre></div>
@@ -1479,12 +1417,7 @@ df = result.to_dataframe()
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="evo.blockmodels.typed.report.ReportResult
-
-
-  
-      dataclass
-  " href="#evo.blockmodels.typed.report.ReportResult">ReportResult</a></code>
+                  <code><a class="autorefs autorefs-internal" title="evo.blockmodels.typed.report.ReportResult" href="#evo.blockmodels.typed.report.ReportResult">ReportResult</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -1506,10 +1439,6 @@ df = result.to_dataframe()
 <h3 id="evo.blockmodels.typed.report.Report.refresh" class="doc doc-heading">
             <span class="doc doc-object-name doc-function-name">refresh</span>
 
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-async"><code>async</code></small>
-  </span>
 
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">refresh</span><span class="p">(</span><span class="n">fb</span><span class="p">:</span> <span class="n">IFeedback</span> <span class="o">=</span> <span class="n">NoFeedback</span><span class="p">,</span> <span class="n">timeout_seconds</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">120.0</span><span class="p">,</span> <span class="n">poll_interval_seconds</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ReportResult</span>
@@ -1596,12 +1525,7 @@ poll until a result is available or the timeout is reached.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="evo.blockmodels.typed.report.ReportResult
-
-
-  
-      dataclass
-  " href="#evo.blockmodels.typed.report.ReportResult">ReportResult</a></code>
+                  <code><a class="autorefs autorefs-internal" title="evo.blockmodels.typed.report.ReportResult" href="#evo.blockmodels.typed.report.ReportResult">ReportResult</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -1646,10 +1570,6 @@ poll until a result is available or the timeout is reached.</p>
 <h3 id="evo.blockmodels.typed.report.Report.list_results" class="doc doc-heading">
             <span class="doc doc-object-name doc-function-name">list_results</span>
 
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-async"><code>async</code></small>
-  </span>
 
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">list_results</span><span class="p">(</span><span class="n">limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span> <span class="n">fb</span><span class="p">:</span> <span class="n">IFeedback</span> <span class="o">=</span> <span class="n">NoFeedback</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ReportResult</span><span class="p">]</span>
@@ -1718,12 +1638,7 @@ poll until a result is available or the timeout is reached.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><span title="list">list</span>[<a class="autorefs autorefs-internal" title="evo.blockmodels.typed.report.ReportResult
-
-
-  
-      dataclass
-  " href="#evo.blockmodels.typed.report.ReportResult">ReportResult</a>]</code>
+                  <code><span title="list">list</span>[<a class="autorefs autorefs-internal" title="evo.blockmodels.typed.report.ReportResult" href="#evo.blockmodels.typed.report.ReportResult">ReportResult</a>]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -1745,7 +1660,8 @@ poll until a result is available or the timeout is reached.</p>
 
     </div>
 
-</div>
+</div><p><a href="https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-blockmodels/src/evo/blockmodels/typed/report.py">GitHub source</a></p>
+
 
 <div class="doc doc-object doc-class">
 
@@ -1754,10 +1670,6 @@ poll until a result is available or the timeout is reached.</p>
 <h2 id="evo.blockmodels.typed.report.ReportSpecificationData" class="doc doc-heading">
             <span class="doc doc-object-name doc-class-name">evo.blockmodels.typed.report.ReportSpecificationData</span>
 
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
-  </span>
 
 </h2>
 
@@ -1803,12 +1715,7 @@ It includes which columns to report on, how to categorize blocks, and density/ma
                 <code>columns</code>
             </td>
             <td>
-                  <code><span title="list">list</span>[<a class="autorefs autorefs-internal" title="evo.blockmodels.typed.report.ReportColumnSpec
-
-
-  
-      dataclass
-  " href="#evo.blockmodels.typed.report.ReportColumnSpec">ReportColumnSpec</a>]</code>
+                  <code><span title="list">list</span>[<a class="autorefs autorefs-internal" title="evo.blockmodels.typed.report.ReportColumnSpec" href="#evo.blockmodels.typed.report.ReportColumnSpec">ReportColumnSpec</a>]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -1840,12 +1747,7 @@ It includes which columns to report on, how to categorize blocks, and density/ma
                 <code>categories</code>
             </td>
             <td>
-                  <code><span title="list">list</span>[<a class="autorefs autorefs-internal" title="evo.blockmodels.typed.report.ReportCategorySpec
-
-
-  
-      dataclass
-  " href="#evo.blockmodels.typed.report.ReportCategorySpec">ReportCategorySpec</a>]</code>
+                  <code><span title="list">list</span>[<a class="autorefs autorefs-internal" title="evo.blockmodels.typed.report.ReportCategorySpec" href="#evo.blockmodels.typed.report.ReportCategorySpec">ReportCategorySpec</a>]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2014,7 +1916,8 @@ It includes which columns to report on, how to categorize blocks, and density/ma
 
     </div>
 
-</div>
+</div><p><a href="https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-blockmodels/src/evo/blockmodels/typed/report.py">GitHub source</a></p>
+
 
 <div class="doc doc-object doc-class">
 
@@ -2023,10 +1926,6 @@ It includes which columns to report on, how to categorize blocks, and density/ma
 <h2 id="evo.blockmodels.typed.report.ReportResult" class="doc doc-heading">
             <span class="doc doc-object-name doc-class-name">evo.blockmodels.typed.report.ReportResult</span>
 
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
-  </span>
 
 </h2>
 
@@ -2130,7 +2029,8 @@ containing the aggregated values for each report column.</p>
 
     </div>
 
-</div>
+</div><p><a href="https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-blockmodels/src/evo/blockmodels/typed/report.py">GitHub source</a></p>
+
 
 <div class="doc doc-object doc-class">
 
@@ -2139,10 +2039,6 @@ containing the aggregated values for each report column.</p>
 <h2 id="evo.blockmodels.typed.report.ReportColumnSpec" class="doc doc-heading">
             <span class="doc doc-object-name doc-class-name">evo.blockmodels.typed.report.ReportColumnSpec</span>
 
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
-  </span>
 
 </h2>
 
@@ -2194,13 +2090,7 @@ containing the aggregated values for each report column.</p>
               </div>
             </td>
             <td>
-                  <code><a class="autorefs autorefs-internal" title="SUM
-
-
-  
-      class-attribute
-      instance-attribute
-   (evo.blockmodels.typed.report.Aggregation.SUM)" href="#evo.blockmodels.typed.report.Aggregation.SUM">SUM</a></code>
+                  <code><a class="autorefs autorefs-internal" title="SUM (evo.blockmodels.typed.report.Aggregation.SUM)" href="#evo.blockmodels.typed.report.Aggregation.SUM">SUM</a></code>
             </td>
           </tr>
           <tr class="doc-section-item">
@@ -2265,7 +2155,8 @@ containing the aggregated values for each report column.</p>
 
     </div>
 
-</div>
+</div><p><a href="https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-blockmodels/src/evo/blockmodels/typed/report.py">GitHub source</a></p>
+
 
 <div class="doc doc-object doc-class">
 
@@ -2274,10 +2165,6 @@ containing the aggregated values for each report column.</p>
 <h2 id="evo.blockmodels.typed.report.ReportCategorySpec" class="doc doc-heading">
             <span class="doc doc-object-name doc-class-name">evo.blockmodels.typed.report.ReportCategorySpec</span>
 
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
-  </span>
 
 </h2>
 
@@ -2379,7 +2266,8 @@ containing the aggregated values for each report column.</p>
 
     </div>
 
-</div>
+</div><p><a href="https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-blockmodels/src/evo/blockmodels/typed/report.py">GitHub source</a></p>
+
 
 <div class="doc doc-object doc-class">
 
@@ -2431,11 +2319,6 @@ containing the aggregated values for each report column.</p>
             <span class="doc doc-object-name doc-attribute-name">SUM</span>
 
 
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
-
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="n">SUM</span> <span class="o">=</span> <span class="s1">&#39;SUM&#39;</span>
 </code></pre></div>
@@ -2455,11 +2338,6 @@ containing the aggregated values for each report column.</p>
 <h3 id="evo.blockmodels.typed.report.Aggregation.MASS_AVERAGE" class="doc doc-heading">
             <span class="doc doc-object-name doc-attribute-name">MASS_AVERAGE</span>
 
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
 
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="n">MASS_AVERAGE</span> <span class="o">=</span> <span class="s1">&#39;MASS_AVERAGE&#39;</span>
@@ -2482,7 +2360,8 @@ containing the aggregated values for each report column.</p>
 
     </div>
 
-</div>
+</div><p><a href="https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-blockmodels/src/evo/blockmodels/typed/units.py">GitHub source</a></p>
+
 
 <div class="doc doc-object doc-class">
 
@@ -2544,7 +2423,8 @@ await bm_ref.add_attribute(df, "metal_content", unit=Units.KILOS_PER_CUBIC_METRE
 
     </div>
 
-</div>
+</div><p><a href="https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-blockmodels/src/evo/blockmodels/typed/units.py">GitHub source</a></p>
+
 
 <div class="doc doc-object doc-class">
 
@@ -2553,10 +2433,6 @@ await bm_ref.add_attribute(df, "metal_content", unit=Units.KILOS_PER_CUBIC_METRE
 <h2 id="evo.blockmodels.typed.units.UnitInfo" class="doc doc-heading">
             <span class="doc doc-object-name doc-class-name">evo.blockmodels.typed.units.UnitInfo</span>
 
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
-  </span>
 
 </h2>
 
@@ -2593,10 +2469,6 @@ await bm_ref.add_attribute(df, "metal_content", unit=Units.KILOS_PER_CUBIC_METRE
             <span class="doc doc-object-name doc-attribute-name">unit_id</span>
 
 
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
-
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="n">unit_id</span><span class="p">:</span> <span class="nb">str</span>
 </code></pre></div>
@@ -2616,10 +2488,6 @@ await bm_ref.add_attribute(df, "metal_content", unit=Units.KILOS_PER_CUBIC_METRE
 <h3 id="evo.blockmodels.typed.units.UnitInfo.symbol" class="doc doc-heading">
             <span class="doc doc-object-name doc-attribute-name">symbol</span>
 
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
 
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span>
@@ -2641,10 +2509,6 @@ await bm_ref.add_attribute(df, "metal_content", unit=Units.KILOS_PER_CUBIC_METRE
             <span class="doc doc-object-name doc-attribute-name">description</span>
 
 
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
-
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="n">description</span><span class="p">:</span> <span class="nb">str</span>
 </code></pre></div>
@@ -2665,10 +2529,6 @@ await bm_ref.add_attribute(df, "metal_content", unit=Units.KILOS_PER_CUBIC_METRE
             <span class="doc doc-object-name doc-attribute-name">unit_type</span>
 
 
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
-
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="n">unit_type</span><span class="p">:</span> <span class="n">UnitType</span>
 </code></pre></div>
@@ -2688,10 +2548,6 @@ await bm_ref.add_attribute(df, "metal_content", unit=Units.KILOS_PER_CUBIC_METRE
 <h3 id="evo.blockmodels.typed.units.UnitInfo.conversion_factor" class="doc doc-heading">
             <span class="doc doc-object-name doc-attribute-name">conversion_factor</span>
 
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
 
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="n">conversion_factor</span><span class="p">:</span> <span class="nb">float</span>

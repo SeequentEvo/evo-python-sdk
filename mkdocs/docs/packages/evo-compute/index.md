@@ -130,13 +130,15 @@ results = await run(manager, [
 ], preview=True)
 ```
 
-!!! tip
-    If each task writes to a **different** attribute name, they can all run in parallel without refreshing — the compute service handles concurrent attribute creation on the same target object. See the [multiple kriging notebook](https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-compute/docs/examples/kriging_multiple.ipynb) for an example.
+## FAQ
+### Can I run multiple tasks in parallel that update the same attribute?
+Block models support a fully parallelised workflow. If each task writes to a **different** attribute name, they can all run in parallel without refreshing. If the attribute was not created yet, run a task to create it and then run parallel tasks to update it with compute results. See the [multiple kriging notebook](https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-compute/docs/examples/kriging_multiple.ipynb) for an example.
+Storing computation results on Pointsets and 3D grids is supported but the tasks can't run in parallel.
 
-!!! note "Preview APIs"
-    Kriging and other compute tasks are currently preview features. You must pass `preview=True` when calling `run()`.
-    Preview APIs may change between releases. For more details, see:
+### Preview APIs
+Kriging and other compute tasks are currently preview features. You must pass `preview=True` when calling `run()`.
+Preview APIs may change between releases. For more details, see:
 
-    - [Preview APIs](https://developer.seequent.com/docs/api/fundamentals/preview-apis) — how to opt in and what to expect
-    - [API Lifecycle](https://developer.seequent.com/docs/api/fundamentals/lifecycle) — how Evo APIs evolve from preview to stable
+- [Preview APIs](https://developer.seequent.com/docs/api/fundamentals/preview-apis) — how to opt in and what to expect
+- [API Lifecycle](https://developer.seequent.com/docs/api/fundamentals/lifecycle) — how Evo APIs evolve from preview to stable
 
