@@ -4,7 +4,7 @@
 
 The `evo-compute` package provides a client for running compute tasks on Evo. Tasks are submitted to the Compute Tasks API and polled for results.
 
-See the [Typed Objects](TypedObjects.md) page for the full typed API reference.
+See the [Typed Objects](typed-objects/) page for the full typed API reference.
 
 ## Running Compute Tasks
 

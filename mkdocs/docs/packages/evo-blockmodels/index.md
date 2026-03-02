@@ -16,10 +16,6 @@ The full functionality of `evo-blockmodels` — creating, retrieving, updating a
     report = await bm.create_report(spec)
     ```
 
-    See the [evo-objects Introduction](../evo-objects/index.md#blockmodel-via-evo-blockmodels) for the full API.
-
-See the [Typed Objects](TypedObjects.md) page for the full typed API reference.
-
 ## Typed Block Models
 
 The typed module provides intuitive classes for creating, retrieving, and updating regular block models with pandas DataFrame support.

@@ -28,9 +28,8 @@ class DocEntry(NamedTuple):
 def _parse_entries(lines: list[str]) -> dict[str, list[DocEntry]]:
     """Parse dotted module paths into :class:`DocEntry` instances grouped by package name.
 
-    Works for both ``api_clients.txt`` and ``typed_objects.txt``.  Each line has the form
-    ``packages.<package>.src.<module...>.<ClassName>`` and is resolved to a namespace
-    (Python import path) and a GitHub source URL.
+    Each line has the form ``packages.<package>.src.<module...>.<ClassName>`` and is
+    resolved to a namespace (Python import path) and a GitHub source URL.
     """
     entries_by_package: dict[str, list[DocEntry]] = defaultdict(list)
     for module_path in lines:
@@ -48,17 +47,23 @@ def _parse_entries(lines: list[str]) -> dict[str, list[DocEntry]]:
     return entries_by_package
 
 
+def _generate_doc(doc_path: Path, entry: DocEntry, mkdocs_dir: Path) -> None:
+    """Write a single auto-generated doc file (GitHub source link + mkdocstrings directive)."""
+    doc_path.parent.mkdir(parents=True, exist_ok=True)
+    doc_path.write_text(f"[GitHub source]({entry.github_url})\n::: {entry.namespace}\n")
+    log.info(f"Generated doc: {doc_path.relative_to(mkdocs_dir)}")
+
+
 def on_startup(command: str, dirty: bool) -> None:
     mkdocs_dir = Path(__file__).parent
     docs_packages_dir = mkdocs_dir / "docs" / "packages"
 
-    # --- Load API clients ---
+    # --- Load entries from config files ---
     api_clients_file = mkdocs_dir / "api_clients.txt"
     api_clients = [line.strip() for line in api_clients_file.read_text().splitlines() if line.strip()]
     log.info(f"Loaded {len(api_clients)} API clients from {api_clients_file.relative_to(mkdocs_dir)}")
     api_entries = _parse_entries(api_clients)
 
-    # --- Load typed objects ---
     typed_objects_file = mkdocs_dir / "typed_objects.txt"
     typed_objects: list[str] = []
     if typed_objects_file.exists():
@@ -71,12 +76,13 @@ def on_startup(command: str, dirty: bool) -> None:
 
     for package, entries in api_entries.items():
         for entry in entries:
-            doc_path = docs_packages_dir / f"{package}/{entry.class_name}.md"
-            auto_generated_paths.add(doc_path.resolve())
+            auto_generated_paths.add((docs_packages_dir / package / f"{entry.class_name}.md").resolve())
 
-    for package in typed_entries:
-        doc_path = docs_packages_dir / f"{package}/TypedObjects.md"
-        auto_generated_paths.add(doc_path.resolve())
+    for package, entries in typed_entries.items():
+        for entry in entries:
+            auto_generated_paths.add(
+                (docs_packages_dir / package / "typed-objects" / f"{entry.class_name}.md").resolve()
+            )
 
     # --- Clean up only auto-generated files ---
     for old_md in docs_packages_dir.rglob("*.md"):
@@ -88,23 +94,13 @@ def on_startup(command: str, dirty: bool) -> None:
         else:
             log.info(f"Preserved manual doc: {old_md.relative_to(mkdocs_dir)}")
 
-    # --- Generate API client docs ---
+    # --- Generate docs ---
     for package, entries in api_entries.items():
         for entry in entries:
-            doc_path = docs_packages_dir / f"{package}/{entry.class_name}.md"
-            doc_path.parent.mkdir(parents=True, exist_ok=True)
-            doc_path.write_text(f"[GitHub source]({entry.github_url})\n::: {entry.namespace}\n")
-            log.info(f"Generated API doc: {doc_path.relative_to(mkdocs_dir)}")
+            _generate_doc(docs_packages_dir / package / f"{entry.class_name}.md", entry, mkdocs_dir)
 
-    # --- Generate typed object docs ---
     for package, entries in typed_entries.items():
-        doc_path = docs_packages_dir / f"{package}/TypedObjects.md"
-        doc_path.parent.mkdir(parents=True, exist_ok=True)
-
-        lines = ["# Typed Objects\n"]
         for entry in entries:
-            lines.append(f"[GitHub source]({entry.github_url})\n")
-            lines.append(f"::: {entry.namespace}\n")
-
-        doc_path.write_text("\n".join(lines))
-        log.info(f"Generated typed objects doc: {doc_path.relative_to(mkdocs_dir)}")
+            _generate_doc(
+                docs_packages_dir / package / "typed-objects" / f"{entry.class_name}.md", entry, mkdocs_dir
+            )

@@ -13,8 +13,6 @@ The typed objects module provides intuitive Python classes for working with Evo 
 - Rich HTML display in Jupyter notebooks (via `%load_ext evo.widgets`)
 - Clickable links to Evo Portal and Viewer
 
-See the [Typed Objects](TypedObjects.md) page for the full API reference.
-
 ### Loading objects
 
 Three convenience functions let you load any typed object by reference, path, or UUID:
