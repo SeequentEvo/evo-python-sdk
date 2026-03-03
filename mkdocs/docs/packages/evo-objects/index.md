@@ -47,7 +47,7 @@ All typed geoscience objects inherit from [`BaseObject`](typed-objects/base/Base
 | [`Variogram`](evo-objects/typed-objects/variogram) | [`VariogramData`](evo-objects/typed-objects/variogram/VariogramData) | Variogram model for geostatistical analysis |
 | [`BlockModel`](evo-objects/typed-objects/block-model-ref/BlockModel) | — | Proxy to Block Model Service (see below) |
 
-**Supporting types** — see [common types](typed-objects/types/BoundingBox) (`BoundingBox`, `Rotation`, `Point3`, `Size3d`, etc.) and [attributes](typed-objects/attributes/Attributes) (`Attributes`, `Attribute`).
+**Supporting types** — see [common types](evo-objects/typed-objects/types/BoundingBox) (`BoundingBox`, `Rotation`, `Point3`, `Size3d`, etc.) and [attributes](evo-objects/typed-objects/attributes) (`Attributes`, `Attribute`).
 
 ### BlockModel (via evo-blockmodels)
 

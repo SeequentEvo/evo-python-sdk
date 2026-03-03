@@ -145,7 +145,7 @@ obj = await object_from_reference(manager, reference_url)
 </tr>
 </tbody>
 </table>
-<p><strong>Supporting types</strong> — see <a href="typed-objects/types/BoundingBox">common types</a> (<code>BoundingBox</code>, <code>Rotation</code>, <code>Point3</code>, <code>Size3d</code>, etc.) and <a href="typed-objects/attributes/Attributes">attributes</a> (<code>Attributes</code>, <code>Attribute</code>).</p>
+<p><strong>Supporting types</strong> — see <a href="evo-objects/typed-objects/types/BoundingBox">common types</a> (<code>BoundingBox</code>, <code>Rotation</code>, <code>Point3</code>, <code>Size3d</code>, etc.) and <a href="evo-objects/typed-objects/attributes">attributes</a> (<code>Attributes</code>, <code>Attribute</code>).</p>
 <h3 id="blockmodel-via-evo-blockmodels">BlockModel (via evo-blockmodels)</h3>
 <p>The <code>BlockModel</code> type is a geoscience object that acts as a proxy to the Block Model Service. When <code>evo-blockmodels</code> is installed (<code>pip install evo-objects[blockmodels]</code>), the full range of block model operations is available directly on the <code>BlockModel</code> object — no need to use the low-level <code>BlockModelAPIClient</code>.</p>
 <pre><code class="language-python">from evo.objects.typed import BlockModel, RegularBlockModelData, Point3, Size3d, Size3i
