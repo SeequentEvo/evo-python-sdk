@@ -207,29 +207,56 @@ def _unregister_formatters(ipython: InteractiveShell) -> None:
 def load_ipython_extension(ipython: InteractiveShell) -> None:
     """Load the Evo presentation IPython extension.
 
-    This function is called when the user runs `%load_ext evo.presentation`.
+    This function is called when the user runs `%load_ext evo.widgets`.
     It registers HTML formatters for all Evo SDK types, enabling rich display
     of objects like PointSet, Regular3DGrid, TensorGrid, etc.
+
+    It also registers the :class:`~evo.notebooks.FeedbackWidget` as the default
+    feedback factory so that SDK operations automatically display a progress
+    widget in notebooks.
 
     :param ipython: The IPython shell instance.
 
     Example:
         In a Jupyter notebook::
 
-            %load_ext evo.presentation
+            %load_ext evo.widgets
 
             # Now typed objects display with rich HTML formatting
             grid = await object_from_reference(manager, grid_url)
             grid  # Shows formatted HTML with Portal/Viewer links
     """
     _register_formatters(ipython)
+    _register_feedback_factory()
 
 
 def unload_ipython_extension(ipython: InteractiveShell) -> None:
     """Unload the Evo presentation IPython extension.
 
-    This function is called when the user runs `%unload_ext evo.presentation`.
+    This function is called when the user runs `%unload_ext evo.widgets`.
 
     :param ipython: The IPython shell instance.
     """
     _unregister_formatters(ipython)
+    _unregister_feedback_factory()
+
+
+def _register_feedback_factory() -> None:
+    """Register :class:`~evo.notebooks.FeedbackWidget` as the default feedback factory."""
+    try:
+        from evo.common.utils import set_feedback_factory
+        from evo.notebooks import FeedbackWidget
+
+        set_feedback_factory(FeedbackWidget)
+    except ImportError:
+        pass
+
+
+def _unregister_feedback_factory() -> None:
+    """Reset the feedback factory to the default."""
+    try:
+        from evo.common.utils import reset_feedback_factory
+
+        reset_feedback_factory()
+    except ImportError:
+        pass

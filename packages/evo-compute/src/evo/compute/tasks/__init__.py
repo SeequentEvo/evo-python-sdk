@@ -34,7 +34,7 @@ from typing import Any, overload
 
 from evo.common import IContext
 from evo.common.interfaces import IFeedback
-from evo.common.utils import NoFeedback
+from evo.common.utils import create_default_feedback
 
 # Import kriging module to trigger registration
 from . import kriging as _kriging_module  # noqa: F401
@@ -63,22 +63,13 @@ from .kriging import (
 )
 
 
-class _DefaultFeedback:
-    """Marker class to indicate default feedback should be used."""
-
-    pass
-
-
-DEFAULT_FEEDBACK = _DefaultFeedback()
-
-
 @overload
 async def run(
     context: IContext,
     parameters: Any,
     *,
     preview: bool = ...,
-    fb: IFeedback | _DefaultFeedback = ...,
+    fb: IFeedback | None = ...,
 ) -> TaskResult: ...
 
 
@@ -88,7 +79,7 @@ async def run(
     parameters: list[Any],
     *,
     preview: bool = ...,
-    fb: IFeedback | _DefaultFeedback = ...,
+    fb: IFeedback | None = ...,
 ) -> TaskResults: ...
 
 
@@ -97,7 +88,7 @@ async def run(
     parameters: Any | list[Any],
     *,
     preview: bool = False,
-    fb: IFeedback | _DefaultFeedback = DEFAULT_FEEDBACK,
+    fb: IFeedback | None = None,
 ) -> TaskResult | TaskResults:
     """
     Run one or more compute tasks.
@@ -111,8 +102,10 @@ async def run(
         preview: If True, sets the ``API-Preview: opt-in`` header on requests.
             Required for tasks that are still in preview (e.g. kriging).
             Defaults to False.
-        fb: Feedback interface for progress updates. If not provided, uses default
-            feedback showing "Running x/y..."
+        fb: Feedback interface for progress updates. If not provided, a default
+            feedback is created via the registered feedback factory (see
+            :func:`~evo.common.utils.set_feedback_factory`). Pass
+            :data:`~evo.common.utils.NoFeedback` to explicitly suppress feedback.
 
     Returns:
         TaskResult for a single task, or TaskResults for multiple tasks
@@ -147,16 +140,8 @@ async def run(
     if len(param_list) == 0:
         return TaskResults([])
 
-    # Create default feedback widget
-    if isinstance(fb, _DefaultFeedback):
-        try:
-            from evo.notebooks import FeedbackWidget
-
-            actual_fb: IFeedback = FeedbackWidget(label="Tasks")
-        except ImportError:
-            actual_fb = NoFeedback
-    else:
-        actual_fb = fb
+    # Create default feedback if none provided
+    actual_fb = fb if fb is not None else create_default_feedback("Tasks")
 
     # Delegate to the common run_tasks implementation
     results = await run_tasks(context, param_list, fb=actual_fb, preview=preview)
