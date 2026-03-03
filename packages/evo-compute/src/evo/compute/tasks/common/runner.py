@@ -37,12 +37,18 @@ from typing import Any, Awaitable, Callable, TypeVar
 
 from evo.common import IContext
 from evo.common.interfaces import IFeedback
-from evo.common.utils import NoFeedback, split_feedback
+from evo.common.utils import NoFeedback, Retry, split_feedback
+from pydantic import BaseModel
+
+from evo.compute.client import JobClient
+
+from .results import TaskResult, TaskTarget
 
 __all__ = [
     "TaskRegistry",
     "get_task_runner",
     "register_task_runner",
+    "run_single_task",
     "run_tasks",
 ]
 
@@ -152,6 +158,68 @@ def get_task_runner(param_type: type) -> RunnerFunc | None:
         The registered runner function, or None if not found
     """
     return _registry.get_runner(param_type)
+
+
+async def run_single_task(
+    context: IContext,
+    parameters: BaseModel,
+    *,
+    topic: str,
+    task: str,
+    result_type: type[TaskResult],
+    preview: bool = False,
+    polling_interval_seconds: float = 0.5,
+    retry: Retry | None = None,
+    fb: IFeedback = NoFeedback,
+) -> TaskResult:
+    """Generic submit-and-wait runner for any compute task.
+
+    Serialises the parameters via ``model_dump()``, submits the job to the
+    compute service, waits for completion, and parses the result into a
+    Pydantic-backed :class:`TaskResult` subclass.
+
+    Args:
+        context: The context providing connector and org_id.
+        parameters: A Pydantic ``BaseModel`` with the task parameters.
+        topic: The compute topic (e.g. ``"geostatistics"``).
+        task: The task name within the topic (e.g. ``"kriging"``).
+        result_type: The :class:`TaskResult` subclass to instantiate.
+        preview: Whether to set the ``API-Preview: opt-in`` header.
+        polling_interval_seconds: Seconds between status polls.
+        retry: Optional retry policy for the polling loop.
+        fb: Feedback interface for progress updates.
+
+    Returns:
+        A *result_type* instance populated from the API response.
+    """
+    connector = context.get_connector()
+    org_id = context.get_org_id()
+
+    params_dict = parameters.model_dump()
+
+    # Submit the job
+    job = await JobClient.submit(
+        connector=connector,
+        org_id=org_id,
+        topic=topic,
+        task=task,
+        parameters=params_dict,
+        result_type=dict,  # Get raw dict, we'll parse it ourselves
+        preview=preview,
+    )
+
+    # Wait for results
+    raw_result = await job.wait_for_results(
+        polling_interval_seconds=polling_interval_seconds,
+        retry=retry,
+        fb=fb,
+    )
+
+    # Parse and return
+    target = TaskTarget.model_validate(raw_result["target"])
+    result = result_type(message=raw_result["message"], target=target)
+    result._context = context
+    return result
 
 
 async def run_tasks(

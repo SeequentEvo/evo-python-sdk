@@ -13,18 +13,17 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Any
 
 from evo.objects.typed.types import Ellipsoid
+from pydantic import BaseModel, model_serializer
 
 __all__ = [
     "SearchNeighborhood",
 ]
 
 
-@dataclass
-class SearchNeighborhood:
+class SearchNeighborhood(BaseModel):
     """Search neighborhood parameters for geostatistical operations.
 
     Defines how to find nearby samples when performing spatial interpolation
@@ -43,6 +42,8 @@ class SearchNeighborhood:
         ... )
     """
 
+    model_config = {"arbitrary_types_allowed": True}
+
     ellipsoid: Ellipsoid
     """The ellipsoid defining the spatial extent to search for samples."""
 
@@ -52,18 +53,8 @@ class SearchNeighborhood:
     min_samples: int | None = None
     """The minimum number of samples required. If fewer are found, the point may be skipped."""
 
-    def __init__(
-        self,
-        ellipsoid: Ellipsoid,
-        max_samples: int,
-        min_samples: int | None = None,
-    ):
-        self.ellipsoid = ellipsoid
-        self.max_samples = max_samples
-        self.min_samples = min_samples
-
-    def to_dict(self) -> dict[str, Any]:
-        """Serialize to dictionary."""
+    @model_serializer
+    def _serialize(self) -> dict[str, Any]:
         result = {
             "ellipsoid": self.ellipsoid.to_dict(),
             "max_samples": self.max_samples,

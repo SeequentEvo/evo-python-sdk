@@ -49,6 +49,7 @@ from .common import (
     Source,
     Target,
     UpdateAttribute,
+    run_tasks,
 )
 
 # Result types from common (generic base classes)
@@ -138,7 +139,6 @@ async def run(
         ... ], preview=True)
         >>> results[0]  # Access first result
     """
-    from .common.runner import run_tasks
 
     # Convert single parameter to list for uniform handling
     is_single = not isinstance(parameters, list)

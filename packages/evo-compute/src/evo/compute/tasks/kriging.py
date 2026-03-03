@@ -33,15 +33,15 @@ Example:
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Any
+from typing import Any, Literal
 
-from evo.common import IContext
-from evo.common.interfaces import IFeedback
-from evo.common.utils import NoFeedback, Retry
-from evo.objects.typed.attributes import Attribute
-
-from ..client import JobClient
+from evo.objects.typed.attributes import (
+    Attribute,
+    BlockModelAttribute,
+    BlockModelPendingAttribute,
+    PendingAttribute,
+)
+from pydantic import BaseModel, field_validator, model_serializer
 
 # Import shared components
 from .common import (
@@ -50,13 +50,11 @@ from .common import (
     Source,
     Target,
     get_attribute_expression,
-    is_typed_attribute,
-    serialize_object_reference,
     source_from_attribute,
     target_from_attribute,
 )
-from .common.results import TaskAttribute, TaskResult, TaskResults, TaskTarget, parse_task_target
-from .common.runner import register_task_runner
+from .common.results import TaskAttribute, TaskResult, TaskResults, TaskTarget
+from .common.runner import register_task_runner, run_single_task
 
 __all__ = [
     # Kriging-specific (users import from evo.compute.tasks.kriging)
@@ -83,8 +81,7 @@ _KrigingTarget = TaskTarget
 # =============================================================================
 
 
-@dataclass
-class SimpleKriging:
+class SimpleKriging(BaseModel):
     """Simple kriging method with a known constant mean.
 
     Use when the mean of the variable is known and constant across the domain.
@@ -93,33 +90,22 @@ class SimpleKriging:
         >>> method = SimpleKriging(mean=100.0)
     """
 
+    type: Literal["simple"] = "simple"
+    """The method type discriminator."""
+
     mean: float
     """The mean value, assumed to be constant across the domain."""
 
-    def __init__(self, mean: float):
-        self.mean = mean
 
-    def to_dict(self) -> dict[str, Any]:
-        """Serialize to dictionary."""
-        return {
-            "type": "simple",
-            "mean": self.mean,
-        }
-
-
-@dataclass
-class OrdinaryKriging:
+class OrdinaryKriging(BaseModel):
     """Ordinary kriging method with unknown local mean.
 
     The most common kriging method. Estimates the local mean from nearby samples.
     This is the default kriging method if none is specified.
     """
 
-    def to_dict(self) -> dict[str, Any]:
-        """Serialize to dictionary."""
-        return {
-            "type": "ordinary",
-        }
+    type: Literal["ordinary"] = "ordinary"
+    """The method type discriminator."""
 
 
 class KrigingMethod:
@@ -148,7 +134,7 @@ class KrigingMethod:
         Returns:
             SimpleKriging instance configured with the given mean.
         """
-        return SimpleKriging(mean)
+        return SimpleKriging(mean=mean)
 
 
 # =============================================================================
@@ -156,8 +142,7 @@ class KrigingMethod:
 # =============================================================================
 
 
-@dataclass
-class BlockDiscretisation:
+class BlockDiscretisation(BaseModel):
     """Sub-block discretisation for block kriging.
 
     When provided, each target block is subdivided into ``nx * ny * nz``
@@ -173,32 +158,23 @@ class BlockDiscretisation:
         >>> discretisation = BlockDiscretisation(nx=3, ny=3, nz=2)
     """
 
-    nx: int
+    nx: int = 1
     """Number of subdivisions in the x direction (1–9)."""
 
-    ny: int
+    ny: int = 1
     """Number of subdivisions in the y direction (1–9)."""
 
-    nz: int
+    nz: int = 1
     """Number of subdivisions in the z direction (1–9)."""
 
-    def __init__(self, nx: int = 1, ny: int = 1, nz: int = 1):
-        for name, value in [("nx", nx), ("ny", ny), ("nz", nz)]:
-            if not isinstance(value, int):
-                raise TypeError(f"{name} must be an integer, got {type(value).__name__}")
-            if value < 1 or value > 9:
-                raise ValueError(f"{name} must be between 1 and 9, got {value}")
-        self.nx = nx
-        self.ny = ny
-        self.nz = nz
-
-    def to_dict(self) -> dict[str, Any]:
-        """Serialize to dictionary."""
-        return {
-            "nx": self.nx,
-            "ny": self.ny,
-            "nz": self.nz,
-        }
+    @field_validator("nx", "ny", "nz")
+    @classmethod
+    def _validate_range(cls, v: int, info) -> int:
+        if not isinstance(v, int):
+            raise TypeError(f"{info.field_name} must be an integer, got {type(v).__name__}")
+        if v < 1 or v > 9:
+            raise ValueError(f"{info.field_name} must be between 1 and 9, got {v}")
+        return v
 
 
 # =============================================================================
@@ -206,8 +182,7 @@ class BlockDiscretisation:
 # =============================================================================
 
 
-@dataclass
-class RegionFilter:
+class RegionFilter(BaseModel):
     """Region filter for restricting kriging to specific categories on the target.
 
     Use either `names` OR `values`, not both:
@@ -228,7 +203,9 @@ class RegionFilter:
         ... )
     """
 
-    attribute: Any
+    model_config = {"arbitrary_types_allowed": True}
+
+    attribute: str | Attribute | BlockModelAttribute
     """The category attribute to filter on (from target object)."""
 
     names: list[str] | None = None
@@ -237,24 +214,16 @@ class RegionFilter:
     values: list[int] | None = None
     """Integer category keys to include (mutually exclusive with names)."""
 
-    def __init__(
-        self,
-        attribute: Any,
-        names: list[str] | None = None,
-        values: list[int] | None = None,
-    ):
-        if names is not None and values is not None:
+    def model_post_init(self, __context: Any) -> None:
+        if self.names is not None and self.values is not None:
             raise ValueError("Only one of 'names' or 'values' may be provided, not both.")
-        if names is None and values is None:
+        if self.names is None and self.values is None:
             raise ValueError("One of 'names' or 'values' must be provided.")
 
-        self.attribute = attribute
-        self.names = names
-        self.values = values
-
-    def to_dict(self) -> dict[str, Any]:
+    @model_serializer
+    def _serialize(self) -> dict[str, Any]:
         """Serialize to dictionary for the compute task API."""
-        if is_typed_attribute(self.attribute):
+        if isinstance(self.attribute, (Attribute, BlockModelAttribute)):
             attribute_expr = get_attribute_expression(self.attribute)
         elif isinstance(self.attribute, str):
             attribute_expr = self.attribute
@@ -276,8 +245,7 @@ class RegionFilter:
 # =============================================================================
 
 
-@dataclass
-class KrigingParameters:
+class KrigingParameters(BaseModel):
     """Parameters for the kriging task.
 
     Defines all inputs needed to run a kriging interpolation task.
@@ -322,7 +290,7 @@ class KrigingParameters:
     search: SearchNeighborhood
     """Search neighborhood parameters."""
 
-    method: SimpleKriging | OrdinaryKriging | None = None
+    method: SimpleKriging | OrdinaryKriging = OrdinaryKriging()
     """The kriging method to use. Defaults to ordinary kriging if not specified."""
 
     target_region_filter: RegionFilter | None = None
@@ -337,51 +305,38 @@ class KrigingParameters:
     or block model.
     """
 
-    def __init__(
-        self,
-        source: Source | Any,  # Also accepts Attribute from evo.objects.typed
-        target: Target | Any,  # Also accepts Attribute/PendingAttribute from evo.objects.typed
-        variogram: GeoscienceObjectReference,
-        search: SearchNeighborhood,
-        method: SimpleKriging | OrdinaryKriging | None = None,
-        target_region_filter: RegionFilter | None = None,
-        block_discretisation: BlockDiscretisation | None = None,
-    ):
-        # Handle Attribute types from evo.objects.typed.attributes
-        if isinstance(source, Attribute):
-            source = source_from_attribute(source)
+    @field_validator("source", mode="before")
+    @classmethod
+    def _convert_source(cls, v: Any) -> Source:
+        if isinstance(v, (Attribute, BlockModelAttribute)):
+            return source_from_attribute(v)
+        return v
 
-        # Handle target attribute types (Attribute, PendingAttribute, BlockModelAttribute, BlockModelPendingAttribute)
-        if is_typed_attribute(target):
-            target = target_from_attribute(target)
+    @field_validator("target", mode="before")
+    @classmethod
+    def _convert_target(cls, v: Any) -> Target:
+        if isinstance(v, (Attribute, PendingAttribute, BlockModelAttribute, BlockModelPendingAttribute)):
+            return target_from_attribute(v)
+        return v
 
-        self.source = source
-        self.target = target
-        self.variogram = variogram
-        self.search = search
-        self.method = method or OrdinaryKriging()
-        self.target_region_filter = target_region_filter
-        self.block_discretisation = block_discretisation
+    @model_serializer
+    def _serialize(self) -> dict[str, Any]:
+        target_dict = self.target.model_dump()
 
-    def to_dict(self) -> dict[str, Any]:
-        """Serialize to dictionary."""
-        target_dict = self.target.to_dict()
-
-        # Add region filter to target if provided
+        # Embed region filter inside the target dict for the API
         if self.target_region_filter is not None:
-            target_dict["region_filter"] = self.target_region_filter.to_dict()
+            target_dict["region_filter"] = self.target_region_filter.model_dump()
 
-        result = {
-            "source": self.source.to_dict(),
+        result: dict[str, Any] = {
+            "source": self.source.model_dump(),
             "target": target_dict,
-            "variogram": serialize_object_reference(self.variogram),
-            "neighborhood": self.search.to_dict(),
-            "kriging_method": self.method.to_dict(),
+            "variogram": str(self.variogram),
+            "neighborhood": self.search.model_dump(),
+            "kriging_method": self.method.model_dump(),
         }
 
-        # Add block discretisation if provided (omit for point kriging)
         if self.block_discretisation is not None:
-            result["block_discretisation"] = self.block_discretisation.to_dict()
+            result["block_discretisation"] = self.block_discretisation.model_dump()
 
         return result
 
@@ -427,63 +382,25 @@ class KrigingResult(TaskResult):
 # =============================================================================
 
 
-def _parse_kriging_result(data: dict[str, Any]) -> KrigingResult:
-    """Parse the kriging result from the API response."""
-    target = parse_task_target(data)
-    return KrigingResult(message=data["message"], target=target)
-
-
-async def _run_single_kriging(
-    context: IContext,
+async def _run_kriging_for_registry(
+    context,
     parameters: KrigingParameters,
     *,
     preview: bool = False,
-    polling_interval_seconds: float = 0.5,
-    retry: Retry | None = None,
-    fb: IFeedback = NoFeedback,
 ) -> KrigingResult:
-    """Internal function to run a single kriging task."""
-    connector = context.get_connector()
-    org_id = context.get_org_id()
+    """Runner function registered with the TaskRegistry.
 
-    params_dict = parameters.to_dict()
-
-    # Submit the job
-    job = await JobClient.submit(
-        connector=connector,
-        org_id=org_id,
+    Delegates to the generic :func:`run_single_task` with kriging-specific
+    topic, task name, and result type.
+    """
+    return await run_single_task(
+        context,
+        parameters,
         topic="geostatistics",
         task="kriging",
-        parameters=params_dict,
-        result_type=dict,  # Get raw dict, we'll parse it ourselves
+        result_type=KrigingResult,
         preview=preview,
     )
-
-    # Wait for results
-    raw_result = await job.wait_for_results(
-        polling_interval_seconds=polling_interval_seconds,
-        retry=retry,
-        fb=fb,
-    )
-
-    # Parse and return
-    result = _parse_kriging_result(raw_result)
-    result._context = context
-    return result
-
-
-async def _run_kriging_for_registry(
-    context: IContext,
-    parameters: KrigingParameters,
-    *,
-    preview: bool = False,
-) -> KrigingResult:
-    """Simplified runner function for task registry (no extra options).
-
-    This is the function registered with the TaskRegistry. For more control
-    over polling and retry behavior, use the full `run()` function.
-    """
-    return await _run_single_kriging(context, parameters, preview=preview)
 
 
 # Register kriging task runner with the task registry

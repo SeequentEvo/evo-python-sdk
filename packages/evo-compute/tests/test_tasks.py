@@ -15,8 +15,9 @@ import inspect
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from evo.compute.tasks.common.runner import get_task_runner, run_tasks
-from evo.compute.tasks.kriging import KrigingParameters, _run_single_kriging
+from evo.compute.tasks.common.results import TaskAttribute, TaskTarget
+from evo.compute.tasks.common.runner import get_task_runner, run_single_task, run_tasks
+from evo.compute.tasks.kriging import KrigingParameters, KrigingResult, TaskResults, _run_kriging_for_registry
 
 
 class TestTaskRegistry(unittest.TestCase):
@@ -68,9 +69,9 @@ class TestPreviewFlagSignatures(unittest.TestCase):
         self.assertEqual(param.default, False)
         self.assertEqual(param.kind, inspect.Parameter.KEYWORD_ONLY)
 
-    def test_run_single_kriging_accepts_preview_kwarg(self):
-        """_run_single_kriging should accept a 'preview' keyword argument defaulting to False."""
-        sig = inspect.signature(_run_single_kriging)
+    def test_run_kriging_for_registry_accepts_preview_kwarg(self):
+        """_run_kriging_for_registry should accept a 'preview' keyword argument defaulting to False."""
+        sig = inspect.signature(_run_kriging_for_registry)
         self.assertIn("preview", sig.parameters)
         self.assertEqual(sig.parameters["preview"].default, False)
 
@@ -85,6 +86,12 @@ class TestPreviewFlagSignatures(unittest.TestCase):
     def test_run_tasks_accepts_preview_kwarg(self):
         """run_tasks() should accept a 'preview' keyword argument defaulting to False."""
         sig = inspect.signature(run_tasks)
+        self.assertIn("preview", sig.parameters)
+        self.assertEqual(sig.parameters["preview"].default, False)
+
+    def test_run_single_task_accepts_preview_kwarg(self):
+        """run_single_task() should accept a 'preview' keyword argument defaulting to False."""
+        sig = inspect.signature(run_single_task)
         self.assertIn("preview", sig.parameters)
         self.assertEqual(sig.parameters["preview"].default, False)
 
@@ -116,51 +123,51 @@ def _mock_kriging_job():
 
 
 class TestPreviewFlagBehavior(unittest.IsolatedAsyncioTestCase):
-    """Tests for the preview flag runtime behavior on _run_single_kriging."""
+    """Tests for the preview flag runtime behavior on _run_kriging_for_registry."""
 
-    async def test_run_single_kriging_passes_preview_true_to_submit(self):
-        """_run_single_kriging should pass preview=True to JobClient.submit."""
+    async def test_run_kriging_passes_preview_true_to_submit(self):
+        """_run_kriging_for_registry should pass preview=True to JobClient.submit."""
         mock_context, mock_connector = _mock_kriging_context()
         mock_params = MagicMock(spec=KrigingParameters)
-        mock_params.to_dict.return_value = {"source": {}, "target": {}}
+        mock_params.model_dump.return_value = {"source": {}, "target": {}}
 
         with patch(
-            "evo.compute.tasks.kriging.JobClient.submit", new_callable=AsyncMock, return_value=_mock_kriging_job()
+            "evo.compute.tasks.common.runner.JobClient.submit", new_callable=AsyncMock, return_value=_mock_kriging_job()
         ) as mock_submit:
-            await _run_single_kriging(mock_context, mock_params, preview=True)
+            await _run_kriging_for_registry(mock_context, mock_params, preview=True)
 
         # Verify preview=True was passed to JobClient.submit
         mock_submit.assert_called_once()
         _, kwargs = mock_submit.call_args
         self.assertTrue(kwargs.get("preview", False))
 
-    async def test_run_single_kriging_passes_preview_false_to_submit(self):
-        """_run_single_kriging should pass preview=False to JobClient.submit when preview=False."""
+    async def test_run_kriging_passes_preview_false_to_submit(self):
+        """_run_kriging_for_registry should pass preview=False when preview=False."""
         mock_context, mock_connector = _mock_kriging_context()
         mock_params = MagicMock(spec=KrigingParameters)
-        mock_params.to_dict.return_value = {"source": {}, "target": {}}
+        mock_params.model_dump.return_value = {"source": {}, "target": {}}
 
         with patch(
-            "evo.compute.tasks.kriging.JobClient.submit", new_callable=AsyncMock, return_value=_mock_kriging_job()
+            "evo.compute.tasks.common.runner.JobClient.submit", new_callable=AsyncMock, return_value=_mock_kriging_job()
         ) as mock_submit:
-            await _run_single_kriging(mock_context, mock_params, preview=False)
+            await _run_kriging_for_registry(mock_context, mock_params, preview=False)
 
         # Verify preview=False was passed to JobClient.submit
         mock_submit.assert_called_once()
         _, kwargs = mock_submit.call_args
         self.assertFalse(kwargs.get("preview", True))
 
-    async def test_run_single_kriging_default_preview_is_false(self):
-        """_run_single_kriging should default to preview=False when not specified."""
+    async def test_run_kriging_default_preview_is_false(self):
+        """_run_kriging_for_registry should default to preview=False when not specified."""
         mock_context, mock_connector = _mock_kriging_context()
         mock_params = MagicMock(spec=KrigingParameters)
-        mock_params.to_dict.return_value = {"source": {}, "target": {}}
+        mock_params.model_dump.return_value = {"source": {}, "target": {}}
 
         with patch(
-            "evo.compute.tasks.kriging.JobClient.submit", new_callable=AsyncMock, return_value=_mock_kriging_job()
+            "evo.compute.tasks.common.runner.JobClient.submit", new_callable=AsyncMock, return_value=_mock_kriging_job()
         ) as mock_submit:
             # Call without preview kwarg — should default to False
-            await _run_single_kriging(mock_context, mock_params)
+            await _run_kriging_for_registry(mock_context, mock_params)
 
         # Verify preview=False was passed to JobClient.submit
         mock_submit.assert_called_once()
@@ -183,11 +190,12 @@ class TestTaskResultsContainer(unittest.TestCase):
 
     def test_task_results_iteration(self):
         """TaskResults should support iteration."""
-        from evo.compute.tasks.kriging import KrigingResult, TaskResults, _KrigingAttribute, _KrigingTarget
+        from evo.compute.tasks.common.results import TaskAttribute, TaskTarget
+        from evo.compute.tasks.kriging import KrigingResult, TaskResults
 
         # Create mock results
-        attr = _KrigingAttribute(reference="ref1", name="attr1")
-        target = _KrigingTarget(
+        attr = TaskAttribute(reference="ref1", name="attr1")
+        target = TaskTarget(
             reference="ref1",
             name="target1",
             description="desc",
@@ -214,10 +222,9 @@ class TestTaskResultsContainer(unittest.TestCase):
 
     def test_task_results_results_property(self):
         """TaskResults should expose results via .results property."""
-        from evo.compute.tasks.kriging import KrigingResult, TaskResults, _KrigingAttribute, _KrigingTarget
 
-        attr = _KrigingAttribute(reference="ref1", name="attr1")
-        target = _KrigingTarget(
+        attr = TaskAttribute(reference="ref1", name="attr1")
+        target = TaskTarget(
             reference="ref1",
             name="target1",
             description="desc",
@@ -279,19 +286,68 @@ class TestKrigingMethod(unittest.TestCase):
         self.assertIsInstance(method, SimpleKriging)
         self.assertEqual(method.mean, 100.0)
 
-    def test_ordinary_kriging_to_dict(self):
+    def test_ordinary_kriging_model_dump(self):
         """OrdinaryKriging should serialize to dict with type='ordinary'."""
         from evo.compute.tasks.kriging import OrdinaryKriging
 
-        d = OrdinaryKriging().to_dict()
+        d = OrdinaryKriging().model_dump()
         self.assertEqual(d, {"type": "ordinary"})
 
-    def test_simple_kriging_to_dict(self):
+    def test_simple_kriging_model_dump(self):
         """SimpleKriging should serialize to dict with type='simple' and mean."""
         from evo.compute.tasks.kriging import SimpleKriging
 
-        d = SimpleKriging(mean=50.0).to_dict()
+        d = SimpleKriging(mean=50.0).model_dump()
         self.assertEqual(d, {"type": "simple", "mean": 50.0})
+
+
+class TestTaskTargetModelValidate(unittest.TestCase):
+    """Tests for TaskTarget.model_validate (replaces parse_task_target)."""
+
+    def test_model_validate_from_dict(self):
+        """TaskTarget.model_validate should parse a raw API response dict."""
+        from evo.compute.tasks.common.results import TaskTarget
+
+        data = {
+            "reference": "ref",
+            "name": "target_name",
+            "description": "desc",
+            "schema_id": "/objects/block-model/2.1.0/block-model.schema.json",
+            "attribute": {"reference": "attr_ref", "name": "attr_name"},
+        }
+        target = TaskTarget.model_validate(data)
+        self.assertIsInstance(target, TaskTarget)
+        self.assertEqual(target.reference, "ref")
+        self.assertEqual(target.name, "target_name")
+        self.assertEqual(target.attribute.reference, "attr_ref")
+        self.assertEqual(target.attribute.name, "attr_name")
+
+
+class TestConvertObjectReference(unittest.TestCase):
+    """Tests for _convert_object_reference BeforeValidator."""
+
+    def test_valid_string_accepted(self):
+        """A valid ObjectReference URL string should be converted to a validated str."""
+        from evo.compute.tasks.common.source_target import _convert_object_reference
+
+        url = "https://hub.test.evo.bentley.com/geoscience-object/orgs/00000000-0000-0000-0000-000000000001/workspaces/00000000-0000-0000-0000-000000000002/objects/00000000-0000-0000-0000-000000000003"
+        result = _convert_object_reference(url)
+        self.assertIsInstance(result, str)
+        self.assertEqual(result, url)
+
+    def test_raises_for_unsupported_type(self):
+        """_convert_object_reference should raise TypeError for unsupported types."""
+        from evo.compute.tasks.common.source_target import _convert_object_reference
+
+        with self.assertRaises(TypeError):
+            _convert_object_reference(12345)
+
+    def test_raises_for_invalid_url(self):
+        """_convert_object_reference should raise ValueError for invalid URL strings."""
+        from evo.compute.tasks.common.source_target import _convert_object_reference
+
+        with self.assertRaises(ValueError):
+            _convert_object_reference("not_a_url")
 
 
 if __name__ == "__main__":

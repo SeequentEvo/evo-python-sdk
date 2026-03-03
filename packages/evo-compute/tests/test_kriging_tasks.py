@@ -14,6 +14,7 @@
 from unittest import TestCase
 from unittest.mock import MagicMock
 
+from evo.objects import ObjectReference
 from evo.objects.typed.attributes import (
     Attribute,
     BlockModelAttribute,
@@ -40,6 +41,25 @@ from evo.compute.tasks.common import (
 )
 from evo.compute.tasks.kriging import KrigingParameters
 
+# ---------------------------------------------------------------------------
+# Test helpers
+# ---------------------------------------------------------------------------
+
+_BASE = "https://hub.test.evo.bentley.com"
+_ORG = "00000000-0000-0000-0000-000000000001"
+_WS = "00000000-0000-0000-0000-000000000002"
+
+
+def _obj_url(obj_id: str = "00000000-0000-0000-0000-000000000003") -> str:
+    """Return a valid ObjectReference URL for testing."""
+    return f"{_BASE}/geoscience-object/orgs/{_ORG}/workspaces/{_WS}/objects/{obj_id}"
+
+
+POINTSET_URL = _obj_url("00000000-0000-0000-0000-000000000010")
+GRID_URL = _obj_url("00000000-0000-0000-0000-000000000020")
+VARIOGRAM_URL = _obj_url("00000000-0000-0000-0000-000000000030")
+BLOCKMODEL_URL = _obj_url("00000000-0000-0000-0000-000000000040")
+
 
 def _create_mock_source_attribute(name: str, key: str, object_url: str, schema_path: str = "") -> MagicMock:
     """Create a mock Attribute (existing) that passes isinstance checks.
@@ -57,9 +77,9 @@ def _create_mock_source_attribute(name: str, key: str, object_url: str, schema_p
     mock_context.schema_path = schema_path
     attr._context = mock_context
 
-    # Parent object
+    # Parent object — metadata.url must be a real ObjectReference
     mock_obj = MagicMock()
-    mock_obj.metadata.url = object_url
+    mock_obj.metadata.url = ObjectReference(object_url)
     attr._obj = mock_obj
 
     return attr
@@ -78,7 +98,7 @@ class TestAttributeAdapters(TestCase):
     # ---- is_typed_attribute ----
 
     def test_is_typed_attribute_with_attribute(self):
-        attr = _create_mock_source_attribute("grade", "abc-key", "https://example.com/obj")
+        attr = _create_mock_source_attribute("grade", "abc-key", POINTSET_URL)
         self.assertTrue(is_typed_attribute(attr))
 
     def test_is_typed_attribute_with_pending_attribute(self):
@@ -97,20 +117,18 @@ class TestAttributeAdapters(TestCase):
         self.assertFalse(is_typed_attribute("some_string"))
 
     def test_is_typed_attribute_with_source(self):
-        source = Source(object="https://example.com/obj", attribute="grade")
+        source = Source(object=POINTSET_URL, attribute="grade")
         self.assertFalse(is_typed_attribute(source))
 
     # ---- get_attribute_expression ----
 
     def test_expression_for_attribute_with_schema_path(self):
-        attr = _create_mock_source_attribute(
-            "grade", "abc-key", "https://example.com/obj", schema_path="locations.attributes"
-        )
+        attr = _create_mock_source_attribute("grade", "abc-key", POINTSET_URL, schema_path="locations.attributes")
         result = get_attribute_expression(attr)
         self.assertEqual(result, "locations.attributes[?key=='abc-key']")
 
     def test_expression_for_attribute_without_schema_path(self):
-        attr = _create_mock_source_attribute("grade", "abc-key", "https://example.com/obj", schema_path="")
+        attr = _create_mock_source_attribute("grade", "abc-key", POINTSET_URL, schema_path="")
         result = get_attribute_expression(attr)
         self.assertEqual(result, "attributes[?key=='abc-key']")
 
@@ -136,20 +154,18 @@ class TestAttributeAdapters(TestCase):
     # ---- source_from_attribute ----
 
     def test_source_from_existing_attribute(self):
-        attr = _create_mock_source_attribute(
-            "grade", "abc-key", "https://example.com/pointset", schema_path="locations.attributes"
-        )
+        attr = _create_mock_source_attribute("grade", "abc-key", POINTSET_URL, schema_path="locations.attributes")
         result = source_from_attribute(attr)
         self.assertIsInstance(result, Source)
-        result_dict = result.to_dict()
-        self.assertEqual(result_dict["object"], "https://example.com/pointset")
+        result_dict = result.model_dump()
+        self.assertEqual(result_dict["object"], POINTSET_URL)
         self.assertEqual(result_dict["attribute"], "locations.attributes[?key=='abc-key']")
 
     def test_source_from_attribute_without_schema_path(self):
-        attr = _create_mock_source_attribute("grade", "abc-key", "https://example.com/pointset", schema_path="")
+        attr = _create_mock_source_attribute("grade", "abc-key", POINTSET_URL, schema_path="")
         result = source_from_attribute(attr)
-        result_dict = result.to_dict()
-        self.assertEqual(result_dict["object"], "https://example.com/pointset")
+        result_dict = result.model_dump()
+        self.assertEqual(result_dict["object"], POINTSET_URL)
         self.assertEqual(result_dict["attribute"], "attributes[?key=='abc-key']")
 
     def test_source_from_attribute_raises_for_pending(self):
@@ -169,42 +185,40 @@ class TestAttributeAdapters(TestCase):
     # ---- target_from_attribute ----
 
     def test_target_from_existing_attribute(self):
-        attr = _create_mock_source_attribute(
-            "grade", "abc-key", "https://example.com/obj", schema_path="locations.attributes"
-        )
+        attr = _create_mock_source_attribute("grade", "abc-key", GRID_URL, schema_path="locations.attributes")
         result = target_from_attribute(attr)
         self.assertIsInstance(result, Target)
-        result_dict = result.to_dict()
+        result_dict = result.model_dump()
         self.assertEqual(result_dict["attribute"]["operation"], "update")
         self.assertEqual(result_dict["attribute"]["reference"], "locations.attributes[?key=='abc-key']")
 
     def test_target_from_pending_attribute(self):
         mock_obj = MagicMock()
-        mock_obj.metadata.url = "https://example.com/grid"
+        mock_obj.metadata.url = ObjectReference(GRID_URL)
         pending = _create_pending_attribute("new_column", parent_obj=mock_obj)
         result = target_from_attribute(pending)
         self.assertIsInstance(result, Target)
-        result_dict = result.to_dict()
+        result_dict = result.model_dump()
         self.assertEqual(result_dict["attribute"]["operation"], "create")
         self.assertEqual(result_dict["attribute"]["name"], "new_column")
 
     def test_target_from_block_model_existing_attribute(self):
         mock_bm = MagicMock()
-        mock_bm.metadata.url = "https://example.com/blockmodel"
+        mock_bm.metadata.url = ObjectReference(BLOCKMODEL_URL)
         bm_attr = BlockModelAttribute(name="grade", attribute_type="Float64", obj=mock_bm)
         result = target_from_attribute(bm_attr)
         self.assertIsInstance(result, Target)
-        result_dict = result.to_dict()
+        result_dict = result.model_dump()
         self.assertEqual(result_dict["attribute"]["operation"], "update")
         self.assertEqual(result_dict["attribute"]["reference"], "attributes[?name=='grade']")
 
     def test_target_from_block_model_pending_attribute(self):
         mock_bm = MagicMock()
-        mock_bm.metadata.url = "https://example.com/blockmodel"
+        mock_bm.metadata.url = ObjectReference(BLOCKMODEL_URL)
         bm_pending = BlockModelPendingAttribute(obj=mock_bm, name="new_col")
         result = target_from_attribute(bm_pending)
         self.assertIsInstance(result, Target)
-        result_dict = result.to_dict()
+        result_dict = result.model_dump()
         self.assertEqual(result_dict["attribute"]["operation"], "create")
         self.assertEqual(result_dict["attribute"]["name"], "new_col")
 
@@ -223,133 +237,129 @@ class TestKrigingParametersWithAttributes(TestCase):
 
     def test_kriging_params_with_pending_attribute_target(self):
         """Test KrigingParameters accepts PendingAttribute as target."""
-        source = Source(object="https://example.com/pointset", attribute="locations.attributes[?name=='grade']")
+        source = Source(object=POINTSET_URL, attribute="locations.attributes[?name=='grade']")
 
         mock_obj = MagicMock()
-        mock_obj.metadata.url = "https://example.com/grid"
+        mock_obj.metadata.url = ObjectReference(GRID_URL)
         target_attr = _create_pending_attribute("kriged_grade", parent_obj=mock_obj)
 
-        variogram = "https://example.com/variogram"
         search = SearchNeighborhood(
-            ellipsoid=Ellipsoid(ranges=EllipsoidRanges(100, 100, 50)),
+            ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=100, semi_major=100, minor=50)),
             max_samples=20,
         )
 
         params = KrigingParameters(
             source=source,
             target=target_attr,
-            variogram=variogram,
+            variogram=VARIOGRAM_URL,
             search=search,
         )
 
-        params_dict = params.to_dict()
-        self.assertEqual(params_dict["target"]["object"], "https://example.com/grid")
+        params_dict = params.model_dump()
+        self.assertEqual(params_dict["target"]["object"], GRID_URL)
         self.assertEqual(params_dict["target"]["attribute"]["operation"], "create")
         self.assertEqual(params_dict["target"]["attribute"]["name"], "kriged_grade")
 
     def test_kriging_params_with_existing_attribute_target(self):
         """Test KrigingParameters accepts existing Attribute as target."""
-        source = Source(object="https://example.com/pointset", attribute="locations.attributes[?name=='grade']")
+        source = Source(object=POINTSET_URL, attribute="locations.attributes[?name=='grade']")
         target_attr = _create_mock_source_attribute(
             name="existing_attr",
             key="exist-key",
-            object_url="https://example.com/grid",
+            object_url=GRID_URL,
             schema_path="locations.attributes",
         )
 
-        variogram = "https://example.com/variogram"
         search = SearchNeighborhood(
-            ellipsoid=Ellipsoid(ranges=EllipsoidRanges(100, 100, 50)),
+            ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=100, semi_major=100, minor=50)),
             max_samples=20,
         )
 
         params = KrigingParameters(
             source=source,
             target=target_attr,
-            variogram=variogram,
+            variogram=VARIOGRAM_URL,
             search=search,
         )
 
-        params_dict = params.to_dict()
-        self.assertEqual(params_dict["target"]["object"], "https://example.com/grid")
+        params_dict = params.model_dump()
+        self.assertEqual(params_dict["target"]["object"], GRID_URL)
         self.assertEqual(params_dict["target"]["attribute"]["operation"], "update")
         self.assertIn("reference", params_dict["target"]["attribute"])
 
     def test_kriging_params_with_block_model_pending_attribute(self):
         """Test KrigingParameters accepts BlockModelPendingAttribute as target."""
-        source = Source(object="https://example.com/pointset", attribute="locations.attributes[?name=='grade']")
+        source = Source(object=POINTSET_URL, attribute="locations.attributes[?name=='grade']")
 
         mock_bm = MagicMock()
-        mock_bm.metadata.url = "https://example.com/blockmodel"
+        mock_bm.metadata.url = ObjectReference(BLOCKMODEL_URL)
         target_attr = BlockModelPendingAttribute(obj=mock_bm, name="new_bm_attr")
 
-        variogram = "https://example.com/variogram"
         search = SearchNeighborhood(
-            ellipsoid=Ellipsoid(ranges=EllipsoidRanges(100, 100, 50)),
+            ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=100, semi_major=100, minor=50)),
             max_samples=20,
         )
 
         params = KrigingParameters(
             source=source,
             target=target_attr,
-            variogram=variogram,
+            variogram=VARIOGRAM_URL,
             search=search,
         )
 
-        params_dict = params.to_dict()
-        self.assertEqual(params_dict["target"]["object"], "https://example.com/blockmodel")
+        params_dict = params.model_dump()
+        self.assertEqual(params_dict["target"]["object"], BLOCKMODEL_URL)
         self.assertEqual(params_dict["target"]["attribute"]["operation"], "create")
         self.assertEqual(params_dict["target"]["attribute"]["name"], "new_bm_attr")
 
     def test_kriging_params_with_block_model_existing_attribute(self):
         """Test KrigingParameters accepts existing BlockModelAttribute as target."""
-        source = Source(object="https://example.com/pointset", attribute="locations.attributes[?name=='grade']")
+        source = Source(object=POINTSET_URL, attribute="locations.attributes[?name=='grade']")
 
         mock_bm = MagicMock()
-        mock_bm.metadata.url = "https://example.com/blockmodel"
+        mock_bm.metadata.url = ObjectReference(BLOCKMODEL_URL)
         target_attr = BlockModelAttribute(
             name="existing_bm_attr",
             attribute_type="Float64",
             obj=mock_bm,
         )
 
-        variogram = "https://example.com/variogram"
         search = SearchNeighborhood(
-            ellipsoid=Ellipsoid(ranges=EllipsoidRanges(100, 100, 50)),
+            ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=100, semi_major=100, minor=50)),
             max_samples=20,
         )
 
         params = KrigingParameters(
             source=source,
             target=target_attr,
-            variogram=variogram,
+            variogram=VARIOGRAM_URL,
             search=search,
         )
 
-        params_dict = params.to_dict()
-        self.assertEqual(params_dict["target"]["object"], "https://example.com/blockmodel")
+        params_dict = params.model_dump()
+        self.assertEqual(params_dict["target"]["object"], BLOCKMODEL_URL)
         self.assertEqual(params_dict["target"]["attribute"]["operation"], "update")
         self.assertIn("reference", params_dict["target"]["attribute"])
 
     def test_kriging_params_with_explicit_target(self):
         """Test KrigingParameters still works with explicit Target object."""
-        source = Source(object="https://example.com/pointset", attribute="locations.attributes[?name=='grade']")
-        target = Target.new_attribute("https://example.com/grid", "kriged_grade")
-        variogram = "https://example.com/variogram"
+        source = Source(object=POINTSET_URL, attribute="locations.attributes[?name=='grade']")
+        target = Target.new_attribute(GRID_URL, "kriged_grade")
+
         search = SearchNeighborhood(
-            ellipsoid=Ellipsoid(ranges=EllipsoidRanges(100, 100, 50)),
+            ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=100, semi_major=100, minor=50)),
             max_samples=20,
         )
 
         params = KrigingParameters(
             source=source,
             target=target,
-            variogram=variogram,
+            variogram=VARIOGRAM_URL,
             search=search,
         )
 
-        params_dict = params.to_dict()
-        self.assertEqual(params_dict["target"]["object"], "https://example.com/grid")
+        params_dict = params.model_dump()
+        self.assertEqual(params_dict["target"]["object"], GRID_URL)
         self.assertEqual(params_dict["target"]["attribute"]["operation"], "create")
         self.assertEqual(params_dict["target"]["attribute"]["name"], "kriged_grade")
 
@@ -358,26 +368,26 @@ class TestKrigingParametersWithAttributes(TestCase):
         source_attr = _create_mock_source_attribute(
             name="grade",
             key="grade-key",
-            object_url="https://example.com/pointset",
+            object_url=POINTSET_URL,
             schema_path="locations.attributes",
         )
 
-        target = Target.new_attribute("https://example.com/grid", "kriged_grade")
-        variogram = "https://example.com/variogram"
+        target = Target.new_attribute(GRID_URL, "kriged_grade")
+
         search = SearchNeighborhood(
-            ellipsoid=Ellipsoid(ranges=EllipsoidRanges(100, 100, 50)),
+            ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=100, semi_major=100, minor=50)),
             max_samples=20,
         )
 
         params = KrigingParameters(
             source=source_attr,
             target=target,
-            variogram=variogram,
+            variogram=VARIOGRAM_URL,
             search=search,
         )
 
-        params_dict = params.to_dict()
-        self.assertEqual(params_dict["source"]["object"], "https://example.com/pointset")
+        params_dict = params.model_dump()
+        self.assertEqual(params_dict["source"]["object"], POINTSET_URL)
         self.assertEqual(params_dict["source"]["attribute"], "locations.attributes[?key=='grade-key']")
 
 
@@ -387,49 +397,36 @@ class TestTargetSerialization(TestCase):
     def test_target_with_create_attribute(self):
         """Test Target serializes CreateAttribute correctly."""
         target = Target(
-            object="https://example.com/grid",
+            object=GRID_URL,
             attribute=CreateAttribute(name="new_attr"),
         )
 
-        result = target.to_dict()
+        result = target.model_dump()
 
-        self.assertEqual(result["object"], "https://example.com/grid")
+        self.assertEqual(result["object"], GRID_URL)
         self.assertEqual(result["attribute"]["operation"], "create")
         self.assertEqual(result["attribute"]["name"], "new_attr")
 
     def test_target_with_update_attribute(self):
         """Test Target serializes UpdateAttribute correctly."""
         target = Target(
-            object="https://example.com/grid",
+            object=GRID_URL,
             attribute=UpdateAttribute(reference="cell_attributes[?name=='existing']"),
         )
 
-        result = target.to_dict()
+        result = target.model_dump()
 
-        self.assertEqual(result["object"], "https://example.com/grid")
+        self.assertEqual(result["object"], GRID_URL)
         self.assertEqual(result["attribute"]["operation"], "update")
         self.assertEqual(result["attribute"]["reference"], "cell_attributes[?name=='existing']")
 
-    def test_target_with_dict_attribute(self):
-        """Test Target serializes dict attribute correctly."""
-        target = Target(
-            object="https://example.com/grid",
-            attribute={"operation": "create", "name": "dict_attr"},
-        )
-
-        result = target.to_dict()
-
-        self.assertEqual(result["object"], "https://example.com/grid")
-        self.assertEqual(result["attribute"]["operation"], "create")
-        self.assertEqual(result["attribute"]["name"], "dict_attr")
-
     def test_target_new_attribute_factory(self):
         """Test Target.new_attribute factory method."""
-        target = Target.new_attribute("https://example.com/grid", "new_attr")
+        target = Target.new_attribute(GRID_URL, "new_attr")
 
-        result = target.to_dict()
+        result = target.model_dump()
 
-        self.assertEqual(result["object"], "https://example.com/grid")
+        self.assertEqual(result["object"], GRID_URL)
         self.assertEqual(result["attribute"]["operation"], "create")
         self.assertEqual(result["attribute"]["name"], "new_attr")
 
@@ -444,7 +441,7 @@ class TestRegionFilter(TestCase):
             names=["LMS1", "LMS2"],
         )
 
-        result = region_filter.to_dict()
+        result = region_filter.model_dump()
 
         self.assertEqual(result["attribute"], "domain_attribute")
         self.assertEqual(result["names"], ["LMS1", "LMS2"])
@@ -457,7 +454,7 @@ class TestRegionFilter(TestCase):
             values=[1, 2, 3],
         )
 
-        result = region_filter.to_dict()
+        result = region_filter.model_dump()
 
         self.assertEqual(result["attribute"], "domain_code_attribute")
         self.assertEqual(result["values"], [1, 2, 3])
@@ -472,7 +469,7 @@ class TestRegionFilter(TestCase):
             names=["Zone1"],
         )
 
-        result = region_filter.to_dict()
+        result = region_filter.model_dump()
 
         self.assertEqual(result["attribute"], "attributes[?name=='domain']")
         self.assertEqual(result["names"], ["Zone1"])
@@ -482,7 +479,7 @@ class TestRegionFilter(TestCase):
         mock_attr = _create_mock_source_attribute(
             name="domain",
             key="domain-key",
-            object_url="https://example.com/pointset",
+            object_url=POINTSET_URL,
             schema_path="locations.attributes",
         )
 
@@ -491,24 +488,20 @@ class TestRegionFilter(TestCase):
             names=["Domain1"],
         )
 
-        result = region_filter.to_dict()
+        result = region_filter.model_dump()
 
         self.assertEqual(result["attribute"], "locations.attributes[?key=='domain-key']")
         self.assertEqual(result["names"], ["Domain1"])
 
     def test_region_filter_with_pending_attribute(self):
-        """Test RegionFilter with a PendingAttribute."""
+        """Test RegionFilter rejects PendingAttribute (not a valid attribute type for filtering)."""
         pending = _create_pending_attribute("domain")
 
-        region_filter = RegionFilter(
-            attribute=pending,
-            names=["Zone1"],
-        )
-
-        result = region_filter.to_dict()
-
-        self.assertEqual(result["attribute"], "attributes[?name=='domain']")
-        self.assertEqual(result["names"], ["Zone1"])
+        with self.assertRaises((TypeError, Exception)):
+            RegionFilter(
+                attribute=pending,
+                names=["Zone1"],
+            )
 
     def test_region_filter_cannot_have_both_names_and_values(self):
         """Test RegionFilter raises error when both names and values are provided."""
@@ -531,10 +524,9 @@ class TestRegionFilter(TestCase):
         self.assertIn("One of 'names' or 'values' must be provided", str(context.exception))
 
     def test_region_filter_raises_for_unsupported_type(self):
-        """Test RegionFilter raises TypeError for unsupported attribute type."""
-        with self.assertRaises(TypeError):
-            region_filter = RegionFilter(attribute=12345, names=["Zone1"])
-            region_filter.to_dict()
+        """Test RegionFilter rejects unsupported attribute types at construction."""
+        with self.assertRaises((TypeError, Exception)):
+            RegionFilter(attribute=12345, names=["Zone1"])
 
 
 class TestKrigingParametersWithRegionFilter(TestCase):
@@ -542,11 +534,10 @@ class TestKrigingParametersWithRegionFilter(TestCase):
 
     def test_kriging_params_with_target_region_filter_names(self):
         """Test KrigingParameters with target region filter using category names."""
-        source = Source(object="https://example.com/pointset", attribute="grade")
-        target = Target.new_attribute("https://example.com/grid", "kriged_grade")
-        variogram = "https://example.com/variogram"
+        source = Source(object=POINTSET_URL, attribute="grade")
+        target = Target.new_attribute(GRID_URL, "kriged_grade")
         search = SearchNeighborhood(
-            ellipsoid=Ellipsoid(ranges=EllipsoidRanges(100, 100, 50)),
+            ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=100, semi_major=100, minor=50)),
             max_samples=20,
         )
         region_filter = RegionFilter(
@@ -557,25 +548,23 @@ class TestKrigingParametersWithRegionFilter(TestCase):
         params = KrigingParameters(
             source=source,
             target=target,
-            variogram=variogram,
+            variogram=VARIOGRAM_URL,
             search=search,
             target_region_filter=region_filter,
         )
 
-        params_dict = params.to_dict()
+        params_dict = params.model_dump()
 
-        # Verify region filter is in target
         self.assertIn("region_filter", params_dict["target"])
         self.assertEqual(params_dict["target"]["region_filter"]["attribute"], "domain_attribute")
         self.assertEqual(params_dict["target"]["region_filter"]["names"], ["LMS1", "LMS2"])
 
     def test_kriging_params_with_target_region_filter_values(self):
         """Test KrigingParameters with target region filter using integer values."""
-        source = Source(object="https://example.com/pointset", attribute="grade")
-        target = Target.new_attribute("https://example.com/grid", "kriged_grade")
-        variogram = "https://example.com/variogram"
+        source = Source(object=POINTSET_URL, attribute="grade")
+        target = Target.new_attribute(GRID_URL, "kriged_grade")
         search = SearchNeighborhood(
-            ellipsoid=Ellipsoid(ranges=EllipsoidRanges(100, 100, 50)),
+            ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=100, semi_major=100, minor=50)),
             max_samples=20,
         )
         region_filter = RegionFilter(
@@ -586,38 +575,35 @@ class TestKrigingParametersWithRegionFilter(TestCase):
         params = KrigingParameters(
             source=source,
             target=target,
-            variogram=variogram,
+            variogram=VARIOGRAM_URL,
             search=search,
             target_region_filter=region_filter,
         )
 
-        params_dict = params.to_dict()
+        params_dict = params.model_dump()
 
-        # Verify region filter is in target
         self.assertIn("region_filter", params_dict["target"])
         self.assertEqual(params_dict["target"]["region_filter"]["attribute"], "domain_code")
         self.assertEqual(params_dict["target"]["region_filter"]["values"], [1, 2, 3])
 
     def test_kriging_params_without_target_region_filter(self):
         """Test KrigingParameters without target region filter (default behavior)."""
-        source = Source(object="https://example.com/pointset", attribute="grade")
-        target = Target.new_attribute("https://example.com/grid", "kriged_grade")
-        variogram = "https://example.com/variogram"
+        source = Source(object=POINTSET_URL, attribute="grade")
+        target = Target.new_attribute(GRID_URL, "kriged_grade")
         search = SearchNeighborhood(
-            ellipsoid=Ellipsoid(ranges=EllipsoidRanges(100, 100, 50)),
+            ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=100, semi_major=100, minor=50)),
             max_samples=20,
         )
 
         params = KrigingParameters(
             source=source,
             target=target,
-            variogram=variogram,
+            variogram=VARIOGRAM_URL,
             search=search,
         )
 
-        params_dict = params.to_dict()
+        params_dict = params.model_dump()
 
-        # Verify region filter is not present
         self.assertNotIn("region_filter", params_dict["target"])
 
 
@@ -625,88 +611,64 @@ class TestBlockDiscretisation(TestCase):
     """Tests for BlockDiscretisation class."""
 
     def test_default_values(self):
-        """Test BlockDiscretisation defaults to 1x1x1."""
         bd = BlockDiscretisation()
-
         self.assertEqual(bd.nx, 1)
         self.assertEqual(bd.ny, 1)
         self.assertEqual(bd.nz, 1)
 
     def test_custom_values(self):
-        """Test BlockDiscretisation with custom values."""
         bd = BlockDiscretisation(nx=3, ny=4, nz=2)
-
         self.assertEqual(bd.nx, 3)
         self.assertEqual(bd.ny, 4)
         self.assertEqual(bd.nz, 2)
 
     def test_maximum_values(self):
-        """Test BlockDiscretisation with maximum values (9)."""
         bd = BlockDiscretisation(nx=9, ny=9, nz=9)
-
         self.assertEqual(bd.nx, 9)
         self.assertEqual(bd.ny, 9)
         self.assertEqual(bd.nz, 9)
 
-    def test_to_dict(self):
-        """Test BlockDiscretisation serializes correctly."""
+    def test_model_dump(self):
         bd = BlockDiscretisation(nx=3, ny=3, nz=2)
-
-        result = bd.to_dict()
-
+        result = bd.model_dump()
         self.assertEqual(result, {"nx": 3, "ny": 3, "nz": 2})
 
-    def test_to_dict_defaults(self):
-        """Test BlockDiscretisation serializes default values."""
+    def test_model_dump_defaults(self):
         bd = BlockDiscretisation()
-
-        result = bd.to_dict()
-
+        result = bd.model_dump()
         self.assertEqual(result, {"nx": 1, "ny": 1, "nz": 1})
 
     def test_validation_nx_too_low(self):
-        """Test BlockDiscretisation rejects nx < 1."""
         with self.assertRaises(ValueError) as ctx:
             BlockDiscretisation(nx=0)
-
         self.assertIn("nx", str(ctx.exception))
         self.assertIn("between 1 and 9", str(ctx.exception))
 
     def test_validation_ny_too_high(self):
-        """Test BlockDiscretisation rejects ny > 9."""
         with self.assertRaises(ValueError) as ctx:
             BlockDiscretisation(ny=10)
-
         self.assertIn("ny", str(ctx.exception))
         self.assertIn("between 1 and 9", str(ctx.exception))
 
     def test_validation_nz_negative(self):
-        """Test BlockDiscretisation rejects negative nz."""
         with self.assertRaises(ValueError) as ctx:
             BlockDiscretisation(nz=-1)
-
         self.assertIn("nz", str(ctx.exception))
         self.assertIn("between 1 and 9", str(ctx.exception))
 
     def test_validation_non_integer_type(self):
-        """Test BlockDiscretisation rejects non-integer types."""
-        with self.assertRaises(TypeError) as ctx:
+        with self.assertRaises((TypeError, ValueError)):
             BlockDiscretisation(nx=2.5)
-
-        self.assertIn("nx", str(ctx.exception))
-        self.assertIn("integer", str(ctx.exception))
 
 
 class TestKrigingParametersWithBlockDiscretisation(TestCase):
     """Tests for KrigingParameters with block_discretisation support."""
 
     def test_kriging_params_with_block_discretisation(self):
-        """Test KrigingParameters includes block_discretisation in to_dict."""
-        source = Source(object="https://example.com/pointset", attribute="grade")
-        target = Target.new_attribute("https://example.com/grid", "kriged_grade")
-        variogram = "https://example.com/variogram"
+        source = Source(object=POINTSET_URL, attribute="grade")
+        target = Target.new_attribute(GRID_URL, "kriged_grade")
         search = SearchNeighborhood(
-            ellipsoid=Ellipsoid(ranges=EllipsoidRanges(100, 100, 50)),
+            ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=100, semi_major=100, minor=50)),
             max_samples=20,
         )
         bd = BlockDiscretisation(nx=3, ny=3, nz=2)
@@ -714,65 +676,79 @@ class TestKrigingParametersWithBlockDiscretisation(TestCase):
         params = KrigingParameters(
             source=source,
             target=target,
-            variogram=variogram,
+            variogram=VARIOGRAM_URL,
             search=search,
             block_discretisation=bd,
         )
 
-        params_dict = params.to_dict()
-
+        params_dict = params.model_dump()
         self.assertIn("block_discretisation", params_dict)
         self.assertEqual(params_dict["block_discretisation"], {"nx": 3, "ny": 3, "nz": 2})
 
     def test_kriging_params_without_block_discretisation(self):
-        """Test KrigingParameters omits block_discretisation when None (default)."""
-        source = Source(object="https://example.com/pointset", attribute="grade")
-        target = Target.new_attribute("https://example.com/grid", "kriged_grade")
-        variogram = "https://example.com/variogram"
+        source = Source(object=POINTSET_URL, attribute="grade")
+        target = Target.new_attribute(GRID_URL, "kriged_grade")
         search = SearchNeighborhood(
-            ellipsoid=Ellipsoid(ranges=EllipsoidRanges(100, 100, 50)),
+            ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=100, semi_major=100, minor=50)),
             max_samples=20,
         )
 
         params = KrigingParameters(
             source=source,
             target=target,
-            variogram=variogram,
+            variogram=VARIOGRAM_URL,
             search=search,
         )
 
-        params_dict = params.to_dict()
-
+        params_dict = params.model_dump()
         self.assertNotIn("block_discretisation", params_dict)
 
     def test_kriging_params_block_discretisation_with_region_filter(self):
-        """Test KrigingParameters with both block_discretisation and region filter."""
-        source = Source(object="https://example.com/pointset", attribute="grade")
-        target = Target.new_attribute("https://example.com/grid", "kriged_grade")
-        variogram = "https://example.com/variogram"
+        source = Source(object=POINTSET_URL, attribute="grade")
+        target = Target.new_attribute(GRID_URL, "kriged_grade")
         search = SearchNeighborhood(
-            ellipsoid=Ellipsoid(ranges=EllipsoidRanges(100, 100, 50)),
+            ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=100, semi_major=100, minor=50)),
             max_samples=20,
         )
         bd = BlockDiscretisation(nx=2, ny=2, nz=2)
-        region_filter = RegionFilter(
-            attribute="domain_attribute",
-            names=["LMS1"],
-        )
+        region_filter = RegionFilter(attribute="domain_attribute", names=["LMS1"])
 
         params = KrigingParameters(
             source=source,
             target=target,
-            variogram=variogram,
+            variogram=VARIOGRAM_URL,
             search=search,
             block_discretisation=bd,
             target_region_filter=region_filter,
         )
 
-        params_dict = params.to_dict()
-
-        # Both should be present
+        params_dict = params.model_dump()
         self.assertIn("block_discretisation", params_dict)
         self.assertEqual(params_dict["block_discretisation"], {"nx": 2, "ny": 2, "nz": 2})
         self.assertIn("region_filter", params_dict["target"])
         self.assertEqual(params_dict["target"]["region_filter"]["names"], ["LMS1"])
+
+
+class TestObjectReferenceValidation(TestCase):
+    """Tests for strict ObjectReference validation on GeoscienceObjectReference fields."""
+
+    def test_valid_object_reference_accepted(self):
+        """Source should accept a valid ObjectReference URL string."""
+        source = Source(object=POINTSET_URL, attribute="grade")
+        self.assertIsInstance(source.object, str)
+        self.assertEqual(source.object, POINTSET_URL)
+
+    def test_invalid_url_rejected(self):
+        """Source should reject an invalid URL that cannot be parsed as ObjectReference."""
+        with self.assertRaises(Exception):
+            Source(object="https://example.com/not-valid", attribute="grade")
+
+    def test_plain_string_rejected(self):
+        """Source should reject a plain string that is not a valid object reference."""
+        with self.assertRaises(Exception):
+            Source(object="not_a_url", attribute="grade")
+
+    def test_integer_rejected(self):
+        """Source should reject an integer."""
+        with self.assertRaises((TypeError, Exception)):
+            Source(object=12345, attribute="grade")

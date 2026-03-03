@@ -18,13 +18,14 @@ for any task type.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Any
 
 from evo.common import IContext
 from evo.objects.data import ObjectSchema
 from evo.objects.exceptions import SchemaIDFormatError
 from evo.objects.typed import object_from_reference
+from evo.objects.typed.spatial import BaseSpatialObject
+from pydantic import BaseModel
 
 __all__ = [
     "TaskAttribute",
@@ -34,21 +35,19 @@ __all__ = [
 ]
 
 
-@dataclass
-class TaskAttribute:
+class TaskAttribute(BaseModel):
     """Attribute information from a task result."""
 
     reference: str
     name: str
 
 
-@dataclass
-class TaskTarget:
+class TaskTarget(BaseModel):
     """Target information from a task result."""
 
     reference: str
     name: str
-    description: Any
+    description: Any = None
     schema_id: str
     attribute: TaskAttribute
 
@@ -150,20 +149,15 @@ class TaskResult:
         """
         target_obj = await self.get_target_object(context)
 
-        # Try different methods to get the dataframe based on object type
-        if hasattr(target_obj, "to_dataframe"):
-            # BlockModel, PointSet, and similar objects with to_dataframe
-            if columns is not None:
-                return await target_obj.to_dataframe(columns=columns)
-            return await target_obj.to_dataframe()
-        elif hasattr(target_obj, "cells") and hasattr(target_obj.cells, "to_dataframe"):
-            # Grid objects (Regular3DGrid, RegularMasked3DGrid, etc.)
-            return await target_obj.cells.to_dataframe()
-        else:
+        if not isinstance(target_obj, BaseSpatialObject):
             raise TypeError(
                 f"Don't know how to get DataFrame from {type(target_obj).__name__}. "
                 "Use get_target_object() and access the data manually."
             )
+
+        if columns is not None:
+            return await target_obj.to_dataframe(columns=columns)
+        return await target_obj.to_dataframe()
 
     def _get_result_type_name(self) -> str:
         """Get the display name for this result type."""
@@ -219,29 +213,3 @@ class TaskResults:
         for i, result in enumerate(self._results):
             lines.append(f"  [{i}] {result.target_name} → {result.attribute_name}")
         return "\n".join(lines)
-
-
-def parse_task_target(data: dict[str, Any]) -> TaskTarget:
-    """Parse target information from an API response dictionary.
-
-    Args:
-        data: The raw API response dictionary containing ``target`` and
-            ``target.attribute`` sub-dicts.
-
-    Returns:
-        A :class:`TaskTarget` populated from the response.
-    """
-    target_data = data["target"]
-    attr_data = target_data["attribute"]
-
-    attribute = TaskAttribute(
-        reference=attr_data["reference"],
-        name=attr_data["name"],
-    )
-    return TaskTarget(
-        reference=target_data["reference"],
-        name=target_data["name"],
-        description=target_data.get("description"),
-        schema_id=target_data["schema_id"],
-        attribute=attribute,
-    )

@@ -45,6 +45,7 @@ class DocEntry(NamedTuple):
 # Parsing: read dotted paths from a .txt config file
 # ---------------------------------------------------------------------------
 
+
 def _parse_entries(lines: list[str]) -> dict[str, list[DocEntry]]:
     """Parse ``packages.<pkg>.src.<module>.<Name>`` lines into DocEntry dicts keyed by package."""
     entries_by_package: dict[str, list[DocEntry]] = defaultdict(list)
@@ -57,7 +58,7 @@ def _parse_entries(lines: list[str]) -> dict[str, list[DocEntry]]:
         github_url = f"{GITHUB_BASE_URL}/{file_path}"
 
         src_idx = parts.index("src")
-        namespace = ".".join(parts[src_idx + 1:])
+        namespace = ".".join(parts[src_idx + 1 :])
 
         entries_by_package[package].append(DocEntry(class_name, namespace, github_url))
     return entries_by_package
@@ -66,6 +67,7 @@ def _parse_entries(lines: list[str]) -> dict[str, list[DocEntry]]:
 # ---------------------------------------------------------------------------
 # Auto-discovery: walk source files → produce grouped DocEntry dicts
 # ---------------------------------------------------------------------------
+
 
 def _discover_typed_entries(
     repo_root: Path,
@@ -117,15 +119,13 @@ def _entries_from_file(
 
     github_url = f"{GITHUB_BASE_URL}/{src_dir}/{py_file.name}"
 
-    return [
-        DocEntry(name, f"{module_name}.{name}", github_url)
-        for name in all_names
-    ]
+    return [DocEntry(name, f"{module_name}.{name}", github_url) for name in all_names]
 
 
 # ---------------------------------------------------------------------------
 # Generation
 # ---------------------------------------------------------------------------
+
 
 def _generate_doc(doc_path: Path, entry: DocEntry, mkdocs_dir: Path) -> None:
     """Write a single auto-generated doc file (GitHub link + mkdocstrings directive)."""
@@ -137,6 +137,7 @@ def _generate_doc(doc_path: Path, entry: DocEntry, mkdocs_dir: Path) -> None:
 # ---------------------------------------------------------------------------
 # MkDocs hook
 # ---------------------------------------------------------------------------
+
 
 def on_startup(command: str, dirty: bool) -> None:
     mkdocs_dir = Path(__file__).parent
@@ -191,4 +192,3 @@ def on_startup(command: str, dirty: bool) -> None:
                     entry,
                     mkdocs_dir,
                 )
-

@@ -13,8 +13,8 @@
 
 from evo.objects.typed.types import Ellipsoid, EllipsoidRanges, Rotation
 
-from .results import TaskAttribute, TaskResult, TaskResults, TaskTarget, parse_task_target
-from .runner import TaskRegistry, get_task_runner, register_task_runner, run_tasks
+from .results import TaskAttribute, TaskResult, TaskResults, TaskTarget
+from .runner import TaskRegistry, get_task_runner, register_task_runner, run_single_task, run_tasks
 from .search import SearchNeighborhood
 from .source_target import (
     CreateAttribute,
@@ -24,7 +24,6 @@ from .source_target import (
     UpdateAttribute,
     get_attribute_expression,
     is_typed_attribute,
-    serialize_object_reference,
     source_from_attribute,
     target_from_attribute,
 )
@@ -47,10 +46,9 @@ __all__ = [
     "get_attribute_expression",
     "get_task_runner",
     "is_typed_attribute",
-    "parse_task_target",
     "register_task_runner",
+    "run_single_task",
     "run_tasks",
-    "serialize_object_reference",
     "source_from_attribute",
     "target_from_attribute",
 ]
