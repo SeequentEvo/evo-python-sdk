@@ -21,79 +21,81 @@ GITHUB_BASE_URL = "https://github.com/SeequentEvo/evo-python-sdk/blob/main"
 log = logging.getLogger("mkdocs.gen_api_docs")
 
 
-# ---------------------------------------------------------------------------
-# Config: packages whose typed source files are auto-discovered.
-# Every non-_-prefixed .py with an __all__ produces a subfolder group under
-# typed-objects/ named after the file stem (underscores → dashes).
-# ---------------------------------------------------------------------------
-TYPED_MODULES: list[tuple[str, str, str]] = [
-    # (package, source dir relative to repo root, python import prefix)
-    ("evo-objects", "packages/evo-objects/src/evo/objects/typed", "evo.objects.typed"),
-    ("evo-blockmodels", "packages/evo-blockmodels/src/evo/blockmodels/typed", "evo.blockmodels.typed"),
-    ("evo-compute", "packages/evo-compute/src/evo/compute/tasks", "evo.compute.tasks"),
-    ("evo-compute", "packages/evo-compute/src/evo/compute/tasks/common", "evo.compute.tasks.common"),
-]
-
-
 class DocEntry(NamedTuple):
     class_name: str
     namespace: str  # Python import path for mkdocstrings
     github_url: str
 
 
-# ---------------------------------------------------------------------------
-# Parsing: read dotted paths from a .txt config file
-# ---------------------------------------------------------------------------
+def _read_lines(file_path: Path) -> list[str]:
+    """Read non-empty, stripped lines from a text file."""
+    return [line.strip() for line in file_path.read_text().splitlines() if line.strip()]
 
 
-def _parse_entries(lines: list[str]) -> dict[str, list[DocEntry]]:
-    """Parse ``packages.<pkg>.src.<module>.<Name>`` lines into DocEntry dicts keyed by package."""
+def _split_dot_path(dot_path: str) -> tuple[str, str, str]:
+    """Split a ``packages.<pkg>.src.<rest>`` dot-path into (package, file_path, import_path).
+
+    For example ``packages.evo-objects.src.evo.objects.typed`` returns
+    ``("evo-objects", "packages/evo-objects/src/evo/objects/typed", "evo.objects.typed")``.
+    """
+    parts = dot_path.split(".")
+    package = parts[1]
+    file_path = "/".join(parts)
+    src_idx = parts.index("src")
+    import_path = ".".join(parts[src_idx + 1 :])
+    return package, file_path, import_path
+
+
+def _parse_api_client_entries(lines: list[str]) -> dict[str, list[DocEntry]]:
+    """Parse ``packages.<pkg>.src.<module>.<ClassName>`` lines into DocEntry dicts keyed by package."""
     entries_by_package: dict[str, list[DocEntry]] = defaultdict(list)
-    for module_path in lines:
-        parts = module_path.split(".")
-        package = parts[1]
-        class_name = parts[-1]
-
-        file_path = "/".join(parts[:-1]) + ".py"
-        github_url = f"{GITHUB_BASE_URL}/{file_path}"
-
-        src_idx = parts.index("src")
-        namespace = ".".join(parts[src_idx + 1 :])
-
-        entries_by_package[package].append(DocEntry(class_name, namespace, github_url))
+    for dot_path in lines:
+        parts = dot_path.rsplit(".", 1)
+        class_name = parts[1]
+        package, file_path, import_path = _split_dot_path(parts[0])
+        github_url = f"{GITHUB_BASE_URL}/{file_path}.py"
+        entries_by_package[package].append(DocEntry(class_name, f"{import_path}.{class_name}", github_url))
     return entries_by_package
 
 
-# ---------------------------------------------------------------------------
-# Auto-discovery: walk source files → produce grouped DocEntry dicts
-# ---------------------------------------------------------------------------
+def _load_api_client_entries(mkdocs_dir: Path) -> dict[str, list[DocEntry]]:
+    """Read ``api_clients.txt`` and return parsed entries keyed by package."""
+    api_clients_file = mkdocs_dir / "api_clients.txt"
+    lines = _read_lines(api_clients_file)
+    log.info(f"Loaded {len(lines)} API clients from {api_clients_file.name}")
+    return _parse_api_client_entries(lines)
+
+
+def _load_typed_modules(mkdocs_dir: Path) -> list[tuple[str, str, str]]:
+    """Read ``typed_modules.txt`` and return (package, source_dir, import_prefix) tuples."""
+    typed_modules_file = mkdocs_dir / "typed_modules.txt"
+    lines = _read_lines(typed_modules_file)
+    modules = [_split_dot_path(line) for line in lines]
+    log.info(f"Loaded {len(modules)} typed module paths from {typed_modules_file.name}")
+    return modules
 
 
 def _discover_typed_entries(
     repo_root: Path,
+    typed_modules: list[tuple[str, str, str]],
 ) -> dict[str, dict[str, list[DocEntry]]]:
-    """Walk TYPED_MODULES directories and return ``{package: {subfolder: [DocEntry]}}``."""
-
-    # Ensure package src dirs are importable
-    for _, src_dir, _ in TYPED_MODULES:
+    """Walk typed module directories and return ``{package: {subfolder: [DocEntry]}}``."""
+    for _, src_dir, _ in typed_modules:
         src_root = str(repo_root / src_dir.split("/src/")[0] / "src")
         if src_root not in sys.path:
             sys.path.insert(0, src_root)
 
     result: dict[str, dict[str, list[DocEntry]]] = defaultdict(lambda: defaultdict(list))
-
-    for package, src_dir, import_prefix in TYPED_MODULES:
+    for package, src_dir, import_prefix in typed_modules:
         abs_dir = repo_root / src_dir
         if not abs_dir.is_dir():
             log.warning(f"Typed source dir not found: {abs_dir}")
             continue
-
         for py_file in sorted(abs_dir.glob("*.py")):
             entries = _entries_from_file(py_file, src_dir, import_prefix)
             if entries:
                 subfolder = py_file.stem.replace("_", "-")
                 result[package][subfolder].extend(entries)
-
     return result
 
 
@@ -118,13 +120,7 @@ def _entries_from_file(
         return []
 
     github_url = f"{GITHUB_BASE_URL}/{src_dir}/{py_file.name}"
-
     return [DocEntry(name, f"{module_name}.{name}", github_url) for name in all_names]
-
-
-# ---------------------------------------------------------------------------
-# Generation
-# ---------------------------------------------------------------------------
 
 
 def _generate_doc(doc_path: Path, entry: DocEntry, mkdocs_dir: Path) -> None:
@@ -134,19 +130,7 @@ def _generate_doc(doc_path: Path, entry: DocEntry, mkdocs_dir: Path) -> None:
     log.info(f"Generated doc: {doc_path.relative_to(mkdocs_dir)}")
 
 
-# ---------------------------------------------------------------------------
-# Orchestration helpers
-# ---------------------------------------------------------------------------
-
 _PRESERVED_FILENAMES = frozenset({"evo-python-sdk.md", "index.md"})
-
-
-def _load_api_client_entries(mkdocs_dir: Path) -> dict[str, list[DocEntry]]:
-    """Read ``api_clients.txt`` and return parsed entries keyed by package."""
-    api_clients_file = mkdocs_dir / "api_clients.txt"
-    lines = [line.strip() for line in api_clients_file.read_text().splitlines() if line.strip()]
-    log.info(f"Loaded {len(lines)} API clients from {api_clients_file.relative_to(mkdocs_dir)}")
-    return _parse_entries(lines)
 
 
 def _doc_path_for_entry(
@@ -168,16 +152,13 @@ def _collect_auto_generated_paths(
 ) -> set[Path]:
     """Build the full set of expected auto-generated doc paths."""
     paths: set[Path] = set()
-
     for package, entries in api_entries.items():
         for entry in entries:
             paths.add(_doc_path_for_entry(docs_packages_dir, package, entry).resolve())
-
     for package, groups in discovered.items():
         for subfolder, entries in groups.items():
             for entry in entries:
                 paths.add(_doc_path_for_entry(docs_packages_dir, package, entry, subfolder).resolve())
-
     return paths
 
 
@@ -207,16 +188,10 @@ def _generate_all_docs(
     for package, entries in api_entries.items():
         for entry in entries:
             _generate_doc(_doc_path_for_entry(docs_packages_dir, package, entry), entry, mkdocs_dir)
-
     for package, groups in discovered.items():
         for subfolder, entries in groups.items():
             for entry in entries:
                 _generate_doc(_doc_path_for_entry(docs_packages_dir, package, entry, subfolder), entry, mkdocs_dir)
-
-
-# ---------------------------------------------------------------------------
-# MkDocs hook
-# ---------------------------------------------------------------------------
 
 
 def on_startup(command: str, dirty: bool) -> None:
@@ -226,7 +201,8 @@ def on_startup(command: str, dirty: bool) -> None:
 
     api_entries = _load_api_client_entries(mkdocs_dir)
 
-    discovered = _discover_typed_entries(repo_root)
+    typed_modules = _load_typed_modules(mkdocs_dir)
+    discovered = _discover_typed_entries(repo_root, typed_modules)
     total = sum(len(e) for groups in discovered.values() for e in groups.values())
     log.info(f"Auto-discovered {total} typed objects across {list(discovered.keys())}")
 
