@@ -15,7 +15,15 @@ from unittest import mock
 from parameterized import parameterized
 
 from evo.common.interfaces import IFeedback
-from evo.common.utils import NoFeedback, PartialFeedback, create_default_feedback, iter_with_fb, reset_feedback_factory, set_feedback_factory, split_feedback
+from evo.common.utils import (
+    NoFeedback,
+    PartialFeedback,
+    create_default_feedback,
+    iter_with_fb,
+    reset_feedback_factory,
+    set_feedback_factory,
+    split_feedback,
+)
 
 
 class TestFeedback(unittest.TestCase):
@@ -170,4 +178,3 @@ class TestFeedbackFactory(unittest.TestCase):
         create_default_feedback("Downloading")
 
         self.assertEqual(labels, ["Uploading data", "Tasks", "Downloading"])
-

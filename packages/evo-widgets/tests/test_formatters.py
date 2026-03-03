@@ -967,9 +967,9 @@ class TestFormatTaskResult(unittest.TestCase):
         obj.schema_type = defaults["schema_type"]
         obj.attribute_name = defaults["attribute_name"]
 
-        # Mock _target with reference for portal URL
-        obj._target = MagicMock()
-        obj._target.reference = defaults["target_reference"]
+        # Mock target with reference for portal URL
+        obj.target = MagicMock()
+        obj.target.reference = defaults["target_reference"]
 
         # Mock _get_result_type_name
         obj._get_result_type_name = MagicMock(return_value="Kriging")
@@ -1077,8 +1077,8 @@ class TestFormatTaskResults(unittest.TestCase):
         obj.target_name = defaults["target_name"]
         obj.schema_type = defaults["schema_type"]
         obj.attribute_name = defaults["attribute_name"]
-        obj._target = MagicMock()
-        obj._target.reference = defaults["target_reference"]
+        obj.target = MagicMock()
+        obj.target.reference = defaults["target_reference"]
         obj._get_result_type_name = MagicMock(return_value=defaults["result_type"])
 
         return obj
@@ -1186,8 +1186,8 @@ class TestGetTaskResultPortalUrl(unittest.TestCase):
     def test_extracts_portal_url_from_valid_reference(self):
         """Test extracting portal URL from a valid object reference."""
         result = MagicMock()
-        result._target = MagicMock()
-        result._target.reference = (
+        result.target = MagicMock()
+        result.target.reference = (
             "https://350mt.api.seequent.com/geoscience-object"
             "/orgs/12345678-1234-1234-1234-123456789abc"
             "/workspaces/87654321-4321-4321-4321-abcdef123456"
@@ -1202,8 +1202,8 @@ class TestGetTaskResultPortalUrl(unittest.TestCase):
     def test_returns_none_for_no_reference(self):
         """Test returns None when target has no reference."""
         result = MagicMock()
-        result._target = MagicMock()
-        result._target.reference = None
+        result.target = MagicMock()
+        result.target.reference = None
 
         url = _get_task_result_portal_url(result)
 
@@ -1212,15 +1212,15 @@ class TestGetTaskResultPortalUrl(unittest.TestCase):
     def test_returns_none_for_invalid_reference(self):
         """Test returns None for invalid reference URL."""
         result = MagicMock()
-        result._target = MagicMock()
-        result._target.reference = "not-a-valid-url"
+        result.target = MagicMock()
+        result.target.reference = "not-a-valid-url"
 
         url = _get_task_result_portal_url(result)
 
         self.assertIsNone(url)
 
     def test_returns_none_when_no_target(self):
-        """Test returns None when result has no _target attribute."""
+        """Test returns None when result has no target attribute."""
         result = MagicMock(spec=[])  # Empty spec means no attributes
 
         url = _get_task_result_portal_url(result)
@@ -1230,8 +1230,8 @@ class TestGetTaskResultPortalUrl(unittest.TestCase):
     def test_returns_none_for_non_string_reference(self):
         """Test returns None when reference is not a string."""
         result = MagicMock()
-        result._target = MagicMock()
-        result._target.reference = 12345  # Not a string
+        result.target = MagicMock()
+        result.target.reference = 12345  # Not a string
 
         url = _get_task_result_portal_url(result)
 
@@ -1240,8 +1240,8 @@ class TestGetTaskResultPortalUrl(unittest.TestCase):
     def test_returns_none_for_empty_string_reference(self):
         """Test returns None when reference is an empty string."""
         result = MagicMock()
-        result._target = MagicMock()
-        result._target.reference = ""
+        result.target = MagicMock()
+        result.target.reference = ""
 
         url = _get_task_result_portal_url(result)
 

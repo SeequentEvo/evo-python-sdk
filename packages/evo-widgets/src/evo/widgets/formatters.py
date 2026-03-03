@@ -578,11 +578,11 @@ def format_block_model(obj: Any) -> str:
 def _get_task_result_portal_url(result: Any) -> str | None:
     """Extract Portal URL from a task result's target reference.
 
-    :param result: A TaskResult object with _target.reference attribute.
+    :param result: A TaskResult object with target.reference attribute.
     :return: Portal URL string or None if not available.
     """
-    # Check if result has _target attribute
-    target = getattr(result, "_target", None)
+    # Check if result has target attribute (public Pydantic field)
+    target = getattr(result, "target", None) or getattr(result, "_target", None)
     if target is None:
         return None
 

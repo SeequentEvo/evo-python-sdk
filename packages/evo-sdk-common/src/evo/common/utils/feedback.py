@@ -37,7 +37,12 @@ class _NoFeedback(IFeedback):
 NoFeedback = _NoFeedback()
 """A default feedback object that does nothing. Use this when no feedback is needed."""
 
-_feedback_factory: Callable[[str], IFeedback] = lambda _: NoFeedback
+
+def _no_feedback_factory(_label: str) -> IFeedback:
+    return NoFeedback
+
+
+_feedback_factory: Callable[[str], IFeedback] = _no_feedback_factory
 
 
 def set_feedback_factory(factory: Callable[[str], IFeedback]) -> None:
@@ -55,7 +60,7 @@ def set_feedback_factory(factory: Callable[[str], IFeedback]) -> None:
 def reset_feedback_factory() -> None:
     """Reset the feedback factory to the default (returns :data:`NoFeedback`)."""
     global _feedback_factory
-    _feedback_factory = lambda _: NoFeedback
+    _feedback_factory = _no_feedback_factory
 
 
 def create_default_feedback(label: str) -> IFeedback:

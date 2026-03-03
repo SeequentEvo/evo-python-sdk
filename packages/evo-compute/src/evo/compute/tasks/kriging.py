@@ -54,7 +54,7 @@ from .common import (
     target_from_attribute,
 )
 from .common.results import TaskAttribute, TaskResult, TaskResults, TaskTarget
-from .common.runner import register_task_runner, run_single_task
+from .common.runner import TaskRunner
 
 __all__ = [
     # Kriging-specific (users import from evo.compute.tasks.kriging)
@@ -62,6 +62,7 @@ __all__ = [
     "KrigingMethod",
     "KrigingParameters",
     "KrigingResult",
+    "KrigingRunner",
     "OrdinaryKriging",
     "RegionFilter",
     "SimpleKriging",
@@ -363,46 +364,24 @@ class KrigingResult(TaskResult):
         >>> target = await result.get_target_object()
     """
 
-    def __init__(self, message: str, target: TaskTarget):
-        """Initialize a KrigingResult.
-
-        Args:
-            message: A message describing what happened in the task.
-            target: The target information from the kriging result.
-        """
-        super().__init__(message=message, target=target)
-
     def _get_result_type_name(self) -> str:
         """Get the display name for this result type."""
         return "Kriging"
 
 
 # =============================================================================
-# Run Functions
+# Task Runner
 # =============================================================================
 
 
-async def _run_kriging_for_registry(
-    context,
-    parameters: KrigingParameters,
-    *,
-    preview: bool = False,
-) -> KrigingResult:
-    """Runner function registered with the TaskRegistry.
+class KrigingRunner(
+    TaskRunner[KrigingParameters, KrigingResult],
+    topic="geostatistics",
+    task="kriging",
+):
+    """Runner for kriging compute tasks.
 
-    Delegates to the generic :func:`run_single_task` with kriging-specific
-    topic, task name, and result type.
+    Automatically registered — used by ``run()`` for dispatch, or directly::
+
+        result = await KrigingRunner(context, params, preview=True)
     """
-    return await run_single_task(
-        context,
-        parameters,
-        topic="geostatistics",
-        task="kriging",
-        result_type=KrigingResult,
-        preview=preview,
-    )
-
-
-# Register kriging task runner with the task registry
-
-register_task_runner(KrigingParameters, _run_kriging_for_registry)

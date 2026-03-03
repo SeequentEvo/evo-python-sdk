@@ -11,13 +11,12 @@
 
 """Tests for the compute tasks module imports and basic functionality."""
 
-import inspect
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from evo.compute.tasks.common.results import TaskAttribute, TaskTarget
-from evo.compute.tasks.common.runner import get_task_runner, run_single_task, run_tasks
-from evo.compute.tasks.kriging import KrigingParameters, KrigingResult, TaskResults, _run_kriging_for_registry
+from evo.compute.tasks.common.runner import TaskRegistry, run_tasks
+from evo.compute.tasks.kriging import KrigingParameters, KrigingResult, KrigingRunner, TaskResults
 
 
 class TestTaskRegistry(unittest.TestCase):
@@ -25,26 +24,23 @@ class TestTaskRegistry(unittest.TestCase):
 
     def test_kriging_parameters_registered(self):
         """KrigingParameters should be registered with the task registry."""
-        from evo.compute.tasks.common.runner import get_task_runner
-        from evo.compute.tasks.kriging import KrigingParameters
-
-        runner = get_task_runner(KrigingParameters)
-        self.assertIsNotNone(runner)
+        registry = TaskRegistry()
+        runner_cls = registry.get_runner(KrigingParameters)
+        self.assertIsNotNone(runner_cls)
+        self.assertIs(runner_cls, KrigingRunner)
 
     def test_unregistered_type_returns_none(self):
-        """Unregistered types should return None from get_task_runner."""
-        from evo.compute.tasks.common.runner import get_task_runner
+        """Unregistered types should return None from get_runner."""
+        registry = TaskRegistry()
 
         class UnregisteredParams:
             pass
 
-        runner = get_task_runner(UnregisteredParams)
-        self.assertIsNone(runner)
+        runner_cls = registry.get_runner(UnregisteredParams)
+        self.assertIsNone(runner_cls)
 
     def test_registry_get_runner_for_params_raises_on_unknown(self):
         """get_runner_for_params should raise TypeError for unregistered types."""
-        from evo.compute.tasks.common.runner import TaskRegistry
-
         registry = TaskRegistry()
 
         class UnknownParams:
@@ -56,27 +52,41 @@ class TestTaskRegistry(unittest.TestCase):
         self.assertIn("UnknownParams", str(ctx.exception))
 
 
+class TestTaskRunnerSubclass(unittest.TestCase):
+    """Tests for the TaskRunner __init_subclass__ mechanism."""
+
+    def test_kriging_runner_has_correct_topic_and_task(self):
+        """KrigingRunner should have topic='geostatistics' and task='kriging'."""
+        self.assertEqual(KrigingRunner.topic, "geostatistics")
+        self.assertEqual(KrigingRunner.task, "kriging")
+
+    def test_kriging_runner_has_correct_types(self):
+        """KrigingRunner should have correct params_type and result_type."""
+        self.assertIs(KrigingRunner.params_type, KrigingParameters)
+        self.assertIs(KrigingRunner.result_type, KrigingResult)
+
+    def test_runner_accepts_preview_kwarg(self):
+        """TaskRunner.__init__ should accept a 'preview' keyword argument."""
+        mock_context = MagicMock()
+        mock_params = MagicMock(spec=KrigingParameters)
+        runner = KrigingRunner(mock_context, mock_params, preview=True)
+        self.assertTrue(runner._preview)
+
+    def test_runner_preview_defaults_false(self):
+        """TaskRunner.__init__ preview should default to False."""
+        mock_context = MagicMock()
+        mock_params = MagicMock(spec=KrigingParameters)
+        runner = KrigingRunner(mock_context, mock_params)
+        self.assertFalse(runner._preview)
+
+
 class TestPreviewFlagSignatures(unittest.TestCase):
-    """Tests for the preview flag signatures on run() and runner functions."""
-
-    def test_registered_runner_accepts_preview_kwarg(self):
-        """The registered kriging runner should accept a 'preview' keyword argument."""
-
-        runner = get_task_runner(KrigingParameters)
-        sig = inspect.signature(runner)
-        self.assertIn("preview", sig.parameters)
-        param = sig.parameters["preview"]
-        self.assertEqual(param.default, False)
-        self.assertEqual(param.kind, inspect.Parameter.KEYWORD_ONLY)
-
-    def test_run_kriging_for_registry_accepts_preview_kwarg(self):
-        """_run_kriging_for_registry should accept a 'preview' keyword argument defaulting to False."""
-        sig = inspect.signature(_run_kriging_for_registry)
-        self.assertIn("preview", sig.parameters)
-        self.assertEqual(sig.parameters["preview"].default, False)
+    """Tests for the preview flag signatures on run()."""
 
     def test_run_function_accepts_preview_kwarg(self):
         """The public run() function should accept a 'preview' keyword argument defaulting to False."""
+        import inspect
+
         from evo.compute.tasks import run
 
         sig = inspect.signature(run)
@@ -85,13 +95,9 @@ class TestPreviewFlagSignatures(unittest.TestCase):
 
     def test_run_tasks_accepts_preview_kwarg(self):
         """run_tasks() should accept a 'preview' keyword argument defaulting to False."""
-        sig = inspect.signature(run_tasks)
-        self.assertIn("preview", sig.parameters)
-        self.assertEqual(sig.parameters["preview"].default, False)
+        import inspect
 
-    def test_run_single_task_accepts_preview_kwarg(self):
-        """run_single_task() should accept a 'preview' keyword argument defaulting to False."""
-        sig = inspect.signature(run_single_task)
+        sig = inspect.signature(run_tasks)
         self.assertIn("preview", sig.parameters)
         self.assertEqual(sig.parameters["preview"].default, False)
 
@@ -107,26 +113,26 @@ def _mock_kriging_context():
 
 
 def _mock_kriging_job():
-    """Create a mock job that returns a valid kriging result."""
+    """Create a mock job that returns a valid KrigingResult."""
     mock_job = AsyncMock()
-    mock_job.wait_for_results.return_value = {
-        "message": "ok",
-        "target": {
-            "reference": "ref",
-            "name": "t",
-            "description": None,
-            "schema_id": "s",
-            "attribute": {"reference": "ar", "name": "an"},
-        },
-    }
+    mock_job.wait_for_results.return_value = KrigingResult(
+        message="ok",
+        target=TaskTarget(
+            reference="ref",
+            name="t",
+            description=None,
+            schema_id="s",
+            attribute=TaskAttribute(reference="ar", name="an"),
+        ),
+    )
     return mock_job
 
 
 class TestPreviewFlagBehavior(unittest.IsolatedAsyncioTestCase):
-    """Tests for the preview flag runtime behavior on _run_kriging_for_registry."""
+    """Tests for the preview flag runtime behavior on KrigingRunner."""
 
-    async def test_run_kriging_passes_preview_true_to_submit(self):
-        """_run_kriging_for_registry should pass preview=True to JobClient.submit."""
+    async def test_runner_passes_preview_true_to_submit(self):
+        """KrigingRunner should pass preview=True to JobClient.submit."""
         mock_context, mock_connector = _mock_kriging_context()
         mock_params = MagicMock(spec=KrigingParameters)
         mock_params.model_dump.return_value = {"source": {}, "target": {}}
@@ -134,15 +140,14 @@ class TestPreviewFlagBehavior(unittest.IsolatedAsyncioTestCase):
         with patch(
             "evo.compute.tasks.common.runner.JobClient.submit", new_callable=AsyncMock, return_value=_mock_kriging_job()
         ) as mock_submit:
-            await _run_kriging_for_registry(mock_context, mock_params, preview=True)
+            await KrigingRunner(mock_context, mock_params, preview=True)
 
-        # Verify preview=True was passed to JobClient.submit
         mock_submit.assert_called_once()
         _, kwargs = mock_submit.call_args
         self.assertTrue(kwargs.get("preview", False))
 
-    async def test_run_kriging_passes_preview_false_to_submit(self):
-        """_run_kriging_for_registry should pass preview=False when preview=False."""
+    async def test_runner_passes_preview_false_to_submit(self):
+        """KrigingRunner should pass preview=False when preview=False."""
         mock_context, mock_connector = _mock_kriging_context()
         mock_params = MagicMock(spec=KrigingParameters)
         mock_params.model_dump.return_value = {"source": {}, "target": {}}
@@ -150,15 +155,14 @@ class TestPreviewFlagBehavior(unittest.IsolatedAsyncioTestCase):
         with patch(
             "evo.compute.tasks.common.runner.JobClient.submit", new_callable=AsyncMock, return_value=_mock_kriging_job()
         ) as mock_submit:
-            await _run_kriging_for_registry(mock_context, mock_params, preview=False)
+            await KrigingRunner(mock_context, mock_params, preview=False)
 
-        # Verify preview=False was passed to JobClient.submit
         mock_submit.assert_called_once()
         _, kwargs = mock_submit.call_args
         self.assertFalse(kwargs.get("preview", True))
 
-    async def test_run_kriging_default_preview_is_false(self):
-        """_run_kriging_for_registry should default to preview=False when not specified."""
+    async def test_runner_default_preview_is_false(self):
+        """KrigingRunner should default to preview=False when not specified."""
         mock_context, mock_connector = _mock_kriging_context()
         mock_params = MagicMock(spec=KrigingParameters)
         mock_params.model_dump.return_value = {"source": {}, "target": {}}
@@ -166,13 +170,24 @@ class TestPreviewFlagBehavior(unittest.IsolatedAsyncioTestCase):
         with patch(
             "evo.compute.tasks.common.runner.JobClient.submit", new_callable=AsyncMock, return_value=_mock_kriging_job()
         ) as mock_submit:
-            # Call without preview kwarg — should default to False
-            await _run_kriging_for_registry(mock_context, mock_params)
+            await KrigingRunner(mock_context, mock_params)
 
-        # Verify preview=False was passed to JobClient.submit
         mock_submit.assert_called_once()
         _, kwargs = mock_submit.call_args
         self.assertFalse(kwargs.get("preview", True))
+
+    async def test_runner_injects_context_on_result(self):
+        """KrigingRunner should inject _context on the returned result."""
+        mock_context, mock_connector = _mock_kriging_context()
+        mock_params = MagicMock(spec=KrigingParameters)
+        mock_params.model_dump.return_value = {"source": {}, "target": {}}
+
+        with patch(
+            "evo.compute.tasks.common.runner.JobClient.submit", new_callable=AsyncMock, return_value=_mock_kriging_job()
+        ):
+            result = await KrigingRunner(mock_context, mock_params)
+
+        self.assertIs(result._context, mock_context)
 
 
 class TestKrigingResultInheritance(unittest.TestCase):
@@ -184,24 +199,29 @@ class TestKrigingResultInheritance(unittest.TestCase):
 
         self.assertTrue(issubclass(KrigingResult, TaskResult))
 
+    def test_kriging_result_is_pydantic_model(self):
+        """KrigingResult should be a Pydantic BaseModel."""
+        from pydantic import BaseModel
+
+        self.assertTrue(issubclass(KrigingResult, BaseModel))
+
 
 class TestTaskResultsContainer(unittest.TestCase):
     """Tests for the TaskResults container class."""
 
-    def test_task_results_iteration(self):
-        """TaskResults should support iteration."""
-        from evo.compute.tasks.common.results import TaskAttribute, TaskTarget
-        from evo.compute.tasks.kriging import KrigingResult, TaskResults
-
-        # Create mock results
+    def _make_target(self, name="target1"):
         attr = TaskAttribute(reference="ref1", name="attr1")
-        target = TaskTarget(
+        return TaskTarget(
             reference="ref1",
-            name="target1",
+            name=name,
             description="desc",
             schema_id="/objects/regular-masked-3d-grid/1.0.0/regular-masked-3d-grid.schema.json",
             attribute=attr,
         )
+
+    def test_task_results_iteration(self):
+        """TaskResults should support iteration."""
+        target = self._make_target()
         result1 = KrigingResult(message="msg1", target=target)
         result2 = KrigingResult(message="msg2", target=target)
 
@@ -222,15 +242,7 @@ class TestTaskResultsContainer(unittest.TestCase):
 
     def test_task_results_results_property(self):
         """TaskResults should expose results via .results property."""
-
-        attr = TaskAttribute(reference="ref1", name="attr1")
-        target = TaskTarget(
-            reference="ref1",
-            name="target1",
-            description="desc",
-            schema_id="/objects/regular-masked-3d-grid/1.0.0/regular-masked-3d-grid.schema.json",
-            attribute=attr,
-        )
+        target = self._make_target()
         result = KrigingResult(message="msg", target=target)
 
         results = TaskResults([result])
@@ -321,6 +333,77 @@ class TestTaskTargetModelValidate(unittest.TestCase):
         self.assertEqual(target.name, "target_name")
         self.assertEqual(target.attribute.reference, "attr_ref")
         self.assertEqual(target.attribute.name, "attr_name")
+
+
+class TestTaskResultPydanticModel(unittest.TestCase):
+    """Tests that TaskResult works as a Pydantic BaseModel."""
+
+    def test_model_validate_from_dict(self):
+        """TaskResult should be constructable via model_validate."""
+        from evo.compute.tasks.common.results import TaskResult
+
+        data = {
+            "message": "ok",
+            "target": {
+                "reference": "ref",
+                "name": "target",
+                "schema_id": "s",
+                "attribute": {"reference": "ar", "name": "an"},
+            },
+        }
+        result = TaskResult.model_validate(data)
+        self.assertEqual(result.message, "ok")
+        self.assertEqual(result.target_name, "target")
+        self.assertEqual(result.attribute_name, "an")
+
+    def test_kriging_result_model_validate(self):
+        """KrigingResult should be constructable via model_validate."""
+        data = {
+            "message": "ok",
+            "target": {
+                "reference": "ref",
+                "name": "target",
+                "schema_id": "s",
+                "attribute": {"reference": "ar", "name": "an"},
+            },
+        }
+        result = KrigingResult.model_validate(data)
+        self.assertIsInstance(result, KrigingResult)
+        self.assertEqual(result._get_result_type_name(), "Kriging")
+
+    def test_context_private_attr_defaults_none(self):
+        """TaskResult._context should default to None."""
+        from evo.compute.tasks.common.results import TaskResult
+
+        data = {
+            "message": "ok",
+            "target": {
+                "reference": "ref",
+                "name": "target",
+                "schema_id": "s",
+                "attribute": {"reference": "ar", "name": "an"},
+            },
+        }
+        result = TaskResult.model_validate(data)
+        self.assertIsNone(result._context)
+
+    def test_context_can_be_injected(self):
+        """TaskResult._context should be settable after construction."""
+        from evo.compute.tasks.common.results import TaskResult
+
+        data = {
+            "message": "ok",
+            "target": {
+                "reference": "ref",
+                "name": "target",
+                "schema_id": "s",
+                "attribute": {"reference": "ar", "name": "an"},
+            },
+        }
+        result = TaskResult.model_validate(data)
+        mock_ctx = MagicMock()
+        result._context = mock_ctx
+        self.assertIs(result._context, mock_ctx)
 
 
 class TestConvertObjectReference(unittest.TestCase):

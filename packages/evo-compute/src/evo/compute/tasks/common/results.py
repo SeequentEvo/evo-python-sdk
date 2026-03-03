@@ -25,7 +25,7 @@ from evo.objects.data import ObjectSchema
 from evo.objects.exceptions import SchemaIDFormatError
 from evo.objects.typed import object_from_reference
 from evo.objects.typed.spatial import BaseSpatialObject
-from pydantic import BaseModel
+from pydantic import BaseModel, PrivateAttr
 
 __all__ = [
     "TaskAttribute",
@@ -52,7 +52,7 @@ class TaskTarget(BaseModel):
     attribute: TaskAttribute
 
 
-class TaskResult:
+class TaskResult(BaseModel):
     """Base class for compute task results.
 
     Provides common functionality for all task results including:
@@ -61,34 +61,31 @@ class TaskResult:
     - Access to target object and data
     """
 
+    model_config = {"arbitrary_types_allowed": True}
+
     message: str
     """A message describing what happened in the task."""
 
-    _target: TaskTarget
-    """Internal target information."""
+    target: TaskTarget
+    """Target information from the task result."""
 
-    _context: IContext | None = None
+    _context: IContext | None = PrivateAttr(default=None)
     """The context used to run the task (for convenience methods)."""
-
-    def __init__(self, message: str, target: TaskTarget):
-        self.message = message
-        self._target = target
-        self._context = None
 
     @property
     def target_name(self) -> str:
         """The name of the target object."""
-        return self._target.name
+        return self.target.name
 
     @property
     def target_reference(self) -> str:
         """Reference URL to the target object."""
-        return self._target.reference
+        return self.target.reference
 
     @property
     def attribute_name(self) -> str:
         """The name of the attribute that was created/updated."""
-        return self._target.attribute.name
+        return self.target.attribute.name
 
     @property
     def schema_type(self) -> str:
@@ -97,7 +94,7 @@ class TaskResult:
         Uses ``ObjectSchema.from_id`` to parse the schema ID. Falls back to the
         raw ``schema_id`` string when it cannot be parsed.
         """
-        schema = self._target.schema_id
+        schema = self.target.schema_id
         try:
             parsed = ObjectSchema.from_id(schema)
             return parsed.sub_classification
@@ -125,7 +122,7 @@ class TaskResult:
                 "No context available. Either pass a context to get_target_object() "
                 "or ensure the result was returned from run()."
             )
-        return await object_from_reference(ctx, self._target.reference)
+        return await object_from_reference(ctx, self.target.reference)
 
     async def to_dataframe(self, context: IContext | None = None, columns: list[str] | None = None):
         """Get the task results as a DataFrame.
