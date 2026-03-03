@@ -29,7 +29,11 @@ class TestFeedbackFactoryRegistration(unittest.TestCase):
         mock_widget = MagicMock()
         mock_widget_class = MagicMock(return_value=mock_widget)
 
-        with patch("evo.notebooks.FeedbackWidget", mock_widget_class):
+        # Patch at the import targets inside _register_feedback_factory so that
+        # the test works even when evo-sdk-common[notebooks] is not installed.
+        with (
+            patch.dict("sys.modules", {"evo.notebooks": MagicMock(FeedbackWidget=mock_widget_class)}),
+        ):
             _register_feedback_factory()
 
         result = create_default_feedback("Test Label")
@@ -40,7 +44,9 @@ class TestFeedbackFactoryRegistration(unittest.TestCase):
         """After _unregister_feedback_factory, create_default_feedback should return NoFeedback."""
         mock_widget_class = MagicMock(return_value=MagicMock())
 
-        with patch("evo.notebooks.FeedbackWidget", mock_widget_class):
+        with (
+            patch.dict("sys.modules", {"evo.notebooks": MagicMock(FeedbackWidget=mock_widget_class)}),
+        ):
             _register_feedback_factory()
 
         # Sanity: factory is active
