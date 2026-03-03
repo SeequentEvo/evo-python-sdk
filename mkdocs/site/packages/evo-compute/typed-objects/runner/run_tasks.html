@@ -36,7 +36,7 @@
 
                     <ul class="nav navbar-nav ms-md-auto">
                             <li class="nav-item">
-                                <a rel="prev" href="run_single_task.html" class="nav-link">
+                                <a rel="prev" href="TaskRunner.html" class="nav-link">
                                     <i class="fa fa-arrow-left"></i> Previous
                                 </a>
                             </li>
@@ -84,7 +84,9 @@
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">run_tasks</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="n">IContext</span><span class="p">,</span> <span class="n">parameters</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">fb</span><span class="p">:</span> <span class="n">IFeedback</span> <span class="o">=</span> <span class="n">NoFeedback</span><span class="p">,</span> <span class="n">preview</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">run_tasks</span><span class="p">(</span>
+    <span class="n">context</span><span class="p">:</span> <span class="n">IContext</span><span class="p">,</span> <span class="n">parameters</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">fb</span><span class="p">:</span> <span class="n">IFeedback</span> <span class="o">=</span> <span class="n">NoFeedback</span><span class="p">,</span> <span class="n">preview</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">TaskResult</span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -93,17 +95,16 @@
 <p>This function looks up the appropriate runner for each parameter based on
 its type, allowing different task types to be run together.</p>
 <p>Args:
-    context: The context providing connector and org_id
-    parameters: List of parameter objects (can be mixed types)
-    fb: Feedback interface for progress updates
+    context: The context providing connector and org_id.
+    parameters: List of parameter objects (can be mixed types).
+    fb: Feedback interface for progress updates.
     preview: If True, sets the <code>API-Preview: opt-in</code> header on requests.
         Required for tasks that are still in preview. Defaults to False.</p>
 <p>Returns:
-    List of results in the same order as the input parameters</p>
+    List of results in the same order as the input parameters.</p>
 <p>Raises:
-    TypeError: If any parameter type doesn't have a registered runner</p>
+    TypeError: If any parameter type doesn't have a registered runner.</p>
 <p>Example:
-    &gt;&gt;&gt; # Run mixed task types
     &gt;&gt;&gt; results = await run_tasks(manager, [
     ...     KrigingParameters(...),
     ...     SimulationParameters(...),  # future task type

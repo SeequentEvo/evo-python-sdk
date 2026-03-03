@@ -8,7 +8,7 @@
         
         
         <link rel="shortcut icon" href="../../../../img/favicon.ico">
-        <title>Get task runner - Evo Python SDK</title>
+        <title>TaskRunner - Evo Python SDK</title>
         <link href="../../../../css/bootstrap.min.css" rel="stylesheet">
         <link href="../../../../css/fontawesome.min.css" rel="stylesheet">
         <link href="../../../../css/brands.min.css" rel="stylesheet">
@@ -41,7 +41,7 @@
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a rel="next" href="register_task_runner.html" class="nav-link">
+                                <a rel="next" href="run_tasks.html" class="nav-link">
                                     Next <i class="fa fa-arrow-right"></i>
                                 </a>
                             </li>
@@ -63,7 +63,7 @@
     <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
         <ul class="nav flex-column">
             
-            <li class="nav-item" data-bs-level="2"><a href="#evo.compute.tasks.common.runner.get_task_runner" class="nav-link">get_task_runner</a>
+            <li class="nav-item" data-bs-level="2"><a href="#evo.compute.tasks.common.runner.TaskRunner" class="nav-link">TaskRunner</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -76,25 +76,183 @@
 </p>
 
 
-<div class="doc doc-object doc-function">
+<div class="doc doc-object doc-class">
 
 
-<h2 id="evo.compute.tasks.common.runner.get_task_runner" class="doc doc-heading">
-            <span class="doc doc-object-name doc-function-name">evo.compute.tasks.common.runner.get_task_runner</span>
+
+<h2 id="evo.compute.tasks.common.runner.TaskRunner" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">evo.compute.tasks.common.runner.TaskRunner</span>
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_task_runner</span><span class="p">(</span><span class="n">param_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RunnerFunc</span> <span class="o">|</span> <span class="kc">None</span>
-</code></pre></div>
+
 
     <div class="doc doc-contents first">
 
-        <p>Get the registered runner for a parameter type.</p>
-<p>Args:
-    param_type: The parameter class to look up</p>
-<p>Returns:
-    The registered runner function, or None if not found</p>
 
+
+        <p>Base class for compute task runners.</p>
+<p>Subclass with concrete <code>TParams</code> and <code>TResult</code> type arguments and provide
+<code>topic</code> and <code>task</code> as class keyword arguments.  The subclass is
+automatically registered with the :class:<code>TaskRegistry</code>.</p>
+<p>Instances are awaitable: <code>await runner</code> submits the job, waits for
+completion, and returns the typed result with the execution context attached.</p>
+<p>Example — defining a runner::</p>
+<pre><code>class KrigingRunner(
+    TaskRunner[KrigingParameters, KrigingResult],
+    topic="geostatistics",
+    task="kriging",
+): ...
+</code></pre>
+<p>Example — advanced direct usage::</p>
+<pre><code>result = await KrigingRunner(context, params, preview=True)
+df = await result.to_dataframe()
+</code></pre>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.common.runner.TaskRunner.topic" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">topic</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">topic</span><span class="p">:</span> <span class="nb">str</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The compute topic (e.g. <code>"geostatistics"</code>).</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.common.runner.TaskRunner.task" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">task</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">task</span><span class="p">:</span> <span class="nb">str</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The task name within the topic (e.g. <code>"kriging"</code>).</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.common.runner.TaskRunner.result_type" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">result_type</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">result_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">TaskResult</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The Pydantic result model, extracted automatically from the generic args.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.common.runner.TaskRunner.params_type" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">params_type</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">params_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The Pydantic parameters model, extracted automatically from the generic args.</p>
+
+    </div>
+
+</div>
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.compute.tasks.common.runner.TaskRunner.__call__" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">__call__</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">__call__</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">TResult</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Submit the task, wait for completion, and return the typed result.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.compute.tasks.common.runner.TaskRunner.__await__" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">__await__</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">__await__</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">TResult</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Make the runner directly awaitable: <code>result = await Runner(ctx, params)</code>.</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
 
     </div>
 

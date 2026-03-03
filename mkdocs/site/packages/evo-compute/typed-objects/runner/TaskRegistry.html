@@ -41,7 +41,7 @@
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a rel="next" href="get_task_runner.html" class="nav-link">
+                                <a rel="next" href="TaskRunner.html" class="nav-link">
                                     Next <i class="fa fa-arrow-right"></i>
                                 </a>
                             </li>
@@ -91,9 +91,9 @@
 
 
 
-        <p>Registry mapping parameter types to their runner functions.</p>
+        <p>Registry mapping parameter types to their TaskRunner subclasses.</p>
 <p>This is a singleton that stores the mapping from parameter class types
-to their corresponding async runner functions.</p>
+to their corresponding TaskRunner subclass.</p>
 
 
 
@@ -124,15 +124,15 @@ to their corresponding async runner functions.</p>
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">register</span><span class="p">(</span><span class="n">param_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span> <span class="n">runner</span><span class="p">:</span> <span class="n">RunnerFunc</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">register</span><span class="p">(</span><span class="n">param_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span> <span class="n">runner_cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">TaskRunner</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="kc">None</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>Register a runner function for a parameter type.</p>
+        <p>Register a TaskRunner subclass for a parameter type.</p>
 <p>Args:
-    param_type: The parameter class (e.g., KrigingParameters)
-    runner: Async function with signature (context, params) -&gt; result</p>
+    param_type: The parameter class (e.g., KrigingParameters).
+    runner_cls: The TaskRunner subclass that handles this parameter type.</p>
 
 
     </div>
@@ -147,16 +147,16 @@ to their corresponding async runner functions.</p>
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_runner</span><span class="p">(</span><span class="n">param_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RunnerFunc</span> <span class="o">|</span> <span class="kc">None</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_runner</span><span class="p">(</span><span class="n">param_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">TaskRunner</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>Get the runner function for a parameter type.</p>
+        <p>Get the TaskRunner subclass for a parameter type.</p>
 <p>Args:
-    param_type: The parameter class to look up</p>
+    param_type: The parameter class to look up.</p>
 <p>Returns:
-    The registered runner function, or None if not found</p>
+    The registered TaskRunner subclass, or None if not found.</p>
 
 
     </div>
@@ -171,18 +171,18 @@ to their corresponding async runner functions.</p>
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_runner_for_params</span><span class="p">(</span><span class="n">params</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RunnerFunc</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_runner_for_params</span><span class="p">(</span><span class="n">params</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">TaskRunner</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>Get the runner function for a parameter instance.</p>
+        <p>Get the TaskRunner subclass for a parameter instance.</p>
 <p>Args:
-    params: A parameter object instance</p>
+    params: A parameter object instance.</p>
 <p>Returns:
-    The registered runner function</p>
+    The registered TaskRunner subclass.</p>
 <p>Raises:
-    TypeError: If no runner is registered for the parameter type</p>
+    TypeError: If no runner is registered for the parameter type.</p>
 
 
     </div>
