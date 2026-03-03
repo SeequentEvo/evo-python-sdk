@@ -135,6 +135,86 @@ def _generate_doc(doc_path: Path, entry: DocEntry, mkdocs_dir: Path) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Orchestration helpers
+# ---------------------------------------------------------------------------
+
+_PRESERVED_FILENAMES = frozenset({"evo-python-sdk.md", "index.md"})
+
+
+def _load_api_client_entries(mkdocs_dir: Path) -> dict[str, list[DocEntry]]:
+    """Read ``api_clients.txt`` and return parsed entries keyed by package."""
+    api_clients_file = mkdocs_dir / "api_clients.txt"
+    lines = [line.strip() for line in api_clients_file.read_text().splitlines() if line.strip()]
+    log.info(f"Loaded {len(lines)} API clients from {api_clients_file.relative_to(mkdocs_dir)}")
+    return _parse_entries(lines)
+
+
+def _doc_path_for_entry(
+    docs_packages_dir: Path,
+    package: str,
+    entry: DocEntry,
+    subfolder: str | None = None,
+) -> Path:
+    """Return the output ``.md`` path for a single DocEntry."""
+    if subfolder is None:
+        return docs_packages_dir / package / f"{entry.class_name}.md"
+    return docs_packages_dir / package / "typed-objects" / subfolder / f"{entry.class_name}.md"
+
+
+def _collect_auto_generated_paths(
+    docs_packages_dir: Path,
+    api_entries: dict[str, list[DocEntry]],
+    discovered: dict[str, dict[str, list[DocEntry]]],
+) -> set[Path]:
+    """Build the full set of expected auto-generated doc paths."""
+    paths: set[Path] = set()
+
+    for package, entries in api_entries.items():
+        for entry in entries:
+            paths.add(_doc_path_for_entry(docs_packages_dir, package, entry).resolve())
+
+    for package, groups in discovered.items():
+        for subfolder, entries in groups.items():
+            for entry in entries:
+                paths.add(_doc_path_for_entry(docs_packages_dir, package, entry, subfolder).resolve())
+
+    return paths
+
+
+def _clean_stale_docs(
+    docs_packages_dir: Path,
+    auto_generated_paths: set[Path],
+    mkdocs_dir: Path,
+) -> None:
+    """Delete previously auto-generated docs so removed entries don't linger."""
+    for old_md in docs_packages_dir.rglob("*.md"):
+        if old_md.name in _PRESERVED_FILENAMES:
+            continue
+        if old_md.resolve() in auto_generated_paths:
+            old_md.unlink()
+            log.info(f"Deleted auto-generated doc: {old_md.relative_to(mkdocs_dir)}")
+        else:
+            log.info(f"Preserved manual doc: {old_md.relative_to(mkdocs_dir)}")
+
+
+def _generate_all_docs(
+    docs_packages_dir: Path,
+    api_entries: dict[str, list[DocEntry]],
+    discovered: dict[str, dict[str, list[DocEntry]]],
+    mkdocs_dir: Path,
+) -> None:
+    """Write doc files for every API-client and auto-discovered entry."""
+    for package, entries in api_entries.items():
+        for entry in entries:
+            _generate_doc(_doc_path_for_entry(docs_packages_dir, package, entry), entry, mkdocs_dir)
+
+    for package, groups in discovered.items():
+        for subfolder, entries in groups.items():
+            for entry in entries:
+                _generate_doc(_doc_path_for_entry(docs_packages_dir, package, entry, subfolder), entry, mkdocs_dir)
+
+
+# ---------------------------------------------------------------------------
 # MkDocs hook
 # ---------------------------------------------------------------------------
 
@@ -144,51 +224,12 @@ def on_startup(command: str, dirty: bool) -> None:
     repo_root = mkdocs_dir.parent
     docs_packages_dir = mkdocs_dir / "docs" / "packages"
 
-    # --- 1. API clients (txt-based config) ---
-    api_clients_file = mkdocs_dir / "api_clients.txt"
-    api_clients = [line.strip() for line in api_clients_file.read_text().splitlines() if line.strip()]
-    log.info(f"Loaded {len(api_clients)} API clients from {api_clients_file.relative_to(mkdocs_dir)}")
-    api_entries = _parse_entries(api_clients)
+    api_entries = _load_api_client_entries(mkdocs_dir)
 
-    # --- 2. Auto-discovered typed objects ---
     discovered = _discover_typed_entries(repo_root)
     total = sum(len(e) for groups in discovered.values() for e in groups.values())
     log.info(f"Auto-discovered {total} typed objects across {list(discovered.keys())}")
 
-    # --- Compute all auto-generated paths (for cleanup) ---
-    auto_generated_paths: set[Path] = set()
-
-    for package, entries in api_entries.items():
-        for entry in entries:
-            auto_generated_paths.add((docs_packages_dir / package / f"{entry.class_name}.md").resolve())
-
-    for package, groups in discovered.items():
-        for subfolder, entries in groups.items():
-            for entry in entries:
-                auto_generated_paths.add(
-                    (docs_packages_dir / package / "typed-objects" / subfolder / f"{entry.class_name}.md").resolve()
-                )
-
-    # --- Clean up auto-generated files ---
-    for old_md in docs_packages_dir.rglob("*.md"):
-        if old_md.name in ("evo-python-sdk.md", "index.md"):
-            continue
-        if old_md.resolve() in auto_generated_paths:
-            old_md.unlink()
-            log.info(f"Deleted auto-generated doc: {old_md.relative_to(mkdocs_dir)}")
-        else:
-            log.info(f"Preserved manual doc: {old_md.relative_to(mkdocs_dir)}")
-
-    # --- Generate docs ---
-    for package, entries in api_entries.items():
-        for entry in entries:
-            _generate_doc(docs_packages_dir / package / f"{entry.class_name}.md", entry, mkdocs_dir)
-
-    for package, groups in discovered.items():
-        for subfolder, entries in groups.items():
-            for entry in entries:
-                _generate_doc(
-                    docs_packages_dir / package / "typed-objects" / subfolder / f"{entry.class_name}.md",
-                    entry,
-                    mkdocs_dir,
-                )
+    auto_generated_paths = _collect_auto_generated_paths(docs_packages_dir, api_entries, discovered)
+    _clean_stale_docs(docs_packages_dir, auto_generated_paths, mkdocs_dir)
+    _generate_all_docs(docs_packages_dir, api_entries, discovered, mkdocs_dir)
