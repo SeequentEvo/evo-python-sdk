@@ -330,7 +330,7 @@ class KrigingParameters(BaseModel):
         result: dict[str, Any] = {
             "source": self.source.model_dump(),
             "target": target_dict,
-            "variogram": str(self.variogram),
+            "variogram": self.variogram,
             "neighborhood": self.search.model_dump(),
             "kriging_method": self.method.model_dump(),
         }
