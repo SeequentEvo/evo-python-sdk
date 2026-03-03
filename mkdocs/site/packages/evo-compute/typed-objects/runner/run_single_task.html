@@ -8,7 +8,7 @@
         
         
         <link rel="shortcut icon" href="../../../../img/favicon.ico">
-        <title>Serialize object reference - Evo Python SDK</title>
+        <title>Run single task - Evo Python SDK</title>
         <link href="../../../../css/bootstrap.min.css" rel="stylesheet">
         <link href="../../../../css/fontawesome.min.css" rel="stylesheet">
         <link href="../../../../css/brands.min.css" rel="stylesheet">
@@ -36,12 +36,12 @@
 
                     <ul class="nav navbar-nav ms-md-auto">
                             <li class="nav-item">
-                                <a rel="prev" href="is_typed_attribute.html" class="nav-link">
+                                <a rel="prev" href="register_task_runner.html" class="nav-link">
                                     <i class="fa fa-arrow-left"></i> Previous
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a rel="next" href="source_from_attribute.html" class="nav-link">
+                                <a rel="next" href="run_tasks.html" class="nav-link">
                                     Next <i class="fa fa-arrow-right"></i>
                                 </a>
                             </li>
@@ -63,7 +63,7 @@
     <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
         <ul class="nav flex-column">
             
-            <li class="nav-item" data-bs-level="2"><a href="#evo.compute.tasks.common.source_target.serialize_object_reference" class="nav-link">serialize_object_reference</a>
+            <li class="nav-item" data-bs-level="2"><a href="#evo.compute.tasks.common.runner.run_single_task" class="nav-link">run_single_task</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -72,36 +72,50 @@
 </div></div>
                     <div class="col-md-9" role="main">
 
-<p><a href="https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-compute/src/evo/compute/tasks/common/source_target.py">GitHub source</a>
+<p><a href="https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-compute/src/evo/compute/tasks/common/runner.py">GitHub source</a>
 </p>
 
 
 <div class="doc doc-object doc-function">
 
 
-<h2 id="evo.compute.tasks.common.source_target.serialize_object_reference" class="doc doc-heading">
-            <span class="doc doc-object-name doc-function-name">evo.compute.tasks.common.source_target.serialize_object_reference</span>
+<h2 id="evo.compute.tasks.common.runner.run_single_task" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">evo.compute.tasks.common.runner.run_single_task</span>
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">serialize_object_reference</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">GeoscienceObjectReference</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">run_single_task</span><span class="p">(</span>
+    <span class="n">context</span><span class="p">:</span> <span class="n">IContext</span><span class="p">,</span>
+    <span class="n">parameters</span><span class="p">:</span> <span class="n">BaseModel</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">topic</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">task</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">result_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">TaskResult</span><span class="p">],</span>
+    <span class="n">preview</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">polling_interval_seconds</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
+    <span class="n">retry</span><span class="p">:</span> <span class="n">Retry</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">fb</span><span class="p">:</span> <span class="n">IFeedback</span> <span class="o">=</span> <span class="n">NoFeedback</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TaskResult</span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
 
-        <p>Serialize an object reference to a string URL.</p>
-<p>Supports:
-- str: returned as-is
-- ObjectReference: str(value)
-- BaseObject (typed objects like PointSet): value.metadata.url
-- DownloadedObject: value.metadata.url
-- ObjectMetadata: value.url</p>
+        <p>Generic submit-and-wait runner for any compute task.</p>
+<p>Serialises the parameters via <code>model_dump()</code>, submits the job to the
+compute service, waits for completion, and parses the result into a
+Pydantic-backed :class:<code>TaskResult</code> subclass.</p>
 <p>Args:
-    value: The value to serialize</p>
+    context: The context providing connector and org_id.
+    parameters: A Pydantic <code>BaseModel</code> with the task parameters.
+    topic: The compute topic (e.g. <code>"geostatistics"</code>).
+    task: The task name within the topic (e.g. <code>"kriging"</code>).
+    result_type: The :class:<code>TaskResult</code> subclass to instantiate.
+    preview: Whether to set the <code>API-Preview: opt-in</code> header.
+    polling_interval_seconds: Seconds between status polls.
+    retry: Optional retry policy for the polling loop.
+    fb: Feedback interface for progress updates.</p>
 <p>Returns:
-    String URL of the object reference</p>
-<p>Raises:
-    TypeError: If the value type is not supported</p>
+    A <em>result_type</em> instance populated from the API response.</p>
 
 
     </div>

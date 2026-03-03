@@ -3,8 +3,7 @@
 [GitHub source](https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-compute/src/evo/compute/)
 
 The `evo-compute` package provides a client for running compute tasks on Evo. Tasks are submitted to the Compute Tasks API and polled for results.
-
-See the [Typed Objects](typed-objects/) page for the full typed API reference.
+JobClient provides low-level access to the API, while the `run()` function is a high-level interface for executing tasks with convenient result handling.
 
 ## Running Compute Tasks
 

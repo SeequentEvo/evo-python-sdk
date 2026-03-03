@@ -36,7 +36,7 @@
 
                     <ul class="nav navbar-nav ms-md-auto">
                             <li class="nav-item">
-                                <a rel="prev" href="serialize_object_reference.html" class="nav-link">
+                                <a rel="prev" href="is_typed_attribute.html" class="nav-link">
                                     <i class="fa fa-arrow-left"></i> Previous
                                 </a>
                             </li>
@@ -84,20 +84,20 @@
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">source_from_attribute</span><span class="p">(</span><span class="n">attr</span><span class="p">:</span> <span class="n">Attribute</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Source</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">source_from_attribute</span><span class="p">(</span><span class="n">attr</span><span class="p">:</span> <span class="n">Attribute</span> <span class="o">|</span> <span class="n">BlockModelAttribute</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Source</span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
 
-        <p>Convert a typed <code>Attribute</code> to a :class:<code>Source</code>.</p>
-<p>Only <code>Attribute</code> (an existing attribute on a DownloadedObject) can be used
-as a source, since source data must already exist.</p>
+        <p>Convert a typed <code>Attribute</code> or <code>BlockModelAttribute</code> to a :class:<code>Source</code>.</p>
+<p>Only existing attributes can be used as a source, since source data must already exist.</p>
 <p>Args:
-    attr: An existing <code>Attribute</code> from a DownloadedObject.</p>
+    attr: An existing <code>Attribute</code> from a DownloadedObject, or a <code>BlockModelAttribute</code>.</p>
 <p>Returns:
     A :class:<code>Source</code> referencing the parent object and attribute expression.</p>
 <p>Raises:
-    TypeError: If <em>attr</em> is not an <code>Attribute</code> instance.</p>
+    TypeError: If <em>attr</em> is not a supported attribute type, or if it has
+        no <code>_obj</code> reference to its parent object.</p>
 
 
     </div>

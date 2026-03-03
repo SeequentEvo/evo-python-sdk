@@ -85,7 +85,7 @@
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">GeoscienceObjectReference</span><span class="p">:</span> <span class="n">TypeAlias</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">GeoscienceObjectReference</span> <span class="o">=</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">BeforeValidator</span><span class="p">(</span><span class="n">_convert_object_reference</span><span class="p">)]</span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
