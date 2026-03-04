@@ -12,7 +12,8 @@
 from __future__ import annotations
 
 import uuid
-from typing import Annotated, Any
+from typing import TYPE_CHECKING, Annotated, Any
+from uuid import UUID
 
 import pandas as pd
 
@@ -32,9 +33,15 @@ from ._model import SchemaList, SchemaLocation, SchemaModel
 from ._utils import get_data_client
 from .exceptions import DataLoaderError, ObjectValidationError
 
+if TYPE_CHECKING:
+    from .block_model_ref import BlockModel
+
 __all__ = [
     "Attribute",
     "Attributes",
+    "BlockModelAttribute",
+    "BlockModelAttributes",
+    "BlockModelPendingAttribute",
 ]
 
 
@@ -93,7 +100,7 @@ class Attribute(SchemaModel):
         """The type of this attribute."""
         return self._attribute_type
 
-    async def get_dataframe(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
+    async def to_dataframe(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
         """Load a DataFrame containing the values for this attribute from the object.
 
         :param fb: Optional feedback object to report download progress.
@@ -149,6 +156,24 @@ class Attribute(SchemaModel):
 class Attributes(SchemaList[Attribute]):
     """A collection of Geoscience Object Attributes"""
 
+    _schema_path: str | None = None
+    """The full JMESPath to this attributes list within the parent object schema."""
+
+    def __getitem__(self, index_or_name: int | str) -> Attribute:
+        """Get an attribute by index or name.
+
+        :param index_or_name: Either an integer index or the name/key of the attribute.
+        :return: The attribute at the specified index or with the specified name/key.
+            If a string is provided and no matching attribute exists, returns a PendingAttribute
+            that can be used as a target for compute tasks.
+        :raises IndexError: If the integer index is out of range.
+        """
+        if isinstance(index_or_name, str):
+            for attr in self:
+                if attr.name == index_or_name or attr.key == index_or_name:
+                    return attr
+        return super().__getitem__(index_or_name)
+
     @classmethod
     async def _data_to_schema(
         cls,
@@ -200,7 +225,7 @@ class Attributes(SchemaList[Attribute]):
 
             attributes_list.append(attr_doc)
 
-    async def get_dataframe(self, *keys: str, fb: IFeedback = NoFeedback) -> pd.DataFrame:
+    async def to_dataframe(self, *keys: str, fb: IFeedback = NoFeedback) -> pd.DataFrame:
         """Load a DataFrame containing the values from the specified attributes in the object.
 
         :param keys: Optional list of attribute keys to filter the attributes by. If no keys are provided, all
@@ -210,7 +235,8 @@ class Attributes(SchemaList[Attribute]):
         :return: A DataFrame containing the values from the specified attributes. Column name(s) will be updated
             based on the attribute names.
         """
-        parts = [await attribute.get_dataframe(fb=fb_part) for attribute, fb_part in iter_with_fb(self, fb)]
+        attributes = [self[key] for key in keys] if keys else list(self)
+        parts = [await attribute.to_dataframe(fb=fb_part) for attribute, fb_part in iter_with_fb(attributes, fb)]
         return pd.concat(parts, axis=1) if len(parts) > 0 else pd.DataFrame()
 
     async def append_attribute(self, df: pd.DataFrame, fb: IFeedback = NoFeedback):
@@ -274,3 +300,172 @@ class Attributes(SchemaList[Attribute]):
                 raise ObjectValidationError(
                     f"Attribute '{attribute.name}' length ({attribute_length}) does not match expected length ({expected_length})"
                 )
+
+
+class BlockModelAttribute:
+    """An attribute on a block model.
+
+    This class represents an existing attribute on a block model. It stores a reference
+    to the parent BlockModel via `_obj`, similar to how `Attribute` in dataset.py works.
+    """
+
+    def __init__(
+        self,
+        name: str,
+        attribute_type: str,
+        block_model_column_uuid: UUID | None = None,
+        unit: str | None = None,
+        obj: BlockModel | None = None,
+    ):
+        self._name = name
+        self._attribute_type = attribute_type
+        self._block_model_column_uuid = block_model_column_uuid
+        self._unit = unit
+        self._obj = obj  # Reference to parent BlockModel, similar to Attribute._obj
+
+    @property
+    def name(self) -> str:
+        """The name of this attribute."""
+        return self._name
+
+    @property
+    def attribute_type(self) -> str:
+        """The type of this attribute."""
+        return self._attribute_type
+
+    @property
+    def block_model_column_uuid(self) -> UUID | None:
+        """The UUID of the column in the block model service."""
+        return self._block_model_column_uuid
+
+    @property
+    def unit(self) -> str | None:
+        """The unit of this attribute."""
+        return self._unit
+
+    @property
+    def exists(self) -> bool:
+        """Whether this attribute exists on the block model.
+
+        :return: True for existing attributes.
+        """
+        return True
+
+    def __repr__(self) -> str:
+        return f"BlockModelAttribute(name={self._name!r}, attribute_type={self._attribute_type!r}, unit={self._unit!r})"
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, BlockModelAttribute):
+            return NotImplemented
+        return (
+            self._name == other._name
+            and self._attribute_type == other._attribute_type
+            and self._block_model_column_uuid == other._block_model_column_uuid
+            and self._unit == other._unit
+        )
+
+    def __hash__(self) -> int:
+        return hash((self._name, self._attribute_type, self._block_model_column_uuid, self._unit))
+
+
+class BlockModelPendingAttribute:
+    """A placeholder for an attribute that doesn't exist yet on a Block Model.
+
+    This is returned when accessing an attribute by name that doesn't exist.
+    It can be used as a target for compute tasks, which will create the attribute.
+
+    Stores a reference to the parent BlockModel via `_obj`, similar to how
+    `BlockModelAttribute` and `Attribute` (in dataset.py) work.
+    """
+
+    def __init__(self, obj: BlockModel, name: str) -> None:
+        """
+        :param obj: The BlockModel this pending attribute belongs to.
+        :param name: The name of the attribute to create.
+        """
+        self._obj = obj  # Reference to parent BlockModel
+        self._name = name
+
+    @property
+    def name(self) -> str:
+        """The name of this attribute."""
+        return self._name
+
+    @property
+    def exists(self) -> bool:
+        """Whether this attribute exists on the block model.
+
+        :return: False for pending attributes.
+        """
+        return False
+
+    def __repr__(self) -> str:
+        return f"BlockModelPendingAttribute(name={self._name!r}, exists=False)"
+
+
+class BlockModelAttributes:
+    """A collection of attributes on a block model with pretty-printing support."""
+
+    def __init__(self, attributes: list[BlockModelAttribute], block_model: BlockModel | None = None):
+        self._block_model = block_model
+        # Set _obj reference on each attribute to the parent BlockModel
+        self._attributes = []
+        for attr in attributes:
+            # Create a new attribute with _obj reference to the block model
+            attr_with_obj = BlockModelAttribute(
+                name=attr.name,
+                attribute_type=attr.attribute_type,
+                block_model_column_uuid=attr.block_model_column_uuid,
+                unit=attr.unit,
+                obj=block_model,
+            )
+            self._attributes.append(attr_with_obj)
+
+    @classmethod
+    def from_schema(cls, attributes_list: list[dict], block_model: BlockModel | None = None) -> BlockModelAttributes:
+        """Parse block model attributes from the schema format.
+
+        :param attributes_list: List of attribute dictionaries from the schema.
+        :param block_model: Optional parent BlockModel for back-references.
+        :return: A BlockModelAttributes collection.
+        """
+        parsed = []
+        for attr in attributes_list:
+            col_uuid = attr.get("block_model_column_uuid")
+            # Try to parse as UUID, but handle invalid formats gracefully
+            parsed_uuid = None
+            if col_uuid:
+                try:
+                    parsed_uuid = UUID(col_uuid)
+                except (ValueError, AttributeError):
+                    # col_uuid is not a valid UUID format, skip it
+                    pass
+            parsed.append(
+                BlockModelAttribute(
+                    name=attr.get("name", ""),
+                    attribute_type=attr.get("attribute_type", "Float64"),
+                    block_model_column_uuid=parsed_uuid,
+                    unit=attr.get("unit"),
+                )
+            )
+        return cls(parsed, block_model=block_model)
+
+    def __iter__(self):
+        return iter(self._attributes)
+
+    def __len__(self):
+        return len(self._attributes)
+
+    def __getitem__(self, index_or_name: int | str) -> BlockModelAttribute | BlockModelPendingAttribute:
+        if isinstance(index_or_name, str):
+            for attr in self._attributes:
+                if attr.name == index_or_name:
+                    return attr
+            # Return a BlockModelPendingAttribute for non-existent attributes accessed by name
+            # Pass the block model directly as _obj
+            return BlockModelPendingAttribute(self._block_model, index_or_name)
+        return self._attributes[index_or_name]
+
+    def __repr__(self) -> str:
+        names = [attr.name for attr in self._attributes]
+        return f"BlockModelAttributes({names})"

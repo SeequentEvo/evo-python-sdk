@@ -1,0 +1,2635 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        
+        <link rel="shortcut icon" href="../../img/favicon.ico">
+        <title>ObjectAPIClient - Evo Python SDK</title>
+        <link href="../../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../../css/fontawesome.min.css" rel="stylesheet">
+        <link href="../../css/brands.min.css" rel="stylesheet">
+        <link href="../../css/solid.min.css" rel="stylesheet">
+        <link href="../../css/v4-font-face.min.css" rel="stylesheet">
+        <link href="../../css/base.css" rel="stylesheet">
+        <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" >
+        <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
+        <link href="../../assets/_mkdocstrings.css" rel="stylesheet">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+        <script>hljs.highlightAll();</script> 
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="../..">Evo Python SDK</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar-collapse" aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+
+                    <ul class="nav navbar-nav ms-md-auto">
+                            <li class="nav-item">
+                                <a rel="prev" href="DownloadedObject.html" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="../evo-sdk-common/discovery.html" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-bs-toggle="collapse" data-bs-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-bs-level="2"><a href="#evo.objects.client.api_client.ObjectAPIClient" class="nav-link">ObjectAPIClient</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<p><a href="https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-objects/src/evo/objects/client/api_client.py">GitHub source</a>
+</p>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="evo.objects.client.api_client.ObjectAPIClient" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">evo.objects.client.api_client.ObjectAPIClient</span>
+
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.client.api_client.ObjectAPIClient.__init__" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">__init__</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">__init__</span><span class="p">(</span><span class="n">environment</span><span class="p">:</span> <span class="n">Environment</span><span class="p">,</span> <span class="n">connector</span><span class="p">:</span> <span class="n">APIConnector</span><span class="p">,</span> <span class="n">cache</span><span class="p">:</span> <span class="n">ICache</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>environment</code>
+            </td>
+            <td>
+                  <code><span title="evo.common.data.Environment">Environment</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The target Evo environment, providing org and workspace IDs.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>connector</code>
+            </td>
+            <td>
+                  <code><span title="evo.common.APIConnector">APIConnector</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The API connector to use for making API calls.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>cache</code>
+            </td>
+            <td>
+                  <code><span title="evo.common.ICache">ICache</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>An optional cache to use for data downloads.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.client.api_client.ObjectAPIClient.from_context" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">from_context</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">from_context</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="n">IContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ObjectAPIClient</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Create a ObjectAPIClient from the given context.</p>
+<p>The context must have a hub_url, org_id, and workspace_id set.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>context</code>
+            </td>
+            <td>
+                  <code><span title="evo.common.IContext">IContext</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The context to create the client from.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="evo.objects.client.api_client.ObjectAPIClient" href="#evo.objects.client.api_client.ObjectAPIClient">ObjectAPIClient</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A ObjectAPIClient instance.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.client.api_client.ObjectAPIClient.get_service_health" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">get_service_health</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_service_health</span><span class="p">(</span><span class="n">check_type</span><span class="p">:</span> <span class="n">HealthCheckType</span> <span class="o">=</span> <span class="n">HealthCheckType</span><span class="o">.</span><span class="n">FULL</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ServiceHealth</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Get the health of the geoscience object service.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>check_type</code>
+            </td>
+            <td>
+                  <code><span title="evo.common.HealthCheckType">HealthCheckType</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The type of health check to perform.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="evo.common.HealthCheckType.FULL">FULL</span></code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="evo.common.ServiceHealth">ServiceHealth</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A ServiceHealth object.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>EvoAPIException</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the API returns an unexpected status code.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code>ClientValueError</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the response is not a valid service health check response.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.client.api_client.ObjectAPIClient.list_objects" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">list_objects</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">list_objects</span><span class="p">(</span>
+    <span class="n">offset</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="n">limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5000</span><span class="p">,</span>
+    <span class="n">order_by</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">ObjectOrderByEnum</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> <span class="n">OrderByOperatorEnum</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">schema_id</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">deleted</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">request_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Page</span><span class="p">[</span><span class="n">ObjectMetadata</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>List up to <code>limit</code> geoscience objects, starting at <code>offset</code>.</p>
+<p>The geoscience objects will be the latest version of the object.
+If there are no objects to list, the page will be empty.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>offset</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The number of objects to skip before listing.</p>
+              </div>
+            </td>
+            <td>
+                  <code>0</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>limit</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Max number of objects to list.</p>
+              </div>
+            </td>
+            <td>
+                  <code>5000</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>order_by</code>
+            </td>
+            <td>
+                  <code><span title="dict">dict</span>[<span title="evo.objects.data.ObjectOrderByEnum">ObjectOrderByEnum</span> | <span title="str">str</span>, <span title="evo.common.data.OrderByOperatorEnum">OrderByOperatorEnum</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A dictionary of fields to order the results by, with the field name as the key and the direction of ordering as the value.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>schema_id</code>
+            </td>
+            <td>
+                  <code><span title="list">list</span>[<span title="str">str</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A list of schema IDs to filter the objects by. If None, objects of all schema types are returned.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>deleted</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>When true, only objects that have been deleted will be returned. If false or None, only non-deleted objects will be returned.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>request_timeout</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span> | <span title="float">float</span> | <span title="tuple">tuple</span>[<span title="int">int</span> | <span title="float">float</span>, <span title="int">int</span> | <span title="float">float</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Timeout setting for this request. If one number is provided, it will be the total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="evo.common.Page">Page</span>[<span title="evo.objects.data.ObjectMetadata">ObjectMetadata</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A page of all objects from the query.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.client.api_client.ObjectAPIClient.list_all_objects" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">list_all_objects</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">list_all_objects</span><span class="p">(</span>
+    <span class="n">limit_per_request</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5000</span><span class="p">,</span>
+    <span class="n">order_by</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">ObjectOrderByEnum</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> <span class="n">OrderByOperatorEnum</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">schema_id</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">deleted</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">request_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ObjectMetadata</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>List all geoscience objects in the workspace.</p>
+<p>This method makes multiple calls to the <code>list_objects</code> endpoint until all objects have been listed.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>limit_per_request</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The maximum number of objects to list in one request.</p>
+              </div>
+            </td>
+            <td>
+                  <code>5000</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>order_by</code>
+            </td>
+            <td>
+                  <code><span title="dict">dict</span>[<span title="evo.objects.data.ObjectOrderByEnum">ObjectOrderByEnum</span> | <span title="str">str</span>, <span title="evo.common.data.OrderByOperatorEnum">OrderByOperatorEnum</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A dictionary of fields to order the results by, with the field name as the key and the direction of ordering as the value.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>schema_id</code>
+            </td>
+            <td>
+                  <code><span title="list">list</span>[<span title="str">str</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A list of schema IDs to filter the objects by. If None, objects of all schema types are returned.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>deleted</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>When true, only objects that have been deleted will be returned. If false or None, only non-deleted objects will be returned.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>request_timeout</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span> | <span title="float">float</span> | <span title="tuple">tuple</span>[<span title="int">int</span> | <span title="float">float</span>, <span title="int">int</span> | <span title="float">float</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Timeout setting for this request. If one number is provided, it will be the total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="list">list</span>[<span title="evo.objects.data.ObjectMetadata">ObjectMetadata</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A list of all objects in the workspace.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.client.api_client.ObjectAPIClient.list_objects_for_instance" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">list_objects_for_instance</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">list_objects_for_instance</span><span class="p">(</span>
+    <span class="n">offset</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="n">limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5000</span><span class="p">,</span>
+    <span class="n">order_by</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">ObjectOrderByEnum</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> <span class="n">OrderByOperatorEnum</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">schema_id</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">deleted</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">request_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Page</span><span class="p">[</span><span class="n">OrgObjectMetadata</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>List up to <code>limit</code> geoscience objects for all accessible workspaces in the instance, starting at <code>offset</code>.</p>
+<p>The geoscience objects will be the latest version of the object.
+If there are no objects to list, the page will be empty.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>offset</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The number of objects to skip before listing.</p>
+              </div>
+            </td>
+            <td>
+                  <code>0</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>limit</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Max number of objects to list.</p>
+              </div>
+            </td>
+            <td>
+                  <code>5000</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>order_by</code>
+            </td>
+            <td>
+                  <code><span title="dict">dict</span>[<span title="evo.objects.data.ObjectOrderByEnum">ObjectOrderByEnum</span> | <span title="str">str</span>, <span title="evo.common.data.OrderByOperatorEnum">OrderByOperatorEnum</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A dictionary of fields to order the results by, with the field name as the key and the direction of ordering as the value.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>schema_id</code>
+            </td>
+            <td>
+                  <code><span title="list">list</span>[<span title="str">str</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A list of schema IDs to filter the objects by. If None, objects of all schema types are returned.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>deleted</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>When true, only objects that have been deleted will be returned. If false or None, only non-deleted objects will be returned.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>request_timeout</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span> | <span title="float">float</span> | <span title="tuple">tuple</span>[<span title="int">int</span> | <span title="float">float</span>, <span title="int">int</span> | <span title="float">float</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Timeout setting for this request. If one number is provided, it will be the total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="evo.common.Page">Page</span>[<span title="evo.objects.data.OrgObjectMetadata">OrgObjectMetadata</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A page of all objects from the query.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.client.api_client.ObjectAPIClient.list_versions_by_path" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">list_versions_by_path</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">list_versions_by_path</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">request_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ObjectVersion</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>List all version for the given object.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>path</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The path to the geoscience object.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>request_timeout</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span> | <span title="float">float</span> | <span title="tuple">tuple</span>[<span title="int">int</span> | <span title="float">float</span>, <span title="int">int</span> | <span title="float">float</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Timeout setting for this request. If one number is provided, it will be the total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="list">list</span>[<span title="evo.objects.data.ObjectVersion">ObjectVersion</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A sorted list of object versions. The latest version is the first element of the list.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.client.api_client.ObjectAPIClient.list_versions_by_id" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">list_versions_by_id</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">list_versions_by_id</span><span class="p">(</span>
+    <span class="n">object_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">request_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ObjectVersion</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>List all version for the given object.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>object_id</code>
+            </td>
+            <td>
+                  <code><span title="uuid.UUID">UUID</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The UUID of the geoscience object.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>request_timeout</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span> | <span title="float">float</span> | <span title="tuple">tuple</span>[<span title="int">int</span> | <span title="float">float</span>, <span title="int">int</span> | <span title="float">float</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Timeout setting for this request. If one number is provided, it will be the total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="list">list</span>[<span title="evo.objects.data.ObjectVersion">ObjectVersion</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A sorted list of object versions. The latest version is the first element of the list.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.client.api_client.ObjectAPIClient.prepare_data_upload" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">prepare_data_upload</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">prepare_data_upload</span><span class="p">(</span><span class="n">data_identifiers</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="n">UUID</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">AsyncIterator</span><span class="p">[</span><span class="n">ObjectDataUpload</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Prepare to upload multiple data files to the geoscience object service.</p>
+<p>Referenced data that already exists in the workspace will be skipped.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>data_identifiers</code>
+            </td>
+            <td>
+                  <code><span title="collections.abc.Sequence">Sequence</span>[<span title="str">str</span> | <span title="uuid.UUID">UUID</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A list of sha256 digests or UUIDs for the data to be uploaded.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="collections.abc.AsyncIterator">AsyncIterator</span>[<span title="evo.objects.io.ObjectDataUpload">ObjectDataUpload</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>An async iterator of data upload contexts that can be used to upload the data. Data identifiers that already exist in the workspace will be skipped.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.client.api_client.ObjectAPIClient.prepare_data_download" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">prepare_data_download</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">prepare_data_download</span><span class="p">(</span>
+    <span class="n">object_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span>
+    <span class="n">version_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">data_identifiers</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="n">UUID</span><span class="p">],</span>
+    <span class="n">request_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AsyncIterator</span><span class="p">[</span><span class="n">ObjectDataDownload</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Prepare to download multiple data files from the geoscience object service.</p>
+<p>Any data IDs that are not associated with the requested object will raise a DataNotFoundError.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>object_id</code>
+            </td>
+            <td>
+                  <code><span title="uuid.UUID">UUID</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The ID of the object to download data from.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>version_id</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The version ID of the object to download data from.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>data_identifiers</code>
+            </td>
+            <td>
+                  <code><span title="collections.abc.Sequence">Sequence</span>[<span title="str">str</span> | <span title="uuid.UUID">UUID</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A list of sha256 digests or UUIDs for the data to be downloaded.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>request_timeout</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span> | <span title="float">float</span> | <span title="tuple">tuple</span>[<span title="int">int</span> | <span title="float">float</span>, <span title="int">int</span> | <span title="float">float</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Timeout setting for this request. If one number is provided, it will be the total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="collections.abc.AsyncIterator">AsyncIterator</span>[<span title="evo.objects.io.ObjectDataDownload">ObjectDataDownload</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>An async iterator of data download contexts that can be used to download the data.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>DataNotFoundError</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If any requested data ID is not associated with the referenced object.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.client.api_client.ObjectAPIClient.get_data_client" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">get_data_client</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_data_client</span><span class="p">(</span><span class="n">cache</span><span class="p">:</span> <span class="n">ICache</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ObjectDataClient</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Get a data client for the geoscience object service.</p>
+<p>The data client provides a high-level interface for uploading and downloading data that is referenced in
+geoscience objects, and caching the data locally. It depends on the optional dependency <code>pyarrow</code>, which is
+not installed by default. This dependency can be installed with <code>pip install evo-objects[utils]</code>.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>cache</code>
+            </td>
+            <td>
+                  <code><span title="evo.common.ICache">ICache</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The cache to use for data downloads.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="evo.objects.utils.ObjectDataClient">ObjectDataClient</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>An ObjectDataClient instance.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>RuntimeError</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the <code>pyarrow</code> package is not installed.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.client.api_client.ObjectAPIClient.create_geoscience_object" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">create_geoscience_object</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">create_geoscience_object</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">object_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">request_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ObjectMetadata</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Upload a new geoscience object to the geoscience object service.</p>
+<p>New geoscience objects must not have a UUID, so that one can be assigned by the Geoscience Object Service.
+The <code>object_instance</code> that is passed in will be updated with the service-assigned UUID after it has been
+uploaded, and the metadata of the created object will be returned.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>path</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The path to upload the object to.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>object_dict</code>
+            </td>
+            <td>
+                  <code><span title="dict">dict</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The geoscience object to be uploaded.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>request_timeout</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span> | <span title="float">float</span> | <span title="tuple">tuple</span>[<span title="int">int</span> | <span title="float">float</span>, <span title="int">int</span> | <span title="float">float</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Timeout setting for this request. If one number is provided, it will be the total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="evo.objects.data.ObjectMetadata">ObjectMetadata</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The metadata of the uploaded object.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>ObjectUUIDError</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the provided object has a UUID.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.client.api_client.ObjectAPIClient.move_geoscience_object" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">move_geoscience_object</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">move_geoscience_object</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">object_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">request_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ObjectMetadata</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Move an existing geoscience object to a new path in the geoscience object service.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>path</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The new path to move the object to.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>object_dict</code>
+            </td>
+            <td>
+                  <code><span title="dict">dict</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The geoscience object to be moved.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>request_timeout</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span> | <span title="float">float</span> | <span title="tuple">tuple</span>[<span title="int">int</span> | <span title="float">float</span>, <span title="int">int</span> | <span title="float">float</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Timeout setting for this request. If one number is provided, it will be the total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="evo.objects.data.ObjectMetadata">ObjectMetadata</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The metadata of the moved object.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>ObjectUUIDError</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the provided object does not have a UUID.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.client.api_client.ObjectAPIClient.update_geoscience_object" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">update_geoscience_object</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">update_geoscience_object</span><span class="p">(</span>
+    <span class="n">object_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">request_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ObjectMetadata</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Update an existing geoscience object in the geoscience object service.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>object_dict</code>
+            </td>
+            <td>
+                  <code><span title="dict">dict</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The geoscience object to be updated.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>request_timeout</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span> | <span title="float">float</span> | <span title="tuple">tuple</span>[<span title="int">int</span> | <span title="float">float</span>, <span title="int">int</span> | <span title="float">float</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Timeout setting for this request. If one number is provided, it will be the total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="evo.objects.data.ObjectMetadata">ObjectMetadata</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The metadata of the updated object.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>ObjectUUIDError</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the provided object does not have a UUID.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.client.api_client.ObjectAPIClient.download_object_by_path" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">download_object_by_path</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">download_object_by_path</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">request_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DownloadedObject</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Download a geoscience object definition (by path).</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>path</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The path to the geoscience object.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>version</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The version of the geoscience object to download. This will download the latest version by default.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>request_timeout</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span> | <span title="float">float</span> | <span title="tuple">tuple</span>[<span title="int">int</span> | <span title="float">float</span>, <span title="int">int</span> | <span title="float">float</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Timeout setting for this request. If one number is provided, it will be the total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="evo.objects.client.object_client.DownloadedObject" href="DownloadedObject.html#evo.objects.client.object_client.DownloadedObject">DownloadedObject</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A tuple containing the object metadata and a data model of the requested geoscience object.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.client.api_client.ObjectAPIClient.download_object_by_id" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">download_object_by_id</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">download_object_by_id</span><span class="p">(</span>
+    <span class="n">object_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span>
+    <span class="n">version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">request_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DownloadedObject</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Download a geoscience object definition (by UUID).</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>object_id</code>
+            </td>
+            <td>
+                  <code><span title="uuid.UUID">UUID</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The uuid of the geoscience object.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>version</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The version of the geoscience object to download. This will download the latest version by default.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>request_timeout</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span> | <span title="float">float</span> | <span title="tuple">tuple</span>[<span title="int">int</span> | <span title="float">float</span>, <span title="int">int</span> | <span title="float">float</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Timeout setting for this request. If one number is provided, it will be the total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="evo.objects.client.object_client.DownloadedObject" href="DownloadedObject.html#evo.objects.client.object_client.DownloadedObject">DownloadedObject</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A tuple containing the object metadata and a data model of the requested geoscience object.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.client.api_client.ObjectAPIClient.get_latest_object_versions" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">get_latest_object_versions</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_latest_object_versions</span><span class="p">(</span>
+    <span class="n">object_ids</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">UUID</span><span class="p">],</span>
+    <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">500</span><span class="p">,</span>
+    <span class="n">request_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">UUID</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Get the latest version of each object by uuid.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>object_ids</code>
+            </td>
+            <td>
+                  <code><span title="list">list</span>[<span title="uuid.UUID">UUID</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A list of object uuids.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>batch_size</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The maximum number of objects to check in one API call (max 500).</p>
+              </div>
+            </td>
+            <td>
+                  <code>500</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>request_timeout</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span> | <span title="float">float</span> | <span title="tuple">tuple</span>[<span title="int">int</span> | <span title="float">float</span>, <span title="int">int</span> | <span title="float">float</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Timeout setting for this request. If one number is provided, it will be the total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="dict">dict</span>[<span title="uuid.UUID">UUID</span>, <span title="str">str</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A mapping of uuids to the latest version id.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.client.api_client.ObjectAPIClient.delete_object_by_path" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">delete_object_by_path</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">delete_object_by_path</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">request_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Soft-delete a geoscience object (by path).</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>path</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The path to the geoscience object.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>request_timeout</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span> | <span title="float">float</span> | <span title="tuple">tuple</span>[<span title="int">int</span> | <span title="float">float</span>, <span title="int">int</span> | <span title="float">float</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Timeout setting for this request. If one number is provided, it will be the total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>None</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.client.api_client.ObjectAPIClient.delete_object_by_id" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">delete_object_by_id</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">delete_object_by_id</span><span class="p">(</span>
+    <span class="n">object_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">request_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Soft-delete a geoscience object (by UUID).</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>object_id</code>
+            </td>
+            <td>
+                  <code><span title="uuid.UUID">UUID</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The uuid of the geoscience object</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>request_timeout</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span> | <span title="float">float</span> | <span title="tuple">tuple</span>[<span title="int">int</span> | <span title="float">float</span>, <span title="int">int</span> | <span title="float">float</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Timeout setting for this request. If one number is provided, it will be the total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>None</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.client.api_client.ObjectAPIClient.restore_geoscience_object" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">restore_geoscience_object</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">restore_geoscience_object</span><span class="p">(</span>
+    <span class="n">object_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">request_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span> <span class="o">|</span> <span class="n">ObjectMetadata</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Restore a soft-deleted geoscience object in the geoscience object service.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>object_id</code>
+            </td>
+            <td>
+                  <code><span title="uuid.UUID">UUID</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The uuid of the geoscience object</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>request_timeout</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span> | <span title="float">float</span> | <span title="tuple">tuple</span>[<span title="int">int</span> | <span title="float">float</span>, <span title="int">int</span> | <span title="float">float</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Timeout setting for this request. If one number is provided, it will be the total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>None | <span title="evo.objects.data.ObjectMetadata">ObjectMetadata</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The metadata of the restored object, if a rename occurred. Otherwise, None.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.client.api_client.ObjectAPIClient.list_stages" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">list_stages</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">list_stages</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Stage</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>List all available stages in the organisation.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="list">list</span>[<span title="evo.objects.data.Stage">Stage</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A list of all available stages.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.client.api_client.ObjectAPIClient.set_stage" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">set_stage</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">set_stage</span><span class="p">(</span><span class="n">object_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">version_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">stage_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Set the stage of a specific version of a geoscience object.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>object_id</code>
+            </td>
+            <td>
+                  <code><span title="uuid.UUID">UUID</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The UUID of the geoscience object.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>version_id</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The version ID of the geoscience object.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>stage_id</code>
+            </td>
+            <td>
+                  <code><span title="uuid.UUID">UUID</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The UUID of the stage to set.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>None</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script src="../../js/bootstrap.bundle.min.js"></script>
+        <script>
+            var base_url = "../..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../../js/base.js"></script>
+
+        <div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>

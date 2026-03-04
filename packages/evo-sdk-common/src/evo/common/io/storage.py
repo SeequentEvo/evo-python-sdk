@@ -104,8 +104,13 @@ class BlockList:
 class StorageDestination(HTTPIOBase, IDestination):
     """`evo.common.io.interfaces.IDestination` implementation for uploading to storage."""
 
-    def __init__(self, url_callback: Callable[[], Awaitable[str]], transport: ITransport) -> None:
-        super().__init__(url_callback, transport)
+    def __init__(
+        self,
+        url_callback: Callable[[], Awaitable[str]],
+        transport: ITransport,
+        additional_headers: dict[str, str] | None = None,
+    ) -> None:
+        super().__init__(url_callback, transport, additional_headers)
         self._block_list = BlockList()
         self._committed = False
 
@@ -180,6 +185,7 @@ class StorageDestination(HTTPIOBase, IDestination):
         transport: ITransport,
         max_workers: int | None = None,
         retry: Retry | None = None,
+        additional_headers: dict[str, str] | None = None,
         fb: IFeedback | None = None,
     ) -> None:
         """Upload a file with the given filename to the given Storage URL.
@@ -194,6 +200,7 @@ class StorageDestination(HTTPIOBase, IDestination):
             is `min(32, os.cpu_count() + 4)`
         :param retry: A Retry object with a wait strategy. If None, a default Retry is created. If a chunk is successfully
             transferred the attempt counter will be reset.
+        :param additional_headers: Additional headers to include in each request.
         :param fb: feedback to track the upload, by tracking reads from the file only
 
         :raises ValueError: if the file to upload does not exist
@@ -210,7 +217,9 @@ class StorageDestination(HTTPIOBase, IDestination):
             retry = Retry(logger=logger)
 
         manager = ChunkedIOManager(message="Uploading", retry=retry, max_workers=max_workers)
-        async with StorageDestination(url_callback=url_generator, transport=transport) as destination:
+        async with StorageDestination(
+            url_callback=url_generator, transport=transport, additional_headers=additional_headers
+        ) as destination:
             size = os.path.getsize(src_path)
             with src_path.open("rb") as input_:
                 source = BytesSource(input_, size)

@@ -20,7 +20,7 @@ from uuid import UUID
 from pydantic import ConfigDict, TypeAdapter
 
 from evo import jmespath, logging
-from evo.common import APIConnector, ICache, IContext, IFeedback
+from evo.common import APIConnector, Environment, ICache, IContext, IFeedback
 from evo.common.io.exceptions import DataNotFoundError
 from evo.common.utils import NoFeedback, split_feedback
 
@@ -74,8 +74,12 @@ logger = logging.getLogger("object.client")
 _T = TypeVar("_T")
 
 
-class DownloadedObject:
-    """A downloaded geoscience object."""
+class DownloadedObject(IContext):
+    """A downloaded geoscience object.
+
+    This class also implements the IContext interface, allowing it to be used
+    directly as a context for further API operations.
+    """
 
     def __init__(
         self,
@@ -180,6 +184,36 @@ class DownloadedObject:
     def metadata(self) -> ObjectMetadata:
         """The metadata of the object."""
         return self._metadata
+
+    # IContext interface implementation
+
+    def get_environment(self) -> Environment:
+        """Gets the Environment associated with this object.
+
+        :return: The Environment.
+        """
+        return self._metadata.environment
+
+    def get_org_id(self) -> UUID:
+        """Gets the organization ID associated with this object.
+
+        :return: The organization ID.
+        """
+        return self._metadata.environment.org_id
+
+    def get_connector(self) -> APIConnector:
+        """Gets the APIConnector associated with this object.
+
+        :return: The APIConnector.
+        """
+        return self._connector
+
+    def get_cache(self) -> ICache | None:
+        """Gets the ICache associated with this object, if any.
+
+        :return: The ICache, or None if no cache is associated.
+        """
+        return self._cache
 
     def as_dict(self) -> dict:
         """Get this object as a dictionary."""
