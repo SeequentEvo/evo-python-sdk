@@ -95,7 +95,7 @@ class WorkspaceAPIClient:
         response = await self._workspaces_api.list_user_roles(
             org_id=str(self._org_id),
             workspace_id=str(workspace_id),
-            filter_user_id=str(filter_user_id) if filter_user_id else None,
+            user_id=str(filter_user_id) if filter_user_id else None,
         )
 
         return [parse.user_model(item) for item in response.results]
@@ -159,12 +159,12 @@ class WorkspaceAPIClient:
             limit=limit,
             offset=offset,
             order_by=parsed_order_by,
-            filter_created_by=str(filter_created_by) if filter_created_by else None,
+            created_by=str(filter_created_by) if filter_created_by else None,
             created_at=created_at,
             updated_at=updated_at,
             name=name,
             deleted=deleted,
-            filter_user_id=str(filter_user_id) if filter_user_id else None,
+            user_id=str(filter_user_id) if filter_user_id else None,
         )
 
         return Page(
@@ -238,12 +238,12 @@ class WorkspaceAPIClient:
             limit=limit,
             offset=offset,
             order_by=parsed_order_by,
-            filter_created_by=str(filter_created_by) if filter_created_by else None,
+            created_by=str(filter_created_by) if filter_created_by else None,
             created_at=created_at,
             updated_at=updated_at,
             name=name,
             deleted=deleted,
-            filter_user_id=str(filter_user_id) if filter_user_id else None,
+            user_id=str(filter_user_id) if filter_user_id else None,
         )
 
         return Page(
