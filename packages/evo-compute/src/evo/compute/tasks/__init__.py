@@ -52,6 +52,9 @@ from .common import (
     run_tasks,
 )
 
+# Result list wrapper for pretty-printing
+from .common.results import TaskResultList
+
 # Result types from common (generic base classes)
 from .common.runner import TParams, TResult
 
@@ -80,7 +83,7 @@ async def run(
     *,
     preview: bool = ...,
     fb: IFeedback | None = ...,
-) -> list[TResult]: ...
+) -> TaskResultList[TResult]: ...
 
 
 async def run(
@@ -89,7 +92,7 @@ async def run(
     *,
     preview: bool = False,
     fb: IFeedback | None = None,
-) -> TResult | list[TResult]:
+) -> TResult | TaskResultList[TResult]:
     """
     Run one or more compute tasks.
 
@@ -138,7 +141,7 @@ async def run(
     param_list = [parameters] if is_single else parameters
 
     if len(param_list) == 0:
-        return []
+        return TaskResultList([])
 
     # Create default feedback if none provided
     actual_fb = fb if fb is not None else create_default_feedback("Tasks")
@@ -149,7 +152,7 @@ async def run(
     # Return single result or wrapped results
     if is_single:
         return results[0]
-    return results
+    return TaskResultList(results)
 
 
 __all__ = [
@@ -163,8 +166,7 @@ __all__ = [
     "SearchNeighborhood",
     "Source",
     "Target",
-    "TaskResult",
-    "TaskResults",
+    "TaskResultList",
     "UpdateAttribute",
     "run",
 ]

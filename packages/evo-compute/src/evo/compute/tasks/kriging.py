@@ -246,6 +246,8 @@ class KrigingParameters(BaseModel):
         ... )
     """
 
+    model_config = {"populate_by_name": True}
+
     source: AnySourceAttribute
     """The source object and attribute containing known values."""
 
@@ -255,7 +257,7 @@ class KrigingParameters(BaseModel):
     variogram: GeoscienceObjectReference
     """Model of the covariance within the domain (Variogram object or reference)."""
 
-    search: SearchNeighborhood
+    search: SearchNeighborhood = Field(alias="neighborhood")
     """Search neighborhood parameters."""
 
     method: SimpleKriging | OrdinaryKriging = Field(default_factory=OrdinaryKriging, alias="kriging_method")

@@ -13,7 +13,7 @@
 
 from evo.objects.typed.types import Ellipsoid, EllipsoidRanges, Rotation
 
-from .results import TaskAttribute, TaskTarget
+from .results import TaskAttribute, TaskResultList, TaskTarget
 from .runner import TaskRegistry, TaskRunner, TParams, TResult, TResultModel, run_tasks
 from .search import SearchNeighborhood
 from .source_target import (
@@ -44,6 +44,7 @@ __all__ = [
     "Target",
     "TaskAttribute",
     "TaskRegistry",
+    "TaskResultList",
     "TaskRunner",
     "TaskTarget",
     "UpdateAttribute",

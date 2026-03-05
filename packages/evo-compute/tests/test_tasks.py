@@ -11,14 +11,25 @@
 
 """Tests for the compute tasks module imports and basic functionality."""
 
+import inspect
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from evo.objects.exceptions import SchemaIDFormatError
 
-from evo.compute.tasks.common.results import TaskAttribute, TaskTarget
+from evo.compute.tasks import run
+from evo.compute.tasks.common.results import TaskAttribute, TaskResultList, TaskTarget
 from evo.compute.tasks.common.runner import TaskRegistry, run_tasks
-from evo.compute.tasks.kriging import KrigingParameters, KrigingResult, KrigingResultModel, KrigingRunner
+from evo.compute.tasks.common.source_target import _convert_object_reference
+from evo.compute.tasks.kriging import (
+    KrigingMethod,
+    KrigingParameters,
+    KrigingResult,
+    KrigingResultModel,
+    KrigingRunner,
+    OrdinaryKriging,
+    SimpleKriging,
+)
 
 
 class TestTaskRegistry(unittest.TestCase):
@@ -63,8 +74,9 @@ class TestTaskRunnerSubclass(unittest.TestCase):
         self.assertEqual(KrigingRunner.task, "kriging")
 
     def test_kriging_runner_has_correct_types(self):
-        """KrigingRunner should have correct params_type and result_type."""
+        """KrigingRunner should have correct params_type, result_model_type, and result_type."""
         self.assertIs(KrigingRunner.params_type, KrigingParameters)
+        self.assertIs(KrigingRunner.result_model_type, KrigingResultModel)
         self.assertIs(KrigingRunner.result_type, KrigingResult)
 
     def test_runner_accepts_preview_kwarg(self):
@@ -87,18 +99,12 @@ class TestPreviewFlagSignatures(unittest.TestCase):
 
     def test_run_function_accepts_preview_kwarg(self):
         """The public run() function should accept a 'preview' keyword argument defaulting to False."""
-        import inspect
-
-        from evo.compute.tasks import run
-
         sig = inspect.signature(run)
         self.assertIn("preview", sig.parameters)
         self.assertEqual(sig.parameters["preview"].default, False)
 
     def test_run_tasks_accepts_preview_kwarg(self):
         """run_tasks() should accept a 'preview' keyword argument defaulting to False."""
-        import inspect
-
         sig = inspect.signature(run_tasks)
         self.assertIn("preview", sig.parameters)
         self.assertEqual(sig.parameters["preview"].default, False)
@@ -183,8 +189,6 @@ class TestTaskResultSchemaType(unittest.TestCase):
     """Tests for schema_type property using ObjectSchema parsing."""
 
     def _make_result(self, schema_id: str):
-        from evo.compute.tasks.common.results import TaskAttribute, TaskTarget
-
         attr = TaskAttribute(reference="ref", name="attr")
         target = TaskTarget(reference="ref", name="target", description=None, schema_id=schema_id, attribute=attr)
         return KrigingResult(
@@ -220,29 +224,21 @@ class TestKrigingMethod(unittest.TestCase):
 
     def test_ordinary_kriging_singleton(self):
         """KrigingMethod.ORDINARY should be an OrdinaryKriging instance."""
-        from evo.compute.tasks.kriging import KrigingMethod, OrdinaryKriging
-
         self.assertIsInstance(KrigingMethod.ORDINARY, OrdinaryKriging)
 
     def test_simple_kriging_factory(self):
         """KrigingMethod.simple() should create a SimpleKriging instance."""
-        from evo.compute.tasks.kriging import KrigingMethod, SimpleKriging
-
         method = KrigingMethod.simple(mean=100.0)
         self.assertIsInstance(method, SimpleKriging)
         self.assertEqual(method.mean, 100.0)
 
     def test_ordinary_kriging_model_dump(self):
         """OrdinaryKriging should serialize to dict with type='ordinary'."""
-        from evo.compute.tasks.kriging import OrdinaryKriging
-
         d = OrdinaryKriging().model_dump()
         self.assertEqual(d, {"type": "ordinary"})
 
     def test_simple_kriging_model_dump(self):
         """SimpleKriging should serialize to dict with type='simple' and mean."""
-        from evo.compute.tasks.kriging import SimpleKriging
-
         d = SimpleKriging(mean=50.0).model_dump()
         self.assertEqual(d, {"type": "simple", "mean": 50.0})
 
@@ -252,8 +248,6 @@ class TestTaskTargetModelValidate(unittest.TestCase):
 
     def test_model_validate_from_dict(self):
         """TaskTarget.model_validate should parse a raw API response dict."""
-        from evo.compute.tasks.common.results import TaskTarget
-
         data = {
             "reference": "ref",
             "name": "target_name",
@@ -292,8 +286,6 @@ class TestConvertObjectReference(unittest.TestCase):
 
     def test_valid_string_accepted(self):
         """A valid ObjectReference URL string should be converted to a validated str."""
-        from evo.compute.tasks.common.source_target import _convert_object_reference
-
         url = "https://hub.test.evo.bentley.com/geoscience-object/orgs/00000000-0000-0000-0000-000000000001/workspaces/00000000-0000-0000-0000-000000000002/objects/00000000-0000-0000-0000-000000000003"
         result = _convert_object_reference(url)
         self.assertIsInstance(result, str)
@@ -301,17 +293,213 @@ class TestConvertObjectReference(unittest.TestCase):
 
     def test_raises_for_unsupported_type(self):
         """_convert_object_reference should raise TypeError for unsupported types."""
-        from evo.compute.tasks.common.source_target import _convert_object_reference
-
         with self.assertRaises(TypeError):
             _convert_object_reference(12345)
 
     def test_raises_for_invalid_url(self):
         """_convert_object_reference should raise ValueError for invalid URL strings."""
-        from evo.compute.tasks.common.source_target import _convert_object_reference
-
         with self.assertRaises(ValueError):
             _convert_object_reference("not_a_url")
+
+
+class TestRunTasksDispatch(unittest.IsolatedAsyncioTestCase):
+    """Tests that run_tasks dispatches to concrete runner subclasses, not abstract TaskRunner."""
+
+    async def test_run_tasks_dispatches_to_registered_runner(self):
+        """run_tasks should use the registered runner subclass, not TaskRunner directly."""
+        mock_context, _ = _mock_kriging_context()
+        mock_params = MagicMock(spec=KrigingParameters)
+        mock_params.model_dump.return_value = {"source": {}, "target": {}}
+
+        with (
+            patch(
+                "evo.compute.tasks.common.runner._registry.get_runner_for_params",
+                return_value=KrigingRunner,
+            ),
+            patch(
+                "evo.compute.tasks.common.runner.JobClient.submit",
+                new_callable=AsyncMock,
+                return_value=_mock_kriging_job(),
+            ),
+        ):
+            results = await run_tasks(mock_context, [mock_params], preview=True)
+
+        self.assertEqual(len(results), 1)
+        self.assertIsInstance(results[0], KrigingResult)
+
+    async def test_run_tasks_multiple_parameters(self):
+        """run_tasks should handle multiple parameters and return results in order."""
+        mock_context, _ = _mock_kriging_context()
+        params_list = []
+        for _ in range(3):
+            p = MagicMock(spec=KrigingParameters)
+            p.model_dump.return_value = {"source": {}, "target": {}}
+            params_list.append(p)
+
+        with (
+            patch(
+                "evo.compute.tasks.common.runner._registry.get_runner_for_params",
+                return_value=KrigingRunner,
+            ),
+            patch(
+                "evo.compute.tasks.common.runner.JobClient.submit",
+                new_callable=AsyncMock,
+                return_value=_mock_kriging_job(),
+            ),
+        ):
+            results = await run_tasks(mock_context, params_list, preview=True)
+
+        self.assertEqual(len(results), 3)
+        for result in results:
+            self.assertIsInstance(result, KrigingResult)
+
+    async def test_run_tasks_empty_list_returns_empty(self):
+        """run_tasks should return an empty list for empty parameters."""
+        mock_context, _ = _mock_kriging_context()
+        results = await run_tasks(mock_context, [])
+        self.assertEqual(results, [])
+
+    async def test_run_tasks_raises_for_unregistered_type(self):
+        """run_tasks should raise TypeError for unregistered parameter types."""
+        mock_context, _ = _mock_kriging_context()
+
+        class UnknownParams:
+            pass
+
+        with self.assertRaises(TypeError):
+            await run_tasks(mock_context, [UnknownParams()])
+
+
+class TestRunReturnsTaskResultList(unittest.IsolatedAsyncioTestCase):
+    """Tests that the public run() function returns TaskResultList for multi-param calls."""
+
+    async def test_run_single_returns_bare_result(self):
+        """run() with a single param should return a bare result, not TaskResultList."""
+        mock_context, _ = _mock_kriging_context()
+        mock_params = MagicMock(spec=KrigingParameters)
+        mock_params.model_dump.return_value = {"source": {}, "target": {}}
+
+        with (
+            patch(
+                "evo.compute.tasks.common.runner._registry.get_runner_for_params",
+                return_value=KrigingRunner,
+            ),
+            patch(
+                "evo.compute.tasks.common.runner.JobClient.submit",
+                new_callable=AsyncMock,
+                return_value=_mock_kriging_job(),
+            ),
+        ):
+            result = await run(mock_context, mock_params, preview=True)
+
+        self.assertIsInstance(result, KrigingResult)
+        self.assertNotIsInstance(result, TaskResultList)
+
+    async def test_run_list_returns_task_result_list(self):
+        """run() with a list of params should return a TaskResultList."""
+        mock_context, _ = _mock_kriging_context()
+        params_list = []
+        for _ in range(3):
+            p = MagicMock(spec=KrigingParameters)
+            p.model_dump.return_value = {"source": {}, "target": {}}
+            params_list.append(p)
+
+        with (
+            patch(
+                "evo.compute.tasks.common.runner._registry.get_runner_for_params",
+                return_value=KrigingRunner,
+            ),
+            patch(
+                "evo.compute.tasks.common.runner.JobClient.submit",
+                new_callable=AsyncMock,
+                return_value=_mock_kriging_job(),
+            ),
+        ):
+            results = await run(mock_context, params_list, preview=True)
+
+        self.assertIsInstance(results, TaskResultList)
+        self.assertEqual(len(results), 3)
+        for r in results:
+            self.assertIsInstance(r, KrigingResult)
+
+    async def test_run_empty_list_returns_task_result_list(self):
+        """run() with an empty list should return an empty TaskResultList."""
+        mock_context, _ = _mock_kriging_context()
+        results = await run(mock_context, [], preview=True)
+        self.assertIsInstance(results, TaskResultList)
+        self.assertEqual(len(results), 0)
+
+
+class TestTaskResultList(unittest.TestCase):
+    """Tests for TaskResultList list-like container."""
+
+    def _make_mock_result(self, target_name="Grid", attribute_name="attr", message="ok"):
+        r = MagicMock()
+        r.TASK_DISPLAY_NAME = "Kriging"
+        r.target_name = target_name
+        r.attribute_name = attribute_name
+        r.message = message
+        return r
+
+    def test_len(self):
+        results = TaskResultList([self._make_mock_result() for _ in range(3)])
+        self.assertEqual(len(results), 3)
+
+    def test_len_empty(self):
+        results = TaskResultList([])
+        self.assertEqual(len(results), 0)
+
+    def test_getitem_int(self):
+        items = [self._make_mock_result(target_name=f"G{i}") for i in range(3)]
+        results = TaskResultList(items)
+        self.assertIs(results[0], items[0])
+        self.assertIs(results[2], items[2])
+        self.assertIs(results[-1], items[-1])
+
+    def test_getitem_slice(self):
+        items = [self._make_mock_result(target_name=f"G{i}") for i in range(5)]
+        results = TaskResultList(items)
+        sliced = results[1:3]
+        self.assertEqual(len(sliced), 2)
+        self.assertIs(sliced[0], items[1])
+
+    def test_iter(self):
+        items = [self._make_mock_result() for _ in range(3)]
+        results = TaskResultList(items)
+        self.assertEqual(list(results), items)
+
+    def test_bool_true(self):
+        results = TaskResultList([self._make_mock_result()])
+        self.assertTrue(results)
+
+    def test_bool_false(self):
+        results = TaskResultList([])
+        self.assertFalse(results)
+
+    def test_repr_with_results(self):
+        results = TaskResultList([self._make_mock_result() for _ in range(2)])
+        self.assertEqual(repr(results), "TaskResultList([2 Kriging result(s)])")
+
+    def test_repr_empty(self):
+        results = TaskResultList([])
+        self.assertEqual(repr(results), "TaskResultList([])")
+
+    def test_str_with_results(self):
+        items = [
+            self._make_mock_result(target_name="Grid A", attribute_name="cu_est"),
+            self._make_mock_result(target_name="Grid B", attribute_name="au_est"),
+        ]
+        results = TaskResultList(items)
+        s = str(results)
+        self.assertIn("2 Kriging Result(s)", s)
+        self.assertIn("Grid A", s)
+        self.assertIn("cu_est", s)
+        self.assertIn("Grid B", s)
+        self.assertIn("au_est", s)
+
+    def test_str_empty(self):
+        results = TaskResultList([])
+        self.assertEqual(str(results), "No results")
 
 
 if __name__ == "__main__":

@@ -182,10 +182,10 @@ class TaskRunner(ABC, Generic[TParams, TResultModel, TResult]):
     params_type: ClassVar[type[TParams]]
     """The Pydantic parameters model, extracted automatically from the generic args."""
 
-    resullt_model_type: ClassVar[type[TResultModel]]
+    result_model_type: ClassVar[type[TResultModel]]
     """The Pydantic result model, extracted automatically from the generic args."""
 
-    result_type: ClassVar[type[TResultModel]]
+    result_type: ClassVar[type[TResult]]
     """The result type returned by the runner, typically a wrapper around the result model with convenience methods."""
 
     def __init_subclass__(cls, *, topic: str = "", task: str = "", **kwargs: Any) -> None:
@@ -206,7 +206,7 @@ class TaskRunner(ABC, Generic[TParams, TResultModel, TResult]):
                 f"class {cls.__name__}(TaskRunner[MyParams, MyResultModel, MyResult], topic=..., task=...)"
             )
 
-        cls.params_type, cls.resullt_model_type, cls.result_type = generic_args
+        cls.params_type, cls.result_model_type, cls.result_type = generic_args
 
         # Auto-register with the global registry
         _registry.register(cls.params_type, cls)
@@ -242,7 +242,7 @@ class TaskRunner(ABC, Generic[TParams, TResultModel, TResult]):
             topic=self.topic,
             task=self.task,
             parameters=self._params.model_dump(mode="json", by_alias=True, exclude_none=True),
-            result_type=self.result_type,
+            result_type=self.result_model_type,
             preview=self._preview,
         )
 
@@ -335,8 +335,8 @@ async def run_tasks(
     # Wrap each sub-feedback to suppress per-job messages and show completion count
     tracked_fbs = [_CompletionTrackingFeedback(sub_fb, _on_task_complete) for sub_fb in per_task_fb]
     tasks = [
-        TaskRunner(context, params, preview=preview, fb=task_fb)
-        for params, task_fb in zip(parameters, tracked_fbs, strict=True)
+        runner_cls(context, params, preview=preview, fb=task_fb)
+        for runner_cls, params, task_fb in zip(runner_classes, parameters, tracked_fbs, strict=True)
     ]
 
     return await asyncio.gather(*tasks)

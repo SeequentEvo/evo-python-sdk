@@ -41,8 +41,8 @@ from .formatters import (
     format_block_model_version,
     format_report,
     format_report_result,
-    format_task_result,
-    format_task_results,
+    format_task_result_list,
+    format_task_result_with_target,
     format_variogram,
 )
 from .urls import (
@@ -73,8 +73,8 @@ __all__ = [
     "format_block_model_version",
     "format_report",
     "format_report_result",
-    "format_task_result",
-    "format_task_results",
+    "format_task_result_list",
+    "format_task_result_with_target",
     "format_variogram",
     "get_blocksync_base_url",
     "get_blocksync_block_model_url",
@@ -160,22 +160,17 @@ def _register_formatters(ipython: InteractiveShell) -> None:
     )
 
     # Register formatters for compute task results
-    html_formatter.for_type_by_name(
-        "evo.compute.tasks.common.results",
-        "TaskResult",
-        format_task_result,
-    )
-
-    html_formatter.for_type_by_name(
-        "evo.compute.tasks.common.results",
-        "TaskResults",
-        format_task_results,
-    )
 
     html_formatter.for_type_by_name(
         "evo.compute.tasks.kriging",
         "KrigingResult",
-        format_task_result,
+        format_task_result_with_target,
+    )
+
+    html_formatter.for_type_by_name(
+        "evo.compute.tasks.common.results",
+        "TaskResultList",
+        format_task_result_list,
     )
 
 

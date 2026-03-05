@@ -8,7 +8,7 @@
         
         
         <link rel="shortcut icon" href="../../../../img/favicon.ico">
-        <title>TaskTarget - Evo Python SDK</title>
+        <title>TaskResultList - Evo Python SDK</title>
         <link href="../../../../css/bootstrap.min.css" rel="stylesheet">
         <link href="../../../../css/fontawesome.min.css" rel="stylesheet">
         <link href="../../../../css/brands.min.css" rel="stylesheet">
@@ -36,12 +36,12 @@
 
                     <ul class="nav navbar-nav ms-md-auto">
                             <li class="nav-item">
-                                <a rel="prev" href="TaskResultList.html" class="nav-link">
+                                <a rel="prev" href="TaskAttribute.html" class="nav-link">
                                     <i class="fa fa-arrow-left"></i> Previous
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a rel="next" href="../runner/TParams.html" class="nav-link">
+                                <a rel="next" href="TaskTarget.html" class="nav-link">
                                     Next <i class="fa fa-arrow-right"></i>
                                 </a>
                             </li>
@@ -63,7 +63,7 @@
     <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
         <ul class="nav flex-column">
             
-            <li class="nav-item" data-bs-level="2"><a href="#evo.compute.tasks.common.results.TaskTarget" class="nav-link">TaskTarget</a>
+            <li class="nav-item" data-bs-level="2"><a href="#evo.compute.tasks.common.results.TaskResultList" class="nav-link">TaskResultList</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -80,8 +80,8 @@
 
 
 
-<h2 id="evo.compute.tasks.common.results.TaskTarget" class="doc doc-heading">
-            <span class="doc doc-object-name doc-class-name">evo.compute.tasks.common.results.TaskTarget</span>
+<h2 id="evo.compute.tasks.common.results.TaskResultList" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">evo.compute.tasks.common.results.TaskResultList</span>
 
 
 </h2>
@@ -91,7 +91,18 @@
 
 
 
-        <p>Target information from a task result.</p>
+        <p>A list-like container for task results with pretty-printing support.</p>
+<p>Wraps a plain list of result objects so that Jupyter can render them
+with rich HTML via <code>_repr_html_</code>.  When <code>evo.widgets</code> is loaded its
+<code>for_type_by_name</code> registration overrides the built-in HTML with the
+fully-styled version.</p>
+<p>Supports indexing, iteration, <code>len()</code>, and <code>bool()</code> just like a
+regular list.</p>
+<p>Example:
+    &gt;&gt;&gt; results = await run(manager, [params1, params2], preview=True)
+    &gt;&gt;&gt; results        # pretty-printed table in Jupyter
+    &gt;&gt;&gt; results[0]     # access individual result
+    &gt;&gt;&gt; len(results)   # number of results</p>
 
 
 

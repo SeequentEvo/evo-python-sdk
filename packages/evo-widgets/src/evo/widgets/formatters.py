@@ -41,8 +41,8 @@ __all__ = [
     "format_block_model_version",
     "format_report",
     "format_report_result",
-    "format_task_result",
-    "format_task_results",
+    "format_task_result_list",
+    "format_task_result_with_target",
     "format_variogram",
 ]
 
@@ -578,7 +578,7 @@ def format_block_model(obj: Any) -> str:
 def _get_task_result_portal_url(result: Any) -> str | None:
     """Extract Portal URL from a task result's target reference.
 
-    :param result: A TaskResult object with target.reference attribute.
+    :param result: A result object with ``_target.reference`` attribute.
     :return: Portal URL string or None if not available.
     """
     # Check if result has target attribute (public Pydantic field)
@@ -599,81 +599,112 @@ def _get_task_result_portal_url(result: Any) -> str | None:
         return None
 
 
-def format_task_result(result: Any) -> str:
-    """Format a TaskResult as HTML.
+def _get_schema_display(result: Any) -> str:
+    """Get a displayable schema string from a task result.
 
-    This formatter handles TaskResult and KrigingResult objects from evo-compute,
-    displaying the task completion status, target information, and Portal links.
+    Uses ``result.schema`` which returns an ``ObjectSchema`` and converts it
+    to a string via ``str()``.
 
-    :param result: A TaskResult object with message, target_name, schema_type,
-        attribute_name, and _target attributes.
-    :return: HTML string for the task result.
+    :param result: A task result object.
+    :return: A string representation of the schema.
+    """
+    schema_obj = getattr(result, "schema", None)
+    if schema_obj is not None:
+        return str(schema_obj)
+    return "Unknown"
+
+
+def _format_single_task_result_inner(result: Any, index: int | None = None) -> str:
+    """Render the inner HTML for a single task result card.
+
+    Returns the title, message, and detail table *without* the outer
+    ``<div class="evo">`` wrapper or the stylesheet so it can be embedded
+    inside both :func:`format_task_result_with_target` and
+    :func:`format_task_result_list`.
+
+    :param result: A result object (e.g. ``KrigingResult``).
+    :param index: Optional 1-based index to prefix the title with (e.g. ``#1``).
+    :return: HTML fragment.
     """
     portal_url = _get_task_result_portal_url(result)
     links = [("Portal", portal_url)] if portal_url else None
 
-    # Get result type name (Task, Kriging, etc.)
-    result_type = result._get_result_type_name() if hasattr(result, "_get_result_type_name") else "Task"
-    title = f"✓ {result_type} Result"
+    result_type = getattr(result, "TASK_DISPLAY_NAME", "Task")
 
-    rows = [
-        ("Target:", result.target_name),
-        ("Schema:", result.schema_type),
-        ("Attribute:", f'<span class="attr-highlight">{result.attribute_name}</span>'),
-    ]
+    if index is not None:
+        title = f"#{index} ✓ {result_type} Result"
+    else:
+        title = f"✓ {result_type} Result"
+
+    target_name = getattr(result, "target_name", None)
+    if target_name is not None:
+        schema_display = _get_schema_display(result)
+        attribute_name = getattr(result, "attribute_name", "")
+        rows = [
+            ("Target:", target_name),
+            ("Schema:", schema_display),
+            ("Attribute:", f'<span class="attr-highlight">{attribute_name}</span>'),
+        ]
+    else:
+        rows = []
 
     table_rows = [build_table_row(label, value) for label, value in rows]
 
-    html = STYLESHEET
-    html += '<div class="evo">'
-    html += build_title(title, links)
-    html += f'<div class="message">{result.message}</div>'
-    html += f"<table>{''.join(table_rows)}</table>"
-    html += "</div>"
+    html = build_title(title, links)
+    message = getattr(result, "message", None)
+    if message:
+        html += f'<div class="message">{message}</div>'
+    if table_rows:
+        html += f"<table>{''.join(table_rows)}</table>"
 
     return html
 
 
-def format_task_results(results: Any) -> str:
-    """Format a TaskResults collection as HTML.
+def format_task_result_with_target(result: Any) -> str:
+    """Format a KrigingResult or any other task result with a target as HTML.
 
-    This formatter handles TaskResults objects from evo-compute,
-    displaying a table of all completed tasks with their status and Portal links.
+    Displays the task completion status, target information, and Portal links.
 
-    :param results: A TaskResults object with _results list of TaskResult objects.
-    :return: HTML string for the task results collection.
+    :param result: A KrigingResult object with message, target_name, schema,
+        attribute_name, and _target attributes.
+    :return: HTML string for the task result.
+    """
+    html = STYLESHEET
+    html += '<div class="evo">'
+    html += _format_single_task_result_inner(result)
+    html += "</div>"
+    return html
+
+
+def format_task_result_list(results: Any) -> str:
+    """Format a TaskResultList as styled HTML.
+
+    Renders each result as an individually-formatted card (reusing the
+    same layout as :func:`format_task_result_with_target`) wrapped in a
+    single container with a summary title.
+
+    :param results: A ``TaskResultList`` object with iterable result items.
+    :return: HTML string for the results collection.
     """
     result_list = results._results
 
     if not result_list:
         return "<div>No results</div>"
 
-    # Get result type from first result
     result_type = getattr(result_list[0], "TASK_DISPLAY_NAME", "Task")
-    title = f"✓ {len(result_list)} {result_type} Results"
-
-    # Build table data
-    headers = ["#", "Target", "Attribute", "Schema", "Link"]
-    rows = []
-    for i, result in enumerate(result_list):
-        portal_url = _get_task_result_portal_url(result)
-        link_html = f'<a href="{portal_url}" target="_blank">Portal</a>' if portal_url else "N/A"
-        rows.append(
-            [
-                str(i + 1),
-                result.target_name,
-                f'<span class="attr-highlight">{result.attribute_name}</span>',
-                result.schema_type,
-                link_html,
-            ]
-        )
-
-    table = build_nested_table(headers, rows)
+    title = f"✓ {len(result_list)} {result_type} Result(s)"
 
     html = STYLESHEET
     html += '<div class="evo">'
     html += build_title(title)
-    html += table
+
+    for i, result in enumerate(result_list):
+        html += (
+            '<div style="margin-top: 0.5em; padding-top: 0.5em; border-top: 1px solid var(--jp-border-color1, #ddd);">'
+        )
+        html += _format_single_task_result_inner(result, index=i + 1)
+        html += "</div>"
+
     html += "</div>"
 
     return html

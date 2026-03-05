@@ -732,3 +732,54 @@ class TestObjectReferenceValidation(TestCase):
         """Source should reject an integer."""
         with self.assertRaises((TypeError, Exception)):
             Source(object=12345, attribute="grade")
+
+
+class TestSearchNeighborhoodAlias(TestCase):
+    """Tests for the search/neighborhood alias on KrigingParameters."""
+
+    def _make_params(self, **kwargs):
+        """Create KrigingParameters with default values, overridable via kwargs."""
+        search = SearchNeighborhood(
+            ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=100, semi_major=100, minor=50)),
+            max_samples=20,
+        )
+        defaults = dict(
+            source=Source(object=POINTSET_URL, attribute="grade"),
+            target=Target.new_attribute(GRID_URL, "kriged_grade"),
+            variogram=VARIOGRAM_URL,
+            search=search,
+        )
+        defaults.update(kwargs)
+        return KrigingParameters(**defaults)
+
+    def test_search_serializes_as_neighborhood_with_by_alias(self):
+        """When by_alias=True, the 'search' field should serialize as 'neighborhood'."""
+        params = self._make_params()
+        params_dict = params.model_dump(mode="json", by_alias=True, exclude_none=True)
+        self.assertIn("neighborhood", params_dict)
+        self.assertNotIn("search", params_dict)
+
+    def test_search_serializes_as_search_without_by_alias(self):
+        """When by_alias=False (default), the field should serialize as 'search'."""
+        params = self._make_params()
+        params_dict = params.model_dump()
+        self.assertIn("search", params_dict)
+
+    def test_can_construct_with_field_name_search(self):
+        """Users should be able to construct KrigingParameters with search=..."""
+        params = self._make_params()
+        self.assertIsNotNone(params.search)
+
+    def test_can_construct_with_alias_neighborhood(self):
+        """Users should also be able to construct with neighborhood=..."""
+        search = SearchNeighborhood(
+            ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=100, semi_major=100, minor=50)),
+            max_samples=20,
+        )
+        params = KrigingParameters(
+            source=Source(object=POINTSET_URL, attribute="grade"),
+            target=Target.new_attribute(GRID_URL, "kriged_grade"),
+            variogram=VARIOGRAM_URL,
+            neighborhood=search,
+        )
+        self.assertIsNotNone(params.search)
