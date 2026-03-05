@@ -41,7 +41,7 @@
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a rel="next" href="KrigingRunner.html" class="nav-link">
+                                <a rel="next" href="KrigingResultModel.html" class="nav-link">
                                     Next <i class="fa fa-arrow-right"></i>
                                 </a>
                             </li>
@@ -91,19 +91,6 @@
 
 
 
-        <p>Result of a kriging task.</p>
-<p>Contains information about the completed kriging operation and provides
-convenient methods to access the target object and its data.</p>
-<p>Example:
-    &gt;&gt;&gt; result = await run(manager, params)
-    &gt;&gt;&gt; result  # Pretty-prints the result
-    &gt;&gt;&gt;
-    &gt;&gt;&gt; # Get data directly as DataFrame (simplest approach)
-    &gt;&gt;&gt; df = await result.to_dataframe()
-    &gt;&gt;&gt;
-    &gt;&gt;&gt; # Or load the target object for more control
-    &gt;&gt;&gt; target = await result.get_target_object()</p>
-
 
 
 
@@ -122,8 +109,220 @@ convenient methods to access the target object and its data.</p>
 
 
 
+<div class="doc doc-object doc-attribute">
 
 
+
+<h3 id="evo.compute.tasks.kriging.KrigingResult.message" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">message</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">message</span><span class="p">:</span> <span class="nb">str</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>A message describing what happened in the task.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.kriging.KrigingResult.target_name" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">target_name</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">target_name</span><span class="p">:</span> <span class="nb">str</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The name of the target object.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.kriging.KrigingResult.target_reference" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">target_reference</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">target_reference</span><span class="p">:</span> <span class="nb">str</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Reference URL to the target object.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.kriging.KrigingResult.attribute_name" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">attribute_name</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">attribute_name</span><span class="p">:</span> <span class="nb">str</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The name of the attribute that was created/updated.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.kriging.KrigingResult.schema" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">schema</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">schema</span><span class="p">:</span> <span class="n">ObjectSchema</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The schema type of the target object (e.g., 'regular-masked-3d-grid').</p>
+<p>Uses <code>ObjectSchema.from_id</code> to parse the schema ID. Falls back to the
+raw <code>schema_id</code> string when it cannot be parsed.</p>
+
+    </div>
+
+</div>
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.compute.tasks.kriging.KrigingResult.get_target_object" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">get_target_object</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_target_object</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">BaseObject</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Load and return the target geoscience object.</p>
+<p>Args:
+    context: Optional context to use. If not provided, uses the context
+            from when the task was run.</p>
+<p>Returns:
+    The typed geoscience object (e.g., Regular3DGrid, RegularMasked3DGrid, BlockModel)</p>
+<p>Example:
+    &gt;&gt;&gt; result = await run(manager, params)
+    &gt;&gt;&gt; target = await result.get_target_object()
+    &gt;&gt;&gt; target  # Pretty-prints with Portal/Viewer links</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.compute.tasks.kriging.KrigingResult.to_dataframe" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">to_dataframe</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">to_dataframe</span><span class="p">(</span><span class="o">*</span><span class="n">columns</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Get the task results as a DataFrame.</p>
+<p>This is the simplest way to access the task output data. It loads
+the target object and returns its data as a pandas DataFrame.</p>
+<p>Args:
+    context: Optional context to use. If not provided, uses the context
+            from when the task was run.
+    columns: Optional list of column names to include. If None, includes
+            all columns. Use ["*"] to explicitly request all columns.</p>
+<p>Returns:
+    A pandas DataFrame containing the task results.</p>
+<p>Example:
+    &gt;&gt;&gt; result = await run(manager, params)
+    &gt;&gt;&gt; df = await result.to_dataframe()
+    &gt;&gt;&gt; df.head()</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.compute.tasks.kriging.KrigingResult.__str__" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">__str__</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">__str__</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>String representation.</p>
+
+
+    </div>
+
+</div>
 
 
 

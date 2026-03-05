@@ -202,6 +202,10 @@
             <span class="doc doc-object-name doc-function-name">from_context</span>
 
 
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">from_context</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="n">IContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ObjectAPIClient</span>
 </code></pre></div>
@@ -276,6 +280,10 @@
 <h3 id="evo.objects.client.api_client.ObjectAPIClient.get_service_health" class="doc doc-heading">
             <span class="doc doc-object-name doc-function-name">get_service_health</span>
 
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
 
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_service_health</span><span class="p">(</span><span class="n">check_type</span><span class="p">:</span> <span class="n">HealthCheckType</span> <span class="o">=</span> <span class="n">HealthCheckType</span><span class="o">.</span><span class="n">FULL</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ServiceHealth</span>
@@ -383,6 +391,10 @@
 <h3 id="evo.objects.client.api_client.ObjectAPIClient.list_objects" class="doc doc-heading">
             <span class="doc doc-object-name doc-function-name">list_objects</span>
 
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
 
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">list_objects</span><span class="p">(</span>
@@ -547,6 +559,10 @@ If there are no objects to list, the page will be empty.</p>
             <span class="doc doc-object-name doc-function-name">list_all_objects</span>
 
 
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">list_all_objects</span><span class="p">(</span>
     <span class="n">limit_per_request</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5000</span><span class="p">,</span>
@@ -691,6 +707,10 @@ If there are no objects to list, the page will be empty.</p>
 <h3 id="evo.objects.client.api_client.ObjectAPIClient.list_objects_for_instance" class="doc doc-heading">
             <span class="doc doc-object-name doc-function-name">list_objects_for_instance</span>
 
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
 
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">list_objects_for_instance</span><span class="p">(</span>
@@ -855,6 +875,10 @@ If there are no objects to list, the page will be empty.</p>
             <span class="doc doc-object-name doc-function-name">list_versions_by_path</span>
 
 
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">list_versions_by_path</span><span class="p">(</span>
     <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">request_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
@@ -946,6 +970,10 @@ If there are no objects to list, the page will be empty.</p>
 <h3 id="evo.objects.client.api_client.ObjectAPIClient.list_versions_by_id" class="doc doc-heading">
             <span class="doc doc-object-name doc-function-name">list_versions_by_id</span>
 
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
 
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">list_versions_by_id</span><span class="p">(</span>
@@ -1039,6 +1067,10 @@ If there are no objects to list, the page will be empty.</p>
             <span class="doc doc-object-name doc-function-name">prepare_data_upload</span>
 
 
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">prepare_data_upload</span><span class="p">(</span><span class="n">data_identifiers</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="n">UUID</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">AsyncIterator</span><span class="p">[</span><span class="n">ObjectDataUpload</span><span class="p">]</span>
 </code></pre></div>
@@ -1113,6 +1145,10 @@ If there are no objects to list, the page will be empty.</p>
 <h3 id="evo.objects.client.api_client.ObjectAPIClient.prepare_data_download" class="doc doc-heading">
             <span class="doc doc-object-name doc-function-name">prepare_data_download</span>
 
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
 
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">prepare_data_download</span><span class="p">(</span>
@@ -1365,6 +1401,10 @@ not installed by default. This dependency can be installed with <code>pip instal
             <span class="doc doc-object-name doc-function-name">create_geoscience_object</span>
 
 
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">create_geoscience_object</span><span class="p">(</span>
     <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">object_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">request_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
@@ -1499,6 +1539,10 @@ uploaded, and the metadata of the created object will be returned.</p>
             <span class="doc doc-object-name doc-function-name">move_geoscience_object</span>
 
 
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">move_geoscience_object</span><span class="p">(</span>
     <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">object_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">request_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
@@ -1630,6 +1674,10 @@ uploaded, and the metadata of the created object will be returned.</p>
             <span class="doc doc-object-name doc-function-name">update_geoscience_object</span>
 
 
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">update_geoscience_object</span><span class="p">(</span>
     <span class="n">object_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">request_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
@@ -1745,6 +1793,10 @@ uploaded, and the metadata of the created object will be returned.</p>
             <span class="doc doc-object-name doc-function-name">download_object_by_path</span>
 
 
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">download_object_by_path</span><span class="p">(</span>
     <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">request_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
@@ -1852,6 +1904,10 @@ uploaded, and the metadata of the created object will be returned.</p>
 <h3 id="evo.objects.client.api_client.ObjectAPIClient.download_object_by_id" class="doc doc-heading">
             <span class="doc doc-object-name doc-function-name">download_object_by_id</span>
 
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
 
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">download_object_by_id</span><span class="p">(</span>
@@ -1963,6 +2019,10 @@ uploaded, and the metadata of the created object will be returned.</p>
             <span class="doc doc-object-name doc-function-name">get_latest_object_versions</span>
 
 
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_latest_object_versions</span><span class="p">(</span>
     <span class="n">object_ids</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">UUID</span><span class="p">],</span>
@@ -2073,6 +2133,10 @@ uploaded, and the metadata of the created object will be returned.</p>
             <span class="doc doc-object-name doc-function-name">delete_object_by_path</span>
 
 
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">delete_object_by_path</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">request_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
 </code></pre></div>
@@ -2162,6 +2226,10 @@ uploaded, and the metadata of the created object will be returned.</p>
 <h3 id="evo.objects.client.api_client.ObjectAPIClient.delete_object_by_id" class="doc doc-heading">
             <span class="doc doc-object-name doc-function-name">delete_object_by_id</span>
 
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
 
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">delete_object_by_id</span><span class="p">(</span>
@@ -2255,6 +2323,10 @@ uploaded, and the metadata of the created object will be returned.</p>
             <span class="doc doc-object-name doc-function-name">restore_geoscience_object</span>
 
 
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">restore_geoscience_object</span><span class="p">(</span>
     <span class="n">object_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">request_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
@@ -2347,6 +2419,10 @@ uploaded, and the metadata of the created object will be returned.</p>
             <span class="doc doc-object-name doc-function-name">list_stages</span>
 
 
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">list_stages</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Stage</span><span class="p">]</span>
 </code></pre></div>
@@ -2389,6 +2465,10 @@ uploaded, and the metadata of the created object will be returned.</p>
 <h3 id="evo.objects.client.api_client.ObjectAPIClient.set_stage" class="doc doc-heading">
             <span class="doc doc-object-name doc-function-name">set_stage</span>
 
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
 
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">set_stage</span><span class="p">(</span><span class="n">object_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">version_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">stage_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>

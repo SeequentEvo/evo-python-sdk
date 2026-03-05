@@ -186,6 +186,10 @@
             <span class="doc doc-object-name doc-function-name">get_service_health</span>
 
 
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_service_health</span><span class="p">(</span><span class="n">check_type</span><span class="p">:</span> <span class="n">HealthCheckType</span> <span class="o">=</span> <span class="n">HealthCheckType</span><span class="o">.</span><span class="n">FULL</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ServiceHealth</span>
 </code></pre></div>
@@ -292,6 +296,10 @@
 <h3 id="evo.files.client.FileAPIClient.list_files" class="doc doc-heading">
             <span class="doc doc-object-name doc-function-name">list_files</span>
 
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
 
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">list_files</span><span class="p">(</span><span class="n">offset</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5000</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">deleted</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Page</span><span class="p">[</span><span class="n">FileMetadata</span><span class="p">]</span>
@@ -417,6 +425,10 @@ If there are no files starting at <code>offset</code>, the page will be empty.</
             <span class="doc doc-object-name doc-function-name">list_all_files</span>
 
 
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">list_all_files</span><span class="p">(</span><span class="n">limit_per_request</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5000</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">deleted</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">FileMetadata</span><span class="p">]</span>
 </code></pre></div>
@@ -524,6 +536,10 @@ If there are no files starting at <code>offset</code>, the page will be empty.</
             <span class="doc doc-object-name doc-function-name">get_file_by_path</span>
 
 
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_file_by_path</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">version_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FileMetadata</span>
 </code></pre></div>
@@ -613,6 +629,10 @@ If there are no files starting at <code>offset</code>, the page will be empty.</
 <h3 id="evo.files.client.FileAPIClient.get_file_by_id" class="doc doc-heading">
             <span class="doc doc-object-name doc-function-name">get_file_by_id</span>
 
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
 
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_file_by_id</span><span class="p">(</span><span class="n">file_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">version_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">deleted</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FileMetadata</span>
@@ -720,6 +740,10 @@ If there are no files starting at <code>offset</code>, the page will be empty.</
             <span class="doc doc-object-name doc-function-name">list_versions_by_path</span>
 
 
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">list_versions_by_path</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">FileVersion</span><span class="p">]</span>
 </code></pre></div>
@@ -793,6 +817,10 @@ If there are no files starting at <code>offset</code>, the page will be empty.</
 <h3 id="evo.files.client.FileAPIClient.list_versions_by_id" class="doc doc-heading">
             <span class="doc doc-object-name doc-function-name">list_versions_by_id</span>
 
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
 
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">list_versions_by_id</span><span class="p">(</span><span class="n">file_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">deleted</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">FileVersion</span><span class="p">]</span>
@@ -884,6 +912,10 @@ If there are no files starting at <code>offset</code>, the page will be empty.</
             <span class="doc doc-object-name doc-function-name">prepare_download_by_path</span>
 
 
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">prepare_download_by_path</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">version_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FileAPIDownload</span>
 </code></pre></div>
@@ -973,6 +1005,10 @@ If there are no files starting at <code>offset</code>, the page will be empty.</
 <h3 id="evo.files.client.FileAPIClient.prepare_download_by_id" class="doc doc-heading">
             <span class="doc doc-object-name doc-function-name">prepare_download_by_id</span>
 
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
 
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">prepare_download_by_id</span><span class="p">(</span><span class="n">file_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">version_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">deleted</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FileAPIDownload</span>
@@ -1080,6 +1116,10 @@ If there are no files starting at <code>offset</code>, the page will be empty.</
             <span class="doc doc-object-name doc-function-name">prepare_upload_by_path</span>
 
 
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">prepare_upload_by_path</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FileAPIUpload</span>
 </code></pre></div>
@@ -1153,6 +1193,10 @@ If there are no files starting at <code>offset</code>, the page will be empty.</
 <h3 id="evo.files.client.FileAPIClient.prepare_upload_by_id" class="doc doc-heading">
             <span class="doc doc-object-name doc-function-name">prepare_upload_by_id</span>
 
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
 
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">prepare_upload_by_id</span><span class="p">(</span><span class="n">file_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FileAPIUpload</span>
@@ -1229,6 +1273,10 @@ will be created.</p>
             <span class="doc doc-object-name doc-function-name">restore_file_by_id</span>
 
 
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">restore_file_by_id</span><span class="p">(</span><span class="n">file_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FileMetadata</span> <span class="o">|</span> <span class="kc">None</span>
 </code></pre></div>
@@ -1303,6 +1351,10 @@ will be created.</p>
             <span class="doc doc-object-name doc-function-name">delete_file_by_path</span>
 
 
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">delete_file_by_path</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
 </code></pre></div>
@@ -1353,6 +1405,10 @@ will be created.</p>
 <h3 id="evo.files.client.FileAPIClient.delete_file_by_id" class="doc doc-heading">
             <span class="doc doc-object-name doc-function-name">delete_file_by_id</span>
 
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
 
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">delete_file_by_id</span><span class="p">(</span><span class="n">file_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>

@@ -8,7 +8,7 @@
         
         
         <link rel="shortcut icon" href="../../../../img/favicon.ico">
-        <title>Rotation - Evo Python SDK</title>
+        <title>TResult - Evo Python SDK</title>
         <link href="../../../../css/bootstrap.min.css" rel="stylesheet">
         <link href="../../../../css/fontawesome.min.css" rel="stylesheet">
         <link href="../../../../css/brands.min.css" rel="stylesheet">
@@ -36,12 +36,12 @@
 
                     <ul class="nav navbar-nav ms-md-auto">
                             <li class="nav-item">
-                                <a rel="prev" href="Point3.html" class="nav-link">
+                                <a rel="prev" href="TParams.html" class="nav-link">
                                     <i class="fa fa-arrow-left"></i> Previous
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a rel="next" href="Size3d.html" class="nav-link">
+                                <a rel="next" href="TResultModel.html" class="nav-link">
                                     Next <i class="fa fa-arrow-right"></i>
                                 </a>
                             </li>
@@ -63,7 +63,7 @@
     <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
         <ul class="nav flex-column">
             
-            <li class="nav-item" data-bs-level="2"><a href="#evo.objects.typed.types.Rotation" class="nav-link">Rotation</a>
+            <li class="nav-item" data-bs-level="2"><a href="#evo.compute.tasks.common.runner.TResult" class="nav-link">TResult</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -72,77 +72,27 @@
 </div></div>
                     <div class="col-md-9" role="main">
 
-<p><a href="https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-objects/src/evo/objects/typed/types.py">GitHub source</a>
+<p><a href="https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-compute/src/evo/compute/tasks/common/runner.py">GitHub source</a>
 </p>
 
 
-<div class="doc doc-object doc-class">
+<div class="doc doc-object doc-attribute">
 
 
 
-<h2 id="evo.objects.typed.types.Rotation" class="doc doc-heading">
-            <span class="doc doc-object-name doc-class-name">evo.objects.typed.types.Rotation</span>
+<h2 id="evo.compute.tasks.common.runner.TResult" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">evo.compute.tasks.common.runner.TResult</span>
 
 
   <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
+      <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
   </span>
 
 </h2>
-
-
-    <div class="doc doc-contents first">
-
-
-
-        <p>A rotation defined by dip azimuth, dip, and pitch angles.</p>
-
-
-
-
-
-
-
-
-
-
-
-<div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-
-<div class="doc doc-object doc-function">
-
-
-<h3 id="evo.objects.typed.types.Rotation.as_rotation_matrix" class="doc doc-heading">
-            <span class="doc doc-object-name doc-function-name">as_rotation_matrix</span>
-
-
-</h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">as_rotation_matrix</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">TResult</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s1">&#39;TResult&#39;</span><span class="p">)</span>
 </code></pre></div>
 
-    <div class="doc doc-contents ">
-
-        <p>Convert the rotation to a rotation matrix.</p>
-<p>The rotation matrix is n the pre-multiplication convention, meaning that
-to rotate a vector <code>v</code>, you compute <code>v_rotated = R @ v</code>.</p>
-
-
-    </div>
-
-</div>
-
-
-
-  </div>
+    <div class="doc doc-contents first">
 
     </div>
 

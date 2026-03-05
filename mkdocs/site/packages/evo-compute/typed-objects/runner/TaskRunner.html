@@ -135,6 +135,10 @@ df = await result.to_dataframe()
             <span class="doc doc-object-name doc-attribute-name">topic</span>
 
 
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+  </span>
+
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="n">topic</span><span class="p">:</span> <span class="nb">str</span>
 </code></pre></div>
@@ -155,6 +159,10 @@ df = await result.to_dataframe()
             <span class="doc doc-object-name doc-attribute-name">task</span>
 
 
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+  </span>
+
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="n">task</span><span class="p">:</span> <span class="nb">str</span>
 </code></pre></div>
@@ -171,12 +179,40 @@ df = await result.to_dataframe()
 
 
 
-<h3 id="evo.compute.tasks.common.runner.TaskRunner.result_type" class="doc doc-heading">
-            <span class="doc doc-object-name doc-attribute-name">result_type</span>
+<h3 id="evo.compute.tasks.common.runner.TaskRunner.params_type" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">params_type</span>
 
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+  </span>
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">result_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">TaskResult</span><span class="p">]</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">params_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">TParams</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The Pydantic parameters model, extracted automatically from the generic args.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.common.runner.TaskRunner.resullt_model_type" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">resullt_model_type</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">resullt_model_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">TResultModel</span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -191,17 +227,21 @@ df = await result.to_dataframe()
 
 
 
-<h3 id="evo.compute.tasks.common.runner.TaskRunner.params_type" class="doc doc-heading">
-            <span class="doc doc-object-name doc-attribute-name">params_type</span>
+<h3 id="evo.compute.tasks.common.runner.TaskRunner.result_type" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">result_type</span>
 
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+  </span>
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">params_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">result_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">TResultModel</span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>The Pydantic parameters model, extracted automatically from the generic args.</p>
+        <p>The result type returned by the runner, typically a wrapper around the result model with convenience methods.</p>
 
     </div>
 
@@ -216,6 +256,10 @@ df = await result.to_dataframe()
 <h3 id="evo.compute.tasks.common.runner.TaskRunner.__call__" class="doc doc-heading">
             <span class="doc doc-object-name doc-function-name">__call__</span>
 
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
 
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">__call__</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">TResult</span>

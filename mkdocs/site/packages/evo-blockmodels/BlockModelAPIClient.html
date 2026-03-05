@@ -203,6 +203,10 @@
             <span class="doc doc-object-name doc-function-name">from_context</span>
 
 
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">from_context</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="n">IContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BlockModelAPIClient</span>
 </code></pre></div>
@@ -277,6 +281,10 @@
 <h3 id="evo.blockmodels.client.BlockModelAPIClient.get_service_health" class="doc doc-heading">
             <span class="doc doc-object-name doc-function-name">get_service_health</span>
 
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
 
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_service_health</span><span class="p">(</span><span class="n">check_type</span><span class="p">:</span> <span class="n">HealthCheckType</span> <span class="o">=</span> <span class="n">HealthCheckType</span><span class="o">.</span><span class="n">FULL</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ServiceHealth</span>
@@ -385,6 +393,10 @@
             <span class="doc doc-object-name doc-function-name">list_block_models</span>
 
 
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">list_block_models</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">BlockModel</span><span class="p">]</span>
 </code></pre></div>
@@ -406,6 +418,10 @@
 <h3 id="evo.blockmodels.client.BlockModelAPIClient.get_block_model" class="doc doc-heading">
             <span class="doc doc-object-name doc-function-name">get_block_model</span>
 
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
 
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_block_model</span><span class="p">(</span><span class="n">bm_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BlockModel</span>
@@ -480,6 +496,10 @@
 <h3 id="evo.blockmodels.client.BlockModelAPIClient.list_all_block_models" class="doc doc-heading">
             <span class="doc doc-object-name doc-function-name">list_all_block_models</span>
 
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
 
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">list_all_block_models</span><span class="p">(</span><span class="n">page_limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="mi">100</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">BlockModel</span><span class="p">]</span>
@@ -557,6 +577,10 @@ until all entries are retrieved. The <code>page_limit</code> is clamped to the s
             <span class="doc doc-object-name doc-function-name">list_versions</span>
 
 
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">list_versions</span><span class="p">(</span><span class="n">bm_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Version</span><span class="p">]</span>
 </code></pre></div>
@@ -633,6 +657,10 @@ limited to the first 100 results (or the service maximum).</p>
 <h3 id="evo.blockmodels.client.BlockModelAPIClient.list_all_versions" class="doc doc-heading">
             <span class="doc doc-object-name doc-function-name">list_all_versions</span>
 
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
 
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">list_all_versions</span><span class="p">(</span><span class="n">bm_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">page_limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="mi">100</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Version</span><span class="p">]</span>
@@ -726,6 +754,10 @@ until all entries are retrieved. The <code>page_limit</code> is clamped to the s
 <h3 id="evo.blockmodels.client.BlockModelAPIClient.create_block_model" class="doc doc-heading">
             <span class="doc doc-object-name doc-function-name">create_block_model</span>
 
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
 
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">create_block_model</span><span class="p">(</span>
@@ -930,6 +962,10 @@ returning. This then returns both the block model and the initial block model ve
             <span class="doc doc-object-name doc-function-name">add_new_subblocked_columns</span>
 
 
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">add_new_subblocked_columns</span><span class="p">(</span><span class="n">bm_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Table</span><span class="p">,</span> <span class="n">units</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
@@ -1060,6 +1096,10 @@ returning. This then returns both the block model and the initial block model ve
             <span class="doc doc-object-name doc-function-name">add_new_columns</span>
 
 
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">add_new_columns</span><span class="p">(</span><span class="n">bm_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Table</span><span class="p">,</span> <span class="n">units</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
@@ -1189,6 +1229,10 @@ returning. This then returns both the block model and the initial block model ve
 <h3 id="evo.blockmodels.client.BlockModelAPIClient.update_block_model_columns" class="doc doc-heading">
             <span class="doc doc-object-name doc-function-name">update_block_model_columns</span>
 
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
 
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">update_block_model_columns</span><span class="p">(</span>
@@ -1376,6 +1420,10 @@ returning. This then returns both the block model and the initial block model ve
             <span class="doc doc-object-name doc-function-name">update_subblocked_columns</span>
 
 
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">update_subblocked_columns</span><span class="p">(</span>
     <span class="n">bm_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span>
@@ -1536,6 +1584,10 @@ If <code>False</code>, the geometry of the sub-blocked model does not change, bu
             <span class="doc doc-object-name doc-function-name">update_column_metadata</span>
 
 
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">update_column_metadata</span><span class="p">(</span><span class="n">bm_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">column_updates</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">],</span> <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Version</span>
 </code></pre></div>
@@ -1642,6 +1694,10 @@ If <code>False</code>, the geometry of the sub-blocked model does not change, bu
 <h3 id="evo.blockmodels.client.BlockModelAPIClient.rename_block_model_columns" class="doc doc-heading">
             <span class="doc doc-object-name doc-function-name">rename_block_model_columns</span>
 
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
 
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">rename_block_model_columns</span><span class="p">(</span><span class="n">bm_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">column_renames</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Version</span>
@@ -1750,6 +1806,10 @@ If <code>False</code>, the geometry of the sub-blocked model does not change, bu
             <span class="doc doc-object-name doc-function-name">delete_block_model_columns</span>
 
 
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">delete_block_model_columns</span><span class="p">(</span><span class="n">bm_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">column_titles</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Version</span>
 </code></pre></div>
@@ -1856,6 +1916,10 @@ If <code>False</code>, the geometry of the sub-blocked model does not change, bu
 <h3 id="evo.blockmodels.client.BlockModelAPIClient.query_block_model_as_table" class="doc doc-heading">
             <span class="doc doc-object-name doc-function-name">query_block_model_as_table</span>
 
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
 
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">query_block_model_as_table</span><span class="p">(</span>

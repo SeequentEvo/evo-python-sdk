@@ -8,7 +8,7 @@
         
         
         <link rel="shortcut icon" href="../../../../img/favicon.ico">
-        <title>Source from attribute - Evo Python SDK</title>
+        <title>AnyTargetAttribute - Evo Python SDK</title>
         <link href="../../../../css/bootstrap.min.css" rel="stylesheet">
         <link href="../../../../css/fontawesome.min.css" rel="stylesheet">
         <link href="../../../../css/brands.min.css" rel="stylesheet">
@@ -36,12 +36,12 @@
 
                     <ul class="nav navbar-nav ms-md-auto">
                             <li class="nav-item">
-                                <a rel="prev" href="is_typed_attribute.html" class="nav-link">
+                                <a rel="prev" href="AnySourceAttribute.html" class="nav-link">
                                     <i class="fa fa-arrow-left"></i> Previous
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a rel="next" href="target_from_attribute.html" class="nav-link">
+                                <a rel="next" href="AttributeExpression.html" class="nav-link">
                                     Next <i class="fa fa-arrow-right"></i>
                                 </a>
                             </li>
@@ -63,7 +63,7 @@
     <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
         <ul class="nav flex-column">
             
-            <li class="nav-item" data-bs-level="2"><a href="#evo.compute.tasks.common.source_target.source_from_attribute" class="nav-link">source_from_attribute</a>
+            <li class="nav-item" data-bs-level="2"><a href="#evo.compute.tasks.common.source_target.AnyTargetAttribute" class="nav-link">AnyTargetAttribute</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -76,29 +76,23 @@
 </p>
 
 
-<div class="doc doc-object doc-function">
+<div class="doc doc-object doc-attribute">
 
 
-<h2 id="evo.compute.tasks.common.source_target.source_from_attribute" class="doc doc-heading">
-            <span class="doc doc-object-name doc-function-name">evo.compute.tasks.common.source_target.source_from_attribute</span>
 
+<h2 id="evo.compute.tasks.common.source_target.AnyTargetAttribute" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">evo.compute.tasks.common.source_target.AnyTargetAttribute</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
+  </span>
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">source_from_attribute</span><span class="p">(</span><span class="n">attr</span><span class="p">:</span> <span class="n">Attribute</span> <span class="o">|</span> <span class="n">BlockModelAttribute</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Source</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">AnyTargetAttribute</span><span class="p">:</span> <span class="n">TypeAlias</span> <span class="o">=</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Target</span><span class="p">,</span> <span class="n">BeforeValidator</span><span class="p">(</span><span class="n">_validate_target_attribute</span><span class="p">)]</span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
-
-        <p>Convert a typed <code>Attribute</code> or <code>BlockModelAttribute</code> to a :class:<code>Source</code>.</p>
-<p>Only existing attributes can be used as a source, since source data must already exist.</p>
-<p>Args:
-    attr: An existing <code>Attribute</code> from a DownloadedObject, or a <code>BlockModelAttribute</code>.</p>
-<p>Returns:
-    A :class:<code>Source</code> referencing the parent object and attribute expression.</p>
-<p>Raises:
-    TypeError: If <em>attr</em> is not a supported attribute type, or if it has
-        no <code>_obj</code> reference to its parent object.</p>
-
 
     </div>
 

@@ -8,7 +8,7 @@
         
         
         <link rel="shortcut icon" href="../../../../img/favicon.ico">
-        <title>TaskResults - Evo Python SDK</title>
+        <title>TResultModel - Evo Python SDK</title>
         <link href="../../../../css/bootstrap.min.css" rel="stylesheet">
         <link href="../../../../css/fontawesome.min.css" rel="stylesheet">
         <link href="../../../../css/brands.min.css" rel="stylesheet">
@@ -36,12 +36,12 @@
 
                     <ul class="nav navbar-nav ms-md-auto">
                             <li class="nav-item">
-                                <a rel="prev" href="TaskResult.html" class="nav-link">
+                                <a rel="prev" href="TResult.html" class="nav-link">
                                     <i class="fa fa-arrow-left"></i> Previous
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a rel="next" href="TaskTarget.html" class="nav-link">
+                                <a rel="next" href="TaskRegistry.html" class="nav-link">
                                     Next <i class="fa fa-arrow-right"></i>
                                 </a>
                             </li>
@@ -63,7 +63,7 @@
     <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
         <ul class="nav flex-column">
             
-            <li class="nav-item" data-bs-level="2"><a href="#evo.compute.tasks.common.results.TaskResults" class="nav-link">TaskResults</a>
+            <li class="nav-item" data-bs-level="2"><a href="#evo.compute.tasks.common.runner.TResultModel" class="nav-link">TResultModel</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -72,98 +72,27 @@
 </div></div>
                     <div class="col-md-9" role="main">
 
-<p><a href="https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-compute/src/evo/compute/tasks/common/results.py">GitHub source</a>
+<p><a href="https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-compute/src/evo/compute/tasks/common/runner.py">GitHub source</a>
 </p>
-
-
-<div class="doc doc-object doc-class">
-
-
-
-<h2 id="evo.compute.tasks.common.results.TaskResults" class="doc doc-heading">
-            <span class="doc doc-object-name doc-class-name">evo.compute.tasks.common.results.TaskResults</span>
-
-
-</h2>
-
-
-    <div class="doc doc-contents first">
-
-
-
-        <p>Container for multiple task results with pretty-printing support.</p>
-<p>Provides iteration and indexing support for accessing individual results.</p>
-<p>Example:
-    &gt;&gt;&gt; results = await run(manager, [params1, params2, params3])
-    &gt;&gt;&gt; results  # Pretty-prints all results
-    &gt;&gt;&gt; results[0]  # Access first result
-    &gt;&gt;&gt; for result in results:
-    ...     print(result.attribute_name)</p>
-
-
-
-
-
-
-
-
-
-
-
-<div class="doc doc-children">
-
-
-
-
-
 
 
 <div class="doc doc-object doc-attribute">
 
 
 
-<h3 id="evo.compute.tasks.common.results.TaskResults.results" class="doc doc-heading">
-            <span class="doc doc-object-name doc-attribute-name">results</span>
+<h2 id="evo.compute.tasks.common.runner.TResultModel" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">evo.compute.tasks.common.runner.TResultModel</span>
 
 
-</h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">TaskResult</span><span class="p">]</span>
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
+  </span>
+
+</h2>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">TResultModel</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s1">&#39;TResultModel&#39;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">BaseModel</span><span class="p">)</span>
 </code></pre></div>
 
-    <div class="doc doc-contents ">
-
-        <p>The list of task results.</p>
-
-    </div>
-
-</div>
-
-
-
-
-<div class="doc doc-object doc-function">
-
-
-<h3 id="evo.compute.tasks.common.results.TaskResults.__repr__" class="doc doc-heading">
-            <span class="doc doc-object-name doc-function-name">__repr__</span>
-
-
-</h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">__repr__</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span>
-</code></pre></div>
-
-    <div class="doc doc-contents ">
-
-        <p>String representation.</p>
-
-
-    </div>
-
-</div>
-
-
-
-  </div>
+    <div class="doc doc-contents first">
 
     </div>
 

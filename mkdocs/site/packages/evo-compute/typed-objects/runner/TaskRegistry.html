@@ -36,7 +36,7 @@
 
                     <ul class="nav navbar-nav ms-md-auto">
                             <li class="nav-item">
-                                <a rel="prev" href="../results/TaskTarget.html" class="nav-link">
+                                <a rel="prev" href="TResultModel.html" class="nav-link">
                                     <i class="fa fa-arrow-left"></i> Previous
                                 </a>
                             </li>
@@ -124,7 +124,7 @@ to their corresponding TaskRunner subclass.</p>
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">register</span><span class="p">(</span><span class="n">param_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span> <span class="n">runner_cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">TaskRunner</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">register</span><span class="p">(</span><span class="n">param_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">TParams</span><span class="p">],</span> <span class="n">runner_cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">TaskRunner</span><span class="p">[</span><span class="n">TParams</span><span class="p">,</span> <span class="n">TResultModel</span><span class="p">,</span> <span class="n">TResult</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="kc">None</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -147,7 +147,7 @@ to their corresponding TaskRunner subclass.</p>
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_runner</span><span class="p">(</span><span class="n">param_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">TaskRunner</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_runner</span><span class="p">(</span><span class="n">param_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">TParams</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">TaskRunner</span><span class="p">[</span><span class="n">TParams</span><span class="p">,</span> <span class="n">TResultModel</span><span class="p">,</span> <span class="n">TResult</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -171,7 +171,7 @@ to their corresponding TaskRunner subclass.</p>
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_runner_for_params</span><span class="p">(</span><span class="n">params</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">TaskRunner</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_runner_for_params</span><span class="p">(</span><span class="n">params</span><span class="p">:</span> <span class="n">TParams</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">TaskRunner</span><span class="p">[</span><span class="n">TParams</span><span class="p">,</span> <span class="n">TResultModel</span><span class="p">,</span> <span class="n">TResult</span><span class="p">]]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
