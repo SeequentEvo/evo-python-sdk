@@ -1079,7 +1079,7 @@ class TestFormatTaskResults(unittest.TestCase):
         obj.attribute_name = defaults["attribute_name"]
         obj.target = MagicMock()
         obj.target.reference = defaults["target_reference"]
-        obj._get_result_type_name = MagicMock(return_value=defaults["result_type"])
+        obj.TASK_DISPLAY_NAME = defaults["result_type"]
 
         return obj
 

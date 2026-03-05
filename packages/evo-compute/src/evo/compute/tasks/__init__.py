@@ -30,7 +30,7 @@ Example:
 
 from __future__ import annotations
 
-from typing import Any, overload
+from typing import overload
 
 from evo.common import IContext
 from evo.common.interfaces import IFeedback
@@ -53,7 +53,7 @@ from .common import (
 )
 
 # Result types from common (generic base classes)
-from .common.results import TaskResult, TaskResults
+from .common.runner import TParams, TResult
 
 # Kriging-specific result types
 from .kriging import (
@@ -66,30 +66,30 @@ from .kriging import (
 @overload
 async def run(
     context: IContext,
-    parameters: Any,
+    parameters: TParams,
     *,
     preview: bool = ...,
     fb: IFeedback | None = ...,
-) -> TaskResult: ...
+) -> TResult: ...
 
 
 @overload
 async def run(
     context: IContext,
-    parameters: list[Any],
+    parameters: list[TParams],
     *,
     preview: bool = ...,
     fb: IFeedback | None = ...,
-) -> TaskResults: ...
+) -> list[TResult]: ...
 
 
 async def run(
     context: IContext,
-    parameters: Any | list[Any],
+    parameters: TParams | list[TParams],
     *,
     preview: bool = False,
     fb: IFeedback | None = None,
-) -> TaskResult | TaskResults:
+) -> TResult | list[TResult]:
     """
     Run one or more compute tasks.
 
@@ -138,7 +138,7 @@ async def run(
     param_list = [parameters] if is_single else parameters
 
     if len(param_list) == 0:
-        return TaskResults([])
+        return []
 
     # Create default feedback if none provided
     actual_fb = fb if fb is not None else create_default_feedback("Tasks")
@@ -149,7 +149,7 @@ async def run(
     # Return single result or wrapped results
     if is_single:
         return results[0]
-    return TaskResults(results)
+    return results
 
 
 __all__ = [

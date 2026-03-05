@@ -649,7 +649,7 @@ def format_task_results(results: Any) -> str:
         return "<div>No results</div>"
 
     # Get result type from first result
-    result_type = result_list[0]._get_result_type_name() if hasattr(result_list[0], "_get_result_type_name") else "Task"
+    result_type = getattr(result_list[0], "TASK_DISPLAY_NAME", "Task")
     title = f"✓ {len(result_list)} {result_type} Results"
 
     # Build table data
