@@ -619,22 +619,22 @@ class TestBlockDiscretisation(TestCase):
         self.assertEqual(result, {"nx": 1, "ny": 1, "nz": 1})
 
     def test_validation_nx_too_low(self):
-        with self.assertRaises(ValueError) as ctx:
+        with self.assertRaises(ValidationError) as ctx:
             BlockDiscretisation(nx=0)
-        self.assertIn("nx", str(ctx.exception))
-        self.assertIn("between 1 and 9", str(ctx.exception))
+        error_str = str(ctx.exception)
+        self.assertIn("nx", error_str)
 
     def test_validation_ny_too_high(self):
-        with self.assertRaises(ValueError) as ctx:
+        with self.assertRaises(ValidationError) as ctx:
             BlockDiscretisation(ny=10)
-        self.assertIn("ny", str(ctx.exception))
-        self.assertIn("between 1 and 9", str(ctx.exception))
+        error_str = str(ctx.exception)
+        self.assertIn("ny", error_str)
 
     def test_validation_nz_negative(self):
-        with self.assertRaises(ValueError) as ctx:
+        with self.assertRaises(ValidationError) as ctx:
             BlockDiscretisation(nz=-1)
-        self.assertIn("nz", str(ctx.exception))
-        self.assertIn("between 1 and 9", str(ctx.exception))
+        error_str = str(ctx.exception)
+        self.assertIn("nz", error_str)
 
     def test_validation_non_integer_type(self):
         with self.assertRaises((TypeError, ValueError)):

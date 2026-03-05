@@ -45,6 +45,7 @@ from __future__ import annotations
 
 import asyncio
 import inspect
+from abc import ABC, abstractmethod
 from collections.abc import Callable, Generator
 from typing import Any, ClassVar, Generic, TypeVar, get_args, get_origin
 
@@ -55,9 +56,10 @@ from pydantic import BaseModel
 
 from evo.compute.client import JobClient
 
-from .results import TaskResult
-
 __all__ = [
+    "TParams",
+    "TResult",
+    "TResultModel",
     "TaskRegistry",
     "TaskRunner",
     "run_tasks",
@@ -65,17 +67,18 @@ __all__ = [
 
 
 TParams = TypeVar("TParams", bound=BaseModel)
-TResult = TypeVar("TResult", bound=TaskResult)
+TResultModel = TypeVar("TResultModel", bound=BaseModel)
+TResult = TypeVar("TResult")
 
 
-def _get_generic_args(cls: type) -> tuple[type, type] | None:
-    """Extract (TParams, TResult) from a TaskRunner subclass's generic bases."""
+def _get_generic_args(cls: type) -> tuple[type, type, type] | None:
+    """Extract (TParams, TResultModel, TResult) from a TaskRunner subclass's generic bases."""
     for base in inspect.getmro(cls):
         for orig_base in getattr(base, "__orig_bases__", ()):
             if get_origin(orig_base) is TaskRunner:
                 args = get_args(orig_base)
-                if len(args) == 2:
-                    return args[0], args[1]
+                if len(args) == 3:
+                    return args[0], args[1], args[2]
     return None
 
 
@@ -87,7 +90,7 @@ class TaskRegistry:
     """
 
     _instance: TaskRegistry | None = None
-    _runners: dict[type, type[TaskRunner[Any, Any]]]
+    _runners: dict[type[TParams], type[TaskRunner[TParams, TResultModel, TResult]]]
 
     def __new__(cls) -> TaskRegistry:
         if cls._instance is None:
@@ -95,7 +98,7 @@ class TaskRegistry:
             cls._instance._runners = {}
         return cls._instance
 
-    def register(self, param_type: type, runner_cls: type[TaskRunner[Any, Any]]) -> None:
+    def register(self, param_type: type[TParams], runner_cls: type[TaskRunner[TParams, TResultModel, TResult]]) -> None:
         """Register a TaskRunner subclass for a parameter type.
 
         Args:
@@ -104,7 +107,7 @@ class TaskRegistry:
         """
         self._runners[param_type] = runner_cls
 
-    def get_runner(self, param_type: type) -> type[TaskRunner[Any, Any]] | None:
+    def get_runner(self, param_type: type[TParams]) -> type[TaskRunner[TParams, TResultModel, TResult]] | None:
         """Get the TaskRunner subclass for a parameter type.
 
         Args:
@@ -115,7 +118,7 @@ class TaskRegistry:
         """
         return self._runners.get(param_type)
 
-    def get_runner_for_params(self, params: Any) -> type[TaskRunner[Any, Any]]:
+    def get_runner_for_params(self, params: TParams) -> type[TaskRunner[TParams, TResultModel, TResult]]:
         """Get the TaskRunner subclass for a parameter instance.
 
         Args:
@@ -146,7 +149,7 @@ class TaskRegistry:
 _registry = TaskRegistry()
 
 
-class TaskRunner(Generic[TParams, TResult]):
+class TaskRunner(ABC, Generic[TParams, TResultModel, TResult]):
     """Base class for compute task runners.
 
     Subclass with concrete ``TParams`` and ``TResult`` type arguments and provide
@@ -176,11 +179,14 @@ class TaskRunner(Generic[TParams, TResult]):
     task: ClassVar[str]
     """The task name within the topic (e.g. ``"kriging"``)."""
 
-    result_type: ClassVar[type[TaskResult]]
+    params_type: ClassVar[type[TParams]]
+    """The Pydantic parameters model, extracted automatically from the generic args."""
+
+    resullt_model_type: ClassVar[type[TResultModel]]
     """The Pydantic result model, extracted automatically from the generic args."""
 
-    params_type: ClassVar[type[BaseModel]]
-    """The Pydantic parameters model, extracted automatically from the generic args."""
+    result_type: ClassVar[type[TResultModel]]
+    """The result type returned by the runner, typically a wrapper around the result model with convenience methods."""
 
     def __init_subclass__(cls, *, topic: str = "", task: str = "", **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
@@ -197,10 +203,10 @@ class TaskRunner(Generic[TParams, TResult]):
         if generic_args is None:
             raise TypeError(
                 f"{cls.__name__} must specify generic type arguments: "
-                f"class {cls.__name__}(TaskRunner[MyParams, MyResult], topic=..., task=...)"
+                f"class {cls.__name__}(TaskRunner[MyParams, MyResultModel, MyResult], topic=..., task=...)"
             )
 
-        cls.params_type, cls.result_type = generic_args
+        cls.params_type, cls.resullt_model_type, cls.result_type = generic_args
 
         # Auto-register with the global registry
         _registry.register(cls.params_type, cls)
@@ -222,6 +228,9 @@ class TaskRunner(Generic[TParams, TResult]):
         self._retry = retry
         self._fb = fb
 
+    @abstractmethod
+    async def _get_result(self, raw_result: TResultModel) -> TResult: ...
+
     async def __call__(self) -> TResult:
         """Submit the task, wait for completion, and return the typed result."""
         connector = self._context.get_connector()
@@ -232,7 +241,7 @@ class TaskRunner(Generic[TParams, TResult]):
             org_id=org_id,
             topic=self.topic,
             task=self.task,
-            parameters=self._params.model_dump(mode="json", exclude_none=True),
+            parameters=self._params.model_dump(mode="json", by_alias=True, exclude_none=True),
             result_type=self.result_type,
             preview=self._preview,
         )
@@ -243,9 +252,7 @@ class TaskRunner(Generic[TParams, TResult]):
             fb=self._fb,
         )
 
-        # Inject execution context so convenience methods work
-        result._context = self._context
-        return result
+        return await self._get_result(result)
 
     def __await__(self) -> Generator[Any, None, TResult]:
         """Make the runner directly awaitable: ``result = await Runner(ctx, params)``."""
@@ -271,11 +278,11 @@ class _CompletionTrackingFeedback(IFeedback):
 
 async def run_tasks(
     context: IContext,
-    parameters: list[Any],
+    parameters: list[TParams],
     *,
     fb: IFeedback = NoFeedback,
     preview: bool = False,
-) -> list[TaskResult]:
+) -> list[TResult]:
     """Run multiple tasks concurrently, dispatching based on parameter types.
 
     This function looks up the appropriate runner for each parameter based on
@@ -327,29 +334,9 @@ async def run_tasks(
 
     # Wrap each sub-feedback to suppress per-job messages and show completion count
     tracked_fbs = [_CompletionTrackingFeedback(sub_fb, _on_task_complete) for sub_fb in per_task_fb]
-
-    async def _run_one(
-        i: int, params: Any, runner_cls: type[TaskRunner[Any, Any]], task_fb: IFeedback
-    ) -> tuple[int, TaskResult]:
-        runner = runner_cls(context, params, preview=preview, fb=task_fb)
-        result = await runner
-        return i, result
-
     tasks = [
-        asyncio.create_task(_run_one(i, params, runner_cls, tracked_fbs[i]))
-        for i, (params, runner_cls) in enumerate(zip(parameters, runner_classes))
+        TaskRunner(context, params, preview=preview, fb=task_fb)
+        for params, task_fb in zip(parameters, tracked_fbs, strict=True)
     ]
 
-    results: list[TaskResult | None] = [None] * total
-
-    for fut in asyncio.as_completed(tasks):
-        try:
-            i, res = await fut
-            results[i] = res
-        except Exception:
-            # Cancel remaining to fail fast
-            for t in tasks:
-                t.cancel()
-            raise
-
-    return [r for r in results if r is not None]
+    return await asyncio.gather(*tasks)

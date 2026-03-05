@@ -14,9 +14,11 @@
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 
+from evo.objects.exceptions import SchemaIDFormatError
+
 from evo.compute.tasks.common.results import TaskAttribute, TaskTarget
 from evo.compute.tasks.common.runner import TaskRegistry, run_tasks
-from evo.compute.tasks.kriging import KrigingParameters, KrigingResult, KrigingRunner, TaskResults
+from evo.compute.tasks.kriging import KrigingParameters, KrigingResult, KrigingResultModel, KrigingRunner
 
 
 class TestTaskRegistry(unittest.TestCase):
@@ -115,7 +117,7 @@ def _mock_kriging_context():
 def _mock_kriging_job():
     """Create a mock job that returns a valid KrigingResult."""
     mock_job = AsyncMock()
-    mock_job.wait_for_results.return_value = KrigingResult(
+    mock_job.wait_for_results.return_value = KrigingResultModel(
         message="ok",
         target=TaskTarget(
             reference="ref",
@@ -176,109 +178,41 @@ class TestPreviewFlagBehavior(unittest.IsolatedAsyncioTestCase):
         _, kwargs = mock_submit.call_args
         self.assertFalse(kwargs.get("preview", True))
 
-    async def test_runner_injects_context_on_result(self):
-        """KrigingRunner should inject _context on the returned result."""
-        mock_context, mock_connector = _mock_kriging_context()
-        mock_params = MagicMock(spec=KrigingParameters)
-        mock_params.model_dump.return_value = {"source": {}, "target": {}}
-
-        with patch(
-            "evo.compute.tasks.common.runner.JobClient.submit", new_callable=AsyncMock, return_value=_mock_kriging_job()
-        ):
-            result = await KrigingRunner(mock_context, mock_params)
-
-        self.assertIs(result._context, mock_context)
-
-
-class TestKrigingResultInheritance(unittest.TestCase):
-    """Tests that KrigingResult inherits from TaskResult."""
-
-    def test_kriging_result_inherits_from_task_result(self):
-        """KrigingResult should be a subclass of TaskResult."""
-        from evo.compute.tasks import KrigingResult, TaskResult
-
-        self.assertTrue(issubclass(KrigingResult, TaskResult))
-
-    def test_kriging_result_is_pydantic_model(self):
-        """KrigingResult should be a Pydantic BaseModel."""
-        from pydantic import BaseModel
-
-        self.assertTrue(issubclass(KrigingResult, BaseModel))
-
-
-class TestTaskResultsContainer(unittest.TestCase):
-    """Tests for the TaskResults container class."""
-
-    def _make_target(self, name="target1"):
-        attr = TaskAttribute(reference="ref1", name="attr1")
-        return TaskTarget(
-            reference="ref1",
-            name=name,
-            description="desc",
-            schema_id="/objects/regular-masked-3d-grid/1.0.0/regular-masked-3d-grid.schema.json",
-            attribute=attr,
-        )
-
-    def test_task_results_iteration(self):
-        """TaskResults should support iteration."""
-        target = self._make_target()
-        result1 = KrigingResult(message="msg1", target=target)
-        result2 = KrigingResult(message="msg2", target=target)
-
-        results = TaskResults([result1, result2])
-
-        # Test len
-        self.assertEqual(len(results), 2)
-
-        # Test iteration
-        items = list(results)
-        self.assertEqual(len(items), 2)
-        self.assertEqual(items[0].message, "msg1")
-        self.assertEqual(items[1].message, "msg2")
-
-        # Test indexing
-        self.assertEqual(results[0].message, "msg1")
-        self.assertEqual(results[1].message, "msg2")
-
-    def test_task_results_results_property(self):
-        """TaskResults should expose results via .results property."""
-        target = self._make_target()
-        result = KrigingResult(message="msg", target=target)
-
-        results = TaskResults([result])
-
-        self.assertEqual(results.results, [result])
-
 
 class TestTaskResultSchemaType(unittest.TestCase):
     """Tests for schema_type property using ObjectSchema parsing."""
 
     def _make_result(self, schema_id: str):
-        from evo.compute.tasks.common.results import TaskAttribute, TaskResult, TaskTarget
+        from evo.compute.tasks.common.results import TaskAttribute, TaskTarget
 
         attr = TaskAttribute(reference="ref", name="attr")
         target = TaskTarget(reference="ref", name="target", description=None, schema_id=schema_id, attribute=attr)
-        return TaskResult(message="ok", target=target)
+        return KrigingResult(
+            context=...,
+            model=KrigingResultModel(message="ok", target=target),
+        )
 
     def test_schema_type_parses_valid_schema_id(self):
         """schema_type should return the sub_classification for a valid schema ID."""
         result = self._make_result("/objects/regular-masked-3d-grid/1.0.0/regular-masked-3d-grid.schema.json")
-        self.assertEqual(result.schema_type, "regular-masked-3d-grid")
+        self.assertEqual(result.schema.sub_classification, "regular-masked-3d-grid")
 
     def test_schema_type_parses_different_schema(self):
         """schema_type should handle different object schema types."""
         result = self._make_result("/objects/block-model/2.1.0/block-model.schema.json")
-        self.assertEqual(result.schema_type, "block-model")
+        self.assertEqual(result.schema.sub_classification, "block-model")
 
-    def test_schema_type_falls_back_for_malformed_id(self):
+    def test_schema_type_fails_for_malformed_id(self):
         """schema_type should return the raw schema_id when it cannot be parsed."""
         result = self._make_result("some-unparseable-string")
-        self.assertEqual(result.schema_type, "some-unparseable-string")
+        with self.assertRaises(SchemaIDFormatError):
+            result.schema.sub_classification
 
-    def test_schema_type_falls_back_for_partial_id(self):
+    def test_schema_type_fails_for_partial_id(self):
         """schema_type should fall back gracefully for partial schema paths."""
         result = self._make_result("schema/1.0.0")
-        self.assertEqual(result.schema_type, "schema/1.0.0")
+        with self.assertRaises(SchemaIDFormatError):
+            result.schema.sub_classification
 
 
 class TestKrigingMethod(unittest.TestCase):
@@ -338,24 +272,6 @@ class TestTaskTargetModelValidate(unittest.TestCase):
 class TestTaskResultPydanticModel(unittest.TestCase):
     """Tests that TaskResult works as a Pydantic BaseModel."""
 
-    def test_model_validate_from_dict(self):
-        """TaskResult should be constructable via model_validate."""
-        from evo.compute.tasks.common.results import TaskResult
-
-        data = {
-            "message": "ok",
-            "target": {
-                "reference": "ref",
-                "name": "target",
-                "schema_id": "s",
-                "attribute": {"reference": "ar", "name": "an"},
-            },
-        }
-        result = TaskResult.model_validate(data)
-        self.assertEqual(result.message, "ok")
-        self.assertEqual(result.target_name, "target")
-        self.assertEqual(result.attribute_name, "an")
-
     def test_kriging_result_model_validate(self):
         """KrigingResult should be constructable via model_validate."""
         data = {
@@ -367,43 +283,8 @@ class TestTaskResultPydanticModel(unittest.TestCase):
                 "attribute": {"reference": "ar", "name": "an"},
             },
         }
-        result = KrigingResult.model_validate(data)
-        self.assertIsInstance(result, KrigingResult)
-        self.assertEqual(result._get_result_type_name(), "Kriging")
-
-    def test_context_private_attr_defaults_none(self):
-        """TaskResult._context should default to None."""
-        from evo.compute.tasks.common.results import TaskResult
-
-        data = {
-            "message": "ok",
-            "target": {
-                "reference": "ref",
-                "name": "target",
-                "schema_id": "s",
-                "attribute": {"reference": "ar", "name": "an"},
-            },
-        }
-        result = TaskResult.model_validate(data)
-        self.assertIsNone(result._context)
-
-    def test_context_can_be_injected(self):
-        """TaskResult._context should be settable after construction."""
-        from evo.compute.tasks.common.results import TaskResult
-
-        data = {
-            "message": "ok",
-            "target": {
-                "reference": "ref",
-                "name": "target",
-                "schema_id": "s",
-                "attribute": {"reference": "ar", "name": "an"},
-            },
-        }
-        result = TaskResult.model_validate(data)
-        mock_ctx = MagicMock()
-        result._context = mock_ctx
-        self.assertIs(result._context, mock_ctx)
+        result = KrigingResultModel.model_validate(data)
+        self.assertIsInstance(result, KrigingResultModel)
 
 
 class TestConvertObjectReference(unittest.TestCase):

@@ -33,9 +33,13 @@ Example:
 
 from __future__ import annotations
 
-from typing import Any, Literal
+from typing import Any, ClassVar, Literal, Protocol, runtime_checkable
+from uuid import UUID
 
-from evo.objects.typed import BlockModelPendingAttribute, PendingAttribute
+import pandas as pd
+from evo.common import IContext, IFeedback
+from evo.objects import ObjectSchema
+from evo.objects.typed import BaseObject, BlockModelPendingAttribute, PendingAttribute, object_from_reference
 from pydantic import BaseModel, Field, SerializerFunctionWrapHandler, field_validator, model_serializer
 
 # Import shared components
@@ -46,7 +50,7 @@ from .common import (
     GeoscienceObjectReference,
     SearchNeighborhood,
 )
-from .common.results import TaskAttribute, TaskResult, TaskResults, TaskTarget
+from .common.results import TaskTarget
 from .common.runner import TaskRunner
 
 __all__ = [
@@ -55,19 +59,12 @@ __all__ = [
     "KrigingMethod",
     "KrigingParameters",
     "KrigingResult",
+    "KrigingResultModel",
     "KrigingRunner",
     "OrdinaryKriging",
     "RegionFilter",
     "SimpleKriging",
-    # Re-exported from common for backwards compatibility
-    "TaskResult",
-    "TaskResults",
 ]
-
-
-# Backwards-compatible aliases for the renamed internal dataclasses.
-_KrigingAttribute = TaskAttribute
-_KrigingTarget = TaskTarget
 
 
 # =============================================================================
@@ -152,23 +149,14 @@ class BlockDiscretisation(BaseModel):
         >>> discretisation = BlockDiscretisation(nx=3, ny=3, nz=2)
     """
 
-    nx: int = 1
-    """Number of subdivisions in the x direction (1–9)."""
+    nx: int = Field(1, ge=1, le=9)
+    """Number of subdivisions in the x direction (1-9)."""
 
-    ny: int = 1
-    """Number of subdivisions in the y direction (1–9)."""
+    ny: int = Field(1, ge=1, le=9)
+    """Number of subdivisions in the y direction (1-9)."""
 
-    nz: int = 1
-    """Number of subdivisions in the z direction (1–9)."""
-
-    @field_validator("nx", "ny", "nz")
-    @classmethod
-    def _validate_range(cls, v: int, info) -> int:
-        if not isinstance(v, int):
-            raise TypeError(f"{info.field_name} must be an integer, got {type(v).__name__}")
-        if v < 1 or v > 9:
-            raise ValueError(f"{info.field_name} must be between 1 and 9, got {v}")
-        return v
+    nz: int = Field(1, ge=1, le=9)
+    """Number of subdivisions in the z direction (1-9)."""
 
 
 # =============================================================================
@@ -297,27 +285,141 @@ class KrigingParameters(BaseModel):
 # Kriging Result Types
 # =============================================================================
 
+# TODO: tidy up `to_dataframe` implementations for better consistency. in _theory_ and spatial object does implement
+# `to_dataframe()` (and should!!), but `BaseSPatialObject` does not declare this, and the `BlockModel` object has a different
+# signature.
 
-class KrigingResult(TaskResult):
-    """Result of a kriging task.
 
-    Contains information about the completed kriging operation and provides
-    convenient methods to access the target object and its data.
+@runtime_checkable
+class _ObjToDataframeProtocol(Protocol):
+    """Protocol for objects that can convert themselves to a DataFrame."""
 
-    Example:
-        >>> result = await run(manager, params)
-        >>> result  # Pretty-prints the result
-        >>>
-        >>> # Get data directly as DataFrame (simplest approach)
-        >>> df = await result.to_dataframe()
-        >>>
-        >>> # Or load the target object for more control
-        >>> target = await result.get_target_object()
+    async def to_dataframe(self, *keys: str, fb: IFeedback = ...) -> pd.DataFrame: ...
+
+
+@runtime_checkable
+class _BlockModelToDataFrameProtocol(Protocol):
+    """Protocol for block models that can convert themselves to a DataFrame."""
+
+    async def to_dataframe(
+        self,
+        columns: list[str] | None = None,
+        version_uuid: UUID | Literal["latest"] | None = None,
+        fb: IFeedback = ...,
+    ) -> pd.DataFrame: ...
+
+
+class KrigingResultModel(BaseModel):
+    """Base class for compute task results.
+
+    Provides common functionality for all task results including:
+    - Pretty-printing in Jupyter notebooks
+    - Portal URL extraction
+    - Access to target object and data
     """
 
-    def _get_result_type_name(self) -> str:
-        """Get the display name for this result type."""
-        return "Kriging"
+    message: str
+    """A message describing what happened in the task."""
+
+    target: TaskTarget
+    """Target information from the task result."""
+
+
+class KrigingResult:
+    TASK_DISPLAY_NAME: ClassVar[str] = "Kriging"
+
+    def __init__(self, context: IContext, model: KrigingResultModel) -> None:
+        self._target = model.target
+        self._message = model.message
+        self._context = context
+
+    @property
+    def message(self) -> str:
+        """A message describing what happened in the task."""
+        return self._message
+
+    @property
+    def target_name(self) -> str:
+        """The name of the target object."""
+        return self._target.name
+
+    @property
+    def target_reference(self) -> str:
+        """Reference URL to the target object."""
+        return self._target.reference
+
+    @property
+    def attribute_name(self) -> str:
+        """The name of the attribute that was created/updated."""
+        return self._target.attribute.name
+
+    @property
+    def schema(self) -> ObjectSchema:
+        """The schema type of the target object (e.g., 'regular-masked-3d-grid').
+
+        Uses ``ObjectSchema.from_id`` to parse the schema ID. Falls back to the
+        raw ``schema_id`` string when it cannot be parsed.
+        """
+        return ObjectSchema.from_id(self._target.schema_id)
+
+    async def get_target_object(self) -> BaseObject:
+        """Load and return the target geoscience object.
+
+        Args:
+            context: Optional context to use. If not provided, uses the context
+                    from when the task was run.
+
+        Returns:
+            The typed geoscience object (e.g., Regular3DGrid, RegularMasked3DGrid, BlockModel)
+
+        Example:
+            >>> result = await run(manager, params)
+            >>> target = await result.get_target_object()
+            >>> target  # Pretty-prints with Portal/Viewer links
+        """
+        return await object_from_reference(self._context, self._target.reference)
+
+    async def to_dataframe(self, *columns: str) -> pd.DataFrame:
+        """Get the task results as a DataFrame.
+
+        This is the simplest way to access the task output data. It loads
+        the target object and returns its data as a pandas DataFrame.
+
+        Args:
+            context: Optional context to use. If not provided, uses the context
+                    from when the task was run.
+            columns: Optional list of column names to include. If None, includes
+                    all columns. Use ["*"] to explicitly request all columns.
+
+        Returns:
+            A pandas DataFrame containing the task results.
+
+        Example:
+            >>> result = await run(manager, params)
+            >>> df = await result.to_dataframe()
+            >>> df.head()
+        """
+        target_obj = await self.get_target_object()
+
+        if isinstance(target_obj, _ObjToDataframeProtocol):
+            return await target_obj.to_dataframe(*columns)
+        elif isinstance(target_obj, _BlockModelToDataFrameProtocol):
+            return target_obj.to_dataframe(columns=list(columns) if columns else None)
+        else:
+            raise TypeError(
+                f"Don't know how to get DataFrame from {type(target_obj).__name__}. "
+                "Use get_target_object() and access the data manually."
+            )
+
+    def __str__(self) -> str:
+        """String representation."""
+        lines = [
+            f"✓ {self.TASK_DISPLAY_NAME} Result",
+            f"  Message:   {self.message}",
+            f"  Target:    {self.target_name}",
+            f"  Attribute: {self.attribute_name}",
+        ]
+        return "\n".join(lines)
 
 
 # =============================================================================
@@ -326,7 +428,7 @@ class KrigingResult(TaskResult):
 
 
 class KrigingRunner(
-    TaskRunner[KrigingParameters, KrigingResult],
+    TaskRunner[KrigingParameters, KrigingResultModel, KrigingResult],
     topic="geostatistics",
     task="kriging",
 ):
@@ -336,3 +438,6 @@ class KrigingRunner(
 
         result = await KrigingRunner(context, params, preview=True)
     """
+
+    async def _get_result(self, raw_result: KrigingResultModel) -> KrigingResult:
+        return KrigingResult(self._context, raw_result)
