@@ -17,18 +17,20 @@ from .results import TaskAttribute, TaskResult, TaskResults, TaskTarget
 from .runner import TaskRegistry, TaskRunner, run_tasks
 from .search import SearchNeighborhood
 from .source_target import (
+    AnySourceAttribute,
+    AnyTargetAttribute,
+    AttributeExpression,
     CreateAttribute,
     GeoscienceObjectReference,
     Source,
     Target,
     UpdateAttribute,
-    get_attribute_expression,
-    is_typed_attribute,
-    source_from_attribute,
-    target_from_attribute,
 )
 
 __all__ = [
+    "AnySourceAttribute",
+    "AnyTargetAttribute",
+    "AttributeExpression",
     "CreateAttribute",
     "Ellipsoid",
     "EllipsoidRanges",
@@ -44,9 +46,5 @@ __all__ = [
     "TaskRunner",
     "TaskTarget",
     "UpdateAttribute",
-    "get_attribute_expression",
-    "is_typed_attribute",
     "run_tasks",
-    "source_from_attribute",
-    "target_from_attribute",
 ]

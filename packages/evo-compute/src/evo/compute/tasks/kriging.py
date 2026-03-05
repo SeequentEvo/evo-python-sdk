@@ -35,23 +35,16 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from evo.objects.typed.attributes import (
-    Attribute,
-    BlockModelAttribute,
-    BlockModelPendingAttribute,
-    PendingAttribute,
-)
-from pydantic import BaseModel, field_validator, model_serializer
+from evo.objects.typed import BlockModelPendingAttribute, PendingAttribute
+from pydantic import BaseModel, Field, SerializerFunctionWrapHandler, field_validator, model_serializer
 
 # Import shared components
 from .common import (
+    AnySourceAttribute,
+    AnyTargetAttribute,
+    AttributeExpression,
     GeoscienceObjectReference,
     SearchNeighborhood,
-    Source,
-    Target,
-    get_attribute_expression,
-    source_from_attribute,
-    target_from_attribute,
 )
 from .common.results import TaskAttribute, TaskResult, TaskResults, TaskTarget
 from .common.runner import TaskRunner
@@ -204,9 +197,7 @@ class RegionFilter(BaseModel):
         ... )
     """
 
-    model_config = {"arbitrary_types_allowed": True}
-
-    attribute: str | Attribute | BlockModelAttribute
+    attribute: AttributeExpression
     """The category attribute to filter on (from target object)."""
 
     names: list[str] | None = None
@@ -221,24 +212,12 @@ class RegionFilter(BaseModel):
         if self.names is None and self.values is None:
             raise ValueError("One of 'names' or 'values' must be provided.")
 
-    @model_serializer
-    def _serialize(self) -> dict[str, Any]:
-        """Serialize to dictionary for the compute task API."""
-        if isinstance(self.attribute, (Attribute, BlockModelAttribute)):
-            attribute_expr = get_attribute_expression(self.attribute)
-        elif isinstance(self.attribute, str):
-            attribute_expr = self.attribute
-        else:
-            raise TypeError(f"Cannot serialize region filter attribute of type {type(self.attribute)}")
-
-        result: dict[str, Any] = {"attribute": attribute_expr}
-
-        if self.names is not None:
-            result["names"] = self.names
-        if self.values is not None:
-            result["values"] = self.values
-
-        return result
+    @field_validator("attribute", mode="before")
+    @classmethod
+    def _validate_attribute(cls, v: Any) -> AttributeExpression:
+        if isinstance(v, (PendingAttribute, BlockModelPendingAttribute)):
+            raise ValueError("RegionFilter attribute cannot be a PendingAttribute. Provide a valid existing attribute.")
+        return v
 
 
 # =============================================================================
@@ -279,10 +258,10 @@ class KrigingParameters(BaseModel):
         ... )
     """
 
-    source: Source
+    source: AnySourceAttribute
     """The source object and attribute containing known values."""
 
-    target: Target
+    target: AnyTargetAttribute
     """The target object and attribute to create or update with kriging results."""
 
     variogram: GeoscienceObjectReference
@@ -291,10 +270,10 @@ class KrigingParameters(BaseModel):
     search: SearchNeighborhood
     """Search neighborhood parameters."""
 
-    method: SimpleKriging | OrdinaryKriging = OrdinaryKriging()
+    method: SimpleKriging | OrdinaryKriging = Field(default_factory=OrdinaryKriging, alias="kriging_method")
     """The kriging method to use. Defaults to ordinary kriging if not specified."""
 
-    target_region_filter: RegionFilter | None = None
+    target_region_filter: RegionFilter | None = Field(None, exclude=True)
     """Optional region filter to restrict kriging to specific categories on the target object."""
 
     block_discretisation: BlockDiscretisation | None = None
@@ -306,39 +285,11 @@ class KrigingParameters(BaseModel):
     or block model.
     """
 
-    @field_validator("source", mode="before")
-    @classmethod
-    def _convert_source(cls, v: Any) -> Source:
-        if isinstance(v, (Attribute, BlockModelAttribute)):
-            return source_from_attribute(v)
-        return v
-
-    @field_validator("target", mode="before")
-    @classmethod
-    def _convert_target(cls, v: Any) -> Target:
-        if isinstance(v, (Attribute, PendingAttribute, BlockModelAttribute, BlockModelPendingAttribute)):
-            return target_from_attribute(v)
-        return v
-
-    @model_serializer
-    def _serialize(self) -> dict[str, Any]:
-        target_dict = self.target.model_dump()
-
-        # Embed region filter inside the target dict for the API
+    @model_serializer(mode="wrap")
+    def _serialize(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        result = handler(self)
         if self.target_region_filter is not None:
-            target_dict["region_filter"] = self.target_region_filter.model_dump()
-
-        result: dict[str, Any] = {
-            "source": self.source.model_dump(),
-            "target": target_dict,
-            "variogram": self.variogram,
-            "neighborhood": self.search.model_dump(),
-            "kriging_method": self.method.model_dump(),
-        }
-
-        if self.block_discretisation is not None:
-            result["block_discretisation"] = self.block_discretisation.model_dump()
-
+            result["target"]["region_filter"] = self.target_region_filter.model_dump()
         return result
 
 

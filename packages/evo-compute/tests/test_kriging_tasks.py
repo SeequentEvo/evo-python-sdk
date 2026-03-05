@@ -21,6 +21,7 @@ from evo.objects.typed.attributes import (
     BlockModelPendingAttribute,
     PendingAttribute,
 )
+from pydantic import TypeAdapter, ValidationError
 
 from evo.compute.tasks import (
     BlockDiscretisation,
@@ -32,12 +33,11 @@ from evo.compute.tasks import (
     UpdateAttribute,
 )
 from evo.compute.tasks.common import (
+    AnySourceAttribute,
+    AnyTargetAttribute,
+    AttributeExpression,
     Ellipsoid,
     EllipsoidRanges,
-    get_attribute_expression,
-    is_typed_attribute,
-    source_from_attribute,
-    target_from_attribute,
 )
 from evo.compute.tasks.kriging import KrigingParameters
 
@@ -92,70 +92,47 @@ def _create_pending_attribute(name: str, parent_obj: MagicMock | None = None) ->
     return PendingAttribute(mock_parent, name)
 
 
-class TestAttributeAdapters(TestCase):
-    """Tests for the attribute adapter functions in source_target."""
-
-    # ---- is_typed_attribute ----
-
-    def test_is_typed_attribute_with_attribute(self):
-        attr = _create_mock_source_attribute("grade", "abc-key", POINTSET_URL)
-        self.assertTrue(is_typed_attribute(attr))
-
-    def test_is_typed_attribute_with_pending_attribute(self):
-        pending = _create_pending_attribute("new_attr")
-        self.assertTrue(is_typed_attribute(pending))
-
-    def test_is_typed_attribute_with_block_model_attribute(self):
-        bm_attr = BlockModelAttribute(name="grade", attribute_type="Float64")
-        self.assertTrue(is_typed_attribute(bm_attr))
-
-    def test_is_typed_attribute_with_block_model_pending_attribute(self):
-        bm_pending = BlockModelPendingAttribute(obj=None, name="new_col")
-        self.assertTrue(is_typed_attribute(bm_pending))
-
-    def test_is_typed_attribute_with_string(self):
-        self.assertFalse(is_typed_attribute("some_string"))
-
-    def test_is_typed_attribute_with_source(self):
-        source = Source(object=POINTSET_URL, attribute="grade")
-        self.assertFalse(is_typed_attribute(source))
-
-    # ---- get_attribute_expression ----
+class TestAttributeExpression(TestCase):
+    def setUp(self):
+        self.ta: TypeAdapter[AttributeExpression] = TypeAdapter(AttributeExpression)
 
     def test_expression_for_attribute_with_schema_path(self):
         attr = _create_mock_source_attribute("grade", "abc-key", POINTSET_URL, schema_path="locations.attributes")
-        result = get_attribute_expression(attr)
+        result = self.ta.validate_python(attr)
         self.assertEqual(result, "locations.attributes[?key=='abc-key']")
 
     def test_expression_for_attribute_without_schema_path(self):
         attr = _create_mock_source_attribute("grade", "abc-key", POINTSET_URL, schema_path="")
-        result = get_attribute_expression(attr)
+        result = self.ta.validate_python(attr)
         self.assertEqual(result, "attributes[?key=='abc-key']")
 
     def test_expression_for_pending_attribute(self):
         pending = _create_pending_attribute("my_attribute")
-        result = get_attribute_expression(pending)
+        result = self.ta.validate_python(pending)
         self.assertEqual(result, "attributes[?name=='my_attribute']")
 
     def test_expression_for_block_model_attribute(self):
         bm_attr = BlockModelAttribute(name="grade", attribute_type="Float64")
-        result = get_attribute_expression(bm_attr)
+        result = self.ta.validate_python(bm_attr)
         self.assertEqual(result, "attributes[?name=='grade']")
 
     def test_expression_for_block_model_pending_attribute(self):
         bm_pending = BlockModelPendingAttribute(obj=None, name="new_col")
-        result = get_attribute_expression(bm_pending)
+        result = self.ta.validate_python(bm_pending)
         self.assertEqual(result, "attributes[?name=='new_col']")
 
     def test_expression_raises_for_invalid_type(self):
-        with self.assertRaises(TypeError):
-            get_attribute_expression("not_an_attribute")
+        with self.assertRaises(ValidationError):
+            self.ta.validate_python(object())
 
-    # ---- source_from_attribute ----
+
+class TestAnySourceAttribute(TestCase):
+    def setUp(self):
+        self.ta: TypeAdapter[AnySourceAttribute] = TypeAdapter(AnySourceAttribute)
 
     def test_source_from_existing_attribute(self):
         attr = _create_mock_source_attribute("grade", "abc-key", POINTSET_URL, schema_path="locations.attributes")
-        result = source_from_attribute(attr)
+        result = self.ta.validate_python(attr)
         self.assertIsInstance(result, Source)
         result_dict = result.model_dump()
         self.assertEqual(result_dict["object"], POINTSET_URL)
@@ -163,30 +140,33 @@ class TestAttributeAdapters(TestCase):
 
     def test_source_from_attribute_without_schema_path(self):
         attr = _create_mock_source_attribute("grade", "abc-key", POINTSET_URL, schema_path="")
-        result = source_from_attribute(attr)
+        result = self.ta.validate_python(attr)
         result_dict = result.model_dump()
         self.assertEqual(result_dict["object"], POINTSET_URL)
         self.assertEqual(result_dict["attribute"], "attributes[?key=='abc-key']")
 
     def test_source_from_attribute_raises_for_pending(self):
         pending = _create_pending_attribute("new_attr")
-        with self.assertRaises(TypeError):
-            source_from_attribute(pending)
+        with self.assertRaises(ValidationError):
+            self.ta.validate_python(pending)
 
     def test_source_from_attribute_raises_for_block_model_attribute(self):
         bm_attr = BlockModelAttribute(name="grade", attribute_type="Float64")
-        with self.assertRaises(TypeError):
-            source_from_attribute(bm_attr)
+        with self.assertRaises(ValidationError):
+            self.ta.validate_python(bm_attr)
 
     def test_source_from_attribute_raises_for_string(self):
-        with self.assertRaises(TypeError):
-            source_from_attribute("not_an_attribute")
+        with self.assertRaises(ValidationError):
+            self.ta.validate_python("not_an_attribute")
 
-    # ---- target_from_attribute ----
+
+class TestAnyTargetAttribute(TestCase):
+    def setUp(self):
+        self.ta: TypeAdapter[AnyTargetAttribute] = TypeAdapter(AnyTargetAttribute)
 
     def test_target_from_existing_attribute(self):
         attr = _create_mock_source_attribute("grade", "abc-key", GRID_URL, schema_path="locations.attributes")
-        result = target_from_attribute(attr)
+        result = self.ta.validate_python(attr)
         self.assertIsInstance(result, Target)
         result_dict = result.model_dump()
         self.assertEqual(result_dict["attribute"]["operation"], "update")
@@ -196,7 +176,7 @@ class TestAttributeAdapters(TestCase):
         mock_obj = MagicMock()
         mock_obj.metadata.url = ObjectReference(GRID_URL)
         pending = _create_pending_attribute("new_column", parent_obj=mock_obj)
-        result = target_from_attribute(pending)
+        result = self.ta.validate_python(pending)
         self.assertIsInstance(result, Target)
         result_dict = result.model_dump()
         self.assertEqual(result_dict["attribute"]["operation"], "create")
@@ -206,7 +186,7 @@ class TestAttributeAdapters(TestCase):
         mock_bm = MagicMock()
         mock_bm.metadata.url = ObjectReference(BLOCKMODEL_URL)
         bm_attr = BlockModelAttribute(name="grade", attribute_type="Float64", obj=mock_bm)
-        result = target_from_attribute(bm_attr)
+        result = self.ta.validate_python(bm_attr)
         self.assertIsInstance(result, Target)
         result_dict = result.model_dump()
         self.assertEqual(result_dict["attribute"]["operation"], "update")
@@ -216,20 +196,20 @@ class TestAttributeAdapters(TestCase):
         mock_bm = MagicMock()
         mock_bm.metadata.url = ObjectReference(BLOCKMODEL_URL)
         bm_pending = BlockModelPendingAttribute(obj=mock_bm, name="new_col")
-        result = target_from_attribute(bm_pending)
+        result = self.ta.validate_python(bm_pending)
         self.assertIsInstance(result, Target)
         result_dict = result.model_dump()
         self.assertEqual(result_dict["attribute"]["operation"], "create")
         self.assertEqual(result_dict["attribute"]["name"], "new_col")
 
     def test_target_from_attribute_raises_for_invalid_type(self):
-        with self.assertRaises(TypeError):
-            target_from_attribute("not_an_attribute")
+        with self.assertRaises(ValidationError):
+            self.ta.validate_python("not_an_attribute")
 
     def test_target_from_attribute_raises_for_none_obj(self):
         bm_pending = BlockModelPendingAttribute(obj=None, name="new_col")
-        with self.assertRaises(TypeError):
-            target_from_attribute(bm_pending)
+        with self.assertRaises(ValidationError):
+            self.ta.validate_python(bm_pending)
 
 
 class TestKrigingParametersWithAttributes(TestCase):
@@ -255,7 +235,7 @@ class TestKrigingParametersWithAttributes(TestCase):
             search=search,
         )
 
-        params_dict = params.model_dump()
+        params_dict = params.model_dump(mode="json", by_alias=True, exclude_none=True)
         self.assertEqual(params_dict["target"]["object"], GRID_URL)
         self.assertEqual(params_dict["target"]["attribute"]["operation"], "create")
         self.assertEqual(params_dict["target"]["attribute"]["name"], "kriged_grade")
@@ -441,7 +421,7 @@ class TestRegionFilter(TestCase):
             names=["LMS1", "LMS2"],
         )
 
-        result = region_filter.model_dump()
+        result = region_filter.model_dump(mode="json", by_alias=True, exclude_none=True)
 
         self.assertEqual(result["attribute"], "domain_attribute")
         self.assertEqual(result["names"], ["LMS1", "LMS2"])
@@ -454,7 +434,7 @@ class TestRegionFilter(TestCase):
             values=[1, 2, 3],
         )
 
-        result = region_filter.model_dump()
+        result = region_filter.model_dump(mode="json", by_alias=True, exclude_none=True)
 
         self.assertEqual(result["attribute"], "domain_code_attribute")
         self.assertEqual(result["values"], [1, 2, 3])
@@ -497,7 +477,7 @@ class TestRegionFilter(TestCase):
         """Test RegionFilter rejects PendingAttribute (not a valid attribute type for filtering)."""
         pending = _create_pending_attribute("domain")
 
-        with self.assertRaises((TypeError, Exception)):
+        with self.assertRaises(ValueError):
             RegionFilter(
                 attribute=pending,
                 names=["Zone1"],
@@ -700,7 +680,7 @@ class TestKrigingParametersWithBlockDiscretisation(TestCase):
             search=search,
         )
 
-        params_dict = params.model_dump()
+        params_dict = params.model_dump(mode="json", by_alias=True, exclude_none=True)
         self.assertNotIn("block_discretisation", params_dict)
 
     def test_kriging_params_block_discretisation_with_region_filter(self):

@@ -10,7 +10,14 @@
 #  limitations under the License.
 
 from ._grid import BlockModelData, BlockModelGeometry
-from .attributes import Attribute, Attributes, BlockModelAttribute, BlockModelAttributes, BlockModelPendingAttribute
+from .attributes import (
+    Attribute,
+    Attributes,
+    BlockModelAttribute,
+    BlockModelAttributes,
+    BlockModelPendingAttribute,
+    PendingAttribute,
+)
 from .base import BaseObject, object_from_path, object_from_reference, object_from_uuid
 from .block_model_ref import (
     BlockModel,
@@ -82,6 +89,7 @@ __all__ = [
     "LinearStructure",
     "Locations",
     "MaskedCells",
+    "PendingAttribute",
     "Point3",
     "PointSet",
     "PointSetData",
