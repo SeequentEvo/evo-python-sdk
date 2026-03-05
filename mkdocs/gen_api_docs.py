@@ -123,10 +123,13 @@ def _entries_from_file(
     return [DocEntry(name, f"{module_name}.{name}", github_url) for name in all_names]
 
 
-def _generate_doc(doc_path: Path, entry: DocEntry, mkdocs_dir: Path) -> None:
+def _generate_doc(doc_path: Path, entry: DocEntry, mkdocs_dir: Path, *, show_labels: bool = True) -> None:
     """Write a single auto-generated doc file (GitHub link + mkdocstrings directive)."""
     doc_path.parent.mkdir(parents=True, exist_ok=True)
-    doc_path.write_text(f"[GitHub source]({entry.github_url})\n::: {entry.namespace}\n")
+    directive = f"::: {entry.namespace}\n"
+    if not show_labels:
+        directive = f"::: {entry.namespace}\n    options:\n      show_labels: false\n"
+    doc_path.write_text(f"[GitHub source]({entry.github_url})\n{directive}")
     log.info(f"Generated doc: {doc_path.relative_to(mkdocs_dir)}")
 
 
@@ -191,7 +194,12 @@ def _generate_all_docs(
     for package, groups in discovered.items():
         for subfolder, entries in groups.items():
             for entry in entries:
-                _generate_doc(_doc_path_for_entry(docs_packages_dir, package, entry, subfolder), entry, mkdocs_dir)
+                _generate_doc(
+                    _doc_path_for_entry(docs_packages_dir, package, entry, subfolder),
+                    entry,
+                    mkdocs_dir,
+                    show_labels=False,
+                )
 
 
 def on_startup(command: str, dirty: bool) -> None:

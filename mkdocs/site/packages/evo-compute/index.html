@@ -73,10 +73,6 @@
               <ul class="nav flex-column">
               </ul>
             </li>
-            <li class="nav-item" data-bs-level="2"><a href="#faq_1" class="nav-link">FAQ</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
               </ul>
             </li>
         </ul>
@@ -192,7 +188,6 @@ results = await run(manager, [
     ),
 ], preview=True)
 </code></pre>
-<h2 id="faq_1">FAQ</h2>
 <h3 id="can-i-run-multiple-tasks-in-parallel-that-update-the-same-attribute">Can I run multiple tasks in parallel that update the same attribute?</h3>
 <p>Block models support a fully parallelised workflow. If each task writes to a <strong>different</strong> attribute name, they can all run in parallel without refreshing. If the attribute was not created yet, run a task to create it and then run parallel tasks to update it with compute results. See the <a href="https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-compute/docs/examples/kriging_multiple.ipynb">multiple kriging notebook</a> for an example.
 Storing computation results on Pointsets and 3D grids is supported but the tasks can't run in parallel.</p>
