@@ -102,7 +102,7 @@ obj = await object_from_reference(manager, reference_url)
 </code></pre>
 <p>The correct typed class (<code>PointSet</code>, <code>Regular3DGrid</code>, etc.) is selected automatically based on the object's schema.</p>
 <h3 id="class-hierarchy">Class hierarchy</h3>
-<p>All typed geoscience objects inherit from <a href="typed-objects/base/BaseObject"><code>BaseObject</code></a>, which provides common properties (name, description, tags) and operations (update, refresh, validate). Objects with spatial data extend <a href="typed-objects/spatial/BaseSpatialObject"><code>BaseSpatialObject</code></a>, adding bounding box and coordinate reference system support.</p>
+<p>All typed geoscience objects inherit from <a href="evo-objects/typed-objects/base/BaseObject"><code>BaseObject</code></a>, which provides common properties (name, description, tags) and operations (update, refresh, validate). Objects with spatial data extend <a href="evo-objects/typed-objects/spatial/BaseSpatialObject"><code>BaseSpatialObject</code></a>, adding bounding box and coordinate reference system support.</p>
 <p><strong>Objects</strong> — each has a corresponding <code>Data</code> class used for creation:</p>
 <table>
 <thead>
@@ -177,7 +177,7 @@ df = result.to_dataframe()
 <pre><code class="language-python">bm = await bm.refresh()
 bm.attributes  # Now shows newly added attributes
 </code></pre>
-<p>For the full <code>evo-blockmodels</code> typed API (RegularBlockModel, Reports, Units), see the <a href="../evo-blockmodels/index.html">evo-blockmodels documentation</a>.</p></div>
+<p>For the full <code>evo-blockmodels</code> typed API (RegularBlockModel, Reports, Units), see the <a href="../evo-blockmodels">evo-blockmodels documentation</a>.</p></div>
             </div>
         </div>
 

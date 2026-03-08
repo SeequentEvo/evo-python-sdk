@@ -13,5 +13,4 @@ colormap_client = ColormapAPIClient(environment, connector)
 colormaps = await colormap_client.list_colormaps()
 ```
 
-See the [ColormapAPIClient](ColormapAPIClient.md) page for the full API reference.
-
+See the [ColormapAPIClient](evo-colormaps/ColormapAPIClient) page for the full API reference.

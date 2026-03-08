@@ -13,5 +13,4 @@ file_client = FileAPIClient(environment, connector)
 files = await file_client.list_files(workspace_id)
 ```
 
-See the [FileAPIClient](FileAPIClient.md) page for the full API reference.
-
+See the [FileAPIClient](evo-files/FileAPIClient) page for the full API reference.
