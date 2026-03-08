@@ -4,7 +4,7 @@
 
 The `evo-blockmodels` package provides both a low-level API client and typed Python classes for working with block models in Evo.
 
-The full functionality of `evo-blockmodels` — creating, retrieving, updating attributes, running reports — is accessible directly from the [`BlockModel`](../evo-objects/index.md#blockmodel-via-evo-blockmodels) object in `evo.objects.typed`. When `evo-blockmodels` is installed, `BlockModel` acts as a proxy and delegates data operations to the Block Model Service automatically.
+The full functionality of `evo-blockmodels` — creating, retrieving, updating attributes, running reports — is accessible directly from the [`BlockModel`](../evo-objects#blockmodel-via-evo-blockmodels) object in `evo.objects.typed`. When `evo-blockmodels` is installed, `BlockModel` acts as a proxy and delegates data operations to the Block Model Service automatically.
 
     ```python
     from evo.objects.typed import object_from_path
@@ -80,4 +80,3 @@ report = await Report.create(context, block_model, spec)
 result = await report.run(context)
 df = result.to_dataframe()  # Tonnages and grades by domain
 ```
-
