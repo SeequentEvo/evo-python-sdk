@@ -89,4 +89,4 @@ bm = await bm.refresh()
 bm.attributes  # Now shows newly added attributes
 ```
 
-For the full `evo-blockmodels` typed API (RegularBlockModel, Reports, Units), see the [evo-blockmodels documentation](../evo-blockmodels).
+For the full `evo-blockmodels` typed API (RegularBlockModel, Reports, Units), see the [evo-blockmodels documentation](./evo-blockmodels).
