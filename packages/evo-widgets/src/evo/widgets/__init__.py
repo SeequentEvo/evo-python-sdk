@@ -33,8 +33,23 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .formatters import format_attributes_collection, format_base_object, format_variogram
+from .formatters import (
+    format_attributes_collection,
+    format_base_object,
+    format_block_model,
+    format_block_model_attributes,
+    format_block_model_version,
+    format_report,
+    format_report_result,
+    format_task_result_list,
+    format_task_result_with_target,
+    format_variogram,
+)
 from .urls import (
+    get_blocksync_base_url,
+    get_blocksync_block_model_url,
+    get_blocksync_block_model_url_from_environment,
+    get_blocksync_report_url,
     get_evo_base_url,
     get_hub_code,
     get_portal_url,
@@ -53,7 +68,18 @@ if TYPE_CHECKING:
 __all__ = [
     "format_attributes_collection",
     "format_base_object",
+    "format_block_model",
+    "format_block_model_attributes",
+    "format_block_model_version",
+    "format_report",
+    "format_report_result",
+    "format_task_result_list",
+    "format_task_result_with_target",
     "format_variogram",
+    "get_blocksync_base_url",
+    "get_blocksync_block_model_url",
+    "get_blocksync_block_model_url_from_environment",
+    "get_blocksync_report_url",
     "get_evo_base_url",
     "get_hub_code",
     "get_portal_url",
@@ -101,6 +127,52 @@ def _register_formatters(ipython: InteractiveShell) -> None:
         format_attributes_collection,
     )
 
+    # Register formatters for block model types
+    html_formatter.for_type_by_name(
+        "evo.blockmodels.data",
+        "Version",
+        format_block_model_version,
+    )
+
+    html_formatter.for_type_by_name(
+        "evo.blockmodels.typed.report",
+        "Report",
+        format_report,
+    )
+
+    html_formatter.for_type_by_name(
+        "evo.blockmodels.typed.report",
+        "ReportResult",
+        format_report_result,
+    )
+
+    # Register formatters for BlockModel from evo-objects
+    html_formatter.for_type_by_name(
+        "evo.objects.typed.block_model_ref",
+        "BlockModel",
+        format_block_model,
+    )
+
+    html_formatter.for_type_by_name(
+        "evo.objects.typed.attributes",
+        "BlockModelAttributes",
+        format_block_model_attributes,
+    )
+
+    # Register formatters for compute task results
+
+    html_formatter.for_type_by_name(
+        "evo.compute.tasks.kriging",
+        "KrigingResult",
+        format_task_result_with_target,
+    )
+
+    html_formatter.for_type_by_name(
+        "evo.compute.tasks.common.results",
+        "TaskResultList",
+        format_task_result_list,
+    )
+
 
 def _unregister_formatters(ipython: InteractiveShell) -> None:
     """Unregister HTML formatters for Evo SDK types.
@@ -130,29 +202,56 @@ def _unregister_formatters(ipython: InteractiveShell) -> None:
 def load_ipython_extension(ipython: InteractiveShell) -> None:
     """Load the Evo presentation IPython extension.
 
-    This function is called when the user runs `%load_ext evo.presentation`.
+    This function is called when the user runs `%load_ext evo.widgets`.
     It registers HTML formatters for all Evo SDK types, enabling rich display
     of objects like PointSet, Regular3DGrid, TensorGrid, etc.
+
+    It also registers the :class:`~evo.notebooks.FeedbackWidget` as the default
+    feedback factory so that SDK operations automatically display a progress
+    widget in notebooks.
 
     :param ipython: The IPython shell instance.
 
     Example:
         In a Jupyter notebook::
 
-            %load_ext evo.presentation
+            %load_ext evo.widgets
 
             # Now typed objects display with rich HTML formatting
             grid = await object_from_reference(manager, grid_url)
             grid  # Shows formatted HTML with Portal/Viewer links
     """
     _register_formatters(ipython)
+    _register_feedback_factory()
 
 
 def unload_ipython_extension(ipython: InteractiveShell) -> None:
     """Unload the Evo presentation IPython extension.
 
-    This function is called when the user runs `%unload_ext evo.presentation`.
+    This function is called when the user runs `%unload_ext evo.widgets`.
 
     :param ipython: The IPython shell instance.
     """
     _unregister_formatters(ipython)
+    _unregister_feedback_factory()
+
+
+def _register_feedback_factory() -> None:
+    """Register :class:`~evo.notebooks.FeedbackWidget` as the default feedback factory."""
+    try:
+        from evo.common.utils import set_feedback_factory
+        from evo.notebooks import FeedbackWidget
+
+        set_feedback_factory(FeedbackWidget)
+    except ImportError:
+        pass
+
+
+def _unregister_feedback_factory() -> None:
+    """Reset the feedback factory to the default."""
+    try:
+        from evo.common.utils import reset_feedback_factory
+
+        reset_feedback_factory()
+    except ImportError:
+        pass

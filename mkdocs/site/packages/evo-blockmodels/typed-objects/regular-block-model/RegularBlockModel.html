@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        
+        <link rel="shortcut icon" href="../../../../img/favicon.ico">
+        <title>RegularBlockModel - Evo Python SDK</title>
+        <link href="../../../../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../../../../css/fontawesome.min.css" rel="stylesheet">
+        <link href="../../../../css/brands.min.css" rel="stylesheet">
+        <link href="../../../../css/solid.min.css" rel="stylesheet">
+        <link href="../../../../css/v4-font-face.min.css" rel="stylesheet">
+        <link href="../../../../css/base.css" rel="stylesheet">
+        <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" >
+        <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
+        <link href="../../../../assets/_mkdocstrings.css" rel="stylesheet">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+        <script>hljs.highlightAll();</script> 
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="../../../..">Evo Python SDK</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar-collapse" aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+
+                    <ul class="nav navbar-nav ms-md-auto">
+                            <li class="nav-item">
+                                <a rel="prev" href="../base/BaseTypedBlockModel.html" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="RegularBlockModelData.html" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-bs-toggle="collapse" data-bs-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-bs-level="2"><a href="#evo.blockmodels.typed.regular_block_model.RegularBlockModel" class="nav-link">RegularBlockModel</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<p><a href="https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-blockmodels/src/evo/blockmodels/typed/regular_block_model.py">GitHub source</a>
+</p>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="evo.blockmodels.typed.regular_block_model.RegularBlockModel" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">evo.blockmodels.typed.regular_block_model.RegularBlockModel</span>
+
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>A typed wrapper for regular block models providing pandas DataFrame access.</p>
+<p>This class provides a high-level interface for creating, retrieving, and updating
+regular block models with typed access to grid properties and cell data.</p>
+<p>Example usage:</p>
+<pre><code># Create a new block model
+data = RegularBlockModelData(
+    name="My Block Model",
+    origin=Point3(0, 0, 0),
+    n_blocks=Size3i(10, 10, 10),
+    block_size=Size3d(1.0, 1.0, 1.0),
+    cell_data=my_dataframe,
+)
+block_model = await RegularBlockModel.create(context, data)
+
+# Retrieve an existing block model
+block_model = await RegularBlockModel.get(context, bm_id)
+df = block_model.cell_data
+
+# Update attributes
+new_version = await block_model.update_attributes(
+    updated_dataframe,
+    new_columns=["new_col"],
+)
+</code></pre>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.blockmodels.typed.regular_block_model.RegularBlockModel.n_blocks" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">n_blocks</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">n_blocks</span><span class="p">:</span> <span class="n">Size3i</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The number of blocks in each dimension.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.blockmodels.typed.regular_block_model.RegularBlockModel.block_size" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">block_size</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">block_size</span><span class="p">:</span> <span class="n">Size3d</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The size of each block in each dimension.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.blockmodels.typed.regular_block_model.RegularBlockModel.rotations" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">rotations</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">rotations</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">RotationAxis</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The rotations applied to the block model.</p>
+
+    </div>
+
+</div>
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.blockmodels.typed.regular_block_model.RegularBlockModel.__init__" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">__init__</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">__init__</span><span class="p">(</span>
+    <span class="n">client</span><span class="p">:</span> <span class="n">BlockModelAPIClient</span><span class="p">,</span>
+    <span class="n">metadata</span><span class="p">:</span> <span class="n">BlockModel</span><span class="p">,</span>
+    <span class="n">version</span><span class="p">:</span> <span class="n">Version</span><span class="p">,</span>
+    <span class="n">cell_data</span><span class="p">:</span> <span class="n">DataFrame</span><span class="p">,</span>
+    <span class="n">context</span><span class="p">:</span> <span class="n">IContext</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Initialize a RegularBlockModel instance.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>client</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="evo.blockmodels.client.BlockModelAPIClient" href="../../BlockModelAPIClient.html#evo.blockmodels.client.BlockModelAPIClient">BlockModelAPIClient</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The BlockModelAPIClient used for API operations.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>metadata</code>
+            </td>
+            <td>
+                  <code><span title="evo.blockmodels.data.BlockModel">BlockModel</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The block model metadata.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>version</code>
+            </td>
+            <td>
+                  <code><span title="evo.blockmodels.data.Version">Version</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The current version information.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>cell_data</code>
+            </td>
+            <td>
+                  <code><span title="pandas.DataFrame">DataFrame</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The cell data as a pandas DataFrame.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>context</code>
+            </td>
+            <td>
+                  <code><span title="evo.common.IContext">IContext</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional IContext for report and other operations.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.blockmodels.typed.regular_block_model.RegularBlockModel.create" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">create</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">create</span><span class="p">(</span>
+    <span class="n">context</span><span class="p">:</span> <span class="n">IContext</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">RegularBlockModelData</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">fb</span><span class="p">:</span> <span class="n">IFeedback</span> <span class="o">=</span> <span class="n">NoFeedback</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RegularBlockModel</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Create a new regular block model.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>context</code>
+            </td>
+            <td>
+                  <code><span title="evo.common.IContext">IContext</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The context containing environment, connector, and cache.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>data</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="evo.blockmodels.typed.regular_block_model.RegularBlockModelData" href="RegularBlockModelData.html#evo.blockmodels.typed.regular_block_model.RegularBlockModelData">RegularBlockModelData</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The data defining the block model to create.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>path</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional path for the block model in the workspace.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>fb</code>
+            </td>
+            <td>
+                  <code><span title="evo.common.IFeedback">IFeedback</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional feedback interface for progress reporting.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="evo.common.utils.NoFeedback">NoFeedback</span></code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="evo.blockmodels.typed.regular_block_model.RegularBlockModel" href="#evo.blockmodels.typed.regular_block_model.RegularBlockModel">RegularBlockModel</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A RegularBlockModel instance representing the created block model.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>ValueError</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the data is invalid.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.blockmodels.typed.regular_block_model.RegularBlockModel.get" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">get</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get</span><span class="p">(</span>
+    <span class="n">context</span><span class="p">:</span> <span class="n">IContext</span><span class="p">,</span>
+    <span class="n">bm_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span>
+    <span class="n">version_id</span><span class="p">:</span> <span class="n">UUID</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">columns</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">bbox</span><span class="p">:</span> <span class="n">BBox</span> <span class="o">|</span> <span class="n">BBoxXYZ</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">fb</span><span class="p">:</span> <span class="n">IFeedback</span> <span class="o">=</span> <span class="n">NoFeedback</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RegularBlockModel</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Retrieve an existing regular block model.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>context</code>
+            </td>
+            <td>
+                  <code><span title="evo.common.IContext">IContext</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The context containing environment, connector, and cache.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>bm_id</code>
+            </td>
+            <td>
+                  <code><span title="uuid.UUID">UUID</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The UUID of the block model to retrieve.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>version_id</code>
+            </td>
+            <td>
+                  <code><span title="uuid.UUID">UUID</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional version UUID. Defaults to the latest version.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>columns</code>
+            </td>
+            <td>
+                  <code><span title="list">list</span>[<span title="str">str</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional list of columns to retrieve. Defaults to all columns ["*"].</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>bbox</code>
+            </td>
+            <td>
+                  <code><span title="evo.blockmodels.endpoints.models.BBox">BBox</span> | <span title="evo.blockmodels.endpoints.models.BBoxXYZ">BBoxXYZ</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional bounding box to filter the data.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>fb</code>
+            </td>
+            <td>
+                  <code><span title="evo.common.IFeedback">IFeedback</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional feedback interface for progress reporting.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="evo.common.utils.NoFeedback">NoFeedback</span></code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="evo.blockmodels.typed.regular_block_model.RegularBlockModel" href="#evo.blockmodels.typed.regular_block_model.RegularBlockModel">RegularBlockModel</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A RegularBlockModel instance.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>ValueError</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the block model is not a regular grid.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script src="../../../../js/bootstrap.bundle.min.js"></script>
+        <script>
+            var base_url = "../../../..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../../../../js/base.js"></script>
+
+        <div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>

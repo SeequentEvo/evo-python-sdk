@@ -28,5 +28,6 @@ plugins:
             show_root_heading: true
             separate_signature: true
             show_signature_annotations: true
+            show_labels: true
             line_length: 120
             members_order: source
