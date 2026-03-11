@@ -18,13 +18,19 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 from urllib.parse import urlparse
+from uuid import UUID
 
 from evo.objects import ObjectReference
 
 if TYPE_CHECKING:
+    from evo.common import Environment
     from evo.common.interfaces import IContext
 
 __all__ = [
+    "get_blocksync_base_url",
+    "get_blocksync_block_model_url",
+    "get_blocksync_block_model_url_from_environment",
+    "get_blocksync_report_url",
     "get_evo_base_url",
     "get_hub_code",
     "get_portal_url",
@@ -45,6 +51,78 @@ def get_evo_base_url(hub_url: str) -> str:
     :return: The Evo base URL (e.g., "https://evo.seequent.com").
     """
     return "https://evo.seequent.com"
+
+
+def get_blocksync_base_url(hub_url: str) -> str:
+    """Determine the BlockSync base URL from an API hub URL.
+
+    :param hub_url: The hub URL (e.g., "https://350mt.api.seequent.com").
+    :return: The BlockSync base URL (e.g., "https://blocksync.seequent.com").
+    """
+    return "https://blocksync.seequent.com"
+
+
+def get_blocksync_block_model_url(
+    org_id: str | UUID,
+    workspace_id: str | UUID,
+    block_model_id: str | UUID,
+    hub_url: str,
+) -> str:
+    """Generate the BlockSync Portal URL for a block model.
+
+    Uses the format: /{org_id}/redirect?ws={workspace_id}&bm={block_model_id}
+
+    :param org_id: The organization ID.
+    :param workspace_id: The workspace ID.
+    :param block_model_id: The block model ID.
+    :param hub_url: The hub URL to determine the environment.
+    :return: The complete BlockSync block model URL.
+    """
+    base_url = get_blocksync_base_url(hub_url)
+    return f"{base_url}/{str(org_id).lower()}/redirect?ws={str(workspace_id).lower()}&bm={str(block_model_id).lower()}"
+
+
+def get_blocksync_block_model_url_from_environment(
+    environment: "Environment",
+    block_model_id: str | UUID,
+) -> str:
+    """Generate the BlockSync Portal URL from an Environment object.
+
+    :param environment: The environment containing org_id, workspace_id, and hub_url.
+    :param block_model_id: The block model ID.
+    :return: The complete BlockSync block model URL.
+    """
+    return get_blocksync_block_model_url(
+        org_id=environment.org_id,
+        workspace_id=environment.workspace_id,
+        block_model_id=block_model_id,
+        hub_url=environment.hub_url,
+    )
+
+
+def get_blocksync_report_url(
+    org_id: str | UUID,
+    hub_code: str,
+    workspace_id: str | UUID,
+    block_model_id: str | UUID,
+    report_id: str | UUID,
+    result_id: str | UUID | None = None,
+) -> str:
+    """Generate the BlockSync URL for a block model report.
+
+    :param org_id: The organization ID.
+    :param hub_code: The hub code (e.g., "350mt").
+    :param workspace_id: The workspace ID.
+    :param block_model_id: The block model ID.
+    :param report_id: The report specification ID.
+    :param result_id: Optional result ID to link to a specific result.
+    :return: The complete BlockSync report URL.
+    """
+    base_url = get_blocksync_base_url("")
+    url = f"{base_url}/{org_id}/{hub_code}/{workspace_id}/blockmodel/{block_model_id}/reports/{report_id}"
+    if result_id:
+        url += f"?result_id={result_id}"
+    return url
 
 
 def get_hub_code(hub_url: str) -> str:

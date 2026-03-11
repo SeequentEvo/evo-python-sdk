@@ -15,7 +15,15 @@ from unittest import mock
 from parameterized import parameterized
 
 from evo.common.interfaces import IFeedback
-from evo.common.utils import NoFeedback, PartialFeedback, iter_with_fb, split_feedback
+from evo.common.utils import (
+    NoFeedback,
+    PartialFeedback,
+    create_default_feedback,
+    iter_with_fb,
+    reset_feedback_factory,
+    set_feedback_factory,
+    split_feedback,
+)
 
 
 class TestFeedback(unittest.TestCase):
@@ -123,3 +131,50 @@ class TestFeedback(unittest.TestCase):
         fb_2.progress(0.75)
         self.parent_fb.progress.assert_called_once_with(expected_progress_values[4], None)
         self.parent_fb.reset_mock()
+
+
+class TestFeedbackFactory(unittest.TestCase):
+    """Tests for the feedback factory functions."""
+
+    def tearDown(self) -> None:
+        reset_feedback_factory()
+
+    def test_create_default_feedback_returns_no_feedback_by_default(self) -> None:
+        fb = create_default_feedback("any label")
+        self.assertIs(fb, NoFeedback)
+
+    def test_set_feedback_factory_is_used_by_create_default_feedback(self) -> None:
+        custom_fb = mock.Mock(spec=IFeedback)
+        factory = mock.Mock(return_value=custom_fb)
+        set_feedback_factory(factory)
+
+        result = create_default_feedback("My Label")
+
+        factory.assert_called_once_with("My Label")
+        self.assertIs(result, custom_fb)
+
+    def test_reset_feedback_factory_restores_default(self) -> None:
+        custom_fb = mock.Mock(spec=IFeedback)
+        set_feedback_factory(lambda _: custom_fb)
+
+        # Sanity check: factory is active
+        self.assertIs(create_default_feedback("x"), custom_fb)
+
+        reset_feedback_factory()
+
+        self.assertIs(create_default_feedback("x"), NoFeedback)
+
+    def test_factory_receives_label(self) -> None:
+        labels: list[str] = []
+
+        def capturing_factory(label: str) -> IFeedback:
+            labels.append(label)
+            return NoFeedback
+
+        set_feedback_factory(capturing_factory)
+
+        create_default_feedback("Uploading data")
+        create_default_feedback("Tasks")
+        create_default_feedback("Downloading")
+
+        self.assertEqual(labels, ["Uploading data", "Tasks", "Downloading"])
