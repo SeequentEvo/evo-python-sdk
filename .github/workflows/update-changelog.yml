@@ -15,10 +15,25 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Update Changelog
-        uses: stefanzweifel/changelog-updater-action@v1
+        uses: actions/github-script@v8
         with:
-          latest-version: ${{ github.event.release.tag_name }}
-          release-notes: ${{ github.event.release.body }}
+          script: |
+            const fs = require('fs');
+            const releases = await github.paginate(
+              github.rest.repos.listReleases,
+              { owner: context.repo.owner, repo: context.repo.repo, per_page: 100 }
+            );
+            const published = releases
+              .filter(r => !r.draft)
+              .sort((a, b) => new Date(b.published_at) - new Date(a.published_at));
+            let changelog = '# Changelog\n';
+            for (const release of published) {
+              changelog += `\n## ${release.tag_name}\n`;
+              if (release.body) {
+                changelog += `${release.body.trim()}\n`;
+              }
+            }
+            fs.writeFileSync('CHANGELOG.md', changelog + '\n');
 
       - name: Check for changes
         id: changes

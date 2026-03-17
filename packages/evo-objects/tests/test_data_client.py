@@ -405,6 +405,15 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
                 table_formats.INTEGER_ARRAY_1_INT32,
             ),
             (
+                "large_string",
+                pa.table({"Category": pa.array(["A", "B", "A", "C"], type=pa.large_string())}),
+                pa.table(
+                    {"key": pa.array([0, 1, 2], type=pa.int32()), "value": pa.array(["A", "B", "C"], type=pa.string())}
+                ),
+                pa.table({"Category": pa.array([0, 1, 0, 2], type=pa.int32())}),
+                table_formats.INTEGER_ARRAY_1_INT32,
+            ),
+            (
                 "multiple_columns",
                 pa.table(
                     {
