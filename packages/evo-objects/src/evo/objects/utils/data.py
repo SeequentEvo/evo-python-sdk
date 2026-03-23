@@ -203,7 +203,7 @@ class ObjectDataClient:
         columns_chunk_range = []
         for column in table.itercolumns():
             column = column.dictionary_encode()
-            if not (pa.types.is_string(column.type.value_type) or pa.types.is_large_string(column.type.value_type)):
+            if not pa.types.is_string(column.type.value_type):
                 raise TableFormatError("Category columns must be of type string")
             if not pa.types.is_int32(column.type.index_type):
                 # Currently, we only support int32 indices
@@ -231,8 +231,6 @@ class ObjectDataClient:
         )
 
         dictionary_values = all_chunks[0].dictionary
-        if pa.types.is_large_string(dictionary_values.type):
-            dictionary_values = pc.cast(dictionary_values, pa.string())
         lookup = pa.Table.from_arrays(
             [np.arange(len(dictionary_values), dtype=np.int32), dictionary_values], names=["key", "value"]
         )
