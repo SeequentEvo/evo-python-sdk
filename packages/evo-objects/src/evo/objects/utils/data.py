@@ -72,6 +72,9 @@ def _cast_large_strings(table: pa.Table) -> pa.Table:
 
     Pandas 3+ with pyarrow-backed string dtype produces large_string columns
     when converting to Arrow, which downstream consumers may not support.
+
+    :param table: The Arrow table to cast.
+    :return: The Arrow table with large_string columns cast to string.
     """
     for i, field in enumerate(table.schema):
         if pa.types.is_large_string(field.type):
