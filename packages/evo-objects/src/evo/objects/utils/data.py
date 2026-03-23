@@ -67,6 +67,25 @@ def _iter_refs(target: Any, _key: str | None = None) -> Iterator[str]:
             yield str(value)
 
 
+def _cast_large_strings(table: pa.Table) -> pa.Table:
+    """Cast any large_string columns in the table to string.
+
+    Pandas 3+ with pyarrow-backed string dtype produces large_string columns
+    when converting to Arrow, which downstream consumers may not support.
+
+    :param table: The Arrow table to cast.
+    :return: The Arrow table with large_string columns cast to string.
+    """
+    for i, field in enumerate(table.schema):
+        if pa.types.is_large_string(field.type):
+            table = table.set_column(i, field.name, table.column(i).cast(pa.string()))
+        elif pa.types.is_dictionary(field.type) and pa.types.is_large_string(field.type.value_type):
+            table = table.set_column(
+                i, field.name, table.column(i).cast(pa.dictionary(field.type.index_type, pa.string()))
+            )
+    return table
+
+
 class ObjectDataClient:
     """An optional wrapper around data upload and download functionality for geoscience objects.
 
@@ -203,7 +222,7 @@ class ObjectDataClient:
         columns_chunk_range = []
         for column in table.itercolumns():
             column = column.dictionary_encode()
-            if not (pa.types.is_string(column.type.value_type) or pa.types.is_large_string(column.type.value_type)):
+            if not pa.types.is_string(column.type.value_type):
                 raise TableFormatError("Category columns must be of type string")
             if not pa.types.is_int32(column.type.index_type):
                 # Currently, we only support int32 indices
@@ -231,8 +250,6 @@ class ObjectDataClient:
         )
 
         dictionary_values = all_chunks[0].dictionary
-        if pa.types.is_large_string(dictionary_values.type):
-            dictionary_values = pc.cast(dictionary_values, pa.string())
         lookup = pa.Table.from_arrays(
             [np.arange(len(dictionary_values), dtype=np.int32), dictionary_values], names=["key", "value"]
         )
@@ -300,7 +317,8 @@ class ObjectDataClient:
                 no table formats are specified, raised when the table does not match any known format.
             :raises StorageFileNotFoundError: If the destination does not exist or is not a directory.
             """
-            return self.save_table(pa.Table.from_pandas(dataframe), table_format=table_format)
+            table = _cast_large_strings(pa.Table.from_pandas(dataframe))
+            return self.save_table(table, table_format=table_format)
 
         async def upload_dataframe(
             self,
@@ -322,7 +340,8 @@ class ObjectDataClient:
             :raises TableFormatError: If the provided table does not match any of the specified formats. If
                 no table formats are specified, raised when the table does not match any known format.
             """
-            table_info = await self.upload_table(pa.Table.from_pandas(dataframe), table_format=table_format, fb=fb)
+            table = _cast_large_strings(pa.Table.from_pandas(dataframe))
+            table_info = await self.upload_table(table, table_format=table_format, fb=fb)
             return table_info
 
         async def upload_category_dataframe(self, dataframe: pd.DataFrame, fb: IFeedback = NoFeedback) -> CategoryInfo:
@@ -342,7 +361,8 @@ class ObjectDataClient:
             :raises TableFormatError: If the table isn't a valid category table, or if the number of categories exceeds
                 what int32 type can represent.
             """
-            category_info = await self.upload_category_table(pa.Table.from_pandas(dataframe), fb=fb)
+            table = _cast_large_strings(pa.Table.from_pandas(dataframe))
+            category_info = await self.upload_category_table(table, fb=fb)
             return category_info
 
         async def download_dataframe(

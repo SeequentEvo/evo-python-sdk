@@ -64,7 +64,7 @@ class _ColumnFormat:
                 return pa.int64()
             case "bool":
                 return pa.bool_()
-            case "string" | "large_string":
+            case "string":
                 return pa.string()
             case "timestamp":
                 return pa.timestamp("us", tz="UTC")
@@ -88,7 +88,7 @@ class _ColumnFormat:
                 return "int64"
             case "bool":
                 return "bool"
-            case "string" | "large_string":
+            case "string":
                 return "string"
             case "timestamp[us, tz=UTC]":
                 return "timestamp"
