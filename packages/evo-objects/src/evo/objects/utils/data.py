@@ -67,23 +67,27 @@ def _iter_refs(target: Any, _key: str | None = None) -> Iterator[str]:
             yield str(value)
 
 
-def _cast_large_strings(table: pa.Table) -> pa.Table:
-    """Cast any large_string columns in the table to string.
+def _get_schema_from_dataframe(dataframe: "pd.DataFrame") -> pa.Schema:
+    """Get a normalized pyarrow schema from a pandas dataframe.
 
-    Pandas 3+ with pyarrow-backed string dtype produces large_string columns
-    when converting to Arrow, which downstream consumers may not support.
+    This hook centralizes dataframe-to-Arrow schema adjustments before the
+    dataframe is converted to a table. It currently performs these conversions:
+    - large_string -> string
+    - dictionary<index, large_string> -> dictionary<index, string>
 
-    :param table: The Arrow table to cast.
-    :return: The Arrow table with large_string columns cast to string.
+    :param dataframe: The pandas dataframe to get the schema from.
+    :return: A pyarrow schema with any configured type conversions applied.
     """
-    for i, field in enumerate(table.schema):
+    schema = pa.Schema.from_pandas(dataframe)
+    fields = []
+    for field in schema:
         if pa.types.is_large_string(field.type):
-            table = table.set_column(i, field.name, table.column(i).cast(pa.string()))
+            fields.append(field.with_type(pa.string()))
         elif pa.types.is_dictionary(field.type) and pa.types.is_large_string(field.type.value_type):
-            table = table.set_column(
-                i, field.name, table.column(i).cast(pa.dictionary(field.type.index_type, pa.string()))
-            )
-    return table
+            fields.append(field.with_type(pa.dictionary(field.type.index_type, pa.string())))
+        else:
+            fields.append(field)
+    return pa.schema(fields)
 
 
 class ObjectDataClient:
@@ -317,7 +321,8 @@ class ObjectDataClient:
                 no table formats are specified, raised when the table does not match any known format.
             :raises StorageFileNotFoundError: If the destination does not exist or is not a directory.
             """
-            table = _cast_large_strings(pa.Table.from_pandas(dataframe))
+            schema = _get_schema_from_dataframe(dataframe)
+            table = pa.Table.from_pandas(dataframe, schema)
             return self.save_table(table, table_format=table_format)
 
         async def upload_dataframe(
@@ -340,7 +345,8 @@ class ObjectDataClient:
             :raises TableFormatError: If the provided table does not match any of the specified formats. If
                 no table formats are specified, raised when the table does not match any known format.
             """
-            table = _cast_large_strings(pa.Table.from_pandas(dataframe))
+            schema = _get_schema_from_dataframe(dataframe)
+            table = pa.Table.from_pandas(dataframe, schema)
             table_info = await self.upload_table(table, table_format=table_format, fb=fb)
             return table_info
 
@@ -361,7 +367,8 @@ class ObjectDataClient:
             :raises TableFormatError: If the table isn't a valid category table, or if the number of categories exceeds
                 what int32 type can represent.
             """
-            table = _cast_large_strings(pa.Table.from_pandas(dataframe))
+            schema = _get_schema_from_dataframe(dataframe)
+            table = pa.Table.from_pandas(dataframe, schema)
             category_info = await self.upload_category_table(table, fb=fb)
             return category_info
 
