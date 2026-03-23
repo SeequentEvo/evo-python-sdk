@@ -24,3 +24,7 @@ jobs:
 
   run-tests:
     uses: ./.github/workflows/run-all-tests.yaml
+
+  run-notebook-tests:
+    uses: ./.github/workflows/run-notebook-tests.yaml
+

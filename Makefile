@@ -21,6 +21,9 @@ test-colormaps:
 test-widgets:
 	uv run --package evo-widgets pytest packages/evo-widgets/tests
 
+test-notebooks:
+	uv run --directory code-samples --group test pytest tests/ -v
+
 test:
 	@make test-common
 	@make test-files
