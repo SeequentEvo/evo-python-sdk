@@ -565,12 +565,8 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
 
     async def test_upload_category_dataframe_casts_large_string_categories(self) -> None:
         """Test that upload_category_dataframe casts large_string categories (from pandas string[pyarrow]) to string."""
-        dataframe = pd.DataFrame(
-            {"Category": pd.Categorical(pd.Series(["A", "B", "A", "C"], dtype="string[pyarrow]"))}
-        )
-        with mock.patch.object(
-            self.data_client, "upload_category_table", new_callable=mock.AsyncMock
-        ) as mock_upload:
+        dataframe = pd.DataFrame({"Category": pd.Categorical(pd.Series(["A", "B", "A", "C"], dtype="string[pyarrow]"))})
+        with mock.patch.object(self.data_client, "upload_category_table", new_callable=mock.AsyncMock) as mock_upload:
             mock_upload.return_value = {}
             await self.data_client.upload_category_dataframe(dataframe)
 
