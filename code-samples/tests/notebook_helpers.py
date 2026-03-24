@@ -37,6 +37,13 @@ EXECUTABLE_NOTEBOOKS: list[str] = [
     "code-samples/common-tasks/working-with-parquet.ipynb",
 ]
 
+# Notebooks that contain CI auth markers but are NOT fully self-contained for
+# CI execution (e.g. require interactive widgets or a browser).
+AUTH_EXCLUDE_NOTEBOOKS: list[str] = [
+    "code-samples/auth-and-evo-discovery/native-app-token.ipynb",
+    "code-samples/workspaces/bonus/move-objects.ipynb",
+]
+
 # Auth notebooks are auto-detected by scanning code cells for CI-compatible auth
 # patterns.
 _CI_AUTH_MARKERS: tuple[str, ...] = ("_create_ci_manager", "get_manual_auth")
@@ -80,6 +87,12 @@ def is_executable(notebook_path: Path) -> bool:
 def is_auth_notebook(notebook_path: Path) -> bool:
     """Return True if the notebook requires authentication credentials."""
     if is_executable(notebook_path):
+        return False
+    try:
+        rel = str(notebook_path.relative_to(REPO_ROOT))
+    except ValueError:
+        return False
+    if rel in AUTH_EXCLUDE_NOTEBOOKS:
         return False
     try:
         with open(notebook_path) as f:

@@ -184,6 +184,7 @@ if AUTH_NOTEBOOKS and has_auth_credentials():
             # Inject credentials into the notebook's execution environment
             creds = get_auth_credentials()
             env = os.environ.copy()
+            env["CI"] = "true"
             if creds["client_id"]:
                 env["EVO_CLIENT_ID"] = creds["client_id"]
             if creds["client_secret"]:

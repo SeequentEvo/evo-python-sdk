@@ -17,8 +17,7 @@ from typing import TYPE_CHECKING
 from uuid import UUID
 
 if TYPE_CHECKING:
-    from evo.common import APIConnector
-    from evo.common.io import ICache
+    from evo.common import APIConnector, ICache
 
 
 @dataclass
@@ -75,7 +74,7 @@ async def _create_ci_manager(
     """
     from evo.aio import AioTransport
     from evo.common import APIConnector
-    from evo.common.io import init_cache
+    from evo.common.utils import Cache
     from evo.oauth import ClientCredentialsAuthorizer, EvoScopes, OAuthConnector
 
     required = {"EVO_CLIENT_ID", "EVO_CLIENT_SECRET", "EVO_ORG_ID", "EVO_HUB_URL"}
@@ -98,7 +97,7 @@ async def _create_ci_manager(
         scopes=EvoScopes.all_evo,
     )
     connector = APIConnector(base_url=hub_url, transport=transport, authorizer=authorizer)
-    cache = init_cache(cache_location)
+    cache = Cache(cache_location, mkdir=True)
 
     return _CIManager(
         connector=connector,
