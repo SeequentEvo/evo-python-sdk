@@ -11,6 +11,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 from pathlib import Path
 
@@ -36,15 +37,9 @@ EXECUTABLE_NOTEBOOKS: list[str] = [
     "code-samples/common-tasks/working-with-parquet.ipynb",
 ]
 
-# Notebooks that require authentication credentials (service app with client_id
-# and client_secret). These will only run if EVO_CLIENT_ID and EVO_CLIENT_SECRET
-# environment variables are set.
-# Note: Only include notebooks that are self-contained and can run end-to-end
-# without additional manual setup (like workspace selection).
-AUTH_NOTEBOOKS: list[str] = [
-    "code-samples/workspaces/api-examples.ipynb",
-    "code-samples/workspaces/sdk-examples.ipynb",
-]
+# Auth notebooks are auto-detected by scanning code cells for CI-compatible auth
+# patterns.
+_CI_AUTH_MARKERS: tuple[str, ...] = ("_create_ci_manager", "get_manual_auth")
 
 
 # Directory name patterns to ignore during notebook discovery.
@@ -84,11 +79,20 @@ def is_executable(notebook_path: Path) -> bool:
 
 def is_auth_notebook(notebook_path: Path) -> bool:
     """Return True if the notebook requires authentication credentials."""
-    try:
-        rel = str(notebook_path.relative_to(REPO_ROOT))
-    except ValueError:
+    if is_executable(notebook_path):
         return False
-    return rel in AUTH_NOTEBOOKS
+    try:
+        with open(notebook_path) as f:
+            nb = json.load(f)
+        for cell in nb.get("cells", []):
+            if cell.get("cell_type") != "code":
+                continue
+            source = "".join(cell.get("source", []))
+            if any(marker in source for marker in _CI_AUTH_MARKERS):
+                return True
+    except (json.JSONDecodeError, OSError, KeyError):
+        pass
+    return False
 
 
 def load_env_file(env_file: Path | None = None) -> dict[str, str]:
