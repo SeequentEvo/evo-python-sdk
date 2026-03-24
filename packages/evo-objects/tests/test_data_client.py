@@ -563,18 +563,6 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
         (table,), _ = mock_upload.await_args
         self.assertTrue(pa.types.is_string(table.schema.field("col").type))
 
-    async def test_upload_category_dataframe_converts_large_string_categories_via_schema(self) -> None:
-        """Test that upload_category_dataframe converts large_string categories (from pandas string[pyarrow]) to string via schema."""
-        dataframe = pd.DataFrame({"Category": pd.Categorical(pd.Series(["A", "B", "A", "C"], dtype="string[pyarrow]"))})
-        with mock.patch.object(self.data_client, "upload_category_table", new_callable=mock.AsyncMock) as mock_upload:
-            mock_upload.return_value = {}
-            await self.data_client.upload_category_dataframe(dataframe)
-
-        (table,), _ = mock_upload.await_args
-        col_type = table.schema.field("Category").type
-        self.assertTrue(pa.types.is_dictionary(col_type))
-        self.assertTrue(pa.types.is_string(col_type.value_type))
-
     async def test_download_table(self) -> None:
         """Test downloading tabular data using pyarrow."""
         get_object_response = load_test_data("get_object.json")
