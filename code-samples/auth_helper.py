@@ -56,6 +56,12 @@ class _CIManager:
             workspace_id=self._workspace_id,
         )
 
+    def get_org_id(self) -> UUID:
+        return self._org_id
+
+    def get_cache(self) -> "ICache | None":
+        return self._cache
+
     @property
     def cache(self) -> "ICache | None":
         return self._cache
@@ -71,6 +77,9 @@ async def _create_ci_manager(
     - EVO_CLIENT_SECRET
     - EVO_ORG_ID
     - EVO_HUB_URL
+
+    Optional:
+    - EVO_WORKSPACE_ID (if not set, the first available workspace is used)
     """
     from evo.aio import AioTransport
     from evo.common import APIConnector
@@ -99,11 +108,22 @@ async def _create_ci_manager(
     connector = APIConnector(base_url=hub_url, transport=transport, authorizer=authorizer)
     cache = Cache(cache_location, mkdir=True)
 
+    workspace_id = os.environ.get("EVO_WORKSPACE_ID")
+    if not workspace_id:
+        # Auto-discover a workspace when none is explicitly provided
+        from evo.workspaces import WorkspaceAPIClient
+
+        ws_client = WorkspaceAPIClient(connector=connector, org_id=UUID(org_id))
+        workspaces = await ws_client.list_all_workspaces()
+        if not workspaces:
+            raise RuntimeError("No workspaces found for the given organization. Set EVO_WORKSPACE_ID explicitly.")
+        workspace_id = str(workspaces[0].id)
+
     return _CIManager(
         connector=connector,
         hub_url=hub_url,
         org_id=org_id,
-        workspace_id=os.environ.get("EVO_WORKSPACE_ID"),
+        workspace_id=workspace_id,
         cache=cache,
     )
 
