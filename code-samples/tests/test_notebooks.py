@@ -1,13 +1,13 @@
-"""Automated tests for sample Jupyter notebooks.
-
-Three levels of validation are applied:
-
-1. **Syntax** – every notebook is valid JSON conforming to the nbformat schema.
-2. **Imports** – every ``import`` / ``from … import`` found in code cells
-   resolves to an installed package (catches stale or misspelled deps).
-3. **Execution** – notebooks that need no authentication are executed
-   end-to-end via *nbclient* and must complete without errors.
-"""
+#  Copyright © 2026 Bentley Systems, Incorporated
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#      http://www.apache.org/licenses/LICENSE-2.0
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
 
 from __future__ import annotations
 
@@ -20,6 +20,9 @@ import nbformat
 import pytest
 from notebook_helpers import (
     discover_notebooks,
+    get_auth_credentials,
+    has_auth_credentials,
+    is_auth_notebook,
     is_executable,
     notebook_id,
 )
@@ -29,6 +32,7 @@ from notebook_helpers import (
 # ---------------------------------------------------------------------------
 ALL_NOTEBOOKS: list[Path] = discover_notebooks()
 EXEC_NOTEBOOKS: list[Path] = [nb for nb in ALL_NOTEBOOKS if is_executable(nb)]
+AUTH_NOTEBOOKS: list[Path] = [nb for nb in ALL_NOTEBOOKS if is_auth_notebook(nb)]
 
 # Standard-library top-level module names (Python 3.10+).  We skip these
 # during the import check because they are always available and never need
@@ -42,6 +46,7 @@ _EXTRA_SKIP: frozenset[str] = frozenset(
         "IPython",
         "ipywidgets",
         "google",  # google.colab – optional, not always present
+        "auth_helper",  # Local module in code-samples root
     }
 )
 
@@ -157,3 +162,44 @@ class TestNotebookExecution:
         )
         # Run in the notebook's own directory so relative paths resolve.
         client.execute(cwd=str(notebook_path.parent))
+
+
+# Only run auth tests if credentials are available
+if AUTH_NOTEBOOKS and has_auth_credentials():
+
+    @pytest.mark.parametrize("notebook_path", AUTH_NOTEBOOKS, ids=[notebook_id(nb) for nb in AUTH_NOTEBOOKS])
+    class TestAuthNotebookExecution:
+        """Execute notebooks that require authentication credentials.
+
+        These tests only run when EVO_CLIENT_ID and EVO_CLIENT_SECRET are set
+        (either in environment or in .github/scripts/.env).
+        """
+
+        def test_executes_with_auth(self, notebook_path: Path) -> None:
+            """Notebook must run to completion with valid credentials."""
+            import os
+
+            from nbclient import NotebookClient
+
+            # Inject credentials into the notebook's execution environment
+            creds = get_auth_credentials()
+            env = os.environ.copy()
+            if creds["client_id"]:
+                env["EVO_CLIENT_ID"] = creds["client_id"]
+            if creds["client_secret"]:
+                env["EVO_CLIENT_SECRET"] = creds["client_secret"]
+            if creds["org_id"]:
+                env["EVO_ORG_ID"] = creds["org_id"]
+            if creds["hub_url"]:
+                env["EVO_HUB_URL"] = creds["hub_url"]
+            if creds["workspace_id"]:
+                env["EVO_WORKSPACE_ID"] = creds["workspace_id"]
+
+            nb = _read_notebook(notebook_path)
+            client = NotebookClient(
+                nb,
+                timeout=600,  # Auth notebooks may take longer
+                kernel_name="python3",
+            )
+            # Run in the notebook's own directory with credentials in env
+            client.execute(cwd=str(notebook_path.parent), env=env)
