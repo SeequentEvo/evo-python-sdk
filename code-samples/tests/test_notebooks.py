@@ -171,26 +171,26 @@ class TestAuthNotebookExecution:
     (either in environment or in .github/scripts/.env).
     """
 
-    def test_executes_with_auth(self, notebook_path: Path) -> None:
+    def test_executes_with_auth(self, notebook_path: Path, monkeypatch) -> None:
         """Notebook must run to completion with valid credentials."""
-        import os
-
         from nbclient import NotebookClient
 
-        # Inject credentials into the notebook's execution environment
+        # Set credentials directly in os.environ so the kernel subprocess
+        # inherits them naturally. This is more reliable than passing env=
+        # to execute(), which can be silently dropped by some nbclient/
+        # jupyter_client version combinations.
         creds = get_auth_credentials()
-        env = os.environ.copy()
-        env["CI"] = "true"
+        monkeypatch.setenv("CI", "true")
         if creds["client_id"]:
-            env["EVO_CLIENT_ID"] = creds["client_id"]
+            monkeypatch.setenv("EVO_CLIENT_ID", creds["client_id"])
         if creds["client_secret"]:
-            env["EVO_CLIENT_SECRET"] = creds["client_secret"]
+            monkeypatch.setenv("EVO_CLIENT_SECRET", creds["client_secret"])
         if creds["org_id"]:
-            env["EVO_ORG_ID"] = creds["org_id"]
+            monkeypatch.setenv("EVO_ORG_ID", creds["org_id"])
         if creds["hub_url"]:
-            env["EVO_HUB_URL"] = creds["hub_url"]
+            monkeypatch.setenv("EVO_HUB_URL", creds["hub_url"])
         if creds["workspace_id"]:
-            env["EVO_WORKSPACE_ID"] = creds["workspace_id"]
+            monkeypatch.setenv("EVO_WORKSPACE_ID", creds["workspace_id"])
 
         nb = _read_notebook(notebook_path)
         client = NotebookClient(
@@ -198,5 +198,6 @@ class TestAuthNotebookExecution:
             timeout=600,  # Auth notebooks may take longer
             kernel_name="python3",
         )
-        # Run in the notebook's own directory with credentials in env
-        client.execute(cwd=str(notebook_path.parent), env=env)
+        # Run in the notebook's own directory so relative paths resolve.
+        # No env= kwarg — kernel inherits from the patched os.environ above.
+        client.execute(cwd=str(notebook_path.parent))
