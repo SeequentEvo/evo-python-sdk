@@ -21,7 +21,6 @@ import pytest
 from notebook_helpers import (
     discover_notebooks,
     get_auth_credentials,
-    has_auth_credentials,
     is_auth_notebook,
     is_executable,
     notebook_id,
@@ -164,43 +163,40 @@ class TestNotebookExecution:
         client.execute(cwd=str(notebook_path.parent))
 
 
-# Only run auth tests if credentials are available
-if AUTH_NOTEBOOKS and has_auth_credentials():
+@pytest.mark.parametrize("notebook_path", AUTH_NOTEBOOKS, ids=[notebook_id(nb) for nb in AUTH_NOTEBOOKS])
+class TestAuthNotebookExecution:
+    """Execute notebooks that require authentication credentials.
 
-    @pytest.mark.parametrize("notebook_path", AUTH_NOTEBOOKS, ids=[notebook_id(nb) for nb in AUTH_NOTEBOOKS])
-    class TestAuthNotebookExecution:
-        """Execute notebooks that require authentication credentials.
+    These tests only run when EVO_CLIENT_ID and EVO_CLIENT_SECRET are set
+    (either in environment or in .github/scripts/.env).
+    """
 
-        These tests only run when EVO_CLIENT_ID and EVO_CLIENT_SECRET are set
-        (either in environment or in .github/scripts/.env).
-        """
+    def test_executes_with_auth(self, notebook_path: Path) -> None:
+        """Notebook must run to completion with valid credentials."""
+        import os
 
-        def test_executes_with_auth(self, notebook_path: Path) -> None:
-            """Notebook must run to completion with valid credentials."""
-            import os
+        from nbclient import NotebookClient
 
-            from nbclient import NotebookClient
+        # Inject credentials into the notebook's execution environment
+        creds = get_auth_credentials()
+        env = os.environ.copy()
+        env["CI"] = "true"
+        if creds["client_id"]:
+            env["EVO_CLIENT_ID"] = creds["client_id"]
+        if creds["client_secret"]:
+            env["EVO_CLIENT_SECRET"] = creds["client_secret"]
+        if creds["org_id"]:
+            env["EVO_ORG_ID"] = creds["org_id"]
+        if creds["hub_url"]:
+            env["EVO_HUB_URL"] = creds["hub_url"]
+        if creds["workspace_id"]:
+            env["EVO_WORKSPACE_ID"] = creds["workspace_id"]
 
-            # Inject credentials into the notebook's execution environment
-            creds = get_auth_credentials()
-            env = os.environ.copy()
-            env["CI"] = "true"
-            if creds["client_id"]:
-                env["EVO_CLIENT_ID"] = creds["client_id"]
-            if creds["client_secret"]:
-                env["EVO_CLIENT_SECRET"] = creds["client_secret"]
-            if creds["org_id"]:
-                env["EVO_ORG_ID"] = creds["org_id"]
-            if creds["hub_url"]:
-                env["EVO_HUB_URL"] = creds["hub_url"]
-            if creds["workspace_id"]:
-                env["EVO_WORKSPACE_ID"] = creds["workspace_id"]
-
-            nb = _read_notebook(notebook_path)
-            client = NotebookClient(
-                nb,
-                timeout=600,  # Auth notebooks may take longer
-                kernel_name="python3",
-            )
-            # Run in the notebook's own directory with credentials in env
-            client.execute(cwd=str(notebook_path.parent), env=env)
+        nb = _read_notebook(notebook_path)
+        client = NotebookClient(
+            nb,
+            timeout=600,  # Auth notebooks may take longer
+            kernel_name="python3",
+        )
+        # Run in the notebook's own directory with credentials in env
+        client.execute(cwd=str(notebook_path.parent), env=env)

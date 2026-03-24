@@ -152,9 +152,3 @@ def get_auth_credentials(env_file: Path | None = None) -> dict[str, str | None]:
         "hub_url": get_var("EVO_HUB_URL"),
         "workspace_id": get_var("EVO_WORKSPACE_ID"),
     }
-
-
-def has_auth_credentials(env_file: Path | None = None) -> bool:
-    """Return True if service app credentials (client_id + client_secret) are available."""
-    creds = get_auth_credentials(env_file)
-    return bool(creds["client_id"] and creds["client_secret"])
