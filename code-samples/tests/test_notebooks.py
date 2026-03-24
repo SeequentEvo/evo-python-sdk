@@ -171,36 +171,33 @@ class TestAuthNotebookExecution:
     (either in environment or in .github/scripts/.env).
     """
 
-    def test_executes_with_auth(self, notebook_path: Path) -> None:
+    def test_executes_with_auth(self, notebook_path: Path, monkeypatch) -> None:
         """Notebook must run to completion with valid credentials."""
         from nbclient import NotebookClient
 
+        # Set credentials directly in os.environ so the kernel subprocess
+        # inherits them naturally. This is more reliable than passing env=
+        # to execute(), which can be silently dropped by some nbclient/
+        # jupyter_client version combinations.
         creds = get_auth_credentials()
-
-        # Build a cell that injects credentials directly into the kernel's
-        # os.environ. This is more reliable than relying on the kernel
-        # subprocess inheriting env vars from the test runner process, which
-        # is not guaranteed across nbclient/jupyter_client versions.
-        env_lines = ["import os", 'os.environ["CI"] = "true"']
-        for key, val in [
-            ("EVO_CLIENT_ID", creds["client_id"]),
-            ("EVO_CLIENT_SECRET", creds["client_secret"]),
-            ("EVO_ORG_ID", creds["org_id"]),
-            ("EVO_HUB_URL", creds["hub_url"]),
-            ("EVO_WORKSPACE_ID", creds["workspace_id"]),
-        ]:
-            if val:
-                env_lines.append(f"os.environ[{key!r}] = {val!r}")
+        monkeypatch.setenv("CI", "true")
+        if creds["client_id"]:
+            monkeypatch.setenv("EVO_CLIENT_ID", creds["client_id"])
+        if creds["client_secret"]:
+            monkeypatch.setenv("EVO_CLIENT_SECRET", creds["client_secret"])
+        if creds["org_id"]:
+            monkeypatch.setenv("EVO_ORG_ID", creds["org_id"])
+        if creds["hub_url"]:
+            monkeypatch.setenv("EVO_HUB_URL", creds["hub_url"])
+        if creds["workspace_id"]:
+            monkeypatch.setenv("EVO_WORKSPACE_ID", creds["workspace_id"])
 
         nb = _read_notebook(notebook_path)
-        inject_cell = nbformat.v4.new_code_cell("\n".join(env_lines))
-        inject_cell.metadata["tags"] = ["injected-ci-credentials"]
-        nb.cells.insert(0, inject_cell)
-
         client = NotebookClient(
             nb,
             timeout=600,  # Auth notebooks may take longer
             kernel_name="python3",
         )
         # Run in the notebook's own directory so relative paths resolve.
+        # No env= kwarg — kernel inherits from the patched os.environ above.
         client.execute(cwd=str(notebook_path.parent))
