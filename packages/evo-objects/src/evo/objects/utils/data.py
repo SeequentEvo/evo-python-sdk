@@ -73,7 +73,6 @@ def _get_schema_from_dataframe(dataframe: "pd.DataFrame") -> pa.Schema:
     This hook centralizes dataframe-to-Arrow schema adjustments before the
     dataframe is converted to a table. It currently performs these conversions:
     - large_string -> string
-    - dictionary<index, large_string> -> dictionary<index, string>
 
     :param dataframe: The pandas dataframe to get the schema from.
     :return: A pyarrow schema with any configured type conversions applied.
@@ -83,8 +82,6 @@ def _get_schema_from_dataframe(dataframe: "pd.DataFrame") -> pa.Schema:
     for field in schema:
         if pa.types.is_large_string(field.type):
             fields.append(field.with_type(pa.string()))
-        elif pa.types.is_dictionary(field.type) and pa.types.is_large_string(field.type.value_type):
-            fields.append(field.with_type(pa.dictionary(field.type.index_type, pa.string())))
         else:
             fields.append(field)
     return pa.schema(fields)
