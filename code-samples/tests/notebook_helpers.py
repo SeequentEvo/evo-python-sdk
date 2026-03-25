@@ -48,6 +48,8 @@ AUTH_EXCLUDE_NOTEBOOKS: list[str] = [
     "code-samples/blockmodels/reports.ipynb",
     # Cascading failure: file_info set by an earlier interactive cell.
     "code-samples/files/sdk-examples.ipynb",
+    # Intermittent 404: file upload may not propagate before the read-back poll.
+    "code-samples/files/api-examples.ipynb",
     # Tries to upload/download from evo-demo.static.evo.seequent.com which is unreachable.
     "code-samples/geoscience-objects/drilling-campaign/download-a-drilling-campaign/sdk-examples.ipynb",
     "code-samples/geoscience-objects/publish-triangular-mesh/publish-triangular-mesh.ipynb",
