@@ -40,7 +40,6 @@ EXECUTABLE_NOTEBOOKS: list[str] = [
 # Notebooks that contain CI auth markers but are NOT fully self-contained for
 # CI execution (e.g. require interactive widgets or a browser).
 AUTH_EXCLUDE_NOTEBOOKS: list[str] = [
-    "code-samples/auth-and-evo-discovery/native-app-token.ipynb",
     "code-samples/workspaces/bonus/move-objects.ipynb",
     # Requires user to manually copy a block model UUID from a previous cell's output.
     "code-samples/blockmodels/api-examples.ipynb",
