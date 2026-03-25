@@ -85,7 +85,7 @@ def discover_notebooks(root: Path | None = None) -> list[Path]:
 def notebook_id(notebook_path: Path) -> str:
     """Generate a readable pytest node-id from a notebook path."""
     try:
-        return str(notebook_path.relative_to(REPO_ROOT))
+        return notebook_path.relative_to(REPO_ROOT).as_posix()
     except ValueError:
         return str(notebook_path)
 
@@ -93,7 +93,7 @@ def notebook_id(notebook_path: Path) -> str:
 def is_executable(notebook_path: Path) -> bool:
     """Return True if the notebook is in the executable allow-list."""
     try:
-        rel = str(notebook_path.relative_to(REPO_ROOT))
+        rel = notebook_path.relative_to(REPO_ROOT).as_posix()
     except ValueError:
         return False
     return rel in EXECUTABLE_NOTEBOOKS
@@ -104,7 +104,7 @@ def is_auth_notebook(notebook_path: Path) -> bool:
     if is_executable(notebook_path):
         return False
     try:
-        rel = str(notebook_path.relative_to(REPO_ROOT))
+        rel = notebook_path.relative_to(REPO_ROOT).as_posix()
     except ValueError:
         return False
     if rel in AUTH_EXCLUDE_NOTEBOOKS:
