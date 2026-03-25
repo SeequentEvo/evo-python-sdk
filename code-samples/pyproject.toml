@@ -11,6 +11,7 @@ dependencies = [
     "PyJWT",
     "matplotlib>=3.10.8",
     "pandas[excel]>=2.2.3",
+    "plotly>=5.18.0",
     "prettytable>=3.16.0",
     "pyarrow>=19.0.1",
     "requests>=2.32.3",
