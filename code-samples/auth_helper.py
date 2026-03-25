@@ -67,6 +67,34 @@ class _CIManager:
         return self._cache
 
 
+_REQUIRED_ENV_VARS = ("EVO_CLIENT_ID", "EVO_CLIENT_SECRET", "EVO_ORG_ID", "EVO_HUB_URL")
+
+
+def _get_required_env(*keys: str) -> dict[str, str]:
+    """Return a dict of environment variable values, raising if any are missing."""
+    missing = [k for k in keys if not os.environ.get(k)]
+    if missing:
+        raise RuntimeError(f"Missing required environment variables: {', '.join(sorted(missing))}")
+    return {k: os.environ[k] for k in keys}
+
+
+def _create_service_auth(user_agent: str = "Evo SDK CI/1.0"):
+    """Create transport and authorizer using service app credentials from environment."""
+    from evo.aio import AioTransport
+    from evo.oauth import ClientCredentialsAuthorizer, EvoScopes, OAuthConnector
+
+    transport = AioTransport(user_agent=user_agent)
+    authorizer = ClientCredentialsAuthorizer(
+        oauth_connector=OAuthConnector(
+            transport=transport,
+            client_id=os.environ["EVO_CLIENT_ID"],
+            client_secret=os.environ["EVO_CLIENT_SECRET"],
+        ),
+        scopes=EvoScopes.all_evo,
+    )
+    return transport, authorizer
+
+
 async def _create_ci_manager(
     cache_location: str = "./notebook-data",
 ) -> _CIManager:
@@ -81,39 +109,19 @@ async def _create_ci_manager(
     Optional:
     - EVO_WORKSPACE_ID (if not set, the first available workspace is used)
     """
-    from evo.aio import AioTransport
     from evo.common import APIConnector
     from evo.common.utils import Cache
-    from evo.oauth import ClientCredentialsAuthorizer, EvoScopes, OAuthConnector
 
-    required = {"EVO_CLIENT_ID", "EVO_CLIENT_SECRET", "EVO_ORG_ID", "EVO_HUB_URL"}
-    missing = [k for k in required if not os.environ.get(k)]
-    if missing:
-        raise RuntimeError(f"Missing required environment variables: {', '.join(sorted(missing))}")
-
-    client_id = os.environ["EVO_CLIENT_ID"]
-    client_secret = os.environ["EVO_CLIENT_SECRET"]
-    org_id = os.environ["EVO_ORG_ID"]
-    hub_url = os.environ["EVO_HUB_URL"]
-
-    transport = AioTransport(user_agent="Evo SDK CI/1.0")
-    authorizer = ClientCredentialsAuthorizer(
-        oauth_connector=OAuthConnector(
-            transport=transport,
-            client_id=client_id,
-            client_secret=client_secret,
-        ),
-        scopes=EvoScopes.all_evo,
-    )
-    connector = APIConnector(base_url=hub_url, transport=transport, authorizer=authorizer)
+    env = _get_required_env(*_REQUIRED_ENV_VARS)
+    transport, authorizer = _create_service_auth()
+    connector = APIConnector(base_url=env["EVO_HUB_URL"], transport=transport, authorizer=authorizer)
     cache = Cache(cache_location, mkdir=True)
 
     workspace_id = os.environ.get("EVO_WORKSPACE_ID")
     if not workspace_id:
-        # Auto-discover a workspace when none is explicitly provided
         from evo.workspaces import WorkspaceAPIClient
 
-        ws_client = WorkspaceAPIClient(connector=connector, org_id=UUID(org_id))
+        ws_client = WorkspaceAPIClient(connector=connector, org_id=UUID(env["EVO_ORG_ID"]))
         workspaces = await ws_client.list_all_workspaces()
         if not workspaces:
             raise RuntimeError("No workspaces found for the given organization. Set EVO_WORKSPACE_ID explicitly.")
@@ -121,11 +129,16 @@ async def _create_ci_manager(
 
     return _CIManager(
         connector=connector,
-        hub_url=hub_url,
-        org_id=org_id,
+        hub_url=env["EVO_HUB_URL"],
+        org_id=env["EVO_ORG_ID"],
         workspace_id=workspace_id,
         cache=cache,
     )
+
+
+def _is_ci() -> bool:
+    """Return True if running in a CI environment with service credentials."""
+    return bool(os.environ.get("CI") or os.environ.get("GITHUB_ACTIONS")) and bool(os.environ.get("EVO_CLIENT_SECRET"))
 
 
 async def get_manual_auth(
@@ -143,25 +156,11 @@ async def get_manual_auth(
     Returns:
         Tuple of (transport, authorizer, org_id, hub_url)
     """
-    from evo.aio import AioTransport
-
-    is_ci = bool(os.environ.get("CI") or os.environ.get("GITHUB_ACTIONS")) and bool(os.environ.get("EVO_CLIENT_SECRET"))
-
-    if is_ci:
-        from evo.oauth import ClientCredentialsAuthorizer, EvoScopes, OAuthConnector
-
-        transport = AioTransport(user_agent=user_agent)
-        authorizer = ClientCredentialsAuthorizer(
-            oauth_connector=OAuthConnector(
-                transport=transport,
-                client_id=os.environ["EVO_CLIENT_ID"],
-                client_secret=os.environ["EVO_CLIENT_SECRET"],
-            ),
-            scopes=EvoScopes.all_evo,
-        )
+    if _is_ci():
+        transport, authorizer = _create_service_auth(user_agent=user_agent)
         return transport, authorizer, os.environ["EVO_ORG_ID"], os.environ["EVO_HUB_URL"]
 
-    # Interactive authentication
+    from evo.aio import AioTransport
     from evo.oauth import AuthorizationCodeAuthorizer, EvoScopes, OAuthConnector
 
     transport = AioTransport(user_agent=user_agent)

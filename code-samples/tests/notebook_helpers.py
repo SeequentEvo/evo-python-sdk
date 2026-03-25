@@ -63,7 +63,7 @@ AUTH_EXCLUDE_NOTEBOOKS: list[str] = [
 
 # Auth notebooks are auto-detected by scanning code cells for CI-compatible auth
 # patterns.
-_CI_AUTH_MARKERS: tuple[str, ...] = ("_create_ci_manager", "get_manual_auth")
+_CI_AUTH_MARKERS = ("_create_ci_manager", "get_manual_auth")
 
 
 # Directory name patterns to ignore during notebook discovery.
@@ -84,88 +84,78 @@ def discover_notebooks(root: Path | None = None) -> list[Path]:
     return notebooks
 
 
-def notebook_id(notebook_path: Path) -> str:
-    """Generate a readable pytest node-id from a notebook path."""
+def _relative_posix(notebook_path: Path) -> str | None:
+    """Return the POSIX path relative to REPO_ROOT, or None if outside."""
     try:
         return notebook_path.relative_to(REPO_ROOT).as_posix()
     except ValueError:
-        return str(notebook_path)
+        return None
+
+
+def notebook_id(notebook_path: Path) -> str:
+    """Generate a readable pytest node-id from a notebook path."""
+    return _relative_posix(notebook_path) or str(notebook_path)
 
 
 def is_executable(notebook_path: Path) -> bool:
     """Return True if the notebook is in the executable allow-list."""
-    try:
-        rel = notebook_path.relative_to(REPO_ROOT).as_posix()
-    except ValueError:
-        return False
-    return rel in EXECUTABLE_NOTEBOOKS
+    rel = _relative_posix(notebook_path)
+    return rel is not None and rel in EXECUTABLE_NOTEBOOKS
 
 
 def is_auth_notebook(notebook_path: Path) -> bool:
     """Return True if the notebook requires authentication credentials."""
     if is_executable(notebook_path):
         return False
-    try:
-        rel = notebook_path.relative_to(REPO_ROOT).as_posix()
-    except ValueError:
+
+    rel = _relative_posix(notebook_path)
+    if rel is None or rel in AUTH_EXCLUDE_NOTEBOOKS:
         return False
-    if rel in AUTH_EXCLUDE_NOTEBOOKS:
-        return False
+
     try:
-        with open(notebook_path) as f:
-            nb = json.load(f)
-        for cell in nb.get("cells", []):
-            if cell.get("cell_type") != "code":
-                continue
-            source = "".join(cell.get("source", []))
-            if any(marker in source for marker in _CI_AUTH_MARKERS):
-                return True
-    except (json.JSONDecodeError, OSError, KeyError):
-        pass
-    return False
+        nb = json.loads(notebook_path.read_text())
+    except (json.JSONDecodeError, OSError):
+        return False
+
+    return any(
+        any(marker in "".join(cell.get("source", [])) for marker in _CI_AUTH_MARKERS)
+        for cell in nb.get("cells", [])
+        if cell.get("cell_type") == "code"
+    )
 
 
 def load_env_file(env_file: Path | None = None) -> dict[str, str]:
     """Load environment variables from a .env file.
 
-    Returns a dict of the variables found. Does not modify os.environ.
+    Returns a dict of the variables found. Does not modify ``os.environ``.
     """
     env_path = env_file or DEFAULT_ENV_FILE
-    env_vars: dict[str, str] = {}
-
     if not env_path.exists():
-        return env_vars
+        return {}
 
-    with open(env_path) as f:
-        for line in f:
-            line = line.strip()
-            if not line or line.startswith("#"):
-                continue
-            if "=" in line:
-                key, _, value = line.partition("=")
-                env_vars[key.strip()] = value.strip()
-
+    env_vars: dict[str, str] = {}
+    for line in env_path.read_text().splitlines():
+        line = line.strip()
+        if line and not line.startswith("#") and "=" in line:
+            key, _, value = line.partition("=")
+            env_vars[key.strip()] = value.strip()
     return env_vars
+
+
+_AUTH_ENV_KEYS = ("EVO_CLIENT_ID", "EVO_CLIENT_SECRET", "EVO_ORG_ID", "EVO_HUB_URL", "EVO_WORKSPACE_ID")
+_AUTH_FIELD_NAMES = ("client_id", "client_secret", "org_id", "hub_url", "workspace_id")
 
 
 def get_auth_credentials(env_file: Path | None = None) -> dict[str, str | None]:
     """Get authentication credentials from environment or .env file.
 
-    Checks os.environ first (for CI secrets), then falls back to .env file.
+    Checks ``os.environ`` first (for CI secrets), then falls back to .env file.
 
     Returns a dict with keys: client_id, client_secret, org_id, hub_url, workspace_id.
-    Values are None if not found.
+    Values are ``None`` if not found.
     """
-    # Load from .env file as fallback
     file_env = load_env_file(env_file)
-
-    def get_var(name: str) -> str | None:
-        return os.environ.get(name) or file_env.get(name)
-
     return {
-        "client_id": get_var("EVO_CLIENT_ID"),
-        "client_secret": get_var("EVO_CLIENT_SECRET"),
-        "org_id": get_var("EVO_ORG_ID"),
-        "hub_url": get_var("EVO_HUB_URL"),
-        "workspace_id": get_var("EVO_WORKSPACE_ID"),
+        field: os.environ.get(env_key) or file_env.get(env_key)
+        for field, env_key in zip(_AUTH_FIELD_NAMES, _AUTH_ENV_KEYS)
     }

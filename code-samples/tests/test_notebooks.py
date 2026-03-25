@@ -94,10 +94,18 @@ def _extract_imports(source: str) -> set[str]:
             if isinstance(node, ast.Import):
                 for alias in node.names:
                     modules.add(alias.name.split(".")[0])
-            elif isinstance(node, ast.ImportFrom):
-                if node.module:
-                    modules.add(node.module.split(".")[0])
+            elif isinstance(node, ast.ImportFrom) and node.module:
+                modules.add(node.module.split(".")[0])
     return modules
+
+
+def _can_import(module_name: str) -> bool:
+    """Return True if *module_name* can be imported in the current environment."""
+    try:
+        importlib.import_module(module_name)
+        return True
+    except ImportError:
+        return False
 
 
 # ---------------------------------------------------------------------------
@@ -123,22 +131,11 @@ class TestNotebookValidation:
             if cell.cell_type == "code":
                 all_imports |= _extract_imports(cell.source)
 
-        # Remove standard-library and runtime-only modules
-        to_check = all_imports - _SKIP_IMPORT_CHECK
-
-        # Skip local sibling .py modules that live next to the notebook
+        # Skip standard-library, runtime-only, platform-conditional, and local sibling modules
         local_modules = {p.stem for p in notebook_path.parent.rglob("*.py")}
-        to_check -= local_modules
+        to_check = all_imports - _SKIP_IMPORT_CHECK - _get_platform_skip_imports() - local_modules
 
-        # Skip platform-conditional packages that aren't available on this OS
-        to_check -= _get_platform_skip_imports()
-
-        missing: list[str] = []
-        for mod in sorted(to_check):
-            try:
-                importlib.import_module(mod)
-            except ImportError:
-                missing.append(mod)
+        missing = sorted(mod for mod in to_check if not _can_import(mod))
 
         assert not missing, (
             f"The following imports could not be resolved: {', '.join(missing)}. Are all dependencies installed?"
@@ -177,26 +174,22 @@ class TestAuthNotebookExecution:
 
         from nbclient import NotebookClient
 
-        # Inject credentials into the notebook's execution environment
         creds = get_auth_credentials()
-        env = os.environ.copy()
-        env["CI"] = "true"
-        if creds["client_id"]:
-            env["EVO_CLIENT_ID"] = creds["client_id"]
-        if creds["client_secret"]:
-            env["EVO_CLIENT_SECRET"] = creds["client_secret"]
-        if creds["org_id"]:
-            env["EVO_ORG_ID"] = creds["org_id"]
-        if creds["hub_url"]:
-            env["EVO_HUB_URL"] = creds["hub_url"]
-        if creds["workspace_id"]:
-            env["EVO_WORKSPACE_ID"] = creds["workspace_id"]
+
+        # Map credential fields back to environment variable names
+        _FIELD_TO_ENV = {
+            "client_id": "EVO_CLIENT_ID",
+            "client_secret": "EVO_CLIENT_SECRET",
+            "org_id": "EVO_ORG_ID",
+            "hub_url": "EVO_HUB_URL",
+            "workspace_id": "EVO_WORKSPACE_ID",
+        }
+        env = {
+            **os.environ,
+            "CI": "true",
+            **{_FIELD_TO_ENV[k]: v for k, v in creds.items() if v},
+        }
 
         nb = _read_notebook(notebook_path)
-        client = NotebookClient(
-            nb,
-            timeout=600,  # Auth notebooks may take longer
-            kernel_name="python3",
-        )
-        # Run in the notebook's own directory with credentials in env
+        client = NotebookClient(nb, timeout=600, kernel_name="python3")
         client.execute(cwd=str(notebook_path.parent), env=env)
