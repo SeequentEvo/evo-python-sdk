@@ -41,21 +41,12 @@ EXECUTABLE_NOTEBOOKS: list[str] = [
 # CI execution (e.g. require interactive widgets or a browser).
 AUTH_EXCLUDE_NOTEBOOKS: list[str] = [
     "code-samples/workspaces/bonus/move-objects.ipynb",
-    # Requires user to manually copy a block model UUID from a previous cell's output.
-    "code-samples/blockmodels/api-examples.ipynb",
     # SDK bug: unsupported data type 'large_string' in evo-blockmodels.
     "code-samples/blockmodels/reports.ipynb",
-    # Cascading failure: file_info set by an earlier interactive cell.
-    "code-samples/files/sdk-examples.ipynb",
-    # Intermittent 404: file upload may not propagate before the read-back poll.
-    "code-samples/files/api-examples.ipynb",
     # Tries to upload/download from evo-demo.static.evo.seequent.com which is unreachable.
     "code-samples/geoscience-objects/drilling-campaign/download-a-drilling-campaign/sdk-examples.ipynb",
-    "code-samples/geoscience-objects/publish-triangular-mesh/publish-triangular-mesh.ipynb",
     # Requires a previously published object_id that doesn't exist in the CI workspace.
     "code-samples/geoscience-objects/download-pointset/download-pointset.ipynb",
-    # Data type mismatch: 'Hole ID' treated as scalar instead of category.
-    "code-samples/geoscience-objects/publish-pointset/publish-pointset.ipynb",
     # geosoft is Windows-only; excluded on all platforms since CI matrix covers Windows separately.
     "code-samples/geoscience-objects/publish-regular-2d-grid/publish-regular-2d-grid.ipynb",
 ]
