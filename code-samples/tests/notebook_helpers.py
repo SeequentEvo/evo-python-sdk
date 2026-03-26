@@ -40,8 +40,14 @@ EXECUTABLE_NOTEBOOKS: list[str] = [
 # Notebooks that contain CI auth markers but are NOT fully self-contained for
 # CI execution (e.g. require interactive widgets or a browser).
 AUTH_EXCLUDE_NOTEBOOKS: list[str] = [
+    # Requires user to manually copy a block model UUID from a previous cell's output.
+    "code-samples/blockmodels/api-examples.ipynb",
     # SDK bug: unsupported data type 'large_string' in evo-blockmodels.
     "code-samples/blockmodels/reports.ipynb",
+    # Cascading failure: file_info set by an earlier interactive cell.
+    "code-samples/files/sdk-examples.ipynb",
+    # Intermittent 404: file upload may not propagate before the read-back poll.
+    "code-samples/files/api-examples.ipynb",
     # geosoft is Windows-only; excluded on all platforms since CI matrix covers Windows separately.
     "code-samples/geoscience-objects/publish-regular-2d-grid/publish-regular-2d-grid.ipynb",
 ]
