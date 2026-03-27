@@ -90,12 +90,19 @@
 
 <h1 id="evo-widgets">evo-widgets</h1>
 <p><a href="https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-widgets/src/evo/widgets/__init__.py">GitHub source</a></p>
-<p>Widgets and presentation layer for the Evo Python SDK — HTML rendering, URL generation, and IPython formatters for Jupyter notebooks.</p>
+<p>Widgets and presentation layer for the Evo Python SDK — interactive widgets, HTML rendering, URL generation, and IPython formatters for Jupyter notebooks.</p>
 <h2 id="usage">Usage</h2>
-<p>Load the IPython extension in your notebook to enable rich HTML rendering for all Evo SDK typed objects:</p>
-<pre><code class="language-python">%load_ext evo.widgets
+<p>When you import from <code>evo.widgets</code>, HTML formatters are automatically registered for all Evo SDK typed objects:</p>
+<pre><code class="language-python">from evo.widgets import ServiceManagerWidget
+
+manager = await ServiceManagerWidget.with_auth_code(
+    client_id=&quot;your-client-id&quot;,
+).login()
 </code></pre>
-<p>After loading, typed objects like <code>PointSet</code>, <code>Regular3DGrid</code>, <code>TensorGrid</code>, and <code>BlockModel</code> will automatically render with formatted metadata tables, clickable Portal/Viewer links, and bounding box information.</p>
+<p>Typed objects like <code>PointSet</code>, <code>Regular3DGrid</code>, <code>TensorGrid</code>, and <code>BlockModel</code> will automatically render with formatted metadata tables, clickable Portal/Viewer links, and bounding box information.</p>
+<p>For interactive widgets, install with the <code>notebooks</code> extra:</p>
+<pre><code class="language-bash">pip install evo-widgets[notebooks]
+</code></pre>
 <h2 id="url-functions">URL Functions</h2>
 <p>Generate URLs to view objects in the Evo Portal and Viewer:</p>
 <pre><code class="language-python">from evo.widgets import (
@@ -122,9 +129,9 @@ url = get_viewer_url_for_objects(manager, [grid, pointset, tensor_grid])
 <li><code>Report</code> and <code>ReportResult</code></li>
 <li><code>TaskResult</code> and <code>TaskResults</code> (compute results)</li>
 </ul>
-<p>All formatters are registered automatically when you load the extension with <code>%load_ext evo.widgets</code>. They support light/dark mode via Jupyter theme CSS variables.</p>
+<p>All formatters are registered automatically when you import from <code>evo.widgets</code>. They support light/dark mode via Jupyter theme CSS variables.</p>
 <h2 id="how-it-works">How It Works</h2>
-<p>When you run <code>%load_ext evo.widgets</code>, the extension registers HTML formatters with IPython using <code>for_type_by_name</code>. This approach:</p>
+<p>When you import from <code>evo.widgets</code> in an IPython/Jupyter environment, HTML formatters are automatically registered using <code>for_type_by_name</code>. This approach:</p>
 <ol>
 <li><strong>Avoids hard dependencies</strong> — The widgets package doesn't import model classes directly</li>
 <li><strong>Works with all typed objects</strong> — Formatters are registered for the base class, so all subclasses are covered</li>

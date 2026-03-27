@@ -143,17 +143,14 @@ sub-packages and optional dependencies (e.g. Jupyter notebook support), or choos
 <h3 id="quick-start-for-notebooks">Quick start for notebooks</h3>
 <p>Once you have an Evo app registered and the SDK installed, you can load and work with geoscience objects in just a few lines of code:</p>
 <pre><code class="language-python"># Authenticate with Evo
-from evo.notebooks import ServiceManagerWidget
+from evo.widgets import ServiceManagerWidget
 
 manager = await ServiceManagerWidget.with_auth_code(
     client_id=&quot;&lt;your-client-id&gt;&quot;,
     cache_location=&quot;./notebook-data&quot;,
 ).login()
 </code></pre>
-<pre><code class="language-python"># Enable rich HTML display for Evo objects in Jupyter
-%load_ext evo.widgets
-
-# Load an object by file path or UUID
+<pre><code class="language-python"># Load an object by file path or UUID
 from evo.objects.typed import object_from_uuid, object_from_path
 
 obj = await object_from_path(manager, &quot;&lt;your-object-path&gt;&quot;)
