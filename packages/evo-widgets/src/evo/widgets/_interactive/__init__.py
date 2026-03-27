@@ -9,40 +9,45 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-"""DEPRECATED: Use evo.widgets instead.
+"""Interactive anywidget-based widgets for Jupyter notebooks.
 
-This module is deprecated and will be removed in a future version.
-Please migrate to the new anywidget-based widgets in `evo.widgets`:
+This subpackage provides modern, interactive widgets built with anywidget
+for richer notebook experiences including authentication, service discovery,
+and object search.
 
-    # Old (deprecated):
-    from evo.notebooks import ServiceManagerWidget
+Example usage::
 
-    # New (recommended):
     from evo.widgets import ServiceManagerWidget
 
-The new widgets in `evo.widgets` provide improved compatibility across
-different Jupyter environments through the anywidget framework.
+    # Create and authenticate
+    manager = await ServiceManagerWidget.with_auth_code(
+        client_id="your-client-id"
+    ).login()
+    manager  # Display the widget
+
+    # Use the manager to create clients
+    client = manager.create_client(ObjectAPIClient)
 """
 
-import warnings
-
-warnings.warn(
-    "evo.notebooks is deprecated and will be removed in a future version. "
-    "Please use evo.widgets instead, which provides improved anywidget-based widgets. "
-    "See the migration guide at https://developer.seequent.com/docs/guides/migration/evo-widgets",
-    DeprecationWarning,
-    stacklevel=2,
-)
-
-from .widgets import (  # noqa: E402
+from .authorizer import AuthorizationCodeAuthorizer
+from .env import DotEnv
+from .widgets import (
+    DropdownSelectorWidget,
     FeedbackWidget,
+    HubSelectorWidget,
     OrgSelectorWidget,
     ServiceManagerWidget,
     WorkspaceSelectorWidget,
+    display_object_links,
 )
 
 __all__ = [
+    "AuthorizationCodeAuthorizer",
+    "display_object_links",
+    "DotEnv",
+    "DropdownSelectorWidget",
     "FeedbackWidget",
+    "HubSelectorWidget",
     "OrgSelectorWidget",
     "ServiceManagerWidget",
     "WorkspaceSelectorWidget",

@@ -15,18 +15,32 @@ This package provides HTML rendering and IPython formatters for displaying
 Evo SDK objects in Jupyter notebooks.
 
 Usage:
-    In a Jupyter notebook, load the extension to enable rich HTML rendering:
+    Simply import the package to enable rich HTML rendering:
 
-        %load_ext evo.widgets
+        from evo.widgets import ServiceManagerWidget
 
-    After loading, any Evo SDK object will automatically render with styled HTML,
-    including Portal and Viewer links.
+    Formatters are auto-registered when imported in an IPython environment.
+    The `%load_ext evo.widgets` magic is no longer required (but still works).
+
+    To disable auto-registration, set EVO_WIDGETS_NO_AUTO_REGISTER=1 before importing.
 
 Manual API:
     from evo.widgets import get_viewer_url_for_objects
 
     # View multiple objects together
     url = get_viewer_url_for_objects(manager, [pointset, grid])
+
+Interactive Widgets (requires `anywidget` and `traitlets`):
+    from evo.widgets import ServiceManagerWidget
+
+    # Create and authenticate
+    manager = await ServiceManagerWidget.with_auth_code(
+        client_id="your-client-id"
+    ).login()
+    manager  # Display the widget
+
+    # Use the manager to create clients
+    client = manager.create_client(ObjectAPIClient)
 """
 
 from __future__ import annotations
@@ -62,6 +76,24 @@ from .urls import (
     serialize_object_reference,
 )
 
+# Conditional imports for interactive widgets (require anywidget and traitlets)
+try:
+    from ._interactive import (  # noqa: F401
+        AuthorizationCodeAuthorizer,
+        DotEnv,
+        DropdownSelectorWidget,
+        FeedbackWidget,
+        HubSelectorWidget,
+        OrgSelectorWidget,
+        ServiceManagerWidget,
+        WorkspaceSelectorWidget,
+        display_object_links,
+    )
+
+    _HAS_INTERACTIVE = True
+except ImportError:
+    _HAS_INTERACTIVE = False
+
 if TYPE_CHECKING:
     from IPython.core.interactiveshell import InteractiveShell
 
@@ -93,6 +125,22 @@ __all__ = [
     "serialize_object_reference",
     "unload_ipython_extension",
 ]
+
+# Add interactive widgets to __all__ if available
+if _HAS_INTERACTIVE:
+    __all__.extend(
+        [
+            "AuthorizationCodeAuthorizer",
+            "DotEnv",
+            "DropdownSelectorWidget",
+            "FeedbackWidget",
+            "HubSelectorWidget",
+            "OrgSelectorWidget",
+            "ServiceManagerWidget",
+            "WorkspaceSelectorWidget",
+            "display_object_links",
+        ]
+    )
 
 
 def _register_formatters(ipython: InteractiveShell) -> None:
@@ -237,12 +285,17 @@ def unload_ipython_extension(ipython: InteractiveShell) -> None:
 
 
 def _register_feedback_factory() -> None:
-    """Register :class:`~evo.notebooks.FeedbackWidget` as the default feedback factory."""
+    """Register :class:`~evo.widgets.FeedbackWidget` as the default feedback factory."""
     try:
         from evo.common.utils import set_feedback_factory
-        from evo.notebooks import FeedbackWidget
 
-        set_feedback_factory(FeedbackWidget)
+        if _HAS_INTERACTIVE:
+            set_feedback_factory(FeedbackWidget)
+        else:
+            # Fall back to evo.notebooks if interactive widgets unavailable
+            from evo.notebooks import FeedbackWidget as NotebookFeedbackWidget
+
+            set_feedback_factory(NotebookFeedbackWidget)
     except ImportError:
         pass
 
@@ -255,3 +308,30 @@ def _unregister_feedback_factory() -> None:
         reset_feedback_factory()
     except ImportError:
         pass
+
+
+def _auto_register() -> None:
+    """Auto-register formatters if running in IPython.
+
+    This is called automatically when the module is imported. To disable
+    auto-registration, set the environment variable EVO_WIDGETS_NO_AUTO_REGISTER=1
+    before importing.
+    """
+    import os
+
+    if os.environ.get("EVO_WIDGETS_NO_AUTO_REGISTER", "").lower() in ("1", "true", "yes"):
+        return
+
+    try:
+        from IPython import get_ipython
+
+        ipython = get_ipython()
+        if ipython is not None:
+            _register_formatters(ipython)
+            _register_feedback_factory()
+    except ImportError:
+        pass
+
+
+# Auto-register formatters when imported in IPython
+_auto_register()

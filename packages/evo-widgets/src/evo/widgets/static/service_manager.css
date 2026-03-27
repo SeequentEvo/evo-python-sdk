@@ -1,0 +1,141 @@
+/* Service Manager Widget Styles
+ * Based on Seequent Web Design System
+ * Primary: #265C7F, Hover: #4A4A4C, Pressed: #234B66
+ * Grey scale: 50:#fafafa, 100:#f2f2f2, 200:#ebebeb, 300:#e2e0e0, 400:#c8c8c8, 500:#979797, 600:#767375, 700:#4A4A4C, 800:#39393c, 900:#1d1f23
+ */
+.evo-service-manager-widget {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+    padding: 10px;
+    font-family: Inter, "Helvetica Neue", Arial, sans-serif;
+}
+
+.evo-service-manager-col1 {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.evo-service-manager-col2 {
+    display: flex;
+    flex-direction: column;
+}
+
+.evo-service-manager-header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.evo-service-manager-logo {
+    max-height: 26px;
+    margin: 3px;
+}
+
+.evo-service-manager-btn {
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #fff;
+    background-color: #265C7F;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    text-transform: none;
+    cursor: pointer;
+    margin: 5px;
+}
+
+.evo-service-manager-btn:hover {
+    background-color: #4A4A4C;
+}
+
+.evo-service-manager-btn:active {
+    background-color: #234B66;
+}
+
+.evo-service-manager-btn:disabled {
+    background-color: #979797;
+    color: #fff;
+    cursor: not-allowed;
+}
+
+.evo-service-manager-loading {
+    max-height: 26px;
+    margin: 3px;
+    display: none;
+}
+
+.evo-service-manager-loading.visible {
+    display: block;
+}
+
+.evo-service-manager-selector-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.evo-service-manager-prompt {
+    display: none;
+    padding: 10px;
+    background-color: #fafafa;
+    border: 1px solid #e2e0e0;
+    border-radius: 0;
+}
+
+.evo-service-manager-prompt.visible {
+    display: block;
+}
+
+/* Embedded dropdown styles for ServiceManager */
+.evo-sm-dropdown {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    padding: 5px;
+}
+
+.evo-sm-dropdown-label {
+    font-weight: 500;
+    color: #39393c;
+    min-width: 100px;
+}
+
+.evo-sm-dropdown-select {
+    padding: 6px 12px;
+    font-size: 14px;
+    border: 1px solid #c8c8c8;
+    border-radius: 0;
+    background-color: #fff;
+    min-width: 200px;
+    cursor: pointer;
+}
+
+.evo-sm-dropdown-select:disabled {
+    background-color: #f2f2f2;
+    cursor: not-allowed;
+    opacity: 0.38;
+}
+
+.evo-sm-dropdown-select:focus {
+    outline: none;
+    border-color: #265C7F;
+    box-shadow: none;
+}
+
+.evo-sm-dropdown-loading {
+    width: 20px;
+    height: 20px;
+    display: none;
+}
+
+.evo-sm-dropdown-loading.visible {
+    display: block;
+}
