@@ -396,9 +396,6 @@ class ConsimParameters(BaseModel):
         return result
 
 
-
-
-
 # =============================================================================
 # Consim Result Types
 # =============================================================================
@@ -668,7 +665,9 @@ class ConsimResult:
         if self.simulations_attribute:
             lines.append(f"  Simulations: {self.simulations_attribute.name}")
         if self.validation_summary:
-            lines.append(f"  Validation: ref_mean={self.validation_summary.reference_mean:.4f}, sim_mean={self.validation_summary.mean:.4f}")
+            lines.append(
+                f"  Validation: ref_mean={self.validation_summary.reference_mean:.4f}, sim_mean={self.validation_summary.mean:.4f}"
+            )
         if self.dashboard_link:
             lines.append(f"  Dashboard: {self.dashboard_link}")
         return "\n".join(lines)

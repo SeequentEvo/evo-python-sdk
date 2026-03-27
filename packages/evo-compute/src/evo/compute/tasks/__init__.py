@@ -71,12 +71,12 @@ from .simulation import (
     ConsimResult,
     Distribution,
     LossCalculation,
+    LowerTail,
     MaterialCategory,
+    ReportMeanThresholds,
     TailExtrapolation,
     UpperTail,
-    LowerTail,
     ValidationReportContext,
-    ReportMeanThresholds,
 )
 
 
@@ -171,16 +171,25 @@ async def run(
 
 __all__ = [
     "BlockDiscretisation",
+    "ConsimResult",
     "CreateAttribute",
+    "Distribution",
     "Ellipsoid",
     "EllipsoidRanges",
     "KrigingResult",
+    "LossCalculation",
+    "LowerTail",
+    "MaterialCategory",
     "RegionFilter",
+    "ReportMeanThresholds",
     "Rotation",
     "SearchNeighborhood",
     "Source",
+    "TailExtrapolation",
     "Target",
     "TaskResultList",
     "UpdateAttribute",
+    "UpperTail",
+    "ValidationReportContext",
     "run",
 ]
