@@ -2,17 +2,27 @@
 
 [GitHub source](https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-widgets/src/evo/widgets/__init__.py)
 
-Widgets and presentation layer for the Evo Python SDK — HTML rendering, URL generation, and IPython formatters for Jupyter notebooks.
+Widgets and presentation layer for the Evo Python SDK — interactive widgets, HTML rendering, URL generation, and IPython formatters for Jupyter notebooks.
 
 ## Usage
 
-Load the IPython extension in your notebook to enable rich HTML rendering for all Evo SDK typed objects:
+When you import from `evo.widgets`, HTML formatters are automatically registered for all Evo SDK typed objects:
 
 ```python
-%load_ext evo.widgets
+from evo.widgets import ServiceManagerWidget
+
+manager = await ServiceManagerWidget.with_auth_code(
+    client_id="your-client-id",
+).login()
 ```
 
-After loading, typed objects like `PointSet`, `Regular3DGrid`, `TensorGrid`, and `BlockModel` will automatically render with formatted metadata tables, clickable Portal/Viewer links, and bounding box information.
+Typed objects like `PointSet`, `Regular3DGrid`, `TensorGrid`, and `BlockModel` will automatically render with formatted metadata tables, clickable Portal/Viewer links, and bounding box information.
+
+For interactive widgets, install with the `notebooks` extra:
+
+```bash
+pip install evo-widgets[notebooks]
+```
 
 ## URL Functions
 
@@ -45,11 +55,11 @@ Rich HTML representations for all typed geoscience objects:
 - `Report` and `ReportResult`
 - `TaskResult` and `TaskResults` (compute results)
 
-All formatters are registered automatically when you load the extension with `%load_ext evo.widgets`. They support light/dark mode via Jupyter theme CSS variables.
+All formatters are registered automatically when you import from `evo.widgets`. They support light/dark mode via Jupyter theme CSS variables.
 
 ## How It Works
 
-When you run `%load_ext evo.widgets`, the extension registers HTML formatters with IPython using `for_type_by_name`. This approach:
+When you import from `evo.widgets` in an IPython/Jupyter environment, HTML formatters are automatically registered using `for_type_by_name`. This approach:
 
 1. **Avoids hard dependencies** — The widgets package doesn't import model classes directly
 2. **Works with all typed objects** — Formatters are registered for the base class, so all subclasses are covered
