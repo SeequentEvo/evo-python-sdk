@@ -67,6 +67,26 @@ def _iter_refs(target: Any, _key: str | None = None) -> Iterator[str]:
             yield str(value)
 
 
+def _get_schema_from_dataframe(dataframe: "pd.DataFrame") -> pa.Schema:
+    """Get a normalized pyarrow schema from a pandas dataframe.
+
+    This hook centralizes dataframe-to-Arrow schema adjustments before the
+    dataframe is converted to a table. It currently performs these conversions:
+    - large_string -> string
+
+    :param dataframe: The pandas dataframe to get the schema from.
+    :return: A pyarrow schema with any configured type conversions applied.
+    """
+    schema = pa.Schema.from_pandas(dataframe)
+    fields = []
+    for field in schema:
+        if pa.types.is_large_string(field.type):
+            fields.append(field.with_type(pa.string()))
+        else:
+            fields.append(field)
+    return pa.schema(fields)
+
+
 class ObjectDataClient:
     """An optional wrapper around data upload and download functionality for geoscience objects.
 
@@ -203,7 +223,7 @@ class ObjectDataClient:
         columns_chunk_range = []
         for column in table.itercolumns():
             column = column.dictionary_encode()
-            if not (pa.types.is_string(column.type.value_type) or pa.types.is_large_string(column.type.value_type)):
+            if not pa.types.is_string(column.type.value_type):
                 raise TableFormatError("Category columns must be of type string")
             if not pa.types.is_int32(column.type.index_type):
                 # Currently, we only support int32 indices
@@ -231,8 +251,6 @@ class ObjectDataClient:
         )
 
         dictionary_values = all_chunks[0].dictionary
-        if pa.types.is_large_string(dictionary_values.type):
-            dictionary_values = pc.cast(dictionary_values, pa.string())
         lookup = pa.Table.from_arrays(
             [np.arange(len(dictionary_values), dtype=np.int32), dictionary_values], names=["key", "value"]
         )
@@ -300,7 +318,9 @@ class ObjectDataClient:
                 no table formats are specified, raised when the table does not match any known format.
             :raises StorageFileNotFoundError: If the destination does not exist or is not a directory.
             """
-            return self.save_table(pa.Table.from_pandas(dataframe), table_format=table_format)
+            schema = _get_schema_from_dataframe(dataframe)
+            table = pa.Table.from_pandas(dataframe, schema)
+            return self.save_table(table, table_format=table_format)
 
         async def upload_dataframe(
             self,
@@ -322,7 +342,9 @@ class ObjectDataClient:
             :raises TableFormatError: If the provided table does not match any of the specified formats. If
                 no table formats are specified, raised when the table does not match any known format.
             """
-            table_info = await self.upload_table(pa.Table.from_pandas(dataframe), table_format=table_format, fb=fb)
+            schema = _get_schema_from_dataframe(dataframe)
+            table = pa.Table.from_pandas(dataframe, schema)
+            table_info = await self.upload_table(table, table_format=table_format, fb=fb)
             return table_info
 
         async def upload_category_dataframe(self, dataframe: pd.DataFrame, fb: IFeedback = NoFeedback) -> CategoryInfo:
@@ -342,7 +364,9 @@ class ObjectDataClient:
             :raises TableFormatError: If the table isn't a valid category table, or if the number of categories exceeds
                 what int32 type can represent.
             """
-            category_info = await self.upload_category_table(pa.Table.from_pandas(dataframe), fb=fb)
+            schema = _get_schema_from_dataframe(dataframe)
+            table = pa.Table.from_pandas(dataframe, schema)
+            category_info = await self.upload_category_table(table, fb=fb)
             return category_info
 
         async def download_dataframe(
