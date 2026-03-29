@@ -44,6 +44,8 @@ AUTH_EXCLUDE_NOTEBOOKS: list[str] = [
     "code-samples/blockmodels/api-examples.ipynb",
     # SDK bug: unsupported data type 'large_string' in evo-blockmodels.
     "code-samples/blockmodels/reports.ipynb",
+    # Cascading failure: file_info set by an earlier interactive cell.
+    "code-samples/files/sdk-examples.ipynb",
     # Intermittent 404: file upload may not propagate before the read-back poll.
     "code-samples/files/api-examples.ipynb",
     # geosoft is Windows-only; excluded on all platforms since CI matrix covers Windows separately.
