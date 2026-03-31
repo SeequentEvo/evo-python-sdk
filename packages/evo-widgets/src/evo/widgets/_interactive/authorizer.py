@@ -77,13 +77,13 @@ def _is_notebook_definitely_remote() -> bool:
         if (env_value:= env.get(var)) is not None
     ]
 
-    # A very small and conservative hostname check: if the configured URL
-    # string contains something that looks non-local, treat it as remote.
-    for value in candidate_hosts:
-        lower = value.lower()
-        if not any(local in lower for local in _LOCAL_HOSTNAMES):
+    # check that all host variables use localhost in some way
+    for host in candidate_hosts:
+        if "localhost" in host or "127.0.0.1" in host:
+            continue
+        else: # host uses a remote URL
             return True
-
+            
     return False
 
 
