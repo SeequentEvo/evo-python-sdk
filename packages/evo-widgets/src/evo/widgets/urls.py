@@ -50,6 +50,10 @@ def get_evo_base_url(hub_url: str) -> str:
     :param hub_url: The hub URL (e.g., "https://350mt.api.seequent.com").
     :return: The Evo base URL (e.g., "https://evo.seequent.com").
     """
+    if "integration" in hub_url:
+        return "https://evo.integration.seequent.com"
+    if "test" in hub_url:
+        return "https://evo.test.seequent.com"
     return "https://evo.seequent.com"
 
 

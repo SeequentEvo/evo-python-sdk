@@ -14,10 +14,10 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import pathlib
-import re
+from collections.abc import Iterator
 from typing import Any, Generic, TypeVar
-from urllib.parse import urlparse
 from uuid import UUID
 
 import anywidget
@@ -41,8 +41,9 @@ from ._consts import (
     DEFAULT_REDIRECT_URL,
 )
 from ._helpers import FileName, init_cache
-from .authorizer import AuthorizationCodeAuthorizer
+from .authorizer import InteractiveAuthorizer
 from .env import DotEnv
+from ..urls import get_portal_url_from_reference, get_viewer_url_from_reference, serialize_object_reference
 
 T = TypeVar("T")
 
@@ -167,7 +168,7 @@ class DropdownSelectorWidget(anywidget.AnyWidget, Generic[T]):
 
             self.value = new_value
             self._on_selected(new_value if new_value != self.UNSELECTED[1] else None)
-            self.disabled = len(new_options) <= 1
+            self.disabled = len(new_options) == 1
         finally:
             self.loading = False
 
@@ -261,7 +262,6 @@ class WorkspaceSelectorWidget(_UUIDSelectorWidget):
 
     async def refresh_workspaces(self) -> None:
         self.loading = True
-        self.disabled = True
         try:
             await self._manager.refresh_workspaces()
             self.refresh()
@@ -390,6 +390,17 @@ class ServiceManagerWidget(anywidget.AnyWidget, IContext, metaclass=_ServiceMana
         else:
             self._service_manager.set_current_workspace(None)
 
+    @contextlib.contextmanager
+    def _loading(self) -> Iterator[None]:
+        """Context manager that sets loading and disabled state during operations."""
+        self.main_loading = True
+        self.button_disabled = True
+        try:
+            yield
+        finally:
+            self.main_loading = False
+            self.button_disabled = False
+
     def _refresh_orgs(self) -> None:
         orgs = self._service_manager.list_organizations()
         self.org_options = [("Select Organisation", str(_NULL_UUID))] + [
@@ -447,7 +458,7 @@ class ServiceManagerWidget(anywidget.AnyWidget, IContext, metaclass=_ServiceMana
         """
         cache = init_cache(cache_location)
         transport = AioTransport(user_agent=client_id, proxy=proxy)
-        authorizer = AuthorizationCodeAuthorizer(
+        authorizer = InteractiveAuthorizer(
             oauth_connector=OAuthConnector(
                 transport=transport,
                 base_uri=base_uri,
@@ -463,7 +474,7 @@ class ServiceManagerWidget(anywidget.AnyWidget, IContext, metaclass=_ServiceMana
     async def _login_with_auth_code(self, timeout_seconds: int) -> None:
         """Login using an authorization code authorizer."""
         authorizer = self._authorizer
-        if isinstance(authorizer, AuthorizationCodeAuthorizer):
+        if isinstance(authorizer, InteractiveAuthorizer):
             if not await authorizer.reuse_token():
                 await authorizer.login(timeout_seconds=timeout_seconds)
 
@@ -474,27 +485,19 @@ class ServiceManagerWidget(anywidget.AnyWidget, IContext, metaclass=_ServiceMana
         :returns: The current instance of the ServiceManagerWidget.
         """
         await self._service_manager._transport.open()
-        self.main_loading = True
-        self.button_disabled = True
 
-        try:
-            if isinstance(self._authorizer, AuthorizationCodeAuthorizer):
+        with self._loading():
+            if isinstance(self._authorizer, InteractiveAuthorizer):
                 await self._login_with_auth_code(timeout_seconds)
             else:
                 raise NotImplementedError(f"ServiceManagerWidget cannot login using {type(self._authorizer).__name__}.")
 
             await self.refresh_services()
-        finally:
-            self.main_loading = False
-            self.button_disabled = False
 
         return self
 
     async def refresh_services(self) -> None:
-        self.main_loading = True
-        self.button_disabled = True
-
-        try:
+        with self._loading():
             try:
                 await self._service_manager.refresh_organizations()
             except UnauthorizedException:
@@ -505,13 +508,6 @@ class ServiceManagerWidget(anywidget.AnyWidget, IContext, metaclass=_ServiceMana
             self._refresh_hubs()
             await self._refresh_workspaces()
             self.button_text = "Refresh Evo Services"
-        finally:
-            self.main_loading = False
-            self.button_disabled = False
-
-    @property
-    def cache(self) -> ICache:
-        return self._cache
 
     @property
     def organizations(self) -> list[Organization]:
@@ -546,52 +542,6 @@ class ServiceManagerWidget(anywidget.AnyWidget, IContext, metaclass=_ServiceMana
         return self._service_manager.create_client(client_class, *args, **kwargs)
 
 
-def _serialize_object_reference(value: Any) -> str:
-    """Serialize an object reference to a string URL."""
-    if isinstance(value, str):
-        return value
-
-    if hasattr(value, "hub_url") and hasattr(value, "org_id"):
-        return str(value)
-
-    if hasattr(value, "metadata") and hasattr(value.metadata, "url"):
-        return str(value.metadata.url)
-
-    if hasattr(value, "url"):
-        return str(value.url)
-
-    raise TypeError(f"Cannot serialize object reference of type {type(value)}")
-
-
-def _generate_evo_url_from_object_reference(object_reference: str, view: str = "overview") -> str:
-    """Generate an Evo URL from a geoscience object reference URL."""
-    parsed = urlparse(object_reference)
-
-    hostname_parts = parsed.hostname.split(".") if parsed.hostname else []
-    if len(hostname_parts) < 1:
-        raise ValueError(f"Invalid object reference URL: cannot extract hub_id from hostname '{parsed.hostname}'")
-    hub_id = hostname_parts[0]
-
-    if "integration" in (parsed.hostname or ""):
-        evo_base_url = "https://evo.integration.seequent.com"
-    elif "test" in (parsed.hostname or ""):
-        evo_base_url = "https://evo.test.seequent.com"
-    else:
-        evo_base_url = "https://evo.seequent.com"
-
-    path_pattern = r"/geoscience-object/orgs/([^/]+)/workspaces/([^/]+)/objects/([^/?]+)"
-    match = re.match(path_pattern, parsed.path)
-
-    if not match:
-        raise ValueError(f"Invalid object reference URL: path '{parsed.path}' does not match expected format")
-
-    org_id = match.group(1)
-    workspace_id = match.group(2)
-    object_id = match.group(3)
-
-    return f"{evo_base_url}/{org_id}/workspaces/{hub_id}/{workspace_id}/{view}?id={object_id}"
-
-
 def display_object_links(object_reference: Any, label: str = "Object links") -> None:
     """Display Evo Viewer and Portal links for a geoscience object.
 
@@ -614,9 +564,9 @@ def display_object_links(object_reference: Any, label: str = "Object links") -> 
         return
 
     try:
-        ref_str = _serialize_object_reference(object_reference)
-        viewer_url = _generate_evo_url_from_object_reference(ref_str, "viewer")
-        portal_url = _generate_evo_url_from_object_reference(ref_str, "overview")
+        ref_str = serialize_object_reference(object_reference)
+        viewer_url = get_viewer_url_from_reference(ref_str)
+        portal_url = get_portal_url_from_reference(ref_str)
     except Exception:
         return
 

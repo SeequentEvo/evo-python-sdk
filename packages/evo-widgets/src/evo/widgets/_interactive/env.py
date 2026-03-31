@@ -38,7 +38,7 @@ class DotEnv:
         return self._cache.get(key, default)
 
     def set(self, key: str, value: str | None) -> None:
-        logger.debug(f"Updating environment variable: {key}={value!r}")
+        logger.debug(f"Updating environment variable")
         if not _KEY.match(key):
             raise ValueError(f"Invalid key: {key!r}")
         elif value is not None and not isinstance(value, str):

@@ -29,7 +29,7 @@ Example usage::
     client = manager.create_client(ObjectAPIClient)
 """
 
-from .authorizer import AuthorizationCodeAuthorizer
+from .authorizer import InteractiveAuthorizer
 from .env import DotEnv
 from .widgets import (
     DropdownSelectorWidget,
@@ -42,7 +42,7 @@ from .widgets import (
 )
 
 __all__ = [
-    "AuthorizationCodeAuthorizer",
+    "InteractiveAuthorizer",
     "display_object_links",
     "DotEnv",
     "DropdownSelectorWidget",

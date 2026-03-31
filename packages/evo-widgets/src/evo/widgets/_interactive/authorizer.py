@@ -16,15 +16,13 @@ import json
 import os
 import warnings
 from collections.abc import AsyncIterator
-from typing import Generic, TypeVar
 
 from evo import logging, oauth
-from evo.oauth.authorizer import _BaseAuthorizer
 
 from .env import DotEnv
 
 __all__ = [
-    "AuthorizationCodeAuthorizer",
+    "InteractiveAuthorizer",
 ]
 
 logger = logging.getLogger("widgets.oauth")
@@ -33,15 +31,21 @@ _TOKEN_KEY = "NotebookOAuth.token"
 
 _LOCAL_HOSTNAMES = {"127.0.0.1", "localhost"}
 
-_T_token = TypeVar("_T_token", bound=oauth.AccessToken)
 
+def _should_warn_insecure_notebook_usage() -> bool:
+    """Return True if we should emit the insecure-usage warning.
 
-def _is_notebook_definitely_remote() -> bool:
-    """Best-effort heuristic to detect obviously remote / hosted notebook environments.
+    The user requested that we only warn when *not* running a local Jupyter
+    notebook. Because detecting the actual notebook URL/host is unreliable
+    without additional heavy dependencies (and highly environment-specific),
+    we use the following conservative policy:
 
-    The goal here is *not* to be perfect, but to avoid warning users who are
-    clearly running on a local Jupyter instance (typically bound to
-    http://127.0.0.1 or http://localhost).
+    - If we can clearly see indicators of a remote / hosted notebook
+      environment, we return True (emit the warning).
+    - Otherwise (local or unknown), we return False and suppress the warning.
+
+    This means we might *not* warn in some edge cases that are actually
+    remote, but we will avoid spamming users of typical local notebooks.
 
     We treat the following as *remote*:
     - Presence of well-known JupyterHub / cloud notebook env vars.
@@ -67,50 +71,14 @@ def _is_notebook_definitely_remote() -> bool:
     if any(key in env for key in cloud_indicators):
         return True
 
-    # If the user has explicitly configured a public host, assume remote.
-    # These env vars are not standardised across all Jupyter frontends, but
-    # are used in several deployments; we only treat them as remote when the
-    # host clearly isn't a localhost alias.
-    candidate_hosts = [
-        env_value
-        for var in ("JUPYTERHUB_BIND_URL", "JUPYTER_SERVER_URL", "JUPYTER_BASE_URL")
-        if (env_value:= env.get(var)) is not None
-    ]
-
-    # check that all host variables use localhost in some way
-    for host in candidate_hosts:
-        if "localhost" in host or "127.0.0.1" in host:
-            continue
-        else: # host uses a remote URL
-            return True
-            
     return False
 
 
-def _should_warn_insecure_notebook_usage() -> bool:
-    """Return True if we should emit the insecure-usage warning.
-
-    The user requested that we only warn when *not* running a local Jupyter
-    notebook. Because detecting the actual notebook URL/host is unreliable
-    without additional heavy dependencies (and highly environment-specific),
-    we use the following conservative policy:
-
-    - If we can clearly see indicators of a remote / hosted notebook
-      environment, we return True (emit the warning).
-    - Otherwise (local or unknown), we return False and suppress the warning.
-
-    This means we might *not* warn in some edge cases that are actually
-    remote, but we will avoid spamming users of typical local notebooks.
-    """
-
-    return _is_notebook_definitely_remote()
-
-
-class _OAuthEnv(Generic[_T_token]):
+class _OAuthEnv:
     def __init__(self, env: DotEnv) -> None:
         self.__dotenv = env
 
-    def get_token(self) -> _T_token | None:
+    def get_token(self) -> oauth.AccessToken | None:
         token_str = self.__dotenv.get(_TOKEN_KEY)
         if token_str is None:
             return None
@@ -121,9 +89,9 @@ class _OAuthEnv(Generic[_T_token]):
 
         except Exception:
             # The token is invalid.
-            raise ValueError(f"Invalid token found in the environment file {_TOKEN_KEY}: {token_str!r}")
+            raise ValueError(f"Invalid token found in the environment file!")
 
-    def set_token(self, token: _T_token | None) -> None:
+    def set_token(self, token: oauth.AccessToken | None) -> None:
         if token is None:
             new_value = None
         else:
@@ -131,35 +99,7 @@ class _OAuthEnv(Generic[_T_token]):
         self.__dotenv.set(_TOKEN_KEY, new_value)
 
 
-class _NotebookAuthorizerMixin(_BaseAuthorizer[_T_token]):
-    pi_partial_implementation = True  # Indicate to pure-interface that this is a mixin.
-
-    _env: _OAuthEnv[_T_token]
-
-    async def reuse_token(self) -> bool:
-        """Attempt to reuse an existing token from the environment file.
-
-        :returns: True if a token was found and reused, False otherwise.
-        """
-        async with self._mutex:
-            if (token := self._env.get_token()) is None:
-                return False
-
-            if token.is_expired:
-                self._env.set_token(None)
-                return False
-
-            return True
-
-    def _get_token(self) -> _T_token | None:
-        return self._env.get_token()
-
-    def _update_token(self, new_token: _T_token) -> None:
-        super()._update_token(new_token)
-        self._env.set_token(new_token)
-
-
-class AuthorizationCodeAuthorizer(_NotebookAuthorizerMixin[oauth.AccessToken], oauth.AuthorizationCodeAuthorizer):
+class InteractiveAuthorizer(oauth.AuthorizationCodeAuthorizer):
     """An authorization code authorizer for use in Jupyter notebooks.
 
     This authorizer is not secure, and should only ever be used in Jupyter notebooks. It stores the access token in the
@@ -182,23 +122,45 @@ class AuthorizationCodeAuthorizer(_NotebookAuthorizerMixin[oauth.AccessToken], o
         """
         if _should_warn_insecure_notebook_usage():
             warnings.warn(
-                "The evo.widgets.AuthorizationCodeAuthorizer is not secure, and should only ever be used in Jupyter"
+                "The evo.widgets.InteractiveAuthorizer is not secure, and should only ever be used in Jupyter"
                 " notebooks in a private environment."
             )
         super().__init__(oauth_connector=oauth_connector, redirect_url=redirect_url, scopes=scopes)
-        self._env = _OAuthEnv(env)
+        self._env: _OAuthEnv = _OAuthEnv(env)
+
+    async def reuse_token(self) -> bool:
+        """Attempt to reuse an existing token from the environment file.
+
+        :returns: True if a token was found and reused, False otherwise.
+        """
+        async with self._mutex:
+            if (token := self._get_token()) is None:
+                return False
+
+            if token.is_expired:
+                self._env.set_token(None)
+                return False
+
+            return True
+
+    def _get_token(self) -> oauth.AccessToken | None:
+        return self._env.get_token()
+
+    def _update_token(self, new_token: oauth.AccessToken) -> None:
+        super()._update_token(new_token)
+        self._env.set_token(new_token)
 
     @contextlib.asynccontextmanager
     async def _unwrap_token(self) -> AsyncIterator[oauth.AccessToken]:
         # Overrides the parent implementation so that we can automatically login at startup.
         async with self._mutex:
-            if (token := self._env.get_token()) is None:
+            if (token := self._get_token()) is None:
                 token = await self._handle_login(timeout_seconds=60)
                 self._update_token(token)
             yield token
 
     async def refresh_token(self) -> bool:
-        succeeded = await oauth.AuthorizationCodeAuthorizer.refresh_token(self)
+        succeeded = await super().refresh_token()
         if not succeeded:
             # The refresh token has expired. Clear the token from the environment.
             self._env.set_token(None)

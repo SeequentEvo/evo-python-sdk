@@ -79,7 +79,7 @@ from .urls import (
 # Conditional imports for interactive widgets (require anywidget and traitlets)
 try:
     from ._interactive import (  # noqa: F401
-        AuthorizationCodeAuthorizer,
+        InteractiveAuthorizer,
         DotEnv,
         DropdownSelectorWidget,
         FeedbackWidget,
@@ -130,7 +130,7 @@ __all__ = [
 if _HAS_INTERACTIVE:
     __all__.extend(
         [
-            "AuthorizationCodeAuthorizer",
+            "InteractiveAuthorizer",
             "DotEnv",
             "DropdownSelectorWidget",
             "FeedbackWidget",
