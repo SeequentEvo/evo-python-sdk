@@ -1,8 +1,24 @@
 /* Service Manager Widget Styles
  * Based on Seequent Web Design System
- * Primary: #265C7F, Hover: #4A4A4C, Pressed: #234B66
- * Grey scale: 50:#fafafa, 100:#f2f2f2, 200:#ebebeb, 300:#e2e0e0, 400:#c8c8c8, 500:#979797, 600:#767375, 700:#4A4A4C, 800:#39393c, 900:#1d1f23
  */
+
+:host {
+    /* Seequent Design System Colors */
+    --evo-color-primary: #265C7F;
+    --evo-color-primary-hover: #4A4A4C;
+    --evo-color-primary-pressed: #234B66;
+    --evo-color-text: #39393c;
+    --evo-color-text-on-primary: #fff;
+    --evo-color-border: #c8c8c8;
+    --evo-color-border-light: #e2e0e0;
+    --evo-color-bg: #fff;
+    --evo-color-bg-subtle: #fafafa;
+    --evo-color-bg-disabled: #f2f2f2;
+    --evo-color-disabled: #979797;
+    --evo-opacity-disabled: 0.38;
+    --evo-font-family: Inter, "Helvetica Neue", Arial, sans-serif;
+}
+
 .evo-service-manager-widget {
     display: flex;
     flex-direction: row;
@@ -10,7 +26,7 @@
     align-items: flex-start;
     gap: 20px;
     padding: 10px;
-    font-family: Inter, "Helvetica Neue", Arial, sans-serif;
+    font-family: var(--evo-font-family);
 }
 
 .evo-service-manager-col1 {
@@ -41,8 +57,8 @@
     padding: 12px 24px;
     font-size: 14px;
     font-weight: 500;
-    color: #fff;
-    background-color: #265C7F;
+    color: var(--evo-color-text-on-primary);
+    background-color: var(--evo-color-primary);
     border: none;
     border-radius: 0;
     box-shadow: none;
@@ -52,16 +68,16 @@
 }
 
 .evo-service-manager-btn:hover {
-    background-color: #4A4A4C;
+    background-color: var(--evo-color-primary-hover);
 }
 
 .evo-service-manager-btn:active {
-    background-color: #234B66;
+    background-color: var(--evo-color-primary-pressed);
 }
 
 .evo-service-manager-btn:disabled {
-    background-color: #979797;
-    color: #fff;
+    background-color: var(--evo-color-disabled);
+    color: var(--evo-color-text-on-primary);
     cursor: not-allowed;
 }
 
@@ -84,8 +100,8 @@
 .evo-service-manager-prompt {
     display: none;
     padding: 10px;
-    background-color: #fafafa;
-    border: 1px solid #e2e0e0;
+    background-color: var(--evo-color-bg-subtle);
+    border: 1px solid var(--evo-color-border-light);
     border-radius: 0;
 }
 
@@ -104,29 +120,29 @@
 
 .evo-sm-dropdown-label {
     font-weight: 500;
-    color: #39393c;
+    color: var(--evo-color-text);
     min-width: 100px;
 }
 
 .evo-sm-dropdown-select {
     padding: 6px 12px;
     font-size: 14px;
-    border: 1px solid #c8c8c8;
+    border: 1px solid var(--evo-color-border);
     border-radius: 0;
-    background-color: #fff;
+    background-color: var(--evo-color-bg);
     min-width: 200px;
     cursor: pointer;
 }
 
 .evo-sm-dropdown-select:disabled {
-    background-color: #f2f2f2;
+    background-color: var(--evo-color-bg-disabled);
     cursor: not-allowed;
-    opacity: 0.38;
+    opacity: var(--evo-opacity-disabled);
 }
 
 .evo-sm-dropdown-select:focus {
     outline: none;
-    border-color: #265C7F;
+    border-color: var(--evo-color-primary);
     box-shadow: none;
 }
 
