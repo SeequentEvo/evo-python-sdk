@@ -89,7 +89,7 @@ class _OAuthEnv:
 
         except Exception:
             # The token is invalid.
-            raise ValueError(f"Invalid token found in the environment file!")
+            raise ValueError("Invalid token found in the environment file!")
 
     def set_token(self, token: oauth.AccessToken | None) -> None:
         if token is None:

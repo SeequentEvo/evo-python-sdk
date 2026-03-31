@@ -42,13 +42,13 @@ from .widgets import (
 )
 
 __all__ = [
-    "InteractiveAuthorizer",
-    "display_object_links",
     "DotEnv",
     "DropdownSelectorWidget",
     "FeedbackWidget",
     "HubSelectorWidget",
+    "InteractiveAuthorizer",
     "OrgSelectorWidget",
     "ServiceManagerWidget",
     "WorkspaceSelectorWidget",
+    "display_object_links",
 ]

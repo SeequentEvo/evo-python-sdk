@@ -34,6 +34,7 @@ from evo.oauth import AnyScopes, EvoScopes, OAuthConnector
 from evo.service_manager import ServiceManager
 from evo.workspaces import Workspace
 
+from ..urls import get_portal_url_from_reference, get_viewer_url_from_reference, serialize_object_reference
 from ._consts import (
     DEFAULT_BASE_URI,
     DEFAULT_CACHE_LOCATION,
@@ -43,20 +44,19 @@ from ._consts import (
 from ._helpers import FileName, init_cache
 from .authorizer import InteractiveAuthorizer
 from .env import DotEnv
-from ..urls import get_portal_url_from_reference, get_viewer_url_from_reference, serialize_object_reference
 
 T = TypeVar("T")
 
 logger = logging.getLogger(__name__)
 
 __all__ = [
-    "display_object_links",
     "DropdownSelectorWidget",
     "FeedbackWidget",
     "HubSelectorWidget",
     "OrgSelectorWidget",
     "ServiceManagerWidget",
     "WorkspaceSelectorWidget",
+    "display_object_links",
 ]
 
 # Path to static files
@@ -135,7 +135,7 @@ class DropdownSelectorWidget(anywidget.AnyWidget, Generic[T]):
         raise NotImplementedError("Subclasses must implement this method.")
 
     def _on_selected(self, value: T | None) -> None:
-        ...
+        raise NotImplementedError("Subclasses must implement this method.")
 
     def _on_value_change(self, change: dict) -> None:
         new_value = change["new"]
@@ -283,13 +283,7 @@ class WorkspaceSelectorWidget(_UUIDSelectorWidget):
 T_client = TypeVar("T_client", bound=BaseAPIClient)
 
 
-class _ServiceManagerWidgetMeta(type(anywidget.AnyWidget), type(IContext)):
-    """Metaclass that combines anywidget and pure interfaces metaclasses."""
-
-    pass
-
-
-class ServiceManagerWidget(anywidget.AnyWidget, IContext, metaclass=_ServiceManagerWidgetMeta):
+class ServiceManagerWidget(anywidget.AnyWidget):
     """Main authentication and service discovery widget.
 
     This is a modern anywidget-based implementation that provides authentication,
@@ -540,6 +534,9 @@ class ServiceManagerWidget(anywidget.AnyWidget, IContext, metaclass=_ServiceMana
     def create_client(self, client_class: type[T_client], *args: Any, **kwargs: Any) -> T_client:
         """Create a client for the currently selected workspace."""
         return self._service_manager.create_client(client_class, *args, **kwargs)
+
+
+IContext.register(ServiceManagerWidget)
 
 
 def display_object_links(object_reference: Any, label: str = "Object links") -> None:
