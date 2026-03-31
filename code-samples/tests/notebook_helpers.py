@@ -133,8 +133,15 @@ def load_env_file(env_file: Path | None = None) -> dict[str, str]:
     return env_vars
 
 
-_AUTH_ENV_KEYS = ("EVO_CLIENT_ID", "EVO_CLIENT_SECRET", "EVO_ORG_ID", "EVO_HUB_URL", "EVO_WORKSPACE_ID")
-_AUTH_FIELD_NAMES = ("client_id", "client_secret", "org_id", "hub_url", "workspace_id")
+_AUTH_ENV_KEYS = (
+    "EVO_CLIENT_ID",
+    "EVO_USERNAME",
+    "EVO_PASSWORD",
+    "EVO_ORG_ID",
+    "EVO_HUB_URL",
+    "EVO_WORKSPACE_ID",
+)
+_AUTH_FIELD_NAMES = ("client_id", "username", "password", "org_id", "hub_url", "workspace_id")
 
 
 def get_auth_credentials(env_file: Path | None = None) -> dict[str, str | None]:
@@ -142,8 +149,8 @@ def get_auth_credentials(env_file: Path | None = None) -> dict[str, str | None]:
 
     Checks ``os.environ`` first (for CI secrets), then falls back to .env file.
 
-    Returns a dict with keys: client_id, client_secret, org_id, hub_url, workspace_id.
-    Values are ``None`` if not found.
+    Returns a dict with keys: client_id, username, password,
+    org_id, hub_url, workspace_id. Values are ``None`` if not found.
     """
     file_env = load_env_file(env_file)
     return {

@@ -35,7 +35,8 @@ jobs:
       - name: Run notebook tests
         env:
           EVO_CLIENT_ID: ${{ secrets.EVO_CLIENT_ID }}
-          EVO_CLIENT_SECRET: ${{ secrets.EVO_CLIENT_SECRET }}
+          EVO_USERNAME: ${{ secrets.EVO_USERNAME }}
+          EVO_PASSWORD: ${{ secrets.EVO_PASSWORD }}
           EVO_ORG_ID: ${{ secrets.EVO_ORG_ID }}
           EVO_HUB_URL: ${{ secrets.EVO_HUB_URL }}
           EVO_WORKSPACE_ID: ${{ secrets.EVO_WORKSPACE_ID }}
