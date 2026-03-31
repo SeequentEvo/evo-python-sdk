@@ -71,12 +71,11 @@ def _is_notebook_definitely_remote() -> bool:
     # These env vars are not standardised across all Jupyter frontends, but
     # are used in several deployments; we only treat them as remote when the
     # host clearly isn't a localhost alias.
-    candidate_hosts = []
-    for var in ("JUPYTERHUB_BIND_URL", "JUPYTER_SERVER_URL", "JUPYTER_BASE_URL"):
-        value = env.get(var)
-        if not value:
-            continue
-        candidate_hosts.append(value)
+    candidate_hosts = [
+        env_value
+        for var in ("JUPYTERHUB_BIND_URL", "JUPYTER_SERVER_URL", "JUPYTER_BASE_URL")
+        if (env_value:= env.get(var)) is not None
+    ]
 
     # A very small and conservative hostname check: if the configured URL
     # string contains something that looks non-local, treat it as remote.
