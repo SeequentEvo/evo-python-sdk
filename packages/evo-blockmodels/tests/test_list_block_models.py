@@ -207,3 +207,14 @@ class TestListBlockModels(TestWithConnector, TestWithStorage):
         ):
             result = await self.client.list_all_versions(bm_id)
         self.assertEqual(result, [])
+
+    async def test_list_all_block_models_deleted_parameter(self) -> None:
+        bm = self.make_bm("deleted-bm")
+        with self.transport.set_http_response(
+            200,
+            json.dumps({"count": 1, "limit": 100, "offset": 0, "results": [bm], "total": 1}),
+            headers={"Content-Type": "application/json"},
+        ):
+            result = await self.client.list_all_block_models(deleted=True)
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0].name, "deleted-bm")

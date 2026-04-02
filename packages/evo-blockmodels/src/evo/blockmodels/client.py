@@ -13,11 +13,13 @@ from __future__ import annotations
 
 import asyncio
 import uuid
+from pathlib import Path
 from uuid import UUID
 
 from evo import logging
 from evo.common import APIConnector, BaseAPIClient, Environment, HealthCheckType, ICache, IContext, ServiceHealth
-from evo.common.data import ServiceUser
+from evo.common._types import PathLike
+from evo.common.data import EmptyResponse, ServiceUser
 from evo.common.utils import get_service_health
 
 from ._types import Table
@@ -41,6 +43,8 @@ from .endpoints.models import (
     BlockSize,
     ColumnHeaderType,
     CreateData,
+    DeltaRequestData,
+    DeltaResponseData,
     GeometryColumns,
     JobErrorPayload,
     JobResponse,
@@ -243,7 +247,7 @@ class BlockModelAPIClient(BaseAPIClient):
         object_path: str | None = None,
         coordinate_reference_system: str | None = None,
         size_unit_id: str | None = None,
-    ):
+    ) -> tuple[models.BlockModelAndJobURL, Version]:
         match grid_definition:
             case RegularGridDefinition(n_blocks=n_blocks, block_size=block_size):
                 size_options = SizeOptionsRegular(
@@ -305,28 +309,50 @@ class BlockModelAPIClient(BaseAPIClient):
         version = extract_payload(job_id, job_status, models.Version)
         return create_result, _version_from_model(version)
 
-    async def _upload_data(self, bm_id: uuid.UUID, job_id: uuid.UUID, upload_url: str, data: Table) -> models.Version:
-        """Upload data to a block model service, marks the upload as complete and waits for the job to complete."""
-        # Write the data to a temporary file
-        import pyarrow.parquet
+    async def upload_block_model(
+        self,
+        bm_id: UUID,
+        job_uuid: UUID,
+        upload_url: str,
+        filename: PathLike,
+    ) -> Version:
+        """Upload a local file to a block model, notify completion, and poll until the job finishes.
 
-        cache_location = get_cache_location_for_upload(self._cache, self._environment, job_id)
-        pyarrow.parquet.write_table(data, cache_location)
-        # Upload the data
-        upload = BlockModelUpload(self._connector, self._environment, bm_id, job_id, upload_url)
-        await upload.upload_from_path(cache_location, self._connector.transport)
+        Uploads the file at the given path to the provided upload URL, notifies the
+        block model service that the upload is complete, and then polls the job until
+        it finishes processing.
+
+        :param bm_id: The ID of the block model to upload data to.
+        :param job_uuid: The UUID of the upload job.
+        :param upload_url: The pre-signed URL to upload the file to.
+        :param filename: The path to the local file to upload.
+        :return: The new version of the block model created from the uploaded data.
+        :raises JobFailedException: If the upload processing job fails.
+        """
+
+        upload = BlockModelUpload(self._connector, self._environment, bm_id, job_uuid, upload_url)
+        await upload.upload_from_path(filename, self._connector.transport)
 
         # Notify the service that the upload is complete
         await self._column_operations_api.notify_upload_complete(
             org_id=str(self._environment.org_id),
             workspace_id=str(self._environment.workspace_id),
             bm_id=str(bm_id),
-            job_id=str(job_id),
+            job_id=str(job_uuid),
         )
 
-        # Poll the job URL until it is complete
-        job_status = await self._poll_job_url(bm_id, job_id)
-        return extract_payload(job_id, job_status, models.Version)
+        # Poll until the job completes
+        job_status = await self._poll_job_url(bm_id, job_uuid)
+        version = extract_payload(job_uuid, job_status, models.Version)
+        return _version_from_model(version)
+
+    async def _upload_data(self, bm_id: uuid.UUID, job_id: uuid.UUID, upload_url: str, data: Table) -> Version:
+        """Upload data to a block model service, marks the upload as complete and waits for the job to complete."""
+        import pyarrow.parquet
+
+        cache_location = get_cache_location_for_upload(self._cache, self._environment, job_id)
+        pyarrow.parquet.write_table(data, cache_location)
+        return await self.upload_block_model(bm_id, job_id, upload_url, cache_location)
 
     async def _update_model_no_data(
         self, bm_id: UUID, columns: models.UpdateColumnsLiteInput, comment: str | None = None
@@ -381,13 +407,16 @@ class BlockModelAPIClient(BaseAPIClient):
         )
         return self._bm_from_model(response)
 
-    async def list_all_block_models(self, page_limit: int | None = 100) -> list[BlockModel]:
+    async def list_all_block_models(
+        self, page_limit: int | None = 100, deleted: bool | None = None
+    ) -> list[BlockModel]:
         """Return all block models for the current workspace, following paginated responses.
 
         This method will page through the `list_block_models` endpoint using `offset` and `limit`
         until all entries are retrieved. The `page_limit` is clamped to the service maximum (100).
 
         :param page_limit: Maximum items to request per page (1..100). Defaults to 100.
+        :param deleted: (optional)  An optional boolean parameter specifying whether to list only deleted block models.
         :return: A list of `BlockModel` dataclasses for the workspace.
         """
         if page_limit is None:
@@ -406,6 +435,7 @@ class BlockModelAPIClient(BaseAPIClient):
                 org_id=str(self._environment.org_id),
                 offset=offset,
                 limit=page_limit,
+                deleted=deleted,
             )
 
             # Convert and append
@@ -545,7 +575,7 @@ class BlockModelAPIClient(BaseAPIClient):
         bm_id: UUID,
         data: Table,
         units: dict[str, str] | None = None,
-    ):
+    ) -> Version:
         """Add new columns to an existing sub-blocked block model. This will not change the sub-blocking structure, thus the provided data must match existing sub-blocks in the model.
 
         Units for the columns can be provided in the `units` dictionary.
@@ -566,7 +596,7 @@ class BlockModelAPIClient(BaseAPIClient):
         data: Table,
         units: dict[str, str] | None = None,
         geometry_change: bool | None = None,
-    ):
+    ) -> Version:
         """Add new columns to an existing block model.
 
         For sub-blocked models, this will not change the sub-blocking structure. Thus the block within the data must match existing sub-blocks in the model.
@@ -610,15 +640,14 @@ class BlockModelAPIClient(BaseAPIClient):
                 geometry_change=geometry_change,
             ),
         )
-        version = await self._upload_data(bm_id, update_response.job_uuid, str(update_response.upload_url), data)
-        return _version_from_model(version)
+        return await self._upload_data(bm_id, update_response.job_uuid, str(update_response.upload_url), data)
 
     async def add_new_columns(
         self,
         bm_id: UUID,
         data: Table,
         units: dict[str, str] | None = None,
-    ):
+    ) -> Version:
         """Add new columns to an existing regular block model.
 
         Units for the columns can be provided in the `units` dictionary.
@@ -685,8 +714,7 @@ class BlockModelAPIClient(BaseAPIClient):
                 geometry_change=geometry_change,
             ),
         )
-        version = await self._upload_data(bm_id, update_response.job_uuid, str(update_response.upload_url), data)
-        return _version_from_model(version)
+        return await self._upload_data(bm_id, update_response.job_uuid, str(update_response.upload_url), data)
 
     async def update_block_model_columns(
         self,
@@ -834,7 +862,7 @@ class BlockModelAPIClient(BaseAPIClient):
 
         return await self._update_model_no_data(bm_id, columns, comment=comment)
 
-    async def query_block_model_as_table(
+    async def query_block_model_to_cache(
         self,
         bm_id: UUID,
         columns: list[str | UUID],
@@ -843,10 +871,10 @@ class BlockModelAPIClient(BaseAPIClient):
         geometry_columns: GeometryColumns = GeometryColumns.coordinates,
         column_headers: ColumnHeaderType = ColumnHeaderType.id,
         exclude_null_rows: bool = True,
-    ) -> Table:
-        """Query a block model and return the result as a PyArrow Table.
+    ) -> Path:
+        """Query a block model and download the result as a Parquet file to the cache.
 
-        This requires the `pyarrow` package to be installed, and the 'cache' parameter to be set in the constructor.
+        This requires the 'cache' parameter to be set in the constructor.
 
         :param bm_id: The ID of the block model to query.
         :param columns: The columns to query, can either be the title or the ID of the column.
@@ -857,11 +885,10 @@ class BlockModelAPIClient(BaseAPIClient):
         :param column_headers: Whether the names of the columns in the returned column should be the title or the ID of
             the block model column.
         :param exclude_null_rows: Whether to exclude rows where all values are null within the queried columns.
-        :return: The result as a PyArrow Table.
+        :return: The file path of the downloaded Parquet file in the cache.
+        :raises CacheNotConfiguredException: If the cache is not configured.
         :raises JobFailedException: If the job failed.
         """
-        import pyarrow.parquet
-
         if self._cache is None:
             raise CacheNotConfiguredException(
                 "Cache must be configured to use this method. Please set the 'cache' parameter in the constructor."
@@ -889,11 +916,86 @@ class BlockModelAPIClient(BaseAPIClient):
         job = await self._poll_job_url(bm_id, job_id)
         payload = extract_payload(job_id, job, QueryDownload)
 
-        # Download the result to a temporary file
+        # Download the result to a file in the cache
         download = BlockModelDownload(
             self._connector, self._environment, query_result, job_id, str(payload.download_url)
         )
-        path = await download.download_to_cache(self._cache, self._connector.transport)
+        return await download.download_to_cache(self._cache, self._connector.transport)
 
-        # Read the PyArrow Table from the temporary file
+    async def query_block_model_as_table(
+        self,
+        bm_id: UUID,
+        columns: list[str | UUID],
+        bbox: BBox | BBoxXYZ | None = None,
+        version_uuid: UUID | None = None,
+        geometry_columns: GeometryColumns = GeometryColumns.coordinates,
+        column_headers: ColumnHeaderType = ColumnHeaderType.id,
+        exclude_null_rows: bool = True,
+    ) -> Table:
+        """Query a block model and return the result as a PyArrow Table.
+
+        This requires the `pyarrow` package to be installed, and the 'cache' parameter to be set in the constructor.
+
+        :param bm_id: The ID of the block model to query.
+        :param columns: The columns to query, can either be the title or the ID of the column.
+        :param bbox: The bounding box to query, if None (the default) the entire block model is queried.
+        :param version_uuid: The version UUID to query, if None (the default) the latest version is queried.
+        :param geometry_columns: Whether rows in the returned table should include coordinates, or block indices of the
+            block, that the row belongs to.
+        :param column_headers: Whether the names of the columns in the returned column should be the title or the ID of
+            the block model column.
+        :param exclude_null_rows: Whether to exclude rows where all values are null within the queried columns.
+        :return: The result as a PyArrow Table.
+        :raises CacheNotConfiguredException: If the cache is not configured.
+        :raises JobFailedException: If the job failed.
+        """
+        import pyarrow.parquet
+
+        path = await self.query_block_model_to_cache(
+            bm_id=bm_id,
+            columns=columns,
+            bbox=bbox,
+            version_uuid=version_uuid,
+            geometry_columns=geometry_columns,
+            column_headers=column_headers,
+            exclude_null_rows=exclude_null_rows,
+        )
         return pyarrow.parquet.read_table(path)
+
+    async def get_deltas_for_block_model(
+        self,
+        version_id: UUID,
+        bm_id: UUID,
+        delta_request_data: DeltaRequestData,
+    ) -> DeltaResponseData | EmptyResponse:
+        """Check for changes to a block model between two versions within a bounding box.
+
+        Delegates to the versions API ``get_deltas_for_block_model`` endpoint. Changes
+        include additions, deletions, and updates to the specified columns within the
+        provided bounding box.
+
+        :param version_id: The starting version UUID (changes are searched *after* this version).
+        :param bm_id: The ID of the block model.
+        :param delta_request_data: The delta request payload specifying columns, bounding box, and options.
+        :return: A ``DeltaResponseData`` describing any detected changes, or an ``EmptyResponse`` (HTTP 304)
+            when no changes are found.
+        """
+        return await self._versions_api.get_deltas_for_block_model(
+            str(version_id),
+            str(self._environment.workspace_id),
+            str(self._environment.org_id),
+            str(bm_id),
+            delta_request_data,
+        )
+
+    async def delete_block_model(self, bm_id: UUID) -> EmptyResponse:
+        """Delete a block model from the current workspace.
+
+        :param bm_id: The ID of the block model to delete.
+        :return: An empty response on success.
+        """
+        return await self._operations_api.delete_block_model(
+            str(bm_id),
+            str(self._environment.workspace_id),
+            str(self._environment.org_id),
+        )
