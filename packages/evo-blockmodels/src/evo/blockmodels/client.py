@@ -316,7 +316,19 @@ class BlockModelAPIClient(BaseAPIClient):
         upload_url: str,
         filename: PathLike,
     ) -> Version:
-        """Upload a local file to a block model, notify completion, and poll until the job finishes."""
+        """Upload a local file to a block model, notify completion, and poll until the job finishes.
+
+        Uploads the file at the given path to the provided upload URL, notifies the
+        block model service that the upload is complete, and then polls the job until
+        it finishes processing.
+
+        :param bm_id: The ID of the block model to upload data to.
+        :param job_uuid: The UUID of the upload job.
+        :param upload_url: The pre-signed URL to upload the file to.
+        :param filename: The path to the local file to upload.
+        :return: The new version of the block model created from the uploaded data.
+        :raises JobFailedException: If the upload processing job fails.
+        """
 
         upload = BlockModelUpload(self._connector, self._environment, bm_id, job_uuid, upload_url)
         await upload.upload_from_path(filename, self._connector.transport)
