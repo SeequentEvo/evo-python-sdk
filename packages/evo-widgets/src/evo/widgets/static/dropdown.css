@@ -2,7 +2,7 @@
  * Based on Seequent Web Design System
  */
 
-:host {
+.evo-dropdown-widget {
     /* Seequent Design System Colors */
     --evo-color-primary: #265C7F;
     --evo-color-text: #39393c;
@@ -11,9 +11,6 @@
     --evo-color-bg-disabled: #f2f2f2;
     --evo-opacity-disabled: 0.38;
     --evo-font-family: Inter, "Helvetica Neue", Arial, sans-serif;
-}
-
-.evo-dropdown-widget {
     display: flex;
     flex-direction: row;
     align-items: center;
