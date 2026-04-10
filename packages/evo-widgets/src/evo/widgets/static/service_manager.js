@@ -102,12 +102,10 @@ function render({ model, el }) {
 
     // Create dropdowns
     const orgDropdown = createDropdown("Organisation", "org-select", model, "org_value", "org_options", "org_loading");
-    const hubDropdown = createDropdown("Hub", "hub-select", model, "hub_value", "hub_options", "hub_loading");
     const wsDropdown = createDropdown("Workspace", "ws-select", model, "ws_value", "ws_options", "ws_loading");
 
     col1.appendChild(header);
     col1.appendChild(orgDropdown.element);
-    col1.appendChild(hubDropdown.element);
     col1.appendChild(wsDropdown.element);
 
     // Column 2 - Prompt area
@@ -156,8 +154,6 @@ function render({ model, el }) {
     updatePrompt();
     orgDropdown.updateOptions();
     orgDropdown.updateLoading();
-    hubDropdown.updateOptions();
-    hubDropdown.updateLoading();
     wsDropdown.updateOptions();
     wsDropdown.updateLoading();
 
@@ -170,9 +166,6 @@ function render({ model, el }) {
     model.on("change:org_options", orgDropdown.updateOptions);
     model.on("change:org_loading", orgDropdown.updateLoading);
     model.on("change:org_value", orgDropdown.updateOptions);
-    model.on("change:hub_options", hubDropdown.updateOptions);
-    model.on("change:hub_loading", hubDropdown.updateLoading);
-    model.on("change:hub_value", hubDropdown.updateOptions);
     model.on("change:ws_options", wsDropdown.updateOptions);
     model.on("change:ws_loading", wsDropdown.updateLoading);
     model.on("change:ws_value", wsDropdown.updateOptions);
@@ -186,9 +179,6 @@ function render({ model, el }) {
         model.off("change:org_options", orgDropdown.updateOptions);
         model.off("change:org_loading", orgDropdown.updateLoading);
         model.off("change:org_value", orgDropdown.updateOptions);
-        model.off("change:hub_options", hubDropdown.updateOptions);
-        model.off("change:hub_loading", hubDropdown.updateLoading);
-        model.off("change:hub_value", hubDropdown.updateOptions);
         model.off("change:ws_options", wsDropdown.updateOptions);
         model.off("change:ws_loading", wsDropdown.updateLoading);
         model.off("change:ws_value", wsDropdown.updateOptions);

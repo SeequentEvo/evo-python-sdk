@@ -34,9 +34,7 @@ from .env import DotEnv
 from .widgets import (
     DropdownSelectorWidget,
     FeedbackWidget,
-    OrgSelectorWidget,
     ServiceManagerWidget,
-    WorkspaceSelectorWidget,
     display_object_links,
 )
 
@@ -45,8 +43,6 @@ __all__ = [
     "DropdownSelectorWidget",
     "FeedbackWidget",
     "InteractiveAuthorizer",
-    "OrgSelectorWidget",
     "ServiceManagerWidget",
-    "WorkspaceSelectorWidget",
     "display_object_links",
 ]

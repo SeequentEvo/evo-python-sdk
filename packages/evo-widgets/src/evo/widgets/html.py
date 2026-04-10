@@ -11,8 +11,8 @@
 
 """Shared HTML styles for Jupyter notebook representations across all Evo SDK packages."""
 
-from pathlib import Path
 import html
+from pathlib import Path
 
 # Load CSS from external file
 _CSS_PATH = Path(__file__).parent / "assets" / "styles.css"

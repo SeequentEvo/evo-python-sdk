@@ -11,17 +11,23 @@
 
 """Tests for the InteractiveAuthorizer and token handling."""
 
+from __future__ import annotations
+
 import json
 import unittest
+from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+
+if TYPE_CHECKING:
+    from evo.widgets._interactive.authorizer import _OAuthEnv
 
 
 class TestOAuthEnvTokenHandling(unittest.TestCase):
     """Tests for _OAuthEnv token get/set behavior."""
 
-    def _create_oauth_env(self, dotenv_mock: MagicMock) -> "_OAuthEnv":
+    def _create_oauth_env(self, dotenv_mock: MagicMock) -> _OAuthEnv:
         """Create an _OAuthEnv instance with a mocked DotEnv."""
         from evo.widgets._interactive.authorizer import _OAuthEnv
 

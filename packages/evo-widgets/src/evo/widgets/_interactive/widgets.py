@@ -126,6 +126,16 @@ class FeedbackWidget(anywidget.AnyWidget, IFeedback, metaclass=_FeedbackMeta):
         super().__init__(label=label)
         self._last_message = ""
 
+    def show(self) -> "FeedbackWidget":
+        """Display the widget and return self for method chaining.
+
+        :returns: The widget instance for method chaining.
+        """
+        from IPython.display import display
+
+        display(self)
+        return self
+
     def progress(self, progress: float, message: str | None = None) -> None:
         """Progress the feedback and update the text to message.
 

@@ -82,9 +82,7 @@ try:
         DropdownSelectorWidget,
         FeedbackWidget,
         InteractiveAuthorizer,
-        OrgSelectorWidget,
         ServiceManagerWidget,
-        WorkspaceSelectorWidget,
         display_object_links,
     )
 
@@ -96,6 +94,12 @@ if TYPE_CHECKING:
     from IPython.core.interactiveshell import InteractiveShell
 
 __all__ = [
+    "DotEnv",
+    "DropdownSelectorWidget",
+    "FeedbackWidget",
+    "InteractiveAuthorizer",
+    "ServiceManagerWidget",
+    "display_object_links",
     "format_attributes_collection",
     "format_base_object",
     "format_block_model",
@@ -122,14 +126,6 @@ __all__ = [
     "load_ipython_extension",
     "serialize_object_reference",
     "unload_ipython_extension",
-    "DotEnv",
-    "DropdownSelectorWidget",
-    "FeedbackWidget",
-    "InteractiveAuthorizer",
-    "OrgSelectorWidget",
-    "ServiceManagerWidget",
-    "WorkspaceSelectorWidget",
-    "display_object_links",
 ]
 
 

@@ -11,7 +11,6 @@
 
 """Tests for the interactive widget state logic in evo.widgets._interactive.widgets."""
 
-import asyncio
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import UUID

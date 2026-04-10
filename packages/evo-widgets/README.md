@@ -169,8 +169,6 @@ viewer_url = get_viewer_url_from_reference(ref_url)
 |-------|-------------|
 | `ServiceManagerWidget` | Authentication and service discovery widget |
 | `FeedbackWidget` | Progress bar and status message widget |
-| `OrgSelectorWidget` | Organization selection dropdown |
-| `WorkspaceSelectorWidget` | Workspace selection dropdown |
 | `DropdownSelectorWidget` | Generic dropdown widget base class |
 
 ### IPython Extension
