@@ -19,7 +19,7 @@ import pytest
 
 
 class TestLoadingContextManager(unittest.TestCase):
-    """Tests for the _loading() reentrant context manager."""
+    """Tests for the _loading() context manager."""
 
     def _create_widget(self) -> MagicMock:
         """Create a mock widget with the _loading context manager behavior."""

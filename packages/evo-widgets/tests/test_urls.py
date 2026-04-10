@@ -220,6 +220,7 @@ class TestGetViewerUrlForObjects(unittest.TestCase):
         """Create a mock object with metadata."""
         obj = MagicMock()
         obj.metadata.id = obj_id
+        obj.object_id = None  # Ensure ObjectReference check doesn't match
         return obj
 
     def test_generates_viewer_url_for_single_object(self):
@@ -266,6 +267,19 @@ class TestGetViewerUrlForObjects(unittest.TestCase):
         with self.assertRaises(TypeError) as ctx:
             get_viewer_url_for_objects(context, [object()])
         self.assertIn("Cannot extract object ID", str(ctx.exception))
+
+    def test_handles_object_reference_with_object_id(self):
+        """ObjectReference with object_id uses that ID, not the string value."""
+        context = self._create_mock_context()
+        # Simulate ObjectReference (str subclass with object_id attribute)
+        obj_ref = MagicMock(spec=["object_id"])
+        obj_ref.object_id = "extracted-uuid-123"
+
+        result = get_viewer_url_for_objects(context, [obj_ref])
+        self.assertEqual(
+            result,
+            "https://evo.seequent.com/org-123/workspaces/350mt/ws-456/viewer?id=extracted-uuid-123",
+        )
 
 
 class TestGetBlocksyncBaseUrl(unittest.TestCase):
