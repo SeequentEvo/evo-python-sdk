@@ -80,6 +80,13 @@ Follow the instructions below for [Windows](#windows), [macOS](#macos) or [Linux
     uv sync
     ```
 
+    > [!NOTE]
+    > If you see an error containing `invalid peer certificate: UnknownIssuer`, your organization likely uses a TLS inspection proxy. Run `uv sync --native-tls` instead, which tells `uv` to use the Windows certificate store. You can also set this permanently:
+    > ```pwsh
+    > $env:UV_NATIVE_TLS = "true"
+    > ```
+    > See the [TLS certificate troubleshooting](#troubleshooting-tls-certificate-errors) section below for more details.
+
 ### macOS
 1. Find the local copy of this repository in **Finder**. It will be called **evo-python-sdk-main** if you downloaded as a ZIP file.
 1. Open the folder so that you can see it's contents.
@@ -108,6 +115,13 @@ Follow the instructions below for [Windows](#windows), [macOS](#macos) or [Linux
     uv sync
     ```
 
+    > [!NOTE]
+    > If you see an error containing `invalid peer certificate: UnknownIssuer`, your organization likely uses a TLS inspection proxy. Run `uv sync --native-tls` instead, which tells `uv` to use the macOS Keychain certificate store. You can also set this permanently:
+    > ```bash
+    > export UV_NATIVE_TLS="true"
+    > ```
+    > See the [TLS certificate troubleshooting](#troubleshooting-tls-certificate-errors) section below for more details.
+
 ### Linux
 
 NOTE: This example is based on [Ubuntu](https://ubuntu.com), but other Linux environments will operate in a similar way.
@@ -131,6 +145,13 @@ NOTE: This example is based on [Ubuntu](https://ubuntu.com), but other Linux env
     ```bash
     uv sync
     ```
+
+    > [!NOTE]
+    > If you see an error containing `invalid peer certificate: UnknownIssuer`, your organization likely uses a TLS inspection proxy. Run `uv sync --native-tls` instead, which tells `uv` to use the system certificate store. You can also set this permanently:
+    > ```bash
+    > export UV_NATIVE_TLS="true"
+    > ```
+    > See the [TLS certificate troubleshooting](#troubleshooting-tls-certificate-errors) section below for more details.
 
 ### 4. Run the notebooks
 
@@ -268,5 +289,37 @@ If you encounter issues:
 3. Ensure all requirements are installed.
 4. Visit the [Seequent Community](https://community.seequent.com/group/19-evo) for support.
 5. Check the [GitHub issues](https://github.com/SeequentEvo/evo-python-sdk/issues) for known problems.
+
+### Troubleshooting: TLS certificate errors
+
+If you are behind a corporate proxy or firewall that performs TLS inspection, you may see errors like this when running `uv sync`, `uv python install`, or other `uv` commands:
+
+```
+error: Failed to download `package==1.2.3`
+  Caused by: Request failed after 3 retries
+  Caused by: error sending request for url (https://...)
+  Caused by: client error (Connect)
+  Caused by: invalid peer certificate: UnknownIssuer
+```
+
+This happens because `uv` uses bundled Mozilla root certificates by default, which don't include your organization's TLS inspection CA certificate. To fix this, use the `--native-tls` flag to tell `uv` to use your operating system's certificate store instead:
+
+```shell
+uv sync --native-tls
+```
+
+You can also set this as an environment variable so it applies to all `uv` commands:
+
+**Windows (PowerShell):**
+```powershell
+$env:UV_NATIVE_TLS = "true"
+```
+
+**macOS / Linux:**
+```bash
+export UV_NATIVE_TLS="true"
+```
+
+This requires that your organization's CA certificate is already installed in your OS certificate store. If you're unsure, contact your IT team. For more detailed instructions on importing certificates, see the [Corporate TLS/SSL Certificates](../README.md#corporate-tlsssl-certificates) section in the main README.
 
 Happy coding with Evo! 🎉

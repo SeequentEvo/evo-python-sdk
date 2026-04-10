@@ -197,6 +197,15 @@ Once you've installed UV, install pre-commit hooks. These are used to standardis
 uv run pre-commit install
 ```
 
+> [!NOTE]
+> If you see an error containing `invalid peer certificate: UnknownIssuer`, your organization likely uses a TLS inspection proxy. Add the `--native-tls` flag to any `uv` command, e.g. `uv run --native-tls pre-commit install`. You can also set this permanently:
+>
+> **Windows (PowerShell):** `$env:UV_NATIVE_TLS = "true"`
+>
+> **macOS / Linux:** `export UV_NATIVE_TLS="true"`
+>
+> See the [Corporate TLS/SSL Certificates](#corporate-tlsssl-certificates) section for more details.
+
 ### Setting up and running Jupyter notebooks
 
 Notebooks can be run in your tool of choice (e.g. VS Code). To use Jupyter (the default):
@@ -205,6 +214,9 @@ Notebooks can be run in your tool of choice (e.g. VS Code). To use Jupyter (the 
 uv sync --all-packages --all-extras
 ```
 
+> [!NOTE]
+> If the above command fails with `invalid peer certificate: UnknownIssuer`, run `uv sync --all-packages --all-extras --native-tls` instead. See the [Corporate TLS/SSL Certificates](#corporate-tlsssl-certificates) section for more details.
+
 Then, in the directory of the notebook(s) you want to run:
 
 ```shell
@@ -212,38 +224,6 @@ uv run jupyter notebook
 ```
 
 A browser should launch where you can open the notebooks for the current directory.
-
-### Troubleshooting: TLS certificate errors
-
-If you are behind a corporate proxy or firewall that performs TLS inspection, you may see errors like this when running `uv sync`, `uv python install`, or other `uv` commands:
-
-```
-error: Failed to download `package==1.2.3`
-  Caused by: Request failed after 3 retries
-  Caused by: error sending request for url (https://...)
-  Caused by: client error (Connect)
-  Caused by: invalid peer certificate: UnknownIssuer
-```
-
-This happens because `uv` uses bundled Mozilla root certificates by default, which don't include your organization's TLS inspection CA certificate. To fix this, use the `--native-tls` flag to tell `uv` to use your operating system's certificate store instead:
-
-```shell
-uv sync --native-tls
-```
-
-You can also set this as an environment variable so it applies to all `uv` commands:
-
-**Windows (PowerShell):**
-```powershell
-$env:UV_NATIVE_TLS = "true"
-```
-
-**macOS / Linux:**
-```bash
-export UV_NATIVE_TLS="true"
-```
-
-> **Note:** This requires that your organization's CA certificate is already installed in your OS certificate store. If you're unsure, contact your IT team. See the [Corporate TLS/SSL Certificates](#corporate-tlsssl-certificates) section below for more details.
 
 ## Corporate TLS/SSL Certificates
 
