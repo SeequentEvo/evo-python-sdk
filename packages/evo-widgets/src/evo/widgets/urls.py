@@ -245,9 +245,14 @@ def get_viewer_url_for_objects(context: IContext, objects: list[Any]) -> str:
 
     object_ids: list[str] = []
     for obj in objects:
-        # Check for ObjectReference first (it's a str subclass with object_id attribute)
-        if hasattr(obj, "object_id") and obj.object_id is not None:
-            object_ids.append(str(obj.object_id))
+        # Check for ObjectReference first (it's a str subclass with object_id/object_path attributes)
+        if hasattr(obj, "object_id"):
+            if obj.object_id is not None:
+                object_ids.append(str(obj.object_id))
+            elif hasattr(obj, "object_path") and obj.object_path is not None:
+                raise TypeError("Path-based ObjectReference is not supported for viewer URLs")
+            else:
+                raise TypeError(f"ObjectReference has no object_id or object_path: {obj}")
         elif isinstance(obj, str):
             # Assume it's already an object ID
             object_ids.append(obj)
