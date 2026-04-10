@@ -29,7 +29,7 @@ from evo import logging
 from evo.aio import AioTransport
 from evo.common import APIConnector, BaseAPIClient, Environment
 from evo.common.exceptions import UnauthorizedException
-from evo.common.interfaces import IAuthorizer, ICache, IContext, IFeedback, ITransport
+from evo.common.interfaces import IAuthorizer, ICache, ITransport
 from evo.discovery import Organization
 from evo.oauth import AnyScopes, EvoScopes, OAuthConnector
 from evo.service_manager import ServiceManager
@@ -46,9 +46,25 @@ from ._helpers import FileName, init_cache
 from .authorizer import InteractiveAuthorizer
 from .env import DotEnv
 
+# Type variables
 T = TypeVar("T")
+T_client = TypeVar("T_client", bound=BaseAPIClient)
+
+# Constants
+_STATIC_DIR = pathlib.Path(__file__).parent.parent / "static"
+_NULL_UUID = UUID(int=0)
 
 logger = logging.getLogger(__name__)
+
+
+def _safe_display(*objs: Any) -> None:
+    """Display objects in IPython/Jupyter; no-op in other environments (e.g., Marimo)."""
+    try:
+        from IPython.display import display
+
+        display(*objs)
+    except ImportError:
+        pass
 
 
 def _build_dropdown_options(
@@ -95,16 +111,8 @@ __all__ = [
     "display_object_links",
 ]
 
-# Path to static files
-_STATIC_DIR = pathlib.Path(__file__).parent.parent / "static"
 
-
-# Resolve metaclass conflict between anywidget (MetaHasTraits) and pure_interface (InterfaceType)
-class _FeedbackMeta(type(anywidget.AnyWidget), type(IFeedback)):
-    pass
-
-
-class FeedbackWidget(anywidget.AnyWidget, IFeedback, metaclass=_FeedbackMeta):
+class FeedbackWidget(anywidget.AnyWidget):
     """Simple feedback widget for displaying progress and messages to the user.
 
     This is a modern anywidget-based implementation that works across different
@@ -131,9 +139,7 @@ class FeedbackWidget(anywidget.AnyWidget, IFeedback, metaclass=_FeedbackMeta):
 
         :returns: The widget instance for method chaining.
         """
-        from IPython.display import display
-
-        display(self)
+        _safe_display(self)
         return self
 
     def progress(self, progress: float, message: str | None = None) -> None:
@@ -231,9 +237,6 @@ class DropdownSelectorWidget(anywidget.AnyWidget, Generic[T]):
         raise NotImplementedError("Subclasses must implement this method.")
 
 
-_NULL_UUID = UUID(int=0)
-
-
 class _UUIDSelectorWidget(DropdownSelectorWidget[UUID]):
     @classmethod
     def _serialize(cls, value: UUID) -> str:
@@ -295,10 +298,6 @@ class WorkspaceSelectorWidget(_UUIDSelectorWidget, AsyncTaskMixin):
         return [(ws.display_name, ws.id) for ws in self._manager.list_workspaces()]
 
 
-# Generic type variable for the client factory method.
-T_client = TypeVar("T_client", bound=BaseAPIClient)
-
-
 class ServiceManagerWidget(anywidget.AnyWidget, AsyncTaskMixin):
     """Main authentication and service discovery widget.
 
@@ -354,17 +353,13 @@ class ServiceManagerWidget(anywidget.AnyWidget, AsyncTaskMixin):
         self.ws_options = [("Select Workspace", str(_NULL_UUID))]
         self.ws_value = str(_NULL_UUID)
 
-        self._loading_depth = 0
-
         # Observe changes
         self.observe(self._on_button_click, names="button_clicked")
         self.observe(self._on_org_change, names="org_value")
         self.observe(self._on_ws_change, names="ws_value")
 
         # Auto-display the widget (for backward compatibility with evo.notebooks)
-        from IPython.display import display
-
-        display(self)
+        _safe_display(self)
 
     def _on_button_click(self, change: dict) -> None:
         if change["new"]:
@@ -388,20 +383,6 @@ class ServiceManagerWidget(anywidget.AnyWidget, AsyncTaskMixin):
             self._service_manager.set_current_workspace(UUID(value))
         else:
             self._service_manager.set_current_workspace(None)
-
-    @contextlib.contextmanager
-    def _loading(self) -> Iterator[None]:
-        """Reentrant context manager that sets loading and disabled state during operations."""
-        self._loading_depth += 1
-        self.main_loading = True
-        self.button_disabled = True
-        try:
-            yield
-        finally:
-            self._loading_depth -= 1
-            if self._loading_depth == 0:
-                self.main_loading = False
-                self.button_disabled = False
 
     def _refresh_orgs(self) -> None:
         orgs = self._service_manager.list_organizations()
@@ -472,6 +453,17 @@ class ServiceManagerWidget(anywidget.AnyWidget, AsyncTaskMixin):
             if not await authorizer.reuse_token():
                 await authorizer.login(timeout_seconds=timeout_seconds)
 
+    @contextlib.contextmanager
+    def _loading(self) -> Iterator[None]:
+        """Context manager that sets loading and disabled state during operations."""
+        self.main_loading = True
+        self.button_disabled = True
+        try:
+            yield
+        finally:
+            self.main_loading = False
+            self.button_disabled = False
+
     async def login(self, timeout_seconds: int = 180) -> ServiceManagerWidget:
         """Authenticate the user and obtain an access token.
 
@@ -486,7 +478,16 @@ class ServiceManagerWidget(anywidget.AnyWidget, AsyncTaskMixin):
             else:
                 raise NotImplementedError(f"ServiceManagerWidget cannot login using {type(self._authorizer).__name__}.")
 
-            await self.refresh_services()
+            # Inline refresh_services logic to avoid nested _loading() calls
+            try:
+                await self._service_manager.refresh_organizations()
+            except UnauthorizedException:
+                await self._login_with_auth_code(timeout_seconds=180)
+                await self._service_manager.refresh_organizations()
+
+            self._refresh_orgs()
+            await self._refresh_workspaces()
+            self.button_text = "Refresh Evo Services"
 
         return self
 
@@ -532,9 +533,6 @@ class ServiceManagerWidget(anywidget.AnyWidget, AsyncTaskMixin):
         return self._service_manager.create_client(client_class, *args, **kwargs)
 
 
-IContext.register(ServiceManagerWidget)
-
-
 def display_object_links(object_reference: Any, label: str = "Object links") -> None:
     """Display Evo Viewer and Portal links for a geoscience object.
 
@@ -552,7 +550,7 @@ def display_object_links(object_reference: Any, label: str = "Object links") -> 
     :param label: Label text to display above the links
     """
     try:
-        from IPython.display import HTML, display
+        from IPython.display import HTML
     except ImportError:
         return
 
@@ -578,4 +576,4 @@ def display_object_links(object_reference: Any, label: str = "Object links") -> 
       <a style='{link_style}' href='{safe_portal_url}' target='_blank'>📋 Open in Evo Portal</a>
     </div>
     """
-    display(HTML(html_content))
+    _safe_display(HTML(html_content))
