@@ -511,42 +511,21 @@ class ServiceManagerWidget(anywidget.AnyWidget, AsyncTaskMixin):
     def workspaces(self) -> list[Workspace]:
         return self._service_manager.list_workspaces()
 
-    @property
-    def connector(self) -> APIConnector:
-        """API connector for the currently selected organization."""
-        return self._service_manager.get_connector()
-
-    @property
-    def environment(self) -> Environment:
-        """Environment with the currently selected organization and workspace."""
-        return self._service_manager.get_environment()
-
-    @property
-    def org_id(self) -> UUID:
-        """ID of the currently selected organization."""
-        return self._service_manager.get_org_id()
-
-    @property
-    def cache(self) -> ICache:
-        """Cache for this context."""
-        return self._cache
-
-    # Backward-compatible method aliases for IContext interface
     def get_connector(self) -> APIConnector:
         """Get an API connector for the currently selected organization."""
-        return self.connector
+        return self._service_manager.get_connector()
 
     def get_environment(self) -> Environment:
         """Get an environment with the currently selected organization and workspace."""
-        return self.environment
+        return self._service_manager.get_environment()
 
     def get_org_id(self) -> UUID:
         """Get the ID of the currently selected organization."""
-        return self.org_id
+        return self._service_manager.get_org_id()
 
     def get_cache(self) -> ICache:
         """Get the cache for this context."""
-        return self.cache
+        return self._cache
 
     def create_client(self, client_class: type[T_client], *args: Any, **kwargs: Any) -> T_client:
         """Create a client for the currently selected workspace."""
