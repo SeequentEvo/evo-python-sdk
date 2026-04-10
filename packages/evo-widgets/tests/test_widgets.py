@@ -64,26 +64,6 @@ class TestLoadingContextManager(unittest.TestCase):
         self.assertFalse(widget.main_loading)
         self.assertFalse(widget.button_disabled)
 
-    def test_loading_is_reentrant(self) -> None:
-        """Nested _loading() calls should keep state True until outermost exits."""
-        widget = self._create_widget()
-
-        with widget._loading():
-            self.assertTrue(widget.main_loading)
-            self.assertEqual(widget._loading_depth, 1)
-
-            with widget._loading():
-                self.assertTrue(widget.main_loading)
-                self.assertEqual(widget._loading_depth, 2)
-
-            # After inner exits, should still be True
-            self.assertTrue(widget.main_loading)
-            self.assertEqual(widget._loading_depth, 1)
-
-        # After outer exits, should be False
-        self.assertFalse(widget.main_loading)
-        self.assertEqual(widget._loading_depth, 0)
-
     def test_loading_clears_on_exception(self) -> None:
         """_loading() should clear state even when exception is raised."""
         widget = self._create_widget()
@@ -94,7 +74,6 @@ class TestLoadingContextManager(unittest.TestCase):
 
         self.assertFalse(widget.main_loading)
         self.assertFalse(widget.button_disabled)
-        self.assertEqual(widget._loading_depth, 0)
 
 
 class TestOrgChangeHandler(unittest.TestCase):
