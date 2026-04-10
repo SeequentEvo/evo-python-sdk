@@ -30,7 +30,7 @@ Manual API:
     # View multiple objects together
     url = get_viewer_url_for_objects(manager, [pointset, grid])
 
-Interactive Widgets (requires `anywidget` and `traitlets`):
+Interactive Widgets:
     from evo.widgets import ServiceManagerWidget
 
     # Create and authenticate
@@ -76,13 +76,11 @@ from .urls import (
     serialize_object_reference,
 )
 
-# Conditional imports for interactive widgets (require anywidget and traitlets)
 try:
     from ._interactive import (  # noqa: F401
         DotEnv,
         DropdownSelectorWidget,
         FeedbackWidget,
-        HubSelectorWidget,
         InteractiveAuthorizer,
         OrgSelectorWidget,
         ServiceManagerWidget,
@@ -124,23 +122,15 @@ __all__ = [
     "load_ipython_extension",
     "serialize_object_reference",
     "unload_ipython_extension",
+    "DotEnv",
+    "DropdownSelectorWidget",
+    "FeedbackWidget",
+    "InteractiveAuthorizer",
+    "OrgSelectorWidget",
+    "ServiceManagerWidget",
+    "WorkspaceSelectorWidget",
+    "display_object_links",
 ]
-
-# Add interactive widgets to __all__ if available
-if _HAS_INTERACTIVE:
-    __all__.extend(
-        [
-            "DotEnv",
-            "DropdownSelectorWidget",
-            "FeedbackWidget",
-            "HubSelectorWidget",
-            "InteractiveAuthorizer",
-            "OrgSelectorWidget",
-            "ServiceManagerWidget",
-            "WorkspaceSelectorWidget",
-            "display_object_links",
-        ]
-    )
 
 
 def _register_formatters(ipython: InteractiveShell) -> None:

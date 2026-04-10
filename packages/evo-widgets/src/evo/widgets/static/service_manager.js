@@ -139,7 +139,7 @@ function render({ model, el }) {
     function updatePrompt() {
         const promptText = model.get("prompt_text") || "";
         const showPrompt = model.get("show_prompt") || false;
-        promptArea.innerHTML = promptText;
+        promptArea.textContent = promptText;
         promptArea.className = showPrompt ? "evo-service-manager-prompt visible" : "evo-service-manager-prompt";
     }
 

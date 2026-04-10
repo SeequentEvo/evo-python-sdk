@@ -12,6 +12,7 @@
 """Shared HTML styles for Jupyter notebook representations across all Evo SDK packages."""
 
 from pathlib import Path
+import html
 
 # Load CSS from external file
 _CSS_PATH = Path(__file__).parent / "assets" / "styles.css"
@@ -21,16 +22,6 @@ _CSS_CONTENT = _CSS_PATH.read_text(encoding="utf-8")
 STYLESHEET = f"<style>\n{_CSS_CONTENT}</style>\n"
 
 
-def build_container(content: str, css_class: str = "evo") -> str:
-    """Wrap content in a styled container div.
-
-    :param content: HTML content to wrap.
-    :param css_class: CSS class for the container (default: "evo").
-    :return: Wrapped HTML string.
-    """
-    return f'{STYLESHEET}<div class="{css_class}">{content}</div>'
-
-
 def build_title(text: str, links: list[tuple[str, str]] | None = None) -> str:
     """Create a styled title div.
 
@@ -38,41 +29,33 @@ def build_title(text: str, links: list[tuple[str, str]] | None = None) -> str:
     :param links: Optional list of (label, url) tuples for links next to the title.
     :return: HTML string.
     """
+    safe_text = html.escape(text)
     if links:
-        link_html = " | ".join([f'<a href="{url}" target="_blank">{label}</a>' for label, url in links])
-        return f'<div class="title"><span>{text}</span><span class="title-links">{link_html}</span></div>'
-    return f'<div class="title">{text}</div>'
+        link_html = " | ".join(
+            [f'<a href="{html.escape(url)}" target="_blank">{html.escape(label)}</a>' for label, url in links]
+        )
+        return f'<div class="title"><span>{safe_text}</span><span class="title-links">{link_html}</span></div>'
+    return f'<div class="title">{safe_text}</div>'
 
 
-def build_table_row(label: str, value: str, is_last: bool = False) -> str:
+def build_table_row(label: str, value: str) -> str:
     """Create a table row with label and value.
 
     :param label: Label text.
     :param value: Value text (can contain HTML).
-    :param is_last: If True, don't add bottom border.
     :return: HTML string.
     """
     return f'<tr><td class="label">{label}</td><td class="value">{value}</td></tr>'
 
 
-def build_table_row_vtop(label: str, value: str, is_last: bool = False) -> str:
+def build_table_row_vtop(label: str, value: str) -> str:
     """Create a table row with label and value (label top-aligned).
 
     :param label: Label text.
     :param value: Value text (can contain HTML).
-    :param is_last: If True, don't add bottom border.
     :return: HTML string.
     """
     return f'<tr><td class="label-vtop">{label}</td><td class="value">{value}</td></tr>'
-
-
-def build_section_divider(title: str) -> str:
-    """Create a section divider with title.
-
-    :param title: Section title.
-    :return: HTML string.
-    """
-    return f'<div class="section"><div class="section-heading">{title}</div>'
 
 
 def build_table(rows: list[tuple[str, str]]) -> str:

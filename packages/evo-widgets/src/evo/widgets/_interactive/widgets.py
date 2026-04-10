@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import html
 import pathlib
 from collections.abc import Iterator
 from typing import Any, Generic, TypeVar
@@ -29,7 +30,7 @@ from evo.aio import AioTransport
 from evo.common import APIConnector, BaseAPIClient, Environment
 from evo.common.exceptions import UnauthorizedException
 from evo.common.interfaces import IAuthorizer, ICache, IContext, IFeedback, ITransport
-from evo.discovery import Hub, Organization
+from evo.discovery import Organization
 from evo.oauth import AnyScopes, EvoScopes, OAuthConnector
 from evo.service_manager import ServiceManager
 from evo.workspaces import Workspace
@@ -49,10 +50,45 @@ T = TypeVar("T")
 
 logger = logging.getLogger(__name__)
 
+
+def _build_dropdown_options(
+    items: list[Any],
+    placeholder: str,
+    *,
+    use_str_id: bool = False,
+) -> list[tuple[str, Any]]:
+    """Build dropdown options list from items with a placeholder entry.
+
+    Args:
+        items: List of objects with `display_name` and `id` attributes.
+        placeholder: Text for the first (unselected) option.
+        use_str_id: If True, convert IDs to strings.
+
+    Returns:
+        List of (display_name, id) tuples with placeholder as first entry.
+    """
+    id_fn = str if use_str_id else lambda x: x
+    return [(placeholder, id_fn(_NULL_UUID))] + [
+        (item.display_name, id_fn(item.id)) for item in items
+    ]
+
+
+class AsyncTaskMixin:
+    """Mixin providing fire-and-forget async task execution with error logging."""
+
+    def _run_async(self, coro: Any) -> asyncio.Future:
+        """Schedule a coroutine as a fire-and-forget task with error logging."""
+        future = asyncio.ensure_future(coro)
+        future.add_done_callback(self._handle_async_error)
+        return future
+
+    def _handle_async_error(self, future: asyncio.Future) -> None:
+        if not future.cancelled() and future.exception() is not None:
+            logger.error("Unhandled error in async task: %s", future.exception())
+
 __all__ = [
     "DropdownSelectorWidget",
     "FeedbackWidget",
-    "HubSelectorWidget",
     "OrgSelectorWidget",
     "ServiceManagerWidget",
     "WorkspaceSelectorWidget",
@@ -184,14 +220,6 @@ class DropdownSelectorWidget(anywidget.AnyWidget, Generic[T]):
     def _deserialize(cls, value: str) -> T:
         raise NotImplementedError("Subclasses must implement this method.")
 
-    @property
-    def selected(self) -> T:
-        return self.value
-
-    @selected.setter
-    def selected(self, value: T) -> None:
-        self.value = value
-
 
 _NULL_UUID = UUID(int=0)
 
@@ -220,45 +248,22 @@ class OrgSelectorWidget(_UUIDSelectorWidget):
 
     def _on_selected(self, value: UUID | None) -> None:
         self._manager.set_current_organization(value)
+        # Auto-select the first hub for the selected organization
+        if value is not None:
+            hubs = self._manager.list_hubs()
+            if hubs:
+                self._manager.set_current_hub(hubs[0].code)
 
 
-class HubSelectorWidget(DropdownSelectorWidget[str]):
-    """Hub selection dropdown widget."""
-
-    UNSELECTED = ("Select Hub", "")
-
-    def __init__(self, env: DotEnv, manager: ServiceManager, org_selector: OrgSelectorWidget) -> None:
-        self._manager = manager
-        super().__init__("Hub", env)
-        org_selector.observe(self._on_org_selected, names="value")
-
-    def _on_org_selected(self, change: dict) -> None:
-        self.refresh()
-
-    def _get_options(self) -> list[tuple[str, str]]:
-        return [(hub.display_name, hub.code) for hub in self._manager.list_hubs()]
-
-    def _on_selected(self, value: str | None) -> None:
-        self._manager.set_current_hub(value)
-
-    @classmethod
-    def _serialize(cls, value: str) -> str:
-        return value
-
-    @classmethod
-    def _deserialize(cls, value: str) -> str:
-        return value
-
-
-class WorkspaceSelectorWidget(_UUIDSelectorWidget):
+class WorkspaceSelectorWidget(_UUIDSelectorWidget, AsyncTaskMixin):
     """Workspace selection dropdown widget."""
 
     UNSELECTED = ("Select Workspace", _NULL_UUID)
 
-    def __init__(self, env: DotEnv, manager: ServiceManager, hub_selector: HubSelectorWidget) -> None:
+    def __init__(self, env: DotEnv, manager: ServiceManager, org_selector: OrgSelectorWidget) -> None:
         self._manager = manager
         super().__init__("Workspace", env)
-        hub_selector.observe(self._on_hub_selected, names="value")
+        org_selector.observe(self._on_org_selected, names="value")
 
     async def refresh_workspaces(self) -> None:
         self.loading = True
@@ -267,10 +272,11 @@ class WorkspaceSelectorWidget(_UUIDSelectorWidget):
             self.refresh()
         finally:
             self.loading = False
+            self.disabled = False
 
-    def _on_hub_selected(self, change: dict) -> asyncio.Future:
+    def _on_org_selected(self, _: dict) -> asyncio.Future:
         self.disabled = True
-        return asyncio.ensure_future(self.refresh_workspaces())
+        return self._run_async(self.refresh_workspaces())
 
     def _on_selected(self, value: UUID | None) -> None:
         self._manager.set_current_workspace(value)
@@ -283,11 +289,11 @@ class WorkspaceSelectorWidget(_UUIDSelectorWidget):
 T_client = TypeVar("T_client", bound=BaseAPIClient)
 
 
-class ServiceManagerWidget(anywidget.AnyWidget):
+class ServiceManagerWidget(anywidget.AnyWidget, AsyncTaskMixin):
     """Main authentication and service discovery widget.
 
     This is a modern anywidget-based implementation that provides authentication,
-    organization/hub/workspace selection, and API client creation.
+    organization/workspace selection, and API client creation.
     """
 
     _esm = _STATIC_DIR / "service_manager.js"
@@ -307,11 +313,6 @@ class ServiceManagerWidget(anywidget.AnyWidget):
     org_options = traitlets.List(traitlets.Tuple()).tag(sync=True)
     org_value = traitlets.Any(allow_none=True).tag(sync=True)
     org_loading = traitlets.Bool(False).tag(sync=True)
-
-    # Hub dropdown
-    hub_options = traitlets.List(traitlets.Tuple()).tag(sync=True)
-    hub_value = traitlets.Any(allow_none=True).tag(sync=True)
-    hub_loading = traitlets.Bool(False).tag(sync=True)
 
     # Workspace dropdown
     ws_options = traitlets.List(traitlets.Tuple()).tag(sync=True)
@@ -340,15 +341,14 @@ class ServiceManagerWidget(anywidget.AnyWidget):
         # Initialize dropdown options
         self.org_options = [("Select Organisation", str(_NULL_UUID))]
         self.org_value = str(_NULL_UUID)
-        self.hub_options = [("Select Hub", "")]
-        self.hub_value = ""
         self.ws_options = [("Select Workspace", str(_NULL_UUID))]
         self.ws_value = str(_NULL_UUID)
+
+        self._loading_depth = 0
 
         # Observe changes
         self.observe(self._on_button_click, names="button_clicked")
         self.observe(self._on_org_change, names="org_value")
-        self.observe(self._on_hub_change, names="hub_value")
         self.observe(self._on_ws_change, names="ws_value")
 
         # Auto-display the widget (for backward compatibility with evo.notebooks)
@@ -359,23 +359,18 @@ class ServiceManagerWidget(anywidget.AnyWidget):
     def _on_button_click(self, change: dict) -> None:
         if change["new"]:
             self.button_clicked = False
-            asyncio.ensure_future(self.refresh_services())
+            self._run_async(self.refresh_services())
 
     def _on_org_change(self, change: dict) -> None:
         value = change["new"]
         if value and value != str(_NULL_UUID):
             self._service_manager.set_current_organization(UUID(value))
-            self._refresh_hubs()
+            hubs = self._service_manager.list_hubs()
+            if hubs:
+                self._service_manager.set_current_hub(hubs[0].code)
+            self._run_async(self._refresh_workspaces())
         else:
             self._service_manager.set_current_organization(None)
-
-    def _on_hub_change(self, change: dict) -> None:
-        value = change["new"]
-        if value:
-            self._service_manager.set_current_hub(value)
-            asyncio.ensure_future(self._refresh_workspaces())
-        else:
-            self._service_manager.set_current_hub(None)
 
     def _on_ws_change(self, change: dict) -> None:
         value = change["new"]
@@ -386,33 +381,28 @@ class ServiceManagerWidget(anywidget.AnyWidget):
 
     @contextlib.contextmanager
     def _loading(self) -> Iterator[None]:
-        """Context manager that sets loading and disabled state during operations."""
+        """Reentrant context manager that sets loading and disabled state during operations."""
+        self._loading_depth += 1
         self.main_loading = True
         self.button_disabled = True
         try:
             yield
         finally:
-            self.main_loading = False
-            self.button_disabled = False
+            self._loading_depth -= 1
+            if self._loading_depth == 0:
+                self.main_loading = False
+                self.button_disabled = False
 
     def _refresh_orgs(self) -> None:
         orgs = self._service_manager.list_organizations()
-        self.org_options = [("Select Organisation", str(_NULL_UUID))] + [
-            (org.display_name, str(org.id)) for org in orgs
-        ]
-
-    def _refresh_hubs(self) -> None:
-        hubs = self._service_manager.list_hubs()
-        self.hub_options = [("Select Hub", "")] + [(hub.display_name, hub.code) for hub in hubs]
+        self.org_options = _build_dropdown_options(orgs, "Select Organisation", use_str_id=True)
 
     async def _refresh_workspaces(self) -> None:
         self.ws_loading = True
         try:
             await self._service_manager.refresh_workspaces()
             workspaces = self._service_manager.list_workspaces()
-            self.ws_options = [("Select Workspace", str(_NULL_UUID))] + [
-                (ws.display_name, str(ws.id)) for ws in workspaces
-            ]
+            self.ws_options = _build_dropdown_options(workspaces, "Select Workspace", use_str_id=True)
         finally:
             self.ws_loading = False
 
@@ -495,11 +485,11 @@ class ServiceManagerWidget(anywidget.AnyWidget):
             try:
                 await self._service_manager.refresh_organizations()
             except UnauthorizedException:
-                await self.login()
+                # Re-authenticate directly without calling login() to avoid recursion.
+                await self._login_with_auth_code(timeout_seconds=180)
                 await self._service_manager.refresh_organizations()
 
             self._refresh_orgs()
-            self._refresh_hubs()
             await self._refresh_workspaces()
             self.button_text = "Refresh Evo Services"
 
@@ -508,28 +498,45 @@ class ServiceManagerWidget(anywidget.AnyWidget):
         return self._service_manager.list_organizations()
 
     @property
-    def hubs(self) -> list[Hub]:
-        return self._service_manager.list_hubs()
-
-    @property
     def workspaces(self) -> list[Workspace]:
         return self._service_manager.list_workspaces()
 
-    def get_connector(self) -> APIConnector:
-        """Get an API connector for the currently selected hub."""
+    @property
+    def connector(self) -> APIConnector:
+        """API connector for the currently selected organization."""
         return self._service_manager.get_connector()
 
-    def get_environment(self) -> Environment:
-        """Get an environment with the currently selected organization, hub, and workspace."""
+    @property
+    def environment(self) -> Environment:
+        """Environment with the currently selected organization and workspace."""
         return self._service_manager.get_environment()
 
-    def get_org_id(self) -> UUID:
-        """Gets the ID of the currently selected organization."""
+    @property
+    def org_id(self) -> UUID:
+        """ID of the currently selected organization."""
         return self._service_manager.get_org_id()
 
-    def get_cache(self) -> ICache:
-        """Gets the cache for this context."""
+    @property
+    def cache(self) -> ICache:
+        """Cache for this context."""
         return self._cache
+
+    # Backward-compatible method aliases for IContext interface
+    def get_connector(self) -> APIConnector:
+        """Get an API connector for the currently selected organization."""
+        return self.connector
+
+    def get_environment(self) -> Environment:
+        """Get an environment with the currently selected organization and workspace."""
+        return self.environment
+
+    def get_org_id(self) -> UUID:
+        """Get the ID of the currently selected organization."""
+        return self.org_id
+
+    def get_cache(self) -> ICache:
+        """Get the cache for this context."""
+        return self.cache
 
     def create_client(self, client_class: type[T_client], *args: Any, **kwargs: Any) -> T_client:
         """Create a client for the currently selected workspace."""
@@ -572,11 +579,14 @@ def display_object_links(object_reference: Any, label: str = "Object links") -> 
         "background:#fafafa;font-family:Inter,Segoe UI,Arial,sans-serif;"
     )
     link_style = "margin-right:16px;color:#0066cc;text-decoration:none;"
-    html = f"""
+    safe_label = html.escape(label)
+    safe_viewer_url = html.escape(viewer_url)
+    safe_portal_url = html.escape(portal_url)
+    html_content = f"""
     <div style='{style}'>
-      <div style='font-weight:600;color:#333;margin-bottom:4px'>{label}</div>
-      <a style='{link_style}' href='{viewer_url}' target='_blank'>🔍 Open in Evo Viewer</a>
-      <a style='{link_style}' href='{portal_url}' target='_blank'>📋 Open in Evo Portal</a>
+      <div style='font-weight:600;color:#333;margin-bottom:4px'>{safe_label}</div>
+      <a style='{link_style}' href='{safe_viewer_url}' target='_blank'>🔍 Open in Evo Viewer</a>
+      <a style='{link_style}' href='{safe_portal_url}' target='_blank'>📋 Open in Evo Portal</a>
     </div>
     """
-    display(HTML(html))
+    display(HTML(html_content))

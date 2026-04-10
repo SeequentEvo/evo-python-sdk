@@ -33,6 +33,11 @@ pip install evo-widgets[notebooks]
 
 ## Interactive Widgets
 
+> **Security Note:** The `InteractiveAuthorizer` stores OAuth tokens in a local `.env` file,
+> which is not a secure storage mechanism. It is intended for development and exploration in
+> Jupyter notebooks only. Do not use it in production or shared environments, and ensure the
+> `.env` file is not committed to source control.
+
 ### ServiceManagerWidget
 
 The `ServiceManagerWidget` provides authentication and service discovery in one convenient widget:
@@ -158,14 +163,13 @@ viewer_url = get_viewer_url_from_reference(ref_url)
 
 ## API Reference
 
-### Interactive Widgets (requires `[notebooks]` extra)
+### Interactive Widgets
 
 | Class | Description |
 |-------|-------------|
 | `ServiceManagerWidget` | Authentication and service discovery widget |
 | `FeedbackWidget` | Progress bar and status message widget |
 | `OrgSelectorWidget` | Organization selection dropdown |
-| `HubSelectorWidget` | Hub selection dropdown |
 | `WorkspaceSelectorWidget` | Workspace selection dropdown |
 | `DropdownSelectorWidget` | Generic dropdown widget base class |
 
@@ -210,7 +214,7 @@ When you import from `evo.widgets` in an IPython/Jupyter environment, HTML forma
 1. **Avoids hard dependencies** — The widgets package doesn't import model classes directly
 2. **Works with all typed objects** — Formatters are registered for the base class, so all subclasses are covered
 3. **Lazy loading** — Formatters only activate when the relevant types are actually used
-4. **Zero configuration** — No need to manually run `%load_ext`
+4. **Automatic widget loading** — html repr widgets for typed objects are loaded automatically as part of the `evo.widgets` initialization.
 
 You can disable auto-registration by setting `EVO_WIDGETS_NO_AUTO_REGISTER=1` before importing.
 

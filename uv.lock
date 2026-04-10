@@ -1329,17 +1329,17 @@ name = "evo-widgets"
 version = "0.3.0"
 source = { editable = "packages/evo-widgets" }
 dependencies = [
+    { name = "anywidget" },
     { name = "evo-sdk-common", extra = ["aiohttp"] },
     { name = "ipython", version = "8.37.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "ipython", version = "9.6.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "traitlets" },
 ]
 
 [package.optional-dependencies]
 notebooks = [
-    { name = "anywidget" },
     { name = "ipykernel" },
     { name = "python-dotenv" },
-    { name = "traitlets" },
 ]
 
 [package.dev-dependencies]
@@ -1363,12 +1363,12 @@ test = [
 
 [package.metadata]
 requires-dist = [
-    { name = "anywidget", marker = "extra == 'notebooks'", specifier = ">=0.9" },
+    { name = "anywidget", specifier = ">=0.9" },
     { name = "evo-sdk-common", extras = ["aiohttp"], editable = "packages/evo-sdk-common" },
     { name = "ipykernel", marker = "extra == 'notebooks'" },
     { name = "ipython", specifier = ">=7.0.0" },
     { name = "python-dotenv", marker = "extra == 'notebooks'" },
-    { name = "traitlets", marker = "extra == 'notebooks'", specifier = ">=5.0" },
+    { name = "traitlets", specifier = ">=5.0" },
 ]
 provides-extras = ["notebooks"]
 

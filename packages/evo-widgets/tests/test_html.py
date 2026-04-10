@@ -15,7 +15,6 @@ import unittest
 
 from evo.widgets.html import (
     STYLESHEET,
-    build_container,
     build_nested_table,
     build_object_html,
     build_table,
@@ -33,26 +32,6 @@ class TestStylesheet(unittest.TestCase):
         self.assertIn(".evo", STYLESHEET)
         self.assertIn("<style>", STYLESHEET)
         self.assertIn("</style>", STYLESHEET)
-
-
-class TestBuildContainer(unittest.TestCase):
-    """Tests for the build_container function."""
-
-    def test_builds_container_with_default_class(self):
-        """Test building a container with default CSS class."""
-        result = build_container("content")
-        self.assertEqual(
-            result,
-            f'{STYLESHEET}<div class="evo">content</div>',
-        )
-
-    def test_builds_container_with_custom_class(self):
-        """Test building a container with custom CSS class."""
-        result = build_container("content", css_class="custom")
-        self.assertEqual(
-            result,
-            f'{STYLESHEET}<div class="custom">content</div>',
-        )
 
 
 class TestBuildTitle(unittest.TestCase):
@@ -81,6 +60,27 @@ class TestBuildTitle(unittest.TestCase):
             "</span>"
             "</div>",
         )
+
+    def test_escapes_html_in_title_text(self):
+        """Test that HTML in title text is escaped to prevent XSS."""
+        malicious_title = '<script>alert("xss")</script>'
+        result = build_title(malicious_title)
+        self.assertNotIn("<script>", result)
+        self.assertIn("&lt;script&gt;", result)
+
+    def test_escapes_html_in_link_labels(self):
+        """Test that HTML in link labels is escaped."""
+        links = [('<img src=x onerror=alert("xss")>', "https://example.com")]
+        result = build_title("Title", links)
+        self.assertNotIn("<img", result)
+        self.assertIn("&lt;img", result)
+
+    def test_escapes_html_in_link_urls(self):
+        """Test that special characters in URLs are escaped."""
+        links = [("Link", 'javascript:alert("xss")')]
+        result = build_title("Title", links)
+        # The quotes should be escaped
+        self.assertIn("&quot;", result)
 
 
 class TestBuildTableRow(unittest.TestCase):

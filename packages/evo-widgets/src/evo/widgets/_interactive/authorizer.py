@@ -13,8 +13,6 @@
 
 import contextlib
 import json
-import os
-import warnings
 from collections.abc import AsyncIterator
 
 from evo import logging, oauth
@@ -28,50 +26,6 @@ __all__ = [
 logger = logging.getLogger("widgets.oauth")
 
 _TOKEN_KEY = "NotebookOAuth.token"
-
-_LOCAL_HOSTNAMES = {"127.0.0.1", "localhost"}
-
-
-def _should_warn_insecure_notebook_usage() -> bool:
-    """Return True if we should emit the insecure-usage warning.
-
-    The user requested that we only warn when *not* running a local Jupyter
-    notebook. Because detecting the actual notebook URL/host is unreliable
-    without additional heavy dependencies (and highly environment-specific),
-    we use the following conservative policy:
-
-    - If we can clearly see indicators of a remote / hosted notebook
-      environment, we return True (emit the warning).
-    - Otherwise (local or unknown), we return False and suppress the warning.
-
-    This means we might *not* warn in some edge cases that are actually
-    remote, but we will avoid spamming users of typical local notebooks.
-
-    We treat the following as *remote*:
-    - Presence of well-known JupyterHub / cloud notebook env vars.
-
-    Anything not clearly identified as remote is treated as "local/unknown"
-    and will not trigger the warning.
-    """
-
-    env = os.environ
-
-    # Common JupyterHub / cloud indicators. This list is intentionally small
-    # and conservative; we only want to flag cases that are very likely to be
-    # remote or multi-user.
-    cloud_indicators = [
-        "JUPYTERHUB_API_URL",  # JupyterHub deployments
-        "JUPYTERHUB_SERVICE_PREFIX",
-        "JUPYTERHUB_HOST",
-        "COLAB_GPU",  # Google Colab
-        "VSCODE_CWD",  # VS Code remote / web contexts
-        "PAPERMILL_EXECUTION_ENV",  # Some managed notebook runners
-    ]
-
-    if any(key in env for key in cloud_indicators):
-        return True
-
-    return False
 
 
 class _OAuthEnv:
@@ -88,8 +42,10 @@ class _OAuthEnv:
             return oauth.AccessToken.model_validate(token_dict)
 
         except Exception:
-            # The token is invalid.
-            raise ValueError("Invalid token found in the environment file!")
+            # The cached token is corrupted — clear it and trigger re-authentication.
+            logger.warning("Corrupted token found in environment file, clearing and re-authenticating.")
+            self.set_token(None)
+            return None
 
     def set_token(self, token: oauth.AccessToken | None) -> None:
         if token is None:
@@ -120,11 +76,6 @@ class InteractiveAuthorizer(oauth.AuthorizationCodeAuthorizer):
         :param scopes: The OAuth scopes to request.
         :param env: The environment to store the OAuth token in.
         """
-        if _should_warn_insecure_notebook_usage():
-            warnings.warn(
-                "The evo.widgets.InteractiveAuthorizer is not secure, and should only ever be used in Jupyter"
-                " notebooks in a private environment."
-            )
         super().__init__(oauth_connector=oauth_connector, redirect_url=redirect_url, scopes=scopes)
         self._env: _OAuthEnv = _OAuthEnv(env)
 
@@ -134,7 +85,7 @@ class InteractiveAuthorizer(oauth.AuthorizationCodeAuthorizer):
         :returns: True if a token was found and reused, False otherwise.
         """
         async with self._mutex:
-            if (token := self._get_token()) is None:
+            if (token := self._env.get_token()) is None:
                 return False
 
             if token.is_expired:
@@ -142,9 +93,6 @@ class InteractiveAuthorizer(oauth.AuthorizationCodeAuthorizer):
                 return False
 
             return True
-
-    def _get_token(self) -> oauth.AccessToken | None:
-        return self._env.get_token()
 
     def _update_token(self, new_token: oauth.AccessToken) -> None:
         super()._update_token(new_token)
@@ -154,7 +102,7 @@ class InteractiveAuthorizer(oauth.AuthorizationCodeAuthorizer):
     async def _unwrap_token(self) -> AsyncIterator[oauth.AccessToken]:
         # Overrides the parent implementation so that we can automatically login at startup.
         async with self._mutex:
-            if (token := self._get_token()) is None:
+            if (token := self._env.get_token()) is None:
                 token = await self._handle_login(timeout_seconds=60)
                 self._update_token(token)
             yield token

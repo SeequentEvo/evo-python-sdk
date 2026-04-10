@@ -2,13 +2,14 @@
  * Based on Seequent Web Design System
  */
 
+/* Design System Variables */
 .evo-feedback-widget {
-    /* Seequent Design System Colors */
     --evo-color-primary: #265C7F;
     --evo-color-text: #39393c;
     --evo-color-text-secondary: #767375;
     --evo-color-border: #c8c8c8;
     --evo-font-family: Inter, "Helvetica Neue", Arial, sans-serif;
+
     display: flex;
     flex-direction: column;
     gap: 4px;

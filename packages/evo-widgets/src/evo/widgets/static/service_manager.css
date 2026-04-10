@@ -2,8 +2,8 @@
  * Based on Seequent Web Design System
  */
 
+/* Design System Variables */
 .evo-service-manager-widget {
-    /* Seequent Design System Colors */
     --evo-color-primary: #265C7F;
     --evo-color-primary-hover: #4A4A4C;
     --evo-color-primary-pressed: #234B66;
@@ -17,6 +17,7 @@
     --evo-color-disabled: #979797;
     --evo-opacity-disabled: 0.38;
     --evo-font-family: Inter, "Helvetica Neue", Arial, sans-serif;
+
     display: flex;
     flex-direction: row;
     justify-content: space-between;
