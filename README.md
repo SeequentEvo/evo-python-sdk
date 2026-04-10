@@ -213,6 +213,94 @@ uv run jupyter notebook
 
 A browser should launch where you can open the notebooks for the current directory.
 
+### Troubleshooting: TLS certificate errors
+
+If you are behind a corporate proxy or firewall that performs TLS inspection, you may see errors like this when running `uv sync`, `uv python install`, or other `uv` commands:
+
+```
+error: Failed to download `package==1.2.3`
+  Caused by: Request failed after 3 retries
+  Caused by: error sending request for url (https://...)
+  Caused by: client error (Connect)
+  Caused by: invalid peer certificate: UnknownIssuer
+```
+
+This happens because `uv` uses bundled Mozilla root certificates by default, which don't include your organization's TLS inspection CA certificate. To fix this, use the `--native-tls` flag to tell `uv` to use your operating system's certificate store instead:
+
+```shell
+uv sync --native-tls
+```
+
+You can also set this as an environment variable so it applies to all `uv` commands:
+
+**Windows (PowerShell):**
+```powershell
+$env:UV_NATIVE_TLS = "true"
+```
+
+**macOS / Linux:**
+```bash
+export UV_NATIVE_TLS="true"
+```
+
+> **Note:** This requires that your organization's CA certificate is already installed in your OS certificate store. If you're unsure, contact your IT team. See the [Corporate TLS/SSL Certificates](#corporate-tlsssl-certificates) section below for more details.
+
+## Corporate TLS/SSL Certificates
+
+Organizations that use TLS inspection proxies (e.g., Zscaler, Netskope, Palo Alto) intercept HTTPS traffic and re-sign it with a corporate root CA certificate. `uv` does not trust these certificates by default, which causes `invalid peer certificate: UnknownIssuer` errors when downloading packages or Python installations.
+
+The solution is two-fold:
+1. Ensure your organization's CA certificate is in your OS certificate store (your IT team may have already done this).
+2. Tell `uv` to use the OS certificate store with the `--native-tls` flag or `UV_NATIVE_TLS` environment variable.
+
+### Windows
+
+To check if the certificate is already installed, or to add it manually:
+
+```powershell
+# Check if your corporate CA is in the store (replace "YourCompanyCA" with the certificate name)
+certutil -store root "YourCompanyCA"
+
+# If not present, import it (requires Administrator PowerShell)
+certutil -addstore root "C:\path\to\corporate-ca-cert.cer"
+```
+
+Then run `uv` with native TLS:
+```powershell
+$env:UV_NATIVE_TLS = "true"
+uv sync
+```
+
+### macOS
+
+```bash
+# Import the corporate CA into the system keychain (requires admin password)
+sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain /path/to/corporate-ca-cert.pem
+
+# Then run uv with native TLS
+export UV_NATIVE_TLS="true"
+uv sync
+```
+
+### Linux
+
+```bash
+# Copy the corporate CA certificate to the system trust store
+# Ubuntu/Debian:
+sudo cp /path/to/corporate-ca-cert.crt /usr/local/share/ca-certificates/
+sudo update-ca-certificates
+
+# RHEL/Fedora:
+sudo cp /path/to/corporate-ca-cert.pem /etc/pki/ca-trust/source/anchors/
+sudo update-ca-trust
+
+# Then run uv with native TLS
+export UV_NATIVE_TLS="true"
+uv sync
+```
+
+> **Tip:** Contact your IT team if you don't know the location of your organization's CA certificate file. They may also be able to provide a certificate bundle.
+
 ## Code of conduct
 
 We rely on an open, friendly, inclusive environment. To help us ensure this remains possible, please familiarise yourself with our [code of conduct](./CODE_OF_CONDUCT.md).
