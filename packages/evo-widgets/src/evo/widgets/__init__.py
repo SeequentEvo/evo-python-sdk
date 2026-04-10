@@ -94,12 +94,6 @@ if TYPE_CHECKING:
     from IPython.core.interactiveshell import InteractiveShell
 
 __all__ = [
-    "DotEnv",
-    "DropdownSelectorWidget",
-    "FeedbackWidget",
-    "InteractiveAuthorizer",
-    "ServiceManagerWidget",
-    "display_object_links",
     "format_attributes_collection",
     "format_base_object",
     "format_block_model",
@@ -127,6 +121,16 @@ __all__ = [
     "serialize_object_reference",
     "unload_ipython_extension",
 ]
+
+if _HAS_INTERACTIVE:
+    __all__.extend([
+        "DotEnv",
+        "DropdownSelectorWidget",
+        "FeedbackWidget",
+        "InteractiveAuthorizer",
+        "ServiceManagerWidget",
+        "display_object_links",
+    ])
 
 
 def _register_formatters(ipython: InteractiveShell) -> None:
