@@ -56,6 +56,7 @@ function createDropdown(label, id, model, valueKey, optionsKey, loadingKey) {
     }
 
     select.addEventListener("change", () => {
+        if (!select.value) return;  // Guard against empty value
         const selectedValue = JSON.parse(select.value);
         model.set(valueKey, selectedValue);
         model.save_changes();

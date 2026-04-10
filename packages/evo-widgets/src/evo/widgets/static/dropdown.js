@@ -67,6 +67,7 @@ function render({ model, el }) {
 
     // Handle selection change
     select.addEventListener("change", () => {
+        if (!select.value) return;  // Guard against empty value
         const selectedValue = JSON.parse(select.value);
         model.set("value", selectedValue);
         model.save_changes();
