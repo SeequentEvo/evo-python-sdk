@@ -92,6 +92,7 @@ class InteractiveAuthorizer(oauth.AuthorizationCodeAuthorizer):
                 self._env.set_token(None)
                 return False
 
+            self._update_token(token)
             return True
 
     def _update_token(self, new_token: oauth.AccessToken) -> None:

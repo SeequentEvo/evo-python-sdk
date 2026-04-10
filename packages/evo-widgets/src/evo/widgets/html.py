@@ -45,7 +45,8 @@ def build_table_row(label: str, value: str) -> str:
     :param value: Value text (can contain HTML).
     :return: HTML string.
     """
-    return f'<tr><td class="label">{label}</td><td class="value">{value}</td></tr>'
+    safe_label = html.escape(label)
+    return f'<tr><td class="label">{safe_label}</td><td class="value">{value}</td></tr>'
 
 
 def build_table_row_vtop(label: str, value: str) -> str:
@@ -55,7 +56,8 @@ def build_table_row_vtop(label: str, value: str) -> str:
     :param value: Value text (can contain HTML).
     :return: HTML string.
     """
-    return f'<tr><td class="label-vtop">{label}</td><td class="value">{value}</td></tr>'
+    safe_label = html.escape(label)
+    return f'<tr><td class="label-vtop">{safe_label}</td><td class="value">{value}</td></tr>'
 
 
 def build_table(rows: list[tuple[str, str]]) -> str:
@@ -76,12 +78,13 @@ def build_nested_table(headers: list[str], rows: list[list[str]], css_class: str
     :param css_class: Additional CSS classes to add to the table (optional).
     :return: HTML string for a nested table.
     """
-    class_attr = f' class="nested {css_class}"' if css_class else ' class="nested"'
+    safe_css_class = html.escape(css_class) if css_class else ""
+    class_attr = f' class="nested {safe_css_class}"' if safe_css_class else ' class="nested"'
 
     # Build header row
     header_cells = []
     for i, header in enumerate(headers):
-        header_cells.append(f"<th>{header}</th>")
+        header_cells.append(f"<th>{html.escape(str(header))}</th>")
 
     # Build data rows
     data_rows = []
@@ -90,9 +93,9 @@ def build_nested_table(headers: list[str], rows: list[list[str]], css_class: str
         for i, cell in enumerate(row):
             # Format numeric values
             if isinstance(cell, (int, float)):
-                formatted_cell = f"{cell:.2f}"
+                formatted_cell = html.escape(f"{cell:.2f}")
             else:
-                formatted_cell = str(cell)
+                formatted_cell = html.escape(str(cell))
             cells.append(f"<td>{formatted_cell}</td>")
         data_rows.append(f"<tr>{''.join(cells)}</tr>")
 

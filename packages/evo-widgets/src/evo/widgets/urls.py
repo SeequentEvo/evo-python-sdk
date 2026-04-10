@@ -17,7 +17,7 @@ This module provides functions to generate URLs for viewing objects in the Evo P
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
-from urllib.parse import urlparse
+from urllib.parse import quote, urlparse
 from uuid import UUID
 
 from evo.objects import ObjectReference
@@ -121,7 +121,7 @@ def get_blocksync_report_url(
     base_url = get_blocksync_base_url("")
     url = f"{base_url}/{org_id}/{hub_code}/{workspace_id}/blockmodel/{block_model_id}/reports/{report_id}"
     if result_id:
-        url += f"?result_id={result_id}"
+        url += f"?result_id={quote(str(result_id))}"
     return url
 
 
@@ -245,7 +245,10 @@ def get_viewer_url_for_objects(context: IContext, objects: list[Any]) -> str:
 
     object_ids: list[str] = []
     for obj in objects:
-        if isinstance(obj, str):
+        # Check for ObjectReference first (it's a str subclass with object_id attribute)
+        if hasattr(obj, "object_id") and obj.object_id is not None:
+            object_ids.append(str(obj.object_id))
+        elif isinstance(obj, str):
             # Assume it's already an object ID
             object_ids.append(obj)
         elif hasattr(obj, "metadata") and hasattr(obj.metadata, "id"):
