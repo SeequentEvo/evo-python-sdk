@@ -851,15 +851,15 @@ notebooks = [
 
 [[package]]
 name = "evo-objects"
-version = "0.4.2"
+version = "0.4.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "evo-sdk-common", extra = ["jmespath"] },
     { name = "pydantic" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/04/36/550bb291a9877367871841b67668db59442e73b893ae3d10697e07fb218f/evo_objects-0.4.2.tar.gz", hash = "sha256:b19c6656c5c8f3bd38b5ddbcc4eb3d8f063812c5111878378faf6ccf597be411", size = 73816, upload-time = "2026-03-24T02:46:38.405Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/00/d7/15ade803a48412447512cc2b2ec2b4999d2f0b5d7d3ebbfe2d27450891af/evo_objects-0.4.3.tar.gz", hash = "sha256:5fe939fd605c0524e5f554c6a666d80e08853829f0ddb5a2bbddebf67d2da68c", size = 73856, upload-time = "2026-04-13T02:59:11.928Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f3/fa/4b9b1f52f60fe9dd573186b66a8302e79f73823ae1f9960a503472f2c566/evo_objects-0.4.2-py3-none-any.whl", hash = "sha256:0338b069bec29d607ecdd1f22803eb47e093e41b540858d9f950231e5ffda33a", size = 110299, upload-time = "2026-03-24T02:46:36.717Z" },
+    { url = "https://files.pythonhosted.org/packages/19/06/5a219a270d8004a694d6e715347a11dfbf772f85f9013090df82282ffd79/evo_objects-0.4.3-py3-none-any.whl", hash = "sha256:5784c22d9c437d045c66402170472387b30560786b700d23ebaebc9207ab3768", size = 110338, upload-time = "2026-04-13T02:59:10.319Z" },
 ]
 
 [package.optional-dependencies]
@@ -1143,12 +1143,12 @@ name = "geosoft"
 version = "2025.2.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "jdcal", marker = "python_full_version < '3.11' or sys_platform == 'win32'" },
+    { name = "jdcal" },
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
-    { name = "numpy", version = "2.4.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11' and sys_platform == 'win32'" },
+    { name = "numpy", version = "2.4.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "pandas", version = "2.3.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
-    { name = "pandas", version = "3.0.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11' and sys_platform == 'win32'" },
-    { name = "requests", marker = "python_full_version < '3.11' or sys_platform == 'win32'" },
+    { name = "pandas", version = "3.0.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "requests" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/6a/68/b99eca4f320541239f7ef9412c2bf510c5d3977fbce11eec206a271cef84/geosoft-2025.2.0-cp310-none-win_amd64.whl", hash = "sha256:509448451b668fddce604eac683d73b5cd6beb02bbba18dfedc0926698603ec1", size = 6373109, upload-time = "2025-12-15T18:34:30.634Z" },
