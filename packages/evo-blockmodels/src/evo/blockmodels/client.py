@@ -247,6 +247,7 @@ class BlockModelAPIClient(BaseAPIClient):
         object_path: str | None = None,
         coordinate_reference_system: str | None = None,
         size_unit_id: str | None = None,
+        comment: str | None = None,
     ) -> tuple[models.BlockModelAndJobURL, Version]:
         match grid_definition:
             case RegularGridDefinition(n_blocks=n_blocks, block_size=block_size):
@@ -302,6 +303,7 @@ class BlockModelAPIClient(BaseAPIClient):
                     Rotation(axis=RotationAxis(axis), angle=angle) for axis, angle in grid_definition.rotations
                 ],
                 size_options=size_options,
+                comment=comment,
             ),
         )
         job_id = _job_id_from_url(create_result.job_url)
@@ -528,6 +530,7 @@ class BlockModelAPIClient(BaseAPIClient):
         size_unit_id: str | None = None,
         initial_data: Table | None = None,
         units: dict[str, str] | None = None,
+        comment: str | None = None,
     ) -> tuple[BlockModel, Version]:
         r"""Create a block model.
 
@@ -550,6 +553,7 @@ class BlockModelAPIClient(BaseAPIClient):
         :param size_unit_id: Unit ID denoting the length unit used for the block model's blocks.
         :param initial_data: The initial data to populate the block model with.
         :param units: A dictionary mapping column names within `initial_data` to units.
+        :param comment: An optional comment describing the initial data.
         :return: A tuple containing the created block model and the version of the block model.
         """
         if units is not None and initial_data is None:
@@ -559,7 +563,7 @@ class BlockModelAPIClient(BaseAPIClient):
                 "Cache must be configured to use this method. Please set the 'cache' parameter in the constructor."
             )
         create_result, version = await self._create_block_model(
-            name, grid_definition, description, object_path, coordinate_reference_system, size_unit_id
+            name, grid_definition, description, object_path, coordinate_reference_system, size_unit_id, comment
         )
 
         if initial_data is not None:
