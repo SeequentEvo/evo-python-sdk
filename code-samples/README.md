@@ -81,9 +81,9 @@ Follow the instructions below for [Windows](#windows), [macOS](#macos) or [Linux
     ```
 
     > [!NOTE]
-    > If you see an error containing `invalid peer certificate: UnknownIssuer`, your organization likely uses a TLS inspection proxy. Run `uv sync --native-tls` instead, which tells `uv` to use the Windows certificate store. You can also set this permanently:
+    > If you see an error containing `invalid peer certificate: UnknownIssuer`, your organization likely uses a TLS inspection proxy. Set `UV_NATIVE_TLS` as a persistent user environment variable, open a new terminal window, and then rerun `uv sync`:
     > ```pwsh
-    > $env:UV_NATIVE_TLS = "true"
+    > [System.Environment]::SetEnvironmentVariable("UV_NATIVE_TLS", "true", "User")
     > ```
     > See the [TLS certificate troubleshooting](#troubleshooting-tls-certificate-errors) section below for more details.
 
@@ -116,11 +116,11 @@ Follow the instructions below for [Windows](#windows), [macOS](#macos) or [Linux
     ```
 
     > [!NOTE]
-    > If you see an error containing `invalid peer certificate: UnknownIssuer`, your organization likely uses a TLS inspection proxy. Run `uv sync --native-tls` instead, which tells `uv` to use the macOS Keychain certificate store. You can also set this permanently:
+    > If you see an error containing `invalid peer certificate: UnknownIssuer`, your organization likely uses a TLS inspection proxy. Add `UV_NATIVE_TLS` to your shell startup file, open a new terminal window, and then rerun `uv sync`. For a common macOS setup using Terminal.app and `zsh`:
     > ```bash
-    > export UV_NATIVE_TLS="true"
+    > echo 'export UV_NATIVE_TLS="true"' >> ~/.zprofile
     > ```
-    > See the [TLS certificate troubleshooting](#troubleshooting-tls-certificate-errors) section below for more details.
+    > If you already use `~/.zshrc` for environment variables, add it there instead. If you use a different shell, use the appropriate startup file. See the [TLS certificate troubleshooting](#troubleshooting-tls-certificate-errors) section below for more details.
 
 ### Linux
 
@@ -147,11 +147,11 @@ NOTE: This example is based on [Ubuntu](https://ubuntu.com), but other Linux env
     ```
 
     > [!NOTE]
-    > If you see an error containing `invalid peer certificate: UnknownIssuer`, your organization likely uses a TLS inspection proxy. Run `uv sync --native-tls` instead, which tells `uv` to use the system certificate store. You can also set this permanently:
+    > If you see an error containing `invalid peer certificate: UnknownIssuer`, your organization likely uses a TLS inspection proxy. Add `UV_NATIVE_TLS` to your shell startup file, open a new terminal window, and then rerun `uv sync`. For `bash`:
     > ```bash
-    > export UV_NATIVE_TLS="true"
+    > echo 'export UV_NATIVE_TLS="true"' >> ~/.bash_profile
     > ```
-    > See the [TLS certificate troubleshooting](#troubleshooting-tls-certificate-errors) section below for more details.
+    > If you use a different shell, add the same export to the appropriate startup file. See the [TLS certificate troubleshooting](#troubleshooting-tls-certificate-errors) section below for more details.
 
 ### 4. Run the notebooks
 
@@ -302,24 +302,25 @@ error: Failed to download `package==1.2.3`
   Caused by: invalid peer certificate: UnknownIssuer
 ```
 
-This happens because `uv` uses bundled Mozilla root certificates by default, which don't include your organization's TLS inspection CA certificate. To fix this, use the `--native-tls` flag to tell `uv` to use your operating system's certificate store instead:
-
-```shell
-uv sync --native-tls
-```
-
-You can also set this as an environment variable so it applies to all `uv` commands:
+This happens because `uv` uses bundled Mozilla root certificates by default, which don't include your organization's TLS inspection CA certificate. To fix this, set `UV_NATIVE_TLS` as a persistent environment variable so `uv` uses your operating system's certificate store for all commands:
 
 **Windows (PowerShell):**
 ```powershell
-$env:UV_NATIVE_TLS = "true"
+[System.Environment]::SetEnvironmentVariable("UV_NATIVE_TLS", "true", "User")
 ```
 
-**macOS / Linux:**
+**macOS (common Terminal.app plus `zsh` setup):**
 ```bash
-export UV_NATIVE_TLS="true"
+echo 'export UV_NATIVE_TLS="true"' >> ~/.zprofile
 ```
 
-This requires that your organization's CA certificate is already installed in your OS certificate store. If you're unsure, contact your IT team. For more detailed instructions on importing certificates, see the [Corporate TLS/SSL Certificates](../README.md#corporate-tlsssl-certificates) section in the main README.
+If you already use `~/.zshrc` for environment variables, add the same export there instead.
+
+**Linux (`bash` example):**
+```bash
+echo 'export UV_NATIVE_TLS="true"' >> ~/.bash_profile
+```
+
+If you use a different shell, add the same export to the appropriate startup file. Then open a new terminal window and rerun your `uv` command.
 
 Happy coding with Evo! 🎉

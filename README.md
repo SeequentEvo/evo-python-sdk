@@ -198,13 +198,7 @@ uv run pre-commit install
 ```
 
 > [!NOTE]
-> If you see an error containing `invalid peer certificate: UnknownIssuer`, your organization likely uses a TLS inspection proxy. Add the `--native-tls` flag to any `uv` command, e.g. `uv run --native-tls pre-commit install`. You can also set this permanently:
->
-> **Windows (PowerShell):** `$env:UV_NATIVE_TLS = "true"`
->
-> **macOS / Linux:** `export UV_NATIVE_TLS="true"`
->
-> See the [Corporate TLS/SSL Certificates](#corporate-tlsssl-certificates) section for more details.
+> If you see an error containing `invalid peer certificate: UnknownIssuer`, your organization likely uses a TLS inspection proxy. Set the `UV_NATIVE_TLS` environment variable as described in the [Corporate TLS/SSL Certificates](#corporate-tlsssl-certificates) section, open a new terminal window, and then rerun the command.
 
 ### Setting up and running Jupyter notebooks
 
@@ -215,7 +209,7 @@ uv sync --all-packages --all-extras
 ```
 
 > [!NOTE]
-> If the above command fails with `invalid peer certificate: UnknownIssuer`, run `uv sync --all-packages --all-extras --native-tls` instead. See the [Corporate TLS/SSL Certificates](#corporate-tlsssl-certificates) section for more details.
+> If the above command fails with `invalid peer certificate: UnknownIssuer`, set the `UV_NATIVE_TLS` environment variable as described in the [Corporate TLS/SSL Certificates](#corporate-tlsssl-certificates) section, open a new terminal window, and then rerun the command.
 
 Then, in the directory of the notebook(s) you want to run:
 
@@ -229,57 +223,31 @@ A browser should launch where you can open the notebooks for the current directo
 
 Organizations that use TLS inspection proxies (e.g., Zscaler, Netskope, Palo Alto) intercept HTTPS traffic and re-sign it with a corporate root CA certificate. `uv` does not trust these certificates by default, which causes `invalid peer certificate: UnknownIssuer` errors when downloading packages or Python installations.
 
-The solution is two-fold:
-1. Ensure your organization's CA certificate is in your OS certificate store (your IT team may have already done this).
-2. Tell `uv` to use the OS certificate store with the `--native-tls` flag or `UV_NATIVE_TLS` environment variable.
+To resolve this, configure `uv` to use your operating system's certificate store by setting `UV_NATIVE_TLS` as a persistent environment variable, then open a new terminal window and rerun your command.
 
 ### Windows
 
-To check if the certificate is already installed, or to add it manually:
-
 ```powershell
-# Check if your corporate CA is in the store (replace "YourCompanyCA" with the certificate name)
-certutil -store root "YourCompanyCA"
-
-# If not present, import it (requires Administrator PowerShell)
-certutil -addstore root "C:\path\to\corporate-ca-cert.cer"
+[System.Environment]::SetEnvironmentVariable("UV_NATIVE_TLS", "true", "User")
 ```
 
-Then run `uv` with native TLS:
-```powershell
-$env:UV_NATIVE_TLS = "true"
-uv sync
-```
+Open a new PowerShell window before rerunning `uv`.
 
 ### macOS
 
 ```bash
-# Import the corporate CA into the system keychain (requires admin password)
-sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain /path/to/corporate-ca-cert.pem
-
-# Then run uv with native TLS
-export UV_NATIVE_TLS="true"
-uv sync
+echo 'export UV_NATIVE_TLS="true"' >> ~/.zprofile
 ```
+
+On macOS, `~/.zprofile` is a reasonable default for the standard Terminal.app and `zsh` setup. If you already manage environment variables in `~/.zshrc`, use that instead. If you use a different shell, add the same export to the appropriate startup file, then open a new terminal window before rerunning `uv`.
 
 ### Linux
 
 ```bash
-# Copy the corporate CA certificate to the system trust store
-# Ubuntu/Debian:
-sudo cp /path/to/corporate-ca-cert.crt /usr/local/share/ca-certificates/
-sudo update-ca-certificates
-
-# RHEL/Fedora:
-sudo cp /path/to/corporate-ca-cert.pem /etc/pki/ca-trust/source/anchors/
-sudo update-ca-trust
-
-# Then run uv with native TLS
-export UV_NATIVE_TLS="true"
-uv sync
+echo 'export UV_NATIVE_TLS="true"' >> ~/.bash_profile
 ```
 
-> **Tip:** Contact your IT team if you don't know the location of your organization's CA certificate file. They may also be able to provide a certificate bundle.
+If you use `bash`, `~/.bash_profile` is a suitable place for a persistent setting. If you use a different shell, add the same export to that shell's startup file, then open a new terminal window before rerunning `uv`.
 
 ## Code of conduct
 
