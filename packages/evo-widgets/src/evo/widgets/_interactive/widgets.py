@@ -14,6 +14,7 @@
 from __future__ import annotations
 
 import asyncio
+import base64
 import contextlib
 import html
 import pathlib
@@ -54,6 +55,10 @@ T_client = TypeVar("T_client", bound=BaseAPIClient)
 _STATIC_DIR = pathlib.Path(__file__).parent.parent / "static"
 _NULL_UUID = UUID(int=0)
 
+# Pre-compute base64 data URLs for images (avoids import.meta.url issues with anywidget)
+_LOGO_DATA_URL = "data:image/png;base64," + base64.b64encode((_STATIC_DIR / "evo-logo.png").read_bytes()).decode()
+_LOADING_DATA_URL = "data:image/gif;base64," + base64.b64encode((_STATIC_DIR / "loading.gif").read_bytes()).decode()
+
 logger = logging.getLogger(__name__)
 
 
@@ -92,11 +97,15 @@ def _build_dropdown_options(
 class AsyncTaskMixin:
     """Mixin providing fire-and-forget async task execution with error logging."""
 
-    def _run_async(self, coro: Any) -> asyncio.Future:
+    def _run_async(self, coro: Any) -> asyncio.Task:
         """Schedule a coroutine as a fire-and-forget task with error logging."""
-        future = asyncio.ensure_future(coro)
-        future.add_done_callback(self._handle_async_error)
-        return future
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = asyncio.get_event_loop()
+        task = loop.create_task(coro)
+        task.add_done_callback(self._handle_async_error)
+        return task
 
     def _handle_async_error(self, future: asyncio.Future) -> None:
         if not future.cancelled() and future.exception() is not None:
@@ -165,6 +174,9 @@ class DropdownSelectorWidget(anywidget.AnyWidget, Generic[T]):
     _css = _STATIC_DIR / "dropdown.css"
 
     UNSELECTED: tuple[str, T]
+
+    # Image assets (base64 data URLs injected from Python)
+    loading_url = traitlets.Unicode(_LOADING_DATA_URL).tag(sync=True)
 
     # Synced traits
     label = traitlets.Unicode("").tag(sync=True)
@@ -308,6 +320,10 @@ class ServiceManagerWidget(anywidget.AnyWidget, AsyncTaskMixin):
     _esm = _STATIC_DIR / "service_manager.js"
     _css = _STATIC_DIR / "service_manager.css"
 
+    # Image assets (base64 data URLs injected from Python)
+    logo_url = traitlets.Unicode(_LOGO_DATA_URL).tag(sync=True)
+    loading_url = traitlets.Unicode(_LOADING_DATA_URL).tag(sync=True)
+
     # Button state
     button_text = traitlets.Unicode("Sign In").tag(sync=True)
     button_disabled = traitlets.Bool(False).tag(sync=True)
@@ -320,12 +336,12 @@ class ServiceManagerWidget(anywidget.AnyWidget, AsyncTaskMixin):
 
     # Organization dropdown
     org_options = traitlets.List(traitlets.Tuple()).tag(sync=True)
-    org_value = traitlets.Any(allow_none=True).tag(sync=True)
+    org_value = traitlets.Unicode(str(_NULL_UUID)).tag(sync=True)
     org_loading = traitlets.Bool(False).tag(sync=True)
 
     # Workspace dropdown
     ws_options = traitlets.List(traitlets.Tuple()).tag(sync=True)
-    ws_value = traitlets.Any(allow_none=True).tag(sync=True)
+    ws_value = traitlets.Unicode(str(_NULL_UUID)).tag(sync=True)
     ws_loading = traitlets.Bool(False).tag(sync=True)
 
     def __init__(self, transport: ITransport, authorizer: IAuthorizer, discovery_url: str, cache: ICache) -> None:
@@ -358,24 +374,22 @@ class ServiceManagerWidget(anywidget.AnyWidget, AsyncTaskMixin):
         self.observe(self._on_org_change, names="org_value")
         self.observe(self._on_ws_change, names="ws_value")
 
-        # Auto-display the widget (for backward compatibility with evo.notebooks)
-        _safe_display(self)
-
     def _on_button_click(self, change: dict) -> None:
         if change["new"]:
             self.button_clicked = False
-            self._run_async(self.refresh_services())
+            asyncio.get_event_loop().create_task(self.refresh_services())
 
     def _on_org_change(self, change: dict) -> None:
         value = change["new"]
         if value and value != str(_NULL_UUID):
-            self._service_manager.set_current_organization(UUID(value))
-            hubs = self._service_manager.list_hubs()
-            if hubs:
-                self._service_manager.set_current_hub(hubs[0].code)
-            self._run_async(self._refresh_workspaces())
-        else:
-            self._service_manager.set_current_organization(None)
+            asyncio.get_event_loop().create_task(self._select_org(value))
+
+    async def _select_org(self, value: str) -> None:
+        self._service_manager.set_current_organization(UUID(value))
+        hubs = self._service_manager.list_hubs()
+        if hubs:
+            self._service_manager.set_current_hub(hubs[0].code)
+        await self._refresh_workspaces()
 
     def _on_ws_change(self, change: dict) -> None:
         value = change["new"]
@@ -470,15 +484,15 @@ class ServiceManagerWidget(anywidget.AnyWidget, AsyncTaskMixin):
         :param timeout_seconds: The maximum time (in seconds) to wait for the authorisation process to complete.
         :returns: The current instance of the ServiceManagerWidget.
         """
-        await self._service_manager._transport.open()
-
         with self._loading():
             if isinstance(self._authorizer, InteractiveAuthorizer):
                 await self._login_with_auth_code(timeout_seconds)
             else:
-                raise NotImplementedError(f"ServiceManagerWidget cannot login using {type(self._authorizer).__name__}.")
+                raise NotImplementedError(
+                    f"ServiceManagerWidget cannot login using {type(self._authorizer).__name__}."
+                )
 
-            # Inline refresh_services logic to avoid nested _loading() calls
+            # Refresh organizations - workspaces will be loaded when org is selected
             try:
                 await self._service_manager.refresh_organizations()
             except UnauthorizedException:
@@ -486,9 +500,9 @@ class ServiceManagerWidget(anywidget.AnyWidget, AsyncTaskMixin):
                 await self._service_manager.refresh_organizations()
 
             self._refresh_orgs()
-            await self._refresh_workspaces()
             self.button_text = "Refresh Evo Services"
 
+        _safe_display(self)
         return self
 
     async def refresh_services(self) -> None:
@@ -501,7 +515,9 @@ class ServiceManagerWidget(anywidget.AnyWidget, AsyncTaskMixin):
                 await self._service_manager.refresh_organizations()
 
             self._refresh_orgs()
-            await self._refresh_workspaces()
+            # Refresh workspaces only if org is already selected
+            if self._service_manager.get_current_organization():
+                await self._refresh_workspaces()
             self.button_text = "Refresh Evo Services"
 
     @property

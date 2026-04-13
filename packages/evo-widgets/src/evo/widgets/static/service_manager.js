@@ -3,10 +3,9 @@
  * Main authentication/discovery widget with sign-in and cascading dropdowns
  */
 
-const EVO_LOGO = new URL("./evo-logo.png", import.meta.url).href;
-const LOADING_GIF = new URL("./loading.gif", import.meta.url).href;
-
 function createDropdown(label, id, model, valueKey, optionsKey, loadingKey) {
+    const loadingUrl = model.get("loading_url");
+
     const container = document.createElement("div");
     container.className = "evo-sm-dropdown";
 
@@ -21,7 +20,7 @@ function createDropdown(label, id, model, valueKey, optionsKey, loadingKey) {
 
     const loading = document.createElement("img");
     loading.className = "evo-sm-dropdown-loading";
-    loading.src = LOADING_GIF;
+    loading.src = loadingUrl;
     loading.alt = "Loading...";
 
     container.appendChild(labelEl);
@@ -52,11 +51,15 @@ function createDropdown(label, id, model, valueKey, optionsKey, loadingKey) {
         loading.className = isLoading ? "evo-sm-dropdown-loading visible" : "evo-sm-dropdown-loading";
         if (isLoading) {
             select.disabled = true;
+        } else {
+            // Re-enable based on options when loading completes
+            const options = model.get(optionsKey) || [];
+            select.disabled = options.length <= 1;
         }
     }
 
     select.addEventListener("change", () => {
-        if (!select.value) return;  // Guard against empty value
+        if (!select.value) return;
         const selectedValue = JSON.parse(select.value);
         model.set(valueKey, selectedValue);
         model.save_changes();
@@ -71,6 +74,10 @@ function createDropdown(label, id, model, valueKey, optionsKey, loadingKey) {
 }
 
 function render({ model, el }) {
+    // Get image URLs from model (injected from Python as base64 data URLs)
+    const logoUrl = model.get("logo_url");
+    const loadingUrl = model.get("loading_url");
+
     // Create main container
     const container = document.createElement("div");
     container.className = "evo-service-manager-widget";
@@ -85,7 +92,7 @@ function render({ model, el }) {
 
     const logo = document.createElement("img");
     logo.className = "evo-service-manager-logo";
-    logo.src = EVO_LOGO;
+    logo.src = logoUrl;
     logo.alt = "Evo";
 
     const btn = document.createElement("button");
@@ -94,7 +101,7 @@ function render({ model, el }) {
 
     const mainLoading = document.createElement("img");
     mainLoading.className = "evo-service-manager-loading";
-    mainLoading.src = LOADING_GIF;
+    mainLoading.src = loadingUrl;
     mainLoading.alt = "Loading...";
 
     header.appendChild(logo);

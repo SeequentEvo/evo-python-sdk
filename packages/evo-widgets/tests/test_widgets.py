@@ -11,6 +11,7 @@
 
 """Tests for the interactive widget state logic in evo.widgets._interactive.widgets."""
 
+import asyncio
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import UUID
@@ -107,10 +108,14 @@ class TestOrgChangeHandler(unittest.TestCase):
         """_on_org_change() should call set_current_organization with the UUID."""
         widget = self._create_widget()
         test_uuid = "12345678-1234-5678-1234-567812345678"
+        widget._mock_service_manager.refresh_workspaces = AsyncMock()
+        widget._mock_service_manager.list_workspaces.return_value = []
 
-        with patch.object(widget, "_run_async"):
+        async def run() -> None:
             widget._on_org_change({"new": test_uuid})
+            await asyncio.sleep(0)
 
+        asyncio.run(run())
         widget._mock_service_manager.set_current_organization.assert_called_once_with(UUID(test_uuid))
 
     def test_org_change_auto_selects_hub(self) -> None:
@@ -121,10 +126,14 @@ class TestOrgChangeHandler(unittest.TestCase):
         mock_hub = MagicMock()
         mock_hub.code = "hub-1"
         widget._mock_service_manager.list_hubs.return_value = [mock_hub]
+        widget._mock_service_manager.refresh_workspaces = AsyncMock()
+        widget._mock_service_manager.list_workspaces.return_value = []
 
-        with patch.object(widget, "_run_async"):
+        async def run() -> None:
             widget._on_org_change({"new": test_uuid})
+            await asyncio.sleep(0)
 
+        asyncio.run(run())
         widget._mock_service_manager.set_current_hub.assert_called_once_with("hub-1")
 
     def test_org_change_no_hubs_does_not_crash(self) -> None:
@@ -133,32 +142,40 @@ class TestOrgChangeHandler(unittest.TestCase):
         test_uuid = "12345678-1234-5678-1234-567812345678"
 
         widget._mock_service_manager.list_hubs.return_value = []
+        widget._mock_service_manager.refresh_workspaces = AsyncMock()
+        widget._mock_service_manager.list_workspaces.return_value = []
 
-        with patch.object(widget, "_run_async"):
+        async def run() -> None:
             widget._on_org_change({"new": test_uuid})
+            await asyncio.sleep(0)
 
+        asyncio.run(run())
         widget._mock_service_manager.set_current_hub.assert_not_called()
 
     def test_org_change_triggers_workspace_refresh(self) -> None:
-        """_on_org_change() should trigger _refresh_workspaces."""
+        """_on_org_change() should call refresh_workspaces."""
         widget = self._create_widget()
         test_uuid = "12345678-1234-5678-1234-567812345678"
         widget._mock_service_manager.list_hubs.return_value = []
+        widget._mock_service_manager.refresh_workspaces = AsyncMock()
+        widget._mock_service_manager.list_workspaces.return_value = []
 
-        with patch.object(widget, "_run_async") as mock_run_async:
+        async def run() -> None:
             widget._on_org_change({"new": test_uuid})
+            await asyncio.sleep(0)
 
-        mock_run_async.assert_called_once()
+        asyncio.run(run())
+        widget._mock_service_manager.refresh_workspaces.assert_called_once()
 
-    def test_org_change_clears_org_on_null(self) -> None:
-        """_on_org_change() should clear organization when value is null UUID."""
+    def test_org_change_skips_null(self) -> None:
+        """_on_org_change() should do nothing for null UUID."""
         from evo.widgets._interactive.widgets import _NULL_UUID
 
         widget = self._create_widget()
 
         widget._on_org_change({"new": str(_NULL_UUID)})
 
-        widget._mock_service_manager.set_current_organization.assert_called_once_with(None)
+        widget._mock_service_manager.set_current_organization.assert_not_called()
 
 
 class TestAsyncErrorHandling(unittest.TestCase):

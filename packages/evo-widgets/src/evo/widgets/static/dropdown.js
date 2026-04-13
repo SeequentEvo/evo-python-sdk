@@ -3,9 +3,10 @@
  * Generic dropdown selector with loading state indicator
  */
 
-const LOADING_GIF = new URL("./loading.gif", import.meta.url).href;
-
 function render({ model, el }) {
+    // Get loading URL from model (injected from Python as base64 data URL)
+    const loadingUrl = model.get("loading_url");
+
     // Create container
     const container = document.createElement("div");
     container.className = "evo-dropdown-widget";
@@ -23,7 +24,7 @@ function render({ model, el }) {
     // Loading indicator
     const loading = document.createElement("img");
     loading.className = "evo-dropdown-loading";
-    loading.src = LOADING_GIF;
+    loading.src = loadingUrl;
     loading.alt = "Loading...";
 
     container.appendChild(labelEl);
