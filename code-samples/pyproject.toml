@@ -10,6 +10,7 @@ dependencies = [
     "geosoft>=2025.1.1 ; sys_platform == 'win32'",
     "matplotlib>=3.10.8",
     "pandas[excel]>=2.2.3",
+    "plotly>=6.0.1",
     "prettytable>=3.16.0",
     "pyarrow>=19.0.1"
 ]
