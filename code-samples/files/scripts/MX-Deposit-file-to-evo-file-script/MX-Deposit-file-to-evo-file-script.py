@@ -12,6 +12,7 @@
 import asyncio
 import datetime
 import json
+import os
 import tempfile
 import time
 import uuid
@@ -19,28 +20,31 @@ import zipfile
 from pathlib import Path
 
 import requests
+from dotenv import load_dotenv
 
 from evo.aio import AioTransport
 from evo.common import APIConnector, Environment
 from evo.files import FileAPIClient
 from evo.oauth import ClientCredentialsAuthorizer, EvoScopes, OAuthConnector
 
+load_dotenv()
+
 # Configuration
 CONFIG = {
     "mx": {
         "url": "https://app.mxdeposit.net/api/v3/collars/export/",
-        "project_id": "<project_id>",
-        "template_code": "<template_code>",
-        "auth_token": "<api_key>",
-        "client_id": "<client_id>",
+        "project_id": os.environ["MX_PROJECT_ID"],
+        "template_code": os.environ["MX_TEMPLATE_CODE"],
+        "auth_token": os.environ["MX_AUTH_TOKEN"],
+        "client_id": os.environ["MX_CLIENT_ID"],
     },
     "evo": {
         "USER_AGENT": "MXDepositToEvoScript",
-        "CLIENT_ID": "<client_id>",
-        "CLIENT_SECRET": "<client_secret>",
-        "service_host": "<hub_url>",
-        "org_id": "<org_id>",
-        "workspace_id": "<workspace_id>",
+        "CLIENT_ID": os.environ["CLIENT_ID"],
+        "CLIENT_SECRET": os.environ["CLIENT_SECRET"],
+        "service_host": os.environ["HUB_URL"],
+        "org_id": os.environ["ORG_ID"],
+        "workspace_id": os.environ["WORKSPACE_ID"],
     },
 }
 

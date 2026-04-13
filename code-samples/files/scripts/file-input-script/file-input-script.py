@@ -10,24 +10,28 @@
 #  limitations under the License.
 
 import asyncio
+import os
 import uuid
 from pathlib import Path
 
+from dotenv import load_dotenv
 from evo.aio import AioTransport
 from evo.common import APIConnector, Environment
 from evo.files import FileAPIClient
 from evo.oauth import ClientCredentialsAuthorizer, EvoScopes, OAuthConnector
 
+load_dotenv()
+
 # Configuration
 CONFIG = {
     "evo": {
-        "USER_AGENT": "Evo File Input Script",
-        "CLIENT_ID": "<client_id>",
-        "CLIENT_SECRET": "<client_secret>",
-        "service_host": "<hub_url>",
-        "org_id": "<org_id>",
-        "workspace_id": "<workspace_id>",
-        "file_path": "C:\\Documents\\drilling_data",  # Path to the directory containing CSV files
+        "USER_AGENT": "Evo CSV File Input Script",
+        "CLIENT_ID": os.environ["CLIENT_ID"],
+        "CLIENT_SECRET": os.environ["CLIENT_SECRET"],
+        "service_host": os.environ["HUB_URL"],
+        "org_id": os.environ["ORG_ID"],
+        "workspace_id": os.environ["WORKSPACE_ID"],
+        "file_path": os.environ["DIR_PATH"],
     }
 }
 

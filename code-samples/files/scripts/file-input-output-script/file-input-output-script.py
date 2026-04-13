@@ -11,28 +11,32 @@
 
 
 import asyncio
+import os
 import tempfile
 import uuid
 from pathlib import Path
 
 import requests
+from dotenv import load_dotenv
 
 from evo.aio import AioTransport
 from evo.common import APIConnector, Environment
 from evo.files import FileAPIClient
 from evo.oauth import ClientCredentialsAuthorizer, EvoScopes, OAuthConnector
 
+load_dotenv()
+
 # Configuration
 CONFIG = {
     "evo": {
         "USER_AGENT": "Evo File I/O Script",
-        "CLIENT_ID": "<client_id>",
-        "CLIENT_SECRET": "<client_secret>",
-        "service_host": "<hub_url>",
-        "org_id": "<org_id>",
-        "workspace_id": "<workspace_id>",
-        "evo_input_file_path": "<input_file>.csv",
-        "evo_output_file_path": "<output_file>.csv",
+        "CLIENT_ID": os.environ["CLIENT_ID"],
+        "CLIENT_SECRET": os.environ["CLIENT_SECRET"],
+        "service_host": os.environ["HUB_URL"],
+        "org_id": os.environ["ORG_ID"],
+        "workspace_id": os.environ["WORKSPACE_ID"],
+        "evo_input_file_path": os.environ["EVO_INPUT_FILE_PATH"],
+        "evo_output_file_path": os.environ["EVO_OUTPUT_FILE_PATH"],
     }
 }
 
