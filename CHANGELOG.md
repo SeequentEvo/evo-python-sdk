@@ -1,5 +1,12 @@
 # Changelog
 
+## evo-blockmodels@v0.3.0
+## What's Changed
+### evo-blockmodels
+* Blockmodel refactor upload add delete deltas cache by @tim-hamblin-seequent in https://github.com/SeequentEvo/evo-python-sdk/pull/239
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-blockmodels@v0.2.0...evo-blockmodels@v0.3.0
+
 ## evo-objects@v0.4.3
 <!-- Release notes generated using configuration in .github/release.yml at main -->
 
