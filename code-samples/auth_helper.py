@@ -67,8 +67,7 @@ class _CIManager:
         return self._cache
 
 
-_COMMON_REQUIRED_ENV_VARS = ("EVO_ORG_ID", "EVO_HUB_URL")
-_USER_AUTH_ENV_VARS = ("EVO_USERNAME", "EVO_PASSWORD", "EVO_CLIENT_ID")
+_REQUIRED_ENV_VARS = ("EVO_CLIENT_ID", "EVO_CLIENT_SECRET", "EVO_ORG_ID", "EVO_HUB_URL")
 
 
 def _get_required_env(*keys: str) -> dict[str, str]:
@@ -79,31 +78,19 @@ def _get_required_env(*keys: str) -> dict[str, str]:
     return {k: os.environ[k] for k in keys}
 
 
-def _has_user_credentials() -> bool:
-    """Return True if test user credentials (ROPC) are available in the environment."""
-    return all(os.environ.get(k) for k in _USER_AUTH_ENV_VARS)
-
-
-def _create_user_auth(user_agent: str = "Evo SDK CI/1.0"):
-    """Create transport and authorizer using test user credentials (ROPC) from environment.
-
-    Uses the Resource Owner Password Credentials grant to authenticate as a
-    test user.  Requires EVO_USERNAME, EVO_PASSWORD, and EVO_CLIENT_ID.
-    """
-    from _ropc_authorizer import ResourceOwnerPasswordAuthorizer
-
+def _create_service_auth(user_agent: str = "Evo SDK CI/1.0"):
+    """Create transport and authorizer using service app credentials from environment."""
     from evo.aio import AioTransport
-    from evo.oauth import EvoScopes, OAuthConnector
+    from evo.oauth import ClientCredentialsAuthorizer, EvoScopes, OAuthConnector
 
     transport = AioTransport(user_agent=user_agent)
-    authorizer = ResourceOwnerPasswordAuthorizer(
+    authorizer = ClientCredentialsAuthorizer(
         oauth_connector=OAuthConnector(
             transport=transport,
             client_id=os.environ["EVO_CLIENT_ID"],
+            client_secret=os.environ["EVO_CLIENT_SECRET"],
         ),
-        username=os.environ["EVO_USERNAME"],
-        password=os.environ["EVO_PASSWORD"],
-        scopes=EvoScopes.all_evo | EvoScopes.offline_access,
+        scopes=EvoScopes.all_evo,
     )
     return transport, authorizer
 
@@ -111,12 +98,11 @@ def _create_user_auth(user_agent: str = "Evo SDK CI/1.0"):
 async def _create_ci_manager(
     cache_location: str = "./notebook-data",
 ) -> _CIManager:
-    """Create an auth manager for CI using test user credentials (ROPC).
+    """Create an auth manager for CI using service app credentials.
 
     Requires the following environment variables:
-    - EVO_USERNAME
-    - EVO_PASSWORD
     - EVO_CLIENT_ID
+    - EVO_CLIENT_SECRET
     - EVO_ORG_ID
     - EVO_HUB_URL
 
@@ -126,8 +112,8 @@ async def _create_ci_manager(
     from evo.common import APIConnector
     from evo.common.utils import Cache
 
-    env = _get_required_env(*_COMMON_REQUIRED_ENV_VARS)
-    transport, authorizer = _create_user_auth()
+    env = _get_required_env(*_REQUIRED_ENV_VARS)
+    transport, authorizer = _create_service_auth()
     connector = APIConnector(base_url=env["EVO_HUB_URL"], transport=transport, authorizer=authorizer)
     cache = Cache(cache_location, mkdir=True)
 
@@ -151,9 +137,8 @@ async def _create_ci_manager(
 
 
 def _is_ci() -> bool:
-    """Return True if running in a CI environment with test user credentials."""
-    is_ci_env = bool(os.environ.get("CI") or os.environ.get("GITHUB_ACTIONS"))
-    return is_ci_env and _has_user_credentials()
+    """Return True if running in a CI environment with service credentials."""
+    return bool(os.environ.get("CI") or os.environ.get("GITHUB_ACTIONS")) and bool(os.environ.get("EVO_CLIENT_SECRET"))
 
 
 async def get_manual_auth(
@@ -165,14 +150,14 @@ async def get_manual_auth(
 ):
     """Get auth components for notebooks that build transport/authorizer manually.
 
-    In CI, uses test user credentials (ROPC).
+    In CI (when EVO_CLIENT_SECRET is set), uses service app credentials.
     Otherwise, uses interactive browser-based AuthorizationCodeAuthorizer.
 
     Returns:
         Tuple of (transport, authorizer, org_id, hub_url)
     """
     if _is_ci():
-        transport, authorizer = _create_user_auth(user_agent=user_agent)
+        transport, authorizer = _create_service_auth(user_agent=user_agent)
         return transport, authorizer, os.environ["EVO_ORG_ID"], os.environ["EVO_HUB_URL"]
 
     from evo.aio import AioTransport

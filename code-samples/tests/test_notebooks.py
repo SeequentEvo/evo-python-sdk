@@ -46,7 +46,6 @@ _EXTRA_SKIP: frozenset[str] = frozenset(
         "ipywidgets",
         "google",  # google.colab – optional, not always present
         "auth_helper",  # Local module in code-samples root
-        "_ropc_authorizer",  # Local module in code-samples root (CI-only ROPC authorizer)
     }
 )
 
@@ -165,9 +164,8 @@ class TestNotebookExecution:
 class TestAuthNotebookExecution:
     """Execute notebooks that require authentication credentials.
 
-    These tests run when valid CI credentials are available (test user
-    via EVO_USERNAME/EVO_PASSWORD/EVO_CLIENT_ID), set in environment or
-    in .github/scripts/.env.
+    These tests only run when EVO_CLIENT_ID and EVO_CLIENT_SECRET are set
+    (either in environment or in .github/scripts/.env).
     """
 
     def test_executes_with_auth(self, notebook_path: Path) -> None:
@@ -181,8 +179,7 @@ class TestAuthNotebookExecution:
         # Map credential fields back to environment variable names
         _FIELD_TO_ENV = {
             "client_id": "EVO_CLIENT_ID",
-            "username": "EVO_USERNAME",
-            "password": "EVO_PASSWORD",
+            "client_secret": "EVO_CLIENT_SECRET",
             "org_id": "EVO_ORG_ID",
             "hub_url": "EVO_HUB_URL",
             "workspace_id": "EVO_WORKSPACE_ID",
