@@ -80,6 +80,13 @@ Follow the instructions below for [Windows](#windows), [macOS](#macos) or [Linux
     uv sync
     ```
 
+    > [!NOTE]
+    > If you see an error containing `invalid peer certificate: UnknownIssuer`, your organization likely uses a TLS inspection proxy. Set `UV_NATIVE_TLS` as a persistent user environment variable, open a new terminal window, and then rerun `uv sync`:
+    > ```pwsh
+    > [System.Environment]::SetEnvironmentVariable("UV_NATIVE_TLS", "true", "User")
+    > ```
+    > See the [TLS certificate troubleshooting](#troubleshooting-tls-certificate-errors) section below for more details.
+
 ### macOS
 1. Find the local copy of this repository in **Finder**. It will be called **evo-python-sdk-main** if you downloaded as a ZIP file.
 1. Open the folder so that you can see it's contents.
@@ -108,6 +115,13 @@ Follow the instructions below for [Windows](#windows), [macOS](#macos) or [Linux
     uv sync
     ```
 
+    > [!NOTE]
+    > If you see an error containing `invalid peer certificate: UnknownIssuer`, your organization likely uses a TLS inspection proxy. Add `UV_NATIVE_TLS` to your shell startup file, open a new terminal window, and then rerun `uv sync`. For a common macOS setup using Terminal.app and `zsh`:
+    > ```bash
+    > echo 'export UV_NATIVE_TLS="true"' >> ~/.zprofile
+    > ```
+    > If you already use `~/.zshrc` for environment variables, add it there instead. If you use a different shell, use the appropriate startup file. See the [TLS certificate troubleshooting](#troubleshooting-tls-certificate-errors) section below for more details.
+
 ### Linux
 
 NOTE: This example is based on [Ubuntu](https://ubuntu.com), but other Linux environments will operate in a similar way.
@@ -131,6 +145,13 @@ NOTE: This example is based on [Ubuntu](https://ubuntu.com), but other Linux env
     ```bash
     uv sync
     ```
+
+    > [!NOTE]
+    > If you see an error containing `invalid peer certificate: UnknownIssuer`, your organization likely uses a TLS inspection proxy. Add `UV_NATIVE_TLS` to your shell startup file, open a new terminal window, and then rerun `uv sync`. For `bash`:
+    > ```bash
+    > echo 'export UV_NATIVE_TLS="true"' >> ~/.bash_profile
+    > ```
+    > If you use a different shell, add the same export to the appropriate startup file. See the [TLS certificate troubleshooting](#troubleshooting-tls-certificate-errors) section below for more details.
 
 ### 4. Run the notebooks
 
@@ -268,5 +289,38 @@ If you encounter issues:
 3. Ensure all requirements are installed.
 4. Visit the [Seequent Community](https://community.seequent.com/group/19-evo) for support.
 5. Check the [GitHub issues](https://github.com/SeequentEvo/evo-python-sdk/issues) for known problems.
+
+### Troubleshooting: TLS certificate errors
+
+If you are behind a corporate proxy or firewall that performs TLS inspection, you may see errors like this when running `uv sync`, `uv python install`, or other `uv` commands:
+
+```
+error: Failed to download `package==1.2.3`
+  Caused by: Request failed after 3 retries
+  Caused by: error sending request for url (https://...)
+  Caused by: client error (Connect)
+  Caused by: invalid peer certificate: UnknownIssuer
+```
+
+This happens because `uv` uses bundled Mozilla root certificates by default, which don't include your organization's TLS inspection CA certificate. To fix this, set `UV_NATIVE_TLS` as a persistent environment variable so `uv` uses your operating system's certificate store for all commands:
+
+**Windows (PowerShell):**
+```powershell
+[System.Environment]::SetEnvironmentVariable("UV_NATIVE_TLS", "true", "User")
+```
+
+**macOS (common Terminal.app plus `zsh` setup):**
+```bash
+echo 'export UV_NATIVE_TLS="true"' >> ~/.zprofile
+```
+
+If you already use `~/.zshrc` for environment variables, add the same export there instead.
+
+**Linux (`bash` example):**
+```bash
+echo 'export UV_NATIVE_TLS="true"' >> ~/.bash_profile
+```
+
+If you use a different shell, add the same export to the appropriate startup file. Then open a new terminal window and rerun your `uv` command.
 
 Happy coding with Evo! 🎉

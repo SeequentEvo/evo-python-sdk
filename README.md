@@ -197,6 +197,9 @@ Once you've installed UV, install pre-commit hooks. These are used to standardis
 uv run pre-commit install
 ```
 
+> [!NOTE]
+> If you see an error containing `invalid peer certificate: UnknownIssuer`, your organization likely uses a TLS inspection proxy. Set the `UV_NATIVE_TLS` environment variable as described in the [Corporate TLS/SSL Certificates](#corporate-tlsssl-certificates) section, open a new terminal window, and then rerun the command.
+
 ### Setting up and running Jupyter notebooks
 
 Notebooks can be run in your tool of choice (e.g. VS Code). To use Jupyter (the default):
@@ -205,6 +208,9 @@ Notebooks can be run in your tool of choice (e.g. VS Code). To use Jupyter (the 
 uv sync --all-packages --all-extras
 ```
 
+> [!NOTE]
+> If the above command fails with `invalid peer certificate: UnknownIssuer`, set the `UV_NATIVE_TLS` environment variable as described in the [Corporate TLS/SSL Certificates](#corporate-tlsssl-certificates) section, open a new terminal window, and then rerun the command.
+
 Then, in the directory of the notebook(s) you want to run:
 
 ```shell
@@ -212,6 +218,36 @@ uv run jupyter notebook
 ```
 
 A browser should launch where you can open the notebooks for the current directory.
+
+## Corporate TLS/SSL Certificates
+
+Organizations that use TLS inspection proxies (e.g., Zscaler, Netskope, Palo Alto) intercept HTTPS traffic and re-sign it with a corporate root CA certificate. `uv` does not trust these certificates by default, which causes `invalid peer certificate: UnknownIssuer` errors when downloading packages or Python installations.
+
+To resolve this, configure `uv` to use your operating system's certificate store by setting `UV_NATIVE_TLS` as a persistent environment variable, then open a new terminal window and rerun your command.
+
+### Windows
+
+```powershell
+[System.Environment]::SetEnvironmentVariable("UV_NATIVE_TLS", "true", "User")
+```
+
+Open a new PowerShell window before rerunning `uv`.
+
+### macOS
+
+```bash
+echo 'export UV_NATIVE_TLS="true"' >> ~/.zprofile
+```
+
+On macOS, `~/.zprofile` is a reasonable default for the standard Terminal.app and `zsh` setup. If you already manage environment variables in `~/.zshrc`, use that instead. If you use a different shell, add the same export to the appropriate startup file, then open a new terminal window before rerunning `uv`.
+
+### Linux
+
+```bash
+echo 'export UV_NATIVE_TLS="true"' >> ~/.bash_profile
+```
+
+If you use `bash`, `~/.bash_profile` is a suitable place for a persistent setting. If you use a different shell, add the same export to that shell's startup file, then open a new terminal window before rerunning `uv`.
 
 ## Code of conduct
 
