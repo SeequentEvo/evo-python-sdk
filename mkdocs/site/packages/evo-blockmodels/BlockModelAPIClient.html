@@ -389,6 +389,158 @@
 <div class="doc doc-object doc-function">
 
 
+<h3 id="evo.blockmodels.client.BlockModelAPIClient.upload_block_model" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">upload_block_model</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">upload_block_model</span><span class="p">(</span><span class="n">bm_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">job_uuid</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">upload_url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="n">PathLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Version</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Upload a local file to a block model, notify completion, and poll until the job finishes.</p>
+<p>Uploads the file at the given path to the provided upload URL, notifies the
+block model service that the upload is complete, and then polls the job until
+it finishes processing.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>bm_id</code>
+            </td>
+            <td>
+                  <code><span title="uuid.UUID">UUID</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The ID of the block model to upload data to.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>job_uuid</code>
+            </td>
+            <td>
+                  <code><span title="uuid.UUID">UUID</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The UUID of the upload job.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>upload_url</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The pre-signed URL to upload the file to.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>filename</code>
+            </td>
+            <td>
+                  <code><span title="evo.common._types.PathLike">PathLike</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The path to the local file to upload.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="evo.blockmodels.data.Version">Version</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The new version of the block model created from the uploaded data.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>JobFailedException</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the upload processing job fails.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
 <h3 id="evo.blockmodels.client.BlockModelAPIClient.list_block_models" class="doc doc-heading">
             <span class="doc doc-object-name doc-function-name">list_block_models</span>
 
@@ -502,7 +654,7 @@
   </span>
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">list_all_block_models</span><span class="p">(</span><span class="n">page_limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="mi">100</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">BlockModel</span><span class="p">]</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">list_all_block_models</span><span class="p">(</span><span class="n">page_limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">deleted</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">BlockModel</span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -537,6 +689,22 @@ until all entries are retrieved. The <code>page_limit</code> is clamped to the s
             </td>
             <td>
                   <code>100</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>deleted</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>(optional)  An optional boolean parameter specifying whether to list only deleted block models.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
             </td>
           </tr>
       </tbody>
@@ -769,6 +937,7 @@ until all entries are retrieved. The <code>page_limit</code> is clamped to the s
     <span class="n">size_unit_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">initial_data</span><span class="p">:</span> <span class="n">Table</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">units</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">BlockModel</span><span class="p">,</span> <span class="n">Version</span><span class="p">]</span>
 </code></pre></div>
 
@@ -924,6 +1093,22 @@ returning. This then returns both the block model and the initial block model ve
                   <code>None</code>
             </td>
           </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>comment</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>An optional comment describing the initial data.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
       </tbody>
     </table>
 
@@ -967,7 +1152,7 @@ returning. This then returns both the block model and the initial block model ve
   </span>
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">add_new_subblocked_columns</span><span class="p">(</span><span class="n">bm_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Table</span><span class="p">,</span> <span class="n">units</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">add_new_subblocked_columns</span><span class="p">(</span><span class="n">bm_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Table</span><span class="p">,</span> <span class="n">units</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Version</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -1051,6 +1236,7 @@ returning. This then returns both the block model and the initial block model ve
       <tbody>
           <tr class="doc-section-item">
             <td>
+                  <code><span title="evo.blockmodels.data.Version">Version</span></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -1101,7 +1287,7 @@ returning. This then returns both the block model and the initial block model ve
   </span>
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">add_new_columns</span><span class="p">(</span><span class="n">bm_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Table</span><span class="p">,</span> <span class="n">units</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">add_new_columns</span><span class="p">(</span><span class="n">bm_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Table</span><span class="p">,</span> <span class="n">units</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Version</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -1185,6 +1371,7 @@ returning. This then returns both the block model and the initial block model ve
       <tbody>
           <tr class="doc-section-item">
             <td>
+                  <code><span title="evo.blockmodels.data.Version">Version</span></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -1913,6 +2100,222 @@ If <code>False</code>, the geometry of the sub-blocked model does not change, bu
 <div class="doc doc-object doc-function">
 
 
+<h3 id="evo.blockmodels.client.BlockModelAPIClient.query_block_model_to_cache" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">query_block_model_to_cache</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">query_block_model_to_cache</span><span class="p">(</span>
+    <span class="n">bm_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span>
+    <span class="n">columns</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="n">UUID</span><span class="p">],</span>
+    <span class="n">bbox</span><span class="p">:</span> <span class="n">BBox</span> <span class="o">|</span> <span class="n">BBoxXYZ</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">version_uuid</span><span class="p">:</span> <span class="n">UUID</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">geometry_columns</span><span class="p">:</span> <span class="n">GeometryColumns</span> <span class="o">=</span> <span class="n">GeometryColumns</span><span class="o">.</span><span class="n">coordinates</span><span class="p">,</span>
+    <span class="n">column_headers</span><span class="p">:</span> <span class="n">ColumnHeaderType</span> <span class="o">=</span> <span class="n">ColumnHeaderType</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+    <span class="n">exclude_null_rows</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Query a block model and download the result as a Parquet file to the cache.</p>
+<p>This requires the 'cache' parameter to be set in the constructor.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>bm_id</code>
+            </td>
+            <td>
+                  <code><span title="uuid.UUID">UUID</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The ID of the block model to query.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>columns</code>
+            </td>
+            <td>
+                  <code><span title="list">list</span>[<span title="str">str</span> | <span title="uuid.UUID">UUID</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The columns to query, can either be the title or the ID of the column.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>bbox</code>
+            </td>
+            <td>
+                  <code><span title="evo.blockmodels.endpoints.models.BBox">BBox</span> | <span title="evo.blockmodels.endpoints.models.BBoxXYZ">BBoxXYZ</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The bounding box to query, if None (the default) the entire block model is queried.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>version_uuid</code>
+            </td>
+            <td>
+                  <code><span title="uuid.UUID">UUID</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The version UUID to query, if None (the default) the latest version is queried.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>geometry_columns</code>
+            </td>
+            <td>
+                  <code><span title="evo.blockmodels.endpoints.models.GeometryColumns">GeometryColumns</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Whether rows in the returned table should include coordinates, or block indices of the block, that the row belongs to.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="evo.blockmodels.endpoints.models.GeometryColumns.coordinates">coordinates</span></code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>column_headers</code>
+            </td>
+            <td>
+                  <code><span title="evo.blockmodels.endpoints.models.ColumnHeaderType">ColumnHeaderType</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Whether the names of the columns in the returned column should be the title or the ID of the block model column.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="evo.blockmodels.endpoints.models.ColumnHeaderType.id">id</span></code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>exclude_null_rows</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Whether to exclude rows where all values are null within the queried columns.</p>
+              </div>
+            </td>
+            <td>
+                  <code>True</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="pathlib.Path">Path</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The file path of the downloaded Parquet file in the cache.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>CacheNotConfiguredException</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the cache is not configured.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code>JobFailedException</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the job failed.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
 <h3 id="evo.blockmodels.client.BlockModelAPIClient.query_block_model_as_table" class="doc doc-heading">
             <span class="doc doc-object-name doc-function-name">query_block_model_as_table</span>
 
@@ -2100,11 +2503,214 @@ If <code>False</code>, the geometry of the sub-blocked model does not change, bu
       <tbody>
           <tr class="doc-section-item">
             <td>
+                  <code>CacheNotConfiguredException</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the cache is not configured.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
                   <code>JobFailedException</code>
             </td>
             <td>
               <div class="doc-md-description">
                 <p>If the job failed.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.blockmodels.client.BlockModelAPIClient.get_deltas_for_block_model" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">get_deltas_for_block_model</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_deltas_for_block_model</span><span class="p">(</span>
+    <span class="n">version_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">bm_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">delta_request_data</span><span class="p">:</span> <span class="n">DeltaRequestData</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DeltaResponseData</span> <span class="o">|</span> <span class="n">EmptyResponse</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Check for changes to a block model between two versions within a bounding box.</p>
+<p>Delegates to the versions API <code>get_deltas_for_block_model</code> endpoint. Changes
+include additions, deletions, and updates to the specified columns within the
+provided bounding box.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>version_id</code>
+            </td>
+            <td>
+                  <code><span title="uuid.UUID">UUID</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The starting version UUID (changes are searched <em>after</em> this version).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>bm_id</code>
+            </td>
+            <td>
+                  <code><span title="uuid.UUID">UUID</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The ID of the block model.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>delta_request_data</code>
+            </td>
+            <td>
+                  <code><span title="evo.blockmodels.endpoints.models.DeltaRequestData">DeltaRequestData</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The delta request payload specifying columns, bounding box, and options.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="evo.blockmodels.endpoints.models.DeltaResponseData">DeltaResponseData</span> | <span title="evo.common.data.EmptyResponse">EmptyResponse</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A <code>DeltaResponseData</code> describing any detected changes, or an <code>EmptyResponse</code> (HTTP 304) when no changes are found.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.blockmodels.client.BlockModelAPIClient.delete_block_model" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">delete_block_model</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">delete_block_model</span><span class="p">(</span><span class="n">bm_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EmptyResponse</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Delete a block model from the current workspace.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>bm_id</code>
+            </td>
+            <td>
+                  <code><span title="uuid.UUID">UUID</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The ID of the block model to delete.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="evo.common.data.EmptyResponse">EmptyResponse</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>An empty response on success.</p>
               </div>
             </td>
           </tr>
