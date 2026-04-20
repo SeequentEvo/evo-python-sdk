@@ -234,7 +234,9 @@ async def _create_workspace(creds: dict) -> str | None:
         print("\n[workspace] Skipping workspace creation: missing credentials.")
         return None
 
-    workspace = await ws_client.create_workspace(name="evo-sdk-notebook-tests-ci")
+    import uuid
+
+    workspace = await ws_client.create_workspace(name=f"evo-sdk-notebook-tests-ci-{uuid.uuid4().hex[:8]}")
     workspace_id = str(workspace.id)
     print(f"\n[workspace] Created workspace: {workspace_id}")
     return workspace_id
