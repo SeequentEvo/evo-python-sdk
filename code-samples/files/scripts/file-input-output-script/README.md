@@ -16,6 +16,8 @@ This script downloads a CSV file from an Evo workspace, allows you to process it
 
 1. Copy the example environment file to create your own `.env` file:
 
+   On macOS and Linux:
+
    ```bash
    cp .env.example .env
    ```
@@ -28,15 +30,15 @@ This script downloads a CSV file from an Evo workspace, allows you to process it
 
 2. Open the `.env` file and fill in your values:
 
-   | Variable              | Description                                              |
-   |-----------------------|----------------------------------------------------------|
-   | `CLIENT_ID`           | Your Evo service application client ID                   |
-   | `CLIENT_SECRET`       | Your Evo service application client secret               |
-   | `HUB_URL`             | The Evo hub URL                                          |
-   | `ORG_ID`              | Your organisation ID (UUID)                              |
-   | `WORKSPACE_ID`        | The target workspace ID (UUID)                           |
-   | `EVO_INPUT_FILE_PATH` | Path of the CSV file to download from the Evo workspace  |
-   | `EVO_OUTPUT_FILE_PATH`| Path to upload the processed CSV file to in Evo          |
+   | Variable              | Description                                                |
+   |-----------------------|------------------------------------------------------------|
+   | `CLIENT_ID`           | Your Evo service application client ID                     |
+   | `CLIENT_SECRET`       | Your Evo service application client secret                 |
+   | `HUB_URL`             | The Evo hub URL                                            |
+   | `ORG_ID`              | Your organisation ID (UUID)                                |
+   | `WORKSPACE_ID`        | The target workspace ID (UUID)                             |
+   | `EVO_INPUT_FILE_PATH` | Path of the CSV file to download from the Evo workspace    |
+   | `EVO_OUTPUT_FILE_PATH`| Path to upload the processed CSV file to the Evo workspace |
 
 3. Install dependencies:
 

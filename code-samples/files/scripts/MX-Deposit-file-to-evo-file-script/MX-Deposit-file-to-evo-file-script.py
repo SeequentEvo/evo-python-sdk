@@ -35,7 +35,7 @@ CONFIG = {
         "url": "https://app.mxdeposit.net/api/v3/collars/export/",
         "project_id": os.environ["MX_PROJECT_ID"],
         "template_code": os.environ["MX_TEMPLATE_CODE"],
-        "auth_token": os.environ["MX_AUTH_TOKEN"],
+        "auth_token": os.environ["MX_API_KEY"],
         "client_id": os.environ["MX_CLIENT_ID"],
     },
     "evo": {

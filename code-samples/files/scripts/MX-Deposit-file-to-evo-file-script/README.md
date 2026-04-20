@@ -17,6 +17,8 @@ This script exports collar data from MX Deposit, downloads the exported CSV file
 
 1. Copy the example environment file to create your own `.env` file:
 
+   On macOS and Linux (bash):
+
    ```bash
    cp .env.example .env
    ```
@@ -35,7 +37,7 @@ This script exports collar data from MX Deposit, downloads the exported CSV file
    |--------------------|------------------------------------|
    | `MX_PROJECT_ID`    | Your MX Deposit project ID         |
    | `MX_TEMPLATE_CODE` | Your MX Deposit template code      |
-   | `MX_AUTH_TOKEN`    | Your MX Deposit API key            |
+   | `MX_API_KEY`       | Your MX Deposit API key            |
    | `MX_CLIENT_ID`     | Your MX Deposit client ID          |
 
    **Evo settings:**

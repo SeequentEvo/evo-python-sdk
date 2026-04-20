@@ -15,6 +15,8 @@ This script uploads all CSV files from a specified directory to an Evo workspace
 
 1. Copy the example environment file to create your own `.env` file:
 
+   On macOS and Linux (bash):
+
    ```bash
    cp .env.example .env
    ```
