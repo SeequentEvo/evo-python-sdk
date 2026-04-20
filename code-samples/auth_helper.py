@@ -105,9 +105,7 @@ async def _create_ci_manager(
     - EVO_CLIENT_SECRET
     - EVO_ORG_ID
     - EVO_HUB_URL
-
-    Optional:
-    - EVO_WORKSPACE_ID (if not set, the first available workspace is used)
+    - EVO_WORKSPACE_ID (injected automatically by the test fixture)
     """
     from evo.common import APIConnector
     from evo.common.utils import Cache
@@ -119,13 +117,10 @@ async def _create_ci_manager(
 
     workspace_id = os.environ.get("EVO_WORKSPACE_ID")
     if not workspace_id:
-        from evo.workspaces import WorkspaceAPIClient
-
-        ws_client = WorkspaceAPIClient(connector=connector, org_id=UUID(env["EVO_ORG_ID"]))
-        workspaces = await ws_client.list_all_workspaces()
-        if not workspaces:
-            raise RuntimeError("No workspaces found for the given organization. Set EVO_WORKSPACE_ID explicitly.")
-        workspace_id = str(workspaces[0].id)
+        raise RuntimeError(
+            "EVO_WORKSPACE_ID is not set. This value is injected automatically by the test fixture "
+            "and should not be set manually."
+        )
 
     return _CIManager(
         connector=connector,

@@ -50,6 +50,8 @@ AUTH_EXCLUDE_NOTEBOOKS: list[str] = [
     "code-samples/files/api-examples.ipynb",
     # geosoft is Windows-only; excluded on all platforms since CI matrix covers Windows separately.
     "code-samples/geoscience-objects/publish-regular-2d-grid/publish-regular-2d-grid.ipynb",
+    # Requires a pre-existing pointset object ID to be set manually before running.
+    "code-samples/geoscience-objects/download-pointset/download-pointset.ipynb",
 ]
 
 # Auth notebooks are auto-detected by scanning code cells for CI-compatible auth
@@ -133,8 +135,8 @@ def load_env_file(env_file: Path | None = None) -> dict[str, str]:
     return env_vars
 
 
-_AUTH_ENV_KEYS = ("EVO_CLIENT_ID", "EVO_CLIENT_SECRET", "EVO_ORG_ID", "EVO_HUB_URL", "EVO_WORKSPACE_ID")
-_AUTH_FIELD_NAMES = ("client_id", "client_secret", "org_id", "hub_url", "workspace_id")
+_AUTH_ENV_KEYS = ("EVO_CLIENT_ID", "EVO_CLIENT_SECRET", "EVO_ORG_ID", "EVO_HUB_URL")
+_AUTH_FIELD_NAMES = ("client_id", "client_secret", "org_id", "hub_url")
 
 
 def get_auth_credentials(env_file: Path | None = None) -> dict[str, str | None]:
@@ -142,7 +144,7 @@ def get_auth_credentials(env_file: Path | None = None) -> dict[str, str | None]:
 
     Checks ``os.environ`` first (for CI secrets), then falls back to .env file.
 
-    Returns a dict with keys: client_id, client_secret, org_id, hub_url, workspace_id.
+    Returns a dict with keys: client_id, client_secret, org_id, hub_url.
     Values are ``None`` if not found.
     """
     file_env = load_env_file(env_file)

@@ -38,7 +38,6 @@ jobs:
           EVO_CLIENT_SECRET: ${{ secrets.EVO_CLIENT_SECRET }}
           EVO_ORG_ID: ${{ secrets.EVO_ORG_ID }}
           EVO_HUB_URL: ${{ secrets.EVO_HUB_URL }}
-          EVO_WORKSPACE_ID: ${{ secrets.EVO_WORKSPACE_ID }}
         run: >
           uv run
           --directory code-samples

@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 import ast
+import asyncio
 import importlib
 import sys
 from pathlib import Path
@@ -182,7 +183,6 @@ class TestAuthNotebookExecution:
             "client_secret": "EVO_CLIENT_SECRET",
             "org_id": "EVO_ORG_ID",
             "hub_url": "EVO_HUB_URL",
-            "workspace_id": "EVO_WORKSPACE_ID",
         }
         env = {
             **os.environ,
@@ -193,3 +193,83 @@ class TestAuthNotebookExecution:
         nb = _read_notebook(notebook_path)
         client = NotebookClient(nb, timeout=600, kernel_name="python3")
         client.execute(cwd=str(notebook_path.parent), env=env)
+
+
+# ---------------------------------------------------------------------------
+# Per-run workspace fixture
+# ---------------------------------------------------------------------------
+
+
+def _build_workspace_client(creds: dict):
+    """Return (ws_client, org_uuid) built from *creds*, or (None, None) if creds are missing."""
+    import os
+    from uuid import UUID
+
+    from evo.aio import AioTransport
+    from evo.common import APIConnector
+    from evo.oauth import ClientCredentialsAuthorizer, EvoScopes, OAuthConnector
+    from evo.workspaces import WorkspaceAPIClient
+
+    hub_url = creds.get("hub_url") or os.environ.get("EVO_HUB_URL")
+    org_id = creds.get("org_id") or os.environ.get("EVO_ORG_ID")
+    client_id = creds.get("client_id") or os.environ.get("EVO_CLIENT_ID")
+    client_secret = creds.get("client_secret") or os.environ.get("EVO_CLIENT_SECRET")
+
+    if not all([hub_url, org_id, client_id, client_secret]):
+        return None, None
+
+    transport = AioTransport(user_agent="Evo SDK CI/1.0")
+    authorizer = ClientCredentialsAuthorizer(
+        oauth_connector=OAuthConnector(transport=transport, client_id=client_id, client_secret=client_secret),
+        scopes=EvoScopes.all_evo,
+    )
+    connector = APIConnector(base_url=hub_url, transport=transport, authorizer=authorizer)
+    return WorkspaceAPIClient(connector=connector, org_id=UUID(org_id)), UUID(org_id)
+
+
+async def _create_workspace(creds: dict) -> str | None:
+    """Create a fresh test workspace and return its ID, or None if credentials are missing."""
+    ws_client, _ = _build_workspace_client(creds)
+    if ws_client is None:
+        print("\n[workspace] Skipping workspace creation: missing credentials.")
+        return None
+
+    workspace = await ws_client.create_workspace(name="evo-sdk-notebook-tests-ci")
+    workspace_id = str(workspace.id)
+    print(f"\n[workspace] Created workspace: {workspace_id}")
+    return workspace_id
+
+
+async def _delete_workspace(creds: dict, workspace_id: str) -> None:
+    """Delete the workspace with the given ID."""
+    from uuid import UUID
+
+    ws_client, _ = _build_workspace_client(creds)
+    if ws_client is None:
+        print("\n[workspace] Skipping workspace deletion: missing credentials.")
+        return
+
+    print(f"\n[workspace] Deleting workspace: {workspace_id}")
+    try:
+        await ws_client.delete_workspace(UUID(workspace_id))
+        print("[workspace] Workspace deleted.")
+    except Exception as e:
+        print(f"[workspace] Warning: failed to delete workspace {workspace_id}: {e}")
+
+
+@pytest.fixture(scope="session", autouse=True)
+def workspace_for_tests():
+    """Create a fresh workspace before all tests and delete it after, regardless of failures."""
+    import os
+
+    creds = get_auth_credentials()
+    workspace_id = asyncio.run(_create_workspace(creds))
+
+    if workspace_id:
+        os.environ["EVO_WORKSPACE_ID"] = workspace_id
+
+    try:
+        yield workspace_id
+    finally:
+        if workspace_id:
+            asyncio.run(_delete_workspace(creds, workspace_id))
