@@ -1,7 +1,7 @@
 [project]
 name = "evo-widgets"
-description = "Widgets and presentation layer for Evo SDK - HTML rendering and IPython formatters for Jupyter notebooks"
-version = "0.2.0"
+description = "Widgets and presentation layer for Evo SDK - HTML rendering, IPython formatters, and interactive Jupyter widgets"
+version = "0.3.0"
 requires-python = ">=3.10"
 license-files = ["LICENSE.md"]
 dynamic = ["readme"]
@@ -10,8 +10,16 @@ authors = [
 ]
 
 dependencies = [
-    "evo-sdk-common>=0.5.8",
+    "evo-sdk-common[aiohttp]>=0.5.8",
     "ipython>=7.0.0",
+    "anywidget>=0.9",
+    "traitlets>=5.0",
+]
+
+[project.optional-dependencies]
+notebooks = [
+    "python-dotenv",
+    "ipykernel",
 ]
 
 [project.urls]
@@ -25,6 +33,8 @@ test = [
     "evo-objects[aiohttp,utils]",
     "pytest",
     "pytest-asyncio",
+    "pytest-playwright",
+    "nbconvert",
 ]
 dev = [
     "bumpver",
@@ -52,7 +62,7 @@ include = ["/src"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/evo"]
-artifacts = ["src/evo/widgets/assets/*"]
+artifacts = ["src/evo/widgets/assets/*", "src/evo/widgets/static/*"]
 
 [tool.hatch.metadata.hooks.fancy-pypi-readme]
 content-type = "text/markdown"

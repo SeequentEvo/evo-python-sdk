@@ -11,6 +11,7 @@
 
 """Shared HTML styles for Jupyter notebook representations across all Evo SDK packages."""
 
+import html
 from pathlib import Path
 
 # Load CSS from external file
@@ -21,16 +22,6 @@ _CSS_CONTENT = _CSS_PATH.read_text(encoding="utf-8")
 STYLESHEET = f"<style>\n{_CSS_CONTENT}</style>\n"
 
 
-def build_container(content: str, css_class: str = "evo") -> str:
-    """Wrap content in a styled container div.
-
-    :param content: HTML content to wrap.
-    :param css_class: CSS class for the container (default: "evo").
-    :return: Wrapped HTML string.
-    """
-    return f'{STYLESHEET}<div class="{css_class}">{content}</div>'
-
-
 def build_title(text: str, links: list[tuple[str, str]] | None = None) -> str:
     """Create a styled title div.
 
@@ -38,41 +29,35 @@ def build_title(text: str, links: list[tuple[str, str]] | None = None) -> str:
     :param links: Optional list of (label, url) tuples for links next to the title.
     :return: HTML string.
     """
+    safe_text = html.escape(text)
     if links:
-        link_html = " | ".join([f'<a href="{url}" target="_blank">{label}</a>' for label, url in links])
-        return f'<div class="title"><span>{text}</span><span class="title-links">{link_html}</span></div>'
-    return f'<div class="title">{text}</div>'
+        link_html = " | ".join(
+            [f'<a href="{html.escape(url)}" target="_blank">{html.escape(label)}</a>' for label, url in links]
+        )
+        return f'<div class="title"><span>{safe_text}</span><span class="title-links">{link_html}</span></div>'
+    return f'<div class="title">{safe_text}</div>'
 
 
-def build_table_row(label: str, value: str, is_last: bool = False) -> str:
+def build_table_row(label: str, value: str) -> str:
     """Create a table row with label and value.
 
     :param label: Label text.
     :param value: Value text (can contain HTML).
-    :param is_last: If True, don't add bottom border.
     :return: HTML string.
     """
-    return f'<tr><td class="label">{label}</td><td class="value">{value}</td></tr>'
+    safe_label = html.escape(label)
+    return f'<tr><td class="label">{safe_label}</td><td class="value">{value}</td></tr>'
 
 
-def build_table_row_vtop(label: str, value: str, is_last: bool = False) -> str:
+def build_table_row_vtop(label: str, value: str) -> str:
     """Create a table row with label and value (label top-aligned).
 
     :param label: Label text.
     :param value: Value text (can contain HTML).
-    :param is_last: If True, don't add bottom border.
     :return: HTML string.
     """
-    return f'<tr><td class="label-vtop">{label}</td><td class="value">{value}</td></tr>'
-
-
-def build_section_divider(title: str) -> str:
-    """Create a section divider with title.
-
-    :param title: Section title.
-    :return: HTML string.
-    """
-    return f'<div class="section"><div class="section-heading">{title}</div>'
+    safe_label = html.escape(label)
+    return f'<tr><td class="label-vtop">{safe_label}</td><td class="value">{value}</td></tr>'
 
 
 def build_table(rows: list[tuple[str, str]]) -> str:
@@ -93,12 +78,13 @@ def build_nested_table(headers: list[str], rows: list[list[str]], css_class: str
     :param css_class: Additional CSS classes to add to the table (optional).
     :return: HTML string for a nested table.
     """
-    class_attr = f' class="nested {css_class}"' if css_class else ' class="nested"'
+    safe_css_class = html.escape(css_class) if css_class else ""
+    class_attr = f' class="nested {safe_css_class}"' if safe_css_class else ' class="nested"'
 
     # Build header row
     header_cells = []
     for i, header in enumerate(headers):
-        header_cells.append(f"<th>{header}</th>")
+        header_cells.append(f"<th>{html.escape(str(header))}</th>")
 
     # Build data rows
     data_rows = []
@@ -107,9 +93,9 @@ def build_nested_table(headers: list[str], rows: list[list[str]], css_class: str
         for i, cell in enumerate(row):
             # Format numeric values
             if isinstance(cell, (int, float)):
-                formatted_cell = f"{cell:.2f}"
+                formatted_cell = html.escape(f"{cell:.2f}")
             else:
-                formatted_cell = str(cell)
+                formatted_cell = html.escape(str(cell))
             cells.append(f"<td>{formatted_cell}</td>")
         data_rows.append(f"<tr>{''.join(cells)}</tr>")
 

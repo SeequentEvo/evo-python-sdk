@@ -24,14 +24,28 @@ class TestFeedbackFactoryRegistration(unittest.TestCase):
     def tearDown(self) -> None:
         reset_feedback_factory()
 
-    def test_register_feedback_factory_sets_factory(self) -> None:
-        """After _register_feedback_factory, create_default_feedback should produce a FeedbackWidget-like object."""
+    def test_register_feedback_factory_sets_factory_with_interactive_widgets(self) -> None:
+        """When _HAS_INTERACTIVE is True, _register_feedback_factory should use evo.widgets.FeedbackWidget."""
         mock_widget = MagicMock()
         mock_widget_class = MagicMock(return_value=mock_widget)
 
-        # Patch at the import targets inside _register_feedback_factory so that
-        # the test works even when evo-sdk-common[notebooks] is not installed.
         with (
+            patch("evo.widgets._HAS_INTERACTIVE", True),
+            patch("evo.widgets.FeedbackWidget", mock_widget_class),
+        ):
+            _register_feedback_factory()
+
+        result = create_default_feedback("Test Label")
+        mock_widget_class.assert_called_once_with("Test Label")
+        self.assertIs(result, mock_widget)
+
+    def test_register_feedback_factory_falls_back_to_notebooks(self) -> None:
+        """When _HAS_INTERACTIVE is False, _register_feedback_factory should use evo.notebooks.FeedbackWidget."""
+        mock_widget = MagicMock()
+        mock_widget_class = MagicMock(return_value=mock_widget)
+
+        with (
+            patch("evo.widgets._HAS_INTERACTIVE", False),
             patch.dict("sys.modules", {"evo.notebooks": MagicMock(FeedbackWidget=mock_widget_class)}),
         ):
             _register_feedback_factory()
@@ -57,8 +71,11 @@ class TestFeedbackFactoryRegistration(unittest.TestCase):
         self.assertIs(create_default_feedback("x"), NoFeedback)
 
     def test_register_feedback_factory_handles_import_error(self) -> None:
-        """_register_feedback_factory should silently handle ImportError."""
-        with patch.dict("sys.modules", {"evo.notebooks": None}):
+        """_register_feedback_factory should silently handle ImportError when neither widget is available."""
+        with (
+            patch("evo.widgets._HAS_INTERACTIVE", False),
+            patch.dict("sys.modules", {"evo.notebooks": None}),
+        ):
             # Should not raise
             _register_feedback_factory()
 

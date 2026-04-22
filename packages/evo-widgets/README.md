@@ -1,10 +1,15 @@
 # evo-widgets
 
-Widgets and presentation layer for the Evo Python SDK — HTML rendering, URL generation, and IPython formatters for Jupyter notebooks.
+Widgets and presentation layer for the Evo Python SDK — interactive widgets, HTML rendering, URL generation, and IPython formatters for Jupyter notebooks.
 
 ## Overview
 
-This package provides rich HTML representations for Evo SDK objects in Jupyter notebooks. It decouples presentation logic from the data model classes, keeping the core SDK lightweight for production use while providing a batteries-included experience for notebook users.
+This package provides:
+- **Interactive widgets** for authentication and service discovery (`ServiceManagerWidget`, `FeedbackWidget`)
+- **Rich HTML representations** for Evo SDK typed objects in Jupyter notebooks
+- **URL generation** utilities for Portal and Viewer links
+
+It decouples presentation logic from the data model classes, keeping the core SDK lightweight for production use while providing a batteries-included experience for notebook users.
 
 ## Installation
 
@@ -20,42 +25,78 @@ Or install it directly:
 pip install evo-widgets
 ```
 
-## Usage
+For interactive widgets (authentication, progress feedback), install with the `notebooks` extra:
 
-### Enabling Rich Display in Notebooks
-
-Load the IPython extension in your notebook to enable rich HTML rendering for all Evo SDK objects:
-
-```python
-%load_ext evo.widgets
+```bash
+pip install evo-widgets[notebooks]
 ```
 
-After loading the extension, any Evo SDK typed object (e.g., `PointSet`, `Regular3DGrid`, `TensorGrid`) will automatically render with:
+## Interactive Widgets
 
+> **Security Note:** The `InteractiveAuthorizer` stores OAuth tokens in a local `.env` file,
+> which is not a secure storage mechanism. It is intended for development and exploration in
+> Jupyter notebooks only. Do not use it in production or shared environments, and ensure the
+> `.env` file is not committed to source control.
+
+### ServiceManagerWidget
+
+The `ServiceManagerWidget` provides authentication and service discovery in one convenient widget:
+
+```python
+from evo.widgets import ServiceManagerWidget
+
+# Authenticate using OAuth authorization code flow
+manager = await ServiceManagerWidget.with_auth_code(
+    client_id="your-client-id",
+    redirect_url="http://localhost:3000/signin-callback",
+).login()
+
+# Use the manager to create API clients
+from evo.objects import ObjectAPIClient
+client = manager.create_client(ObjectAPIClient)
+```
+
+### FeedbackWidget
+
+Display progress feedback in notebooks:
+
+```python
+from evo.widgets import FeedbackWidget
+
+fb = FeedbackWidget("Loading data...")
+for i in range(100):
+    fb.progress(i / 100, f"{i}%")
+fb.progress(1, "Done")
+```
+
+## Rich Display
+
+### Automatic Formatter Registration
+
+When you import from `evo.widgets`, HTML formatters are automatically registered for all Evo SDK typed objects. No manual setup required:
+
+```python
+from evo.widgets import ServiceManagerWidget
+from evo.objects.typed import object_from_path
+
+manager = await ServiceManagerWidget.with_auth_code(
+    client_id="your-client-id"
+).login()
+
+# Objects automatically render with rich HTML formatting
+grid = await object_from_path(manager, "/My Grid")
+grid  # Displays formatted HTML with Portal/Viewer links
+```
+
+Typed objects render with:
 - Formatted metadata tables
 - Clickable links to Portal and Viewer
 - Bounding box information
 - Coordinate reference system
 - Attribute summaries
 
-### Example
-
-```python
-from evo.notebooks import ServiceManagerWidget
-from evo.objects.typed import object_from_path
-
-# Authenticate
-manager = await ServiceManagerWidget.with_auth_code(
-    client_id="your-client-id"
-).login()
-
-# Load the widgets extension
-%load_ext evo.widgets
-
-# Load and display an object - it renders with rich HTML formatting
-grid = await object_from_path(manager, "/My Grid")
-grid  # Displays formatted HTML with Portal/Viewer links
-```
+> **Note:** To disable auto-registration, set `EVO_WIDGETS_NO_AUTO_REGISTER=1` before importing.
+> Manual registration is still available via `%load_ext evo.widgets`.
 
 ## Features
 
@@ -122,6 +163,14 @@ viewer_url = get_viewer_url_from_reference(ref_url)
 
 ## API Reference
 
+### Interactive Widgets
+
+| Class | Description |
+|-------|-------------|
+| `ServiceManagerWidget` | Authentication and service discovery widget |
+| `FeedbackWidget` | Progress bar and status message widget |
+| `DropdownSelectorWidget` | Generic dropdown widget base class |
+
 ### IPython Extension
 
 | Function | Description |
@@ -158,11 +207,14 @@ viewer_url = get_viewer_url_from_reference(ref_url)
 
 ## How It Works
 
-When you run `%load_ext evo.widgets`, the extension registers HTML formatters with IPython using `for_type_by_name`. This approach:
+When you import from `evo.widgets` in an IPython/Jupyter environment, HTML formatters are automatically registered using `for_type_by_name`. This approach:
 
 1. **Avoids hard dependencies** — The widgets package doesn't import model classes directly
 2. **Works with all typed objects** — Formatters are registered for the base class, so all subclasses are covered
 3. **Lazy loading** — Formatters only activate when the relevant types are actually used
+4. **Automatic widget loading** — html repr widgets for typed objects are loaded automatically as part of the `evo.widgets` initialization.
+
+You can disable auto-registration by setting `EVO_WIDGETS_NO_AUTO_REGISTER=1` before importing.
 
 ## CSS Customization
 

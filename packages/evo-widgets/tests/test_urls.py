@@ -217,8 +217,9 @@ class TestGetViewerUrlForObjects(unittest.TestCase):
         return context
 
     def _create_mock_object(self, obj_id: str):
-        """Create a mock object with metadata."""
-        obj = MagicMock()
+        """Create a mock object with metadata (typed object like PointSet)."""
+        obj = MagicMock(spec=["metadata"])
+        obj.metadata = MagicMock(spec=["id"])
         obj.metadata.id = obj_id
         return obj
 
@@ -266,6 +267,48 @@ class TestGetViewerUrlForObjects(unittest.TestCase):
         with self.assertRaises(TypeError) as ctx:
             get_viewer_url_for_objects(context, [object()])
         self.assertIn("Cannot extract object ID", str(ctx.exception))
+
+    def test_handles_object_reference_with_object_id(self):
+        """ObjectReference with object_id uses that ID, not the string value."""
+        context = self._create_mock_context()
+
+        # Create a str subclass to simulate ObjectReference behavior
+        class MockObjectReference(str):
+            def __new__(cls, url: str, object_id: str):
+                instance = super().__new__(cls, url)
+                instance.object_id = object_id
+                return instance
+
+        obj_ref = MockObjectReference(
+            "https://350mt.api.seequent.com/geoscience-object/orgs/.../objects/extracted-uuid-123",
+            "extracted-uuid-123",
+        )
+
+        result = get_viewer_url_for_objects(context, [obj_ref])
+        self.assertEqual(
+            result,
+            "https://evo.seequent.com/org-123/workspaces/350mt/ws-456/viewer?id=extracted-uuid-123",
+        )
+
+    def test_raises_on_path_based_object_reference(self):
+        """Path-based ObjectReference raises TypeError."""
+        context = self._create_mock_context()
+
+        # Create a str subclass to simulate path-based ObjectReference
+        class MockPathObjectReference(str):
+            def __new__(cls, url: str):
+                instance = super().__new__(cls, url)
+                instance.object_id = None
+                instance.object_path = "path/to/object"
+                return instance
+
+        obj_ref = MockPathObjectReference(
+            "https://350mt.api.seequent.com/geoscience-object/orgs/.../objects/path/to/object"
+        )
+
+        with self.assertRaises(TypeError) as ctx:
+            get_viewer_url_for_objects(context, [obj_ref])
+        self.assertIn("Path-based ObjectReference", str(ctx.exception))
 
 
 class TestGetBlocksyncBaseUrl(unittest.TestCase):

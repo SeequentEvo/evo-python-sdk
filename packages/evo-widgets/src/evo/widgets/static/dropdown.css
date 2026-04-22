@@ -1,0 +1,59 @@
+/* Dropdown Widget Styles
+ * Based on Seequent Web Design System
+ */
+
+/* Design System Variables */
+.evo-dropdown-widget {
+    --evo-color-primary: #265C7F;
+    --evo-color-text: #39393c;
+    --evo-color-border: #c8c8c8;
+    --evo-color-bg: #fff;
+    --evo-color-bg-disabled: #f2f2f2;
+    --evo-opacity-disabled: 0.38;
+    --evo-font-family: Inter, "Helvetica Neue", Arial, sans-serif;
+
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    padding: 5px;
+    font-family: var(--evo-font-family);
+}
+
+.evo-dropdown-label {
+    font-weight: 500;
+    color: var(--evo-color-text);
+    min-width: 100px;
+}
+
+.evo-dropdown-select {
+    padding: 8px 12px;
+    font-size: 14px;
+    border: 1px solid var(--evo-color-border);
+    border-radius: 0;
+    background-color: var(--evo-color-bg);
+    min-width: 200px;
+    cursor: pointer;
+}
+
+.evo-dropdown-select:disabled {
+    background-color: var(--evo-color-bg-disabled);
+    cursor: not-allowed;
+    opacity: var(--evo-opacity-disabled);
+}
+
+.evo-dropdown-select:focus {
+    outline: none;
+    border-color: var(--evo-color-primary);
+    box-shadow: none;
+}
+
+.evo-dropdown-loading {
+    width: 20px;
+    height: 20px;
+    display: none;
+}
+
+.evo-dropdown-loading.visible {
+    display: block;
+}

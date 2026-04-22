@@ -1,0 +1,155 @@
+/* Service Manager Widget Styles
+ * Based on Seequent Web Design System
+ */
+
+/* Design System Variables */
+.evo-service-manager-widget {
+    --evo-color-primary: #265C7F;
+    --evo-color-primary-hover: #4A4A4C;
+    --evo-color-primary-pressed: #234B66;
+    --evo-color-text: #39393c;
+    --evo-color-text-on-primary: #fff;
+    --evo-color-border: #c8c8c8;
+    --evo-color-border-light: #e2e0e0;
+    --evo-color-bg: #fff;
+    --evo-color-bg-subtle: #fafafa;
+    --evo-color-bg-disabled: #f2f2f2;
+    --evo-color-disabled: #979797;
+    --evo-opacity-disabled: 0.38;
+    --evo-font-family: Inter, "Helvetica Neue", Arial, sans-serif;
+
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+    padding: 10px;
+    font-family: var(--evo-font-family);
+}
+
+.evo-service-manager-col1 {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.evo-service-manager-col2 {
+    display: flex;
+    flex-direction: column;
+}
+
+.evo-service-manager-header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.evo-service-manager-logo {
+    max-height: 26px;
+    margin: 3px;
+}
+
+.evo-service-manager-btn {
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--evo-color-text-on-primary);
+    background-color: var(--evo-color-primary);
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    text-transform: none;
+    cursor: pointer;
+    margin: 5px;
+}
+
+.evo-service-manager-btn:hover {
+    background-color: var(--evo-color-primary-hover);
+}
+
+.evo-service-manager-btn:active {
+    background-color: var(--evo-color-primary-pressed);
+}
+
+.evo-service-manager-btn:disabled {
+    background-color: var(--evo-color-disabled);
+    color: var(--evo-color-text-on-primary);
+    cursor: not-allowed;
+}
+
+.evo-service-manager-loading {
+    max-height: 26px;
+    margin: 3px;
+    display: none;
+}
+
+.evo-service-manager-loading.visible {
+    display: block;
+}
+
+.evo-service-manager-selector-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.evo-service-manager-prompt {
+    display: none;
+    padding: 10px;
+    background-color: var(--evo-color-bg-subtle);
+    border: 1px solid var(--evo-color-border-light);
+    border-radius: 0;
+}
+
+.evo-service-manager-prompt.visible {
+    display: block;
+}
+
+/* Embedded dropdown styles for ServiceManager */
+.evo-sm-dropdown {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    padding: 5px;
+}
+
+.evo-sm-dropdown-label {
+    font-weight: 500;
+    color: var(--evo-color-text);
+    min-width: 100px;
+}
+
+.evo-sm-dropdown-select {
+    padding: 6px 12px;
+    font-size: 14px;
+    border: 1px solid var(--evo-color-border);
+    border-radius: 0;
+    background-color: var(--evo-color-bg);
+    min-width: 200px;
+    cursor: pointer;
+}
+
+.evo-sm-dropdown-select:disabled {
+    background-color: var(--evo-color-bg-disabled);
+    cursor: not-allowed;
+    opacity: var(--evo-opacity-disabled);
+}
+
+.evo-sm-dropdown-select:focus {
+    outline: none;
+    border-color: var(--evo-color-primary);
+    box-shadow: none;
+}
+
+.evo-sm-dropdown-loading {
+    width: 20px;
+    height: 20px;
+    display: none;
+}
+
+.evo-sm-dropdown-loading.visible {
+    display: block;
+}

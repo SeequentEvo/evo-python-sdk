@@ -10,7 +10,7 @@ The typed objects module provides intuitive Python classes for working with Evo 
 
 - Simple property access (e.g., `pointset.num_points`, `grid.bounding_box`)
 - `to_dataframe()` for getting data as pandas DataFrames
-- Rich HTML display in Jupyter notebooks (via `%load_ext evo.widgets`)
+- Rich HTML display in Jupyter notebooks (auto-enabled when importing from `evo.widgets`)
 - Clickable links to Evo Portal and Viewer
 
 ### Loading objects

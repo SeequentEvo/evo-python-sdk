@@ -9,7 +9,37 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from .widgets import FeedbackWidget, OrgSelectorWidget, ServiceManagerWidget, WorkspaceSelectorWidget
+"""DEPRECATED: Use evo.widgets instead.
+
+This module is deprecated and will be removed in a future version.
+Please migrate to the new anywidget-based widgets in `evo.widgets`:
+
+    # Old (deprecated):
+    from evo.notebooks import ServiceManagerWidget
+
+    # New (recommended):
+    from evo.widgets import ServiceManagerWidget
+
+The new widgets in `evo.widgets` provide improved compatibility across
+different Jupyter environments through the anywidget framework.
+"""
+
+import warnings
+
+warnings.warn(
+    "evo.notebooks is deprecated and will be removed in a future version. "
+    "Please use evo.widgets instead, which provides improved anywidget-based widgets. "
+    "See the migration guide at https://developer.seequent.com/docs/guides/migration/evo-widgets",
+    DeprecationWarning,
+    stacklevel=2,
+)
+
+from .widgets import (  # noqa: E402
+    FeedbackWidget,
+    OrgSelectorWidget,
+    ServiceManagerWidget,
+    WorkspaceSelectorWidget,
+)
 
 __all__ = [
     "FeedbackWidget",

@@ -1,0 +1,45 @@
+/* Feedback Widget Styles
+ * Based on Seequent Web Design System
+ */
+
+/* Design System Variables */
+.evo-feedback-widget {
+    --evo-color-primary: #265C7F;
+    --evo-color-text: #39393c;
+    --evo-color-text-secondary: #767375;
+    --evo-color-border: #c8c8c8;
+    --evo-font-family: Inter, "Helvetica Neue", Arial, sans-serif;
+
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px;
+    font-family: var(--evo-font-family);
+}
+
+.evo-feedback-label {
+    font-weight: 500;
+    color: var(--evo-color-text);
+    margin-bottom: 4px;
+}
+
+.evo-feedback-progress-container {
+    width: 400px;
+    height: 20px;
+    background-color: var(--evo-color-border);
+    border-radius: 0;
+    overflow: hidden;
+}
+
+.evo-feedback-progress-bar {
+    height: 100%;
+    background-color: var(--evo-color-primary);
+    transition: width 0.3s ease;
+    border-radius: 0;
+}
+
+.evo-feedback-message {
+    color: var(--evo-color-text-secondary);
+    font-size: 14px;
+    margin-top: 4px;
+}

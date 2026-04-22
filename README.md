@@ -63,7 +63,7 @@ Once you have an Evo app registered and the SDK installed, you can load and work
 
 ```python
 # Authenticate with Evo
-from evo.notebooks import ServiceManagerWidget
+from evo.widgets import ServiceManagerWidget
 
 manager = await ServiceManagerWidget.with_auth_code(
     client_id="<your-client-id>",
@@ -78,9 +78,6 @@ manager = await ServiceManagerWidget.with_auth_code(
 > *A browser window opens for authentication. After login, select your organization, hub, and workspace from the dropdowns.*
 
 ```python
-# Enable rich HTML display for Evo objects in Jupyter
-%load_ext evo.widgets
-
 # Load an object by file path or UUID
 from evo.objects.typed import object_from_uuid, object_from_path
 
