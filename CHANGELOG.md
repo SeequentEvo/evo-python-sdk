@@ -1,5 +1,14 @@
 # Changelog
 
+## evo-sdk@v0.2.2
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### Other Changes
+* Use correct extra for evo-blockmodels in evo-sdk by @BenLewis-Seequent in https://github.com/SeequentEvo/evo-python-sdk/pull/246
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-sdk@v0.2.1...evo-sdk@v0.2.2
+
 ## evo-blockmodels@v0.3.0
 ## What's Changed
 ### evo-blockmodels
