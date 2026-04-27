@@ -39,6 +39,7 @@ __all__ = [
     "format_block_model",
     "format_block_model_attributes",
     "format_block_model_version",
+    "format_pointset",
     "format_report",
     "format_report_result",
     "format_task_result_list",
@@ -186,6 +187,60 @@ def format_base_object(obj: Any) -> str:
             rows.append((f"{dataset_name}:", attrs_table))
 
     return _build_html_from_rows(name, title_links, rows)
+
+
+def format_pointset(obj: Any) -> str:
+    """Format a PointSet object as HTML.
+
+    This formatter renders a pointset with its metadata, bounding box,
+    number of points, and attributes as a styled HTML table with Portal/Viewer links.
+
+    :param obj: A PointSet object from evo.objects.typed.pointset.
+    :return: HTML string representation.
+    """
+    doc = obj.as_dict()
+    name, title_links, rows = _get_base_metadata(obj)
+
+    # Add number of points
+    num_points = getattr(obj, "num_points", None)
+    if num_points is not None:
+        rows.append(("Points:", f"{num_points:,}"))
+
+    # Add bounding box if present
+    if bbox := doc.get("bounding_box"):
+        rows.append(("Bounding box:", _format_bounding_box(bbox)))
+
+    # Add CRS if present
+    if crs := doc.get("coordinate_reference_system"):
+        rows.append(("CRS:", _format_crs(crs)))
+
+    # Build the main table
+    table_rows = []
+    for label, value in rows:
+        if label == "Bounding box:":
+            table_rows.append(build_table_row_vtop(label, value))
+        else:
+            table_rows.append(build_table_row(label, value))
+
+    html = STYLESHEET
+    html += '<div class="evo">'
+    html += build_title(name, title_links)
+    html += f"<table>{''.join(table_rows)}</table>"
+
+    # Build attributes section
+    attrs = getattr(obj, "attributes", None)
+    if attrs and len(attrs) > 0:
+        attr_rows = []
+        for attr in attrs:
+            attr_info = attr.as_dict()
+            attr_name = attr_info.get("name", "Unknown")
+            attr_type = attr_info.get("attribute_type", "Unknown")
+            attr_rows.append([attr_name, attr_type])
+        attrs_table = build_nested_table(["Attribute", "Type"], attr_rows)
+        html += f'<div style="margin-top: 8px;"><strong>Attributes ({len(attrs)}):</strong></div>{attrs_table}'
+
+    html += "</div>"
+    return html
 
 
 def format_attributes_collection(obj: Any) -> str:

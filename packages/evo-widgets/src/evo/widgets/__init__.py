@@ -39,6 +39,7 @@ from .formatters import (
     format_block_model,
     format_block_model_attributes,
     format_block_model_version,
+    format_pointset,
     format_report,
     format_report_result,
     format_task_result_list,
@@ -118,6 +119,13 @@ def _register_formatters(ipython: InteractiveShell) -> None:
         "evo.objects.typed.variogram",
         "Variogram",
         format_variogram,
+    )
+
+    # Register formatter for PointSet (overrides BaseObject for pointset-specific rendering)
+    html_formatter.for_type_by_name(
+        "evo.objects.typed.pointset",
+        "PointSet",
+        format_pointset,
     )
 
     # Register formatter for Attributes collection
