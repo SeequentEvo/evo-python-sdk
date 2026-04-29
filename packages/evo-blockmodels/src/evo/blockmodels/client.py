@@ -62,6 +62,7 @@ from .endpoints.models import (
     SizeOptionsFullySubBlocked,
     SizeOptionsOctree,
     SizeOptionsRegular,
+    UpdateBlockModel,
 )
 from .exceptions import CacheNotConfiguredException, JobFailedException, MissingColumnInTable
 from .io import BlockModelDownload, BlockModelUpload, get_cache_location_for_upload
@@ -991,6 +992,27 @@ class BlockModelAPIClient(BaseAPIClient):
             str(bm_id),
             delta_request_data,
         )
+
+    async def update_block_model(
+        self,
+        bm_id: UUID,
+        update_block_model: UpdateBlockModel,
+    ) -> BlockModel:
+        """Update a block model's metadata.
+
+        Updates the block model name, description, and/or size unit ID for the given block model.
+
+        :param bm_id: The ID of the block model to update.
+        :param update_block_model: The update payload containing the fields to change.
+        :return: The updated BlockModel.
+        """
+        response = await self._operations_api.update_block_model(
+            workspace_id=str(self._environment.workspace_id),
+            org_id=str(self._environment.org_id),
+            bm_id=str(bm_id),
+            update_block_model=update_block_model,
+        )
+        return self._bm_from_model(response)
 
     async def delete_block_model(self, bm_id: UUID) -> EmptyResponse:
         """Delete a block model from the current workspace.
