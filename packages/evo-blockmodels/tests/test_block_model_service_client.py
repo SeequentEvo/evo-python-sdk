@@ -10,6 +10,7 @@
 #  limitations under the License.
 
 import uuid
+from datetime import datetime, timezone
 from unittest import mock
 
 import pyarrow
@@ -17,15 +18,25 @@ import pyarrow
 from evo.blockmodels import BlockModelAPIClient
 from evo.blockmodels.endpoints.models import (
     BBox,
+    BBoxXYZ,
+    BlockSize,
     DeltaRequestData,
     DeltaResponseData,
+    FloatRange,
     IntRange,
     JobErrorPayload,
     JobResponse,
     JobStatus,
+    Location,
     Mapping,
     QueryDownload,
     QueryResult,
+    Rotation,
+    RotationAxis,
+    Size3D,
+    SizeOptionsRegular,
+    UpdateBlockModel,
+    UserInfo,
 )
 from evo.blockmodels.exceptions import CacheNotConfiguredException, JobFailedException
 from evo.common import HealthCheckType, StaticContext
@@ -254,6 +265,48 @@ class TestBlockModelAPIClient(TestWithConnector, TestWithStorage):
             )
 
         self.transport.assert_no_requests()
+
+    async def test_update_block_model(self) -> None:
+        bm_uuid = uuid.uuid4()
+        now = datetime.now(timezone.utc)
+        user_info = UserInfo(email="test@test.com", id=uuid.uuid4(), name="Test User")
+        from evo.blockmodels.endpoints.models import BlockModel as EndpointBlockModel
+
+        block_model_response = EndpointBlockModel(
+            bbox=BBoxXYZ(
+                x_minmax=FloatRange(min=0.0, max=10.0),
+                y_minmax=FloatRange(min=0.0, max=10.0),
+                z_minmax=FloatRange(min=0.0, max=10.0),
+            ),
+            block_rotation=[Rotation(axis=RotationAxis.x, angle=0.0)],
+            bm_uuid=bm_uuid,
+            created_at=now,
+            created_by=user_info,
+            description="Updated description",
+            fill_subblocks=False,
+            last_updated_at=now,
+            last_updated_by=user_info,
+            model_origin=Location(x=0.0, y=0.0, z=0.0),
+            name="Updated Name",
+            normalized_rotation=[0.0, 0.0, 0.0],
+            org_uuid=self.environment.org_id,
+            size_options=SizeOptionsRegular(
+                model_type="regular",
+                n_blocks=Size3D(nx=10, ny=10, nz=10),
+                block_size=BlockSize(x=1.0, y=1.0, z=1.0),
+            ),
+            workspace_id=self.environment.workspace_id,
+        )
+        with self.transport.set_http_response(
+            200, block_model_response.model_dump_json(), headers={"Content-Type": "application/json"}
+        ):
+            result = await self.bms_client.update_block_model(
+                bm_id=bm_uuid,
+                update_block_model=UpdateBlockModel(name="Updated Name", description="Updated description"),
+            )
+        self.assertEqual(result.name, "Updated Name")
+        self.assertEqual(result.description, "Updated description")
+        self.assertEqual(result.id, bm_uuid)
 
     async def test_delete_block_model(self) -> None:
         bm_uuid = uuid.uuid4()
