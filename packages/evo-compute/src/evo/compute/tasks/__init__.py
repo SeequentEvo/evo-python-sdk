@@ -36,8 +36,9 @@ from evo.common import IContext
 from evo.common.interfaces import IFeedback
 from evo.common.utils import create_default_feedback
 
-# Import kriging module to trigger registration
+# Import task modules to trigger registration
 from . import kriging as _kriging_module  # noqa: F401
+from . import simulation_report as _simulation_report_module  # noqa: F401
 
 # Shared components from common module
 from .common import (
