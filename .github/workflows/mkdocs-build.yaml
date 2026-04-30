@@ -45,7 +45,7 @@ jobs:
           fi
 
       - name: Commit and push changes
-        if: steps.changes.outputs.has_changes == 'true'
+        if: steps.changes.outputs.has_changes == 'true' && github.event_name == 'push'
         uses: actions/github-script@v8
         with:
           script: |
