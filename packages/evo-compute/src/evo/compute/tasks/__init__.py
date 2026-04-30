@@ -36,8 +36,12 @@ from evo.common import IContext
 from evo.common.interfaces import IFeedback
 from evo.common.utils import create_default_feedback
 
-# Import kriging module to trigger registration
+# Import task modules to trigger registration
+from . import break_ties as _break_ties_module  # noqa: F401
 from . import kriging as _kriging_module  # noqa: F401
+
+# Break Ties-specific result types
+from .break_ties import BreakTiesResult
 
 # Shared components from common module
 from .common import (
@@ -157,6 +161,7 @@ async def run(
 
 __all__ = [
     "BlockDiscretisation",
+    "BreakTiesResult",
     "CreateAttribute",
     "Ellipsoid",
     "EllipsoidRanges",
