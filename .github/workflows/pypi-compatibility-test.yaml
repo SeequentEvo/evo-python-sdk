@@ -1,0 +1,70 @@
+name: PyPI compatibility test
+
+# This workflow simulates the experience of a developer installing our packages fresh from PyPI.
+# Unlike the standard PR/push tests (which use the pinned uv.lock), a fresh install resolves
+# the latest available versions of all dependencies, meaning any newly released package could
+# introduce a breaking change that our pinned lockfile wouldn't catch.
+
+permissions:
+  contents: read
+
+on:
+  schedule:
+    - cron: '0 18 * * *'
+  workflow_dispatch:
+
+jobs:
+  resolve-latest-dependencies:
+    name: Resolve latest dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/install-uv
+
+      - name: Upgrade all dependencies to latest
+        run: uv lock --upgrade
+
+      - name: Upload resolved lockfile
+        uses: actions/upload-artifact@v4
+        with:
+          name: latest-deps-uv-lock
+          path: uv.lock
+
+  run-tests:
+    name: Test
+    needs: resolve-latest-dependencies
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - windows-latest
+          - ubuntu-latest
+          - macos-latest
+        package:
+          - evo-sdk-common
+          - evo-blockmodels
+          - evo-colormaps
+          - evo-files
+          - evo-objects
+          - evo-compute
+          - evo-widgets
+        python-version:
+          - "3.10"
+          - "3.11"
+          - "3.12"
+          - "3.13"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/install-uv
+        with:
+          PYTHON_VERSION: ${{ matrix.python-version }}
+
+      - name: Download latest resolved lockfile
+        uses: actions/download-artifact@v4
+        with:
+          name: latest-deps-uv-lock
+
+      - name: Run tests against latest dependencies
+        run: |
+          uv run --package ${{ matrix.package }} pytest packages/${{ matrix.package }}/tests/
