@@ -45,6 +45,7 @@ jobs:
           PYTHON_VERSION: ${{ matrix.python-version }}
 
       - name: Remove lockfile to resolve latest dependencies
+        shell: bash
         run: rm -f uv.lock
 
       - name: Run tests against latest dependencies
