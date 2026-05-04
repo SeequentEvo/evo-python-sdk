@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 from pathlib import Path
 
 # Root directories
@@ -48,8 +49,12 @@ AUTH_EXCLUDE_NOTEBOOKS: list[str] = [
     "code-samples/files/sdk-examples.ipynb",
     # Intermittent 404: file upload may not propagate before the read-back poll.
     "code-samples/files/api-examples.ipynb",
-    # geosoft is Windows-only; excluded on all platforms since CI matrix covers Windows separately.
-    "code-samples/geoscience-objects/publish-regular-2d-grid/publish-regular-2d-grid.ipynb",
+    # geosoft is Windows-only; conditionally excluded below.
+    *(
+        ["code-samples/geoscience-objects/publish-regular-2d-grid/publish-regular-2d-grid.ipynb"]
+        if sys.platform != "win32"
+        else []
+    ),
     # Requires a pre-existing pointset object ID to be set manually before running.
     "code-samples/geoscience-objects/download-pointset/download-pointset.ipynb",
 ]
