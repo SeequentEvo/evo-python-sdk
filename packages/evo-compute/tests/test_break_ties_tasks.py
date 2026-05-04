@@ -11,7 +11,7 @@
 
 """Tests for break-ties task parameter handling."""
 
-from unittest import TestCase
+from unittest import IsolatedAsyncioTestCase, TestCase
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from evo.objects import ObjectReference
@@ -55,7 +55,9 @@ POINTSET_URL = _obj_url("00000000-0000-0000-0000-000000000010")
 TARGET_URL = _obj_url("00000000-0000-0000-0000-000000000020")
 
 
-def _search(major: float = 200.0, semi_major: float = 150.0, minor: float = 100.0, max_samples: int = 20) -> SearchNeighborhood:
+def _search(
+    major: float = 200.0, semi_major: float = 150.0, minor: float = 100.0, max_samples: int = 20
+) -> SearchNeighborhood:
     return SearchNeighborhood(
         ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=major, semi_major=semi_major, minor=minor)),
         max_samples=max_samples,
@@ -128,7 +130,9 @@ class TestBreakTiesParametersSerialization(TestCase):
 
     def test_target_update_serializes_correctly(self):
         params = self._params(
-            target=Target(object=TARGET_URL, attribute=UpdateAttribute(reference="locations.attributes[?name=='grade']"))
+            target=Target(
+                object=TARGET_URL, attribute=UpdateAttribute(reference="locations.attributes[?name=='grade']")
+            )
         )
         d = self._dump(params)
         self.assertEqual(d["target"]["attribute"]["operation"], "update")
@@ -262,14 +266,13 @@ class TestBreakTiesResult(TestCase):
 # ---------------------------------------------------------------------------
 
 
-class TestBreakTiesRunnerBehavior(TestCase.IsolatedAsyncioTestCase if hasattr(TestCase, "IsolatedAsyncioTestCase") else TestCase):
+class TestBreakTiesRunnerBehavior(
+    TestCase.IsolatedAsyncioTestCase if hasattr(TestCase, "IsolatedAsyncioTestCase") else TestCase
+):
     pass
 
 
-import unittest
-
-
-class TestBreakTiesRunnerAsync(unittest.IsolatedAsyncioTestCase):
+class TestBreakTiesRunnerAsync(IsolatedAsyncioTestCase):
     def _make_context(self):
         connector = MagicMock()
         context = MagicMock()
@@ -338,7 +341,3 @@ class TestBreakTiesRunnerAsync(unittest.IsolatedAsyncioTestCase):
 
         _, kwargs = mock_submit.call_args
         self.assertFalse(kwargs.get("preview", True))
-
-
-if __name__ == "__main__":
-    unittest.main()
