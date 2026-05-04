@@ -14,25 +14,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  resolve-latest-dependencies:
-    name: Resolve latest dependencies
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ./.github/actions/install-uv
-
-      - name: Upgrade all dependencies to latest
-        run: uv lock --upgrade
-
-      - name: Upload resolved lockfile
-        uses: actions/upload-artifact@v4
-        with:
-          name: latest-deps-uv-lock
-          path: uv.lock
-
   run-tests:
     name: Test
-    needs: resolve-latest-dependencies
     strategy:
       fail-fast: false
       matrix:
@@ -53,6 +36,7 @@ jobs:
           - "3.11"
           - "3.12"
           - "3.13"
+          - "3.14"
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -60,10 +44,8 @@ jobs:
         with:
           PYTHON_VERSION: ${{ matrix.python-version }}
 
-      - name: Download latest resolved lockfile
-        uses: actions/download-artifact@v4
-        with:
-          name: latest-deps-uv-lock
+      - name: Remove lockfile to resolve latest dependencies
+        run: rm -f uv.lock
 
       - name: Run tests against latest dependencies
         run: |
