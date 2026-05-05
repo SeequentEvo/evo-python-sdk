@@ -36,8 +36,9 @@ from evo.common import IContext
 from evo.common.interfaces import IFeedback
 from evo.common.utils import create_default_feedback
 
-# Import kriging module to trigger registration
+# Import task modules to trigger registration
 from . import kriging as _kriging_module  # noqa: F401
+from . import simulation as _simulation_module  # noqa: F401
 
 # Shared components from common module
 from .common import (
@@ -63,6 +64,19 @@ from .kriging import (
     BlockDiscretisation,
     KrigingResult,
     RegionFilter,
+)
+
+# Simulation-specific result types
+from .simulation import (
+    ConsimResult,
+    Distribution,
+    LossCalculation,
+    LowerTail,
+    MaterialCategory,
+    ReportMeanThresholds,
+    TailExtrapolation,
+    UpperTail,
+    ValidationReportContext,
 )
 
 
@@ -157,16 +171,25 @@ async def run(
 
 __all__ = [
     "BlockDiscretisation",
+    "ConsimResult",
     "CreateAttribute",
+    "Distribution",
     "Ellipsoid",
     "EllipsoidRanges",
     "KrigingResult",
+    "LossCalculation",
+    "LowerTail",
+    "MaterialCategory",
     "RegionFilter",
+    "ReportMeanThresholds",
     "Rotation",
     "SearchNeighborhood",
     "Source",
+    "TailExtrapolation",
     "Target",
     "TaskResultList",
     "UpdateAttribute",
+    "UpperTail",
+    "ValidationReportContext",
     "run",
 ]
