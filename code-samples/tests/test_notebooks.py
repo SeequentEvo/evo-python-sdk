@@ -52,17 +52,25 @@ _EXTRA_SKIP: frozenset[str] = frozenset(
 
 _SKIP_IMPORT_CHECK: frozenset[str] = _STDLIB_MODULES | _EXTRA_SKIP
 
-# Platform-conditional imports: mapping from module name to the platform(s)
-# where it IS available. On other platforms, the import check is skipped.
-_PLATFORM_SPECIFIC_IMPORTS: dict[str, set[str]] = {
-    "geosoft": {"win32"},
+# Platform-conditional imports: mapping from module name to a predicate
+# that returns True when the module is expected to be available.
+_PLATFORM_SPECIFIC_IMPORTS: dict[str, tuple[set[str], tuple[int, int] | None]] = {
+    # (allowed platforms, max python version exclusive)
+    "geosoft": ({"win32"}, (3, 14)),
 }
 
 
 def _get_platform_skip_imports() -> frozenset[str]:
-    """Return imports to skip on the current platform."""
+    """Return imports to skip on the current platform/version."""
     current_platform = sys.platform
-    return frozenset(mod for mod, platforms in _PLATFORM_SPECIFIC_IMPORTS.items() if current_platform not in platforms)
+    current_version = sys.version_info[:2]
+    skip = set()
+    for mod, (platforms, max_version) in _PLATFORM_SPECIFIC_IMPORTS.items():
+        if current_platform not in platforms:
+            skip.add(mod)
+        elif max_version is not None and current_version >= max_version:
+            skip.add(mod)
+    return frozenset(skip)
 
 
 # ---------------------------------------------------------------------------

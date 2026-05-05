@@ -49,10 +49,10 @@ AUTH_EXCLUDE_NOTEBOOKS: list[str] = [
     "code-samples/files/sdk-examples.ipynb",
     # Intermittent 404: file upload may not propagate before the read-back poll.
     "code-samples/files/api-examples.ipynb",
-    # geosoft is Windows-only; conditionally excluded below.
+    # geosoft is Windows-only and incompatible with Python 3.14+.
     *(
         ["code-samples/geoscience-objects/publish-regular-2d-grid/publish-regular-2d-grid.ipynb"]
-        if sys.platform != "win32"
+        if sys.platform != "win32" or sys.version_info >= (3, 14)
         else []
     ),
     # Requires a pre-existing pointset object ID to be set manually before running.
