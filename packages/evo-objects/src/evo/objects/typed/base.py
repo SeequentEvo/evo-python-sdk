@@ -227,31 +227,8 @@ class _BaseObject(SchemaModel):
                 "sub_classification and creation_schema_version must be defined by the subclass"
             )
         schema_id = ObjectSchema("objects", cls.sub_classification, cls.creation_schema_version)
-        result: dict[str, Any] = {
-            "schema": str(schema_id),
-        }
-
-        # Handle schema properties
-        for key, prop in cls._schema_properties.items():
-            value = getattr(data, key, None)
-            if value is not None:
-                prop.apply_to(result, value)
-
-        # Handle annotation-based sub-models
-        for name, metadata in cls._sub_models.items():
-            if metadata.data_field:
-                sub_data = getattr(data, metadata.data_field, None)
-            else:
-                sub_data = data
-            if sub_data is not None:
-                from ._utils import assign_jmespath_value
-
-                sub_document = await metadata.model_type._data_to_schema(sub_data, context)
-                if metadata.jmespath_expr:
-                    assign_jmespath_value(result, metadata.jmespath_expr, sub_document)
-                else:
-                    result.update(sub_document)
-
+        result = await super()._data_to_schema(data, context)
+        result["schema"] = str(schema_id)
         return result
 
     @classmethod
