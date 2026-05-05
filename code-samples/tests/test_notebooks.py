@@ -25,6 +25,7 @@ from notebook_helpers import (
     is_auth_notebook,
     is_executable,
     notebook_id,
+    sort_by_dependencies,
 )
 
 # ---------------------------------------------------------------------------
@@ -32,7 +33,7 @@ from notebook_helpers import (
 # ---------------------------------------------------------------------------
 ALL_NOTEBOOKS: list[Path] = discover_notebooks()
 EXEC_NOTEBOOKS: list[Path] = [nb for nb in ALL_NOTEBOOKS if is_executable(nb)]
-AUTH_NOTEBOOKS: list[Path] = [nb for nb in ALL_NOTEBOOKS if is_auth_notebook(nb)]
+AUTH_NOTEBOOKS: list[Path] = sort_by_dependencies([nb for nb in ALL_NOTEBOOKS if is_auth_notebook(nb)])
 
 # Standard-library top-level module names (Python 3.10+).  We skip these
 # during the import check because they are always available and never need

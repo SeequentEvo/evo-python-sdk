@@ -39,12 +39,16 @@ EXECUTABLE_NOTEBOOKS: list[str] = [
 
 # Notebooks that contain CI auth markers but are NOT fully self-contained for
 # CI execution (e.g. require interactive widgets or a browser).
-AUTH_EXCLUDE_NOTEBOOKS: list[str] = [
-    # Cascading failure: file_info set by an earlier interactive cell.
-    "code-samples/files/sdk-examples.ipynb",
-    # Requires a pre-existing pointset object ID to be set manually before running.
-    "code-samples/geoscience-objects/download-pointset/download-pointset.ipynb",
-]
+AUTH_EXCLUDE_NOTEBOOKS: list[str] = []
+
+# Ordering constraints for auth notebooks that depend on other notebooks having
+# run first.  Keys are notebooks that must wait; values are the notebooks that
+# must run before them.
+AUTH_NOTEBOOK_DEPENDENCIES: dict[str, list[str]] = {
+    "code-samples/geoscience-objects/download-pointset/download-pointset.ipynb": [
+        "code-samples/geoscience-objects/publish-pointset/publish-pointset.ipynb",
+    ],
+}
 
 # Auth notebooks are auto-detected by scanning code cells for CI-compatible auth
 # patterns.
@@ -86,6 +90,25 @@ def is_executable(notebook_path: Path) -> bool:
     """Return True if the notebook is in the executable allow-list."""
     rel = _relative_posix(notebook_path)
     return rel is not None and rel in EXECUTABLE_NOTEBOOKS
+
+
+def sort_by_dependencies(notebooks: list[Path]) -> list[Path]:
+    """Sort notebooks so that dependencies run before dependents."""
+    rel_to_path = {_relative_posix(nb): nb for nb in notebooks}
+    result: list[Path] = []
+    added: set[str] = set()
+
+    def _add(rel: str) -> None:
+        if rel in added or rel not in rel_to_path:
+            return
+        for dep in AUTH_NOTEBOOK_DEPENDENCIES.get(rel, []):
+            _add(dep)
+        added.add(rel)
+        result.append(rel_to_path[rel])
+
+    for nb in notebooks:
+        _add(_relative_posix(nb) or "")
+    return result
 
 
 def is_auth_notebook(notebook_path: Path) -> bool:
