@@ -37,10 +37,6 @@ EXECUTABLE_NOTEBOOKS: list[str] = [
     "code-samples/common-tasks/working-with-parquet.ipynb",
 ]
 
-# Notebooks that contain CI auth markers but are NOT fully self-contained for
-# CI execution (e.g. require interactive widgets or a browser).
-AUTH_EXCLUDE_NOTEBOOKS: list[str] = []
-
 # Ordering constraints for auth notebooks that depend on other notebooks having
 # run first.  Keys are notebooks that must wait; values are the notebooks that
 # must run before them.
@@ -117,7 +113,7 @@ def is_auth_notebook(notebook_path: Path) -> bool:
         return False
 
     rel = _relative_posix(notebook_path)
-    if rel is None or rel in AUTH_EXCLUDE_NOTEBOOKS:
+    if rel is None:
         return False
 
     try:
