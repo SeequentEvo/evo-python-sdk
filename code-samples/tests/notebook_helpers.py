@@ -44,8 +44,6 @@ AUTH_EXCLUDE_NOTEBOOKS: list[str] = [
     "code-samples/blockmodels/api-examples.ipynb",
     # Cascading failure: file_info set by an earlier interactive cell.
     "code-samples/files/sdk-examples.ipynb",
-    # Intermittent 404: file upload may not propagate before the read-back poll.
-    "code-samples/files/api-examples.ipynb",
     # Requires a pre-existing pointset object ID to be set manually before running.
     "code-samples/geoscience-objects/download-pointset/download-pointset.ipynb",
 ]
