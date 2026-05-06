@@ -275,10 +275,11 @@ class SchemaModel:
                 inner_args = get_args(annotation)
                 inner_type = inner_args[0]
                 base_type, schema_location, _ = _get_base_type(inner_type)
+                # Skip class variables without a SchemaLocation, e.g. data_columns: ClassVar[list[str]] = []
                 if schema_location is None:
                     continue
 
-                # Treat such ClassVar fields as constants, which also have a corresponding value in the schema
+                # Treat such remaining ClassVar fields as constants, which also have a corresponding value in the schema
                 type_adapter = TypeAdapter(base_type)
                 prop = SchemaConstantProperty(
                     jmespath_expr=schema_location.jmespath_expr,
