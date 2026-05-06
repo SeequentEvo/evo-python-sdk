@@ -14,7 +14,7 @@ from __future__ import annotations
 import copy
 from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Annotated, Any, Callable, Generic, TypeVar, get_args, get_origin, get_type_hints, overload
+from typing import Annotated, Any, Callable, ClassVar, Generic, TypeVar, get_args, get_origin, get_type_hints, overload
 
 from pydantic import TypeAdapter
 
@@ -86,11 +86,8 @@ class SubModelMetadata:
     """The field name in the data class for this sub-model."""
 
 
-class SchemaProperty(Generic[_T]):
-    """Descriptor for data within a Geoscience Object schema.
-
-    This can be used on either typed objects classes or dataset classes.
-    """
+class BaseSchemaProperty(Generic[_T]):
+    """Base descriptor for reading data from a Geoscience Object schema."""
 
     def __init__(
         self,
@@ -111,7 +108,7 @@ class SchemaProperty(Generic[_T]):
         return self._type_adapter.dump_python(value)
 
     @overload
-    def __get__(self, instance: None, owner: type[SchemaModel]) -> SchemaProperty[_T]: ...
+    def __get__(self, instance: None, owner: type[SchemaModel]) -> BaseSchemaProperty[_T]: ...
 
     @overload
     def __get__(self, instance: SchemaModel, owner: type[SchemaModel]) -> _T: ...
@@ -128,6 +125,13 @@ class SchemaProperty(Generic[_T]):
         # Use TypeAdapter to validate and apply defaults from Field annotations
         return self._type_adapter.validate_python(value)
 
+
+class SchemaProperty(BaseSchemaProperty[_T]):
+    """Descriptor for mutable data within a Geoscience Object schema.
+
+    This can be used on either typed objects classes or dataset classes.
+    """
+
     def __set__(self, instance: SchemaModel, value: Any) -> None:
         _set_property_value(self, instance._document, value)
 
@@ -140,7 +144,19 @@ class SchemaProperty(Generic[_T]):
         _set_property_value(self, document, value)
 
 
-def _set_property_value(schema_property: SchemaProperty, document: dict[str, Any], value: Any) -> None:
+class SchemaConstantProperty(BaseSchemaProperty[_T]):
+    """A SchemaProperty that always writes a fixed value to the schema."""
+
+    def __init__(self, jmespath_expr: str, type_adapter: TypeAdapter[_T], value: _T) -> None:
+        super().__init__(jmespath_expr=jmespath_expr, type_adapter=type_adapter)
+        self._value = value
+
+    @property
+    def value(self) -> _T:
+        return self._value
+
+
+def _set_property_value(schema_property: BaseSchemaProperty, document: dict[str, Any], value: Any) -> None:
     """Set the value of a SchemaProperty by name.
 
     :param property_name: The name of the property to set.
@@ -177,6 +193,26 @@ class SchemaBuilder:
         else:
             self.document.update(sub_document)
 
+    async def build_from_data(self, data: Any, skip_sub_models: set[str] | None = None) -> dict[str, Any]:
+        """Build the schema document by applying all properties and sub-models."""
+        for key, prop in self._properties.items():
+            if isinstance(prop, SchemaConstantProperty):
+                self.set_property(key, prop.value)
+            else:
+                value = getattr(data, key, None)
+                self.set_property(key, value)
+
+        for name, metadata in self._sub_models.items():
+            if skip_sub_models and name in skip_sub_models:
+                continue
+            if metadata.data_field:
+                sub_data = getattr(data, metadata.data_field, None)
+            else:
+                sub_data = data
+            await self.set_sub_model_value(name, sub_data)
+
+        return self.document
+
 
 def _get_base_type(annotation: Any) -> tuple[Any, SchemaLocation | None, DataLocation | None]:
     """Extract the base type and SchemaLocation from an annotation.
@@ -208,14 +244,14 @@ class SchemaModel:
     automatically created for nested SchemaModel/SchemaList fields.
     """
 
-    _schema_properties: dict[str, SchemaProperty[Any]] = {}
+    _schema_properties: dict[str, BaseSchemaProperty[Any]] = {}
     _sub_models: dict[str, SubModelMetadata] = {}
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
 
         # Initialize with inherited values (copy to avoid mutating parent)
-        schema_properties: dict[str, SchemaProperty[Any]] = {}
+        schema_properties: dict[str, BaseSchemaProperty[Any]] = {}
         sub_models: dict[str, SubModelMetadata] = {}
         for base in cls.__mro__[1:]:
             if issubclass(base, SchemaModel):
@@ -234,6 +270,26 @@ class SchemaModel:
 
         # Process the resolved annotations
         for field_name, annotation in hints.items():
+            # Handle ClassVar fields
+            if get_origin(annotation) is ClassVar:
+                inner_args = get_args(annotation)
+                inner_type = inner_args[0]
+                base_type, schema_location, _ = _get_base_type(inner_type)
+                # Skip class variables without a SchemaLocation, e.g. data_columns: ClassVar[list[str]] = []
+                if schema_location is None:
+                    continue
+
+                # Treat such remaining ClassVar fields as constants, which also have a corresponding value in the schema
+                type_adapter = TypeAdapter(base_type)
+                prop = SchemaConstantProperty(
+                    jmespath_expr=schema_location.jmespath_expr,
+                    type_adapter=type_adapter,
+                    value=getattr(cls, field_name),
+                )
+                setattr(cls, field_name, prop)
+                schema_properties[field_name] = prop
+                continue
+
             base_type, schema_location, data_location = _get_base_type(annotation)
 
             # Skip fields without a SchemaLocation
@@ -348,16 +404,7 @@ class SchemaModel:
         :return: The dictionary representation of the data.
         """
         builder = SchemaBuilder(cls, context)
-        for key in cls._schema_properties.keys():
-            value = getattr(data, key, None)
-            builder.set_property(key, value)
-        for name, metadata in cls._sub_models.items():
-            if metadata.data_field:
-                sub_data = getattr(data, metadata.data_field, None)
-            else:
-                sub_data = data
-            await builder.set_sub_model_value(name, sub_data)
-        return builder.document
+        return await builder.build_from_data(data)
 
     def search(self, expression: str) -> Any:
         """Search the model using a JMESPath expression.
