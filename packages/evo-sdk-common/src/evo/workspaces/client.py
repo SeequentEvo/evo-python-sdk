@@ -34,6 +34,7 @@ from .data import (
     Workspace,
     WorkspaceOrderByEnum,
     WorkspaceRole,
+    BulkUserRoleAssignmentRequest,
 )
 from .endpoints.api import AdminApi, GeneralApi, InstanceUsersApi, ThumbnailsApi, WorkspacesApi
 from .endpoints.models import (
@@ -44,7 +45,7 @@ from .endpoints.models import (
     RoleEnum,
     UpdateInstanceUserRolesRequest,
     UpdateWorkspaceRequest,
-    UserRoleMapping,
+    UserRoleMapping, BulkUserRoleAssignmentsRequest, UserRoleAssignmentRequest,
 )
 from .endpoints.models import BoundingBox as PydanticBoundingBox
 from .endpoints.models import UserRole as PydanticUserRole
@@ -86,6 +87,10 @@ class WorkspaceAPIClient:
         :raises ClientValueError: If the response is not a valid service health check response.
         """
         return await get_service_health(self._connector, "workspace", check_type=check_type)
+
+    """
+    Workspace user endpoints
+    """
 
     async def list_user_roles(
         self,
@@ -136,6 +141,11 @@ class WorkspaceAPIClient:
             workspace_id=str(workspace_id),
             user_id=str(user_id),
         )
+
+
+    """
+    Workspace crud endpoints
+    """
 
     async def list_workspaces(
         self,
@@ -377,6 +387,23 @@ class WorkspaceAPIClient:
         )
         return parse.workspace_model(model, self._org_id, self._connector.base_url)
 
+
+    async def restore_deleted_workspace(self, workspace_id: UUID) -> None:
+        """
+        Restore a deleted workspace by workspace id.
+
+        :param workspace_id: The workspace id to restore.
+        """
+        await self._workspaces_api.restore_soft_deleted_workspace(
+            org_id=str(self._org_id),
+            workspace_id=str(workspace_id),
+            deleted="false",
+        )
+
+    """
+    Instance user endpoints
+    """
+
     async def list_instance_users(
         self, limit: int | None = None, offset: int | None = None
     ) -> Page[InstanceUserWithEmail]:
@@ -499,3 +526,224 @@ class WorkspaceAPIClient:
             update_instance_user_roles_request=update_instance_user_roles_request,
         )
         return parse.instance_user_model(response)
+
+    """
+    Thumbnail endpoints
+    """
+
+    async def get_thumbnail(self, workspace_id: UUID) -> bytearray:
+        """
+        Gets the thumbnail image for a workspace.
+
+        :param workspace_id: The ID of the workspace to get the thumbnail for.
+        :returns: The thumbnail image as bytes.
+        """
+        return await self._thumbnails_api.get_thumbnail(org_id=str(self._org_id), workspace_id=str(workspace_id))
+
+    async def put_thumbnail(self, workspace_id: UUID, thumbnail: bytearray):
+        """
+        uploads the thumbnail image for a workspace.
+        :param workspace_id: The ID of the workspace to upload the thumbnail for.
+        :param thumbnail: The thumbnail image as a byte array.
+        :returns: The thumbnail image as bytes.
+        """
+
+        await self._thumbnails_api.put_thumbnail(org_id=str(self._org_id), workspace_id=str(workspace_id), body=thumbnail)
+
+    async def delete_thumbnail(self, workspace_id: UUID) -> None:
+        """
+        deletes the thumbnail image for a workspace.
+        :param workspace_id: The ID of the workspace to delete the thumbnail for.
+        """
+
+        await self._thumbnails_api.delete_workspace_thumbnail(org_id=str(self._org_id), workspace_id=str(workspace_id))
+
+    """
+    Workspace admin endpoints
+    """
+
+    async def admin_bulk_assign_roles(self, role_assignments: BulkUserRoleAssignmentRequest) -> None:
+        """
+        Bulk assigns roles to users in the workspace instance.
+
+        :param role_assignments: A list of role assignments, where each assignment includes a user ID and a role to assign.
+        """
+
+        request: BulkUserRoleAssignmentsRequest = BulkUserRoleAssignmentsRequest(
+            role_assignments=[
+                UserRoleAssignmentRequest(
+                    role=RoleEnum[str(assignment.role.name)],
+                    user_id=assignment.user_id,
+                    workspace_id=assignment.workspace_id,
+                )
+                for assignment in role_assignments.role_assignments
+            ]
+        )
+
+        await self._admin_api.bulk_assign_roles_admin(org_id=str(self._org_id), bulk_user_role_assignments_request=request)
+
+    async def admin_list_user_workspaces(
+        self,
+        user_id: UUID,
+        limit: int | None = None,
+        offset: int | None = None,
+        order_by: dict[WorkspaceOrderByEnum, OrderByOperatorEnum]
+        | dict[WorkspaceOrderByLiteral, OrderByOperatorLiteral]
+        | None = None,
+        created_by: UUID | None = None,
+        created_at: str | None = None,
+        updated_at: str | None = None,
+        name: str | None = None,
+        deleted: bool | None = None,
+    ) -> Page[Workspace]:
+        """
+        Lists all workspaces assigned to a specific user in the instance.
+        :param user_id: The ID of the user to list the workspaces for.
+        :param limit: The maximum number of workspaces to return.
+        :param offset: The offset for pagination.
+        :param order_by: A dictionary specifying the fields to sort by and their corresponding sort directions (e.g., {"name": "asc", "created_at": "desc"}).
+        :param created_by: Filter workspaces by the ID of the user who created them.
+        :param created_at: Filter workspaces by their creation timestamp (e.g., "2023-01-01T00:00:00Z").
+        :param updated_at: Filter workspaces by their last updated timestamp (e.g., "2023-01-01T00:00:00Z").
+        :param name: Filter workspaces by their name (supports partial matches).
+        :param deleted: Filter workspaces by their deletion status (true or false).
+        :returns: A page of workspaces that match the specified criteria.
+        """
+
+        parsed_order_by = parse_order_by(order_by)  # type: ignore
+        if not offset:
+            offset = 0
+        if not limit:
+            limit = 100
+        response = await self._admin_api.list_user_workspaces_admin(
+            user_id=str(user_id),
+            org_id=str(self._org_id),
+            limit=limit,
+            offset=offset,
+            order_by=parsed_order_by,
+            created_by=str(created_by) if created_by else None,
+            created_at=created_at,
+            updated_at=updated_at,
+            name=name,
+            deleted=deleted,
+        )
+
+        return Page(
+            offset=offset,
+            limit=limit,
+            total=response.links.total,
+            items=[parse.workspace_model(item, self._org_id, self._connector.base_url) for item in response.results],
+        )
+
+    async def admin_list_workspaces(
+        self,
+        limit: int | None = None,
+        offset: int | None = None,
+        order_by: dict[WorkspaceOrderByEnum, OrderByOperatorEnum]
+        | dict[WorkspaceOrderByLiteral, OrderByOperatorLiteral]
+        | None = None,
+        created_by: UUID | None = None,
+        created_at: str | None = None,
+        updated_at: str | None = None,
+        name: str | None = None,
+        deleted: bool | None = None,
+        user_id: UUID | None = None,
+    ) -> Page[Workspace]:
+        """
+        Lists all workspaces in the instance.
+        :param user_id: The ID of the user to list the workspaces for.
+        :param limit: The maximum number of workspaces to return.
+        :param offset: The offset for pagination.
+        :param order_by: A dictionary specifying the fields to sort by and their corresponding sort directions (e.g., {"name": "asc", "created_at": "desc"}).
+        :param created_by: Filter workspaces by the ID of the user who created them.
+        :param created_at: Filter workspaces by their creation timestamp (e.g., "2023-01-01T00:00:00Z").
+        :param updated_at: Filter workspaces by their last updated timestamp (e.g., "2023-01-01T00:00:00Z").
+        :param name: Filter workspaces by their name (supports partial matches).
+        :param deleted: Filter workspaces by their deletion status (true or false).
+        :returns: A page of workspaces that match the specified criteria.
+        """
+
+        parsed_order_by = parse_order_by(order_by)  # type: ignore
+        if not offset:
+            offset = 0
+        if not limit:
+            limit = 100
+        response = await self._admin_api.list_workspaces_admin(
+            org_id=str(self._org_id),
+            limit=limit,
+            offset=offset,
+            order_by=parsed_order_by,
+            created_by=str(created_by) if created_by else None,
+            created_at=created_at,
+            updated_at=updated_at,
+            name=name,
+            deleted=deleted,
+            user_id=str(user_id) if user_id else None,
+        )
+
+        return Page(
+            offset=offset,
+            limit=limit,
+            total=response.links.total,
+            items=[parse.workspace_model(item, self._org_id, self._connector.base_url) for item in response.results],
+        )
+
+    async def admin_get_workspace(self, workspace_id: UUID, deleted: bool = False) -> Workspace:
+        """
+        Gets a workspace by ID, can pass in a deleted flag to get deleted workspaces
+        :param workspace_id: The ID of the workspace to get.
+        :param deleted: Get a deleted workspace
+        """
+        response = await self._admin_api.get_workspace_admin(
+            org_id=str(self._org_id), workspace_id=str(workspace_id), deleted=deleted
+        )
+        return parse.workspace_model(response, self._org_id, self._connector.base_url)
+
+    async def admin_get_thumbnail(self, workspace_id: UUID) -> bytearray:
+        """
+        Gets the thumbnail image for a workspace.
+
+        :param workspace_id: The ID of the workspace to get the thumbnail for.
+        :returns: The thumbnail image as bytes.
+        """
+        return await self._thumbnails_api.get_thumbnail(org_id=str(self._org_id), workspace_id=str(workspace_id))
+
+    async def admin_list_users(self, workspace_id: UUID, user_id: UUID | None = None) -> list[User]:
+        """
+        Lists all users in the workspace.
+        :param workspace_id: The ID of the workspace to get the users for.
+        :param user_id: filter by a specific user id.
+        :returns: A list of users in the workspace.
+        """
+        response = await self._admin_api.list_user_roles_admin(
+            org_id=str(self._org_id),
+            workspace_id=str(workspace_id),
+            user_id=str(user_id) if user_id else None,
+        )
+
+        return [parse.user_model(item) for item in response.results]
+
+    async def admin_assign_user_role(self, workspace_id: UUID, user_id: UUID, role: WorkspaceRole) -> UserRole:
+        """
+        Assigns a user to a workspace.
+        :param workspace_id: The ID of the workspace to assign the user to.
+        :param user_id: The ID of the user to assign the user to.
+        :param role: The role to assign the user to.
+        :returns: A UserRole object.
+        """
+        assign_role_request = PydanticUserRole(user_id=user_id, role=RoleEnum[str(role.name)])
+        response = await self._admin_api.assign_user_role_admin(
+            org_id=str(self._org_id),
+            workspace_id=str(workspace_id),
+            assign_role_request=assign_role_request,
+        )
+
+        return parse.user_role_model(response)
+
+    async def admin_remove_user_from_workspace(self, workspace_id: UUID, user_id: UUID | None = None) -> None:
+        """
+        Removes a user from a workspace.
+        :param workspace_id: The ID of the workspace to remove the user from.
+        :param user_id: user_id of the user to remove.
+        """
+        await self._admin_api.delete_user_role_admin(org_id=str(self._org_id), workspace_id=str(workspace_id), user_id=str(user_id))

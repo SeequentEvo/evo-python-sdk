@@ -87,13 +87,15 @@ def workspace_model(
     if model.bounding_box:
         parsed_bounding_box = bounding_box(model.bounding_box)
 
+    user_role_value = getattr(model, "current_user_role", None) or getattr(model, "user_role", None)
+
     return Workspace(
         id=model.id,
         org_id=org_id,
         hub_url=base_url,
         display_name=model.name,
         description=model.description,
-        user_role=WorkspaceRole[str(model.current_user_role.value)] if model.current_user_role else None,
+        user_role=WorkspaceRole[str(user_role_value.value)] if user_role_value else None,
         created_at=model.created_at.replace(tzinfo=timezone.utc),
         created_by=ServiceUser.from_model(model.created_by),
         updated_at=model.updated_at.replace(tzinfo=timezone.utc),

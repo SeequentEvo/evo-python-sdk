@@ -28,6 +28,8 @@ from .data import (
     Workspace,
     WorkspaceOrderByEnum,
     WorkspaceRole,
+    BulkUserRoleAssignment,
+    BulkUserRoleAssignmentRequest,
 )
 
 __all__ = [
@@ -49,4 +51,6 @@ __all__ = [
     "WorkspaceAPIClient",
     "WorkspaceOrderByEnum",
     "WorkspaceRole",
+    "BulkUserRoleAssignment",
+    "BulkUserRoleAssignmentRequest",
 ]

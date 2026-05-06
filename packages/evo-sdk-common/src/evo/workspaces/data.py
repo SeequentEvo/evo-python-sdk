@@ -215,3 +215,13 @@ class InstanceRoleWithPermissions(InstanceRole):
 class AddedInstanceUsers:
     members: list[InstanceUserWithEmail]
     invitations: list[InstanceUserInvitation]
+
+@dataclass(frozen=True, kw_only=True)
+class BulkUserRoleAssignment:
+    role: WorkspaceRole
+    user_id: UUID
+    workspace_id: UUID
+
+@dataclass(frozen=True, kw_only=True)
+class BulkUserRoleAssignmentRequest:
+    role_assignments: list[BulkUserRoleAssignment]
