@@ -11,152 +11,50 @@
 
 import json
 from unittest import mock
-from uuid import UUID
 
 from evo.common import HealthCheckType, RequestMethod, StaticContext
 from evo.common.exceptions import ContextError
-from evo.common.test_tools import BASE_URL, MockResponse, TestHTTPHeaderDict, TestWithConnector, utc_datetime
+from evo.common.test_tools import MockResponse, TestHTTPHeaderDict, TestWithConnector, utc_datetime
 from evo.common.utils import get_header_metadata
 from evo.workspaces import (
     AddedInstanceUsers,
-    BasicWorkspace,
-    BoundingBox,
     BulkUserRoleAssignment,
     BulkUserRoleAssignmentRequest,
-    Coordinate,
-    InstanceRole,
-    InstanceRoleWithPermissions,
     InstanceUser,
-    InstanceUserInvitation,
-    InstanceUserWithEmail,
     OrderByOperatorEnum,
-    ServiceUser,
     User,
     UserRole,
-    Workspace,
     WorkspaceAPIClient,
     WorkspaceOrderByEnum,
     WorkspaceRole,
 )
 
 from ..data import load_test_data
-
-ORG_UUID = UUID(int=0)
-USER_ID = UUID(int=2)
-BASE_PATH = f"/workspace/orgs/{ORG_UUID}"
-ADMIN_BASE_PATH = f"/workspace/admin/orgs/{ORG_UUID}"
-TEST_USER = ServiceUser(id=USER_ID, name="Test User", email="test.user@unit.test")
-
-
-def _test_workspace(ws_id: UUID, name: str, bounding_box: BoundingBox | None = None) -> Workspace:
-    """Factory method to create test workspace objects."""
-    return Workspace(
-        id=ws_id,
-        display_name=name.title(),
-        description=name.lower(),
-        user_role=WorkspaceRole.owner,
-        org_id=ORG_UUID,
-        hub_url=BASE_URL,
-        created_at=utc_datetime(2020, 1, 1),
-        created_by=TEST_USER,
-        updated_at=utc_datetime(2020, 1, 1),
-        updated_by=TEST_USER,
-        bounding_box=bounding_box,
-    )
-
-
-def _test_basic_workspace(ws_id: UUID, name: str) -> BasicWorkspace:
-    """Factory method to create test basic workspace objects."""
-    return BasicWorkspace(
-        id=ws_id,
-        display_name=name.title(),
-    )
-
-
-def _test_instance_role(role_id: UUID, name: str) -> InstanceRole:
-    """Factory method to create test instance role objects."""
-    return InstanceRole(
-        role_id=role_id,
-        name=name.title(),
-        description=name.lower(),
-    )
-
-
-def _test_instance_role_with_permissions(role_id: UUID, name: str) -> InstanceRoleWithPermissions:
-    """Factory method to create test instance role objects."""
-    return InstanceRoleWithPermissions(
-        role_id=role_id, name=name.title(), description=name.lower(), permissions=[name.lower() + " permission"]
-    )
-
-
-def _test_instance_user(user_id: UUID, role_name: str, role_id: int) -> InstanceUser:
-    """Factory method to create test instance user objects."""
-    return InstanceUser(user_id=user_id, roles=[_test_instance_role(UUID(int=role_id), role_name)])
-
-
-def _test_instance_user_with_email(
-    user_id: UUID, email: str, full_name: str, role_name: str, role_id: int
-) -> InstanceUserWithEmail:
-    """Factory method to create test instance user objects."""
-    return InstanceUserWithEmail(
-        user_id=user_id, email=email, full_name=full_name, roles=[_test_instance_role(UUID(int=role_id), role_name)]
-    )
-
-
-def _test_instance_user_invitation(
-    invitation_id: UUID, email: str, status: str, role_name: str, role_id: int
-) -> InstanceUserInvitation:
-    """Factory method to create test instance user invitation objects."""
-    return InstanceUserInvitation(
-        email=email,
-        invitation_id=invitation_id,
-        invited_at=utc_datetime(2026, 1, 1, 12, 0, 0),
-        expiration_date=utc_datetime(2026, 1, 15, 12, 0, 0),
-        invited_by="admin.user@bentley.com",
-        status=status,
-        roles=[_test_instance_role(UUID(int=role_id), role_name)],
-    )
-
-
-TEST_WORKSPACE_A = _test_workspace(UUID(int=0xA), "Test Workspace A")
-TEST_WORKSPACE_B = _test_workspace(UUID(int=0xB), "Test Workspace B")
-TEST_WORKSPACE_C = _test_workspace(UUID(int=0xC), "Test Workspace C")
-TEST_WORKSPACE_D = _test_workspace(
-    UUID(int=0xD),
-    "Test Workspace D",
-    bounding_box=BoundingBox(
-        coordinates=[
-            [
-                Coordinate(longitude=100, latitude=0),
-                Coordinate(longitude=101, latitude=0),
-                Coordinate(longitude=101, latitude=1),
-                Coordinate(longitude=100, latitude=1),
-                Coordinate(longitude=100, latitude=0),
-            ]
-        ],
-        type="Polygon",
-    ),
+from .consts import (
+    ADMIN_BASE_PATH,
+    BASE_PATH,
+    ORG_UUID,
+    USER_ID,
 )
-
-TEST_BASIC_WORKSPACE_A = _test_basic_workspace(UUID(int=0xA), "Test Workspace A")
-TEST_BASIC_WORKSPACE_B = _test_basic_workspace(UUID(int=0xB), "Test Workspace B")
-TEST_BASIC_WORKSPACE_C = _test_basic_workspace(UUID(int=0xC), "Test Workspace C")
-
-INSTANCE_USER_1 = _test_instance_user_with_email(UUID(int=1), "test.user1@gmail.com", "User 1", "Evo Owner", 3)
-INSTANCE_USER_2 = _test_instance_user_with_email(UUID(int=2), "test.user2@gmail.com", "User 2", "Evo Admin", 2)
-INSTANCE_USER_3 = _test_instance_user_with_email(UUID(int=3), "test.user3@gmail.com", "User 3", "Evo User", 1)
-INVITATION_1 = _test_instance_user_invitation(UUID(int=1), "external.user1@gmail.com", "Pending", "Evo User", 1)
-INVITATION_2 = _test_instance_user_invitation(UUID(int=2), "external.user2@gmail.com", "Accepted", "Evo Admin", 2)
-INVITATION_3 = _test_instance_user_invitation(UUID(int=3), "external.user3@gmail.com", "Pending", "Evo User", 1)
-
-INSTANCE_USER_ROLE = _test_instance_role_with_permissions(UUID(int=1), "Evo User")
-INSTANCE_ADMIN_ROLE = _test_instance_role_with_permissions(UUID(int=2), "Evo Admin")
-
-
-def _get_thumbnail_bytestream():
-    with open("./data/thumbnail.jpg", "rb") as f:
-        thumbnail_bytes = bytearray(f.read())
-    return thumbnail_bytes
+from .data import (
+    INSTANCE_ADMIN_ROLE,
+    INSTANCE_USER_1,
+    INSTANCE_USER_2,
+    INSTANCE_USER_3,
+    INSTANCE_USER_ROLE,
+    INVITATION_1,
+    INVITATION_2,
+    TEST_BASIC_WORKSPACE_A,
+    TEST_BASIC_WORKSPACE_B,
+    TEST_BASIC_WORKSPACE_C,
+    TEST_WORKSPACE_A,
+    TEST_WORKSPACE_B,
+    TEST_WORKSPACE_C,
+    TEST_WORKSPACE_D,
+)
+from .helpers import (
+    make_instance_role,
+)
 
 
 class TestWorkspaceClient(TestWithConnector):
@@ -624,7 +522,7 @@ class TestWorkspaceClient(TestWithConnector):
             response,
             InstanceUser(
                 user_id=INSTANCE_USER_1.user_id,
-                roles=[_test_instance_role(INSTANCE_ADMIN_ROLE.role_id, "Evo Admin")],
+                roles=[make_instance_role(INSTANCE_ADMIN_ROLE.role_id, "Evo Admin")],
             ),
         )
 
@@ -639,7 +537,7 @@ class TestWorkspaceClient(TestWithConnector):
         self.assertIsNone(response, "Restore workspace response should be None")
 
     async def test_get_thumbnail(self):
-        thumbnail_bytes = _get_thumbnail_bytestream()
+        thumbnail_bytes: bytearray = load_test_data("thumbnail.jpg")
         self.transport.request.return_value = MockResponse(
             status_code=200,
             body=thumbnail_bytes,
@@ -654,7 +552,7 @@ class TestWorkspaceClient(TestWithConnector):
         self.assertEqual(response, thumbnail_bytes)
 
     async def test_put_thumbnail(self):
-        thumbnail_bytes = _get_thumbnail_bytestream()
+        thumbnail_bytes: bytearray = load_test_data("thumbnail.jpg")
         with self.transport.set_http_response(204):
             response = await self.workspace_client.put_thumbnail(
                 workspace_id=TEST_WORKSPACE_A.id, thumbnail=thumbnail_bytes
@@ -748,7 +646,7 @@ class TestWorkspaceClient(TestWithConnector):
         self.assertEqual(TEST_WORKSPACE_A, workspace)
 
     async def test_admin_get_thumbnail(self):
-        thumbnail_bytes = _get_thumbnail_bytestream()
+        thumbnail_bytes: bytearray = load_test_data("thumbnail.jpg")
         self.transport.request.return_value = MockResponse(
             status_code=200,
             body=thumbnail_bytes,
@@ -791,8 +689,6 @@ class TestWorkspaceClient(TestWithConnector):
                 User(user_id=USER_ID, role=WorkspaceRole.owner, full_name="Test User", email="test@example.com"),
             ],
         )
-
-    # admin assign user role
 
     async def test_admin_assign_user_role(self):
         with self.transport.set_http_response(

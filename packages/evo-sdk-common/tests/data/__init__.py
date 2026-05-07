@@ -20,7 +20,7 @@ def _load_json_data(target_file: Path) -> list | dict:
         return json.load(json_file)
 
 
-def load_test_data(filename: str) -> list | dict:
+def load_test_data(filename: str) -> list | dict | bytearray:
     target_file = (_THIS_DIR / filename).resolve()
 
     # Test data must live in test data directory.
@@ -34,5 +34,15 @@ def load_test_data(filename: str) -> list | dict:
     match target_file.suffix.lower():
         case ".json":
             return _load_json_data(target_file)
+        case ".jpg" | ".jpeg" | ".png":
+            with target_file.open("rb") as f:
+                return bytearray(f.read())
         case ext:
             raise ValueError(f"Unsupported data file type '{ext}'")
+
+
+def _get_thumbnail_bytestream():
+    target_file = (_THIS_DIR / "thumbnail.jpg").resolve()
+    with open(target_file, "rb") as f:
+        thumbnail_bytes = bytearray(f.read())
+    return thumbnail_bytes
