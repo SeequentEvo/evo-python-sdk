@@ -1,0 +1,303 @@
+import json
+
+from evo.common import RequestMethod
+from evo.common.test_tools import MockResponse, TestHTTPHeaderDict, TestWithConnector, utc_datetime
+from evo.common.utils import get_header_metadata
+from evo.workspaces import (
+    OrderByOperatorEnum,
+    WorkspaceAPIClient,
+    WorkspaceOrderByEnum,
+)
+
+from ...data import load_test_data
+from ..consts import (
+    BASE_PATH,
+    ORG_UUID,
+    USER_ID,
+)
+from ..data import (
+    TEST_BASIC_WORKSPACE_A,
+    TEST_BASIC_WORKSPACE_B,
+    TEST_BASIC_WORKSPACE_C,
+    TEST_WORKSPACE_A,
+    TEST_WORKSPACE_B,
+    TEST_WORKSPACE_C,
+    TEST_WORKSPACE_D,
+)
+
+
+class TestWorkspaceClientWorkspaceEndpoints(TestWithConnector):
+    def setUp(self) -> None:
+        super().setUp()
+        self.workspace_client = WorkspaceAPIClient(connector=self.connector, org_id=ORG_UUID)
+        self.setup_universal_headers(get_header_metadata(WorkspaceAPIClient.__module__))
+
+    def _empty_content(self) -> str:
+        data = """{"results": [], "links": {"first": "http://firstlink", "last": "http://lastlink",
+                "next": null, "previous": null, "count": 0, "total": 0}}"""
+        return data
+
+    async def test_list_workspaces_default_args(self):
+        with self.transport.set_http_response(200, self._empty_content(), headers={"Content-Type": "application/json"}):
+            workspaces = await self.workspace_client.list_workspaces()
+        self.assert_request_made(
+            method=RequestMethod.GET,
+            path=f"{BASE_PATH}/workspaces?offset=0",
+            headers={"Accept": "application/json"},
+        )
+        self.assertEqual([], workspaces.items())
+
+    async def test_list_workspaces_all_args(self):
+        with self.transport.set_http_response(200, self._empty_content(), headers={"Content-Type": "application/json"}):
+            workspaces = await self.workspace_client.list_workspaces(offset=10, limit=20)
+        self.assert_request_made(
+            method=RequestMethod.GET,
+            path=f"{BASE_PATH}/workspaces?limit=20&offset=10",
+            headers={"Accept": "application/json"},
+        )
+        self.assertEqual([], workspaces.items())
+
+    async def test_delete_workspace_call(self):
+        with self.transport.set_http_response(204):
+            response = await self.workspace_client.delete_workspace(workspace_id=TEST_WORKSPACE_A.id)
+        self.assert_request_made(method=RequestMethod.DELETE, path=f"{BASE_PATH}/workspaces/{TEST_WORKSPACE_A.id}")
+        self.assertIsNone(response, "Delete workspace response should be None")
+
+    async def test_create_workspace(self):
+        with self.transport.set_http_response(201, json.dumps(load_test_data("new_workspace.json"))):
+            new_workspace = await self.workspace_client.create_workspace(
+                name="Test Workspace",
+                description="test workspace",
+            )
+        self.assert_request_made(
+            method=RequestMethod.POST,
+            path=f"{BASE_PATH}/workspaces",
+            headers={
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+            },
+            body={
+                "bounding_box": None,
+                "default_coordinate_system": "",
+                "description": "test workspace",
+                "labels": None,
+                "name": "Test Workspace",
+            },
+        )
+        self.assertEqual(TEST_WORKSPACE_A, new_workspace)
+
+    async def test_create_workspace_with_bounding_box(self):
+        with self.transport.set_http_response(201, json.dumps(load_test_data("new_workspace_with_bounding_box.json"))):
+            new_workspace = await self.workspace_client.create_workspace(
+                name="Test Workspace",
+                description="test workspace",
+                bounding_box_coordinates=[(100, 0), (101, 0), (101, 1), (100, 1), (100, 0)],
+            )
+        self.assert_request_made(
+            method=RequestMethod.POST,
+            path=f"{BASE_PATH}/workspaces",
+            headers={
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+            },
+            body={
+                "bounding_box": {
+                    "coordinates": [[[100, 0], [101, 0], [101, 1], [100, 1], [100, 0]]],
+                    "type": "Polygon",
+                },
+                "default_coordinate_system": "",
+                "description": "test workspace",
+                "labels": None,
+                "name": "Test Workspace",
+            },
+        )
+        self.assertEqual(TEST_WORKSPACE_D, new_workspace)
+
+    async def test_update_workspace(self):
+        with self.transport.set_http_response(200, json.dumps(load_test_data("new_workspace.json"))):
+            updated_workspace = await self.workspace_client.update_workspace(
+                workspace_id=TEST_WORKSPACE_A.id,
+                name="Test Workspace",
+            )
+        self.assert_request_made(
+            method=RequestMethod.PATCH,
+            path=f"{BASE_PATH}/workspaces/{TEST_WORKSPACE_A.id}",
+            headers={
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+            },
+            body={
+                "name": "Test Workspace",
+            },
+        )
+        self.assertEqual(TEST_WORKSPACE_A, updated_workspace)
+
+    async def test_list_workspaces(self) -> None:
+        content = load_test_data("list_workspaces_0.json")
+        with self.transport.set_http_response(200, json.dumps(content), headers={"Content-Type": "application/json"}):
+            workspaces = await self.workspace_client.list_workspaces(limit=2)
+        self.assert_request_made(
+            method=RequestMethod.GET,
+            path=f"{BASE_PATH}/workspaces?limit=2&offset=0",
+            headers={"Accept": "application/json"},
+        )
+        self.assertEqual(1, self.transport.request.call_count, "One requests should be made.")
+        self.assertEqual([TEST_WORKSPACE_A, TEST_WORKSPACE_B], workspaces.items())
+
+    async def test_list_all_workspaces(self) -> None:
+        content_0 = load_test_data("list_workspaces_0.json")
+        content_1 = load_test_data("list_workspaces_1.json")
+        responses = [
+            MockResponse(status_code=200, content=json.dumps(content_0), headers={"Content-Type": "application/json"}),
+            MockResponse(status_code=200, content=json.dumps(content_1), headers={"Content-Type": "application/json"}),
+        ]
+        self.transport.request.side_effect = responses
+        expected_workspaces = [TEST_WORKSPACE_A, TEST_WORKSPACE_B, TEST_WORKSPACE_C]
+        actual_workspaces = await self.workspace_client.list_all_workspaces(limit=2)
+
+        self.assertEqual(2, self.transport.request.call_count, "Two requests should be made.")
+        self.assert_any_request_made(
+            method=RequestMethod.GET,
+            path=f"{BASE_PATH}/workspaces?limit=2&offset=0",
+            headers=TestHTTPHeaderDict({"Accept": "application/json"}),
+        )
+        self.assert_any_request_made(
+            method=RequestMethod.GET,
+            path=f"{BASE_PATH}/workspaces?limit=2&offset=2",
+            headers=TestHTTPHeaderDict({"Accept": "application/json"}),
+        )
+        self.assertEqual(expected_workspaces, actual_workspaces)
+
+    async def test_list_workspaces_sorted_by_display_name(self) -> None:
+        content_0 = load_test_data("list_workspaces_0.json")
+        content_1 = load_test_data("list_workspaces_1.json")
+
+        # Shuffle the workspaces in the response content.
+        results_0: list = content_0["results"]
+        results_1: list = content_1["results"]
+        results_0.insert(2, results_1.pop(0))
+        results_1.insert(0, results_0.pop(0))
+
+        responses = [
+            MockResponse(status_code=200, content=json.dumps(content_0), headers={"Content-Type": "application/json"}),
+            MockResponse(status_code=200, content=json.dumps(content_1), headers={"Content-Type": "application/json"}),
+        ]
+        self.transport.request.side_effect = responses
+        expected_workspaces = [TEST_WORKSPACE_A, TEST_WORKSPACE_B, TEST_WORKSPACE_C]
+        actual_workspaces = await self.workspace_client.list_all_workspaces(limit=2)
+
+        self.assertEqual(2, self.transport.request.call_count, "Two requests should be made.")
+        self.assert_any_request_made(
+            method=RequestMethod.GET,
+            path=f"{BASE_PATH}/workspaces?limit=2&offset=0",
+            headers=TestHTTPHeaderDict({"Accept": "application/json"}),
+        )
+        self.assert_any_request_made(
+            method=RequestMethod.GET,
+            path=f"{BASE_PATH}/workspaces?limit=2&offset=2",
+            headers=TestHTTPHeaderDict({"Accept": "application/json"}),
+        )
+        self.assertEqual(expected_workspaces, actual_workspaces)
+
+    async def test_list_workspaces_summary_default_args(self):
+        with self.transport.set_http_response(200, self._empty_content(), headers={"Content-Type": "application/json"}):
+            workspaces = await self.workspace_client.list_workspaces_summary()
+        self.assert_request_made(
+            method=RequestMethod.GET,
+            path=f"{BASE_PATH}/workspaces/summary",
+            headers={"Accept": "application/json"},
+        )
+        self.assertEqual([], workspaces.items())
+
+    async def test_list_workspaces_summary_all_args(self) -> None:
+        for order_by in [
+            {WorkspaceOrderByEnum.name: OrderByOperatorEnum.asc},
+            {"name": "asc"},
+        ]:
+            with self.transport.set_http_response(
+                200, self._empty_content(), headers={"Content-Type": "application/json"}
+            ):
+                workspaces = await self.workspace_client.list_workspaces_summary(
+                    offset=10,
+                    limit=20,
+                    order_by=order_by,
+                    filter_created_by=USER_ID,
+                    created_at=str(utc_datetime(2020, 1, 1)),
+                    updated_at=str(utc_datetime(2020, 1, 1)),
+                    name="Test Workspace A",
+                    deleted=False,
+                    filter_user_id=USER_ID,
+                )
+            self.assert_request_made(
+                method=RequestMethod.GET,
+                path=f"{BASE_PATH}/workspaces/summary?"
+                f"limit=20&offset=10&order_by=asc%3Aname&created_by=00000000-0000-0000-0000-000000000002&"
+                f"created_at=2020-01-01+00%3A00%3A00%2B00%3A00&updated_at=2020-01-01+00%3A00%3A00%2B00%3A00&"
+                f"name=Test+Workspace+A&deleted=False&user_id=00000000-0000-0000-0000-000000000002",
+                headers={"Accept": "application/json"},
+            )
+            self.assertEqual([], workspaces.items())
+
+    async def test_list_workspaces_summary(self) -> None:
+        content = load_test_data("list_workspaces_summary.json")
+        with self.transport.set_http_response(200, json.dumps(content), headers={"Content-Type": "application/json"}):
+            workspaces = await self.workspace_client.list_workspaces_summary()
+        self.assert_request_made(
+            method=RequestMethod.GET,
+            path=f"{BASE_PATH}/workspaces/summary",
+            headers={"Accept": "application/json"},
+        )
+        self.assertEqual(1, self.transport.request.call_count, "One requests should be made.")
+        self.assertEqual([TEST_BASIC_WORKSPACE_A, TEST_BASIC_WORKSPACE_B, TEST_BASIC_WORKSPACE_C], workspaces.items())
+
+    async def test_paginated_list_workspaces_summary(self) -> None:
+        content = load_test_data("list_workspaces_summary_paginated_0.json")
+        content_2 = load_test_data("list_workspaces_summary_paginated_1.json")
+        with self.transport.set_http_response(200, json.dumps(content), headers={"Content-Type": "application/json"}):
+            workspaces_page_1 = await self.workspace_client.list_workspaces_summary(limit=2, offset=0)
+
+        with self.transport.set_http_response(200, json.dumps(content_2), headers={"Content-Type": "application/json"}):
+            workspaces_page_2 = await self.workspace_client.list_workspaces_summary(limit=2, offset=2)
+
+        self.assert_any_request_made(
+            method=RequestMethod.GET,
+            path=f"{BASE_PATH}/workspaces/summary?limit=2&offset=0",
+            headers={"Accept": "application/json"},
+        )
+        self.assert_any_request_made(
+            method=RequestMethod.GET,
+            path=f"{BASE_PATH}/workspaces/summary?limit=2&offset=2",
+            headers={"Accept": "application/json"},
+        )
+        self.assertEqual(2, self.transport.request.call_count, "Two requests should be made.")
+        self.assertEqual([TEST_BASIC_WORKSPACE_A, TEST_BASIC_WORKSPACE_B], workspaces_page_1.items())
+        self.assertEqual([TEST_BASIC_WORKSPACE_C], workspaces_page_2.items())
+
+    async def test_restore_workspace(self):
+        with self.transport.set_http_response(204):
+            response = await self.workspace_client.restore_deleted_workspace(workspace_id=TEST_WORKSPACE_A.id)
+        self.assert_request_made(
+            method=RequestMethod.POST,
+            path=f"{BASE_PATH}/workspaces/{TEST_WORKSPACE_A.id}?deleted=false",
+            headers={"accept": "application/json"},
+        )
+        self.assertIsNone(response, "Restore workspace response should be None")
+
+    async def test_get_workspace(self):
+        content = load_test_data("get_workspace.json")
+        with self.transport.set_http_response(
+            200,
+            json.dumps(content),
+            headers={
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+            },
+        ):
+            workspace = await self.workspace_client.get_workspace(workspace_id=TEST_WORKSPACE_A.id)
+
+        self.assert_request_made(
+            method=RequestMethod.GET,
+            path=f"{BASE_PATH}/workspaces/{TEST_WORKSPACE_A.id}?deleted=False",
+            headers={"Accept": "application/json"},
+        )
+        self.assertEqual(TEST_WORKSPACE_A, workspace)
