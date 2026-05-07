@@ -1605,7 +1605,7 @@ by returning BasicWorkspace objects with minimal data instead of full Workspace 
     <span class="n">order_by</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">WorkspaceOrderByEnum</span><span class="p">,</span> <span class="n">OrderByOperatorEnum</span><span class="p">]</span>
     <span class="o">|</span> <span class="nb">dict</span><span class="p">[</span><span class="n">WorkspaceOrderByLiteral</span><span class="p">,</span> <span class="n">OrderByOperatorLiteral</span><span class="p">]</span>
     <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">created_by</span><span class="p">:</span> <span class="n">UUID</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">filter_created_by</span><span class="p">:</span> <span class="n">UUID</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">created_at</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">updated_at</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -1695,7 +1695,7 @@ by returning BasicWorkspace objects with minimal data instead of full Workspace 
           </tr>
           <tr class="doc-section-item">
             <td>
-                <code>created_by</code>
+                <code>filter_created_by</code>
             </td>
             <td>
                   <code><span title="uuid.UUID">UUID</span> | None</code>
@@ -1822,12 +1822,12 @@ by returning BasicWorkspace objects with minimal data instead of full Workspace 
     <span class="n">order_by</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">WorkspaceOrderByEnum</span><span class="p">,</span> <span class="n">OrderByOperatorEnum</span><span class="p">]</span>
     <span class="o">|</span> <span class="nb">dict</span><span class="p">[</span><span class="n">WorkspaceOrderByLiteral</span><span class="p">,</span> <span class="n">OrderByOperatorLiteral</span><span class="p">]</span>
     <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">created_by</span><span class="p">:</span> <span class="n">UUID</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">filter_created_by</span><span class="p">:</span> <span class="n">UUID</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">created_at</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">updated_at</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">deleted</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">user_id</span><span class="p">:</span> <span class="n">UUID</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">filter_user_id</span><span class="p">:</span> <span class="n">UUID</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Page</span><span class="p">[</span><span class="n">Workspace</span><span class="p">]</span>
 </code></pre></div>
 
@@ -1849,14 +1849,14 @@ by returning BasicWorkspace objects with minimal data instead of full Workspace 
       <tbody>
           <tr class="doc-section-item">
             <td>
-                <code>user_id</code>
+                <code>filter_user_id</code>
             </td>
             <td>
                   <code><span title="uuid.UUID">UUID</span> | None</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The ID of the user to list the workspaces for.</p>
+                <p>Filter workspaces by the user's ID.</p>
               </div>
             </td>
             <td>
@@ -1913,7 +1913,7 @@ by returning BasicWorkspace objects with minimal data instead of full Workspace 
           </tr>
           <tr class="doc-section-item">
             <td>
-                <code>created_by</code>
+                <code>filter_created_by</code>
             </td>
             <td>
                   <code><span title="uuid.UUID">UUID</span> | None</code>
@@ -2174,8 +2174,8 @@ by returning BasicWorkspace objects with minimal data instead of full Workspace 
 <div class="doc doc-object doc-function">
 
 
-<h3 id="evo.workspaces.client.WorkspaceAPIClient.admin_list_users" class="doc doc-heading">
-            <span class="doc doc-object-name doc-function-name">admin_list_users</span>
+<h3 id="evo.workspaces.client.WorkspaceAPIClient.admin_list_user_roles" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">admin_list_user_roles</span>
 
 
   <span class="doc doc-labels">
@@ -2183,7 +2183,7 @@ by returning BasicWorkspace objects with minimal data instead of full Workspace 
   </span>
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">admin_list_users</span><span class="p">(</span><span class="n">workspace_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">user_id</span><span class="p">:</span> <span class="n">UUID</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">User</span><span class="p">]</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">admin_list_user_roles</span><span class="p">(</span><span class="n">workspace_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">filter_user_id</span><span class="p">:</span> <span class="n">UUID</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">User</span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -2220,7 +2220,7 @@ by returning BasicWorkspace objects with minimal data instead of full Workspace 
           </tr>
           <tr class="doc-section-item">
             <td>
-                <code>user_id</code>
+                <code>filter_user_id</code>
             </td>
             <td>
                   <code><span title="uuid.UUID">UUID</span> | None</code>
