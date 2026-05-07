@@ -1,3 +1,5 @@
+from parameterized import parameterized
+
 from evo.common import RequestMethod
 from evo.common.test_tools import MockResponse, TestWithConnector
 from evo.common.utils import get_header_metadata
@@ -21,23 +23,35 @@ class TestWorkspaceClientThumbnailEndpoints(TestWithConnector):
         self.workspace_client = WorkspaceAPIClient(connector=self.connector, org_id=ORG_UUID)
         self.setup_universal_headers(get_header_metadata(WorkspaceAPIClient.__module__))
 
-    async def test_get_thumbnail(self):
-        thumbnail_bytes: bytearray = load_test_data("thumbnail.jpg")
+    @parameterized.expand(
+        [
+            ("jpeg", "thumbnail.jpg", "image/jpeg"),
+            ("png", "thumbnail_2.png", "image/png"),
+        ]
+    )
+    async def test_get_thumbnail(self, _name: str, filename: str, content_type: str):
+        thumbnail_bytes: bytearray = load_test_data(filename)
         self.transport.request.return_value = MockResponse(
             status_code=200,
             body=thumbnail_bytes,
-            headers={"Content-Type": "image/jpeg"},
+            headers={"Content-Type": content_type},
         )
         response = await self.workspace_client.get_thumbnail(workspace_id=TEST_WORKSPACE_A.id)
         self.assert_request_made(
             method=RequestMethod.GET,
             path=f"{BASE_PATH}/workspaces/{TEST_WORKSPACE_A.id}/thumbnail",
-            headers={"accept": "image/jpeg"},
+            headers={"accept": "image/jpeg, image/png"},
         )
         self.assertEqual(response, thumbnail_bytes)
 
-    async def test_put_thumbnail(self):
-        thumbnail_bytes: bytearray = load_test_data("thumbnail.jpg")
+    @parameterized.expand(
+        [
+            ("jpeg", "thumbnail.jpg", "image/jpeg"),
+            ("png", "thumbnail_2.png", "image/png"),
+        ]
+    )
+    async def test_put_thumbnail(self, _name: str, filename: str, content_type: str):
+        thumbnail_bytes: bytearray = load_test_data(filename)
         with self.transport.set_http_response(204):
             response = await self.workspace_client.put_thumbnail(
                 workspace_id=TEST_WORKSPACE_A.id, thumbnail=thumbnail_bytes
@@ -45,7 +59,7 @@ class TestWorkspaceClientThumbnailEndpoints(TestWithConnector):
         self.assert_request_made(
             method=RequestMethod.PUT,
             path=f"{BASE_PATH}/workspaces/{TEST_WORKSPACE_A.id}/thumbnail",
-            headers={"Content-Type": "image/jpeg"},
+            headers={"Content-Type": content_type},
             body=thumbnail_bytes,
         )
         self.assertIsNone(response, "Put thumbnail response should be None")

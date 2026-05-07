@@ -87,3 +87,10 @@ def make_instance_user_invitation(
         status=status,
         roles=[make_instance_role(UUID(int=role_id), role_name)],
     )
+
+
+def empty_response_content() -> str:
+    """Factory method to create empty response content."""
+    data = """{"results": [], "links": {"first": "http://firstlink", "last": "http://lastlink",
+            "next": null, "previous": null, "count": 0, "total": 0}}"""
+    return data

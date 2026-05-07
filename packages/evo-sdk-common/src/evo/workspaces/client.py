@@ -538,7 +538,11 @@ class WorkspaceAPIClient:
         :param workspace_id: The ID of the workspace to get the thumbnail for.
         :returns: The thumbnail image as bytes.
         """
-        return await self._thumbnails_api.get_thumbnail(org_id=str(self._org_id), workspace_id=str(workspace_id))
+        return await self._thumbnails_api.get_thumbnail(
+            org_id=str(self._org_id),
+            workspace_id=str(workspace_id),
+            additional_headers={"Accept": "image/jpeg, image/png"},
+        )
 
     async def put_thumbnail(self, workspace_id: UUID, thumbnail: bytearray):
         """
@@ -601,7 +605,7 @@ class WorkspaceAPIClient:
         order_by: dict[WorkspaceOrderByEnum, OrderByOperatorEnum]
         | dict[WorkspaceOrderByLiteral, OrderByOperatorLiteral]
         | None = None,
-        created_by: UUID | None = None,
+        filter_created_by: UUID | None = None,
         created_at: str | None = None,
         updated_at: str | None = None,
         name: str | None = None,
@@ -613,7 +617,7 @@ class WorkspaceAPIClient:
         :param limit: The maximum number of workspaces to return.
         :param offset: The offset for pagination.
         :param order_by: A dictionary specifying the fields to sort by and their corresponding sort directions (e.g., {"name": "asc", "created_at": "desc"}).
-        :param created_by: Filter workspaces by the ID of the user who created them.
+        :param filter_created_by: Filter workspaces by the ID of the user who created them.
         :param created_at: Filter workspaces by their creation timestamp (e.g., "2023-01-01T00:00:00Z").
         :param updated_at: Filter workspaces by their last updated timestamp (e.g., "2023-01-01T00:00:00Z").
         :param name: Filter workspaces by their name (supports partial matches).
@@ -632,7 +636,7 @@ class WorkspaceAPIClient:
             limit=limit,
             offset=offset,
             order_by=parsed_order_by,
-            created_by=str(created_by) if created_by else None,
+            created_by=str(filter_created_by) if filter_created_by else None,
             created_at=created_at,
             updated_at=updated_at,
             name=name,
@@ -653,20 +657,20 @@ class WorkspaceAPIClient:
         order_by: dict[WorkspaceOrderByEnum, OrderByOperatorEnum]
         | dict[WorkspaceOrderByLiteral, OrderByOperatorLiteral]
         | None = None,
-        created_by: UUID | None = None,
+        filter_created_by: UUID | None = None,
         created_at: str | None = None,
         updated_at: str | None = None,
         name: str | None = None,
         deleted: bool | None = None,
-        user_id: UUID | None = None,
+        filter_user_id: UUID | None = None,
     ) -> Page[Workspace]:
         """
         Lists all workspaces in the instance.
-        :param user_id: The ID of the user to list the workspaces for.
+        :param filter_user_id: Filter workspaces by the user's ID.
         :param limit: The maximum number of workspaces to return.
         :param offset: The offset for pagination.
         :param order_by: A dictionary specifying the fields to sort by and their corresponding sort directions (e.g., {"name": "asc", "created_at": "desc"}).
-        :param created_by: Filter workspaces by the ID of the user who created them.
+        :param filter_created_by: Filter workspaces by the ID of the user who created them.
         :param created_at: Filter workspaces by their creation timestamp (e.g., "2023-01-01T00:00:00Z").
         :param updated_at: Filter workspaces by their last updated timestamp (e.g., "2023-01-01T00:00:00Z").
         :param name: Filter workspaces by their name (supports partial matches).
@@ -684,12 +688,12 @@ class WorkspaceAPIClient:
             limit=limit,
             offset=offset,
             order_by=parsed_order_by,
-            created_by=str(created_by) if created_by else None,
+            created_by=str(filter_created_by) if filter_created_by else None,
             created_at=created_at,
             updated_at=updated_at,
             name=name,
             deleted=deleted,
-            user_id=str(user_id) if user_id else None,
+            user_id=str(filter_user_id) if filter_user_id else None,
         )
 
         return Page(
@@ -717,19 +721,23 @@ class WorkspaceAPIClient:
         :param workspace_id: The ID of the workspace to get the thumbnail for.
         :returns: The thumbnail image as bytes.
         """
-        return await self._admin_api.get_thumbnail_admin(org_id=str(self._org_id), workspace_id=str(workspace_id))
+        return await self._admin_api.get_thumbnail_admin(
+            org_id=str(self._org_id),
+            workspace_id=str(workspace_id),
+            additional_headers={"Accept": "image/jpeg, image/png"},
+        )
 
-    async def admin_list_users(self, workspace_id: UUID, user_id: UUID | None = None) -> list[User]:
+    async def admin_list_user_roles(self, workspace_id: UUID, filter_user_id: UUID | None = None) -> list[User]:
         """
         Lists all users in the workspace.
         :param workspace_id: The ID of the workspace to get the users for.
-        :param user_id: filter by a specific user id.
+        :param filter_user_id: filter by a specific user id.
         :returns: A list of users in the workspace.
         """
         response = await self._admin_api.list_user_roles_admin(
             org_id=str(self._org_id),
             workspace_id=str(workspace_id),
-            user_id=str(user_id) if user_id else None,
+            user_id=str(filter_user_id) if filter_user_id else None,
         )
 
         return [parse.user_model(item) for item in response.results]

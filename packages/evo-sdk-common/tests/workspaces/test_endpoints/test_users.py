@@ -1,5 +1,7 @@
 import json
 
+from parameterized import parameterized
+
 from evo.common import RequestMethod
 from evo.common.test_tools import TestWithConnector
 from evo.common.utils import get_header_metadata
@@ -73,7 +75,13 @@ class TestWorkspaceClientUserEndpoints(TestWithConnector):
         )
         self.assertEqual(response, UserRole(user_id=USER_ID, role=WorkspaceRole.owner))
 
-    async def test_list_user_roles(self) -> None:
+    @parameterized.expand(
+        [
+            None,
+            USER_ID,
+        ]
+    )
+    async def test_list_user_roles(self, user_id_filter) -> None:
         with self.transport.set_http_response(
             200,
             json.dumps(
@@ -90,11 +98,17 @@ class TestWorkspaceClientUserEndpoints(TestWithConnector):
                 }
             ),
         ):
-            response = await self.workspace_client.list_user_roles(workspace_id=TEST_WORKSPACE_A.id)
+            response = await self.workspace_client.list_user_roles(
+                workspace_id=TEST_WORKSPACE_A.id, filter_user_id=user_id_filter
+            )
+
+        expected_path = f"{BASE_PATH}/workspaces/{TEST_WORKSPACE_A.id}/users"
+        if user_id_filter:
+            expected_path += f"?user_id={user_id_filter}"
 
         self.assert_request_made(
             method=RequestMethod.GET,
-            path=f"{BASE_PATH}/workspaces/{TEST_WORKSPACE_A.id}/users",
+            path=expected_path,
             headers={"Accept": "application/json"},
         )
         self.assertEqual(

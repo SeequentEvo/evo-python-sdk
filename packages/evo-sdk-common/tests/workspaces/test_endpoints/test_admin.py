@@ -1,7 +1,10 @@
 import json
 
+from parameterized import parameterized
+
 from evo.common import RequestMethod
-from evo.common.test_tools import MockResponse, TestWithConnector
+from evo.common.data import OrderByOperatorEnum
+from evo.common.test_tools import MockResponse, TestWithConnector, utc_datetime
 from evo.common.utils import get_header_metadata
 from evo.workspaces import (
     BulkUserRoleAssignment,
@@ -9,6 +12,7 @@ from evo.workspaces import (
     User,
     UserRole,
     WorkspaceAPIClient,
+    WorkspaceOrderByEnum,
     WorkspaceRole,
 )
 
@@ -23,6 +27,7 @@ from ..data import (
     TEST_WORKSPACE_A,
     TEST_WORKSPACE_B,
 )
+from ..helpers import empty_response_content
 
 
 class TestWorkspaceClientAdminEndpoints(TestWithConnector):
@@ -71,6 +76,35 @@ class TestWorkspaceClientAdminEndpoints(TestWithConnector):
         self.assertEqual(1, self.transport.request.call_count, "One requests should be made.")
         self.assertEqual([TEST_WORKSPACE_A, TEST_WORKSPACE_B], workspaces.items())
 
+    async def test_admin_list_user_workspaces_all_args(self):
+        for order_by in [
+            {WorkspaceOrderByEnum.name: OrderByOperatorEnum.asc},
+            {"name": "asc"},
+        ]:
+            with self.transport.set_http_response(
+                200, empty_response_content(), headers={"Content-Type": "application/json"}
+            ):
+                workspaces = await self.workspace_client.admin_list_user_workspaces(
+                    offset=10,
+                    limit=20,
+                    order_by=order_by,
+                    filter_created_by=USER_ID,
+                    created_at=str(utc_datetime(2020, 1, 1)),
+                    updated_at=str(utc_datetime(2020, 1, 1)),
+                    name="Test Workspace A",
+                    deleted=False,
+                    user_id=USER_ID,
+                )
+            self.assert_request_made(
+                method=RequestMethod.GET,
+                path=f"{ADMIN_BASE_PATH}/users/{USER_ID}/workspaces?"
+                f"limit=20&offset=10&order_by=asc%3Aname&created_by=00000000-0000-0000-0000-000000000002&"
+                f"created_at=2020-01-01+00%3A00%3A00%2B00%3A00&updated_at=2020-01-01+00%3A00%3A00%2B00%3A00&"
+                f"name=Test+Workspace+A&deleted=False",
+                headers={"Accept": "application/json"},
+            )
+            self.assertEqual([], workspaces.items())
+
     async def test_admin_list_workspaces(self):
         content = load_test_data("list_workspaces_0.json")
         with self.transport.set_http_response(200, json.dumps(content), headers={"Content-Type": "application/json"}):
@@ -82,6 +116,35 @@ class TestWorkspaceClientAdminEndpoints(TestWithConnector):
             )
             self.assertEqual(1, self.transport.request.call_count, "One requests should be made.")
             self.assertEqual([TEST_WORKSPACE_A, TEST_WORKSPACE_B], workspaces.items())
+
+    async def test_admin_list_workspaces_all_args(self):
+        for order_by in [
+            {WorkspaceOrderByEnum.name: OrderByOperatorEnum.asc},
+            {"name": "asc"},
+        ]:
+            with self.transport.set_http_response(
+                200, empty_response_content(), headers={"Content-Type": "application/json"}
+            ):
+                workspaces = await self.workspace_client.admin_list_workspaces(
+                    offset=10,
+                    limit=20,
+                    order_by=order_by,
+                    filter_created_by=USER_ID,
+                    created_at=str(utc_datetime(2020, 1, 1)),
+                    updated_at=str(utc_datetime(2020, 1, 1)),
+                    name="Test Workspace A",
+                    deleted=False,
+                    filter_user_id=USER_ID,
+                )
+            self.assert_request_made(
+                method=RequestMethod.GET,
+                path=f"{ADMIN_BASE_PATH}/workspaces?"
+                f"limit=20&offset=10&order_by=asc%3Aname&created_by=00000000-0000-0000-0000-000000000002&"
+                f"created_at=2020-01-01+00%3A00%3A00%2B00%3A00&updated_at=2020-01-01+00%3A00%3A00%2B00%3A00&"
+                f"name=Test+Workspace+A&deleted=False&user_id=00000000-0000-0000-0000-000000000002",
+                headers={"Accept": "application/json"},
+            )
+            self.assertEqual([], workspaces.items())
 
     async def test_admin_get_workspace(self):
         content = load_test_data("get_workspace.json")
@@ -102,22 +165,34 @@ class TestWorkspaceClientAdminEndpoints(TestWithConnector):
         )
         self.assertEqual(TEST_WORKSPACE_A, workspace)
 
-    async def test_admin_get_thumbnail(self):
-        thumbnail_bytes: bytearray = load_test_data("thumbnail.jpg")
+    @parameterized.expand(
+        [
+            ("jpeg", "thumbnail.jpg", "image/jpeg"),
+            ("png", "thumbnail_2.png", "image/png"),
+        ]
+    )
+    async def test_admin_get_thumbnail(self, _name: str, filename: str, content_type: str):
+        thumbnail_bytes: bytearray = load_test_data(filename)
         self.transport.request.return_value = MockResponse(
             status_code=200,
             body=thumbnail_bytes,
-            headers={"Content-Type": "image/jpeg"},
+            headers={"Content-Type": content_type},
         )
         response = await self.workspace_client.admin_get_thumbnail(workspace_id=TEST_WORKSPACE_A.id)
         self.assert_request_made(
             method=RequestMethod.GET,
             path=f"{ADMIN_BASE_PATH}/workspaces/{TEST_WORKSPACE_A.id}/thumbnail",
-            headers={"accept": "image/jpeg"},
+            headers={"accept": "image/jpeg, image/png"},
         )
         self.assertEqual(response, thumbnail_bytes)
 
-    async def test_admin_list_users(self):
+    @parameterized.expand(
+        [
+            None,
+            USER_ID,
+        ]
+    )
+    async def test_admin_list_user_roles(self, user_id_filter) -> None:
         with self.transport.set_http_response(
             200,
             json.dumps(
@@ -134,10 +209,17 @@ class TestWorkspaceClientAdminEndpoints(TestWithConnector):
                 }
             ),
         ):
-            response = await self.workspace_client.admin_list_users(workspace_id=TEST_WORKSPACE_A.id)
+            response = await self.workspace_client.admin_list_user_roles(
+                workspace_id=TEST_WORKSPACE_A.id, filter_user_id=user_id_filter
+            )
+
+        expected_path = f"{ADMIN_BASE_PATH}/workspaces/{TEST_WORKSPACE_A.id}/users"
+        if user_id_filter:
+            expected_path += f"?user_id={user_id_filter}"
+
         self.assert_request_made(
             method=RequestMethod.GET,
-            path=f"{ADMIN_BASE_PATH}/workspaces/{TEST_WORKSPACE_A.id}/users",
+            path=expected_path,
             headers={"Accept": "application/json"},
         )
         self.assertEqual(
