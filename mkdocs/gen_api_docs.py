@@ -11,6 +11,7 @@
 
 import importlib
 import logging
+import re
 import sys
 from collections import defaultdict
 from pathlib import Path
@@ -217,3 +218,13 @@ def on_startup(command: str, dirty: bool) -> None:
     auto_generated_paths = _collect_auto_generated_paths(docs_packages_dir, api_entries, discovered)
     _clean_stale_docs(docs_packages_dir, auto_generated_paths, mkdocs_dir)
     _generate_all_docs(docs_packages_dir, api_entries, discovered, mkdocs_dir)
+
+
+_SCRIPT_RE = re.compile(r"^\s*<script\b[^>]*>.*?</script>\s*\n", re.DOTALL | re.IGNORECASE | re.MULTILINE)
+
+
+def on_post_page(output: str, **kwargs) -> str:
+    cleaned = _SCRIPT_RE.sub("", output)
+    if cleaned != output:
+        log.info("Removed <script> sections from page output.")
+    return cleaned
