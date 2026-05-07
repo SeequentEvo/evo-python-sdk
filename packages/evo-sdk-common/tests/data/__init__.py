@@ -39,10 +39,3 @@ def load_test_data(filename: str) -> list | dict | bytearray:
                 return bytearray(f.read())
         case ext:
             raise ValueError(f"Unsupported data file type '{ext}'")
-
-
-def _get_thumbnail_bytestream():
-    target_file = (_THIS_DIR / "thumbnail.jpg").resolve()
-    with open(target_file, "rb") as f:
-        thumbnail_bytes = bytearray(f.read())
-    return thumbnail_bytes
