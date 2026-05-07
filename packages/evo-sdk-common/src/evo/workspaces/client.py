@@ -24,6 +24,7 @@ from . import parse
 from .data import (
     AddedInstanceUsers,
     BasicWorkspace,
+    BulkUserRoleAssignmentRequest,
     InstanceRoleWithPermissions,
     InstanceUser,
     InstanceUserInvitation,
@@ -34,18 +35,19 @@ from .data import (
     Workspace,
     WorkspaceOrderByEnum,
     WorkspaceRole,
-    BulkUserRoleAssignmentRequest,
 )
 from .endpoints.api import AdminApi, GeneralApi, InstanceUsersApi, ThumbnailsApi, WorkspacesApi
 from .endpoints.models import (
     AddInstanceUsersRequest,
+    BulkUserRoleAssignmentsRequest,
     CreateWorkspaceRequest,
     GeometryTypeEnum,
     Label,
     RoleEnum,
     UpdateInstanceUserRolesRequest,
     UpdateWorkspaceRequest,
-    UserRoleMapping, BulkUserRoleAssignmentsRequest, UserRoleAssignmentRequest,
+    UserRoleAssignmentRequest,
+    UserRoleMapping,
 )
 from .endpoints.models import BoundingBox as PydanticBoundingBox
 from .endpoints.models import UserRole as PydanticUserRole
@@ -141,7 +143,6 @@ class WorkspaceAPIClient:
             workspace_id=str(workspace_id),
             user_id=str(user_id),
         )
-
 
     """
     Workspace crud endpoints
@@ -387,7 +388,6 @@ class WorkspaceAPIClient:
         )
         return parse.workspace_model(model, self._org_id, self._connector.base_url)
 
-
     async def restore_deleted_workspace(self, workspace_id: UUID) -> None:
         """
         Restore a deleted workspace by workspace id.
@@ -547,8 +547,17 @@ class WorkspaceAPIClient:
         :param thumbnail: The thumbnail image as a byte array.
         :returns: The thumbnail image as bytes.
         """
+        if thumbnail[:3] == bytearray(b"\xff\xd8\xff"):
+            content_type = "image/jpeg"
+        else:
+            content_type = "image/png"  # workspace will validate regardless
 
-        await self._thumbnails_api.put_thumbnail(org_id=str(self._org_id), workspace_id=str(workspace_id), body=thumbnail)
+        await self._thumbnails_api.put_thumbnail(
+            org_id=str(self._org_id),
+            workspace_id=str(workspace_id),
+            body=thumbnail,
+            additional_headers={"Content-Type": content_type},
+        )
 
     async def delete_thumbnail(self, workspace_id: UUID) -> None:
         """
@@ -580,7 +589,9 @@ class WorkspaceAPIClient:
             ]
         )
 
-        await self._admin_api.bulk_assign_roles_admin(org_id=str(self._org_id), bulk_user_role_assignments_request=request)
+        await self._admin_api.bulk_assign_roles_admin(
+            org_id=str(self._org_id), bulk_user_role_assignments_request=request
+        )
 
     async def admin_list_user_workspaces(
         self,
@@ -706,7 +717,7 @@ class WorkspaceAPIClient:
         :param workspace_id: The ID of the workspace to get the thumbnail for.
         :returns: The thumbnail image as bytes.
         """
-        return await self._thumbnails_api.get_thumbnail(org_id=str(self._org_id), workspace_id=str(workspace_id))
+        return await self._admin_api.get_thumbnail_admin(org_id=str(self._org_id), workspace_id=str(workspace_id))
 
     async def admin_list_users(self, workspace_id: UUID, user_id: UUID | None = None) -> list[User]:
         """
@@ -746,4 +757,6 @@ class WorkspaceAPIClient:
         :param workspace_id: The ID of the workspace to remove the user from.
         :param user_id: user_id of the user to remove.
         """
-        await self._admin_api.delete_user_role_admin(org_id=str(self._org_id), workspace_id=str(workspace_id), user_id=str(user_id))
+        await self._admin_api.delete_user_role_admin(
+            org_id=str(self._org_id), workspace_id=str(workspace_id), user_id=str(user_id)
+        )

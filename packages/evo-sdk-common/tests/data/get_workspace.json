@@ -1,0 +1,22 @@
+{
+  "id": "00000000-0000-0000-0000-00000000000a",
+  "name": "Test Workspace A",
+  "description": "test workspace a",
+  "current_user_role": "owner",
+  "bounding_box": null,
+  "created_at": "2020-01-01T00:00:00.000000+00:00",
+  "updated_at": "2020-01-01T00:00:00.000000+00:00",
+  "created_by": {
+      "id": "00000000-0000-0000-0000-000000000002",
+      "name": "Test User",
+      "email": "test.user@unit.test"
+  },
+  "updated_by": {
+      "id": "00000000-0000-0000-0000-000000000002",
+      "name": "Test User",
+      "email": "test.user@unit.test"
+  },
+  "default_coordinate_system": "",
+  "labels": [],
+  "self_link": "https://unittest.localhost/workspace/orgs/00000000-0000-0000-0000-000000000000/workspaces/00000000-0000-0000-0000-00000000000a"
+}

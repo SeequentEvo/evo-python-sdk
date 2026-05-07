@@ -14,6 +14,8 @@ from .data import (
     AddedInstanceUsers,
     BasicWorkspace,
     BoundingBox,
+    BulkUserRoleAssignment,
+    BulkUserRoleAssignmentRequest,
     Coordinate,
     InstanceRole,
     InstanceRoleWithPermissions,
@@ -28,14 +30,14 @@ from .data import (
     Workspace,
     WorkspaceOrderByEnum,
     WorkspaceRole,
-    BulkUserRoleAssignment,
-    BulkUserRoleAssignmentRequest,
 )
 
 __all__ = [
     "AddedInstanceUsers",
     "BasicWorkspace",
     "BoundingBox",
+    "BulkUserRoleAssignment",
+    "BulkUserRoleAssignmentRequest",
     "Coordinate",
     "InstanceRole",
     "InstanceRoleWithPermissions",
@@ -51,6 +53,4 @@ __all__ = [
     "WorkspaceAPIClient",
     "WorkspaceOrderByEnum",
     "WorkspaceRole",
-    "BulkUserRoleAssignment",
-    "BulkUserRoleAssignmentRequest",
 ]

@@ -21,6 +21,8 @@ from evo.workspaces import (
     AddedInstanceUsers,
     BasicWorkspace,
     BoundingBox,
+    BulkUserRoleAssignment,
+    BulkUserRoleAssignmentRequest,
     Coordinate,
     InstanceRole,
     InstanceRoleWithPermissions,
@@ -42,7 +44,7 @@ from ..data import load_test_data
 ORG_UUID = UUID(int=0)
 USER_ID = UUID(int=2)
 BASE_PATH = f"/workspace/orgs/{ORG_UUID}"
-
+ADMIN_BASE_PATH = f"/workspace/admin/orgs/{ORG_UUID}"
 TEST_USER = ServiceUser(id=USER_ID, name="Test User", email="test.user@unit.test")
 
 
@@ -149,6 +151,12 @@ INVITATION_3 = _test_instance_user_invitation(UUID(int=3), "external.user3@gmail
 
 INSTANCE_USER_ROLE = _test_instance_role_with_permissions(UUID(int=1), "Evo User")
 INSTANCE_ADMIN_ROLE = _test_instance_role_with_permissions(UUID(int=2), "Evo Admin")
+
+
+def _get_thumbnail_bytestream():
+    with open("./data/thumbnail.jpg", "rb") as f:
+        thumbnail_bytes = bytearray(f.read())
+    return thumbnail_bytes
 
 
 class TestWorkspaceClient(TestWithConnector):
@@ -619,3 +627,255 @@ class TestWorkspaceClient(TestWithConnector):
                 roles=[_test_instance_role(INSTANCE_ADMIN_ROLE.role_id, "Evo Admin")],
             ),
         )
+
+    async def test_restore_workspace(self):
+        with self.transport.set_http_response(204):
+            response = await self.workspace_client.restore_deleted_workspace(workspace_id=TEST_WORKSPACE_A.id)
+        self.assert_request_made(
+            method=RequestMethod.POST,
+            path=f"{BASE_PATH}/workspaces/{TEST_WORKSPACE_A.id}?deleted=false",
+            headers={"accept": "application/json"},
+        )
+        self.assertIsNone(response, "Restore workspace response should be None")
+
+    async def test_get_thumbnail(self):
+        thumbnail_bytes = _get_thumbnail_bytestream()
+        self.transport.request.return_value = MockResponse(
+            status_code=200,
+            body=thumbnail_bytes,
+            headers={"Content-Type": "image/jpeg"},
+        )
+        response = await self.workspace_client.get_thumbnail(workspace_id=TEST_WORKSPACE_A.id)
+        self.assert_request_made(
+            method=RequestMethod.GET,
+            path=f"{BASE_PATH}/workspaces/{TEST_WORKSPACE_A.id}/thumbnail",
+            headers={"accept": "image/jpeg"},
+        )
+        self.assertEqual(response, thumbnail_bytes)
+
+    async def test_put_thumbnail(self):
+        thumbnail_bytes = _get_thumbnail_bytestream()
+        with self.transport.set_http_response(204):
+            response = await self.workspace_client.put_thumbnail(
+                workspace_id=TEST_WORKSPACE_A.id, thumbnail=thumbnail_bytes
+            )
+        self.assert_request_made(
+            method=RequestMethod.PUT,
+            path=f"{BASE_PATH}/workspaces/{TEST_WORKSPACE_A.id}/thumbnail",
+            headers={"Content-Type": "image/jpeg"},
+            body=thumbnail_bytes,
+        )
+        self.assertIsNone(response, "Put thumbnail response should be None")
+
+    async def test_delete_thumbnail(self):
+        with self.transport.set_http_response(204):
+            response = await self.workspace_client.delete_thumbnail(workspace_id=TEST_WORKSPACE_A.id)
+        self.assert_request_made(
+            method=RequestMethod.DELETE,
+            path=f"{BASE_PATH}/workspaces/{TEST_WORKSPACE_A.id}/thumbnail",
+        )
+        self.assertIsNone(response, "Delete thumbnail response should be None")
+
+    async def test_bulk_assign_roles(self):
+        request = BulkUserRoleAssignmentRequest(
+            role_assignments=[
+                BulkUserRoleAssignment(
+                    workspace_id=TEST_WORKSPACE_A.id,
+                    role=WorkspaceRole.editor,
+                    user_id=INSTANCE_USER_1.user_id,
+                )
+            ]
+        )
+        with self.transport.set_http_response(200):
+            response = await self.workspace_client.admin_bulk_assign_roles(request)
+        self.assert_request_made(
+            method=RequestMethod.POST,
+            path=f"{ADMIN_BASE_PATH}/action/bulk_assign_roles",
+            headers={"Content-Type": "application/json", "Accept": "application/json"},
+            body={
+                "role_assignments": [
+                    {
+                        "role": "editor",
+                        "user_id": str(INSTANCE_USER_1.user_id),
+                        "workspace_id": str(TEST_WORKSPACE_A.id),
+                    }
+                ]
+            },
+        )
+        self.assertIsNone(response, "Bulk assign roles response should be None")
+
+    async def test_admin_list_user_workspaces(self):
+        content = load_test_data("list_user_workspaces_admin.json")
+        with self.transport.set_http_response(200, json.dumps(content), headers={"Content-Type": "application/json"}):
+            workspaces = await self.workspace_client.admin_list_user_workspaces(user_id=INSTANCE_USER_1.user_id)
+        self.assert_request_made(
+            method=RequestMethod.GET,
+            path=f"{ADMIN_BASE_PATH}/users/{INSTANCE_USER_1.user_id}/workspaces?limit=100&offset=0",
+            headers={"Accept": "application/json"},
+        )
+        self.assertEqual(1, self.transport.request.call_count, "One requests should be made.")
+        self.assertEqual([TEST_WORKSPACE_A, TEST_WORKSPACE_B], workspaces.items())
+
+    async def test_admin_list_workspaces(self):
+        content = load_test_data("list_workspaces_0.json")
+        with self.transport.set_http_response(200, json.dumps(content), headers={"Content-Type": "application/json"}):
+            workspaces = await self.workspace_client.admin_list_workspaces()
+            self.assert_request_made(
+                method=RequestMethod.GET,
+                path=f"{ADMIN_BASE_PATH}/workspaces?limit=100&offset=0",
+                headers={"Accept": "application/json"},
+            )
+            self.assertEqual(1, self.transport.request.call_count, "One requests should be made.")
+            self.assertEqual([TEST_WORKSPACE_A, TEST_WORKSPACE_B], workspaces.items())
+
+    async def test_admin_get_workspace(self):
+        content = load_test_data("get_workspace.json")
+        with self.transport.set_http_response(
+            200,
+            json.dumps(content),
+            headers={
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+            },
+        ):
+            workspace = await self.workspace_client.admin_get_workspace(workspace_id=TEST_WORKSPACE_A.id)
+
+        self.assert_request_made(
+            method=RequestMethod.GET,
+            path=f"{ADMIN_BASE_PATH}/workspaces/{TEST_WORKSPACE_A.id}?deleted=False",
+            headers={"Accept": "application/json"},
+        )
+        self.assertEqual(TEST_WORKSPACE_A, workspace)
+
+    async def test_admin_get_thumbnail(self):
+        thumbnail_bytes = _get_thumbnail_bytestream()
+        self.transport.request.return_value = MockResponse(
+            status_code=200,
+            body=thumbnail_bytes,
+            headers={"Content-Type": "image/jpeg"},
+        )
+        response = await self.workspace_client.admin_get_thumbnail(workspace_id=TEST_WORKSPACE_A.id)
+        self.assert_request_made(
+            method=RequestMethod.GET,
+            path=f"{ADMIN_BASE_PATH}/workspaces/{TEST_WORKSPACE_A.id}/thumbnail",
+            headers={"accept": "image/jpeg"},
+        )
+        self.assertEqual(response, thumbnail_bytes)
+
+    async def test_admin_list_users(self):
+        with self.transport.set_http_response(
+            200,
+            json.dumps(
+                {
+                    "results": [
+                        {
+                            "user_id": str(USER_ID),
+                            "role": "owner",
+                            "full_name": "Test User",
+                            "email": "test@example.com",
+                        },
+                    ],
+                    "links": {"self": "dummy-link.com"},
+                }
+            ),
+        ):
+            response = await self.workspace_client.admin_list_users(workspace_id=TEST_WORKSPACE_A.id)
+        self.assert_request_made(
+            method=RequestMethod.GET,
+            path=f"{ADMIN_BASE_PATH}/workspaces/{TEST_WORKSPACE_A.id}/users",
+            headers={"Accept": "application/json"},
+        )
+        self.assertEqual(
+            response,
+            [
+                User(user_id=USER_ID, role=WorkspaceRole.owner, full_name="Test User", email="test@example.com"),
+            ],
+        )
+
+    # admin assign user role
+
+    async def test_admin_assign_user_role(self):
+        with self.transport.set_http_response(
+            201,
+            json.dumps(
+                {
+                    "user_id": str(USER_ID),
+                    "role": "owner",
+                }
+            ),
+        ):
+            response = await self.workspace_client.admin_assign_user_role(
+                workspace_id=TEST_WORKSPACE_A.id,
+                user_id=USER_ID,
+                role=WorkspaceRole.owner,
+            )
+        self.assert_request_made(
+            method=RequestMethod.POST,
+            path=f"{ADMIN_BASE_PATH}/workspaces/{TEST_WORKSPACE_A.id}/users",
+            headers={
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+            },
+            body={
+                "user_id": str(USER_ID),
+                "role": "owner",
+            },
+        )
+        self.assertEqual(response, UserRole(user_id=USER_ID, role=WorkspaceRole.owner))
+
+    # admin remove user from workspace
+
+    async def test_admin_remove_user_from_workspace(self):
+        with self.transport.set_http_response(204):
+            response = await self.workspace_client.admin_remove_user_from_workspace(TEST_WORKSPACE_A.id, USER_ID)
+
+        self.assert_request_made(
+            method=RequestMethod.DELETE,
+            path=f"{ADMIN_BASE_PATH}/workspaces/{TEST_WORKSPACE_A.id}/users/{USER_ID}",
+        )
+        self.assertIsNone(response, "delete response should be empty.")
+
+    async def test_remove_user_from_workspace(self):
+        with self.transport.set_http_response(204):
+            response = await self.workspace_client.delete_user_role(TEST_WORKSPACE_A.id, USER_ID)
+
+        self.assert_request_made(
+            method=RequestMethod.DELETE,
+            path=f"{BASE_PATH}/workspaces/{TEST_WORKSPACE_A.id}/users/{USER_ID}",
+        )
+        self.assertIsNone(response, "delete response should be empty.")
+
+    async def test_list_instance_user_roles(self):
+        content = load_test_data("list_instance_roles.json")
+        with self.transport.set_http_response(
+            200,
+            json.dumps(content),
+            headers={"Content-Type": "application/json"},
+        ):
+            response = await self.workspace_client.list_instance_roles()
+
+        self.assert_request_made(
+            method=RequestMethod.GET,
+            path=f"{BASE_PATH}/members/roles",
+            headers={"Accept": "application/json"},
+        )
+        self.assertEqual(response, [INSTANCE_USER_ROLE, INSTANCE_ADMIN_ROLE])
+
+    async def test_get_workspace(self):
+        content = load_test_data("get_workspace.json")
+        with self.transport.set_http_response(
+            200,
+            json.dumps(content),
+            headers={
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+            },
+        ):
+            workspace = await self.workspace_client.get_workspace(workspace_id=TEST_WORKSPACE_A.id)
+
+        self.assert_request_made(
+            method=RequestMethod.GET,
+            path=f"{BASE_PATH}/workspaces/{TEST_WORKSPACE_A.id}?deleted=False",
+            headers={"Accept": "application/json"},
+        )
+        self.assertEqual(TEST_WORKSPACE_A, workspace)
