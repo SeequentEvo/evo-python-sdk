@@ -736,6 +736,61 @@ by returning BasicWorkspace objects with minimal data instead of full Workspace 
 <div class="doc doc-object doc-function">
 
 
+<h3 id="evo.workspaces.client.WorkspaceAPIClient.restore_deleted_workspace" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">restore_deleted_workspace</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">restore_deleted_workspace</span><span class="p">(</span><span class="n">workspace_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Restore a deleted workspace by workspace id.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>workspace_id</code>
+            </td>
+            <td>
+                  <code><span title="uuid.UUID">UUID</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The workspace id to restore.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
 <h3 id="evo.workspaces.client.WorkspaceAPIClient.list_instance_users" class="doc doc-heading">
             <span class="doc doc-object-name doc-function-name">list_instance_users</span>
 
@@ -1240,6 +1295,1147 @@ by returning BasicWorkspace objects with minimal data instead of full Workspace 
               <div class="doc-md-description">
                 <p>The updated instance user.</p>
               </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.workspaces.client.WorkspaceAPIClient.get_thumbnail" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">get_thumbnail</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_thumbnail</span><span class="p">(</span><span class="n">workspace_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytearray</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Gets the thumbnail image for a workspace.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>workspace_id</code>
+            </td>
+            <td>
+                  <code><span title="uuid.UUID">UUID</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The ID of the workspace to get the thumbnail for.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="bytearray">bytearray</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The thumbnail image as bytes.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.workspaces.client.WorkspaceAPIClient.put_thumbnail" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">put_thumbnail</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">put_thumbnail</span><span class="p">(</span><span class="n">workspace_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">thumbnail</span><span class="p">:</span> <span class="nb">bytearray</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>uploads the thumbnail image for a workspace.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>workspace_id</code>
+            </td>
+            <td>
+                  <code><span title="uuid.UUID">UUID</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The ID of the workspace to upload the thumbnail for.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>thumbnail</code>
+            </td>
+            <td>
+                  <code><span title="bytearray">bytearray</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The thumbnail image as a byte array.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The thumbnail image as bytes.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.workspaces.client.WorkspaceAPIClient.delete_thumbnail" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">delete_thumbnail</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">delete_thumbnail</span><span class="p">(</span><span class="n">workspace_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>deletes the thumbnail image for a workspace.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>workspace_id</code>
+            </td>
+            <td>
+                  <code><span title="uuid.UUID">UUID</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The ID of the workspace to delete the thumbnail for.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.workspaces.client.WorkspaceAPIClient.admin_bulk_assign_roles" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">admin_bulk_assign_roles</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">admin_bulk_assign_roles</span><span class="p">(</span><span class="n">role_assignments</span><span class="p">:</span> <span class="n">BulkUserRoleAssignmentRequest</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Bulk assigns roles to users in the workspace instance.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>role_assignments</code>
+            </td>
+            <td>
+                  <code><span title="evo.workspaces.data.BulkUserRoleAssignmentRequest">BulkUserRoleAssignmentRequest</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A list of role assignments, where each assignment includes a user ID and a role to assign.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.workspaces.client.WorkspaceAPIClient.admin_list_user_workspaces" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">admin_list_user_workspaces</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">admin_list_user_workspaces</span><span class="p">(</span>
+    <span class="n">user_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span>
+    <span class="n">limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">offset</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">order_by</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">WorkspaceOrderByEnum</span><span class="p">,</span> <span class="n">OrderByOperatorEnum</span><span class="p">]</span>
+    <span class="o">|</span> <span class="nb">dict</span><span class="p">[</span><span class="n">WorkspaceOrderByLiteral</span><span class="p">,</span> <span class="n">OrderByOperatorLiteral</span><span class="p">]</span>
+    <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">created_by</span><span class="p">:</span> <span class="n">UUID</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">created_at</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">updated_at</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">deleted</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Page</span><span class="p">[</span><span class="n">Workspace</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Lists all workspaces assigned to a specific user in the instance.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>user_id</code>
+            </td>
+            <td>
+                  <code><span title="uuid.UUID">UUID</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The ID of the user to list the workspaces for.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>limit</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The maximum number of workspaces to return.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>offset</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The offset for pagination.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>order_by</code>
+            </td>
+            <td>
+                  <code><span title="dict">dict</span>[<span title="evo.workspaces.data.WorkspaceOrderByEnum">WorkspaceOrderByEnum</span>, <span title="evo.workspaces.data.OrderByOperatorEnum">OrderByOperatorEnum</span>] | <span title="dict">dict</span>[<span title="evo.workspaces.client.WorkspaceOrderByLiteral">WorkspaceOrderByLiteral</span>, <span title="evo.workspaces.client.OrderByOperatorLiteral">OrderByOperatorLiteral</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A dictionary specifying the fields to sort by and their corresponding sort directions (e.g., {"name": "asc", "created_at": "desc"}).</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>created_by</code>
+            </td>
+            <td>
+                  <code><span title="uuid.UUID">UUID</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Filter workspaces by the ID of the user who created them.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>created_at</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Filter workspaces by their creation timestamp (e.g., "2023-01-01T00:00:00Z").</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>updated_at</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Filter workspaces by their last updated timestamp (e.g., "2023-01-01T00:00:00Z").</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>name</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Filter workspaces by their name (supports partial matches).</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>deleted</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Filter workspaces by their deletion status (true or false).</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="evo.common.Page">Page</span>[<span title="evo.workspaces.data.Workspace">Workspace</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A page of workspaces that match the specified criteria.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.workspaces.client.WorkspaceAPIClient.admin_list_workspaces" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">admin_list_workspaces</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">admin_list_workspaces</span><span class="p">(</span>
+    <span class="n">limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">offset</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">order_by</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">WorkspaceOrderByEnum</span><span class="p">,</span> <span class="n">OrderByOperatorEnum</span><span class="p">]</span>
+    <span class="o">|</span> <span class="nb">dict</span><span class="p">[</span><span class="n">WorkspaceOrderByLiteral</span><span class="p">,</span> <span class="n">OrderByOperatorLiteral</span><span class="p">]</span>
+    <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">created_by</span><span class="p">:</span> <span class="n">UUID</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">created_at</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">updated_at</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">deleted</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">user_id</span><span class="p">:</span> <span class="n">UUID</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Page</span><span class="p">[</span><span class="n">Workspace</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Lists all workspaces in the instance.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>user_id</code>
+            </td>
+            <td>
+                  <code><span title="uuid.UUID">UUID</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The ID of the user to list the workspaces for.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>limit</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The maximum number of workspaces to return.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>offset</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The offset for pagination.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>order_by</code>
+            </td>
+            <td>
+                  <code><span title="dict">dict</span>[<span title="evo.workspaces.data.WorkspaceOrderByEnum">WorkspaceOrderByEnum</span>, <span title="evo.workspaces.data.OrderByOperatorEnum">OrderByOperatorEnum</span>] | <span title="dict">dict</span>[<span title="evo.workspaces.client.WorkspaceOrderByLiteral">WorkspaceOrderByLiteral</span>, <span title="evo.workspaces.client.OrderByOperatorLiteral">OrderByOperatorLiteral</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A dictionary specifying the fields to sort by and their corresponding sort directions (e.g., {"name": "asc", "created_at": "desc"}).</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>created_by</code>
+            </td>
+            <td>
+                  <code><span title="uuid.UUID">UUID</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Filter workspaces by the ID of the user who created them.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>created_at</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Filter workspaces by their creation timestamp (e.g., "2023-01-01T00:00:00Z").</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>updated_at</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Filter workspaces by their last updated timestamp (e.g., "2023-01-01T00:00:00Z").</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>name</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Filter workspaces by their name (supports partial matches).</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>deleted</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Filter workspaces by their deletion status (true or false).</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="evo.common.Page">Page</span>[<span title="evo.workspaces.data.Workspace">Workspace</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A page of workspaces that match the specified criteria.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.workspaces.client.WorkspaceAPIClient.admin_get_workspace" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">admin_get_workspace</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">admin_get_workspace</span><span class="p">(</span><span class="n">workspace_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">deleted</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Workspace</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Gets a workspace by ID, can pass in a deleted flag to get deleted workspaces</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>workspace_id</code>
+            </td>
+            <td>
+                  <code><span title="uuid.UUID">UUID</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The ID of the workspace to get.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>deleted</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Get a deleted workspace</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.workspaces.client.WorkspaceAPIClient.admin_get_thumbnail" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">admin_get_thumbnail</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">admin_get_thumbnail</span><span class="p">(</span><span class="n">workspace_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytearray</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Gets the thumbnail image for a workspace.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>workspace_id</code>
+            </td>
+            <td>
+                  <code><span title="uuid.UUID">UUID</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The ID of the workspace to get the thumbnail for.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="bytearray">bytearray</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The thumbnail image as bytes.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.workspaces.client.WorkspaceAPIClient.admin_list_users" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">admin_list_users</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">admin_list_users</span><span class="p">(</span><span class="n">workspace_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">user_id</span><span class="p">:</span> <span class="n">UUID</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">User</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Lists all users in the workspace.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>workspace_id</code>
+            </td>
+            <td>
+                  <code><span title="uuid.UUID">UUID</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The ID of the workspace to get the users for.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>user_id</code>
+            </td>
+            <td>
+                  <code><span title="uuid.UUID">UUID</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>filter by a specific user id.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="list">list</span>[<span title="evo.workspaces.data.User">User</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A list of users in the workspace.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.workspaces.client.WorkspaceAPIClient.admin_assign_user_role" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">admin_assign_user_role</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">admin_assign_user_role</span><span class="p">(</span><span class="n">workspace_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">user_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">role</span><span class="p">:</span> <span class="n">WorkspaceRole</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">UserRole</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Assigns a user to a workspace.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>workspace_id</code>
+            </td>
+            <td>
+                  <code><span title="uuid.UUID">UUID</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The ID of the workspace to assign the user to.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>user_id</code>
+            </td>
+            <td>
+                  <code><span title="uuid.UUID">UUID</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The ID of the user to assign the user to.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>role</code>
+            </td>
+            <td>
+                  <code><span title="evo.workspaces.data.WorkspaceRole">WorkspaceRole</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The role to assign the user to.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="evo.workspaces.data.UserRole">UserRole</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A UserRole object.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.workspaces.client.WorkspaceAPIClient.admin_remove_user_from_workspace" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">admin_remove_user_from_workspace</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">admin_remove_user_from_workspace</span><span class="p">(</span><span class="n">workspace_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">user_id</span><span class="p">:</span> <span class="n">UUID</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Removes a user from a workspace.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>workspace_id</code>
+            </td>
+            <td>
+                  <code><span title="uuid.UUID">UUID</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The ID of the workspace to remove the user from.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>user_id</code>
+            </td>
+            <td>
+                  <code><span title="uuid.UUID">UUID</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>user_id of the user to remove.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
             </td>
           </tr>
       </tbody>
