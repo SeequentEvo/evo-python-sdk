@@ -2647,8 +2647,8 @@ provided bounding box.</p>
 <div class="doc doc-object doc-function">
 
 
-<h3 id="evo.blockmodels.client.BlockModelAPIClient.update_block_model" class="doc doc-heading">
-            <span class="doc doc-object-name doc-function-name">update_block_model</span>
+<h3 id="evo.blockmodels.client.BlockModelAPIClient.update_block_model_metadata" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">update_block_model_metadata</span>
 
 
   <span class="doc doc-labels">
@@ -2656,13 +2656,14 @@ provided bounding box.</p>
   </span>
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">update_block_model</span><span class="p">(</span><span class="n">bm_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">update_block_model</span><span class="p">:</span> <span class="n">UpdateBlockModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BlockModel</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">update_block_model_metadata</span><span class="p">(</span><span class="n">bm_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">update_block_model</span><span class="p">:</span> <span class="n">UpdateBlockModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BlockModel</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Update a block model's metadata.</p>
-<p>Updates the block model name, description, and/or size unit ID for the given block model.</p>
+<p>Updates the block model name, description, coordinate reference system,
+size unit ID, and/or fill subblocks setting for the given block model.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
