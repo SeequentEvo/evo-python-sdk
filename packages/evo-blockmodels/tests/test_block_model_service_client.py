@@ -282,14 +282,16 @@ class TestBlockModelAPIClient(TestWithConnector, TestWithStorage):
             bm_uuid=bm_uuid,
             created_at=now,
             created_by=user_info,
+            coordinate_reference_system="EPSG:3395",
             description="Updated description",
-            fill_subblocks=False,
+            fill_subblocks=True,
             last_updated_at=now,
             last_updated_by=user_info,
             model_origin=Location(x=0.0, y=0.0, z=0.0),
             name="Updated Name",
             normalized_rotation=[0.0, 0.0, 0.0],
             org_uuid=self.environment.org_id,
+            size_unit_id="m",
             size_options=SizeOptionsRegular(
                 model_type="regular",
                 n_blocks=Size3D(nx=10, ny=10, nz=10),
@@ -300,12 +302,20 @@ class TestBlockModelAPIClient(TestWithConnector, TestWithStorage):
         with self.transport.set_http_response(
             200, block_model_response.model_dump_json(), headers={"Content-Type": "application/json"}
         ):
-            result = await self.bms_client.update_block_model(
+            result = await self.bms_client.update_block_model_metadata(
                 bm_id=bm_uuid,
-                update_block_model=UpdateBlockModel(name="Updated Name", description="Updated description"),
+                update_block_model=UpdateBlockModel(
+                    name="Updated Name",
+                    description="Updated description",
+                    coordinate_reference_system="EPSG:3395",
+                    size_unit_id="m",
+                    fill_subblocks=True,
+                ),
             )
         self.assertEqual(result.name, "Updated Name")
         self.assertEqual(result.description, "Updated description")
+        self.assertEqual(result.coordinate_reference_system, "EPSG:3395")
+        self.assertEqual(result.size_unit_id, "m")
         self.assertEqual(result.id, bm_uuid)
 
     async def test_delete_block_model(self) -> None:

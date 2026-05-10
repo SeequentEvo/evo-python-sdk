@@ -993,14 +993,15 @@ class BlockModelAPIClient(BaseAPIClient):
             delta_request_data,
         )
 
-    async def update_block_model(
+    async def update_block_model_metadata(
         self,
         bm_id: UUID,
         update_block_model: UpdateBlockModel,
     ) -> BlockModel:
         """Update a block model's metadata.
 
-        Updates the block model name, description, and/or size unit ID for the given block model.
+        Updates the block model name, description, coordinate reference system,
+        size unit ID, and/or fill subblocks setting for the given block model.
 
         :param bm_id: The ID of the block model to update.
         :param update_block_model: The update payload containing the fields to change.
