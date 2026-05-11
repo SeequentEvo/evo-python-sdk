@@ -1001,7 +1001,7 @@ class BlockModelAPIClient(BaseAPIClient):
         """Update a block model's metadata.
 
         Updates the block model name, description, coordinate reference system,
-        size unit ID, and/or fill subblocks setting for the given block model.
+        size unit ID, and/or fill sub-blocks setting for the given block model.
 
         :param bm_id: The ID of the block model to update.
         :param update_block_model: The update payload containing the fields to change.

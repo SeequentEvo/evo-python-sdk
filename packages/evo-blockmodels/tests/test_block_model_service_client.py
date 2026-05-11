@@ -266,7 +266,7 @@ class TestBlockModelAPIClient(TestWithConnector, TestWithStorage):
 
         self.transport.assert_no_requests()
 
-    async def test_update_block_model(self) -> None:
+    async def test_update_block_model_metadata(self) -> None:
         bm_uuid = uuid.uuid4()
         now = datetime.now(timezone.utc)
         user_info = UserInfo(email="test@test.com", id=uuid.uuid4(), name="Test User")
