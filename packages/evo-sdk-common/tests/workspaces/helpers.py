@@ -17,7 +17,6 @@ from evo.workspaces import (
     BoundingBox,
     InstanceRole,
     InstanceRoleWithPermissions,
-    InstanceUser,
     InstanceUserInvitation,
     InstanceUserWithEmail,
     Workspace,
@@ -28,11 +27,6 @@ from .consts import (
     ORG_UUID,
     TEST_USER,
 )
-
-
-def _make_instance_user(user_id: UUID, role_name: str, role_id: int) -> InstanceUser:
-    """Factory method to create test instance user objects."""
-    return InstanceUser(user_id=user_id, roles=[make_instance_role(UUID(int=role_id), role_name)])
 
 
 def make_workspace(ws_id: UUID, name: str, bounding_box: BoundingBox | None = None) -> Workspace:
