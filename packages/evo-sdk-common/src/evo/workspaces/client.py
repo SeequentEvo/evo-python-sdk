@@ -87,6 +87,10 @@ class WorkspaceAPIClient:
         """
         return await get_service_health(self._connector, "workspace", check_type=check_type)
 
+    """
+    Workspace user endpoints
+    """
+
     async def list_user_roles(
         self,
         workspace_id: UUID,
@@ -136,6 +140,10 @@ class WorkspaceAPIClient:
             workspace_id=str(workspace_id),
             user_id=str(user_id),
         )
+
+    """
+    Workspace crud endpoints
+    """
 
     async def list_workspaces(
         self,
@@ -389,6 +397,10 @@ class WorkspaceAPIClient:
             deleted="false",
         )
 
+    """
+    Instance user endpoints
+    """
+
     async def list_instance_users(
         self, limit: int | None = None, offset: int | None = None
     ) -> Page[InstanceUserWithEmail]:
@@ -512,6 +524,10 @@ class WorkspaceAPIClient:
         )
         return parse.instance_user_model(response)
 
+    """
+    Thumbnail endpoints
+    """
+
     async def get_thumbnail(self, workspace_id: UUID) -> bytearray:
         """
         Gets the thumbnail image for a workspace.
@@ -530,6 +546,7 @@ class WorkspaceAPIClient:
         uploads the thumbnail image for a workspace.
         :param workspace_id: The ID of the workspace to upload the thumbnail for.
         :param thumbnail: The thumbnail image as a byte array.
+        :returns: The thumbnail image as bytes.
         """
         if thumbnail[:3] == bytearray(b"\xff\xd8\xff"):
             content_type = "image/jpeg"
