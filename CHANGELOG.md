@@ -1,5 +1,15 @@
 # Changelog
 
+## evo-sdk-common@v0.5.22
+## What's Changed
+### Other Changes
+* Add break-ties task SDK client by @amirabbas-jalali in #260
+* Update workspace sdk and notebooks by @sachinseizer in #279
+## New Contributors
+* @amirabbas-jalali made their first contribution in #260
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-blockmodels@v0.4.0...evo-sdk-common@v0.5.22
+
 ## evo-blockmodels@v0.3.0
 ## What's Changed
 ### evo-blockmodels
