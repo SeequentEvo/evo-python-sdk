@@ -17,7 +17,7 @@ the Break Ties task (geostatistics/break-ties).
 
 Example:
     >>> from evo.compute.tasks import run, SearchNeighborhood, Ellipsoid, EllipsoidRanges
-    >>> from evo.compute.tasks.break_ties import BreakTiesParameters
+    >>> from evo.compute.tasks.geostatistics.break_ties import BreakTiesParameters
     >>>
     >>> params = BreakTiesParameters(
     ...     source=pointset.attributes["grade"],
@@ -40,13 +40,13 @@ from evo.objects import ObjectSchema
 from evo.objects.typed import BaseObject, object_from_reference
 from pydantic import BaseModel
 
-from .common import (
+from ..common import (
     AnySourceAttribute,
     AnyTargetAttribute,
     SearchNeighborhood,
 )
-from .common.results import TaskTarget
-from .common.runner import TaskRunner
+from ..common.results import TaskTarget
+from ..common.runner import TaskRunner
 
 __all__ = [
     "BreakTiesParameters",
@@ -68,7 +68,7 @@ class BreakTiesParameters(BaseModel):
 
     Example:
         >>> from evo.compute.tasks import run, SearchNeighborhood, Ellipsoid, EllipsoidRanges, Target
-        >>> from evo.compute.tasks.break_ties import BreakTiesParameters
+        >>> from evo.compute.tasks.geostatistics.break_ties import BreakTiesParameters
         >>>
         >>> params = BreakTiesParameters(
         ...     source=pointset.attributes["grade"],

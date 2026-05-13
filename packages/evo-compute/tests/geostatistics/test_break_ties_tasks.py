@@ -24,12 +24,6 @@ from evo.compute.tasks import (
     Target,
     UpdateAttribute,
 )
-from evo.compute.tasks.break_ties import (
-    BreakTiesParameters,
-    BreakTiesResult,
-    BreakTiesResultModel,
-    BreakTiesRunner,
-)
 from evo.compute.tasks.common import (
     Ellipsoid,
     EllipsoidRanges,
@@ -37,6 +31,12 @@ from evo.compute.tasks.common import (
 )
 from evo.compute.tasks.common.results import TaskAttribute, TaskTarget
 from evo.compute.tasks.common.runner import TaskRegistry
+from evo.compute.tasks.geostatistics.break_ties import (
+    BreakTiesParameters,
+    BreakTiesResult,
+    BreakTiesResultModel,
+    BreakTiesRunner,
+)
 
 # ---------------------------------------------------------------------------
 # Test helpers

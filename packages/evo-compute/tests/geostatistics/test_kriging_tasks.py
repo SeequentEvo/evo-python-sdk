@@ -39,7 +39,7 @@ from evo.compute.tasks.common import (
     Ellipsoid,
     EllipsoidRanges,
 )
-from evo.compute.tasks.kriging import KrigingParameters
+from evo.compute.tasks.geostatistics.kriging import KrigingParameters
 
 # ---------------------------------------------------------------------------
 # Test helpers

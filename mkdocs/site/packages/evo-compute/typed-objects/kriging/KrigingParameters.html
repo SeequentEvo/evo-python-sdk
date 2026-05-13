@@ -93,7 +93,7 @@
 <p>Defines all inputs needed to run a kriging interpolation task.</p>
 <p>Example:
     &gt;&gt;&gt; from evo.compute.tasks import run, SearchNeighborhood, Ellipsoid, EllipsoidRanges
-    &gt;&gt;&gt; from evo.compute.tasks.kriging import KrigingParameters, RegionFilter
+    &gt;&gt;&gt; from evo.compute.tasks.geostatistics.kriging import KrigingParameters, RegionFilter
     &gt;&gt;&gt;
     &gt;&gt;&gt; params = KrigingParameters(
     ...     source=pointset.attributes["grade"],  # Source attribute

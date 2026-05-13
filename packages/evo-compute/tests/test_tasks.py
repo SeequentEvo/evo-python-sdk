@@ -21,7 +21,7 @@ from evo.compute.tasks import run
 from evo.compute.tasks.common.results import TaskAttribute, TaskResultList, TaskTarget
 from evo.compute.tasks.common.runner import TaskRegistry, run_tasks
 from evo.compute.tasks.common.source_target import _convert_object_reference
-from evo.compute.tasks.kriging import (
+from evo.compute.tasks.geostatistics.kriging import (
     KrigingMethod,
     KrigingParameters,
     KrigingResult,

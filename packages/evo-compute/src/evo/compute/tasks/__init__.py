@@ -16,7 +16,7 @@ dispatched based on their parameter types using a registry system.
 
 Example:
     >>> from evo.compute.tasks import run, SearchNeighborhood, Target
-    >>> from evo.compute.tasks.kriging import KrigingParameters
+    >>> from evo.compute.tasks.geostatistics.kriging import KrigingParameters
     >>>
     >>> # Run a single task (preview=True required for preview APIs like kriging)
     >>> result = await run(manager, KrigingParameters(...), preview=True)
@@ -37,11 +37,7 @@ from evo.common.interfaces import IFeedback
 from evo.common.utils import create_default_feedback
 
 # Import task modules to trigger registration
-from . import break_ties as _break_ties_module  # noqa: F401
-from . import kriging as _kriging_module  # noqa: F401
-
-# Break Ties-specific result types
-from .break_ties import BreakTiesResult
+from . import geostatistics as _geostatistics_module  # noqa: F401
 
 # Shared components from common module
 from .common import (
@@ -62,8 +58,11 @@ from .common.results import TaskResultList
 # Result types from common (generic base classes)
 from .common.runner import TParams, TResult
 
+# Break Ties-specific result types
+from .geostatistics.break_ties import BreakTiesResult
+
 # Kriging-specific result types
-from .kriging import (
+from .geostatistics.kriging import (
     BlockDiscretisation,
     KrigingResult,
     RegionFilter,
@@ -119,7 +118,7 @@ async def run(
 
     Example (single task):
         >>> from evo.compute.tasks import run, SearchNeighborhood, Target
-        >>> from evo.compute.tasks.kriging import KrigingParameters
+        >>> from evo.compute.tasks.geostatistics.kriging import KrigingParameters
         >>>
         >>> params = KrigingParameters(
         ...     source=pointset.attributes["grade"],
