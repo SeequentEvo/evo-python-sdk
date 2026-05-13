@@ -111,7 +111,7 @@ class DataTableAndAttributes(SchemaModel):
         if attr_df is not None:
             await self.attributes.set_attributes(attr_df, fb=fb)
         else:
-            await self.attributes.clear()
+            self.attributes.clear()
 
     def validate(self) -> None:
         """Validate that all attributes have the correct length."""

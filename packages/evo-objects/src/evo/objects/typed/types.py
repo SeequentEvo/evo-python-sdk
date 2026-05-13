@@ -218,6 +218,20 @@ class BoundingBox:
         )
         return cls.from_extent(origin, extent, rotation)
 
+    @classmethod
+    def combine(cls, bboxes: list[BoundingBox]):
+        if not bboxes:
+            raise ValueError("bboxes list is empty")
+
+        return cls(
+            min_x=min(b.min_x for b in bboxes),
+            max_x=max(b.max_x for b in bboxes),
+            min_y=min(b.min_y for b in bboxes),
+            max_y=max(b.max_y for b in bboxes),
+            min_z=min(b.min_z for b in bboxes),
+            max_z=max(b.max_z for b in bboxes),
+        )
+
 
 @dataclass(frozen=True)
 class Rotation:
