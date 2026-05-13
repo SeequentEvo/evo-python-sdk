@@ -68,6 +68,9 @@ from .geostatistics.kriging import (
     RegionFilter,
 )
 
+# Location-Wise result types
+from .geostatistics.location_wise import LocationWiseResult
+
 
 @overload
 async def run(
@@ -165,6 +168,7 @@ __all__ = [
     "Ellipsoid",
     "EllipsoidRanges",
     "KrigingResult",
+    "LocationWiseResult",
     "RegionFilter",
     "Rotation",
     "SearchNeighborhood",
