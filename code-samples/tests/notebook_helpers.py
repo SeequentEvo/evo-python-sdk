@@ -37,22 +37,14 @@ EXECUTABLE_NOTEBOOKS: list[str] = [
     "code-samples/common-tasks/working-with-parquet.ipynb",
 ]
 
-# Notebooks that contain CI auth markers but are NOT fully self-contained for
-# CI execution (e.g. require interactive widgets or a browser).
-AUTH_EXCLUDE_NOTEBOOKS: list[str] = [
-    # Requires user to manually copy a block model UUID from a previous cell's output.
-    "code-samples/blockmodels/api-examples.ipynb",
-    # SDK bug: unsupported data type 'large_string' in evo-blockmodels.
-    "code-samples/blockmodels/reports.ipynb",
-    # Cascading failure: file_info set by an earlier interactive cell.
-    "code-samples/files/sdk-examples.ipynb",
-    # Intermittent 404: file upload may not propagate before the read-back poll.
-    "code-samples/files/api-examples.ipynb",
-    # geosoft is Windows-only; excluded on all platforms since CI matrix covers Windows separately.
-    "code-samples/geoscience-objects/publish-regular-2d-grid/publish-regular-2d-grid.ipynb",
-    # Requires a pre-existing pointset object ID to be set manually before running.
-    "code-samples/geoscience-objects/download-pointset/download-pointset.ipynb",
-]
+# Ordering constraints for auth notebooks that depend on other notebooks having
+# run first.  Keys are notebooks that must wait; values are the notebooks that
+# must run before them.
+AUTH_NOTEBOOK_DEPENDENCIES: dict[str, list[str]] = {
+    "code-samples/geoscience-objects/download-pointset/download-pointset.ipynb": [
+        "code-samples/geoscience-objects/publish-pointset/publish-pointset.ipynb",
+    ],
+}
 
 # Auth notebooks are auto-detected by scanning code cells for CI-compatible auth
 # patterns.
@@ -96,13 +88,32 @@ def is_executable(notebook_path: Path) -> bool:
     return rel is not None and rel in EXECUTABLE_NOTEBOOKS
 
 
+def sort_by_dependencies(notebooks: list[Path]) -> list[Path]:
+    """Sort notebooks so that dependencies run before dependents."""
+    rel_to_path = {_relative_posix(nb): nb for nb in notebooks}
+    result: list[Path] = []
+    added: set[str] = set()
+
+    def _add(rel: str) -> None:
+        if rel in added or rel not in rel_to_path:
+            return
+        for dep in AUTH_NOTEBOOK_DEPENDENCIES.get(rel, []):
+            _add(dep)
+        added.add(rel)
+        result.append(rel_to_path[rel])
+
+    for nb in notebooks:
+        _add(_relative_posix(nb) or "")
+    return result
+
+
 def is_auth_notebook(notebook_path: Path) -> bool:
     """Return True if the notebook requires authentication credentials."""
     if is_executable(notebook_path):
         return False
 
     rel = _relative_posix(notebook_path)
-    if rel is None or rel in AUTH_EXCLUDE_NOTEBOOKS:
+    if rel is None:
         return False
 
     try:
