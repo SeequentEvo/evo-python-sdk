@@ -29,7 +29,8 @@ notebooks = [
     "ipykernel",
     "ipython",
     "ipywidgets",
-    "python-dotenv"
+    "python-dotenv",
+    "Pillow",
 ]
 jmespath = [
     "jmespath>=1.0.1",
