@@ -28,6 +28,7 @@ Example:
 """
 
 from . import break_ties as _break_ties_module  # noqa: F401
+from . import knn as _knn_module  # noqa: F401
 from . import kriging as _kriging_module  # noqa: F401
 from . import location_wise as _location_wise_module  # noqa: F401
 from .break_ties import BreakTiesResult
