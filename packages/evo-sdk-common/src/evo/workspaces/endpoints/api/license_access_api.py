@@ -33,7 +33,7 @@ API version: 1.0
 """
 
 from evo.common.connector import APIConnector
-from evo.common.data import RequestMethod
+from evo.common.data import EmptyResponse, RequestMethod  # noqa: F401
 from evo.common.utils import get_header_metadata
 
 from ..models import *  # noqa: F403
@@ -57,10 +57,11 @@ class LicenseAccessApi:
 
     async def v2_license_access_evo_identity_v2_license_access_get(
         self,
+        authorization: str,
         service: list[str] | None = None,
+        required_scope: list[str] | None = None,
         hub: str | None = None,
         org_id: str | None = None,
-        required_scope: list[str] | None = None,
         tx_uuid: str | None = None,
         additional_headers: dict[str, str] | None = None,
         request_timeout: int | float | tuple[int | float, int | float] | None = None,
@@ -69,14 +70,16 @@ class LicenseAccessApi:
 
         Verify the user and token has access to the requested resources.  Given a user token, verify that the user has access to the requested service, org and hub, as well as that the token as the required scope.  On success, returns details of the calling user, what they are entitled to, and the authorization the request was made with.  Args:     org_id (UUID): UUID of the Evo organisation     service (str): service name (i.e. \"blockmodel\")     hub (str): the hub code     required_scope(str): scope required for the service Returns:     A JSON response.
 
+        :param authorization:
+            Example: `'authorization_example'`
         :param service: (optional)
-            Example: `['service_example']`
+            Example: `[]`
+        :param required_scope: (optional)
+            Example: `[]`
         :param hub: (optional)
             Example: `'hub_example'`
         :param org_id: (optional)
             Example: `'org_id_example'`
-        :param required_scope: (optional)
-            Example: `['required_scope_example']`
         :param tx_uuid: (optional)
             Example: `'tx_uuid_example'`
         :param additional_headers: (optional) Additional headers to send with the request.
@@ -100,16 +103,17 @@ class LicenseAccessApi:
         _query_params = {}
         if service is not None:
             _query_params["service"] = service
+        if required_scope is not None:
+            _query_params["required_scope"] = required_scope
         if hub is not None:
             _query_params["hub"] = hub
         if org_id is not None:
             _query_params["org_id"] = org_id
-        if required_scope is not None:
-            _query_params["required_scope"] = required_scope
 
         # Prepare the header parameters.
         _header_params = {
             "Accept": "application/json",
+            "authorization": authorization,
         } | get_header_metadata(__name__)
         if tx_uuid is not None:
             _header_params["tx-uuid"] = tx_uuid

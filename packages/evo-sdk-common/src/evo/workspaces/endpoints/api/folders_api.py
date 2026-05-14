@@ -57,8 +57,9 @@ class FoldersApi:
 
     async def create_folder(
         self,
-        workspace_id: str,
         org_id: str,
+        workspace_id: str,
+        authorization: str,
         folder_create_request: FolderCreateRequest,  # noqa: F405
         api_preview: str | None = None,
         preview_api: str | None = None,
@@ -69,12 +70,14 @@ class FoldersApi:
 
         Creates a new folder in the workspace. The folder needs to have a name and exclusively define either a `parent_folder_id` or a `parent_folder_path`.
 
-        :param workspace_id:
-            Format: `uuid`
-            Example: `'workspace_id_example'`
         :param org_id:
             Format: `uuid`
             Example: `'org_id_example'`
+        :param workspace_id:
+            Format: `uuid`
+            Example: `'workspace_id_example'`
+        :param authorization:
+            Example: `'authorization_example'`
         :param folder_create_request:
             Example: `endpoints.FolderCreateRequest()`
         :param api_preview: (optional) Set to \"opt-in\" to be able to use this API.
@@ -100,14 +103,15 @@ class FoldersApi:
         """
         # Prepare the path parameters.
         _path_params = {
-            "workspace_id": workspace_id,
             "org_id": org_id,
+            "workspace_id": workspace_id,
         }
 
         # Prepare the header parameters.
         _header_params = {
             "Content-Type": "application/json",
             "Accept": "application/json",
+            "authorization": authorization,
         } | get_header_metadata(__name__)
         if api_preview is not None:
             _header_params["API-Preview"] = api_preview
@@ -136,8 +140,9 @@ class FoldersApi:
 
     async def create_folders_in_path(
         self,
-        workspace_id: str,
         org_id: str,
+        workspace_id: str,
+        authorization: str,
         folders_path: str,
         api_preview: str | None = None,
         preview_api: str | None = None,
@@ -148,12 +153,14 @@ class FoldersApi:
 
         Ensures that all folders in the specified path exist. If a folder does not exist, it will be created.
 
-        :param workspace_id:
-            Format: `uuid`
-            Example: `'workspace_id_example'`
         :param org_id:
             Format: `uuid`
             Example: `'org_id_example'`
+        :param workspace_id:
+            Format: `uuid`
+            Example: `'workspace_id_example'`
+        :param authorization:
+            Example: `'authorization_example'`
         :param folders_path: Folders path. This parameter was automatically generated from a wildcard path.
             Example: `'folders_path_example'`
         :param api_preview: (optional) Set to \"opt-in\" to be able to use this API.
@@ -179,14 +186,15 @@ class FoldersApi:
         """
         # Prepare the path parameters.
         _path_params = {
-            "workspace_id": workspace_id,
             "org_id": org_id,
+            "workspace_id": workspace_id,
             "folders_path": folders_path,
         }
 
         # Prepare the header parameters.
         _header_params = {
             "Accept": "application/json",
+            "authorization": authorization,
         } | get_header_metadata(__name__)
         if api_preview is not None:
             _header_params["API-Preview"] = api_preview
@@ -215,9 +223,10 @@ class FoldersApi:
 
     async def delete_folder(
         self,
+        org_id: str,
         folder_id: str,
         workspace_id: str,
-        org_id: str,
+        authorization: str,
         api_preview: str | None = None,
         preview_api: str | None = None,
         additional_headers: dict[str, str] | None = None,
@@ -227,15 +236,17 @@ class FoldersApi:
 
         Deletes the folder with the given ID. This is not a permanent delete, folder can be restored.
 
+        :param org_id:
+            Format: `uuid`
+            Example: `'org_id_example'`
         :param folder_id:
             Format: `uuid`
             Example: `'folder_id_example'`
         :param workspace_id:
             Format: `uuid`
             Example: `'workspace_id_example'`
-        :param org_id:
-            Format: `uuid`
-            Example: `'org_id_example'`
+        :param authorization:
+            Example: `'authorization_example'`
         :param api_preview: (optional) Set to \"opt-in\" to be able to use this API.
             Example: `'api_preview_example'`
         :param preview_api: (optional) Set to \"opt-in\" to be able to use this API. This header is being deprecated. Please use the API-Preview header.
@@ -259,13 +270,15 @@ class FoldersApi:
         """
         # Prepare the path parameters.
         _path_params = {
+            "org_id": org_id,
             "folder_id": folder_id,
             "workspace_id": workspace_id,
-            "org_id": org_id,
         }
 
         # Prepare the header parameters.
-        _header_params = {} | get_header_metadata(__name__)
+        _header_params = {
+            "authorization": authorization,
+        } | get_header_metadata(__name__)
         if api_preview is not None:
             _header_params["API-Preview"] = api_preview
         if preview_api is not None:
@@ -292,17 +305,18 @@ class FoldersApi:
 
     async def get_folder_by_id(
         self,
+        org_id: str,
         workspace_id: str,
         folder_id: str,
-        org_id: str,
+        authorization: str,
         limit: int | None = None,
         offset: int | None = None,
         deleted: bool | None = None,
         max_depth: int | None = None,
         folder_name: str | None = None,
-        created_by: str | None = None,
+        created_by: list[str] | None = None,
         created_at: str | None = None,
-        updated_by: str | None = None,
+        updated_by: list[str] | None = None,
         updated_at: str | None = None,
         order_by: str | None = None,
         api_preview: str | None = None,
@@ -314,15 +328,17 @@ class FoldersApi:
 
         Returns a folder by its ID. Optionally include its child folders up to a specified depth.
 
+        :param org_id:
+            Format: `uuid`
+            Example: `'org_id_example'`
         :param workspace_id:
             Format: `uuid`
             Example: `'workspace_id_example'`
         :param folder_id:
             Format: `uuid`
             Example: `'folder_id_example'`
-        :param org_id:
-            Format: `uuid`
-            Example: `'org_id_example'`
+        :param authorization:
+            Example: `'authorization_example'`
         :param limit: (optional) Max number of results per page.
             Example: `5000`
         :param offset: (optional) Number of results to skip before returning `limit` number of results.
@@ -331,18 +347,18 @@ class FoldersApi:
             Example: `False`
         :param max_depth: (optional) Max depth of the folder tree to return with the folder.
             Example: `0`
-        :param folder_name: (optional)
-            Example: `'folder_name_example'`
-        :param created_by: (optional)
+        :param folder_name: (optional) Only show folders with a matching name. This filter supports the operators `eq`, `like`, and  `ilike`. If no operator is provided, the `eq` operator is used. The `eq` operator performs an exact string match while the `like` and `ilike` operators support pattern matching (regular expressions). The only difference between `like` and `ilike` is that `ilike` searches case-insensitive. For example, you can use `like:a` to find any folder that contain the lower case 'a' or `ilike:a` to find any folder containing the letter 'A' or 'a'.
+            Example: `'folder_name'`
+        :param created_by: (optional) Only show folders created by user
             Format: `uuid`
-            Example: `'created_by_example'`
-        :param created_at: (optional)
-            Example: `'created_at_example'`
-        :param updated_by: (optional)
+            Example: `['created_by_example']`
+        :param created_at: (optional) Only show folders relative to the creation date. This filter supports operators like `gt`, `lt`, `gte`, and `lte`. For example, you can use `2023-10-01T00:00:000` for exact match or `gt:2023-10-01` for greater than. Supported formats are ISO 8601 date strings.
+            Example: `'2023-10-01T00:00:00'`
+        :param updated_by: (optional) Only show folders modified by user
             Format: `uuid`
-            Example: `'updated_by_example'`
-        :param updated_at: (optional)
-            Example: `'updated_at_example'`
+            Example: `['updated_by_example']`
+        :param updated_at: (optional) Only show folders relative to the creation date. This filter supports operators like `gt`, `lt`, `gte`, and `lte`. For example, you can use `2023-10-01T00:00:000` for exact match or `gt:2023-10-01` for greater than. Supported formats are ISO 8601 date strings.
+            Example: `'2023-10-01T00:00:00'`
         :param order_by: (optional) A comma separated list of fields to order by, where the default sort order is ascending. To specify the sort order, prefix the field name with either `asc:` or `desc:` for ascending or descending respectively. Field names can be one of the following known sort fields: `created_at`, `updated_at`, `name`
             Example: `'order_by_example'`
         :param api_preview: (optional) Set to \"opt-in\" to be able to use this API.
@@ -368,9 +384,9 @@ class FoldersApi:
         """
         # Prepare the path parameters.
         _path_params = {
+            "org_id": org_id,
             "workspace_id": workspace_id,
             "folder_id": folder_id,
-            "org_id": org_id,
         }
 
         # Prepare the query parameters.
@@ -399,6 +415,7 @@ class FoldersApi:
         # Prepare the header parameters.
         _header_params = {
             "Accept": "application/json",
+            "authorization": authorization,
         } | get_header_metadata(__name__)
         if api_preview is not None:
             _header_params["API-Preview"] = api_preview
@@ -408,7 +425,10 @@ class FoldersApi:
             _header_params.update(additional_headers)
 
         # Define the collection formats.
-        _collection_formats = {}
+        _collection_formats = {
+            "created_by": "multi",
+            "updated_by": "multi",
+        }
 
         _response_types_map = {
             "200": GetFolderResponse,  # noqa: F405
@@ -427,17 +447,18 @@ class FoldersApi:
 
     async def get_folder_by_path(
         self,
-        workspace_id: str,
         org_id: str,
+        workspace_id: str,
+        authorization: str,
         folders_path: str,
         limit: int | None = None,
         offset: int | None = None,
         deleted: bool | None = None,
         max_depth: int | None = None,
         folder_name: str | None = None,
-        created_by: str | None = None,
+        created_by: list[str] | None = None,
         created_at: str | None = None,
-        updated_by: str | None = None,
+        updated_by: list[str] | None = None,
         updated_at: str | None = None,
         order_by: str | None = None,
         api_preview: str | None = None,
@@ -449,12 +470,14 @@ class FoldersApi:
 
         Get a folder at the provided path. Optionally include the child folders up to a specified depth.
 
-        :param workspace_id:
-            Format: `uuid`
-            Example: `'workspace_id_example'`
         :param org_id:
             Format: `uuid`
             Example: `'org_id_example'`
+        :param workspace_id:
+            Format: `uuid`
+            Example: `'workspace_id_example'`
+        :param authorization:
+            Example: `'authorization_example'`
         :param folders_path: Folders path. This parameter was automatically generated from a wildcard path.
             Example: `'folders_path_example'`
         :param limit: (optional) Max number of results per page.
@@ -465,18 +488,18 @@ class FoldersApi:
             Example: `False`
         :param max_depth: (optional) Max depth of the folder tree to return with the folder.
             Example: `0`
-        :param folder_name: (optional)
-            Example: `'folder_name_example'`
-        :param created_by: (optional)
+        :param folder_name: (optional) Only show folders with a matching name. This filter supports the operators `eq`, `like`, and  `ilike`. If no operator is provided, the `eq` operator is used. The `eq` operator performs an exact string match while the `like` and `ilike` operators support pattern matching (regular expressions). The only difference between `like` and `ilike` is that `ilike` searches case-insensitive. For example, you can use `like:a` to find any folder that contain the lower case 'a' or `ilike:a` to find any folder containing the letter 'A' or 'a'.
+            Example: `'folder_name'`
+        :param created_by: (optional) Only show folders created by user
             Format: `uuid`
-            Example: `'created_by_example'`
-        :param created_at: (optional)
-            Example: `'created_at_example'`
-        :param updated_by: (optional)
+            Example: `['created_by_example']`
+        :param created_at: (optional) Only show folders relative to the creation date. This filter supports operators like `gt`, `lt`, `gte`, and `lte`. For example, you can use `2023-10-01T00:00:000` for exact match or `gt:2023-10-01` for greater than. Supported formats are ISO 8601 date strings.
+            Example: `'2023-10-01T00:00:00'`
+        :param updated_by: (optional) Only show folders modified by user
             Format: `uuid`
-            Example: `'updated_by_example'`
-        :param updated_at: (optional)
-            Example: `'updated_at_example'`
+            Example: `['updated_by_example']`
+        :param updated_at: (optional) Only show folders relative to the creation date. This filter supports operators like `gt`, `lt`, `gte`, and `lte`. For example, you can use `2023-10-01T00:00:000` for exact match or `gt:2023-10-01` for greater than. Supported formats are ISO 8601 date strings.
+            Example: `'2023-10-01T00:00:00'`
         :param order_by: (optional) A comma separated list of fields to order by, where the default sort order is ascending. To specify the sort order, prefix the field name with either `asc:` or `desc:` for ascending or descending respectively. Field names can be one of the following known sort fields: `created_at`, `updated_at`, `name`
             Example: `'order_by_example'`
         :param api_preview: (optional) Set to \"opt-in\" to be able to use this API.
@@ -502,8 +525,8 @@ class FoldersApi:
         """
         # Prepare the path parameters.
         _path_params = {
-            "workspace_id": workspace_id,
             "org_id": org_id,
+            "workspace_id": workspace_id,
             "folders_path": folders_path,
         }
 
@@ -533,6 +556,7 @@ class FoldersApi:
         # Prepare the header parameters.
         _header_params = {
             "Accept": "application/json",
+            "authorization": authorization,
         } | get_header_metadata(__name__)
         if api_preview is not None:
             _header_params["API-Preview"] = api_preview
@@ -542,7 +566,10 @@ class FoldersApi:
             _header_params.update(additional_headers)
 
         # Define the collection formats.
-        _collection_formats = {}
+        _collection_formats = {
+            "created_by": "multi",
+            "updated_by": "multi",
+        }
 
         _response_types_map = {
             "200": GetFolderResponse,  # noqa: F405
@@ -561,9 +588,10 @@ class FoldersApi:
 
     async def move_folder(
         self,
+        org_id: str,
         folder_id: str,
         workspace_id: str,
-        org_id: str,
+        authorization: str,
         folder_move_request: FolderMoveRequest,  # noqa: F405
         api_preview: str | None = None,
         preview_api: str | None = None,
@@ -574,15 +602,17 @@ class FoldersApi:
 
         Moves a folder to a new location.
 
+        :param org_id:
+            Format: `uuid`
+            Example: `'org_id_example'`
         :param folder_id:
             Format: `uuid`
             Example: `'folder_id_example'`
         :param workspace_id:
             Format: `uuid`
             Example: `'workspace_id_example'`
-        :param org_id:
-            Format: `uuid`
-            Example: `'org_id_example'`
+        :param authorization:
+            Example: `'authorization_example'`
         :param folder_move_request:
             Example: `endpoints.FolderMoveRequest()`
         :param api_preview: (optional) Set to \"opt-in\" to be able to use this API.
@@ -608,15 +638,16 @@ class FoldersApi:
         """
         # Prepare the path parameters.
         _path_params = {
+            "org_id": org_id,
             "folder_id": folder_id,
             "workspace_id": workspace_id,
-            "org_id": org_id,
         }
 
         # Prepare the header parameters.
         _header_params = {
             "Content-Type": "application/json",
             "Accept": "application/json",
+            "authorization": authorization,
         } | get_header_metadata(__name__)
         if api_preview is not None:
             _header_params["API-Preview"] = api_preview
@@ -645,9 +676,10 @@ class FoldersApi:
 
     async def update_folder(
         self,
+        org_id: str,
         folder_id: str,
         workspace_id: str,
-        org_id: str,
+        authorization: str,
         deleted: bool | None = None,
         api_preview: str | None = None,
         preview_api: str | None = None,
@@ -659,15 +691,17 @@ class FoldersApi:
 
         Updates a folders name.
 
+        :param org_id:
+            Format: `uuid`
+            Example: `'org_id_example'`
         :param folder_id:
             Format: `uuid`
             Example: `'folder_id_example'`
         :param workspace_id:
             Format: `uuid`
             Example: `'workspace_id_example'`
-        :param org_id:
-            Format: `uuid`
-            Example: `'org_id_example'`
+        :param authorization:
+            Example: `'authorization_example'`
         :param deleted: (optional)
             Example: `True`
         :param api_preview: (optional) Set to \"opt-in\" to be able to use this API.
@@ -695,9 +729,9 @@ class FoldersApi:
         """
         # Prepare the path parameters.
         _path_params = {
+            "org_id": org_id,
             "folder_id": folder_id,
             "workspace_id": workspace_id,
-            "org_id": org_id,
         }
 
         # Prepare the query parameters.
@@ -709,6 +743,7 @@ class FoldersApi:
         _header_params = {
             "Content-Type": "application/json",
             "Accept": "application/json",
+            "authorization": authorization,
         } | get_header_metadata(__name__)
         if api_preview is not None:
             _header_params["API-Preview"] = api_preview
