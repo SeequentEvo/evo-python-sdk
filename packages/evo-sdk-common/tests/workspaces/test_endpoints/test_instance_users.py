@@ -57,12 +57,12 @@ class TestWorkspaceClientInstanceUserEndpoints(TestWithConnector):
 
         self.assert_any_request_made(
             method=RequestMethod.GET,
-            path=f"{BASE_PATH}/members?limit=2&offset=0",
+            path=f"{BASE_PATH}/members/users?limit=2&offset=0",
             headers={"Accept": "application/json"},
         )
         self.assert_any_request_made(
             method=RequestMethod.GET,
-            path=f"{BASE_PATH}/members?limit=2&offset=2",
+            path=f"{BASE_PATH}/members/users?limit=2&offset=2",
             headers={"Accept": "application/json"},
         )
         self.assertEqual(2, self.transport.request.call_count, "Two requests should be made.")
@@ -98,7 +98,7 @@ class TestWorkspaceClientInstanceUserEndpoints(TestWithConnector):
             )
         self.assert_request_made(
             method=RequestMethod.POST,
-            path=f"{BASE_PATH}/members",
+            path=f"{BASE_PATH}/members/users",
             headers={
                 "Accept": "application/json",
                 "Content-Type": "application/json",
@@ -141,7 +141,7 @@ class TestWorkspaceClientInstanceUserEndpoints(TestWithConnector):
             response = await self.workspace_client.remove_instance_user(user_id=INSTANCE_USER_1.user_id)
         self.assert_request_made(
             method=RequestMethod.DELETE,
-            path=f"{BASE_PATH}/members/{INSTANCE_USER_1.user_id}",
+            path=f"{BASE_PATH}/members/users/{INSTANCE_USER_1.user_id}",
         )
         self.assertIsNone(response, "Remove instance user response should be None")
 
@@ -158,7 +158,7 @@ class TestWorkspaceClientInstanceUserEndpoints(TestWithConnector):
             )
         self.assert_request_made(
             method=RequestMethod.PATCH,
-            path=f"{BASE_PATH}/members/{INSTANCE_USER_1.user_id}",
+            path=f"{BASE_PATH}/members/users/{INSTANCE_USER_1.user_id}",
             headers={
                 "Accept": "application/json",
                 "Content-Type": "application/json",
