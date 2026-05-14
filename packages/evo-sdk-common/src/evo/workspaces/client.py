@@ -87,6 +87,10 @@ class WorkspaceAPIClient:
         """
         return await get_service_health(self._connector, "workspace", check_type=check_type)
 
+    async def _get_authorization(self) -> str:
+        headers = await self._connector._authorizer.get_default_headers()
+        return headers.get("Authorization", "")
+
     async def list_user_roles(
         self,
         workspace_id: UUID,
@@ -95,6 +99,7 @@ class WorkspaceAPIClient:
         response = await self._workspaces_api.list_user_roles(
             org_id=str(self._org_id),
             workspace_id=str(workspace_id),
+            authorization=await self._get_authorization(),
             user_id=str(filter_user_id) if filter_user_id else None,
         )
 
@@ -107,6 +112,7 @@ class WorkspaceAPIClient:
         response = await self._workspaces_api.get_current_user_role(
             org_id=str(self._org_id),
             workspace_id=str(workspace_id),
+            authorization=await self._get_authorization(),
         )
 
         return parse.user_role_model(response)
@@ -121,6 +127,7 @@ class WorkspaceAPIClient:
         response = await self._workspaces_api.assign_user_role(
             org_id=str(self._org_id),
             workspace_id=str(workspace_id),
+            authorization=await self._get_authorization(),
             assign_role_request=assign_role_request,
         )
 
@@ -134,6 +141,7 @@ class WorkspaceAPIClient:
         await self._workspaces_api.delete_user_role(
             org_id=str(self._org_id),
             workspace_id=str(workspace_id),
+            authorization=await self._get_authorization(),
             user_id=str(user_id),
         )
 
@@ -156,6 +164,7 @@ class WorkspaceAPIClient:
             offset = 0
         response = await self._workspaces_api.list_workspaces(
             org_id=str(self._org_id),
+            authorization=await self._get_authorization(),
             limit=limit,
             offset=offset,
             order_by=parsed_order_by,
@@ -235,6 +244,7 @@ class WorkspaceAPIClient:
 
         response = await self._workspaces_api.list_workspaces_summary(
             org_id=str(self._org_id),
+            authorization=await self._get_authorization(),
             limit=limit,
             offset=offset,
             order_by=parsed_order_by,
@@ -255,7 +265,8 @@ class WorkspaceAPIClient:
 
     async def get_workspace(self, workspace_id: UUID, deleted: bool = False) -> Workspace:
         response = await self._workspaces_api.get_workspace(
-            org_id=str(self._org_id), workspace_id=str(workspace_id), deleted=deleted
+            org_id=str(self._org_id), authorization=await self._get_authorization(), workspace_id=str(workspace_id), deleted=deleted
+
         )
         return parse.workspace_model(response, self._org_id, self._connector.base_url)
 
@@ -271,6 +282,7 @@ class WorkspaceAPIClient:
         """
         await self._workspaces_api.delete_workspace(
             org_id=str(self._org_id),
+            authorization=await self._get_authorization(),
             workspace_id=str(workspace_id),
         )
 
@@ -322,7 +334,7 @@ class WorkspaceAPIClient:
             labels=labels,
         )
         model = await self._workspaces_api.create_workspace(
-            org_id=str(self._org_id), create_workspace_request=create_workspace_request
+            org_id=str(self._org_id), authorization=await self._get_authorization(), create_workspace_request=create_workspace_request
         )
         return parse.workspace_model(model, self._org_id, self._connector.base_url)
 
@@ -373,7 +385,7 @@ class WorkspaceAPIClient:
                     "Invalid bounding box coordinates! Ensure that the bounding box coordinate is in the format of [[longitude, latitude], [longitude, latitude], ...]"
                 ) from e
         model = await self._workspaces_api.update_workspace(
-            org_id=str(self._org_id), workspace_id=str(workspace_id), update_workspace_request=update_workspace_request
+            org_id=str(self._org_id), authorization=await self._get_authorization(), workspace_id=str(workspace_id), update_workspace_request=update_workspace_request
         )
         return parse.workspace_model(model, self._org_id, self._connector.base_url)
 
@@ -385,6 +397,7 @@ class WorkspaceAPIClient:
         """
         await self._workspaces_api.restore_soft_deleted_workspace(
             org_id=str(self._org_id),
+            authorization=await self._get_authorization(),
             workspace_id=str(workspace_id),
             deleted="false",
         )
@@ -407,7 +420,7 @@ class WorkspaceAPIClient:
             limit = 50
 
         response = await self._instance_users_api.list_instance_users(
-            org_id=str(self._org_id), limit=limit, offset=offset
+            org_id=str(self._org_id), authorization=await self._get_authorization(), limit=limit, offset=offset
         )
 
         if response.links.next:
@@ -435,7 +448,7 @@ class WorkspaceAPIClient:
         )
 
         response = await self._instance_users_api.add_instance_users(
-            org_id=str(self._org_id), add_instance_users_request=add_instance_users_request
+            org_id=str(self._org_id), authorization=await self._get_authorization(), add_instance_users_request=add_instance_users_request
         )
 
         return parse.add_instance_user_model(response)
@@ -456,7 +469,7 @@ class WorkspaceAPIClient:
         if limit is None:
             limit = 50
         response = await self._instance_users_api.list_instance_user_invitations(
-            org_id=str(self._org_id), limit=limit, offset=offset
+            org_id=str(self._org_id), authorization=await self._get_authorization(), limit=limit, offset=offset
         )
 
         if response.links.next:
@@ -477,7 +490,7 @@ class WorkspaceAPIClient:
         :param invitation_id: The ID of the invitation to delete.
         """
         await self._instance_users_api.delete_instance_user_invitation(
-            org_id=str(self._org_id), invitation_id=str(invitation_id)
+            org_id=str(self._org_id), authorization=await self._get_authorization(), invitation_id=str(invitation_id)
         )
 
     async def list_instance_roles(self) -> list[InstanceRoleWithPermissions]:
@@ -486,7 +499,7 @@ class WorkspaceAPIClient:
         :returns: A list of instance user roles with their permissions.
         """
 
-        response = await self._instance_users_api.list_instance_user_roles(org_id=str(self._org_id))
+        response = await self._instance_users_api.list_instance_user_roles(org_id=str(self._org_id), authorization=await self._get_authorization())
         return [parse.instance_user_role_model(item) for item in response.roles]
 
     async def remove_instance_user(self, user_id: UUID) -> None:
@@ -494,7 +507,7 @@ class WorkspaceAPIClient:
         Removes a user from the instance.
         :param user_id: The ID of the user to remove.
         """
-        await self._instance_users_api.remove_instance_user(org_id=str(self._org_id), user_id=str(user_id))
+        await self._instance_users_api.remove_instance_user(org_id=str(self._org_id), user_id=str(user_id), authorization=await self._get_authorization())
 
     async def update_instance_user_roles(self, user_id: UUID, roles: list[UUID]) -> InstanceUser:
         """
@@ -507,6 +520,7 @@ class WorkspaceAPIClient:
         update_instance_user_roles_request = UpdateInstanceUserRolesRequest(user_id=user_id, roles=roles)
         response = await self._instance_users_api.update_instance_user_roles(
             org_id=str(self._org_id),
+            authorization=await self._get_authorization(),
             user_id=str(user_id),
             update_instance_user_roles_request=update_instance_user_roles_request,
         )
@@ -522,6 +536,7 @@ class WorkspaceAPIClient:
         return await self._thumbnails_api.get_thumbnail(
             org_id=str(self._org_id),
             workspace_id=str(workspace_id),
+            authorization=await self._get_authorization(),
             additional_headers={"Accept": "image/jpeg, image/png"},
         )
 
@@ -539,6 +554,7 @@ class WorkspaceAPIClient:
         await self._thumbnails_api.put_thumbnail(
             org_id=str(self._org_id),
             workspace_id=str(workspace_id),
+            authorization=await self._get_authorization(),
             body=thumbnail,
             additional_headers={"Content-Type": content_type},
         )
@@ -549,4 +565,4 @@ class WorkspaceAPIClient:
         :param workspace_id: The ID of the workspace to delete the thumbnail for.
         """
 
-        await self._thumbnails_api.delete_workspace_thumbnail(org_id=str(self._org_id), workspace_id=str(workspace_id))
+        await self._thumbnails_api.delete_workspace_thumbnail(org_id=str(self._org_id), workspace_id=str(workspace_id), authorization=await self._get_authorization())
