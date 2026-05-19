@@ -417,6 +417,58 @@ class TestJobClientPreview(TestWithConnector):
         )
         self.assertEqual(TEST_JOB_ID, job.id)
 
+    async def test_submit_with_additional_headers(self) -> None:
+        """Test that a job can be submitted with operation IDs for distributed tracing."""
+        with self.transport.set_http_response(status_code=303, headers={"Location": self.job_url}):
+            job = await JobClient.submit(
+                connector=self.connector,
+                org_id=TEST_ORG.id,
+                topic=TEST_TOPIC,
+                task=TEST_TASK,
+                parameters={"foo": "bar"},
+                preview=True,
+                parent_operation_id=UUID("00000000-0000-0000-0000-000000000001"),
+                root_operation_id=UUID("00000000-0000-0000-0000-000000000002"),
+            )
+        self.assert_request_made(
+            RequestMethod.POST,
+            self.task_path,
+            headers={
+                "Content-Type": "application/json",
+                "API-Preview": "opt-in",
+            },
+            body={
+                "parameters": {"foo": "bar"},
+                "parent_operation_id": "00000000-0000-0000-0000-000000000001",
+                "root_operation_id": "00000000-0000-0000-0000-000000000002",
+            },
+        )
+        self.assertEqual(TEST_JOB_ID, job.id)
+
+    async def test_submit_with_additional_headers_no_preview(self) -> None:
+        """Test that operation IDs work without preview mode."""
+        with self.transport.set_http_response(status_code=303, headers={"Location": self.job_url}):
+            job = await JobClient.submit(
+                connector=self.connector,
+                org_id=TEST_ORG.id,
+                topic=TEST_TOPIC,
+                task=TEST_TASK,
+                parameters={"foo": "bar"},
+                parent_operation_id=UUID("00000000-0000-0000-0000-000000000456"),
+            )
+        self.assert_request_made(
+            RequestMethod.POST,
+            self.task_path,
+            headers={
+                "Content-Type": "application/json",
+            },
+            body={
+                "parameters": {"foo": "bar"},
+                "parent_operation_id": "00000000-0000-0000-0000-000000000456",
+            },
+        )
+        self.assertEqual(TEST_JOB_ID, job.id)
+
     async def test_get_status_with_preview(self) -> None:
         """Test that get_status includes the preview header when enabled."""
         response_data = load_test_data("job-response-in-progress.json")

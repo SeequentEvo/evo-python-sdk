@@ -174,6 +174,9 @@ class JobClient(Generic[T_Result]):
         parameters: Mapping[str, Any],
         result_type: type[T_Result] = dict,
         preview: bool = False,
+        *,
+        parent_operation_id: UUID | None = None,
+        root_operation_id: UUID | None = None,
     ) -> JobClient[T_Result]:
         """Trigger an asynchronous task within a specific topic with the given parameters.
 
@@ -188,13 +191,20 @@ class JobClient(Generic[T_Result]):
 
         :raises UnknownResponseError: If the Location header is missing or invalid.
         """
+        # parent_operation_id and root_operation_id are intended for internal use only.
+        # They enable distributed tracing across fan-out workflows and require S2S auth on the server side.
+        request_body: dict[str, Any] = {"parameters": dict(parameters)}
+        if parent_operation_id is not None:
+            request_body["parent_operation_id"] = str(parent_operation_id)
+        if root_operation_id is not None:
+            request_body["root_operation_id"] = str(root_operation_id)
 
         async with connector:
             response = await TasksApi(connector).execute_task(
                 org_id=str(org_id),
                 topic=topic,
                 task=task,
-                execute_task_request={"parameters": dict(parameters)},
+                execute_task_request=request_body,
                 additional_headers={"API-Preview": "opt-in"} if preview else {},
             )
 
