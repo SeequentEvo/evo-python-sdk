@@ -201,6 +201,8 @@ class APIConnector:
                 if key in specified_headers or isinstance(value, list):
                     raise RuntimeError(f"Multiple values not supported in header '{key}'")
                 else:
+                    if key.title() in headers:
+                        del headers[key]
                     headers[key] = value
                     specified_headers.add(key)
 
