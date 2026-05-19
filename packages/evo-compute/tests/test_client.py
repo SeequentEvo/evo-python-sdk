@@ -417,8 +417,8 @@ class TestJobClientPreview(TestWithConnector):
         )
         self.assertEqual(TEST_JOB_ID, job.id)
 
-    async def test_submit_with_additional_headers(self) -> None:
-        """Test that a job can be submitted with operation IDs for distributed tracing."""
+    async def test_submit_with_operation_ids(self) -> None:
+        """Test that a job can be submitted with parent and root operation IDs for distributed tracing."""
         with self.transport.set_http_response(status_code=303, headers={"Location": self.job_url}):
             job = await JobClient.submit(
                 connector=self.connector,
@@ -445,8 +445,8 @@ class TestJobClientPreview(TestWithConnector):
         )
         self.assertEqual(TEST_JOB_ID, job.id)
 
-    async def test_submit_with_additional_headers_no_preview(self) -> None:
-        """Test that operation IDs work without preview mode."""
+    async def test_submit_with_parent_operation_id_only(self) -> None:
+        """Test that parent_operation_id can be passed without root_operation_id."""
         with self.transport.set_http_response(status_code=303, headers={"Location": self.job_url}):
             job = await JobClient.submit(
                 connector=self.connector,
