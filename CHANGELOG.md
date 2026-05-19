@@ -1,5 +1,18 @@
 # Changelog
 
+## evo-compute@0.0.3
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### evo-compute
+* Add break-ties task SDK client by @amirabbas-jalali-bentley in https://github.com/SeequentEvo/evo-python-sdk/pull/260
+* Add location-wise task & reorganize geostatistics tasks into subpackage by @amirabbas-jalali-bentley in https://github.com/SeequentEvo/evo-python-sdk/pull/266
+
+## New Contributors
+* @amirabbas-jalali-bentley made their first contribution in https://github.com/SeequentEvo/evo-python-sdk/pull/260
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-compute@0.0.2...evo-compute@0.0.3
+
 ## evo-blockmodels@v0.3.0
 ## What's Changed
 ### evo-blockmodels
