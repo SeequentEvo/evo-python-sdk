@@ -182,7 +182,9 @@ class TestCreateBlockModel(TestWithConnector, TestWithStorage):
     def base_path(self) -> str:
         return f"blockmodel/orgs/{self.environment.org_id}/workspaces/{self.environment.workspace_id}"
 
-    def _assert_create_request(self, definition: BaseGridDefinition, comment: str | None = None) -> None:
+    def _assert_create_request(
+        self, definition: BaseGridDefinition, comment: str | None = None, fill_subblocks: bool = False
+    ) -> None:
         match definition:
             case RegularGridDefinition():
                 size_options = models.SizeOptionsRegular(
@@ -271,6 +273,7 @@ class TestCreateBlockModel(TestWithConnector, TestWithStorage):
                 size_unit_id="m",
                 object_path="test/path",
                 comment=comment,
+                fill_subblocks=fill_subblocks,
             ).model_dump(mode="json", exclude_unset=True),
             headers={
                 "Authorization": "Bearer <not-a-real-token>",
@@ -354,6 +357,30 @@ class TestCreateBlockModel(TestWithConnector, TestWithStorage):
         self.assertEqual(version.comment, "Initial creation")
 
         self._assert_create_request(GRID_DEFINITION, comment="Initial creation")
+
+    async def test_create_block_model_with_fill_subblocks(self) -> None:
+        self.transport.set_request_handler(
+            CreateRequestHandler(
+                create_result=_mock_create_result(self.environment),
+                job_response=JobResponse(
+                    job_status=JobStatus.COMPLETE,
+                    payload=FIRST_VERSION,
+                ),
+            )
+        )
+        bm, version = await self.bms_client.create_block_model(
+            name="Test BM",
+            description="Test Block Model",
+            grid_definition=SUBBLOCKED_GRID_DEFINITION,
+            object_path="test/path",
+            coordinate_reference_system="EPSG:4326",
+            size_unit_id="m",
+            fill_subblocks=True,
+        )
+        self.assertEqual(bm.id, BM_UUID)
+        self.assertEqual(version.version_id, 1)
+
+        self._assert_create_request(SUBBLOCKED_GRID_DEFINITION, fill_subblocks=True)
 
     async def test_create_block_model_with_data(self) -> None:
         second_version = _mock_version(

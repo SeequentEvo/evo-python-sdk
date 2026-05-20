@@ -249,6 +249,7 @@ class BlockModelAPIClient(BaseAPIClient):
         coordinate_reference_system: str | None = None,
         size_unit_id: str | None = None,
         comment: str | None = None,
+        fill_subblocks: bool = False,
     ) -> tuple[models.BlockModelAndJobURL, Version]:
         match grid_definition:
             case RegularGridDefinition(n_blocks=n_blocks, block_size=block_size):
@@ -295,6 +296,7 @@ class BlockModelAPIClient(BaseAPIClient):
                 object_path=object_path,
                 coordinate_reference_system=coordinate_reference_system,
                 size_unit_id=size_unit_id,
+                fill_subblocks=fill_subblocks,
                 model_origin=Location(
                     x=grid_definition.model_origin[0],
                     y=grid_definition.model_origin[1],
@@ -532,6 +534,7 @@ class BlockModelAPIClient(BaseAPIClient):
         initial_data: Table | None = None,
         units: dict[str, str] | None = None,
         comment: str | None = None,
+        fill_subblocks: bool = False,
     ) -> tuple[BlockModel, Version]:
         r"""Create a block model.
 
@@ -555,6 +558,9 @@ class BlockModelAPIClient(BaseAPIClient):
         :param initial_data: The initial data to populate the block model with.
         :param units: A dictionary mapping column names within `initial_data` to units.
         :param comment: An optional comment describing the initial data.
+        :param fill_subblocks: Sets the default fill_subblocks behaviour for this block model. If ``True``, updates to a
+            fully sub-blocked model with ``update_type``=``merge`` and ``geometry_change``=``True`` will fill any missing
+            sub-blocks with data from the parent block. Defaults to ``False``.
         :return: A tuple containing the created block model and the version of the block model.
         """
         if units is not None and initial_data is None:
@@ -564,7 +570,8 @@ class BlockModelAPIClient(BaseAPIClient):
                 "Cache must be configured to use this method. Please set the 'cache' parameter in the constructor."
             )
         create_result, version = await self._create_block_model(
-            name, grid_definition, description, object_path, coordinate_reference_system, size_unit_id, comment
+            name, grid_definition, description, object_path, coordinate_reference_system, size_unit_id, comment,
+            fill_subblocks
         )
 
         if initial_data is not None:
