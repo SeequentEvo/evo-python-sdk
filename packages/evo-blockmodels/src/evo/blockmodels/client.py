@@ -571,8 +571,14 @@ class BlockModelAPIClient(BaseAPIClient):
                 "Cache must be configured to use this method. Please set the 'cache' parameter in the constructor."
             )
         create_result, version = await self._create_block_model(
-            name, grid_definition, description, object_path, coordinate_reference_system, size_unit_id, comment,
-            fill_subblocks
+            name,
+            grid_definition,
+            description,
+            object_path,
+            coordinate_reference_system,
+            size_unit_id,
+            comment,
+            fill_subblocks,
         )
 
         if initial_data is not None:
@@ -793,8 +799,14 @@ class BlockModelAPIClient(BaseAPIClient):
             the block model's own ``fill_subblocks`` setting is used.
         """
         return await self._update_columns(
-            bm_id, data, new_columns, update_columns, delete_columns, units,
-            geometry_change=geometry_change, fill_subblocks=fill_subblocks,
+            bm_id,
+            data,
+            new_columns,
+            update_columns,
+            delete_columns,
+            units,
+            geometry_change=geometry_change,
+            fill_subblocks=fill_subblocks,
         )
 
     async def update_column_metadata(
