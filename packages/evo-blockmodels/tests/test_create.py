@@ -56,7 +56,7 @@ SUBBLOCKED_GRID_DEFINITION = FullySubBlockedGridDefinition(
 )
 
 
-def _mock_create_result(environment, size_options=None) -> models.BlockModelAndJobURL:
+def _mock_create_result(environment, size_options=None, fill_subblocks: bool = False) -> models.BlockModelAndJobURL:
     if size_options is None:
         size_options = models.SizeOptionsRegular(
             model_type="regular",
@@ -82,6 +82,7 @@ def _mock_create_result(environment, size_options=None) -> models.BlockModelAndJ
         last_updated_at=DATE,
         last_updated_by=MODEL_USER,
         job_url=f"{BASE_URL}/jobs/{uuid.uuid4()}",
+        fill_subblocks=fill_subblocks,
     )
 
 
@@ -316,6 +317,7 @@ class TestCreateBlockModel(TestWithConnector, TestWithStorage):
         self.assertEqual(bm.created_by, USER)
         self.assertEqual(bm.last_updated_at, DATE)
         self.assertEqual(bm.last_updated_by, USER)
+        self.assertEqual(bm.fill_subblocks, False)
 
         self.assertEqual(version.bm_uuid, BM_UUID)
         self.assertEqual(version.version_id, 1)
@@ -361,7 +363,7 @@ class TestCreateBlockModel(TestWithConnector, TestWithStorage):
     async def test_create_block_model_with_fill_subblocks(self) -> None:
         self.transport.set_request_handler(
             CreateRequestHandler(
-                create_result=_mock_create_result(self.environment),
+                create_result=_mock_create_result(self.environment, fill_subblocks=True),
                 job_response=JobResponse(
                     job_status=JobStatus.COMPLETE,
                     payload=FIRST_VERSION,
@@ -378,6 +380,7 @@ class TestCreateBlockModel(TestWithConnector, TestWithStorage):
             fill_subblocks=True,
         )
         self.assertEqual(bm.id, BM_UUID)
+        self.assertEqual(bm.fill_subblocks, True)
         self.assertEqual(version.version_id, 1)
 
         self._assert_create_request(SUBBLOCKED_GRID_DEFINITION, fill_subblocks=True)

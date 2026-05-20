@@ -223,6 +223,7 @@ class BlockModelAPIClient(BaseAPIClient):
             last_updated_at=model.last_updated_at,
             last_updated_by=ServiceUser.from_model(model.last_updated_by),
             geoscience_object_id=model.geoscience_object_id,
+            fill_subblocks=model.fill_subblocks,
         )
 
     async def _poll_job_url(self, bm_id: UUID, job_id: UUID) -> JobResponse:
@@ -683,6 +684,7 @@ class BlockModelAPIClient(BaseAPIClient):
         delete_columns: set[str] | None = None,
         units: dict[str, str] | None = None,
         geometry_change: bool | None = None,
+        fill_subblocks: bool | None = None,
     ) -> Version:
         if self._cache is None:
             raise CacheNotConfiguredException(
@@ -724,6 +726,7 @@ class BlockModelAPIClient(BaseAPIClient):
                 columns=columns,
                 update_type=models.UpdateType.replace,
                 geometry_change=geometry_change,
+                **({} if fill_subblocks is None else {"fill_subblocks": fill_subblocks}),
             ),
         )
         return await self._upload_data(bm_id, update_response.job_uuid, str(update_response.upload_url), data)
@@ -765,6 +768,7 @@ class BlockModelAPIClient(BaseAPIClient):
         delete_columns: set[str] | None = None,
         units: dict[str, str] | None = None,
         geometry_change: bool = False,
+        fill_subblocks: bool | None = None,
     ) -> Version:
         """Add, update, or delete sub-blocked block model columns.
 
@@ -784,9 +788,13 @@ class BlockModelAPIClient(BaseAPIClient):
         :param delete_columns: A set of column names to delete from the block model.
         :param units: A dictionary mapping column names within `data` to units.
         :param geometry_change: Whether the geometry of the sub-blocked model changes.
+        :param fill_subblocks: If ``True``, any missing sub-blocks will be filled with data from the parent block.
+            Only applicable for fully sub-blocked models when ``geometry_change`` is ``True``. If ``None`` (the default),
+            the block model's own ``fill_subblocks`` setting is used.
         """
         return await self._update_columns(
-            bm_id, data, new_columns, update_columns, delete_columns, units, geometry_change=geometry_change
+            bm_id, data, new_columns, update_columns, delete_columns, units,
+            geometry_change=geometry_change, fill_subblocks=fill_subblocks,
         )
 
     async def update_column_metadata(
