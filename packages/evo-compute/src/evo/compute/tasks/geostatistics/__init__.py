@@ -31,6 +31,7 @@ from . import break_ties as _break_ties_module  # noqa: F401
 from . import kriging as _kriging_module  # noqa: F401
 from . import location_wise as _location_wise_module  # noqa: F401
 from . import normal_score as _normal_score_module  # noqa: F401
+from . import simulation_report as _simulation_report_module  # noqa: F401
 from .break_ties import BreakTiesResult
 from .kriging import (
     BlockDiscretisation,
