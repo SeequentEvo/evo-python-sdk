@@ -59,7 +59,6 @@ class WorkspacesApi:
         self,
         org_id: str,
         workspace_id: str,
-        authorization: str,
         assign_role_request: AssignRoleRequest,  # noqa: F405
         additional_headers: dict[str, str] | None = None,
         request_timeout: int | float | tuple[int | float, int | float] | None = None,
@@ -74,8 +73,6 @@ class WorkspacesApi:
         :param workspace_id:
             Format: `uuid`
             Example: `'workspace_id_example'`
-        :param authorization:
-            Example: `'authorization_example'`
         :param assign_role_request:
             Example: `endpoints.AssignRoleRequest()`
         :param additional_headers: (optional) Additional headers to send with the request.
@@ -105,7 +102,6 @@ class WorkspacesApi:
         _header_params = {
             "Content-Type": "application/json",
             "Accept": "application/json",
-            "authorization": authorization,
         } | get_header_metadata(__name__)
         if additional_headers is not None:
             _header_params.update(additional_headers)
@@ -131,7 +127,6 @@ class WorkspacesApi:
     async def create_workspace(
         self,
         org_id: str,
-        authorization: str,
         create_workspace_request: CreateWorkspaceRequest,  # noqa: F405
         additional_headers: dict[str, str] | None = None,
         request_timeout: int | float | tuple[int | float, int | float] | None = None,
@@ -143,8 +138,6 @@ class WorkspacesApi:
         :param org_id:
             Format: `uuid`
             Example: `'org_id_example'`
-        :param authorization:
-            Example: `'authorization_example'`
         :param create_workspace_request:
             Example: `endpoints.CreateWorkspaceRequest()`
         :param additional_headers: (optional) Additional headers to send with the request.
@@ -173,7 +166,6 @@ class WorkspacesApi:
         _header_params = {
             "Content-Type": "application/json",
             "Accept": "application/json",
-            "authorization": authorization,
         } | get_header_metadata(__name__)
         if additional_headers is not None:
             _header_params.update(additional_headers)
@@ -201,7 +193,6 @@ class WorkspacesApi:
         org_id: str,
         workspace_id: str,
         user_id: str,
-        authorization: str,
         additional_headers: dict[str, str] | None = None,
         request_timeout: int | float | tuple[int | float, int | float] | None = None,
     ) -> EmptyResponse:
@@ -218,8 +209,6 @@ class WorkspacesApi:
         :param user_id:
             Format: `uuid`
             Example: `'user_id_example'`
-        :param authorization:
-            Example: `'authorization_example'`
         :param additional_headers: (optional) Additional headers to send with the request.
         :param request_timeout: (optional) Timeout setting for this request. If one number is provided, it will be the
             total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.
@@ -245,9 +234,7 @@ class WorkspacesApi:
         }
 
         # Prepare the header parameters.
-        _header_params = {
-            "authorization": authorization,
-        } | get_header_metadata(__name__)
+        _header_params = {} | get_header_metadata(__name__)
         if additional_headers is not None:
             _header_params.update(additional_headers)
 
@@ -272,7 +259,6 @@ class WorkspacesApi:
         self,
         org_id: str,
         workspace_id: str,
-        authorization: str,
         additional_headers: dict[str, str] | None = None,
         request_timeout: int | float | tuple[int | float, int | float] | None = None,
     ) -> EmptyResponse:
@@ -286,8 +272,6 @@ class WorkspacesApi:
         :param workspace_id:
             Format: `uuid`
             Example: `'workspace_id_example'`
-        :param authorization:
-            Example: `'authorization_example'`
         :param additional_headers: (optional) Additional headers to send with the request.
         :param request_timeout: (optional) Timeout setting for this request. If one number is provided, it will be the
             total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.
@@ -312,9 +296,7 @@ class WorkspacesApi:
         }
 
         # Prepare the header parameters.
-        _header_params = {
-            "authorization": authorization,
-        } | get_header_metadata(__name__)
+        _header_params = {} | get_header_metadata(__name__)
         if additional_headers is not None:
             _header_params.update(additional_headers)
 
@@ -339,7 +321,6 @@ class WorkspacesApi:
         self,
         org_id: str,
         workspace_id: str,
-        authorization: str,
         additional_headers: dict[str, str] | None = None,
         request_timeout: int | float | tuple[int | float, int | float] | None = None,
     ) -> UserRole:  # noqa: F405
@@ -353,8 +334,6 @@ class WorkspacesApi:
         :param workspace_id:
             Format: `uuid`
             Example: `'workspace_id_example'`
-        :param authorization:
-            Example: `'authorization_example'`
         :param additional_headers: (optional) Additional headers to send with the request.
         :param request_timeout: (optional) Timeout setting for this request. If one number is provided, it will be the
             total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.
@@ -381,7 +360,6 @@ class WorkspacesApi:
         # Prepare the header parameters.
         _header_params = {
             "Accept": "application/json",
-            "authorization": authorization,
         } | get_header_metadata(__name__)
         if additional_headers is not None:
             _header_params.update(additional_headers)
@@ -407,7 +385,6 @@ class WorkspacesApi:
         self,
         org_id: str,
         workspace_id: str,
-        authorization: str,
         deleted: bool | None = None,
         additional_headers: dict[str, str] | None = None,
         request_timeout: int | float | tuple[int | float, int | float] | None = None,
@@ -422,8 +399,6 @@ class WorkspacesApi:
         :param workspace_id:
             Format: `uuid`
             Example: `'workspace_id_example'`
-        :param authorization:
-            Example: `'authorization_example'`
         :param deleted: (optional) Only list workspaces that have been deleted.
             Example: `False`
         :param additional_headers: (optional) Additional headers to send with the request.
@@ -457,7 +432,6 @@ class WorkspacesApi:
         # Prepare the header parameters.
         _header_params = {
             "Accept": "application/json",
-            "authorization": authorization,
         } | get_header_metadata(__name__)
         if additional_headers is not None:
             _header_params.update(additional_headers)
@@ -484,7 +458,6 @@ class WorkspacesApi:
         self,
         org_id: str,
         workspace_id: str,
-        authorization: str,
         filter_user_id: str | None = None,
         user_id: str | None = None,
         additional_headers: dict[str, str] | None = None,
@@ -500,8 +473,6 @@ class WorkspacesApi:
         :param workspace_id:
             Format: `uuid`
             Example: `'workspace_id_example'`
-        :param authorization:
-            Example: `'authorization_example'`
         :param filter_user_id: (optional) Filter to see the role of a specific user ID.
             Format: `uuid`
             Example: `'filter_user_id_example'`
@@ -540,7 +511,6 @@ class WorkspacesApi:
         # Prepare the header parameters.
         _header_params = {
             "Accept": "application/json",
-            "authorization": authorization,
         } | get_header_metadata(__name__)
         if additional_headers is not None:
             _header_params.update(additional_headers)
@@ -566,7 +536,6 @@ class WorkspacesApi:
     async def list_workspaces(
         self,
         org_id: str,
-        authorization: str,
         limit: int | None = None,
         offset: int | None = None,
         sort: str | None = None,
@@ -590,8 +559,6 @@ class WorkspacesApi:
         :param org_id:
             Format: `uuid`
             Example: `'org_id_example'`
-        :param authorization:
-            Example: `'authorization_example'`
         :param limit: (optional) The maximum number of results to return. Limits over 100 are deprecated and may only work for some clients.
             Example: `20`
         :param offset: (optional) The (zero-based) offset of the first item returned in the collection.
@@ -674,7 +641,6 @@ class WorkspacesApi:
         # Prepare the header parameters.
         _header_params = {
             "Accept": "application/json",
-            "authorization": authorization,
         } | get_header_metadata(__name__)
         if additional_headers is not None:
             _header_params.update(additional_headers)
@@ -700,7 +666,6 @@ class WorkspacesApi:
     async def list_workspaces_summary(
         self,
         org_id: str,
-        authorization: str,
         limit: int | None = None,
         offset: int | None = None,
         sort: str | None = None,
@@ -723,8 +688,6 @@ class WorkspacesApi:
         :param org_id:
             Format: `uuid`
             Example: `'org_id_example'`
-        :param authorization:
-            Example: `'authorization_example'`
         :param limit: (optional) The maximum number of results to return.
             Example: `0`
         :param offset: (optional) The (zero-based) offset of the first item returned in the collection.
@@ -807,7 +770,6 @@ class WorkspacesApi:
         # Prepare the header parameters.
         _header_params = {
             "Accept": "application/json",
-            "authorization": authorization,
         } | get_header_metadata(__name__)
         if additional_headers is not None:
             _header_params.update(additional_headers)
@@ -834,7 +796,6 @@ class WorkspacesApi:
         self,
         org_id: str,
         workspace_id: str,
-        authorization: str,
         deleted: str | None = None,
         additional_headers: dict[str, str] | None = None,
         request_timeout: int | float | tuple[int | float, int | float] | None = None,
@@ -849,8 +810,6 @@ class WorkspacesApi:
         :param workspace_id:
             Format: `uuid`
             Example: `'workspace_id_example'`
-        :param authorization:
-            Example: `'authorization_example'`
         :param deleted: (optional)
             Example: `'deleted_example'`
         :param additional_headers: (optional) Additional headers to send with the request.
@@ -884,7 +843,6 @@ class WorkspacesApi:
         # Prepare the header parameters.
         _header_params = {
             "Accept": "application/json",
-            "authorization": authorization,
         } | get_header_metadata(__name__)
         if additional_headers is not None:
             _header_params.update(additional_headers)
@@ -912,7 +870,6 @@ class WorkspacesApi:
         self,
         org_id: str,
         workspace_id: str,
-        authorization: str,
         update_workspace_request: UpdateWorkspaceRequest,  # noqa: F405
         additional_headers: dict[str, str] | None = None,
         request_timeout: int | float | tuple[int | float, int | float] | None = None,
@@ -927,8 +884,6 @@ class WorkspacesApi:
         :param workspace_id:
             Format: `uuid`
             Example: `'workspace_id_example'`
-        :param authorization:
-            Example: `'authorization_example'`
         :param update_workspace_request:
             Example: `endpoints.UpdateWorkspaceRequest()`
         :param additional_headers: (optional) Additional headers to send with the request.
@@ -958,7 +913,6 @@ class WorkspacesApi:
         _header_params = {
             "Content-Type": "application/json",
             "Accept": "application/json",
-            "authorization": authorization,
         } | get_header_metadata(__name__)
         if additional_headers is not None:
             _header_params.update(additional_headers)

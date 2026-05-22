@@ -59,7 +59,6 @@ class FoldersApi:
         self,
         org_id: str,
         workspace_id: str,
-        authorization: str,
         folder_create_request: FolderCreateRequest,  # noqa: F405
         api_preview: str | None = None,
         preview_api: str | None = None,
@@ -76,8 +75,6 @@ class FoldersApi:
         :param workspace_id:
             Format: `uuid`
             Example: `'workspace_id_example'`
-        :param authorization:
-            Example: `'authorization_example'`
         :param folder_create_request:
             Example: `endpoints.FolderCreateRequest()`
         :param api_preview: (optional) Set to \"opt-in\" to be able to use this API.
@@ -111,7 +108,6 @@ class FoldersApi:
         _header_params = {
             "Content-Type": "application/json",
             "Accept": "application/json",
-            "authorization": authorization,
         } | get_header_metadata(__name__)
         if api_preview is not None:
             _header_params["API-Preview"] = api_preview
@@ -142,7 +138,6 @@ class FoldersApi:
         self,
         org_id: str,
         workspace_id: str,
-        authorization: str,
         folders_path: str,
         api_preview: str | None = None,
         preview_api: str | None = None,
@@ -159,8 +154,6 @@ class FoldersApi:
         :param workspace_id:
             Format: `uuid`
             Example: `'workspace_id_example'`
-        :param authorization:
-            Example: `'authorization_example'`
         :param folders_path: Folders path. This parameter was automatically generated from a wildcard path.
             Example: `'folders_path_example'`
         :param api_preview: (optional) Set to \"opt-in\" to be able to use this API.
@@ -194,7 +187,6 @@ class FoldersApi:
         # Prepare the header parameters.
         _header_params = {
             "Accept": "application/json",
-            "authorization": authorization,
         } | get_header_metadata(__name__)
         if api_preview is not None:
             _header_params["API-Preview"] = api_preview
@@ -226,7 +218,6 @@ class FoldersApi:
         org_id: str,
         folder_id: str,
         workspace_id: str,
-        authorization: str,
         api_preview: str | None = None,
         preview_api: str | None = None,
         additional_headers: dict[str, str] | None = None,
@@ -245,8 +236,6 @@ class FoldersApi:
         :param workspace_id:
             Format: `uuid`
             Example: `'workspace_id_example'`
-        :param authorization:
-            Example: `'authorization_example'`
         :param api_preview: (optional) Set to \"opt-in\" to be able to use this API.
             Example: `'api_preview_example'`
         :param preview_api: (optional) Set to \"opt-in\" to be able to use this API. This header is being deprecated. Please use the API-Preview header.
@@ -276,9 +265,7 @@ class FoldersApi:
         }
 
         # Prepare the header parameters.
-        _header_params = {
-            "authorization": authorization,
-        } | get_header_metadata(__name__)
+        _header_params = {} | get_header_metadata(__name__)
         if api_preview is not None:
             _header_params["API-Preview"] = api_preview
         if preview_api is not None:
@@ -308,7 +295,6 @@ class FoldersApi:
         org_id: str,
         workspace_id: str,
         folder_id: str,
-        authorization: str,
         limit: int | None = None,
         offset: int | None = None,
         deleted: bool | None = None,
@@ -337,8 +323,6 @@ class FoldersApi:
         :param folder_id:
             Format: `uuid`
             Example: `'folder_id_example'`
-        :param authorization:
-            Example: `'authorization_example'`
         :param limit: (optional) Max number of results per page.
             Example: `5000`
         :param offset: (optional) Number of results to skip before returning `limit` number of results.
@@ -415,7 +399,6 @@ class FoldersApi:
         # Prepare the header parameters.
         _header_params = {
             "Accept": "application/json",
-            "authorization": authorization,
         } | get_header_metadata(__name__)
         if api_preview is not None:
             _header_params["API-Preview"] = api_preview
@@ -449,7 +432,6 @@ class FoldersApi:
         self,
         org_id: str,
         workspace_id: str,
-        authorization: str,
         folders_path: str,
         limit: int | None = None,
         offset: int | None = None,
@@ -476,8 +458,6 @@ class FoldersApi:
         :param workspace_id:
             Format: `uuid`
             Example: `'workspace_id_example'`
-        :param authorization:
-            Example: `'authorization_example'`
         :param folders_path: Folders path. This parameter was automatically generated from a wildcard path.
             Example: `'folders_path_example'`
         :param limit: (optional) Max number of results per page.
@@ -556,7 +536,6 @@ class FoldersApi:
         # Prepare the header parameters.
         _header_params = {
             "Accept": "application/json",
-            "authorization": authorization,
         } | get_header_metadata(__name__)
         if api_preview is not None:
             _header_params["API-Preview"] = api_preview
@@ -591,7 +570,6 @@ class FoldersApi:
         org_id: str,
         folder_id: str,
         workspace_id: str,
-        authorization: str,
         folder_move_request: FolderMoveRequest,  # noqa: F405
         api_preview: str | None = None,
         preview_api: str | None = None,
@@ -611,8 +589,6 @@ class FoldersApi:
         :param workspace_id:
             Format: `uuid`
             Example: `'workspace_id_example'`
-        :param authorization:
-            Example: `'authorization_example'`
         :param folder_move_request:
             Example: `endpoints.FolderMoveRequest()`
         :param api_preview: (optional) Set to \"opt-in\" to be able to use this API.
@@ -647,7 +623,6 @@ class FoldersApi:
         _header_params = {
             "Content-Type": "application/json",
             "Accept": "application/json",
-            "authorization": authorization,
         } | get_header_metadata(__name__)
         if api_preview is not None:
             _header_params["API-Preview"] = api_preview
@@ -679,7 +654,6 @@ class FoldersApi:
         org_id: str,
         folder_id: str,
         workspace_id: str,
-        authorization: str,
         deleted: bool | None = None,
         api_preview: str | None = None,
         preview_api: str | None = None,
@@ -700,8 +674,6 @@ class FoldersApi:
         :param workspace_id:
             Format: `uuid`
             Example: `'workspace_id_example'`
-        :param authorization:
-            Example: `'authorization_example'`
         :param deleted: (optional)
             Example: `True`
         :param api_preview: (optional) Set to \"opt-in\" to be able to use this API.
@@ -743,7 +715,6 @@ class FoldersApi:
         _header_params = {
             "Content-Type": "application/json",
             "Accept": "application/json",
-            "authorization": authorization,
         } | get_header_metadata(__name__)
         if api_preview is not None:
             _header_params["API-Preview"] = api_preview

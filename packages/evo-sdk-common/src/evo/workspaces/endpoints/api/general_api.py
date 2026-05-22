@@ -126,7 +126,6 @@ class GeneralApi:
     async def list_coordinate_systems(
         self,
         org_id: str,
-        authorization: str,
         additional_headers: dict[str, str] | None = None,
         request_timeout: int | float | tuple[int | float, int | float] | None = None,
     ) -> ListCoordinateSystemsResponse:  # noqa: F405
@@ -137,8 +136,6 @@ class GeneralApi:
         :param org_id:
             Format: `uuid`
             Example: `'org_id_example'`
-        :param authorization:
-            Example: `'authorization_example'`
         :param additional_headers: (optional) Additional headers to send with the request.
         :param request_timeout: (optional) Timeout setting for this request. If one number is provided, it will be the
             total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.
@@ -164,7 +161,6 @@ class GeneralApi:
         # Prepare the header parameters.
         _header_params = {
             "Accept": "application/json",
-            "authorization": authorization,
         } | get_header_metadata(__name__)
         if additional_headers is not None:
             _header_params.update(additional_headers)

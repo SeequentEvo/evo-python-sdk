@@ -58,7 +58,6 @@ class InstanceUsersApi:
     async def add_instance_users(
         self,
         org_id: str,
-        authorization: str,
         add_instance_users_request: AddInstanceUsersRequest,  # noqa: F405
         additional_headers: dict[str, str] | None = None,
         request_timeout: int | float | tuple[int | float, int | float] | None = None,
@@ -70,8 +69,6 @@ class InstanceUsersApi:
         :param org_id:
             Format: `uuid`
             Example: `'org_id_example'`
-        :param authorization:
-            Example: `'authorization_example'`
         :param add_instance_users_request:
             Example: `endpoints.AddInstanceUsersRequest()`
         :param additional_headers: (optional) Additional headers to send with the request.
@@ -100,7 +97,6 @@ class InstanceUsersApi:
         _header_params = {
             "Content-Type": "application/json",
             "Accept": "application/json",
-            "authorization": authorization,
         } | get_header_metadata(__name__)
         if additional_headers is not None:
             _header_params.update(additional_headers)
@@ -126,7 +122,6 @@ class InstanceUsersApi:
     async def add_instance_users_deprecated(
         self,
         org_id: str,
-        authorization: str,
         add_instance_users_request: AddInstanceUsersRequest,  # noqa: F405
         additional_headers: dict[str, str] | None = None,
         request_timeout: int | float | tuple[int | float, int | float] | None = None,
@@ -138,8 +133,6 @@ class InstanceUsersApi:
         :param org_id:
             Format: `uuid`
             Example: `'org_id_example'`
-        :param authorization:
-            Example: `'authorization_example'`
         :param add_instance_users_request:
             Example: `endpoints.AddInstanceUsersRequest()`
         :param additional_headers: (optional) Additional headers to send with the request.
@@ -168,7 +161,6 @@ class InstanceUsersApi:
         _header_params = {
             "Content-Type": "application/json",
             "Accept": "application/json",
-            "authorization": authorization,
         } | get_header_metadata(__name__)
         if additional_headers is not None:
             _header_params.update(additional_headers)
@@ -195,7 +187,6 @@ class InstanceUsersApi:
         self,
         org_id: str,
         invitation_id: str,
-        authorization: str,
         additional_headers: dict[str, str] | None = None,
         request_timeout: int | float | tuple[int | float, int | float] | None = None,
     ) -> EmptyResponse:
@@ -209,8 +200,6 @@ class InstanceUsersApi:
         :param invitation_id:
             Format: `uuid`
             Example: `'invitation_id_example'`
-        :param authorization:
-            Example: `'authorization_example'`
         :param additional_headers: (optional) Additional headers to send with the request.
         :param request_timeout: (optional) Timeout setting for this request. If one number is provided, it will be the
             total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.
@@ -235,9 +224,7 @@ class InstanceUsersApi:
         }
 
         # Prepare the header parameters.
-        _header_params = {
-            "authorization": authorization,
-        } | get_header_metadata(__name__)
+        _header_params = {} | get_header_metadata(__name__)
         if additional_headers is not None:
             _header_params.update(additional_headers)
 
@@ -261,7 +248,6 @@ class InstanceUsersApi:
     async def list_instance_user_invitations(
         self,
         org_id: str,
-        authorization: str,
         limit: int | None = None,
         offset: int | None = None,
         additional_headers: dict[str, str] | None = None,
@@ -274,8 +260,6 @@ class InstanceUsersApi:
         :param org_id:
             Format: `uuid`
             Example: `'org_id_example'`
-        :param authorization:
-            Example: `'authorization_example'`
         :param limit: (optional) The maximum number of results to return.
             Example: `20`
         :param offset: (optional) The (zero-based) offset of the first item returned in the collection.
@@ -312,7 +296,6 @@ class InstanceUsersApi:
         # Prepare the header parameters.
         _header_params = {
             "Accept": "application/json",
-            "authorization": authorization,
         } | get_header_metadata(__name__)
         if additional_headers is not None:
             _header_params.update(additional_headers)
@@ -338,7 +321,6 @@ class InstanceUsersApi:
     async def list_instance_user_roles(
         self,
         org_id: str,
-        authorization: str,
         additional_headers: dict[str, str] | None = None,
         request_timeout: int | float | tuple[int | float, int | float] | None = None,
     ) -> ListInstanceRolesResponse:  # noqa: F405
@@ -349,8 +331,6 @@ class InstanceUsersApi:
         :param org_id:
             Format: `uuid`
             Example: `'org_id_example'`
-        :param authorization:
-            Example: `'authorization_example'`
         :param additional_headers: (optional) Additional headers to send with the request.
         :param request_timeout: (optional) Timeout setting for this request. If one number is provided, it will be the
             total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.
@@ -376,7 +356,6 @@ class InstanceUsersApi:
         # Prepare the header parameters.
         _header_params = {
             "Accept": "application/json",
-            "authorization": authorization,
         } | get_header_metadata(__name__)
         if additional_headers is not None:
             _header_params.update(additional_headers)
@@ -401,7 +380,6 @@ class InstanceUsersApi:
     async def list_instance_users(
         self,
         org_id: str,
-        authorization: str,
         limit: int | None = None,
         offset: int | None = None,
         additional_headers: dict[str, str] | None = None,
@@ -414,8 +392,6 @@ class InstanceUsersApi:
         :param org_id:
             Format: `uuid`
             Example: `'org_id_example'`
-        :param authorization:
-            Example: `'authorization_example'`
         :param limit: (optional) The maximum number of results to return.
             Example: `20`
         :param offset: (optional) The (zero-based) offset of the first item returned in the collection.
@@ -452,7 +428,6 @@ class InstanceUsersApi:
         # Prepare the header parameters.
         _header_params = {
             "Accept": "application/json",
-            "authorization": authorization,
         } | get_header_metadata(__name__)
         if additional_headers is not None:
             _header_params.update(additional_headers)
@@ -478,7 +453,6 @@ class InstanceUsersApi:
     async def list_instance_users_deprecated(
         self,
         org_id: str,
-        authorization: str,
         limit: int | None = None,
         offset: int | None = None,
         additional_headers: dict[str, str] | None = None,
@@ -491,8 +465,6 @@ class InstanceUsersApi:
         :param org_id:
             Format: `uuid`
             Example: `'org_id_example'`
-        :param authorization:
-            Example: `'authorization_example'`
         :param limit: (optional) The maximum number of results to return.
             Example: `20`
         :param offset: (optional) The (zero-based) offset of the first item returned in the collection.
@@ -529,7 +501,6 @@ class InstanceUsersApi:
         # Prepare the header parameters.
         _header_params = {
             "Accept": "application/json",
-            "authorization": authorization,
         } | get_header_metadata(__name__)
         if additional_headers is not None:
             _header_params.update(additional_headers)
@@ -556,7 +527,6 @@ class InstanceUsersApi:
         self,
         org_id: str,
         user_id: str,
-        authorization: str,
         additional_headers: dict[str, str] | None = None,
         request_timeout: int | float | tuple[int | float, int | float] | None = None,
     ) -> EmptyResponse:
@@ -570,8 +540,6 @@ class InstanceUsersApi:
         :param user_id:
             Format: `uuid`
             Example: `'user_id_example'`
-        :param authorization:
-            Example: `'authorization_example'`
         :param additional_headers: (optional) Additional headers to send with the request.
         :param request_timeout: (optional) Timeout setting for this request. If one number is provided, it will be the
             total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.
@@ -596,9 +564,7 @@ class InstanceUsersApi:
         }
 
         # Prepare the header parameters.
-        _header_params = {
-            "authorization": authorization,
-        } | get_header_metadata(__name__)
+        _header_params = {} | get_header_metadata(__name__)
         if additional_headers is not None:
             _header_params.update(additional_headers)
 
@@ -623,7 +589,6 @@ class InstanceUsersApi:
         self,
         org_id: str,
         user_id: str,
-        authorization: str,
         additional_headers: dict[str, str] | None = None,
         request_timeout: int | float | tuple[int | float, int | float] | None = None,
     ) -> EmptyResponse:
@@ -637,8 +602,6 @@ class InstanceUsersApi:
         :param user_id:
             Format: `uuid`
             Example: `'user_id_example'`
-        :param authorization:
-            Example: `'authorization_example'`
         :param additional_headers: (optional) Additional headers to send with the request.
         :param request_timeout: (optional) Timeout setting for this request. If one number is provided, it will be the
             total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.
@@ -663,9 +626,7 @@ class InstanceUsersApi:
         }
 
         # Prepare the header parameters.
-        _header_params = {
-            "authorization": authorization,
-        } | get_header_metadata(__name__)
+        _header_params = {} | get_header_metadata(__name__)
         if additional_headers is not None:
             _header_params.update(additional_headers)
 
@@ -690,7 +651,6 @@ class InstanceUsersApi:
         self,
         org_id: str,
         user_id: str,
-        authorization: str,
         update_instance_user_roles_request: UpdateInstanceUserRolesRequest,  # noqa: F405
         additional_headers: dict[str, str] | None = None,
         request_timeout: int | float | tuple[int | float, int | float] | None = None,
@@ -705,8 +665,6 @@ class InstanceUsersApi:
         :param user_id:
             Format: `uuid`
             Example: `'user_id_example'`
-        :param authorization:
-            Example: `'authorization_example'`
         :param update_instance_user_roles_request:
             Example: `endpoints.UpdateInstanceUserRolesRequest()`
         :param additional_headers: (optional) Additional headers to send with the request.
@@ -736,7 +694,6 @@ class InstanceUsersApi:
         _header_params = {
             "Content-Type": "application/json",
             "Accept": "application/json",
-            "authorization": authorization,
         } | get_header_metadata(__name__)
         if additional_headers is not None:
             _header_params.update(additional_headers)
@@ -763,7 +720,6 @@ class InstanceUsersApi:
         self,
         org_id: str,
         user_id: str,
-        authorization: str,
         update_instance_user_roles_request: UpdateInstanceUserRolesRequest,  # noqa: F405
         additional_headers: dict[str, str] | None = None,
         request_timeout: int | float | tuple[int | float, int | float] | None = None,
@@ -778,8 +734,6 @@ class InstanceUsersApi:
         :param user_id:
             Format: `uuid`
             Example: `'user_id_example'`
-        :param authorization:
-            Example: `'authorization_example'`
         :param update_instance_user_roles_request:
             Example: `endpoints.UpdateInstanceUserRolesRequest()`
         :param additional_headers: (optional) Additional headers to send with the request.
@@ -809,7 +763,6 @@ class InstanceUsersApi:
         _header_params = {
             "Content-Type": "application/json",
             "Accept": "application/json",
-            "authorization": authorization,
         } | get_header_metadata(__name__)
         if additional_headers is not None:
             _header_params.update(additional_headers)

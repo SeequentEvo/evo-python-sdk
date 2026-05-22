@@ -57,7 +57,6 @@ class DiscoveryApi:
 
     async def v1_discovery_evo_identity_v1_discovery_get(
         self,
-        authorization: str,
         service: list[str] | None = None,
         user_agent: str | None = None,
         origin: str | None = None,
@@ -67,8 +66,6 @@ class DiscoveryApi:
         """V1 Discovery
 
 
-        :param authorization:
-            Example: `'authorization_example'`
         :param service: (optional)
             Example: `[]`
         :param user_agent: (optional)
@@ -100,7 +97,6 @@ class DiscoveryApi:
         # Prepare the header parameters.
         _header_params = {
             "Accept": "application/json",
-            "authorization": authorization,
         } | get_header_metadata(__name__)
         if user_agent is not None:
             _header_params["user-agent"] = user_agent
@@ -130,7 +126,6 @@ class DiscoveryApi:
 
     async def v2_discovery_evo_identity_v2_discovery_get(
         self,
-        authorization: str,
         service: list[str] | None = None,
         user_agent: str | None = None,
         origin: str | None = None,
@@ -140,8 +135,6 @@ class DiscoveryApi:
         """V2 Discovery
 
 
-        :param authorization:
-            Example: `'authorization_example'`
         :param service: (optional)
             Example: `[]`
         :param user_agent: (optional)
@@ -173,7 +166,6 @@ class DiscoveryApi:
         # Prepare the header parameters.
         _header_params = {
             "Accept": "application/json",
-            "authorization": authorization,
         } | get_header_metadata(__name__)
         if user_agent is not None:
             _header_params["user-agent"] = user_agent

@@ -58,7 +58,6 @@ class InstanceGroupsApi:
     async def list_instance_groups(
         self,
         org_id: str,
-        authorization: str,
         api_preview: str | None = None,
         preview_api: str | None = None,
         additional_headers: dict[str, str] | None = None,
@@ -71,8 +70,6 @@ class InstanceGroupsApi:
         :param org_id:
             Format: `uuid`
             Example: `'org_id_example'`
-        :param authorization:
-            Example: `'authorization_example'`
         :param api_preview: (optional) Set to \"opt-in\" to be able to use this API.
             Example: `'api_preview_example'`
         :param preview_api: (optional) Set to \"opt-in\" to be able to use this API. This header is being deprecated. Please use the API-Preview header.
@@ -102,7 +99,6 @@ class InstanceGroupsApi:
         # Prepare the header parameters.
         _header_params = {
             "Accept": "application/json",
-            "authorization": authorization,
         } | get_header_metadata(__name__)
         if api_preview is not None:
             _header_params["API-Preview"] = api_preview
@@ -132,7 +128,6 @@ class InstanceGroupsApi:
         self,
         group_id: str,
         org_id: str,
-        authorization: str,
         update_instance_group_members_request: UpdateInstanceGroupMembersRequest,  # noqa: F405
         api_preview: str | None = None,
         preview_api: str | None = None,
@@ -149,8 +144,6 @@ class InstanceGroupsApi:
         :param org_id:
             Format: `uuid`
             Example: `'org_id_example'`
-        :param authorization:
-            Example: `'authorization_example'`
         :param update_instance_group_members_request:
             Example: `endpoints.UpdateInstanceGroupMembersRequest()`
         :param api_preview: (optional) Set to \"opt-in\" to be able to use this API.
@@ -184,7 +177,6 @@ class InstanceGroupsApi:
         _header_params = {
             "Content-Type": "application/json",
             "Accept": "application/json",
-            "authorization": authorization,
         } | get_header_metadata(__name__)
         if api_preview is not None:
             _header_params["API-Preview"] = api_preview

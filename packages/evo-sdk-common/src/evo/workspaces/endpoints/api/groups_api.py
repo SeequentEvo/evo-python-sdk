@@ -59,7 +59,6 @@ class GroupsApi:
         self,
         org_id: str,
         email: str,
-        authorization: str,
         api_preview: str | None = None,
         preview_api: str | None = None,
         additional_headers: dict[str, str] | None = None,
@@ -74,8 +73,6 @@ class GroupsApi:
             Example: `'org_id_example'`
         :param email:
             Example: `'ilike:foo*'`
-        :param authorization:
-            Example: `'authorization_example'`
         :param api_preview: (optional) Set to \"opt-in\" to be able to use this API.
             Example: `'api_preview_example'`
         :param preview_api: (optional) Set to \"opt-in\" to be able to use this API. This header is being deprecated. Please use the API-Preview header.
@@ -110,7 +107,6 @@ class GroupsApi:
         # Prepare the header parameters.
         _header_params = {
             "Accept": "application/json",
-            "authorization": authorization,
         } | get_header_metadata(__name__)
         if api_preview is not None:
             _header_params["API-Preview"] = api_preview
@@ -141,7 +137,6 @@ class GroupsApi:
         self,
         group_id: str,
         org_id: str,
-        authorization: str,
         api_preview: str | None = None,
         preview_api: str | None = None,
         additional_headers: dict[str, str] | None = None,
@@ -157,8 +152,6 @@ class GroupsApi:
         :param org_id:
             Format: `uuid`
             Example: `'org_id_example'`
-        :param authorization:
-            Example: `'authorization_example'`
         :param api_preview: (optional) Set to \"opt-in\" to be able to use this API.
             Example: `'api_preview_example'`
         :param preview_api: (optional) Set to \"opt-in\" to be able to use this API. This header is being deprecated. Please use the API-Preview header.
@@ -189,7 +182,6 @@ class GroupsApi:
         # Prepare the header parameters.
         _header_params = {
             "Accept": "application/json",
-            "authorization": authorization,
         } | get_header_metadata(__name__)
         if api_preview is not None:
             _header_params["API-Preview"] = api_preview
@@ -218,7 +210,6 @@ class GroupsApi:
     async def list_ims_groups(
         self,
         org_id: str,
-        authorization: str,
         api_preview: str | None = None,
         preview_api: str | None = None,
         additional_headers: dict[str, str] | None = None,
@@ -231,8 +222,6 @@ class GroupsApi:
         :param org_id:
             Format: `uuid`
             Example: `'org_id_example'`
-        :param authorization:
-            Example: `'authorization_example'`
         :param api_preview: (optional) Set to \"opt-in\" to be able to use this API.
             Example: `'api_preview_example'`
         :param preview_api: (optional) Set to \"opt-in\" to be able to use this API. This header is being deprecated. Please use the API-Preview header.
@@ -262,7 +251,6 @@ class GroupsApi:
         # Prepare the header parameters.
         _header_params = {
             "Accept": "application/json",
-            "authorization": authorization,
         } | get_header_metadata(__name__)
         if api_preview is not None:
             _header_params["API-Preview"] = api_preview

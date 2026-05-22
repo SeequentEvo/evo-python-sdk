@@ -59,7 +59,6 @@ class ThumbnailsApi:
         self,
         org_id: str,
         workspace_id: str,
-        authorization: str,
         additional_headers: dict[str, str] | None = None,
         request_timeout: int | float | tuple[int | float, int | float] | None = None,
     ) -> EmptyResponse:
@@ -73,8 +72,6 @@ class ThumbnailsApi:
         :param workspace_id:
             Format: `uuid`
             Example: `'workspace_id_example'`
-        :param authorization:
-            Example: `'authorization_example'`
         :param additional_headers: (optional) Additional headers to send with the request.
         :param request_timeout: (optional) Timeout setting for this request. If one number is provided, it will be the
             total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.
@@ -99,9 +96,7 @@ class ThumbnailsApi:
         }
 
         # Prepare the header parameters.
-        _header_params = {
-            "authorization": authorization,
-        } | get_header_metadata(__name__)
+        _header_params = {} | get_header_metadata(__name__)
         if additional_headers is not None:
             _header_params.update(additional_headers)
 
@@ -126,7 +121,6 @@ class ThumbnailsApi:
         self,
         org_id: str,
         workspace_id: str,
-        authorization: str,
         additional_headers: dict[str, str] | None = None,
         request_timeout: int | float | tuple[int | float, int | float] | None = None,
     ) -> bytearray:
@@ -140,8 +134,6 @@ class ThumbnailsApi:
         :param workspace_id:
             Format: `uuid`
             Example: `'workspace_id_example'`
-        :param authorization:
-            Example: `'authorization_example'`
         :param additional_headers: (optional) Additional headers to send with the request.
         :param request_timeout: (optional) Timeout setting for this request. If one number is provided, it will be the
             total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.
@@ -168,7 +160,6 @@ class ThumbnailsApi:
         # Prepare the header parameters.
         _header_params = {
             "Accept": "image/jpeg",
-            "authorization": authorization,
         } | get_header_metadata(__name__)
         if additional_headers is not None:
             _header_params.update(additional_headers)
@@ -194,7 +185,6 @@ class ThumbnailsApi:
         self,
         org_id: str,
         workspace_id: str,
-        authorization: str,
         body: bytearray | None = None,
         additional_headers: dict[str, str] | None = None,
         request_timeout: int | float | tuple[int | float, int | float] | None = None,
@@ -209,8 +199,6 @@ class ThumbnailsApi:
         :param workspace_id:
             Format: `uuid`
             Example: `'workspace_id_example'`
-        :param authorization:
-            Example: `'authorization_example'`
         :param body: (optional)
             Example: `None`
         :param additional_headers: (optional) Additional headers to send with the request.
@@ -239,7 +227,6 @@ class ThumbnailsApi:
         # Prepare the header parameters.
         _header_params = {
             "Content-Type": "image/jpeg",
-            "authorization": authorization,
         } | get_header_metadata(__name__)
         if additional_headers is not None:
             _header_params.update(additional_headers)
