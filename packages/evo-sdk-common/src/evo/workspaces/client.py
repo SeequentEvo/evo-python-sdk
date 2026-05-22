@@ -256,7 +256,6 @@ class WorkspaceAPIClient:
     async def get_workspace(self, workspace_id: UUID, deleted: bool = False) -> Workspace:
         response = await self._workspaces_api.get_workspace(
             org_id=str(self._org_id), workspace_id=str(workspace_id), deleted=deleted
-
         )
         return parse.workspace_model(response, self._org_id, self._connector.base_url)
 
