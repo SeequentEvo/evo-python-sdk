@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from uuid import UUID
 
 __all__ = [
+    "CentralInstance",
     "Hub",
     "Organization",
 ]
@@ -36,6 +37,26 @@ class Hub:
 
 
 @dataclass(frozen=True, kw_only=True)
+class CentralInstance:
+    """Central instance metadata."""
+
+    id: UUID
+    """Central instance ID."""
+
+    display_name: str
+    """Central instance display name."""
+
+    name: str
+    """Central instance name."""
+
+    host: str
+    """Central instance host."""
+
+    organization_name: str
+    """Organization the central instance belongs to."""
+
+
+@dataclass(frozen=True, kw_only=True)
 class Organization:
     """License holder organization metadata."""
 
@@ -46,3 +67,7 @@ class Organization:
     """Organization display name."""
 
     hubs: tuple[Hub, ...]
+    """List of hubs the organization has access to."""
+
+    central: CentralInstance | None
+    """Central instance belonging to the organization, if any."""

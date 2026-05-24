@@ -22,5 +22,5 @@ HUB = Hub(
     url=BASE_URL,
     services=["service1", "service2"],
 )
-ORG = Organization(id=UUID(int=1234), display_name="Organization Name", hubs=(HUB,))
+ORG = Organization(id=UUID(int=1234), display_name="Organization Name", hubs=(HUB,), central=None)
 WORKSPACE_ID = UUID(int=5678)

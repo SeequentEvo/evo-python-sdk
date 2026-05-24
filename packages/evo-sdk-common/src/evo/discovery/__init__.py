@@ -10,9 +10,10 @@
 #  limitations under the License.
 
 from .client import DiscoveryAPIClient
-from .data import Hub, Organization
+from .data import CentralInstance, Hub, Organization
 
 __all__ = [
+    "CentralInstance",
     "DiscoveryAPIClient",
     "Hub",
     "Organization",

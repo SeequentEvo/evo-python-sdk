@@ -16,7 +16,7 @@ from pydantic import BaseModel, field_validator
 
 from evo.common import APIConnector, RequestMethod
 
-from .data import Hub, Organization
+from .data import CentralInstance, Hub, Organization
 
 __all__ = ["DiscoveryAPIClient"]
 
@@ -38,10 +38,33 @@ class _ServiceDiscoveryAccess(BaseModel):
     services: list[str]
 
 
+class _ServiceDiscoveryAccountInstanceHub(BaseModel):
+    code: str
+
+
+class _ServiceDiscoveryAccountInstanceCentral(BaseModel):
+    id: UUID
+    display_name: str
+    name: str
+    host: str
+    organization_name: str
+
+
+class _ServiceDiscoveryAccountInstance(BaseModel):
+    id: UUID
+    hub: _ServiceDiscoveryAccountInstanceHub
+    central: _ServiceDiscoveryAccountInstanceCentral | None = None
+
+
+class _ServiceDiscoverAccount(BaseModel):
+    instances: list[_ServiceDiscoveryAccountInstance]
+
+
 class _ServiceDiscoveryResult(BaseModel):
     organizations: list[_ServiceDiscoveryOrganization]
     hubs: list[_ServiceDiscoveryHub]
     service_access: list[_ServiceDiscoveryAccess]
+    accounts: list[_ServiceDiscoverAccount] | None = None
 
     @field_validator("organizations", "hubs")
     def _sort_by_display_name(cls, v: list) -> list:
@@ -83,6 +106,23 @@ class DiscoveryAPIClient:
         """
         self._connector = connector
 
+    @staticmethod
+    def _central_instance_for_org(discovery_result: _ServiceDiscoveryResult, org_id: UUID) -> CentralInstance | None:
+        if discovery_result.accounts is None:
+            return None
+
+        instance = next((i for acc in discovery_result.accounts for i in acc.instances if i.id == org_id), None)
+        if instance is None or instance.central is None:
+            return None
+
+        return CentralInstance(
+            id=instance.central.id,
+            display_name=instance.central.display_name,
+            name=instance.central.name,
+            host=instance.central.host,
+            organization_name=instance.central.organization_name,
+        )
+
     async def list_organizations(self, service_codes: Sequence[str] = ("evo",)) -> list[Organization]:
         """Get organizations with access to the specified services.
 
@@ -95,7 +135,8 @@ class DiscoveryAPIClient:
             collection_formats={"service": "multi"},
             response_types_map={"200": _DiscoveryResult},
         )
-        discovered = result.discovery
+        discovered: _DiscoveryResult = result.discovery
+
         return [
             Organization(
                 id=org.id,
@@ -110,6 +151,7 @@ class DiscoveryAPIClient:
                     for hub in discovered.hubs
                     if (org, hub) in discovered
                 ),
+                central=self._central_instance_for_org(discovered, org.id),
             )
             for org in discovered.organizations
         ]

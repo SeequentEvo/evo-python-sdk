@@ -288,5 +288,104 @@
             "services": [],
             "service_access": []
         }
+    },
+    {
+        "scenario": "Data with Central Instances",
+        "sample_data": {
+            "organizations": [
+                {
+                    "id": "00000000-0000-0000-0000-000000000000",
+                    "display_name": "Org 0"
+                },
+                {
+                    "id": "00000000-0000-0000-0000-000000000001",
+                    "display_name": "Org 1"
+                }
+            ],
+            "hubs": [
+                {
+                    "code": "hub0",
+                    "display_name": "Hub 0",
+                    "url": "hub0url"
+                },
+                {
+                    "code": "hub1",
+                    "display_name": "Hub 1",
+                    "url": "hub1url"
+                }
+            ],
+            "services": [
+                {
+                    "code": "service0",
+                    "display_name": "Service 0"
+                },
+                {
+                    "code": "service1",
+                    "display_name": "Service 1"
+                }
+            ],
+            "service_access": [
+                {
+                    "org_id": "00000000-0000-0000-0000-000000000000",
+                    "hub_code": "hub0",
+                    "services": [
+                        "service0"
+                    ]
+                },
+                {
+                    "org_id": "00000000-0000-0000-0000-000000000000",
+                    "hub_code": "hub1",
+                    "services": [
+                        "service1"
+                    ]
+                }
+            ],
+            "accounts": [
+                {
+                    "name": "account0",
+                    "id": "00000000-0000-0000-0000-000000000000",
+                    "instances": [
+                        {
+                            "id": "00000000-0000-0000-0000-000000000000",
+                            "display_name": "Instance 0",
+                            "hub": {
+                                "code": "hub0",
+                                "display_name": "Hub 0",
+                                "url": "hub0url"
+                            },
+                            "central": {
+                                "id": "00000000-0000-0000-0000-000000000000",
+                                "display_name": "Central 0",
+                                "name": "central0",
+                                "host": "central0url",
+                                "organization_name": "Instance 0"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "account1",
+                    "id": "00000000-0000-0000-0000-000000000001",
+                    "instances": [
+                        {
+                            "id": "00000000-0000-0000-0000-000000000001",
+                            "display_name": "Instance 1",
+                            "hub": {
+                                "code": "hub1",
+                                "display_name": "Hub 1",
+                                "url": "hub1url"
+                            },
+                            "central": {
+                                "id": "00000000-0000-0000-0000-000000000001",
+                                "display_name": "Central 1",
+                                "name": "central1",
+                                "host": "central1url",
+                                "organization_name": "Instance 1"
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
     }
 ]
