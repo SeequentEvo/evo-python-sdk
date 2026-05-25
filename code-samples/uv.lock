@@ -868,9 +868,10 @@ name = "evo-code-samples"
 version = "0.0.1"
 source = { virtual = "." }
 dependencies = [
+    { name = "evo-compute" },
     { name = "evo-schemas" },
     { name = "evo-sdk" },
-    { name = "geosoft", marker = "sys_platform == 'win32'" },
+    { name = "geosoft", marker = "python_full_version < '3.14' and sys_platform == 'win32'" },
     { name = "matplotlib" },
     { name = "pandas", version = "2.3.3", source = { registry = "https://pypi.org/simple" }, extra = ["excel"], marker = "python_full_version < '3.11'" },
     { name = "pandas", version = "3.0.0", source = { registry = "https://pypi.org/simple" }, extra = ["excel"], marker = "python_full_version >= '3.11'" },
@@ -897,9 +898,10 @@ test = [
 
 [package.metadata]
 requires-dist = [
+    { name = "evo-compute", specifier = ">=0.0.3" },
     { name = "evo-schemas", specifier = ">=2025.12.15" },
-    { name = "evo-sdk", specifier = ">=0.2.1" },
-    { name = "geosoft", marker = "sys_platform == 'win32'", specifier = ">=2025.1.1" },
+    { name = "evo-sdk", specifier = ">=0.2.2" },
+    { name = "geosoft", marker = "python_full_version < '3.14' and sys_platform == 'win32'", specifier = ">=2025.1.1" },
     { name = "matplotlib", specifier = ">=3.10.8" },
     { name = "pandas", extras = ["excel"], specifier = ">=2.2.3" },
     { name = "plotly", specifier = ">=5.18.0" },
@@ -946,7 +948,7 @@ notebooks = [
 
 [[package]]
 name = "evo-compute"
-version = "0.0.2"
+version = "0.0.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "evo-blockmodels", extra = ["utils"] },
@@ -955,9 +957,9 @@ dependencies = [
     { name = "pydantic" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/0f/db/74af15545151b23e4ab133dd4a05bca1a7dc2e052d654f3791590b7fbf79/evo_compute-0.0.2.tar.gz", hash = "sha256:2c445333f4becb0c69253e2423f825ef14ab3e3f366a2a483d9c223c245f306a", size = 24270, upload-time = "2026-03-08T21:49:44.601Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/88/e8/4cebd50943e9b6de03de015d96a95a3d938e7365b1f642ecb825d2282768/evo_compute-0.0.3.tar.gz", hash = "sha256:528674b45a79e832f7e53b348276ceca38c9ab805279461a3d0eef1d87ff264e", size = 26346, upload-time = "2026-05-19T21:19:11.628Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/92/93/2ba09e0d2d94ec2f38f0f7480242e66dbf7e9f9e8002bc9e9c75813b3583/evo_compute-0.0.2-py3-none-any.whl", hash = "sha256:021250b8195d4d285b716568c3f85d32331eb12e4c499bd1ba0093ed0f2ff22e", size = 38015, upload-time = "2026-03-08T21:49:43.171Z" },
+    { url = "https://files.pythonhosted.org/packages/d9/07/80183fa6a3b065bf0fd9fcfe4caffa4068fe8e1b35027ad967f3485c04d3/evo_compute-0.0.3-py3-none-any.whl", hash = "sha256:7fa421772e8bb5d67086e69215f90fe0480048b5823be88a0fc3bfb956efb20a", size = 44768, upload-time = "2026-05-19T21:19:10.156Z" },
 ]
 
 [package.optional-dependencies]
@@ -1035,11 +1037,11 @@ wheels = [
 
 [[package]]
 name = "evo-sdk"
-version = "0.2.1"
+version = "0.2.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "authlib" },
-    { name = "evo-blockmodels", extra = ["aiohttp", "notebooks"] },
+    { name = "evo-blockmodels", extra = ["aiohttp", "notebooks", "utils"] },
     { name = "evo-colormaps", extra = ["aiohttp", "notebooks"] },
     { name = "evo-compute", extra = ["aiohttp", "notebooks"] },
     { name = "evo-files", extra = ["aiohttp", "notebooks"] },
@@ -1049,9 +1051,9 @@ dependencies = [
     { name = "jupyter" },
     { name = "pyjwt" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f5/aa/22db2c6480600c9ade42d1bab71cf6899a78cbfdf5dd445a3e4c25445c9e/evo_sdk-0.2.1.tar.gz", hash = "sha256:31824cd16f668f1f6bae3051ac7d76df4b618724b1a4728b6f08a9e72cb0ee20", size = 632339, upload-time = "2026-03-11T21:55:50.431Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a2/5a/5a5d3be21e3a7e95d548c0260de2e1858d7249dd8f60688411642ada6b94/evo_sdk-0.2.2.tar.gz", hash = "sha256:f4e0aba157ad3486ccd753643181b16dbde0ee9fa8c8f1fdecd027d009d398f3", size = 635099, upload-time = "2026-04-24T23:22:20.591Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b4/8a/5e6c42cb97074748424a7b580e21611d54bf469d4cc2b2747a54c8542759/evo_sdk-0.2.1-py3-none-any.whl", hash = "sha256:e20bc2e913ad95c7c1ebbeda7a8b657fc01513743d7c0eed1d32356e116dcb69", size = 1149914, upload-time = "2026-03-11T21:55:48.762Z" },
+    { url = "https://files.pythonhosted.org/packages/8f/20/6fe31e7b733b625f114e31db5d7686f739ff2fdd948fb4aff90dd7c74068/evo_sdk-0.2.2-py3-none-any.whl", hash = "sha256:9fc6ec59bee77a2adabb269cd73c45f843584413685737f3f7d0dbd4f86daeb1", size = 1154749, upload-time = "2026-04-24T23:22:18.989Z" },
 ]
 
 [[package]]
@@ -1329,12 +1331,12 @@ name = "geosoft"
 version = "2025.2.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "jdcal", marker = "python_full_version < '3.11' or sys_platform == 'win32'" },
+    { name = "jdcal", marker = "(python_full_version < '3.11' and sys_platform != 'win32') or (python_full_version < '3.14' and sys_platform == 'win32')" },
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
-    { name = "numpy", version = "2.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11' and sys_platform == 'win32'" },
+    { name = "numpy", version = "2.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11' and python_full_version < '3.14' and sys_platform == 'win32'" },
     { name = "pandas", version = "2.3.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
-    { name = "pandas", version = "3.0.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11' and sys_platform == 'win32'" },
-    { name = "requests", marker = "python_full_version < '3.11' or sys_platform == 'win32'" },
+    { name = "pandas", version = "3.0.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11' and python_full_version < '3.14' and sys_platform == 'win32'" },
+    { name = "requests", marker = "(python_full_version < '3.11' and sys_platform != 'win32') or (python_full_version < '3.14' and sys_platform == 'win32')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/6a/68/b99eca4f320541239f7ef9412c2bf510c5d3977fbce11eec206a271cef84/geosoft-2025.2.0-cp310-none-win_amd64.whl", hash = "sha256:509448451b668fddce604eac683d73b5cd6beb02bbba18dfedc0926698603ec1", size = 6373109, upload-time = "2025-12-15T18:34:30.634Z" },
