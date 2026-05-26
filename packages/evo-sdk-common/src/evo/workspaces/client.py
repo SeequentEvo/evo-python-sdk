@@ -377,6 +377,18 @@ class WorkspaceAPIClient:
         )
         return parse.workspace_model(model, self._org_id, self._connector.base_url)
 
+    async def restore_deleted_workspace(self, workspace_id: UUID) -> None:
+        """
+        Restore a deleted workspace by workspace id.
+
+        :param workspace_id: The workspace id to restore.
+        """
+        await self._workspaces_api.restore_soft_deleted_workspace(
+            org_id=str(self._org_id),
+            workspace_id=str(workspace_id),
+            deleted="false",
+        )
+
     async def list_instance_users(
         self, limit: int | None = None, offset: int | None = None
     ) -> Page[InstanceUserWithEmail]:
@@ -499,3 +511,42 @@ class WorkspaceAPIClient:
             update_instance_user_roles_request=update_instance_user_roles_request,
         )
         return parse.instance_user_model(response)
+
+    async def get_thumbnail(self, workspace_id: UUID) -> bytearray:
+        """
+        Gets the thumbnail image for a workspace.
+
+        :param workspace_id: The ID of the workspace to get the thumbnail for.
+        :returns: The thumbnail image as bytes.
+        """
+        return await self._thumbnails_api.get_thumbnail(
+            org_id=str(self._org_id),
+            workspace_id=str(workspace_id),
+            additional_headers={"Accept": "image/jpeg, image/png"},
+        )
+
+    async def put_thumbnail(self, workspace_id: UUID, thumbnail: bytearray) -> None:
+        """
+        uploads the thumbnail image for a workspace.
+        :param workspace_id: The ID of the workspace to upload the thumbnail for.
+        :param thumbnail: The thumbnail image as a byte array.
+        """
+        if thumbnail[:3] == bytearray(b"\xff\xd8\xff"):
+            content_type = "image/jpeg"
+        else:
+            content_type = "image/png"  # workspace will validate regardless
+
+        await self._thumbnails_api.put_thumbnail(
+            org_id=str(self._org_id),
+            workspace_id=str(workspace_id),
+            body=thumbnail,
+            additional_headers={"Content-Type": content_type},
+        )
+
+    async def delete_thumbnail(self, workspace_id: UUID) -> None:
+        """
+        deletes the thumbnail image for a workspace.
+        :param workspace_id: The ID of the workspace to delete the thumbnail for.
+        """
+
+        await self._thumbnails_api.delete_workspace_thumbnail(org_id=str(self._org_id), workspace_id=str(workspace_id))

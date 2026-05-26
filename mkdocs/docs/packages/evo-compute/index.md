@@ -13,7 +13,7 @@ The `run()` function is the main entry point for executing compute tasks. It sup
 
 ```python
 from evo.compute.tasks import run, SearchNeighborhood, Ellipsoid, EllipsoidRanges
-from evo.compute.tasks.kriging import KrigingParameters
+from evo.compute.tasks.geostatistics.kriging import KrigingParameters
 
 params = KrigingParameters(
     source=pointset.attributes["grade"],
@@ -33,7 +33,7 @@ Run multiple kriging tasks concurrently — for example, estimating different at
 
 ```python
 from evo.compute.tasks import run, SearchNeighborhood
-from evo.compute.tasks.kriging import KrigingParameters
+from evo.compute.tasks.geostatistics.kriging import KrigingParameters
 
 results = await run(manager, [
     KrigingParameters(
@@ -87,7 +87,7 @@ To avoid this:
 
 ```python
 from evo.compute.tasks import run, SearchNeighborhood
-from evo.compute.tasks.kriging import KrigingParameters, RegionFilter
+from evo.compute.tasks.geostatistics.kriging import KrigingParameters, RegionFilter
 
 # Step 1: Run the first task — attribute "kriged_grade" does not exist yet, so it is created
 first_result = await run(manager, KrigingParameters(

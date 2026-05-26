@@ -162,7 +162,7 @@ class AioTransport(ITransport):
                         fields=post_params,
                         timeout=timeout,
                     )
-                case _, _, str() | bytes():
+                case _, _, str() | bytes() | bytearray():
                     # Allow any content-type if the body is already serialized.
                     return await ctx.request(str_method, url, headers=headers, body=body, timeout=timeout)
                 case content_type, _, _ if content_type is None or _RE_JSON.search(content_type):

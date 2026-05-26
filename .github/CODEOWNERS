@@ -21,6 +21,8 @@
 packages/evo-blockmodels/                   @SeequentEvo/blockmodels-maintainers
 packages/evo-colormaps/                     @SeequentEvo/colormaps-maintainers
 packages/evo-compute/                       @SeequentEvo/compute-maintainers
+packages/evo-compute/src/evo/compute/tasks/geostatistics/ @SeequentEvo/geostatistics-maintainers @SeequentEvo/compute-maintainers
+packages/evo-compute/tests/geostatistics/    @SeequentEvo/geostatistics-maintainers @SeequentEvo/compute-maintainers
 packages/evo-files/                         @SeequentEvo/files-maintainers
 packages/evo-objects/                       @SeequentEvo/objects-maintainers
 packages/evo-sdk-common/                    @SeequentEvo/python-sdk-common-maintainers

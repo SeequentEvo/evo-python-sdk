@@ -161,6 +161,14 @@ class BlockModel(ResourceMetadata):
     User who last updated the block model, including metadata updates
     """
 
+    fill_subblocks: bool = False
+    """
+    Sets the default fill_subblocks behaviour for this block model.
+
+    If ``True``, updates to a fully sub-blocked model with ``update_type``=``merge`` and ``geometry_change``=``True``
+    will fill any missing sub-blocks with data from the parent block.
+    """
+
     @property
     def url(self) -> str:
         """The url of the block model version."""

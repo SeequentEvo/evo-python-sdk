@@ -1,5 +1,58 @@
 # Changelog
 
+## evo-blockmodels@v0.4.1
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### Other Changes
+* Expose fill subblocks by @denis-simo in https://github.com/SeequentEvo/evo-python-sdk/pull/288
+
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-compute@0.0.3...evo-blockmodels@v0.4.1
+
+## evo-compute@0.0.3
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### Other Changes
+
+* Add break-ties task SDK client by @amirabbas-jalali-bentley in https://github.com/SeequentEvo/evo-python-sdk/pull/260
+* Add location-wise task & reorganize geostatistics tasks into subpackage by @amirabbas-jalali-bentley in https://github.com/SeequentEvo/evo-python-sdk/pull/266
+* chore: bump evo-compute to v0.0.3 by @amirabbas-jalali-bentley in https://github.com/SeequentEvo/evo-python-sdk/pull/286
+
+## New Contributors
+* @amirabbas-jalali-bentley made their first contribution in https://github.com/SeequentEvo/evo-python-sdk/pull/260
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-compute@0.0.2...evo-compute@0.0.3
+
+## evo-sdk-common@v0.5.22
+<!-- Release notes generated using configuration in .github/release.yml at evo-sdk-common@v0.5.22 -->
+
+## What's Changed
+### Other Changes
+* Update workspace sdk and notebooks by @sachinseizer in https://github.com/SeequentEvo/evo-python-sdk/pull/279
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-sdk-common@v0.5.21...evo-sdk-common@v0.5.22
+
+## evo-blockmodels@v0.4.0
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### evo-blockmodels
+* Add update block model by @tim-hamblin-seequent in https://github.com/SeequentEvo/evo-python-sdk/pull/250
+
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-blockmodels@v0.3.0...evo-blockmodels@v0.4.0
+
+## evo-sdk@v0.2.2
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### Other Changes
+* Use correct extra for evo-blockmodels in evo-sdk by @BenLewis-Seequent in https://github.com/SeequentEvo/evo-python-sdk/pull/246
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-sdk@v0.2.1...evo-sdk@v0.2.2
+
 ## evo-blockmodels@v0.3.0
 ## What's Changed
 ### evo-blockmodels

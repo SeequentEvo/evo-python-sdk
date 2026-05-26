@@ -290,7 +290,7 @@ class APIConnector:
         if isinstance(obj, Enum):
             # If obj is an Enum sanitize the value.
             return cls._sanitize_for_serialization(obj.value)
-        elif isinstance(obj, (str, int, float, bool, bytes)):
+        elif isinstance(obj, (str, int, float, bool, bytes, bytearray)):
             # If obj is a primitive return directly.
             return obj
         elif isinstance(obj, (datetime.date, datetime.datetime)):
@@ -392,7 +392,7 @@ class APIConnector:
             # Return the response object directly.
             return response
 
-        if response_type is not bytes:
+        if response_type is not bytes and response_type is not bytearray:
             match = None
             content_type = response.getheader("content-type")
             if content_type is not None:
@@ -442,7 +442,7 @@ class APIConnector:
 
         if isinstance(response_type, GenericAlias):  # list[T], dict[str, T].
             return cls.__deserialize_generic(data, response_type)
-        elif response_type in {str, int, float, bool, bytes, dict}:
+        elif response_type in {str, int, float, bool, bytes, bytearray, dict}:
             return cls.__deserialize_primitive(data, response_type)
         elif response_type is datetime.datetime:
             return cls.__deserialize_datetime(data)

@@ -190,9 +190,9 @@ class AdminApi:
 
     async def delete_user_role_admin(
         self,
+        org_id: str,
         workspace_id: str,
         user_id: str,
-        org_id: str,
         additional_headers: dict[str, str] | None = None,
         request_timeout: int | float | tuple[int | float, int | float] | None = None,
     ) -> EmptyResponse:
@@ -200,15 +200,15 @@ class AdminApi:
 
         Removes a user's role from a workspace. Admin endpoints allow organization admin users to access any workspace, regardless of their role or lack thereof within the workspace.
 
+        :param org_id:
+            Format: `uuid`
+            Example: `'org_id_example'`
         :param workspace_id:
             Format: `uuid`
             Example: `'workspace_id_example'`
         :param user_id:
             Format: `uuid`
             Example: `'user_id_example'`
-        :param org_id:
-            Format: `uuid`
-            Example: `'org_id_example'`
         :param additional_headers: (optional) Additional headers to send with the request.
         :param request_timeout: (optional) Timeout setting for this request. If one number is provided, it will be the
             total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.
@@ -228,9 +228,9 @@ class AdminApi:
         """
         # Prepare the path parameters.
         _path_params = {
+            "org_id": org_id,
             "workspace_id": workspace_id,
             "user_id": user_id,
-            "org_id": org_id,
         }
 
         # Prepare the header parameters.
@@ -316,8 +316,8 @@ class AdminApi:
 
     async def get_thumbnail_admin(
         self,
-        workspace_id: str,
         org_id: str,
+        workspace_id: str,
         additional_headers: dict[str, str] | None = None,
         request_timeout: int | float | tuple[int | float, int | float] | None = None,
     ) -> bytearray:
@@ -325,12 +325,12 @@ class AdminApi:
 
         Returns the thumbnail image for a specified workspace. Admin endpoints allow organization admin users to access any workspace, regardless of their role or lack thereof within the workspace.
 
-        :param workspace_id:
-            Format: `uuid`
-            Example: `'workspace_id_example'`
         :param org_id:
             Format: `uuid`
             Example: `'org_id_example'`
+        :param workspace_id:
+            Format: `uuid`
+            Example: `'workspace_id_example'`
         :param additional_headers: (optional) Additional headers to send with the request.
         :param request_timeout: (optional) Timeout setting for this request. If one number is provided, it will be the
             total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.
@@ -350,8 +350,8 @@ class AdminApi:
         """
         # Prepare the path parameters.
         _path_params = {
-            "workspace_id": workspace_id,
             "org_id": org_id,
+            "workspace_id": workspace_id,
         }
 
         # Prepare the header parameters.
@@ -453,8 +453,8 @@ class AdminApi:
 
     async def list_user_roles_admin(
         self,
-        workspace_id: str,
         org_id: str,
+        workspace_id: str,
         filter_user_id: str | None = None,
         user_id: str | None = None,
         additional_headers: dict[str, str] | None = None,
@@ -464,17 +464,16 @@ class AdminApi:
 
         List all users and their roles within a workspace. Admin endpoints allow organization admin users to access any workspace, regardless of their role or lack thereof within the workspace.
 
-        :param workspace_id:
-            Format: `uuid`
-            Example: `'workspace_id_example'`
         :param org_id:
             Format: `uuid`
             Example: `'org_id_example'`
+        :param workspace_id:
+            Format: `uuid`
+            Example: `'workspace_id_example'`
         :param filter_user_id: (optional) Filter to see the role of a specific user ID.
             Format: `uuid`
             Example: `'filter_user_id_example'`
         :param user_id: (optional) Filter to see the role of a specific user ID.
-            Format: `uuid`
             Example: `'user_id_example'`
         :param additional_headers: (optional) Additional headers to send with the request.
         :param request_timeout: (optional) Timeout setting for this request. If one number is provided, it will be the
@@ -495,8 +494,8 @@ class AdminApi:
         """
         # Prepare the path parameters.
         _path_params = {
-            "workspace_id": workspace_id,
             "org_id": org_id,
+            "workspace_id": workspace_id,
         }
 
         # Prepare the query parameters.
@@ -571,7 +570,6 @@ class AdminApi:
             Format: `uuid`
             Example: `'filter_created_by_example'`
         :param created_by: (optional) Filter by workspace that a user has created, by user ID.
-            Format: `uuid`
             Example: `'created_by_example'`
         :param created_at: (optional) Filter by the time workspace has created.
             Example: `'created_at_example'`
@@ -582,7 +580,7 @@ class AdminApi:
         :param name: (optional) Filter by workspace name.
             Example: `'name_example'`
         :param deleted: (optional) Include workspaces that have been deleted.
-            Example: `True`
+            Example: `False`
         :param additional_headers: (optional) Additional headers to send with the request.
         :param request_timeout: (optional) Timeout setting for this request. If one number is provided, it will be the
             total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.
@@ -694,7 +692,6 @@ class AdminApi:
             Format: `uuid`
             Example: `'filter_created_by_example'`
         :param created_by: (optional) Filter by workspace that a user has created, by user ID.
-            Format: `uuid`
             Example: `'created_by_example'`
         :param created_at: (optional) Filter by the time workspace has created.
             Example: `'created_at_example'`
@@ -705,12 +702,11 @@ class AdminApi:
         :param name: (optional) Filter by workspace name.
             Example: `'name_example'`
         :param deleted: (optional) Include workspaces that have been deleted.
-            Example: `True`
+            Example: `False`
         :param filter_user_id: (optional) Filter by workspaces that a user ID has access to.
             Format: `uuid`
             Example: `'filter_user_id_example'`
         :param user_id: (optional) Filter by workspaces that a user ID has access to.
-            Format: `uuid`
             Example: `'user_id_example'`
         :param additional_headers: (optional) Additional headers to send with the request.
         :param request_timeout: (optional) Timeout setting for this request. If one number is provided, it will be the

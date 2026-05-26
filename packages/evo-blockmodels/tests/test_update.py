@@ -480,6 +480,63 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
         self.assertEqual(version.created_by, USER)
         self.assertEqual(version.columns, UPDATED_VERSION.mapping.columns)
 
+    async def test_update_subblocked_columns_with_fill_subblocks(self) -> None:
+        """Test that fill_subblocks is passed through to UpdateDataLiteInput."""
+        self.transport.set_request_handler(
+            UpdateRequestHandler(
+                update_result=UPDATE_RESULT,
+                job_response=JobResponse(
+                    job_status=JobStatus.COMPLETE,
+                    payload=UPDATED_VERSION,
+                ),
+            )
+        )
+        with (
+            mock.patch("evo.common.io.upload.StorageDestination") as mock_destination,
+        ):
+            mock_destination.upload_file = mock.AsyncMock()
+            version = await self.bms_client.update_subblocked_columns(
+                BM_UUID,
+                SUBBLOCKED_DATA,
+                new_columns=["col2"],
+                update_columns={"col1"},
+                delete_columns={"col3"},
+                units={"col2": "g/t"},
+                geometry_change=True,
+                fill_subblocks=True,
+            )
+            mock_destination.upload_file.assert_called_once()
+
+            expected_update_body = models.UpdateDataLiteInput(
+                columns=models.UpdateColumnsLiteInput(
+                    new=[
+                        models.ColumnLite(
+                            title="col2",
+                            data_type=models.DataType.Float64,
+                            unit_id="g/t",
+                        ),
+                    ],
+                    update=["col1"],
+                    rename=[],
+                    delete=["col3"],
+                ),
+                update_type=models.UpdateType.replace,
+                geometry_change=True,
+                fill_subblocks=True,
+            )
+            self.assert_any_request_made(
+                method=RequestMethod.PATCH,
+                path=f"{self.base_path}/block-models/{BM_UUID}/blocks",
+                body=expected_update_body.model_dump(mode="json", exclude_unset=True),
+                headers={
+                    "Authorization": "Bearer <not-a-real-token>",
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                },
+            )
+        self.assertEqual(version.bm_uuid, BM_UUID)
+        self.assertEqual(version.version_id, 2)
+
     async def test_update_column_metadata(self) -> None:
         self.transport.set_request_handler(
             UpdateRequestHandler(

@@ -17,7 +17,7 @@ the Kriging task (geostatistics/kriging).
 
 Example:
     >>> from evo.compute.tasks import run, SearchNeighborhood, Ellipsoid, EllipsoidRanges
-    >>> from evo.compute.tasks.kriging import KrigingParameters
+    >>> from evo.compute.tasks.geostatistics.kriging import KrigingParameters
     >>>
     >>> params = KrigingParameters(
     ...     source=pointset.attributes["grade"],
@@ -43,15 +43,15 @@ from evo.objects.typed import BaseObject, BlockModelPendingAttribute, PendingAtt
 from pydantic import BaseModel, Field, SerializerFunctionWrapHandler, field_validator, model_serializer
 
 # Import shared components
-from .common import (
+from ..common import (
     AnySourceAttribute,
     AnyTargetAttribute,
     AttributeExpression,
     GeoscienceObjectReference,
     SearchNeighborhood,
 )
-from .common.results import TaskTarget
-from .common.runner import TaskRunner
+from ..common.results import TaskTarget
+from ..common.runner import TaskRunner
 
 __all__ = [
     # Kriging-specific (users import from evo.compute.tasks.kriging)
@@ -220,7 +220,7 @@ class KrigingParameters(BaseModel):
 
     Example:
         >>> from evo.compute.tasks import run, SearchNeighborhood, Ellipsoid, EllipsoidRanges
-        >>> from evo.compute.tasks.kriging import KrigingParameters, RegionFilter
+        >>> from evo.compute.tasks.geostatistics.kriging import KrigingParameters, RegionFilter
         >>>
         >>> params = KrigingParameters(
         ...     source=pointset.attributes["grade"],  # Source attribute

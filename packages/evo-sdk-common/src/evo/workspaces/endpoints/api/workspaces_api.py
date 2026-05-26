@@ -190,9 +190,9 @@ class WorkspacesApi:
 
     async def delete_user_role(
         self,
+        org_id: str,
         workspace_id: str,
         user_id: str,
-        org_id: str,
         additional_headers: dict[str, str] | None = None,
         request_timeout: int | float | tuple[int | float, int | float] | None = None,
     ) -> EmptyResponse:
@@ -200,15 +200,15 @@ class WorkspacesApi:
 
         Removes a user by removing their role from the workspace.
 
+        :param org_id:
+            Format: `uuid`
+            Example: `'org_id_example'`
         :param workspace_id:
             Format: `uuid`
             Example: `'workspace_id_example'`
         :param user_id:
             Format: `uuid`
             Example: `'user_id_example'`
-        :param org_id:
-            Format: `uuid`
-            Example: `'org_id_example'`
         :param additional_headers: (optional) Additional headers to send with the request.
         :param request_timeout: (optional) Timeout setting for this request. If one number is provided, it will be the
             total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.
@@ -228,9 +228,9 @@ class WorkspacesApi:
         """
         # Prepare the path parameters.
         _path_params = {
+            "org_id": org_id,
             "workspace_id": workspace_id,
             "user_id": user_id,
-            "org_id": org_id,
         }
 
         # Prepare the header parameters.
@@ -257,8 +257,8 @@ class WorkspacesApi:
 
     async def delete_workspace(
         self,
-        workspace_id: str,
         org_id: str,
+        workspace_id: str,
         additional_headers: dict[str, str] | None = None,
         request_timeout: int | float | tuple[int | float, int | float] | None = None,
     ) -> EmptyResponse:
@@ -266,12 +266,12 @@ class WorkspacesApi:
 
         Deletes a workspace. Use of this API requires an \"owner\" role in the workspace. Deleted workspaces will no longer be returned in \"get workspace\" and \"list workspace\" requests, however you can include them by appending `deleted=true` to your request parameters.
 
-        :param workspace_id:
-            Format: `uuid`
-            Example: `'workspace_id_example'`
         :param org_id:
             Format: `uuid`
             Example: `'org_id_example'`
+        :param workspace_id:
+            Format: `uuid`
+            Example: `'workspace_id_example'`
         :param additional_headers: (optional) Additional headers to send with the request.
         :param request_timeout: (optional) Timeout setting for this request. If one number is provided, it will be the
             total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.
@@ -291,8 +291,8 @@ class WorkspacesApi:
         """
         # Prepare the path parameters.
         _path_params = {
-            "workspace_id": workspace_id,
             "org_id": org_id,
+            "workspace_id": workspace_id,
         }
 
         # Prepare the header parameters.
@@ -319,8 +319,8 @@ class WorkspacesApi:
 
     async def get_current_user_role(
         self,
-        workspace_id: str,
         org_id: str,
+        workspace_id: str,
         additional_headers: dict[str, str] | None = None,
         request_timeout: int | float | tuple[int | float, int | float] | None = None,
     ) -> UserRole:  # noqa: F405
@@ -328,12 +328,12 @@ class WorkspacesApi:
 
         Returns your user account's role in a workspace.
 
-        :param workspace_id:
-            Format: `uuid`
-            Example: `'workspace_id_example'`
         :param org_id:
             Format: `uuid`
             Example: `'org_id_example'`
+        :param workspace_id:
+            Format: `uuid`
+            Example: `'workspace_id_example'`
         :param additional_headers: (optional) Additional headers to send with the request.
         :param request_timeout: (optional) Timeout setting for this request. If one number is provided, it will be the
             total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.
@@ -353,8 +353,8 @@ class WorkspacesApi:
         """
         # Prepare the path parameters.
         _path_params = {
-            "workspace_id": workspace_id,
             "org_id": org_id,
+            "workspace_id": workspace_id,
         }
 
         # Prepare the header parameters.
@@ -456,8 +456,8 @@ class WorkspacesApi:
 
     async def list_user_roles(
         self,
-        workspace_id: str,
         org_id: str,
+        workspace_id: str,
         filter_user_id: str | None = None,
         user_id: str | None = None,
         additional_headers: dict[str, str] | None = None,
@@ -467,17 +467,16 @@ class WorkspacesApi:
 
         Returns a list of all users with a role in a workspace.
 
-        :param workspace_id:
-            Format: `uuid`
-            Example: `'workspace_id_example'`
         :param org_id:
             Format: `uuid`
             Example: `'org_id_example'`
+        :param workspace_id:
+            Format: `uuid`
+            Example: `'workspace_id_example'`
         :param filter_user_id: (optional) Filter to see the role of a specific user ID.
             Format: `uuid`
             Example: `'filter_user_id_example'`
         :param user_id: (optional) Filter to see the role of a specific user ID.
-            Format: `uuid`
             Example: `'user_id_example'`
         :param additional_headers: (optional) Additional headers to send with the request.
         :param request_timeout: (optional) Timeout setting for this request. If one number is provided, it will be the
@@ -498,8 +497,8 @@ class WorkspacesApi:
         """
         # Prepare the path parameters.
         _path_params = {
-            "workspace_id": workspace_id,
             "org_id": org_id,
+            "workspace_id": workspace_id,
         }
 
         # Prepare the query parameters.
@@ -572,7 +571,6 @@ class WorkspacesApi:
             Format: `uuid`
             Example: `'filter_created_by_example'`
         :param created_by: (optional) Filter by workspace that a user has created, by user ID.
-            Format: `uuid`
             Example: `'created_by_example'`
         :param created_at: (optional) Filter by the time workspace has created.
             Example: `'created_at_example'`
@@ -583,12 +581,11 @@ class WorkspacesApi:
         :param name: (optional) Filter by workspace name.
             Example: `'name_example'`
         :param deleted: (optional) Include workspaces that have been deleted.
-            Example: `True`
+            Example: `False`
         :param filter_user_id: (optional) Filter by workspaces that a user ID has access to.
             Format: `uuid`
             Example: `'filter_user_id_example'`
         :param user_id: (optional) Filter by workspaces that a user ID has access to.
-            Format: `uuid`
             Example: `'user_id_example'`
         :param additional_headers: (optional) Additional headers to send with the request.
         :param request_timeout: (optional) Timeout setting for this request. If one number is provided, it will be the
@@ -685,14 +682,14 @@ class WorkspacesApi:
         additional_headers: dict[str, str] | None = None,
         request_timeout: int | float | tuple[int | float, int | float] | None = None,
     ) -> ListWorkspaceSummaryResponse:  # noqa: F405
-        """List Workspaces Summary
+        """List workspaces summary
 
 
         :param org_id:
             Format: `uuid`
             Example: `'org_id_example'`
         :param limit: (optional) The maximum number of results to return.
-            Example: `56`
+            Example: `0`
         :param offset: (optional) The (zero-based) offset of the first item returned in the collection.
             Example: `0`
         :param sort: (optional) An optional comma separated list of fields to sort the results by. Options are: `name`, `-name`, `created_at`, `-created_at`, `updated_at`, `-updated_at`, `user_role`, `-user_role`.
@@ -703,7 +700,6 @@ class WorkspacesApi:
             Format: `uuid`
             Example: `'filter_created_by_example'`
         :param created_by: (optional) Filter by workspace that a user has created, by user ID.
-            Format: `uuid`
             Example: `'created_by_example'`
         :param created_at: (optional) Filter by the time workspace has created.
             Example: `'created_at_example'`
@@ -714,12 +710,11 @@ class WorkspacesApi:
         :param name: (optional) Filter by workspace name.
             Example: `'name_example'`
         :param deleted: (optional) Include workspaces that have been deleted.
-            Example: `True`
+            Example: `False`
         :param filter_user_id: (optional) Filter by workspaces that a user ID has access to.
             Format: `uuid`
             Example: `'filter_user_id_example'`
         :param user_id: (optional) Filter by workspaces that a user ID has access to.
-            Format: `uuid`
             Example: `'user_id_example'`
         :param additional_headers: (optional) Additional headers to send with the request.
         :param request_timeout: (optional) Timeout setting for this request. If one number is provided, it will be the
@@ -799,8 +794,8 @@ class WorkspacesApi:
 
     async def restore_soft_deleted_workspace(
         self,
-        workspace_id: str,
         org_id: str,
+        workspace_id: str,
         deleted: str | None = None,
         additional_headers: dict[str, str] | None = None,
         request_timeout: int | float | tuple[int | float, int | float] | None = None,
@@ -809,12 +804,12 @@ class WorkspacesApi:
 
         If a workspace has been soft deleted, this API allows you to restore it again. After restoring, the workspace will no longer be included in \"get workspace\" and \"list workspace\" when the `deleted=true` parameter is appended to your request parameters.
 
-        :param workspace_id:
-            Format: `uuid`
-            Example: `'workspace_id_example'`
         :param org_id:
             Format: `uuid`
             Example: `'org_id_example'`
+        :param workspace_id:
+            Format: `uuid`
+            Example: `'workspace_id_example'`
         :param deleted: (optional)
             Example: `'deleted_example'`
         :param additional_headers: (optional) Additional headers to send with the request.
@@ -836,8 +831,8 @@ class WorkspacesApi:
         """
         # Prepare the path parameters.
         _path_params = {
-            "workspace_id": workspace_id,
             "org_id": org_id,
+            "workspace_id": workspace_id,
         }
 
         # Prepare the query parameters.
