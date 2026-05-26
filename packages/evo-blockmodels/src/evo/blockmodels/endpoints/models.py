@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import Enum
-from typing import Annotated, Any, Literal
+from typing import Annotated, Literal
 from uuid import UUID
 
 from pydantic import (
@@ -187,31 +187,6 @@ class JobStatus(Enum):
     PROCESSING = "PROCESSING"
     COMPLETE = "COMPLETE"
     FAILED = "FAILED"
-
-
-class LineageV100RuneventInputdataset(CustomBaseModel):
-    facets: Annotated[dict[str, Any] | None, Field(title="Facets")] = None
-    inputFacets: Annotated[dict[str, Any] | None, Field(title="Inputfacets")] = None
-    name: Annotated[StrictStr, Field(title="Name")]
-    namespace: Annotated[StrictStr, Field(title="Namespace")]
-
-
-class LineageV100RuneventJob(CustomBaseModel):
-    facets: Annotated[dict[str, Any] | None, Field(title="Facets")] = None
-    name: Annotated[StrictStr, Field(title="Name")]
-    namespace: Annotated[StrictStr, Field(title="Namespace")]
-
-
-class LineageV100RuneventOutputdataset(CustomBaseModel):
-    facets: Annotated[dict[str, Any] | None, Field(title="Facets")] = None
-    name: Annotated[StrictStr, Field(title="Name")]
-    namespace: Annotated[StrictStr, Field(title="Namespace")]
-    outputFacets: Annotated[dict[str, Any] | None, Field(title="Outputfacets")] = None
-
-
-class LineageV100RuneventRun(CustomBaseModel):
-    facets: Annotated[dict[str, Any] | None, Field(title="Facets")] = None
-    runId: Annotated[UUID, Field(title="Runid")]
 
 
 class Location(CustomBaseModel):
@@ -904,17 +879,6 @@ class DeltaRequestData(CustomBaseModel):
     """
     If there are changes, whether to return details about such changes or not.
     """
-
-
-class LineageV100Runevent(CustomBaseModel):
-    eventTime: Annotated[StrictStr, Field(title="Eventtime")]
-    eventType: Annotated[StrictStr | None, Field(title="Eventtype")] = None
-    inputs: Annotated[list[LineageV100RuneventInputdataset] | None, Field(title="Inputs")] = None
-    job: LineageV100RuneventJob
-    outputs: Annotated[list[LineageV100RuneventOutputdataset] | None, Field(title="Outputs")] = None
-    producer: Annotated[StrictStr, Field(title="Producer")]
-    run: LineageV100RuneventRun
-    schemaURL: Annotated[StrictStr, Field(title="Schemaurl")]
 
 
 class Mapping(CustomBaseModel):
@@ -1855,16 +1819,6 @@ class JobResponse(CustomBaseModel):
     """
 
 
-class LineageV100Input(CustomBaseModel):
-    events: Annotated[list[LineageV100Runevent], Field(title="Events")]
-    self_link: Annotated[StrictStr | None, Field(title="Self Link")] = None
-
-
-class LineageV100Output(CustomBaseModel):
-    events: Annotated[list[LineageV100Runevent], Field(title="Events")]
-    self_link: Annotated[StrictStr | None, Field(title="Self Link")] = None
-
-
 class PaginatedResponseWithUnitsReportSpecificationWithLastRunInfo(CustomBaseModel):
     count: Annotated[StrictInt, Field(title="Count")]
     """
@@ -2130,10 +2084,6 @@ class UpdateBlockModel(CustomBaseModel):
     with missing sub-blocks will fill the missing sub-blocks with data from the parent block.
 
     """
-    lineage: LineageV100Input | None = None
-    """
-    Lineage of the block model
-    """
     name: Annotated[StrictStr | None, Field(max_length=100, min_length=3, title="Name")] = None
     """
     Name of the block model. This may not contain `/` nor `\\`. If the name is changed, leading and trailing whitespace will be automatically removed.
@@ -2212,10 +2162,6 @@ class UpdateDataLiteInput(CustomBaseModel):
         InputOptionsParquet | InputOptionsCSV | InputOptionsDatamine | None,
         Field(discriminator="file_format", title="Input Options"),
     ] = None
-    lineage: LineageV100Input | None = None
-    """
-    Lineage of the block model update
-    """
     update_type: UpdateType = "merge"
     """
     
@@ -2252,10 +2198,6 @@ class UpdateDataLiteOutput(CustomBaseModel):
         InputOptionsParquet | InputOptionsCSV | InputOptionsDatamine | None,
         Field(discriminator="file_format", title="Input Options"),
     ] = None
-    lineage: LineageV100Output | None = None
-    """
-    Lineage of the block model update
-    """
     update_type: UpdateType = "merge"
     """
     
@@ -2289,10 +2231,6 @@ class UpdateDataWithVersion(CustomBaseModel):
         - `update_metadata` is allowed, but only when the target columns are being updated as part of the `update` operation, and only when there are no columns being renamed.
         - If `update_type` is set to `merge`, then all sub-blocks within a parent block must be provided.
 
-    """
-    lineage: LineageV100Output | None = None
-    """
-    Lineage of the block model update
     """
     update_type: UpdateType = "merge"
     """
@@ -2432,10 +2370,6 @@ class CreateData(CustomBaseModel):
     If this flag is `true`, then updates to a fully subblocked-model with `update_type`=`merge`, and `geometry_change`=`true`
     with missing sub-blocks will fill the missing sub-blocks with data from the parent block.
 
-    """
-    lineage: LineageV100Input | None = None
-    """
-    Lineage of the block model
     """
     model_origin: Location
     name: Annotated[StrictStr, Field(title="Name")]
