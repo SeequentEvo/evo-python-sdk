@@ -196,7 +196,16 @@ Regular3DGrid) based on the object's sub-classification.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>If no typed class is found for the object's sub-classification.  Example::  from evo.objects.typed import object_from_path  # Download latest version by path obj = await object_from_path(context, "my-folder/pointset.json")  # Download specific version obj = await object_from_path(context, "my-folder/pointset.json", version="abc123")</p>
+                <p>If no typed class is found for the object's sub-classification.</p>
+<p>Example::</p>
+<pre><code>from evo.objects.typed import object_from_path
+
+# Download latest version by path
+obj = await object_from_path(context, "my-folder/pointset.json")
+
+# Download specific version
+obj = await object_from_path(context, "my-folder/pointset.json", version="abc123")
+</code></pre>
               </div>
             </td>
           </tr>

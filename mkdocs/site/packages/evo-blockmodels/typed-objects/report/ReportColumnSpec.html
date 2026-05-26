@@ -130,7 +130,9 @@
             </td>
             <td>
               <div class="doc-md-description">
-                <p>How to aggregate the column values. Use <code>Aggregation</code> enum: - <code>Aggregation.MASS_AVERAGE</code> - Mass-weighted average (for grades) - <code>Aggregation.SUM</code> - Sum of values (for metal content)</p>
+                <p>How to aggregate the column values. Use <code>Aggregation</code> enum:
+- <code>Aggregation.MASS_AVERAGE</code> - Mass-weighted average (for grades)
+- <code>Aggregation.SUM</code> - Sum of values (for metal content)</p>
               </div>
             </td>
             <td>
@@ -162,7 +164,31 @@
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Unit ID for the output values. Use <code>Units</code> class constants: - <code>Units.GRAMS_PER_TONNE</code> - g/t (grades) - <code>Units.PERCENT</code> - % (grades) - <code>Units.PPM</code> - ppm (grades) - <code>Units.KILOGRAMS</code> - kg (metal content) - <code>Units.TONNES</code> - t (metal content) - <code>Units.TROY_OUNCES</code> - oz_tr (metal content)  Example: &gt;&gt;&gt; from evo.blockmodels import Units &gt;&gt;&gt; from evo.blockmodels.typed import Aggregation, ReportColumnSpec &gt;&gt;&gt; &gt;&gt;&gt; # For grade columns, use MASS_AVERAGE &gt;&gt;&gt; grade_col = ReportColumnSpec( ...     column_name="Au", ...     aggregation=Aggregation.MASS_AVERAGE, ...     label="Au Grade", ...     output_unit_id=Units.GRAMS_PER_TONNE, ... ) &gt;&gt;&gt; # For metal content columns, use SUM &gt;&gt;&gt; metal_col = ReportColumnSpec( ...     column_name="Au_metal", ...     aggregation=Aggregation.SUM, ...     label="Au Metal", ...     output_unit_id=Units.KILOGRAMS, ... )</p>
+                <p>Unit ID for the output values. Use <code>Units</code> class constants:
+    - <code>Units.GRAMS_PER_TONNE</code> - g/t (grades)
+    - <code>Units.PERCENT</code> - % (grades)
+    - <code>Units.PPM</code> - ppm (grades)
+    - <code>Units.KILOGRAMS</code> - kg (metal content)
+    - <code>Units.TONNES</code> - t (metal content)
+    - <code>Units.TROY_OUNCES</code> - oz_tr (metal content)</p>
+<p>Example:
+    &gt;&gt;&gt; from evo.blockmodels import Units
+    &gt;&gt;&gt; from evo.blockmodels.typed import Aggregation, ReportColumnSpec
+    &gt;&gt;&gt;
+    &gt;&gt;&gt; # For grade columns, use MASS_AVERAGE
+    &gt;&gt;&gt; grade_col = ReportColumnSpec(
+    ...     column_name="Au",
+    ...     aggregation=Aggregation.MASS_AVERAGE,
+    ...     label="Au Grade",
+    ...     output_unit_id=Units.GRAMS_PER_TONNE,
+    ... )
+    &gt;&gt;&gt; # For metal content columns, use SUM
+    &gt;&gt;&gt; metal_col = ReportColumnSpec(
+    ...     column_name="Au_metal",
+    ...     aggregation=Aggregation.SUM,
+    ...     label="Au Metal",
+    ...     output_unit_id=Units.KILOGRAMS,
+    ... )</p>
               </div>
             </td>
             <td>

@@ -418,7 +418,8 @@ with user-friendly column names.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Specific version to query. Use "latest" (default) for the latest version, or None to use the version referenced by this object.</p>
+                <p>Specific version to query. Use "latest" (default) for the latest version,
+or None to use the version referenced by this object.</p>
               </div>
             </td>
             <td>
@@ -460,7 +461,10 @@ with user-friendly column names.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>DataFrame containing the block model data.  Example: &gt;&gt;&gt; df = await block_model.to_dataframe() &gt;&gt;&gt; df.head()</p>
+                <p>DataFrame containing the block model data.</p>
+<p>Example:
+    &gt;&gt;&gt; df = await block_model.to_dataframe()
+    &gt;&gt;&gt; df.head()</p>
               </div>
             </td>
           </tr>
@@ -837,7 +841,13 @@ units defined.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The new version created by the metadata update.  Example: &gt;&gt;&gt; from evo.blockmodels import Units &gt;&gt;&gt; version = await block_model.set_attribute_units({ ...     "Au": Units.GRAMS_PER_TONNE, ...     "density": Units.TONNES_PER_CUBIC_METRE, ... })</p>
+                <p>The new version created by the metadata update.</p>
+<p>Example:
+    &gt;&gt;&gt; from evo.blockmodels import Units
+    &gt;&gt;&gt; version = await block_model.set_attribute_units({
+    ...     "Au": Units.GRAMS_PER_TONNE,
+    ...     "density": Units.TONNES_PER_CUBIC_METRE,
+    ... })</p>
               </div>
             </td>
           </tr>
@@ -1016,7 +1026,17 @@ units defined.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>A Report instance representing the created report.  Example: &gt;&gt;&gt; from evo.blockmodels.typed import ReportSpecificationData, ReportColumnSpec, ReportCategorySpec &gt;&gt;&gt; report = await block_model.create_report(ReportSpecificationData( ...     name="Gold Resource Report", ...     columns=[ReportColumnSpec(column_name="Au", aggregation="WEIGHTED_MEAN", output_unit_id="g/t")], ...     categories=[ReportCategorySpec(column_name="domain")], ...     mass_unit_id="t", ...     density_value=2.7, ...     density_unit_id="t/m3", ... ))</p>
+                <p>A Report instance representing the created report.</p>
+<p>Example:
+    &gt;&gt;&gt; from evo.blockmodels.typed import ReportSpecificationData, ReportColumnSpec, ReportCategorySpec
+    &gt;&gt;&gt; report = await block_model.create_report(ReportSpecificationData(
+    ...     name="Gold Resource Report",
+    ...     columns=[ReportColumnSpec(column_name="Au", aggregation="WEIGHTED_MEAN", output_unit_id="g/t")],
+    ...     categories=[ReportCategorySpec(column_name="domain")],
+    ...     mass_unit_id="t",
+    ...     density_value=2.7,
+    ...     density_unit_id="t/m3",
+    ... ))</p>
               </div>
             </td>
           </tr>
