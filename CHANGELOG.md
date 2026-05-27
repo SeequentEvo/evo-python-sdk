@@ -1,5 +1,21 @@
 # Changelog
 
+## evo-sdk-common@v0.5.23
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### Other Changes
+* Add normal-score compute task SDK client by @amirabbas-jalali-bentley in https://github.com/SeequentEvo/evo-python-sdk/pull/268
+* Update CHANGELOG.md by @change-log-updater[bot] in https://github.com/SeequentEvo/evo-python-sdk/pull/249
+* Add simulation-report compute task SDK client by @amirabbas-jalali-bentley in https://github.com/SeequentEvo/evo-python-sdk/pull/264
+* Update workspace SDK to use non-deprecated endpoints by @keerynj04 in https://github.com/SeequentEvo/evo-python-sdk/pull/282
+* Update evo-sdk-common version by @keerynj04 in https://github.com/SeequentEvo/evo-python-sdk/pull/291
+
+## New Contributors
+* @keerynj04 made their first contribution in https://github.com/SeequentEvo/evo-python-sdk/pull/282
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-sdk-common@v0.5.22...evo-sdk-common@v0.5.23
+
 ## evo-blockmodels@v0.4.1
 <!-- Release notes generated using configuration in .github/release.yml at main -->
 
