@@ -1,5 +1,17 @@
 # Changelog
 
+## evo-blockmodels@v0.4.2
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### evo-blockmodels
+* fix: remove lineage property from block model API models by @ChamilaKuruppuarachchi in https://github.com/SeequentEvo/evo-python-sdk/pull/293
+
+## New Contributors
+* @ChamilaKuruppuarachchi made their first contribution in https://github.com/SeequentEvo/evo-python-sdk/pull/293
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-blockmodels@v0.4.1...evo-blockmodels@v0.4.2
+
 ## evo-sdk-common@v0.5.23
 <!-- Release notes generated using configuration in .github/release.yml at main -->
 
