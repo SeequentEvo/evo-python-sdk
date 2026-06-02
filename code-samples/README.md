@@ -188,10 +188,9 @@ Now that you know how Evo auth works, explore the other Jupyter notebooks. They 
 ### 🔐 Authentication & discovery
 **📁 [auth-and-evo-discovery](auth-and-evo-discovery/)**
 
-Learn about Evo auth and the Evo Discovery service:
-- `native-app-token.ipynb` - Authentication for desktop applications
-- `service-app-token.ipynb` - Authentication for service applications  
-- `evo-discovery.ipynb` - Find your organization ID and hub URL
+Learn about Evo auth and the Evo discovery service:
+- `api-examples.ipynb` - Generic API examples that demonstrate authentication and Evo discovery for native and service applications
+- `sdk-examples.ipynb` - Evo SDK examples that demonstrate authentication and Evo discovery for native and service applications  
 
 ### 🧊 Block models
 **📁 [blockmodels](blockmodels/)**
