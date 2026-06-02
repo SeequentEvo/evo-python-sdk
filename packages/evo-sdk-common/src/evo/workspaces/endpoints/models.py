@@ -14,7 +14,6 @@
 
 from __future__ import annotations
 
-from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from typing import Annotated, Any
@@ -22,6 +21,7 @@ from uuid import UUID
 
 from pydantic import (
     AnyUrl,
+    AwareDatetime,
     Field,
     RootModel,
     StrictBool,
@@ -33,15 +33,37 @@ from pydantic import (
 from .._model_config import CustomBaseModel
 
 
+class BaseInstanceUserInvitationResponse(CustomBaseModel):
+    created_date: Annotated[AwareDatetime, Field(title="Created Date")]
+    email: Annotated[StrictStr, Field(title="Email")]
+    expiration_date: Annotated[AwareDatetime, Field(title="Expiration Date")]
+    id: Annotated[UUID, Field(title="Id")]
+    invited_by_email: Annotated[StrictStr, Field(title="Invited By Email")]
+    status: Annotated[StrictStr, Field(title="Status")]
+
+
+class BaseInstanceUserResponse(CustomBaseModel):
+    email: Annotated[StrictStr, Field(title="Email")]
+    full_name: Annotated[StrictStr, Field(title="Full Name")]
+    id: Annotated[UUID, Field(title="Id")]
+
+
 class BaseInstanceUserRoleResponse(CustomBaseModel):
     description: Annotated[StrictStr, Field(title="Description")]
     id: Annotated[UUID, Field(title="Id")]
     name: Annotated[StrictStr, Field(title="Name")]
 
 
+class BaseInstanceUserWithRolesResponse(CustomBaseModel):
+    email: Annotated[StrictStr, Field(title="Email")]
+    full_name: Annotated[StrictStr, Field(title="Full Name")]
+    id: Annotated[UUID, Field(title="Id")]
+    roles: Annotated[list[BaseInstanceUserRoleResponse], Field(title="Roles")]
+
+
 class BasicWorkspaceResponse(CustomBaseModel):
     id: Annotated[UUID, Field(title="Id")]
-    name: Annotated[StrictStr, Field(title="Name")]
+    name: Annotated[StrictStr, Field(max_length=60, min_length=1, title="Name")]
     """
     The name of the workspace, unique within an organization and hub
     """
@@ -60,7 +82,7 @@ class CoordinateSystemEntry(CustomBaseModel):
 
 
 class Label(RootModel[StrictStr]):
-    root: StrictStr
+    root: Annotated[StrictStr, Field(max_length=100, min_length=1)]
 
 
 class ErrorInvalidParam(CustomBaseModel):
@@ -80,7 +102,7 @@ class ErrorResponse(CustomBaseModel):
 
 
 class FolderCreateRequest(CustomBaseModel):
-    name: Annotated[StrictStr, Field(title="Name")]
+    name: Annotated[StrictStr, Field(max_length=100, min_length=1, title="Name")]
     """
     The name of the folder
     """
@@ -102,7 +124,7 @@ class FolderMoveRequest(CustomBaseModel):
 
 
 class FolderUpdateRequest(CustomBaseModel):
-    name: Annotated[StrictStr, Field(title="Name")]
+    name: Annotated[StrictStr, Field(max_length=100, min_length=1, title="Name")]
     """
     The new name of the folder
     """
@@ -110,6 +132,18 @@ class FolderUpdateRequest(CustomBaseModel):
 
 class GeometryTypeEnum(Enum):
     Polygon = "Polygon"
+
+
+class Hub(CustomBaseModel):
+    code: Annotated[StrictStr, Field(title="Code")]
+    display_name: Annotated[StrictStr, Field(title="Display Name")]
+    url: Annotated[StrictStr, Field(title="Url")]
+
+
+class ImsGroupResponse(CustomBaseModel):
+    id: Annotated[StrictStr, Field(title="Id")]
+    is_federated_group: Annotated[StrictBool, Field(title="Is Federated Group")]
+    name: Annotated[StrictStr, Field(title="Name")]
 
 
 class InstanceRoleWithPermissions(CustomBaseModel):
@@ -173,11 +207,11 @@ class OrganizationSettingsFieldResponse(CustomBaseModel):
 
 
 class OrganizationSettingsResponse(CustomBaseModel):
-    created_at: Annotated[datetime | None, Field(title="Created At")] = None
+    created_at: Annotated[AwareDatetime | None, Field(title="Created At")] = None
     created_by: Annotated[UUID | None, Field(title="Created By")] = None
     id: Annotated[UUID, Field(title="Id")]
-    settings: Annotated[OrganizationSettingsFieldResponse, Field()] = {"ml_enabled": False}
-    updated_at: Annotated[datetime | None, Field(title="Updated At")] = None
+    settings: Annotated[OrganizationSettingsFieldResponse, Field(validate_default=True)] = {"ml_enabled": False}
+    updated_at: Annotated[AwareDatetime | None, Field(title="Updated At")] = None
     updated_by: Annotated[UUID | None, Field(title="Updated By")] = None
 
 
@@ -197,6 +231,12 @@ class PaginationLinksWithoutTotal(CustomBaseModel):
     previous: Annotated[AnyUrl | None, Field(title="Previous")] = None
 
 
+class RbacGroupRole(CustomBaseModel):
+    description: Annotated[StrictStr, Field(title="Description")]
+    id: Annotated[UUID, Field(title="Id")]
+    name: Annotated[StrictStr, Field(title="Name")]
+
+
 class RoleEnum(Enum):
     owner = "owner"
     editor = "editor"
@@ -214,6 +254,19 @@ class ServiceAccess(CustomBaseModel):
     services: Annotated[list[StrictStr], Field(title="Services")]
 
 
+class UpdateInstanceGroupMembersRequest(CustomBaseModel):
+    ims_groups: Annotated[list[StrictStr], Field(title="Ims Groups")]
+
+
+class UpdateInstanceGroupMembersResponse(CustomBaseModel):
+    description: Annotated[StrictStr, Field(title="Description")]
+    id: Annotated[UUID, Field(title="Id")]
+    ims_groups: Annotated[list[StrictStr], Field(title="Ims Groups")]
+    invitations: Annotated[list[BaseInstanceUserInvitationResponse], Field(title="Invitations")]
+    members: Annotated[list[BaseInstanceUserResponse], Field(title="Members")]
+    name: Annotated[StrictStr, Field(title="Name")]
+
+
 class UpdateInstanceUserRolesRequest(CustomBaseModel):
     roles: Annotated[list[UUID], Field(title="Roles")]
 
@@ -228,6 +281,11 @@ class User(CustomBaseModel):
     full_name: Annotated[StrictStr | None, Field(title="Full Name")] = None
     role: RoleEnum
     user_id: Annotated[UUID, Field(title="User Id")]
+
+
+class UserFullNameAndEmail(CustomBaseModel):
+    email: Annotated[StrictStr, Field(title="Email")]
+    full_name: Annotated[StrictStr, Field(title="Full Name")]
 
 
 class UserModel(CustomBaseModel):
@@ -267,24 +325,32 @@ class AddInstanceUsersRequest(CustomBaseModel):
 
 
 class AssignRoleRequest(RootModel[UserRole | UserRoleViaEmail]):
-    root: Annotated[UserRole | UserRoleViaEmail, Field(title="AssignRoleRequest")]
+    root: Annotated[
+        UserRole | UserRoleViaEmail,
+        Field(
+            examples=[{"role": "admin", "user_id": "123e4567-e89b-12d3-a456-426614174000"}],
+            title="AssignRoleRequest",
+        ),
+    ]
 
 
-class BaseInstanceUserInvitationResponse(CustomBaseModel):
-    created_date: Annotated[datetime, Field(title="Created Date")]
+class BaseInstanceGroupWithRolesResponse(CustomBaseModel):
+    description: Annotated[StrictStr, Field(title="Description")]
+    id: Annotated[UUID, Field(title="Id")]
+    ims_groups: Annotated[list[StrictStr], Field(title="Ims Groups")]
+    members: Annotated[list[BaseInstanceUserResponse], Field(title="Members")]
+    name: Annotated[StrictStr, Field(title="Name")]
+    roles: Annotated[list[RbacGroupRole], Field(title="Roles")]
+
+
+class BaseInstanceUserInvitationWithRolesResponse(CustomBaseModel):
+    created_date: Annotated[AwareDatetime, Field(title="Created Date")]
     email: Annotated[StrictStr, Field(title="Email")]
-    expiration_date: Annotated[datetime, Field(title="Expiration Date")]
+    expiration_date: Annotated[AwareDatetime, Field(title="Expiration Date")]
     id: Annotated[UUID, Field(title="Id")]
     invited_by_email: Annotated[StrictStr, Field(title="Invited By Email")]
     roles: Annotated[list[BaseInstanceUserRoleResponse], Field(title="Roles")]
     status: Annotated[StrictStr, Field(title="Status")]
-
-
-class BaseInstanceUserResponse(CustomBaseModel):
-    email: Annotated[StrictStr, Field(title="Email")]
-    full_name: Annotated[StrictStr, Field(title="Full Name")]
-    id: Annotated[UUID, Field(title="Id")]
-    roles: Annotated[list[BaseInstanceUserRoleResponse], Field(title="Roles")]
 
 
 class BoundingBox(CustomBaseModel):
@@ -302,23 +368,41 @@ class CoordinateSystemCategory(CustomBaseModel):
 
 
 class CreateWorkspaceRequest(CustomBaseModel):
-    bounding_box: BoundingBox | None = None
+    bounding_box: Annotated[
+        BoundingBox | None,
+        Field(
+            examples=[
+                {
+                    "coordinates": [
+                        [
+                            [100.0, 0.0],
+                            [101.0, 0.0],
+                            [101.0, 1.0],
+                            [100.0, 1.0],
+                            [100.0, 0.0],
+                        ]
+                    ],
+                    "type": "Polygon",
+                }
+            ]
+        ),
+    ] = None
+    """
+    The geographic bounding box for the workspace, defined as a GeoJSON Polygon using the WGS 84 coordinate system (longitude, latitude). The polygon must be a rectangle defined by 5 coordinate pairs in counter-clockwise order. The first and last coordinate pairs must be identical to form a closed ring. Longitude values must be between -180 and 180, and latitude values must be between -90 and 90.
+    """
     default_coordinate_system: Annotated[StrictStr, Field(title="Default Coordinate System")] = ""
+    """
+    The default coordinate reference system for the workspace. This can be either an EPSG code (for example, EPSG:4326), or a WKT2 coordinate reference system definition string (conforming to OGC / ISO standards).
+    """
     description: Annotated[StrictStr, Field(title="Description")] = ""
     labels: Annotated[list[Label] | None, Field(max_length=20, title="Labels")] = None
     """
     A list of labels
     """
-    name: Annotated[StrictStr, Field(title="Name")]
+    name: Annotated[StrictStr, Field(max_length=60, min_length=1, title="Name")]
     """
     The name of the workspace, unique within an organization and hub
     """
-
-
-class Hub(CustomBaseModel):
-    code: Annotated[StrictStr, Field(title="Code")]
-    display_name: Annotated[StrictStr, Field(title="Display Name")]
-    url: Annotated[StrictStr, Field(title="Url")]
 
 
 class DiscoveryResponseContent(CustomBaseModel):
@@ -329,14 +413,14 @@ class DiscoveryResponseContent(CustomBaseModel):
 
 
 class FolderResponse(CustomBaseModel):
-    created_at: Annotated[datetime, Field(title="Created At")]
+    created_at: Annotated[AwareDatetime, Field(title="Created At")]
     created_by: UserModel
     deleted: Annotated[StrictBool, Field(title="Deleted")]
     folder_id: Annotated[UUID, Field(title="Folder Id")]
     name: Annotated[StrictStr, Field(title="Name")]
     parent_folder_id: Annotated[UUID | None, Field(title="Parent Folder Id")] = None
     path: Annotated[Path, Field(title="Path")]
-    updated_at: Annotated[datetime, Field(title="Updated At")]
+    updated_at: Annotated[AwareDatetime, Field(title="Updated At")]
     updated_by: UserModel
     workspace_id: Annotated[UUID, Field(title="Workspace Id")]
 
@@ -356,19 +440,27 @@ class ListCoordinateSystemsResponse(CustomBaseModel):
     results: Annotated[list[CoordinateSystemCategory], Field(title="Results")]
 
 
+class ListInstanceGroupResponse(CustomBaseModel):
+    groups: Annotated[list[BaseInstanceGroupWithRolesResponse], Field(title="Groups")]
+
+
 class ListInstanceUserInvitationsResponse(CustomBaseModel):
     links: PaginationLinksWithoutTotal
-    results: Annotated[list[BaseInstanceUserInvitationResponse], Field(title="Results")]
+    results: Annotated[list[BaseInstanceUserInvitationWithRolesResponse], Field(title="Results")]
 
 
 class ListInstanceUsersResponse(CustomBaseModel):
     links: PaginationLinksWithoutTotal
-    results: Annotated[list[BaseInstanceUserResponse], Field(title="Results")]
+    results: Annotated[list[BaseInstanceUserWithRolesResponse], Field(title="Results")]
 
 
 class ListUserRoleResponse(CustomBaseModel):
     links: Annotated[dict[str, Any], Field(title="Links")]
     results: Annotated[list[User], Field(title="Results")]
+
+
+class ListUsersResponse(CustomBaseModel):
+    users: Annotated[list[UserFullNameAndEmail] | None, Field(title="Users")] = None
 
 
 class ListWorkspaceSummaryResponse(CustomBaseModel):
@@ -384,8 +476,32 @@ class MlEnablementRequest(CustomBaseModel):
 
 
 class UpdateWorkspaceRequest(CustomBaseModel):
-    bounding_box: BoundingBox | None = None
+    bounding_box: Annotated[
+        BoundingBox | None,
+        Field(
+            examples=[
+                {
+                    "coordinates": [
+                        [
+                            [100.0, 0.0],
+                            [101.0, 0.0],
+                            [101.0, 1.0],
+                            [100.0, 1.0],
+                            [100.0, 0.0],
+                        ]
+                    ],
+                    "type": "Polygon",
+                }
+            ]
+        ),
+    ] = None
+    """
+    The geographic bounding box for the workspace, defined as a GeoJSON Polygon using the WGS 84 coordinate system (longitude, latitude). The polygon must be a rectangle defined by 5 coordinate pairs in counter-clockwise order. The first and last coordinate pairs must be identical to form a closed ring. Longitude values must be between -180 and 180, and latitude values must be between -90 and 90.
+    """
     default_coordinate_system: Annotated[StrictStr | None, Field(title="Default Coordinate System")] = None
+    """
+    The default coordinate reference system for the workspace. This can be either an EPSG code (for example, EPSG:4326), or a WKT2 coordinate reference system definition string (conforming to OGC / ISO standards).
+    """
     description: Annotated[StrictStr | None, Field(title="Description")] = None
     labels: Annotated[list[Label] | None, Field(max_length=20, title="Labels")] = None
     """
@@ -396,26 +512,26 @@ class UpdateWorkspaceRequest(CustomBaseModel):
 
 class UserWorkspaceResponse(CustomBaseModel):
     bounding_box: BoundingBox | None = None
-    created_at: Annotated[datetime, Field(title="Created At")]
+    created_at: Annotated[AwareDatetime, Field(title="Created At")]
     created_by: UserModel
     default_coordinate_system: Annotated[StrictStr, Field(title="Default Coordinate System")] = ""
     description: Annotated[StrictStr, Field(title="Description")] = ""
     id: Annotated[UUID, Field(title="Id")]
     labels: Annotated[list[StrictStr], Field(title="Labels")] = []
     ml_enabled: Annotated[StrictBool, Field(title="Ml Enabled")] = False
-    name: Annotated[StrictStr, Field(title="Name")]
+    name: Annotated[StrictStr, Field(max_length=60, min_length=1, title="Name")]
     """
     The name of the workspace, unique within an organization and hub
     """
     self_link: Annotated[AnyUrl, Field(title="Self Link")]
-    updated_at: Annotated[datetime, Field(title="Updated At")]
+    updated_at: Annotated[AwareDatetime, Field(title="Updated At")]
     updated_by: UserModel
     user_role: RoleEnum
 
 
 class WorkspaceRoleOptionalResponse(CustomBaseModel):
     bounding_box: BoundingBox | None = None
-    created_at: Annotated[datetime, Field(title="Created At")]
+    created_at: Annotated[AwareDatetime, Field(title="Created At")]
     created_by: UserModel
     current_user_role: RoleEnum | None = None
     default_coordinate_system: Annotated[StrictStr, Field(title="Default Coordinate System")] = ""
@@ -423,18 +539,18 @@ class WorkspaceRoleOptionalResponse(CustomBaseModel):
     id: Annotated[UUID, Field(title="Id")]
     labels: Annotated[list[StrictStr], Field(title="Labels")] = []
     ml_enabled: Annotated[StrictBool, Field(title="Ml Enabled")] = False
-    name: Annotated[StrictStr, Field(title="Name")]
+    name: Annotated[StrictStr, Field(max_length=60, min_length=1, title="Name")]
     """
     The name of the workspace, unique within an organization and hub
     """
     self_link: Annotated[AnyUrl, Field(title="Self Link")]
-    updated_at: Annotated[datetime, Field(title="Updated At")]
+    updated_at: Annotated[AwareDatetime, Field(title="Updated At")]
     updated_by: UserModel
 
 
 class WorkspaceRoleRequiredResponse(CustomBaseModel):
     bounding_box: BoundingBox | None = None
-    created_at: Annotated[datetime, Field(title="Created At")]
+    created_at: Annotated[AwareDatetime, Field(title="Created At")]
     created_by: UserModel
     current_user_role: RoleEnum
     default_coordinate_system: Annotated[StrictStr, Field(title="Default Coordinate System")] = ""
@@ -442,18 +558,18 @@ class WorkspaceRoleRequiredResponse(CustomBaseModel):
     id: Annotated[UUID, Field(title="Id")]
     labels: Annotated[list[StrictStr], Field(title="Labels")] = []
     ml_enabled: Annotated[StrictBool, Field(title="Ml Enabled")] = False
-    name: Annotated[StrictStr, Field(title="Name")]
+    name: Annotated[StrictStr, Field(max_length=60, min_length=1, title="Name")]
     """
     The name of the workspace, unique within an organization and hub
     """
     self_link: Annotated[AnyUrl, Field(title="Self Link")]
-    updated_at: Annotated[datetime, Field(title="Updated At")]
+    updated_at: Annotated[AwareDatetime, Field(title="Updated At")]
     updated_by: UserModel
 
 
 class AddInstanceUsersResponse(CustomBaseModel):
-    invitations: Annotated[list[BaseInstanceUserInvitationResponse], Field(title="Invitations")]
-    members: Annotated[list[BaseInstanceUserResponse], Field(title="Members")]
+    invitations: Annotated[list[BaseInstanceUserInvitationWithRolesResponse], Field(title="Invitations")]
+    members: Annotated[list[BaseInstanceUserWithRolesResponse], Field(title="Members")]
 
 
 class ChildFolderListResponse(CustomBaseModel):

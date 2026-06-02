@@ -18,8 +18,6 @@
         <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" >
         <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
         <link href="../../assets/_mkdocstrings.css" rel="stylesheet">
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
-        <script>hljs.highlightAll();</script> 
     </head>
 
     <body>
@@ -88,7 +86,7 @@ JobClient provides low-level access to the API, while the <code>run()</code> fun
 <p>The <code>run()</code> function is the main entry point for executing compute tasks. It supports running a single task or multiple tasks concurrently.</p>
 <h3 id="single-task">Single task</h3>
 <pre><code class="language-python">from evo.compute.tasks import run, SearchNeighborhood, Ellipsoid, EllipsoidRanges
-from evo.compute.tasks.kriging import KrigingParameters
+from evo.compute.tasks.geostatistics.kriging import KrigingParameters
 
 params = KrigingParameters(
     source=pointset.attributes[&quot;grade&quot;],
@@ -104,7 +102,7 @@ result = await run(manager, params, preview=True)
 <h3 id="multiple-tasks">Multiple tasks</h3>
 <p>Run multiple kriging tasks concurrently — for example, estimating different attributes or using different parameters:</p>
 <pre><code class="language-python">from evo.compute.tasks import run, SearchNeighborhood
-from evo.compute.tasks.kriging import KrigingParameters
+from evo.compute.tasks.geostatistics.kriging import KrigingParameters
 
 results = await run(manager, [
     KrigingParameters(
@@ -147,7 +145,7 @@ df = await result.to_dataframe()
 <li>Run the <strong>remaining</strong> tasks — now <code>block_model.attributes["kriged_grade"]</code> resolves to the existing attribute and will update it.</li>
 </ol>
 <pre><code class="language-python">from evo.compute.tasks import run, SearchNeighborhood
-from evo.compute.tasks.kriging import KrigingParameters, RegionFilter
+from evo.compute.tasks.geostatistics.kriging import KrigingParameters, RegionFilter
 
 # Step 1: Run the first task — attribute &quot;kriged_grade&quot; does not exist yet, so it is created
 first_result = await run(manager, KrigingParameters(
@@ -205,13 +203,6 @@ Preview APIs may change between releases. For more details, see:</p>
             <hr>
             <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
         </footer>
-        <script src="../../js/bootstrap.bundle.min.js"></script>
-        <script>
-            var base_url = "../..",
-                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
-        </script>
-        <script src="../../js/base.js"></script>
-
         <div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">

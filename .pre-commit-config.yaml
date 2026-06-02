@@ -1,4 +1,11 @@
 repos:
+  - repo: local
+    hooks:
+      - id: check-uv-lock-sources
+        name: Check uv.lock sources
+        entry: python scripts/check_uv_lock_sources.py
+        language: python
+        files: (^|/)uv\.lock$
   - repo: https://github.com/charliermarsh/ruff-pre-commit
     rev: v0.14.0 # keep in sync with pyproject.toml
     hooks:

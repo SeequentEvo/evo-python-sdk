@@ -18,8 +18,6 @@
         <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" >
         <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
         <link href="../../../../assets/_mkdocstrings.css" rel="stylesheet">
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
-        <script>hljs.highlightAll();</script> 
     </head>
 
     <body>
@@ -130,7 +128,9 @@
             </td>
             <td>
               <div class="doc-md-description">
-                <p>How to aggregate the column values. Use <code>Aggregation</code> enum: - <code>Aggregation.MASS_AVERAGE</code> - Mass-weighted average (for grades) - <code>Aggregation.SUM</code> - Sum of values (for metal content)</p>
+                <p>How to aggregate the column values. Use <code>Aggregation</code> enum:
+- <code>Aggregation.MASS_AVERAGE</code> - Mass-weighted average (for grades)
+- <code>Aggregation.SUM</code> - Sum of values (for metal content)</p>
               </div>
             </td>
             <td>
@@ -162,7 +162,31 @@
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Unit ID for the output values. Use <code>Units</code> class constants: - <code>Units.GRAMS_PER_TONNE</code> - g/t (grades) - <code>Units.PERCENT</code> - % (grades) - <code>Units.PPM</code> - ppm (grades) - <code>Units.KILOGRAMS</code> - kg (metal content) - <code>Units.TONNES</code> - t (metal content) - <code>Units.TROY_OUNCES</code> - oz_tr (metal content)  Example: &gt;&gt;&gt; from evo.blockmodels import Units &gt;&gt;&gt; from evo.blockmodels.typed import Aggregation, ReportColumnSpec &gt;&gt;&gt; &gt;&gt;&gt; # For grade columns, use MASS_AVERAGE &gt;&gt;&gt; grade_col = ReportColumnSpec( ...     column_name="Au", ...     aggregation=Aggregation.MASS_AVERAGE, ...     label="Au Grade", ...     output_unit_id=Units.GRAMS_PER_TONNE, ... ) &gt;&gt;&gt; # For metal content columns, use SUM &gt;&gt;&gt; metal_col = ReportColumnSpec( ...     column_name="Au_metal", ...     aggregation=Aggregation.SUM, ...     label="Au Metal", ...     output_unit_id=Units.KILOGRAMS, ... )</p>
+                <p>Unit ID for the output values. Use <code>Units</code> class constants:
+    - <code>Units.GRAMS_PER_TONNE</code> - g/t (grades)
+    - <code>Units.PERCENT</code> - % (grades)
+    - <code>Units.PPM</code> - ppm (grades)
+    - <code>Units.KILOGRAMS</code> - kg (metal content)
+    - <code>Units.TONNES</code> - t (metal content)
+    - <code>Units.TROY_OUNCES</code> - oz_tr (metal content)</p>
+<p>Example:
+    &gt;&gt;&gt; from evo.blockmodels import Units
+    &gt;&gt;&gt; from evo.blockmodels.typed import Aggregation, ReportColumnSpec
+    &gt;&gt;&gt;
+    &gt;&gt;&gt; # For grade columns, use MASS_AVERAGE
+    &gt;&gt;&gt; grade_col = ReportColumnSpec(
+    ...     column_name="Au",
+    ...     aggregation=Aggregation.MASS_AVERAGE,
+    ...     label="Au Grade",
+    ...     output_unit_id=Units.GRAMS_PER_TONNE,
+    ... )
+    &gt;&gt;&gt; # For metal content columns, use SUM
+    &gt;&gt;&gt; metal_col = ReportColumnSpec(
+    ...     column_name="Au_metal",
+    ...     aggregation=Aggregation.SUM,
+    ...     label="Au Metal",
+    ...     output_unit_id=Units.KILOGRAMS,
+    ... )</p>
               </div>
             </td>
             <td>
@@ -207,13 +231,6 @@
             <hr>
             <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
         </footer>
-        <script src="../../../../js/bootstrap.bundle.min.js"></script>
-        <script>
-            var base_url = "../../../..",
-                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
-        </script>
-        <script src="../../../../js/base.js"></script>
-
         <div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">

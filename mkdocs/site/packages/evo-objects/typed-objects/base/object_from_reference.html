@@ -18,8 +18,6 @@
         <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" >
         <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
         <link href="../../../../assets/_mkdocstrings.css" rel="stylesheet">
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
-        <script>hljs.highlightAll();</script> 
     </head>
 
     <body>
@@ -180,7 +178,18 @@ based on the object's sub-classification.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>If no typed class is found for the object's sub-classification.  Example::  from evo.objects.typed import object_from_reference from evo.objects import ObjectReference  # Create reference from URL ref = ObjectReference("evo://org/workspace/object/b208a6c9-6881-4b97-b02d-acb5d81299bb") obj = await object_from_reference(context, ref)  # obj will be a PointSet if the object is a pointset, # a Regular3DGrid if it's a regular-3d-grid, etc.</p>
+                <p>If no typed class is found for the object's sub-classification.</p>
+<p>Example::</p>
+<pre><code>from evo.objects.typed import object_from_reference
+from evo.objects import ObjectReference
+
+# Create reference from URL
+ref = ObjectReference("evo://org/workspace/object/b208a6c9-6881-4b97-b02d-acb5d81299bb")
+obj = await object_from_reference(context, ref)
+
+# obj will be a PointSet if the object is a pointset,
+# a Regular3DGrid if it's a regular-3d-grid, etc.
+</code></pre>
               </div>
             </td>
           </tr>
@@ -198,13 +207,6 @@ based on the object's sub-classification.</p>
             <hr>
             <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
         </footer>
-        <script src="../../../../js/bootstrap.bundle.min.js"></script>
-        <script>
-            var base_url = "../../../..",
-                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
-        </script>
-        <script src="../../../../js/base.js"></script>
-
         <div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
