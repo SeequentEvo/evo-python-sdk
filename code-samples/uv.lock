@@ -885,6 +885,7 @@ name = "evo-code-samples"
 version = "0.0.1"
 source = { virtual = "." }
 dependencies = [
+    { name = "evo-compute" },
     { name = "evo-schemas" },
     { name = "evo-sdk" },
     { name = "geosoft", marker = "python_full_version < '3.14' and sys_platform == 'win32'" },
@@ -914,8 +915,9 @@ test = [
 
 [package.metadata]
 requires-dist = [
+    { name = "evo-compute", specifier = ">=0.0.3" },
     { name = "evo-schemas", specifier = ">=2025.12.15" },
-    { name = "evo-sdk", specifier = ">=0.2.1" },
+    { name = "evo-sdk", specifier = ">=0.2.2" },
     { name = "geosoft", marker = "python_full_version < '3.14' and sys_platform == 'win32'", specifier = ">=2025.1.1" },
     { name = "matplotlib", specifier = ">=3.10.8" },
     { name = "pandas", extras = ["excel"], specifier = ">=2.2.3" },
@@ -1347,12 +1349,12 @@ name = "geosoft"
 version = "2025.2.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "jdcal" },
+    { name = "jdcal", marker = "(python_full_version < '3.11' and sys_platform != 'win32') or (python_full_version < '3.14' and sys_platform == 'win32')" },
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
-    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11' and python_full_version < '3.14' and sys_platform == 'win32'" },
     { name = "pandas", version = "2.3.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
-    { name = "pandas", version = "3.0.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "requests" },
+    { name = "pandas", version = "3.0.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11' and python_full_version < '3.14' and sys_platform == 'win32'" },
+    { name = "requests", marker = "(python_full_version < '3.11' and sys_platform != 'win32') or (python_full_version < '3.14' and sys_platform == 'win32')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/6a/68/b99eca4f320541239f7ef9412c2bf510c5d3977fbce11eec206a271cef84/geosoft-2025.2.0-cp310-none-win_amd64.whl", hash = "sha256:509448451b668fddce604eac683d73b5cd6beb02bbba18dfedc0926698603ec1", size = 6373109, upload-time = "2025-12-15T18:34:30.634Z" },
