@@ -15,7 +15,12 @@ This package groups all geostatistics-topic compute tasks:
 
 - **kriging** — Kriging interpolation
 - **break_ties** — Spatial tie-breaking
+- **declustering** — Grid-based declustering weights
 - **location_wise** — Per-location ensemble statistics
+- **loss_calculation** — Classification by expected economic loss
+- **normal_score** — Normal score transformation
+- **profit_calculation** — Classification by expected economic profit
+- **simulation_report** — Simulation result reporting
 
 Task modules are imported here to trigger runner registration with the
 central :class:`~evo.compute.tasks.common.runner.TaskRegistry`.
@@ -28,6 +33,7 @@ Example:
 """
 
 from . import break_ties as _break_ties_module  # noqa: F401
+from . import declustering as _declustering_module  # noqa: F401
 from . import kriging as _kriging_module  # noqa: F401
 from . import location_wise as _location_wise_module  # noqa: F401
 from . import loss_calculation as _loss_calculation_module  # noqa: F401
@@ -35,6 +41,7 @@ from . import normal_score as _normal_score_module  # noqa: F401
 from . import profit_calculation as _profit_calculation_module  # noqa: F401
 from . import simulation_report as _simulation_report_module  # noqa: F401
 from .break_ties import BreakTiesResult
+from .declustering import DeclusteringResult
 from .kriging import (
     BlockDiscretisation,
     KrigingResult,
@@ -45,6 +52,7 @@ from .location_wise import LocationWiseResult
 __all__ = [
     "BlockDiscretisation",
     "BreakTiesResult",
+    "DeclusteringResult",
     "KrigingResult",
     "LocationWiseResult",
     "RegionFilter",
