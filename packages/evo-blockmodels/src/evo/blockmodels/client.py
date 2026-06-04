@@ -62,6 +62,7 @@ from .endpoints.models import (
     SizeOptionsFullySubBlocked,
     SizeOptionsOctree,
     SizeOptionsRegular,
+    UpdateBlockModel,
 )
 from .exceptions import CacheNotConfiguredException, JobFailedException, MissingColumnInTable
 from .io import BlockModelDownload, BlockModelUpload, get_cache_location_for_upload
@@ -222,6 +223,7 @@ class BlockModelAPIClient(BaseAPIClient):
             last_updated_at=model.last_updated_at,
             last_updated_by=ServiceUser.from_model(model.last_updated_by),
             geoscience_object_id=model.geoscience_object_id,
+            fill_subblocks=model.fill_subblocks,
         )
 
     async def _poll_job_url(self, bm_id: UUID, job_id: UUID) -> JobResponse:
@@ -248,6 +250,7 @@ class BlockModelAPIClient(BaseAPIClient):
         coordinate_reference_system: str | None = None,
         size_unit_id: str | None = None,
         comment: str | None = None,
+        fill_subblocks: bool = False,
     ) -> tuple[models.BlockModelAndJobURL, Version]:
         match grid_definition:
             case RegularGridDefinition(n_blocks=n_blocks, block_size=block_size):
@@ -294,6 +297,7 @@ class BlockModelAPIClient(BaseAPIClient):
                 object_path=object_path,
                 coordinate_reference_system=coordinate_reference_system,
                 size_unit_id=size_unit_id,
+                fill_subblocks=fill_subblocks,
                 model_origin=Location(
                     x=grid_definition.model_origin[0],
                     y=grid_definition.model_origin[1],
@@ -531,6 +535,7 @@ class BlockModelAPIClient(BaseAPIClient):
         initial_data: Table | None = None,
         units: dict[str, str] | None = None,
         comment: str | None = None,
+        fill_subblocks: bool = False,
     ) -> tuple[BlockModel, Version]:
         r"""Create a block model.
 
@@ -554,6 +559,9 @@ class BlockModelAPIClient(BaseAPIClient):
         :param initial_data: The initial data to populate the block model with.
         :param units: A dictionary mapping column names within `initial_data` to units.
         :param comment: An optional comment describing the initial data.
+        :param fill_subblocks: Sets the default fill_subblocks behaviour for this block model. If ``True``, updates to a
+            fully sub-blocked model with ``update_type``=``merge`` and ``geometry_change``=``True`` will fill any missing
+            sub-blocks with data from the parent block. Defaults to ``False``.
         :return: A tuple containing the created block model and the version of the block model.
         """
         if units is not None and initial_data is None:
@@ -563,7 +571,14 @@ class BlockModelAPIClient(BaseAPIClient):
                 "Cache must be configured to use this method. Please set the 'cache' parameter in the constructor."
             )
         create_result, version = await self._create_block_model(
-            name, grid_definition, description, object_path, coordinate_reference_system, size_unit_id, comment
+            name,
+            grid_definition,
+            description,
+            object_path,
+            coordinate_reference_system,
+            size_unit_id,
+            comment,
+            fill_subblocks,
         )
 
         if initial_data is not None:
@@ -675,6 +690,7 @@ class BlockModelAPIClient(BaseAPIClient):
         delete_columns: set[str] | None = None,
         units: dict[str, str] | None = None,
         geometry_change: bool | None = None,
+        fill_subblocks: bool | None = None,
     ) -> Version:
         if self._cache is None:
             raise CacheNotConfiguredException(
@@ -716,6 +732,7 @@ class BlockModelAPIClient(BaseAPIClient):
                 columns=columns,
                 update_type=models.UpdateType.replace,
                 geometry_change=geometry_change,
+                **({} if fill_subblocks is None else {"fill_subblocks": fill_subblocks}),
             ),
         )
         return await self._upload_data(bm_id, update_response.job_uuid, str(update_response.upload_url), data)
@@ -757,6 +774,7 @@ class BlockModelAPIClient(BaseAPIClient):
         delete_columns: set[str] | None = None,
         units: dict[str, str] | None = None,
         geometry_change: bool = False,
+        fill_subblocks: bool | None = None,
     ) -> Version:
         """Add, update, or delete sub-blocked block model columns.
 
@@ -776,9 +794,19 @@ class BlockModelAPIClient(BaseAPIClient):
         :param delete_columns: A set of column names to delete from the block model.
         :param units: A dictionary mapping column names within `data` to units.
         :param geometry_change: Whether the geometry of the sub-blocked model changes.
+        :param fill_subblocks: If ``True``, any missing sub-blocks will be filled with data from the parent block.
+            Only applicable for fully sub-blocked models when ``geometry_change`` is ``True``. If ``None`` (the default),
+            the block model's own ``fill_subblocks`` setting is used.
         """
         return await self._update_columns(
-            bm_id, data, new_columns, update_columns, delete_columns, units, geometry_change=geometry_change
+            bm_id,
+            data,
+            new_columns,
+            update_columns,
+            delete_columns,
+            units,
+            geometry_change=geometry_change,
+            fill_subblocks=fill_subblocks,
         )
 
     async def update_column_metadata(
@@ -991,6 +1019,28 @@ class BlockModelAPIClient(BaseAPIClient):
             str(bm_id),
             delta_request_data,
         )
+
+    async def update_block_model_metadata(
+        self,
+        bm_id: UUID,
+        update_block_model: UpdateBlockModel,
+    ) -> BlockModel:
+        """Update a block model's metadata.
+
+        Updates the block model name, description, coordinate reference system,
+        size unit ID, and/or fill sub-blocks setting for the given block model.
+
+        :param bm_id: The ID of the block model to update.
+        :param update_block_model: The update payload containing the fields to change.
+        :return: The updated BlockModel.
+        """
+        response = await self._operations_api.update_block_model(
+            workspace_id=str(self._environment.workspace_id),
+            org_id=str(self._environment.org_id),
+            bm_id=str(bm_id),
+            update_block_model=update_block_model,
+        )
+        return self._bm_from_model(response)
 
     async def delete_block_model(self, bm_id: UUID) -> EmptyResponse:
         """Delete a block model from the current workspace.

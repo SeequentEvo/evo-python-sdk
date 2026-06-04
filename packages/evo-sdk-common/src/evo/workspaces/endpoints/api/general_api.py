@@ -33,7 +33,7 @@ API version: 1.0
 """
 
 from evo.common.connector import APIConnector
-from evo.common.data import RequestMethod
+from evo.common.data import EmptyResponse, RequestMethod  # noqa: F401
 from evo.common.utils import get_header_metadata
 
 from ..models import *  # noqa: F403
@@ -59,16 +59,19 @@ class GeneralApi:
         self,
         full: bool | None = None,
         check_dependencies: bool | None = None,
+        strict: bool | None = None,
         additional_headers: dict[str, str] | None = None,
         request_timeout: int | float | tuple[int | float, int | float] | None = None,
     ) -> dict:
         """Health check
 
-        Checks if the service is healthy and able to response to requests
+        Checks if the service is healthy and able to respond to requests
 
         :param full: (optional)
             Example: `False`
         :param check_dependencies: (optional)
+            Example: `False`
+        :param strict: (optional)
             Example: `False`
         :param additional_headers: (optional) Additional headers to send with the request.
         :param request_timeout: (optional) Timeout setting for this request. If one number is provided, it will be the
@@ -93,6 +96,8 @@ class GeneralApi:
             _query_params["full"] = full
         if check_dependencies is not None:
             _query_params["check_dependencies"] = check_dependencies
+        if strict is not None:
+            _query_params["strict"] = strict
 
         # Prepare the header parameters.
         _header_params = {
@@ -171,55 +176,6 @@ class GeneralApi:
             method=RequestMethod.GET,
             resource_path="/workspace/orgs/{org_id}/coordinate_systems",
             path_params=_path_params,
-            header_params=_header_params,
-            collection_formats=_collection_formats,
-            response_types_map=_response_types_map,
-            request_timeout=request_timeout,
-        )
-
-    async def openapi_spec(
-        self,
-        additional_headers: dict[str, str] | None = None,
-        request_timeout: int | float | tuple[int | float, int | float] | None = None,
-    ) -> dict:
-        """Get OpenAPI schema
-
-        Returns the OpenAPI schema for the Workspace Service API.
-
-        :param additional_headers: (optional) Additional headers to send with the request.
-        :param request_timeout: (optional) Timeout setting for this request. If one number is provided, it will be the
-            total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.
-
-        :return: Returns the result object.
-
-        :raise evo.common.exceptions.BadRequestException: If the server responds with HTTP status 400.
-        :raise evo.common.exceptions.UnauthorizedException: If the server responds with HTTP status 401.
-        :raise evo.common.exceptions.ForbiddenException: If the server responds with HTTP status 403.
-        :raise evo.common.exceptions.NotFoundException: If the server responds with HTTP status 404.
-        :raise evo.common.exceptions.BaseTypedError: If the server responds with any other HTTP status between
-            400 and 599, and the body of the response contains a descriptive `type` parameter.
-        :raise evo.common.exceptions.EvoAPIException: If the server responds with any other HTTP status between 400
-            and 599, and the body of the response does not contain a `type` parameter.
-        :raise evo.common.exceptions.UnknownResponseError: For other HTTP status codes with no corresponding response
-            type in `response_types_map`.
-        """
-        # Prepare the header parameters.
-        _header_params = {
-            "Accept": "application/json",
-        } | get_header_metadata(__name__)
-        if additional_headers is not None:
-            _header_params.update(additional_headers)
-
-        # Define the collection formats.
-        _collection_formats = {}
-
-        _response_types_map = {
-            "200": dict,
-        }
-
-        return await self.connector.call_api(
-            method=RequestMethod.GET,
-            resource_path="/workspace/openapi.json",
             header_params=_header_params,
             collection_formats=_collection_formats,
             response_types_map=_response_types_map,

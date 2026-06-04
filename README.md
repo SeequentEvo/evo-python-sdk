@@ -22,9 +22,9 @@ Before you get started, make sure you have:
 
     *Evo apps* provide the credentials necessary to generate Evo access tokens, which in turn provide access to your Evo data. An app can be created by you or by a member of your team.
     
-    Register an Evo app in the [Bentley Developer Portal](https://developer.bentley.com/my-apps). For in-depth instructions, follow this [guide](https://developer.seequent.com/docs/guides/getting-started/apps-and-tokens) on the Seequent Developer Portal.
+    Register an Evo app in the [Seequent Developer Portal](https://developer.seequent.com/my-apps). For in-depth instructions, follow this [guide](https://developer.seequent.com/docs/guides/getting-started/apps-and-tokens).
 
-    NOTE: You must have a **Bentley developer account** in order to create apps. If you try to register an app using the link above but find that you don't have permission, contact your account administrator to get access.
+    NOTE: You must have a **Bentley developer account** in order to create apps. If you try to create an app using the link above but find that you don't have permission, contact your account administrator to get access.
 
 * **A local copy of this repository**
 

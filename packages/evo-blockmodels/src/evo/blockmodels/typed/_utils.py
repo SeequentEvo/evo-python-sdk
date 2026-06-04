@@ -26,6 +26,25 @@ GEOMETRY_COLUMNS_XYZ = {"x", "y", "z"}
 GEOMETRY_COLUMNS = GEOMETRY_COLUMNS_IJK | GEOMETRY_COLUMNS_XYZ
 
 
+def _get_schema_from_dataframe(dataframe: pd.DataFrame) -> pa.Schema:
+    """Get a normalized pyarrow schema from a pandas dataframe.
+
+    Converts unsupported Arrow types before table creation:
+    - large_string -> string
+    - dictionary<*, large_string> -> dictionary<*, string>
+    """
+    schema = pa.Schema.from_pandas(dataframe)
+    fields = []
+    for field in schema:
+        if pa.types.is_large_string(field.type):
+            fields.append(field.with_type(pa.string()))
+        elif pa.types.is_dictionary(field.type) and pa.types.is_large_string(field.type.value_type):
+            fields.append(field.with_type(pa.dictionary(field.type.index_type, pa.string())))
+        else:
+            fields.append(field)
+    return pa.schema(fields)
+
+
 def dataframe_to_pyarrow(df: pd.DataFrame) -> pa.Table:
     """Convert a pandas DataFrame to a PyArrow Table.
 
@@ -45,8 +64,9 @@ def dataframe_to_pyarrow(df: pd.DataFrame) -> pa.Table:
     if not has_ijk and not has_xyz:
         raise ValueError("DataFrame must contain either (i, j, k) or (x, y, z) geometry columns")
 
-    # Convert to PyArrow table
-    table = pa.Table.from_pandas(df)
+    # Convert to PyArrow table with normalized schema
+    schema = _get_schema_from_dataframe(df)
+    table = pa.Table.from_pandas(df, schema=schema)
 
     # Cast i, j, k columns to uint32 as required by the Block Model Service
     if has_ijk:
