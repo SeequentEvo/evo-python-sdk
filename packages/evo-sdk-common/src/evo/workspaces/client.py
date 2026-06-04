@@ -203,7 +203,7 @@ class WorkspaceAPIClient:
             deleted=deleted,
             filter_user_id=filter_user_id,
         )
-        page_read_coroutines = []
+        page_read_coroutines: list[Awaitable[Page[Workspace]]] = []
 
         for i in range(offset + limit, first_page.total, limit):
             page_read_coroutines.append(self.list_workspaces(
@@ -222,6 +222,8 @@ class WorkspaceAPIClient:
         workspaces = first_page.items() + [ws for page in remaining_pages for ws in page.items()]
 
         return sorted(workspaces, key=lambda x: x.display_name)
+
+
 
     async def list_workspaces_summary(
         self,
