@@ -268,14 +268,14 @@ class SchemaModel:
             cls._sub_models = sub_models
             return
 
-        # Process the resolved annotations
+        # Process the resolved annotations, to produce the final set of schema properties and sub-models for this class
         for field_name, annotation in hints.items():
             # Handle ClassVar fields
             if get_origin(annotation) is ClassVar:
                 inner_args = get_args(annotation)
                 inner_type = inner_args[0]
                 base_type, schema_location, _ = _get_base_type(inner_type)
-                # Skip class variables without a SchemaLocation, e.g. data_columns: ClassVar[list[str]] = []
+                # Skip class variables without a SchemaLocation, e.g. data_columns: ClassVar[list[str]] = [],
                 if schema_location is None:
                     continue
 
