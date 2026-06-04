@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        
+        <link rel="shortcut icon" href="../../../../img/favicon.ico">
+        <title>Variogram - Evo Python SDK</title>
+        <link href="../../../../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../../../../css/fontawesome.min.css" rel="stylesheet">
+        <link href="../../../../css/brands.min.css" rel="stylesheet">
+        <link href="../../../../css/solid.min.css" rel="stylesheet">
+        <link href="../../../../css/v4-font-face.min.css" rel="stylesheet">
+        <link href="../../../../css/base.css" rel="stylesheet">
+        <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" >
+        <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
+        <link href="../../../../assets/_mkdocstrings.css" rel="stylesheet">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+        <script>hljs.highlightAll();</script> 
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="../../../..">Evo Python SDK</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar-collapse" aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+
+                    <ul class="nav navbar-nav ms-md-auto">
+                            <li class="nav-item">
+                                <a rel="prev" href="SpheroidalStructure.html" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="VariogramCurveData.html" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-bs-toggle="collapse" data-bs-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-bs-level="2"><a href="#evo.objects.typed.variogram.Variogram" class="nav-link">Variogram</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<p><a href="https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-objects/src/evo/objects/typed/variogram.py">GitHub source</a>
+</p>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="evo.objects.typed.variogram.Variogram" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">evo.objects.typed.variogram.Variogram</span>
+
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>A GeoscienceObject representing a variogram.</p>
+<p>The variogram describes the spatial correlation structure of a variable,
+used in geostatistical modeling and kriging interpolation.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.objects.typed.variogram.Variogram.sill" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">sill</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">sill</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">SchemaLocation</span><span class="p">(</span><span class="s1">&#39;sill&#39;</span><span class="p">)]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The variance of the variogram.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.objects.typed.variogram.Variogram.is_rotation_fixed" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">is_rotation_fixed</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">is_rotation_fixed</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="n">SchemaLocation</span><span class="p">(</span><span class="s1">&#39;is_rotation_fixed&#39;</span><span class="p">)]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Boolean value specifying whether all structure's rotations are the same.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.objects.typed.variogram.Variogram.structures" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">structures</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">structures</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span> <span class="n">SchemaLocation</span><span class="p">(</span><span class="s1">&#39;structures&#39;</span><span class="p">)]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>List of variogram structures (exponential, gaussian, spherical, etc.).</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.objects.typed.variogram.Variogram.nugget" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">nugget</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">nugget</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">SchemaLocation</span><span class="p">(</span><span class="s1">&#39;nugget&#39;</span><span class="p">)]</span> <span class="o">=</span> <span class="mf">0.0</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The variance between two samples separated by near-zero lag distance.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.objects.typed.variogram.Variogram.data_variance" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">data_variance</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">data_variance</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">SchemaLocation</span><span class="p">(</span><span class="s1">&#39;data_variance&#39;</span><span class="p">)]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The variance of the data, used for normalising or rescaling the variogram.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.objects.typed.variogram.Variogram.modelling_space" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">modelling_space</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">modelling_space</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Literal</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">,</span> <span class="s1">&#39;normalscore&#39;</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">SchemaLocation</span><span class="p">(</span><span class="s1">&#39;modelling_space&#39;</span><span class="p">)]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The modelling space the variogram model was fitted in.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.objects.typed.variogram.Variogram.domain" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">domain</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">domain</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">SchemaLocation</span><span class="p">(</span><span class="s1">&#39;domain&#39;</span><span class="p">)]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The domain the variogram is modelled for.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.objects.typed.variogram.Variogram.attribute" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">attribute</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">attribute</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">SchemaLocation</span><span class="p">(</span><span class="s1">&#39;attribute&#39;</span><span class="p">)]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The attribute the variogram is modelled for.</p>
+
+    </div>
+
+</div>
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.typed.variogram.Variogram.get_ellipsoid" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">get_ellipsoid</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_ellipsoid</span><span class="p">(</span><span class="n">structure_index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Ellipsoid&#39;</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Get an Ellipsoid from a variogram structure for visualization or search.</p>
+<p>Returns an Ellipsoid from evo.objects.typed that can be used for:
+- 3D visualization with surface_points() or wireframe_points()
+- Creating search ellipsoids via scaled()
+- Kriging search neighborhoods</p>
+<p>Args:
+    structure_index: Index of the structure to use. If None (default), selects
+                    the structure with the largest volume (major × semi_major × minor).</p>
+<p>Returns:
+    Ellipsoid configured with the structure's anisotropy ranges and rotation.</p>
+<p>Example:
+    &gt;&gt;&gt; # Get ellipsoid from structure with largest range (default)
+    &gt;&gt;&gt; var_ell = variogram.get_ellipsoid()
+    &gt;&gt;&gt;
+    &gt;&gt;&gt; # Or explicitly select a structure by index
+    &gt;&gt;&gt; var_ell = variogram.get_ellipsoid(structure_index=0)
+    &gt;&gt;&gt;
+    &gt;&gt;&gt; # Create search ellipsoid scaled by 2x
+    &gt;&gt;&gt; search_ell = var_ell.scaled(2.0)
+    &gt;&gt;&gt;
+    &gt;&gt;&gt; # Visualize with Plotly
+    &gt;&gt;&gt; x, y, z = var_ell.surface_points(center=(100, 200, 50))
+    &gt;&gt;&gt; mesh = go.Mesh3d(x=x, y=y, z=z, alphahull=0, opacity=0.3)</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.typed.variogram.Variogram.get_principal_directions" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">get_principal_directions</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_principal_directions</span><span class="p">(</span>
+    <span class="n">max_distance</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">n_points</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">200</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="s2">&quot;VariogramCurveData&quot;</span><span class="p">,</span> <span class="s2">&quot;VariogramCurveData&quot;</span><span class="p">,</span> <span class="s2">&quot;VariogramCurveData&quot;</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Generate variogram curve data for the three principal directions.</p>
+<p>Calculates the variogram model along the major, semi-major, and minor
+axis directions. Each direction uses the corresponding range from the
+anisotropy ellipsoid.</p>
+<p>Args:
+    max_distance: Maximum distance for the curves. If None, uses 1.2x the maximum range.
+    n_points: Number of points for smooth curves.</p>
+<p>Returns:
+    Tuple of (major_curve, semi_major_curve, minor_curve) as VariogramCurveData.</p>
+<p>Example with Plotly:
+    &gt;&gt;&gt; major, semi_maj, minor = variogram.get_principal_directions()
+    &gt;&gt;&gt; import plotly.graph_objects as go
+    &gt;&gt;&gt; fig = go.Figure()
+    &gt;&gt;&gt; fig.add_trace(go.Scatter(x=minor.distance, y=minor.semivariance,
+    ...                          name='Minor', line=dict(color='blue')))
+    &gt;&gt;&gt; fig.add_trace(go.Scatter(x=semi_maj.distance, y=semi_maj.semivariance,
+    ...                          name='Semi-major', line=dict(color='green')))
+    &gt;&gt;&gt; fig.add_trace(go.Scatter(x=major.distance, y=major.semivariance,
+    ...                          name='Major', line=dict(color='red')))
+    &gt;&gt;&gt; fig.update_layout(xaxis_title='Distance', yaxis_title='Semivariance')
+    &gt;&gt;&gt; fig.show()</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.typed.variogram.Variogram.get_direction" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">get_direction</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_direction</span><span class="p">(</span>
+    <span class="n">azimuth</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">dip</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">max_distance</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">n_points</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">200</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="s2">&quot;NDArray[np.floating[Any]]&quot;</span><span class="p">,</span> <span class="s2">&quot;NDArray[np.floating[Any]]&quot;</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Calculate variogram model curve in an arbitrary direction.</p>
+<p>Computes the variogram semivariance along a specified direction defined by
+azimuth and dip angles. The effective range in that direction is calculated
+using the anisotropic transform.</p>
+<p>Args:
+    azimuth: Azimuth angle in degrees (0-360), measured clockwise from north.
+    dip: Dip angle in degrees (-90 to 90), positive downward.
+    max_distance: Maximum distance for the curve. If None, uses 1.3x the
+                 effective range in the specified direction.
+    n_points: Number of points for smooth curve.</p>
+<p>Returns:
+    Tuple of (distance, semivariance) as numpy arrays, suitable for plotting.</p>
+<p>Example with Plotly:
+    &gt;&gt;&gt; distance, semivariance = variogram.get_direction(azimuth=45, dip=30)
+    &gt;&gt;&gt; import plotly.graph_objects as go
+    &gt;&gt;&gt; fig = go.Figure()
+    &gt;&gt;&gt; fig.add_trace(go.Scatter(x=distance, y=semivariance, name='Az=45°, Dip=30°'))
+    &gt;&gt;&gt; fig.update_layout(xaxis_title='Distance', yaxis_title='Semivariance')
+    &gt;&gt;&gt; fig.show()</p>
+<p>Example with Matplotlib:
+    &gt;&gt;&gt; distance, semivariance = variogram.get_direction(azimuth=0, dip=0)
+    &gt;&gt;&gt; import matplotlib.pyplot as plt
+    &gt;&gt;&gt; plt.plot(distance, semivariance)
+    &gt;&gt;&gt; plt.xlabel('Distance')
+    &gt;&gt;&gt; plt.ylabel('Semivariance')
+    &gt;&gt;&gt; plt.show()</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script src="../../../../js/bootstrap.bundle.min.js"></script>
+        <script>
+            var base_url = "../../../..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../../../../js/base.js"></script>
+
+        <div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>

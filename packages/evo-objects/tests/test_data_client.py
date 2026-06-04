@@ -152,6 +152,7 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
             mock.patch("evo.objects.utils.table_formats.get_known_format") as mock_get_known_format,
             mock.patch("evo.common.io.upload.StorageDestination") as mock_destination,
             mock.patch("pyarrow.Table") as mock_pyarrow_table,
+            mock.patch("evo.objects.utils.data._get_schema_from_dataframe", return_value=None),
         ):
             mock_pyarrow_table.from_pandas.return_value = mock_table = mock.Mock()
             mock_get_known_format.return_value = mock_known_format = mock.Mock(spec=KnownTableFormat)
@@ -307,6 +308,7 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
             mock.patch("evo.objects.utils.table_formats.get_known_format") as mock_get_known_format,
             mock.patch("evo.common.io.upload.StorageDestination", autospec=True) as mock_destination,
             mock.patch("pyarrow.Table") as mock_pyarrow_table,
+            mock.patch("evo.objects.utils.data._get_schema_from_dataframe", return_value=None),
         ):
             mock_pyarrow_table.from_pandas.return_value = mock_table = mock.Mock()
             mock_get_known_format.return_value = mock_known_format = mock.Mock(spec=KnownTableFormat)
@@ -397,6 +399,7 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
             mock.patch("evo.objects.utils.table_formats.get_known_format") as mock_get_known_format,
             mock.patch("evo.common.io.upload.StorageDestination", autospec=True) as mock_destination,
             mock.patch("pyarrow.Table") as mock_pyarrow_table,
+            mock.patch("evo.objects.utils.data._get_schema_from_dataframe", return_value=None),
         ):
             mock_pyarrow_table.from_pandas.return_value = mock_table = mock.Mock()
             mock_get_known_format.return_value = mock_known_format = mock.Mock(spec=KnownTableFormat)
@@ -632,6 +635,16 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
         self.assertEqual(category_info["table"]["table_format"], table_formats.LOOKUP_TABLE_INT32)
         self.assertEqual(category_info["values"]["table"], values_table)
         self.assertEqual(category_info["values"]["table_format"], values_table_format)
+
+    async def test_upload_dataframe_converts_large_string_via_schema(self) -> None:
+        """Test that upload_dataframe converts large_string columns (from pandas string[pyarrow]) to string via schema."""
+        dataframe = pd.DataFrame({"col": pd.Series(["A", "B", "C"], dtype="string[pyarrow]")})
+        with mock.patch.object(self.data_client, "upload_table", new_callable=mock.AsyncMock) as mock_upload:
+            mock_upload.return_value = {}
+            await self.data_client.upload_dataframe(dataframe)
+
+        (table,), _ = mock_upload.await_args
+        self.assertTrue(pa.types.is_string(table.schema.field("col").type))
 
     async def test_download_table(self) -> None:
         """Test downloading tabular data using pyarrow."""

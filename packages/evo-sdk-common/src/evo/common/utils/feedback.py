@@ -19,7 +19,10 @@ from ..interfaces import IFeedback
 __all__ = [
     "NoFeedback",
     "PartialFeedback",
+    "create_default_feedback",
     "iter_with_fb",
+    "reset_feedback_factory",
+    "set_feedback_factory",
     "split_feedback",
 ]
 
@@ -33,6 +36,43 @@ class _NoFeedback(IFeedback):
 
 NoFeedback = _NoFeedback()
 """A default feedback object that does nothing. Use this when no feedback is needed."""
+
+
+def _no_feedback_factory(_label: str) -> IFeedback:
+    return NoFeedback
+
+
+_feedback_factory: Callable[[str], IFeedback] = _no_feedback_factory
+
+
+def set_feedback_factory(factory: Callable[[str], IFeedback]) -> None:
+    """Set the factory used by :func:`create_default_feedback`.
+
+    This is intended to be called by the IPython extension (``%load_ext evo.widgets``)
+    so that SDK operations automatically display a progress widget when running in a notebook.
+
+    :param factory: A callable that accepts a label string and returns an :class:`IFeedback` instance.
+    """
+    global _feedback_factory
+    _feedback_factory = factory
+
+
+def reset_feedback_factory() -> None:
+    """Reset the feedback factory to the default (returns :data:`NoFeedback`)."""
+    global _feedback_factory
+    _feedback_factory = _no_feedback_factory
+
+
+def create_default_feedback(label: str) -> IFeedback:
+    """Create a feedback instance using the currently registered factory.
+
+    When no factory has been registered (or after :func:`reset_feedback_factory`),
+    this returns :data:`NoFeedback`.
+
+    :param label: A descriptive label for the operation (e.g. ``"Tasks"``, ``"Uploading data"``).
+    :returns: An :class:`IFeedback` instance.
+    """
+    return _feedback_factory(label)
 
 
 class PartialFeedback(IFeedback):

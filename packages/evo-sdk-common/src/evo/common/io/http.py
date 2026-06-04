@@ -78,7 +78,12 @@ class HTTPIOBase:
 
     _RENEWAL_SECONDS_THRESHOLD = 5 * 60  # Five minutes
 
-    def __init__(self, url_callback: Callable[[], Awaitable[str]], transport: ITransport) -> None:
+    def __init__(
+        self,
+        url_callback: Callable[[], Awaitable[str]],
+        transport: ITransport,
+        additional_headers: dict[str, str] | None = None,
+    ) -> None:
         """
         :param url_callback: An awaitable callback method that accepts no arguments and returns a new resource url.
             The callback is used to renew the resource url when the current one expires. Resource URLs are considered
@@ -92,6 +97,7 @@ class HTTPIOBase:
         self.__resource_path: str | None = None
         self.__query_params: list[tuple[str, Any]] = []
         self.__renewal_time: datetime | None = None
+        self.__additional_headers = additional_headers
 
     async def __get_new_url(self) -> str:
         """Get a new resource url.
@@ -120,7 +126,9 @@ class HTTPIOBase:
                 if not url.startswith("https://"):
                     raise ValueError("Unsupported URL scheme")
                 base_url = "https://" + urlparse(url).hostname
-                self.__connector = APIConnector(base_url=base_url, transport=self.__transport)
+                self.__connector = APIConnector(
+                    base_url=base_url, transport=self.__transport, additional_headers=self.__additional_headers
+                )
                 self.__update_url(url)
         await self.__connector.__aenter__()
         return self
@@ -210,8 +218,13 @@ class HTTPSource(HTTPIOBase, ISource):
     For more information on range requests, refer to https://developer.mozilla.org/en-US/docs/Web/HTTP/Range_requests.
     """
 
-    def __init__(self, url_callback: Callable[[], Awaitable[str]], transport: ITransport) -> None:
-        super().__init__(url_callback, transport)
+    def __init__(
+        self,
+        url_callback: Callable[[], Awaitable[str]],
+        transport: ITransport,
+        additional_headers: dict[str, str] | None = None,
+    ) -> None:
+        super().__init__(url_callback, transport, additional_headers)
         self._size: int | None = None
 
     async def __aenter__(self) -> HTTPSource:
@@ -270,6 +283,7 @@ class HTTPSource(HTTPIOBase, ISource):
         max_workers: int | None = None,
         retry: Retry | None = None,
         overwrite: bool = False,
+        additional_headers: dict[str, str] | None = None,
         fb: IFeedback = NoFeedback,
     ) -> None:
         """Download an HTTP resource to a file with the given filename.
@@ -285,6 +299,7 @@ class HTTPSource(HTTPIOBase, ISource):
         :param retry: A Retry object with a wait strategy. If None, a default Retry is created. If a chunk is successfully
             transferred the attempt counter will be reset.
         :param overwrite: whether to overwrite an existing local file
+        :param additional_headers: Additional headers to include in each request.
         :param fb: feedback to track the download, by tracking writes to the file
 
         :raises FileNameTooLongError: If the filename is too long.
@@ -301,7 +316,7 @@ class HTTPSource(HTTPIOBase, ISource):
             retry = Retry(logger=logger)
         manager = ChunkedIOManager(retry=retry, max_workers=max_workers)
 
-        async with HTTPSource(url_generator, transport) as source:
+        async with HTTPSource(url_generator, transport, additional_headers=additional_headers) as source:
             tmp_file = None
             try:
                 with NamedTemporaryFile(delete=False, dir=dst_path.parent) as tmp_file:

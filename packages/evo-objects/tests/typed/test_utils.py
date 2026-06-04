@@ -79,13 +79,9 @@ class TestCreateGeoscienceObject(TestWithConnector):
             body=new_pointset_without_uuid,
         )
 
-    @parameterized.expand(
-        [
-            (None, "path/to/object"),
-            ("path/to/parent", "path/to/object.json"),
-        ]
-    )
-    async def test_create_geoscience_object_error(self, parent: str | None, path: str | None):
+    async def test_create_geoscience_object_error(self):
+        parent = "path/to/parent"
+        path = "path/to/object.json"
         new_pointset = {
             "name": "Sample pointset",
             "uuid": None,

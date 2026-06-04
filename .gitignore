@@ -14,7 +14,7 @@ build/
 # Reporting
 .coverage
 
-# Environmnents
+# Environments
 venv/
 venv*/
 .venv/
@@ -31,3 +31,12 @@ samples/*/download*/data/*
 
 # macOS invisible files
 .DS_Store
+
+# MkDocs
+mkdocs/site/*
+!mkdocs/site/packages/
+!mkdocs/site/packages/**
+!mkdocs/site/
+
+# Other
+drilling_campaign.xlsx

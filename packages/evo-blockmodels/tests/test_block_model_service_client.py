@@ -17,6 +17,8 @@ import pyarrow
 from evo.blockmodels import BlockModelAPIClient
 from evo.blockmodels.endpoints.models import (
     BBox,
+    DeltaRequestData,
+    DeltaResponseData,
     IntRange,
     JobErrorPayload,
     JobResponse,
@@ -27,7 +29,7 @@ from evo.blockmodels.endpoints.models import (
 )
 from evo.blockmodels.exceptions import CacheNotConfiguredException, JobFailedException
 from evo.common import HealthCheckType, StaticContext
-from evo.common.data import HTTPHeaderDict, RequestMethod
+from evo.common.data import EmptyResponse, HTTPHeaderDict, RequestMethod
 from evo.common.test_tools import BASE_URL, AbstractTestRequestHandler, MockResponse, TestWithConnector, TestWithStorage
 from evo.common.utils import NoFeedback
 
@@ -194,3 +196,126 @@ class TestBlockModelAPIClient(TestWithConnector, TestWithStorage):
             )
 
         self.transport.assert_no_requests()
+
+    async def test_query_block_model_to_cache(self) -> None:
+        bm_uuid = uuid.uuid4()
+        version_uuid = uuid.uuid4()
+        column_uuid = uuid.uuid4()
+        job_uuid = uuid.uuid4()
+
+        download_url = "http://data.com/"
+
+        query_result = QueryResult(
+            bm_uuid=bm_uuid,
+            version_id=1,
+            version_uuid=version_uuid,
+            bbox=BBOX,
+            mapping=Mapping(columns=[]),
+            columns=["col1", str(column_uuid)],
+            job_url=BASE_URL + self.base_path + f"blockmodel/{bm_uuid}/jobs/{job_uuid}",
+        )
+        job_response = JobResponse(
+            job_status=JobStatus.COMPLETE,
+            payload=QueryDownload(download_url=download_url),
+        )
+        self.transport.set_request_handler(QueryRequestHandler(query_result, job_response))
+
+        expected_filename = self.cache.get_location(environment=self.environment, scope="blockmodel") / str(job_uuid)
+        with mock.patch("evo.common.io.download.HTTPSource", autospec=True) as mock_source:
+
+            async def _mock_download_file_side_effect(*args, **kwargs):
+                actual_download_url = await kwargs["url_generator"]()
+                self.assertEqual(expected_filename, kwargs["filename"])
+                self.assertEqual(download_url, actual_download_url)
+                self.assertIs(self.transport, kwargs["transport"])
+                self.assertIs(NoFeedback, kwargs["fb"])
+
+            mock_source.download_file.side_effect = _mock_download_file_side_effect
+
+            result = await self.bms_client.query_block_model_to_cache(
+                bm_id=bm_uuid,
+                columns=["col1", column_uuid],
+                bbox=BBOX,
+                version_uuid=version_uuid,
+            )
+        self.assertEqual(expected_filename, result)
+
+    async def test_query_block_model_to_cache_no_cache(self) -> None:
+        bm_uuid = uuid.uuid4()
+        version_uuid = uuid.uuid4()
+        column_uuid = uuid.uuid4()
+
+        with self.assertRaises(CacheNotConfiguredException):
+            await self.bms_client_without_cache.query_block_model_to_cache(
+                bm_id=bm_uuid,
+                columns=["col1", column_uuid],
+                bbox=BBOX,
+                version_uuid=version_uuid,
+            )
+
+        self.transport.assert_no_requests()
+
+    async def test_delete_block_model(self) -> None:
+        bm_uuid = uuid.uuid4()
+        with self.transport.set_http_response(204, ""):
+            result = await self.bms_client.delete_block_model(bm_uuid)
+        self.assertIsInstance(result, EmptyResponse)
+        self.assertEqual(result.status, 204)
+
+    async def test_get_deltas_for_block_model(self) -> None:
+        bm_uuid = uuid.uuid4()
+        version_uuid = uuid.uuid4()
+
+        delta_response = DeltaResponseData(
+            delete_deltas=[],
+            new_deltas=[],
+            update_deltas=[],
+            version_data=[],
+        )
+        with self.transport.set_http_response(
+            200,
+            delta_response.model_dump_json(),
+            headers={"Content-Type": "application/json"},
+        ):
+            result = await self.bms_client.get_deltas_for_block_model(
+                version_id=version_uuid,
+                bm_id=bm_uuid,
+                delta_request_data=DeltaRequestData(
+                    bbox=BBOX,
+                    columns=["*"],
+                ),
+            )
+        self.assertIsInstance(result, DeltaResponseData)
+        self.assertEqual(result.delete_deltas, [])
+        self.assertEqual(result.new_deltas, [])
+        self.assertEqual(result.update_deltas, [])
+        self.assertEqual(result.version_data, [])
+
+    async def test_get_deltas_for_block_model_with_changes(self) -> None:
+        bm_uuid = uuid.uuid4()
+        version_uuid = uuid.uuid4()
+        update_version_uuid = uuid.uuid4()
+        new_version_uuid = uuid.uuid4()
+
+        delta_response = DeltaResponseData(
+            delete_deltas=[],
+            new_deltas=[new_version_uuid],
+            update_deltas=[update_version_uuid],
+            version_data=[],
+        )
+        with self.transport.set_http_response(
+            200,
+            delta_response.model_dump_json(),
+            headers={"Content-Type": "application/json"},
+        ):
+            result = await self.bms_client.get_deltas_for_block_model(
+                version_id=version_uuid,
+                bm_id=bm_uuid,
+                delta_request_data=DeltaRequestData(
+                    bbox=BBOX,
+                    columns=["*"],
+                ),
+            )
+        self.assertIsInstance(result, DeltaResponseData)
+        self.assertEqual(result.new_deltas, [new_version_uuid])
+        self.assertEqual(result.update_deltas, [update_version_uuid])

@@ -67,6 +67,29 @@ def _iter_refs(target: Any, _key: str | None = None) -> Iterator[str]:
             yield str(value)
 
 
+def _get_schema_from_dataframe(dataframe: "pd.DataFrame") -> pa.Schema:
+    """Get a normalized pyarrow schema from a pandas dataframe.
+
+    This hook centralizes dataframe-to-Arrow schema adjustments before the
+    dataframe is converted to a table. It currently performs these conversions:
+    - large_string -> string
+    - dictionary<*, large_string> -> dictionary<*, string>
+
+    :param dataframe: The pandas dataframe to get the schema from.
+    :return: A pyarrow schema with any configured type conversions applied.
+    """
+    schema = pa.Schema.from_pandas(dataframe)
+    fields = []
+    for field in schema:
+        if pa.types.is_large_string(field.type):
+            fields.append(field.with_type(pa.string()))
+        elif pa.types.is_dictionary(field.type) and pa.types.is_large_string(field.type.value_type):
+            fields.append(field.with_type(pa.dictionary(field.type.index_type, pa.string())))
+        else:
+            fields.append(field)
+    return pa.schema(fields)
+
+
 class ObjectDataClient:
     """An optional wrapper around data upload and download functionality for geoscience objects.
 
@@ -321,9 +344,9 @@ class ObjectDataClient:
             :raises StorageFileNotFoundError: If the destination does not exist or is not a directory.
             :raises ValueError: If allow_casting is True and multiple table formats are provided.
             """
-            return self.save_table(
-                pa.Table.from_pandas(dataframe), table_format=table_format, allow_casting=allow_casting
-            )
+            schema = _get_schema_from_dataframe(dataframe)
+            table = pa.Table.from_pandas(dataframe, schema)
+            return self.save_table(table, table_format=table_format, allow_casting=allow_casting)
 
         async def upload_dataframe(
             self,
@@ -350,9 +373,9 @@ class ObjectDataClient:
                 no table formats are specified, raised when the table does not match any known format.
             :raises ValueError: If allow_casting is True and multiple table formats are provided.
             """
-            table_info = await self.upload_table(
-                pa.Table.from_pandas(dataframe), table_format=table_format, fb=fb, allow_casting=allow_casting
-            )
+            schema = _get_schema_from_dataframe(dataframe)
+            table = pa.Table.from_pandas(dataframe, schema)
+            table_info = await self.upload_table(table, table_format=table_format, fb=fb, allow_casting=allow_casting)
             return table_info
 
         async def upload_category_dataframe(self, dataframe: pd.DataFrame, fb: IFeedback = NoFeedback) -> CategoryInfo:
@@ -372,7 +395,9 @@ class ObjectDataClient:
             :raises TableFormatError: If the table isn't a valid category table, or if the number of categories exceeds
                 what int32 type can represent.
             """
-            category_info = await self.upload_category_table(pa.Table.from_pandas(dataframe), fb=fb)
+            schema = _get_schema_from_dataframe(dataframe)
+            table = pa.Table.from_pandas(dataframe, schema)
+            category_info = await self.upload_category_table(table, fb=fb)
             return category_info
 
         async def download_dataframe(

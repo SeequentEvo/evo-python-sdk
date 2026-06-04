@@ -9,8 +9,15 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from importlib.abc import Traversable
 from importlib.resources import files
+
+try:
+    # Traversable was moved from importlib.abc to importlib.resources.abc in Python 3.11, and
+    # the re-export was removed in Python 3.14.
+    from importlib.resources.abc import Traversable
+except ImportError:
+    from importlib.abc import Traversable
+
 
 _ROOT = files(__name__)
 

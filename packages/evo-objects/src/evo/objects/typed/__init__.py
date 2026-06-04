@@ -9,8 +9,19 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from .attributes import Attribute, Attributes
-from .base import BaseObject
+from ._grid import BlockModelData, BlockModelGeometry
+from .attributes import (
+    Attribute,
+    Attributes,
+    BlockModelAttribute,
+    BlockModelAttributes,
+    BlockModelPendingAttribute,
+    PendingAttribute,
+)
+from .base import BaseObject, object_from_path, object_from_reference, object_from_uuid
+from .block_model_ref import (
+    BlockModel,
+)
 from .pointset import (
     PointSet,
     PointSetData,
@@ -32,16 +43,55 @@ from .triangle_mesh import (
     TriangleMesh,
     TriangleMeshData,
 )
-from .types import BoundingBox, CoordinateReferenceSystem, EpsgCode, Point3, Rotation, Size3d, Size3i
+from .types import (
+    BoundingBox,
+    CoordinateReferenceSystem,
+    Ellipsoid,
+    EllipsoidRanges,
+    EpsgCode,
+    Point3,
+    Rotation,
+    Size3d,
+    Size3i,
+)
+from .variogram import (
+    CubicStructure,
+    ExponentialStructure,
+    GaussianStructure,
+    GeneralisedCauchyStructure,
+    LinearStructure,
+    SphericalStructure,
+    SpheroidalStructure,
+    Variogram,
+    VariogramCurveData,
+    VariogramData,
+    VariogramStructure,
+)
 
 __all__ = [
     "Attribute",
     "Attributes",
     "BaseObject",
     "BaseSpatialObject",
+    "BlockModel",
+    "BlockModelAttribute",
+    "BlockModelAttributes",
+    "BlockModelData",
+    "BlockModelGeometry",
+    "BlockModelPendingAttribute",
     "BoundingBox",
     "CoordinateReferenceSystem",
+    "CubicStructure",
+    "Ellipsoid",
+    "EllipsoidRanges",
     "EpsgCode",
+    "ExponentialStructure",
+    "GaussianStructure",
+    "GeneralisedCauchyStructure",
+    "LinearStructure",
+    "Locations",
+    "MaskedCells",
+    "PendingAttribute",
     "Point3",
     "PointSet",
     "PointSetData",
@@ -52,8 +102,43 @@ __all__ = [
     "Rotation",
     "Size3d",
     "Size3i",
+    "SphericalStructure",
+    "SpheroidalStructure",
     "Tensor3DGrid",
     "Tensor3DGridData",
     "TriangleMesh",
     "TriangleMeshData",
+    "Variogram",
+    "VariogramCurveData",
+    "VariogramData",
+    "VariogramStructure",
+    "object_from_path",
+    "object_from_reference",
+    "object_from_uuid",
 ]
+
+# Conditionally export report types when evo-blockmodels is installed
+try:
+    from evo.blockmodels.typed import (  # noqa: F401
+        Aggregation,
+        MassUnits,
+        RegularBlockModelData,
+        Report,
+        ReportCategorySpec,
+        ReportColumnSpec,
+        ReportResult,
+        ReportSpecificationData,
+    )
+
+    __all__ += [
+        "Aggregation",
+        "MassUnits",
+        "RegularBlockModelData",
+        "Report",
+        "ReportCategorySpec",
+        "ReportColumnSpec",
+        "ReportResult",
+        "ReportSpecificationData",
+    ]
+except ImportError:
+    pass

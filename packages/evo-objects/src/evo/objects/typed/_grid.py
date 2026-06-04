@@ -14,8 +14,9 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Annotated
+from uuid import UUID
 
 import pandas as pd
 
@@ -23,7 +24,7 @@ from evo.common import IFeedback
 from evo.common.utils import NoFeedback
 
 from ._model import DataLocation, SchemaLocation, SchemaModel
-from .attributes import Attributes
+from .attributes import Attributes, BlockModelAttribute
 from .exceptions import ObjectValidationError
 from .spatial import BaseSpatialObject, BaseSpatialObjectData
 from .types import BoundingBox, Point3, Rotation, Size3d, Size3i
@@ -33,6 +34,9 @@ __all__ = [
     "Base3DGridData",
     "BaseRegular3DGrid",
     "BaseRegular3DGridData",
+    "BlockModelData",
+    "BlockModelGeometry",
+    "RegularBlockModelData",
 ]
 
 
@@ -126,11 +130,16 @@ class Cells3D(SchemaModel):
     def expected_length(self) -> int:
         return self.size.total_size
 
-    async def get_dataframe(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
-        """Load a DataFrame containing the cell attribute values."""
-        return await self.attributes.get_dataframe(fb=fb)
+    async def to_dataframe(self, *keys: str, fb: IFeedback = NoFeedback) -> pd.DataFrame:
+        """Load a DataFrame containing the cell attribute values.
 
-    async def set_dataframe(self, df: pd.DataFrame, fb: IFeedback = NoFeedback) -> None:
+        :param keys: Optional list of attribute keys to include. If not provided, all attributes are included.
+        :param fb: Optional feedback object to report download progress.
+        :return: A DataFrame with cell attribute columns.
+        """
+        return await self.attributes.to_dataframe(*keys, fb=fb)
+
+    async def from_dataframe(self, df: pd.DataFrame, fb: IFeedback = NoFeedback) -> None:
         """Set the cell attributes from a DataFrame."""
         if df.shape[0] != self.expected_length:
             raise ObjectValidationError(
@@ -161,11 +170,16 @@ class Vertices3D(SchemaModel):
     def expected_length(self) -> int:
         return self.size.total_size
 
-    async def get_dataframe(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
-        """Load a DataFrame containing the vertex attribute values."""
-        return await self.attributes.get_dataframe(fb=fb)
+    async def to_dataframe(self, *keys: str, fb: IFeedback = NoFeedback) -> pd.DataFrame:
+        """Load a DataFrame containing the vertex attribute values.
 
-    async def set_dataframe(self, df: pd.DataFrame, fb: IFeedback = NoFeedback) -> None:
+        :param keys: Optional list of attribute keys to include. If not provided, all attributes are included.
+        :param fb: Optional feedback object to report download progress.
+        :return: A DataFrame with vertex attribute columns.
+        """
+        return await self.attributes.to_dataframe(*keys, fb=fb)
+
+    async def from_dataframe(self, df: pd.DataFrame, fb: IFeedback = NoFeedback) -> None:
         """Set the vertex attributes from a DataFrame."""
         if df.shape[0] != self.expected_length:
             raise ObjectValidationError(
@@ -176,3 +190,70 @@ class Vertices3D(SchemaModel):
     def validate(self) -> None:
         """Validate that all attributes have the correct length."""
         self.attributes.validate_lengths(self.expected_length)
+
+
+@dataclass(frozen=True, kw_only=True)
+class BlockModelGeometry:
+    """The geometry definition of a regular block model."""
+
+    model_type: str
+    origin: Point3
+    n_blocks: Size3i
+    block_size: Size3d
+    rotation: Rotation | None = None
+
+
+@dataclass(frozen=True, kw_only=True)
+class RegularBlockModelData:
+    """Data for creating a regular block model.
+
+    This creates a new block model in the Block Model Service and a corresponding
+    Geoscience Object reference.
+
+    :param name: The name of the block model.
+    :param origin: The origin point (x, y, z) of the block model.
+    :param n_blocks: The number of blocks in each dimension (nx, ny, nz).
+    :param block_size: The size of each block (dx, dy, dz).
+    :param cell_data: DataFrame with block data. Must contain (x, y, z) or (i, j, k) columns.
+    :param description: Optional description.
+    :param coordinate_reference_system: Coordinate reference system (e.g., "EPSG:28354").
+    :param size_unit_id: Unit for block sizes (e.g., "m").
+    :param units: Dictionary mapping column names to unit IDs.
+    """
+
+    name: str
+    origin: Point3
+    n_blocks: Size3i
+    block_size: Size3d
+    cell_data: pd.DataFrame | None = None
+    description: str | None = None
+    coordinate_reference_system: str | None = None
+    size_unit_id: str | None = None
+    units: dict[str, str] = field(default_factory=dict)
+
+
+@dataclass(frozen=True, kw_only=True)
+class BlockModelData(BaseSpatialObjectData):
+    """Data for creating a BlockModel reference.
+
+    A BlockModel is a reference to a block model stored in the Block Model Service.
+    This creates a Geoscience Object that points to an existing block model.
+
+    :param name: The name of the block model reference object.
+    :param block_model_uuid: The UUID of the block model in the Block Model Service.
+    :param block_model_version_uuid: Optional specific version UUID to reference.
+    :param geometry: The geometry definition of the block model.
+    :param attributes: List of attributes available on the block model.
+    :param coordinate_reference_system: Optional CRS for the block model.
+    """
+
+    block_model_uuid: UUID
+    block_model_version_uuid: UUID | None = None
+    geometry: BlockModelGeometry
+    attributes: list[BlockModelAttribute] = field(default_factory=list)
+
+    def compute_bounding_box(self) -> BoundingBox:
+        """Compute the bounding box from the geometry."""
+        return BoundingBox.from_regular_grid(
+            self.geometry.origin, self.geometry.n_blocks, self.geometry.block_size, self.geometry.rotation
+        )

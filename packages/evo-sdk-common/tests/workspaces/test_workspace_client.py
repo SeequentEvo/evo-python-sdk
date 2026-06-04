@@ -447,9 +447,9 @@ class TestWorkspaceClient(TestWithConnector):
             self.assert_request_made(
                 method=RequestMethod.GET,
                 path=f"{BASE_PATH}/workspaces/summary?"
-                f"limit=20&offset=10&order_by=asc%3Aname&filter%5Bcreated_by%5D=00000000-0000-0000-0000-000000000002&"
+                f"limit=20&offset=10&order_by=asc%3Aname&created_by=00000000-0000-0000-0000-000000000002&"
                 f"created_at=2020-01-01+00%3A00%3A00%2B00%3A00&updated_at=2020-01-01+00%3A00%3A00%2B00%3A00&"
-                f"name=Test+Workspace+A&deleted=False&filter%5Buser_id%5D=00000000-0000-0000-0000-000000000002",
+                f"name=Test+Workspace+A&deleted=False&user_id=00000000-0000-0000-0000-000000000002",
                 headers={"Accept": "application/json"},
             )
             self.assertEqual([], workspaces.items())

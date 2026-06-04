@@ -16,7 +16,7 @@ from unittest import TestCase
 import pandas as pd
 from parameterized import parameterized
 
-from evo.objects.typed.attributes import UnSupportedDataTypeError, _infer_attribute_type_from_series
+from evo.objects.typed.attributes import PendingAttribute, UnSupportedDataTypeError, _infer_attribute_type_from_series
 
 
 class TestAttributeTypeInference(TestCase):
@@ -46,3 +46,22 @@ class TestAttributeTypeInference(TestCase):
         series = pd.Series([1 + 2j, 3 + 4j], dtype="complex128")
         with self.assertRaises(UnSupportedDataTypeError):
             _infer_attribute_type_from_series(series)
+
+
+class TestPendingAttribute(TestCase):
+    """Tests for PendingAttribute class."""
+
+    def test_pending_attribute_name(self):
+        """Test that PendingAttribute stores the name correctly."""
+        pending = PendingAttribute(None, "test_attr")
+        self.assertEqual(pending.name, "test_attr")
+
+    def test_pending_attribute_exists_is_false(self):
+        """Test that PendingAttribute.exists returns False."""
+        pending = PendingAttribute(None, "test_attr")
+        self.assertFalse(pending.exists)
+
+    def test_pending_attribute_repr(self):
+        """Test that PendingAttribute has a useful repr."""
+        pending = PendingAttribute(None, "test_attr")
+        self.assertEqual(repr(pending), "PendingAttribute(name='test_attr', exists=False)")

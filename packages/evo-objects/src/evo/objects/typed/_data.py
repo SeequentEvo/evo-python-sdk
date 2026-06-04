@@ -22,18 +22,17 @@ class DataTable(SchemaModel):
     table_format: ClassVar[KnownTableFormat | None] = None
     data_columns: ClassVar[list[str]] = []
 
-    async def get_dataframe(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
-        """Load a DataFrame containing value for this table.
+    async def to_dataframe(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
+        """Load a DataFrame containing values for this table.
 
         :param fb: Optional feedback object to report download progress.
-
         :return: The loaded DataFrame with values for this table.
         """
         if self._context.is_data_modified(self._data):
             raise DataLoaderError("Data was modified since the object was downloaded")
         return await self._obj.download_dataframe(self.as_dict(), fb=fb, column_names=self.data_columns)
 
-    async def set_dataframe(self, df: pd.DataFrame, fb: IFeedback = NoFeedback) -> None:
+    async def from_dataframe(self, df: pd.DataFrame, fb: IFeedback = NoFeedback) -> None:
         """Update the values of this table.
 
         :param df: DataFrame containing the new values for this table.
@@ -87,21 +86,22 @@ class DataTableAndAttributes(SchemaModel):
         """The expected number of rows in the table and attributes."""
         return self._table.length
 
-    async def get_dataframe(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
+    async def to_dataframe(self, *keys: str, fb: IFeedback = NoFeedback) -> pd.DataFrame:
         """Load a DataFrame containing the values and attributes.
 
+        :param keys: Optional attribute keys to include. If not specified, all attributes are included.
         :param fb: Optional feedback object to report download progress.
         :return: DataFrame with data columns (e.g., X, Y, Z) and additional columns for attributes.
         """
-        table_df = await self._table.get_dataframe(fb=fb)
+        table_df = await self._table.to_dataframe(fb=fb)
         if self.attributes is not None and len(self.attributes) > 0:
-            attr_df = await self.attributes.get_dataframe(fb=fb)
+            attr_df = await self.attributes.to_dataframe(*keys, fb=fb)
             combined_df = pd.concat([table_df, attr_df], axis=1)
             return combined_df
         else:
             return table_df
 
-    async def set_dataframe(self, df: pd.DataFrame, fb: IFeedback = NoFeedback) -> None:
+    async def from_dataframe(self, df: pd.DataFrame, fb: IFeedback = NoFeedback) -> None:
         """Set the table data and attributes from a DataFrame.
 
         :param df: DataFrame containing data columns (e.g., X, Y, Z) and additional columns for attributes.
@@ -109,7 +109,7 @@ class DataTableAndAttributes(SchemaModel):
         """
         table_df, attr_df = self._split_dataframe(df, self._table.data_columns)
 
-        await self._table.set_dataframe(table_df, fb=fb)
+        await self._table.from_dataframe(table_df, fb=fb)
         if attr_df is not None:
             await self.attributes.set_attributes(attr_df, fb=fb)
         else:
@@ -145,4 +145,6 @@ class DataTableAndAttributes(SchemaModel):
         builder = SchemaBuilder(cls, context)
         await builder.set_sub_model_value("_table", table_df)
         await builder.set_sub_model_value("attributes", attr_df)
-        return builder.document
+
+        # As we specially handle the _table and attributes sub-models above, we skip them in the default data processing of build_from_data.
+        return await builder.build_from_data(data, skip_sub_models={"_table", "attributes"})
