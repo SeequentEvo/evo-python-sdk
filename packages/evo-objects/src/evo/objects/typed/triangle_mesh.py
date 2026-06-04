@@ -168,22 +168,6 @@ class Triangles(SchemaModel):
         """The number of triangles in this mesh."""
         return self.indices.length
 
-    async def get_vertices_dataframe(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
-        """Load a DataFrame containing the vertex coordinates and attributes.
-
-        :param fb: Optional feedback object to report download progress.
-        :return: DataFrame with x, y, z coordinates and additional columns for attributes.
-        """
-        return await self.vertices.get_dataframe(fb=fb)
-
-    async def get_indices_dataframe(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
-        """Load a DataFrame containing the triangle indices and attributes.
-
-        :param fb: Optional feedback object to report download progress.
-        :return: DataFrame with n0, n1, n2 indices and additional columns for attributes.
-        """
-        return await self.indices.get_dataframe(fb=fb)
-
     @classmethod
     async def _data_to_schema(cls, data: Any, context: IContext) -> Any:
         """Convert triangles data to schema format."""
@@ -217,10 +201,26 @@ class TriangleMesh(BaseSpatialObject):
         object_dict["triangles"] = await Triangles._data_to_schema(triangles_data, context)
         return object_dict
 
+    async def vertices_dataframe(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
+        """Get the vertices dataframe for the pointset, including any vertex attributes.
+
+        :param fb: Optional feedback object to report download progress.
+        :return: A DataFrame with 'x', 'y', 'z' columns representing vertex coordinates and any additional attribute columns.
+        """
+        return await self.triangles.vertices.to_dataframe(fb=fb)
+
     @property
     def num_vertices(self) -> int:
         """The number of vertices in this mesh."""
         return self.triangles.num_vertices
+
+    async def indices_dataframe(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
+        """Get the triangle indices dataframe for the mesh, including any triangle attributes.
+
+        :param fb: Optional feedback object to report download progress.
+        :return: A DataFrame with 'n0', 'n1', 'n2' columns representing triangle indices and any additional attribute columns.
+        """
+        return await self.triangles.indices.to_dataframe(fb=fb)
 
     @property
     def num_triangles(self) -> int:

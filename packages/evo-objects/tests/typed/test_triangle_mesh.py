@@ -89,10 +89,10 @@ class TestTriangleMesh(TestWithConnector):
         self.assertEqual(result.num_vertices, 4)
         self.assertEqual(result.num_triangles, 4)
 
-        vertex_df = await result.triangles.get_vertices_dataframe()
+        vertex_df = await result.vertices_dataframe()
         pd.testing.assert_frame_equal(vertex_df, self.example_mesh.vertices)
 
-        triangle_df = await result.triangles.get_indices_dataframe()
+        triangle_df = await result.indices_dataframe()
         pd.testing.assert_frame_equal(triangle_df, self.example_mesh.triangles)
 
     @parameterized.expand([BaseObject, TriangleMesh])
@@ -131,7 +131,7 @@ class TestTriangleMesh(TestWithConnector):
         self.assertEqual(result.num_vertices, 3)
         self.assertEqual(result.num_triangles, 1)
 
-        actual_vertices = await result.triangles.get_vertices_dataframe()
+        actual_vertices = await result.vertices_dataframe()
         pd.testing.assert_frame_equal(actual_vertices, vertices)
 
     @parameterized.expand([BaseObject, TriangleMesh])
@@ -160,7 +160,7 @@ class TestTriangleMesh(TestWithConnector):
             self.assertEqual(result.num_vertices, 4)
             self.assertEqual(result.num_triangles, 4)
 
-            vertex_df = await result.triangles.get_vertices_dataframe()
+            vertex_df = await result.vertices_dataframe()
             pd.testing.assert_frame_equal(vertex_df, self.example_mesh.vertices)
 
     def test_bounding_box_from_data(self):

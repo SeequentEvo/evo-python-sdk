@@ -453,18 +453,18 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
     async def test_upload_dataframe_with_allow_casting_without_single_format_raises(self) -> None:
         """Test that allow_casting=True raises ValueError when not providing a single table format."""
         with mock.patch("pyarrow.Table") as mock_pyarrow_table:
-            mock_dataframe = mock.Mock()
+            dataframe = pd.DataFrame()
             mock_pyarrow_table.from_pandas.return_value = mock.Mock()
 
             # Test with no table format
             with self.assertRaises(ValueError) as ctx:
-                await self.data_client.upload_dataframe(mock_dataframe, table_format=None, allow_casting=True)
+                await self.data_client.upload_dataframe(dataframe, table_format=None, allow_casting=True)
             self.assertIn("allow_casting can only be used when a single table_format is provided", str(ctx.exception))
 
             # Test with multiple table formats
             with self.assertRaises(ValueError) as ctx:
                 await self.data_client.upload_dataframe(
-                    mock_dataframe,
+                    dataframe,
                     table_format=[table_formats.FLOAT_ARRAY_2, table_formats.FLOAT_ARRAY_3],
                     allow_casting=True,
                 )
