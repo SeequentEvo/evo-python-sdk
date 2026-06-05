@@ -17,6 +17,7 @@ This package groups all geostatistics-topic compute tasks:
 - **break_ties** — Spatial tie-breaking
 - **declustering** — Grid-based declustering weights
 - **location_wise** — Per-location ensemble statistics
+- **continuous_distribution** — Continuous non-parametric cumulative distribution
 - **loss_calculation** — Classification by expected economic loss
 - **normal_score** — Normal score transformation
 - **profit_calculation** — Classification by expected economic profit
@@ -33,6 +34,7 @@ Example:
 """
 
 from . import break_ties as _break_ties_module  # noqa: F401
+from . import continuous_distribution as _continuous_distribution_module  # noqa: F401
 from . import declustering as _declustering_module  # noqa: F401
 from . import kriging as _kriging_module  # noqa: F401
 from . import location_wise as _location_wise_module  # noqa: F401
