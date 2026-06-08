@@ -238,7 +238,7 @@ class ResourceMetadata(ABC):
         pass
 
 
-_Metadata = TypeVar("_Metadata", bound=ResourceMetadata)
+_Metadata = TypeVar("_Metadata")
 
 
 class Page(Sequence[_Metadata]):
