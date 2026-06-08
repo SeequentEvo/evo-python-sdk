@@ -221,6 +221,7 @@ class WorkspaceAPIClient:
         remaining_pages = await asyncio.gather(*page_read_coroutines)
         workspaces = first_page.items() + [ws for page in remaining_pages for ws in page.items()]
 
+        # Note: this sort overrides any order_by passed to this method. This was here before
         return sorted(workspaces, key=lambda x: x.display_name)
 
 
