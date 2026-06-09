@@ -217,12 +217,9 @@ class WorkspaceAPIClient:
                 filter_user_id=filter_user_id,
             ))
 
-
         remaining_pages = await asyncio.gather(*page_read_coroutines)
         workspaces = first_page.items() + [ws for page in remaining_pages for ws in page.items()]
 
-        if order_by is None:
-            return sorted(workspaces, key=lambda ws: ws.display_name)
         return workspaces
 
 
