@@ -48,8 +48,8 @@ from .break_ties import BreakTiesResult
 from .declustering import DeclusteringResult
 from .kriging import (
     BlockDiscretisation,
+    Filter,
     KrigingResult,
-    RegionFilter,
 )
 from .location_wise import LocationWiseResult
 
@@ -57,7 +57,7 @@ __all__ = [
     "BlockDiscretisation",
     "BreakTiesResult",
     "DeclusteringResult",
+    "Filter",
     "KrigingResult",
     "LocationWiseResult",
-    "RegionFilter",
 ]

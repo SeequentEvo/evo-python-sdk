@@ -86,8 +86,8 @@ To avoid this:
 3. Run the **remaining** tasks — now `block_model.attributes["kriged_grade"]` resolves to the existing attribute and will update it.
 
 ```python
-from evo.compute.tasks import run, SearchNeighborhood
-from evo.compute.tasks.geostatistics.kriging import KrigingParameters, RegionFilter
+from evo.compute.tasks import run, Filter, FilterCondition, SearchNeighborhood
+from evo.compute.tasks.geostatistics.kriging import KrigingParameters
 
 # Step 1: Run the first task — attribute "kriged_grade" does not exist yet, so it is created
 first_result = await run(manager, KrigingParameters(
@@ -95,9 +95,12 @@ first_result = await run(manager, KrigingParameters(
     target=block_model.attributes["kriged_grade"],
     variogram=variogram,
     search=SearchNeighborhood(...),
-    target_region_filter=RegionFilter(
-        attribute=block_model.attributes["domain"],
-        names=["LMS1"],
+    target_filter=Filter(
+        where=FilterCondition(
+            attribute=block_model.attributes["domain"],
+            operator="in",
+            values=["LMS1"],
+        ),
     ),
 ), preview=True)
 
@@ -111,9 +114,12 @@ results = await run(manager, [
         target=block_model.attributes["kriged_grade"],  # Exists → update
         variogram=variogram,
         search=SearchNeighborhood(...),
-        target_region_filter=RegionFilter(
-            attribute=block_model.attributes["domain"],
-            names=["LMS2"],
+        target_filter=Filter(
+            where=FilterCondition(
+                attribute=block_model.attributes["domain"],
+                operator="in",
+                values=["LMS2"],
+            ),
         ),
     ),
     KrigingParameters(
@@ -121,9 +127,12 @@ results = await run(manager, [
         target=block_model.attributes["kriged_grade"],  # Exists → update
         variogram=variogram,
         search=SearchNeighborhood(...),
-        target_region_filter=RegionFilter(
-            attribute=block_model.attributes["domain"],
-            names=["LMS3"],
+        target_filter=Filter(
+            where=FilterCondition(
+                attribute=block_model.attributes["domain"],
+                operator="in",
+                values=["LMS3"],
+            ),
         ),
     ),
 ], preview=True)

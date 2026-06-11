@@ -24,9 +24,11 @@ from evo.objects.typed.attributes import (
 from pydantic import TypeAdapter, ValidationError
 
 from evo.compute.tasks import (
+    AllOfFilter,
     BlockDiscretisation,
     CreateAttribute,
-    RegionFilter,
+    Filter,
+    FilterCondition,
     SearchNeighborhood,
     Source,
     Target,
@@ -411,51 +413,70 @@ class TestTargetSerialization(TestCase):
         self.assertEqual(result["attribute"]["name"], "new_attr")
 
 
-class TestRegionFilter(TestCase):
-    """Tests for RegionFilter class."""
+class TestFilter(TestCase):
+    """Tests for the generic Filter / FilterCondition models."""
 
-    def test_region_filter_with_names(self):
-        """Test RegionFilter with category names."""
-        region_filter = RegionFilter(
-            attribute="domain_attribute",
-            names=["LMS1", "LMS2"],
+    def test_filter_condition_membership(self):
+        """Test a single membership FilterCondition."""
+        f = Filter(where=FilterCondition(attribute="domain_attribute", operator="in", values=["LMS1", "LMS2"]))
+
+        result = f.model_dump(mode="json", exclude_none=True)
+
+        self.assertEqual(result["where"]["type"], "condition")
+        self.assertEqual(result["where"]["attribute"], "domain_attribute")
+        self.assertEqual(result["where"]["operator"], "in")
+        self.assertEqual(result["where"]["values"], ["LMS1", "LMS2"])
+        self.assertNotIn("threshold", result["where"])
+
+    def test_filter_condition_numeric(self):
+        """Test a single numeric FilterCondition."""
+        f = Filter(where=FilterCondition(attribute="grade", operator="greater_than_or_equal_to", threshold=0.5))
+
+        result = f.model_dump(mode="json", exclude_none=True)
+
+        self.assertEqual(result["where"]["operator"], "greater_than_or_equal_to")
+        self.assertEqual(result["where"]["threshold"], 0.5)
+        self.assertNotIn("values", result["where"])
+
+    def test_filter_condition_integer_values(self):
+        """Test membership FilterCondition with integer category keys."""
+        f = Filter(where=FilterCondition(attribute="domain_code_attribute", operator="not_in", values=[1, 2, 3]))
+
+        result = f.model_dump(mode="json", exclude_none=True)
+
+        self.assertEqual(result["where"]["values"], [1, 2, 3])
+
+    def test_filter_composite_all_of(self):
+        """Test a composite all_of (AND) filter expression."""
+        f = Filter(
+            where=AllOfFilter(
+                filters=[
+                    FilterCondition(attribute="domain", operator="in", values=[1, 2]),
+                    FilterCondition(attribute="grade", operator="greater_than", threshold=0.1),
+                ],
+            )
         )
 
-        result = region_filter.model_dump(mode="json", by_alias=True, exclude_none=True)
+        result = f.model_dump(mode="json", exclude_none=True)
 
-        self.assertEqual(result["attribute"], "domain_attribute")
-        self.assertEqual(result["names"], ["LMS1", "LMS2"])
-        self.assertNotIn("values", result)
+        self.assertEqual(result["where"]["type"], "all_of")
+        self.assertEqual(len(result["where"]["filters"]), 2)
+        self.assertEqual(result["where"]["filters"][0]["values"], [1, 2])
+        self.assertEqual(result["where"]["filters"][1]["threshold"], 0.1)
 
-    def test_region_filter_with_values(self):
-        """Test RegionFilter with integer values."""
-        region_filter = RegionFilter(
-            attribute="domain_code_attribute",
-            values=[1, 2, 3],
-        )
-
-        result = region_filter.model_dump(mode="json", by_alias=True, exclude_none=True)
-
-        self.assertEqual(result["attribute"], "domain_code_attribute")
-        self.assertEqual(result["values"], [1, 2, 3])
-        self.assertNotIn("names", result)
-
-    def test_region_filter_with_block_model_attribute(self):
-        """Test RegionFilter with a real BlockModelAttribute."""
+    def test_filter_condition_with_block_model_attribute(self):
+        """Test FilterCondition resolves a BlockModelAttribute to an expression."""
         bm_attr = BlockModelAttribute(name="domain", attribute_type="category")
 
-        region_filter = RegionFilter(
-            attribute=bm_attr,
-            names=["Zone1"],
-        )
+        f = Filter(where=FilterCondition(attribute=bm_attr, operator="in", values=["Zone1"]))
 
-        result = region_filter.model_dump()
+        result = f.model_dump()
 
-        self.assertEqual(result["attribute"], "attributes[?name=='domain']")
-        self.assertEqual(result["names"], ["Zone1"])
+        self.assertEqual(result["where"]["attribute"], "attributes[?name=='domain']")
+        self.assertEqual(result["where"]["values"], ["Zone1"])
 
-    def test_region_filter_with_pointset_attribute(self):
-        """Test RegionFilter with a PointSet Attribute (mock with spec)."""
+    def test_filter_condition_with_pointset_attribute(self):
+        """Test FilterCondition resolves a PointSet Attribute to a key-based expression."""
         mock_attr = _create_mock_source_attribute(
             name="domain",
             key="domain-key",
@@ -463,128 +484,82 @@ class TestRegionFilter(TestCase):
             schema_path="locations.attributes",
         )
 
-        region_filter = RegionFilter(
-            attribute=mock_attr,
-            names=["Domain1"],
-        )
+        f = Filter(where=FilterCondition(attribute=mock_attr, operator="in", values=["Domain1"]))
 
-        result = region_filter.model_dump()
+        result = f.model_dump()
 
-        self.assertEqual(result["attribute"], "locations.attributes[?key=='domain-key']")
-        self.assertEqual(result["names"], ["Domain1"])
+        self.assertEqual(result["where"]["attribute"], "locations.attributes[?key=='domain-key']")
 
-    def test_region_filter_with_pending_attribute(self):
-        """Test RegionFilter rejects PendingAttribute (not a valid attribute type for filtering)."""
-        pending = _create_pending_attribute("domain")
-
+    def test_membership_operator_requires_values(self):
+        """Membership operators must be paired with values, not threshold."""
         with self.assertRaises(ValueError):
-            RegionFilter(
-                attribute=pending,
-                names=["Zone1"],
-            )
+            FilterCondition(attribute="domain_attribute", operator="in", threshold=1.0)
 
-    def test_region_filter_cannot_have_both_names_and_values(self):
-        """Test RegionFilter raises error when both names and values are provided."""
-        with self.assertRaises(ValueError) as context:
-            RegionFilter(
-                attribute="domain_attribute",
-                names=["LMS1"],
-                values=[1],
-            )
-
-        self.assertIn("Only one of 'names' or 'values' may be provided", str(context.exception))
-
-    def test_region_filter_must_have_names_or_values(self):
-        """Test RegionFilter raises error when neither names nor values are provided."""
-        with self.assertRaises(ValueError) as context:
-            RegionFilter(
-                attribute="domain_attribute",
-            )
-
-        self.assertIn("One of 'names' or 'values' must be provided", str(context.exception))
-
-    def test_region_filter_raises_for_unsupported_type(self):
-        """Test RegionFilter rejects unsupported attribute types at construction."""
-        with self.assertRaises((TypeError, Exception)):
-            RegionFilter(attribute=12345, names=["Zone1"])
+    def test_numeric_operator_requires_threshold(self):
+        """Numeric operators must be paired with threshold, not values."""
+        with self.assertRaises(ValueError):
+            FilterCondition(attribute="grade", operator="greater_than", values=[1])
 
 
-class TestKrigingParametersWithRegionFilter(TestCase):
-    """Tests for KrigingParameters with target region filter support."""
+class TestKrigingParametersWithFilter(TestCase):
+    """Tests for KrigingParameters with source/target filter support."""
 
-    def test_kriging_params_with_target_region_filter_names(self):
-        """Test KrigingParameters with target region filter using category names."""
-        source = Source(object=POINTSET_URL, attribute="grade")
-        target = Target.new_attribute(GRID_URL, "kriged_grade")
-        search = SearchNeighborhood(
-            ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=100, semi_major=100, minor=50)),
-            max_samples=20,
-        )
-        region_filter = RegionFilter(
-            attribute="domain_attribute",
-            names=["LMS1", "LMS2"],
-        )
-
-        params = KrigingParameters(
-            source=source,
-            target=target,
-            variogram=VARIOGRAM_URL,
-            search=search,
-            target_region_filter=region_filter,
-        )
-
-        params_dict = params.model_dump()
-
-        self.assertIn("region_filter", params_dict["target"])
-        self.assertEqual(params_dict["target"]["region_filter"]["attribute"], "domain_attribute")
-        self.assertEqual(params_dict["target"]["region_filter"]["names"], ["LMS1", "LMS2"])
-
-    def test_kriging_params_with_target_region_filter_values(self):
-        """Test KrigingParameters with target region filter using integer values."""
-        source = Source(object=POINTSET_URL, attribute="grade")
-        target = Target.new_attribute(GRID_URL, "kriged_grade")
-        search = SearchNeighborhood(
-            ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=100, semi_major=100, minor=50)),
-            max_samples=20,
-        )
-        region_filter = RegionFilter(
-            attribute="domain_code",
-            values=[1, 2, 3],
-        )
-
-        params = KrigingParameters(
-            source=source,
-            target=target,
-            variogram=VARIOGRAM_URL,
-            search=search,
-            target_region_filter=region_filter,
-        )
-
-        params_dict = params.model_dump()
-
-        self.assertIn("region_filter", params_dict["target"])
-        self.assertEqual(params_dict["target"]["region_filter"]["attribute"], "domain_code")
-        self.assertEqual(params_dict["target"]["region_filter"]["values"], [1, 2, 3])
-
-    def test_kriging_params_without_target_region_filter(self):
-        """Test KrigingParameters without target region filter (default behavior)."""
-        source = Source(object=POINTSET_URL, attribute="grade")
-        target = Target.new_attribute(GRID_URL, "kriged_grade")
-        search = SearchNeighborhood(
+    def _search(self) -> SearchNeighborhood:
+        return SearchNeighborhood(
             ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=100, semi_major=100, minor=50)),
             max_samples=20,
         )
 
+    def test_kriging_params_with_target_filter(self):
+        """Test KrigingParameters serializes a target filter under target.filter."""
         params = KrigingParameters(
-            source=source,
-            target=target,
+            source=Source(object=POINTSET_URL, attribute="grade"),
+            target=Target.new_attribute(GRID_URL, "kriged_grade"),
             variogram=VARIOGRAM_URL,
-            search=search,
+            search=self._search(),
+            target_filter=Filter(
+                where=FilterCondition(attribute="domain_attribute", operator="in", values=["LMS1", "LMS2"]),
+            ),
         )
 
         params_dict = params.model_dump()
 
-        self.assertNotIn("region_filter", params_dict["target"])
+        self.assertIn("filter", params_dict["target"])
+        self.assertEqual(params_dict["target"]["filter"]["where"]["attribute"], "domain_attribute")
+        self.assertEqual(params_dict["target"]["filter"]["where"]["values"], ["LMS1", "LMS2"])
+        self.assertNotIn("filter", params_dict["source"])
+
+    def test_kriging_params_with_source_filter(self):
+        """Test KrigingParameters serializes a source filter under source.filter."""
+        params = KrigingParameters(
+            source=Source(object=POINTSET_URL, attribute="grade"),
+            target=Target.new_attribute(GRID_URL, "kriged_grade"),
+            variogram=VARIOGRAM_URL,
+            search=self._search(),
+            source_filter=Filter(
+                where=FilterCondition(attribute="grade", operator="greater_than", threshold=0.0),
+            ),
+        )
+
+        params_dict = params.model_dump()
+
+        self.assertIn("filter", params_dict["source"])
+        self.assertEqual(params_dict["source"]["filter"]["where"]["threshold"], 0.0)
+        self.assertNotIn("filter", params_dict["target"])
+
+    def test_kriging_params_without_filter(self):
+        """Test KrigingParameters omits filters by default."""
+        params = KrigingParameters(
+            source=Source(object=POINTSET_URL, attribute="grade"),
+            target=Target.new_attribute(GRID_URL, "kriged_grade"),
+            variogram=VARIOGRAM_URL,
+            search=self._search(),
+        )
+
+        params_dict = params.model_dump()
+
+        self.assertNotIn("filter", params_dict["target"])
+        self.assertNotIn("filter", params_dict["source"])
 
 
 class TestBlockDiscretisation(TestCase):
@@ -683,7 +658,7 @@ class TestKrigingParametersWithBlockDiscretisation(TestCase):
         params_dict = params.model_dump(mode="json", by_alias=True, exclude_none=True)
         self.assertNotIn("block_discretisation", params_dict)
 
-    def test_kriging_params_block_discretisation_with_region_filter(self):
+    def test_kriging_params_block_discretisation_with_filter(self):
         source = Source(object=POINTSET_URL, attribute="grade")
         target = Target.new_attribute(GRID_URL, "kriged_grade")
         search = SearchNeighborhood(
@@ -691,7 +666,7 @@ class TestKrigingParametersWithBlockDiscretisation(TestCase):
             max_samples=20,
         )
         bd = BlockDiscretisation(nx=2, ny=2, nz=2)
-        region_filter = RegionFilter(attribute="domain_attribute", names=["LMS1"])
+        target_filter = Filter(where=FilterCondition(attribute="domain_attribute", operator="in", values=["LMS1"]))
 
         params = KrigingParameters(
             source=source,
@@ -699,14 +674,14 @@ class TestKrigingParametersWithBlockDiscretisation(TestCase):
             variogram=VARIOGRAM_URL,
             search=search,
             block_discretisation=bd,
-            target_region_filter=region_filter,
+            target_filter=target_filter,
         )
 
         params_dict = params.model_dump()
         self.assertIn("block_discretisation", params_dict)
         self.assertEqual(params_dict["block_discretisation"], {"nx": 2, "ny": 2, "nz": 2})
-        self.assertIn("region_filter", params_dict["target"])
-        self.assertEqual(params_dict["target"]["region_filter"]["names"], ["LMS1"])
+        self.assertIn("filter", params_dict["target"])
+        self.assertEqual(params_dict["target"]["filter"]["where"]["values"], ["LMS1"])
 
 
 class TestObjectReferenceValidation(TestCase):
