@@ -179,9 +179,7 @@ class WorkspaceAPIClient:
         self,
         limit: int | None = None,
         offset: int | None = None,
-        order_by: dict[WorkspaceOrderByEnum, OrderByOperatorEnum] | None = {
-            WorkspaceOrderByEnum.name: OrderByOperatorEnum.asc
-        },
+            order_by=None,
         filter_created_by: UUID | None = None,
         created_at: str | None = None,
         updated_at: str | None = None,
@@ -189,6 +187,10 @@ class WorkspaceAPIClient:
         deleted: bool | None = None,
         filter_user_id: UUID | None = None,
     ) -> list[Workspace]:
+        if order_by is None:
+            order_by = {
+                WorkspaceOrderByEnum.name: OrderByOperatorEnum.asc
+            }
         if offset is None:
             offset = 0
         if limit is None:
