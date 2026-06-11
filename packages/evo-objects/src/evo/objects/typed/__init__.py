@@ -23,6 +23,7 @@ from .block_model_ref import (
     BlockModel,
 )
 from .pointset import (
+    Locations,
     PointSet,
     PointSetData,
 )
@@ -31,6 +32,7 @@ from .regular_grid import (
     Regular3DGridData,
 )
 from .regular_masked_grid import (
+    MaskedCells,
     RegularMasked3DGrid,
     RegularMasked3DGridData,
 )
