@@ -179,7 +179,7 @@ class WorkspaceAPIClient:
         self,
         limit: int | None = None,
         offset: int | None = None,
-            order_by=None,
+        order_by: dict[WorkspaceOrderByEnum, OrderByOperatorEnum] | None = None,
         filter_created_by: UUID | None = None,
         created_at: str | None = None,
         updated_at: str | None = None,
