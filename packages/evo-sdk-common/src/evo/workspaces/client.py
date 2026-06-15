@@ -188,9 +188,7 @@ class WorkspaceAPIClient:
         filter_user_id: UUID | None = None,
     ) -> list[Workspace]:
         if order_by is None:
-            order_by = {
-                WorkspaceOrderByEnum.name: OrderByOperatorEnum.asc
-            }
+            order_by = {WorkspaceOrderByEnum.name: OrderByOperatorEnum.asc}
         if offset is None:
             offset = 0
         if limit is None:
@@ -210,24 +208,24 @@ class WorkspaceAPIClient:
         page_read_coroutines: list[Awaitable[Page[Workspace]]] = []
 
         for i in range(offset + limit, first_page.total, limit):
-            page_read_coroutines.append(self.list_workspaces(
-                limit=limit, offset=i,
-                order_by=order_by,
-                filter_created_by=filter_created_by,
-                created_at=created_at,
-                updated_at=updated_at,
-                name=name,
-                deleted=deleted,
-                filter_user_id=filter_user_id,
-            ))
+            page_read_coroutines.append(
+                self.list_workspaces(
+                    limit=limit,
+                    offset=i,
+                    order_by=order_by,
+                    filter_created_by=filter_created_by,
+                    created_at=created_at,
+                    updated_at=updated_at,
+                    name=name,
+                    deleted=deleted,
+                    filter_user_id=filter_user_id,
+                )
+            )
 
         remaining_pages = await asyncio.gather(*page_read_coroutines)
         workspaces = first_page.items() + [ws for page in remaining_pages for ws in page.items()]
 
         return workspaces
-
-
-
 
     async def list_workspaces_summary(
         self,
