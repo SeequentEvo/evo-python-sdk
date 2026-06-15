@@ -12,7 +12,7 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Literal, TypeAlias, Awaitable
+from typing import Awaitable, Literal, TypeAlias
 from uuid import UUID
 
 from pydantic import ValidationError
