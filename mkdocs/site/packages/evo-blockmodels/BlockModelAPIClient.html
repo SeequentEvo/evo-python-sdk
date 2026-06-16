@@ -748,15 +748,16 @@ until all entries are retrieved. The <code>page_limit</code> is clamped to the s
   </span>
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">list_versions</span><span class="p">(</span><span class="n">bm_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Version</span><span class="p">]</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">list_versions</span><span class="p">(</span><span class="n">bm_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ListingVersion</span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>List versions of a block model.</p>
-<p>Returns a list of <code>Version</code>s for the block model referenced by <code>bm_id</code>,
+<p>Returns a list of <code>ListingVersion</code>s for the block model referenced by <code>bm_id</code>,
 limited to the first 100 results (or the service maximum).</p>
 <p>Versions are ordered from newest to oldest.</p>
+<p>Listing columns never carry <code>tags</code>; fetch a version individually to read tags.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -801,11 +802,11 @@ limited to the first 100 results (or the service maximum).</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><span title="list">list</span>[<span title="evo.blockmodels.data.Version">Version</span>]</code>
+                  <code><span title="list">list</span>[<span title="evo.blockmodels.data.ListingVersion">ListingVersion</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>A list of <code>Version</code> dataclasses for the block model, ordered newest to oldest.</p>
+                <p>A list of <code>ListingVersion</code> dataclasses for the block model, ordered newest to oldest.</p>
               </div>
             </td>
           </tr>
@@ -829,7 +830,7 @@ limited to the first 100 results (or the service maximum).</p>
   </span>
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">list_all_versions</span><span class="p">(</span><span class="n">bm_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">page_limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="mi">100</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Version</span><span class="p">]</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">list_all_versions</span><span class="p">(</span><span class="n">bm_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">page_limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="mi">100</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ListingVersion</span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -838,6 +839,7 @@ limited to the first 100 results (or the service maximum).</p>
 <p>This method will page through the <code>list_block_model_versions</code> endpoint using <code>offset</code> and <code>limit</code>
 until all entries are retrieved. The <code>page_limit</code> is clamped to the service maximum (100).</p>
 <p>Versions are ordered from newest to oldest.</p>
+<p>Listing columns never carry <code>tags</code>; fetch a version individually to read tags.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -898,11 +900,11 @@ until all entries are retrieved. The <code>page_limit</code> is clamped to the s
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><span title="list">list</span>[<span title="evo.blockmodels.data.Version">Version</span>]</code>
+                  <code><span title="list">list</span>[<span title="evo.blockmodels.data.ListingVersion">ListingVersion</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>A list of <code>Version</code> dataclasses for the block model, ordered newest to oldest.</p>
+                <p>A list of <code>ListingVersion</code> dataclasses for the block model, ordered newest to oldest.</p>
               </div>
             </td>
           </tr>
@@ -935,6 +937,7 @@ until all entries are retrieved. The <code>page_limit</code> is clamped to the s
     <span class="n">size_unit_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">initial_data</span><span class="p">:</span> <span class="n">Table</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">units</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">tags</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">fill_subblocks</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">BlockModel</span><span class="p">,</span> <span class="n">Version</span><span class="p">]</span>
@@ -1094,6 +1097,22 @@ returning. This then returns both the block model and the initial block model ve
           </tr>
           <tr class="doc-section-item">
             <td>
+                <code>tags</code>
+            </td>
+            <td>
+                  <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="dict">dict</span>[<span title="str">str</span>, <span title="typing.Any">Any</span>]] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A dictionary mapping column names within <code>initial_data</code> to their tags object.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
                 <code>comment</code>
             </td>
             <td>
@@ -1169,7 +1188,9 @@ sub-blocks with data from the parent block. Defaults to <code>False</code>.</p>
   </span>
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">add_new_subblocked_columns</span><span class="p">(</span><span class="n">bm_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Table</span><span class="p">,</span> <span class="n">units</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Version</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">add_new_subblocked_columns</span><span class="p">(</span>
+    <span class="n">bm_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Table</span><span class="p">,</span> <span class="n">units</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">tags</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Version</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -1232,6 +1253,22 @@ sub-blocks with data from the parent block. Defaults to <code>False</code>.</p>
             <td>
               <div class="doc-md-description">
                 <p>A dictionary mapping column names within <code>data</code> to units.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>tags</code>
+            </td>
+            <td>
+                  <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="dict">dict</span>[<span title="str">str</span>, <span title="typing.Any">Any</span>]] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A dictionary mapping column names within <code>data</code> to their tags object.</p>
               </div>
             </td>
             <td>
@@ -1304,7 +1341,9 @@ sub-blocks with data from the parent block. Defaults to <code>False</code>.</p>
   </span>
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">add_new_columns</span><span class="p">(</span><span class="n">bm_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Table</span><span class="p">,</span> <span class="n">units</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Version</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">add_new_columns</span><span class="p">(</span>
+    <span class="n">bm_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Table</span><span class="p">,</span> <span class="n">units</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">tags</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Version</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -1367,6 +1406,22 @@ sub-blocks with data from the parent block. Defaults to <code>False</code>.</p>
             <td>
               <div class="doc-md-description">
                 <p>A dictionary mapping column names within <code>data</code> to units.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>tags</code>
+            </td>
+            <td>
+                  <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="dict">dict</span>[<span title="str">str</span>, <span title="typing.Any">Any</span>]] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A dictionary mapping column names within <code>data</code> to their tags object.</p>
               </div>
             </td>
             <td>
@@ -1446,6 +1501,7 @@ sub-blocks with data from the parent block. Defaults to <code>False</code>.</p>
     <span class="n">update_columns</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">delete_columns</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">units</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">tags</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Version</span>
 </code></pre></div>
 
@@ -1563,6 +1619,22 @@ sub-blocks with data from the parent block. Defaults to <code>False</code>.</p>
                   <code>None</code>
             </td>
           </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>tags</code>
+            </td>
+            <td>
+                  <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="dict">dict</span>[<span title="str">str</span>, <span title="typing.Any">Any</span>]] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A dictionary mapping new column names to their tags object.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
       </tbody>
     </table>
 
@@ -1638,6 +1710,7 @@ sub-blocks with data from the parent block. Defaults to <code>False</code>.</p>
     <span class="n">units</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">geometry_change</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">fill_subblocks</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">tags</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Version</span>
 </code></pre></div>
 
@@ -1792,6 +1865,22 @@ the block model's own <code>fill_subblocks</code> setting is used.</p>
                   <code>None</code>
             </td>
           </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>tags</code>
+            </td>
+            <td>
+                  <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="dict">dict</span>[<span title="str">str</span>, <span title="typing.Any">Any</span>]] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A dictionary mapping new column names to their tags object.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
       </tbody>
     </table>
 
@@ -1812,13 +1901,23 @@ the block model's own <code>fill_subblocks</code> setting is used.</p>
   </span>
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">update_column_metadata</span><span class="p">(</span><span class="n">bm_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">column_updates</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">],</span> <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Version</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">update_column_metadata</span><span class="p">(</span>
+    <span class="n">bm_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">column_updates</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">|</span> <span class="n">ColumnMetadataUpdate</span><span class="p">],</span> <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Version</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>Update metadata (e.g., units) for existing block model columns.</p>
+        <p>Update metadata (e.g., units and tags) for existing block model columns.</p>
 <p>This method updates column properties without requiring data upload or cache configuration.</p>
+<p>Each entry in <code>column_updates</code> maps a column title to its update:</p>
+<ul>
+<li>A <code>str</code> sets the column's unit ID.</li>
+<li><code>None</code> clears the column's unit ID.</li>
+<li>A :class:<code>ColumnMetadataUpdate</code> sets any combination of unit ID and/or tags. Only the
+  fields explicitly set on the object are sent; unset fields are left untouched. Set
+  <code>tags={}</code> to clear a column's tags, or <code>unit_id=None</code> to clear its unit.</li>
+</ul>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -1853,13 +1952,13 @@ the block model's own <code>fill_subblocks</code> setting is used.</p>
                 <code>column_updates</code>
             </td>
             <td>
-                  <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="str">str</span> | None]</code>
+                  <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="str">str</span> | None | <span title="evo.blockmodels.data.ColumnMetadataUpdate">ColumnMetadataUpdate</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>A dictionary mapping column titles to their new unit IDs.
-Set the unit ID to None to remove the unit.
-Example: {"Cu": "%[mass]", "Au": None}</p>
+                <p>A dictionary mapping column titles to their metadata update.
+Example: {"Cu": "%[mass]", "Au": None,
+"Ag": ColumnMetadataUpdate(tags={"source": "assay"})}</p>
               </div>
             </td>
             <td>
@@ -2586,7 +2685,7 @@ the block model column.</p>
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_deltas_for_block_model</span><span class="p">(</span>
     <span class="n">version_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">bm_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">delta_request_data</span><span class="p">:</span> <span class="n">DeltaRequestData</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DeltaResponseData</span> <span class="o">|</span> <span class="n">EmptyResponse</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ListingDeltaResponseData</span> <span class="o">|</span> <span class="n">EmptyResponse</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -2671,11 +2770,11 @@ provided bounding box.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><span title="evo.blockmodels.endpoints.models.DeltaResponseData">DeltaResponseData</span> | <span title="evo.common.data.EmptyResponse">EmptyResponse</span></code>
+                  <code><span title="evo.blockmodels.endpoints.models.ListingDeltaResponseData">ListingDeltaResponseData</span> | <span title="evo.common.data.EmptyResponse">EmptyResponse</span></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>A <code>DeltaResponseData</code> describing any detected changes, or an <code>EmptyResponse</code> (HTTP 304)
+                <p>A <code>ListingDeltaResponseData</code> describing any detected changes, or an <code>EmptyResponse</code> (HTTP 304)
 when no changes are found.</p>
               </div>
             </td>
