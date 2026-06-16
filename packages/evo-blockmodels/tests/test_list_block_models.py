@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from uuid import uuid4
 
 from evo.blockmodels import BlockModelAPIClient
-from evo.blockmodels.data import RegularGridDefinition, Version
+from evo.blockmodels.data import ListingVersion, RegularGridDefinition
 from evo.common import Environment
 from evo.common.test_tools import (
     BASE_URL,
@@ -134,8 +134,8 @@ class TestListBlockModels(TestWithConnector, TestWithStorage):
         ):
             result = await self.client.list_versions(bm_id)
         self.assertEqual(len(result), 2)
-        self.assertIsInstance(result[0], Version)
-        self.assertIsInstance(result[1], Version)
+        self.assertIsInstance(result[0], ListingVersion)
+        self.assertIsInstance(result[1], ListingVersion)
         self.assertEqual(result[0].version_id, 2)
         self.assertEqual(result[1].version_id, 1)
 
@@ -166,8 +166,8 @@ class TestListBlockModels(TestWithConnector, TestWithStorage):
 
         result = await self.client.list_all_versions(bm_id, page_limit=2)
         self.assertEqual(len(result), 2)
-        self.assertIsInstance(result[0], Version)
-        self.assertIsInstance(result[1], Version)
+        self.assertIsInstance(result[0], ListingVersion)
+        self.assertIsInstance(result[1], ListingVersion)
         self.assertEqual(result[0].version_id, 2)
         self.assertEqual(result[1].version_id, 1)
 

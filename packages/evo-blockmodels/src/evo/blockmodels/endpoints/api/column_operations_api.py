@@ -25,11 +25,11 @@ Block Model API
 
 
 This code is generated from the OpenAPI specification for Block Model API.
-API version: 1.41.3
+API version: 1.42.9
 """
 
 from evo.common.connector import APIConnector
-from evo.common.data import RequestMethod
+from evo.common.data import EmptyResponse, RequestMethod  # noqa: F401
 from evo.common.utils import get_header_metadata
 
 from ..models import *  # noqa: F403
@@ -130,7 +130,7 @@ class ColumnOperationsApi:
         workspace_id: str,
         org_id: str,
         bm_id: str,
-        update_data_lite_input: UpdateDataLiteInput,  # noqa: F405
+        update_data_lite: UpdateDataLite,  # noqa: F405
         additional_headers: dict[str, str] | None = None,
         request_timeout: int | float | tuple[int | float, int | float] | None = None,
     ) -> UpdateWithUrl:  # noqa: F405
@@ -147,8 +147,8 @@ class ColumnOperationsApi:
         :param bm_id: ID of the block model this call is scoped to. Represented as a v4 UUID.
             Format: `uuid`
             Example: `'e3c277c2-edc6-4a7a-8380-251dd19231f2'`
-        :param update_data_lite_input:
-            Example: `endpoints.UpdateDataLiteInput()`
+        :param update_data_lite:
+            Example: `endpoints.UpdateDataLite()`
         :param additional_headers: (optional) Additional headers to send with the request.
         :param request_timeout: (optional) Timeout setting for this request. If one number is provided, it will be the
             total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.
@@ -193,7 +193,7 @@ class ColumnOperationsApi:
             resource_path="/blockmodel/orgs/{org_id}/workspaces/{workspace_id}/block-models/{bm_id}/blocks",
             path_params=_path_params,
             header_params=_header_params,
-            body=update_data_lite_input,
+            body=update_data_lite,
             collection_formats=_collection_formats,
             response_types_map=_response_types_map,
             request_timeout=request_timeout,

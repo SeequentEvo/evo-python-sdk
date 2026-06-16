@@ -25,7 +25,7 @@ Block Model API
 
 
 This code is generated from the OpenAPI specification for Block Model API.
-API version: 1.41.3
+API version: 1.42.9
 """
 
 from evo.common.connector import APIConnector

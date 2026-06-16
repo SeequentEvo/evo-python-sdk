@@ -11,7 +11,7 @@
 
 import json
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest import mock
 
 from evo.blockmodels import BlockModelAPIClient
@@ -26,7 +26,7 @@ from evo.common.data import HTTPHeaderDict, RequestMethod
 from evo.common.test_tools import MockResponse, TestWithConnector, TestWithStorage
 from utils import JobPollingRequestHandler
 
-DATE = datetime(2021, 1, 1)
+DATE = datetime(2021, 1, 1, tzinfo=timezone.utc)
 MODEL_USER = models.UserInfo(email="test@test.com", name="Test User", id=uuid.uuid4())
 
 MOCK_VERSION = models.Version(

@@ -25,7 +25,7 @@ Block Model API
 
 
 This code is generated from the OpenAPI specification for Block Model API.
-API version: 1.41.3
+API version: 1.42.9
 """
 
 from evo.common.connector import APIConnector
@@ -60,7 +60,7 @@ class VersionsApi:
         delta_request_data: DeltaRequestData,  # noqa: F405
         additional_headers: dict[str, str] | None = None,
         request_timeout: int | float | tuple[int | float, int | float] | None = None,
-    ) -> DeltaResponseData:  # noqa: F405
+    ) -> ListingDeltaResponseData:  # noqa: F405
         """Check for deltas
 
         Checks if there have been any changes to the block model within a given bounding box, between two specified versions.  Changes are searched for within a range of versions. The first version searched for changes is the version after `version_id`. The last version that is searched is the version that is specified by `end_version_id` (inclusive), or if `end_version_id` isn't specified, the latest version of the block model.  This request only checks for updates or deletions for specified columns. The columns are specified as list of `column_id` UUIDs or a wildcard (`\"*\"`), for all columns that exist within the `version_id` version (the starting version). Using column titles is not supported on this endpoint.  For this endpoint, changes that are considered are: - Addition of any new columns, regardless of the columns specified in this request - Deletions of any of the columns specified - Updates to any of the columns specified, within the given bounding box. When block models are updated, a bounding box that encloses all updated blocks is computed. Only updates that have a bounding box that intersects with the specified bounding box are included.  Column renames aren't considered as part of this and they do not count as a change.  If no changes are found, then the response will have a status code of 304, with no content in the response.  If there are changes found, then the `verbose` flag inside the request body changes the response. If `verbose` is false, then the response body will be empty. If `verbose` is true, then the response body will contain information about the difference in versions. For clarity, if no changes are found, then the `verbose` flag does nothing, as in that case the system will always return a 304 with no content.  All workspace roles can use this endpoint.
@@ -116,7 +116,7 @@ class VersionsApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "200": DeltaResponseData,  # noqa: F405
+            "200": ListingDeltaResponseData,  # noqa: F405
             "304": EmptyResponse,
         }
 
@@ -141,7 +141,7 @@ class VersionsApi:
         limit: int | None = None,
         additional_headers: dict[str, str] | None = None,
         request_timeout: int | float | tuple[int | float, int | float] | None = None,
-    ) -> PaginatedResponseWithUnitsVersion:  # noqa: F405
+    ) -> PaginatedResponseWithUnitsListingVersion:  # noqa: F405
         """List version metadata for all versions of a block model
 
         Gets all versions of the block model `bm_id`.  The list is ordered from the newest version to the oldest version.  This endpoint is paginated, therefore by default this lists, at most, the first 50 versions. To get other versions, use the `offset` and `limit` query parameters to select the desired part of the list. An `offset` beyond the total number of versions for the block model will result in an empty `results` list. The `limit` must be an integer from 1 to 100. The response includes `total`, which is the total number of versions within the list. All workspace roles can use this endpoint.
@@ -205,7 +205,7 @@ class VersionsApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "200": PaginatedResponseWithUnitsVersion,  # noqa: F405
+            "200": PaginatedResponseWithUnitsListingVersion,  # noqa: F405
         }
 
         return await self.connector.call_api(
@@ -302,10 +302,10 @@ class VersionsApi:
         include_changes: bool | None = None,
         additional_headers: dict[str, str] | None = None,
         request_timeout: int | float | tuple[int | float, int | float] | None = None,
-    ) -> VersionWithChanges | Version:  # noqa: F405
+    ) -> ResponseRetrieveBlockModelVersion:  # noqa: F405
         """Request version metadata for a specific block model version
 
-        Gets the version of the block model `bm_id` identified by the `version_id` UUID.  If the `include_changes` query parameter is set to `true`, then the response will include the changes made in the update. Returned object will be of type `VersionWithChanges`, this object extends the `Version` object to include the field `changes`. The changes field contains the `VersionChanges` object.  The fields of the `VersionChanges` object are as follows: - blocks_uploaded: The number of blocks (rows) present in the update file if one was used for the update, null otherwise. - total_blocks: The total number of blocks in the block model. Will remain static for regular models, will change for sub-blocked models when the sub-block count changes due to geometry change updates. - update_type: Whether the update that created the Version was of type `merge` or `replace`; field contains null if the update did not update any blocks. - columns: - columns->new: List of columns (specified by title) created in the update that created the Version. Empty if the update did not create any columns. - columns->deleted: List of columns (specified by title) deleted in the update that created the Version. Empty if the update did not delete any columns. - columns->updated: List of columns (specified by title) updated in the update that created the Version. Empty if the update did not update any columns. - columns->renamed: List of the `ColumnRename` object, denoting which columns were renamed in the update the created the version. Empty if the update did not rename any columns. `ColumnRename` contains the fields: (`old_title`, `new_title`). - columns->metadata_updated: List of the `UpdateMetadataLite` object, containing column metadata changes if they were made in the update. This includes the `title` of the column, the new title, and updated unit ID, respective of what was modified in the update. Empty if the update did not update any column metadata.   All workspace roles can use this endpoint.
+        Gets the version of the block model `bm_id` identified by the `version_id` UUID.  If the `include_changes` query parameter is set to `true`, then the response will include the changes made in the update. Returned object will be of type `VersionWithChanges`, this object extends the `Version` object to include the field `changes`. The changes field contains the `VersionChanges` object.  The fields of the `VersionChanges` object are as follows: - blocks_uploaded: The number of blocks (rows) present in the update file if one was used for the update, null otherwise. - total_blocks: The total number of blocks in the block model. Will remain static for regular models, will change for sub-blocked models when the sub-block count changes due to geometry change updates. - update_type: Whether the update that created the Version was of type `merge` or `replace`; field contains null if the update did not update any blocks. - columns: - columns->new: List of columns (specified by title) created in the update that created the Version. Empty if the update did not create any columns. - columns->deleted: List of columns (specified by title) deleted in the update that created the Version. Empty if the update did not delete any columns. - columns->updated: List of columns (specified by title) updated in the update that created the Version. Empty if the update did not update any columns. - columns->renamed: List of the `ColumnRename` object, denoting which columns were renamed in the update the created the version. Empty if the update did not rename any columns. `ColumnRename` contains the fields: (`old_title`, `new_title`). - columns->metadata_updated: List of the `UpdateMetadataLite` object, containing column metadata changes if they were made in the update. This includes the `title` of the column, the new title, updated unit ID, and replacement `tags`, respective of what was modified in the update. Empty if the update did not update any column metadata.   All workspace roles can use this endpoint.
 
         :param version_id: ID of the version of the block model this call is scoped to. Represented as a v4 UUID.
             Format: `uuid`
@@ -362,7 +362,7 @@ class VersionsApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "200": VersionWithChanges | Version,  # noqa: F405
+            "200": ResponseRetrieveBlockModelVersion,  # noqa: F405
         }
 
         return await self.connector.call_api(

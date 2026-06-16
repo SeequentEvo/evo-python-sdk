@@ -25,11 +25,11 @@ Block Model API
 
 
 This code is generated from the OpenAPI specification for Block Model API.
-API version: 1.41.3
+API version: 1.42.9
 """
 
 from evo.common.connector import APIConnector
-from evo.common.data import RequestMethod
+from evo.common.data import EmptyResponse, RequestMethod  # noqa: F401
 from evo.common.utils import get_header_metadata
 
 from ..models import *  # noqa: F403

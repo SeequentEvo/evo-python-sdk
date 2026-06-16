@@ -11,22 +11,42 @@
 
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Any
 from uuid import UUID
 
 from evo.common import ResourceMetadata
 from evo.workspaces import ServiceUser
 
-from .endpoints.models import BBox, BBoxXYZ, Column, RotationAxis
+from ._model_config import CustomBaseModel
+from .endpoints.models import BBox, BBoxXYZ, Column, ListingColumn, RotationAxis
 
 __all__ = [
     "BaseGridDefinition",
     "BlockModel",
+    "Column",
+    "ColumnMetadataUpdate",
     "FlexibleGridDefinition",
     "FullySubBlockedGridDefinition",
+    "ListingColumn",
+    "ListingVersion",
     "OctreeGridDefinition",
     "RegularGridDefinition",
     "Version",
 ]
+
+
+class ColumnMetadataUpdate(CustomBaseModel):
+    """A per-column metadata update for :meth:`BlockModelAPIClient.update_column_metadata`.
+
+    Only the fields you explicitly set are sent to the service; unset fields are left untouched.
+    """
+
+    unit_id: str | None = None
+    """The new unit ID for the column. Set to ``None`` to clear the unit."""
+
+    tags: dict[str, Any] | None = None
+    """Replacement tags for the column. Send a populated object to replace the column's tags
+    wholesale, or ``{}`` to clear them. Omit this field to leave the existing tags untouched."""
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -181,7 +201,7 @@ class BlockModel(ResourceMetadata):
 
 
 @dataclass(frozen=True, kw_only=True)
-class Version:
+class _VersionBase:
     bm_uuid: UUID
     """UUID of the block model this version belongs to."""
 
@@ -234,11 +254,6 @@ class Version:
     that only delete and rename columns.
     """
 
-    columns: list[Column]
-    """
-    Columns within this version
-    """
-
     def __repr__(self) -> str:
         """Return a concise string representation of the version."""
         col_names = [c.title for c in self.columns]
@@ -246,8 +261,25 @@ class Version:
         if self.bbox:
             bbox_str = f", bbox=i[{self.bbox.i_minmax.min}-{self.bbox.i_minmax.max}] j[{self.bbox.j_minmax.min}-{self.bbox.j_minmax.max}] k[{self.bbox.k_minmax.min}-{self.bbox.k_minmax.max}]"
         return (
-            f"Version(id={self.version_id}, "
+            f"{type(self).__name__}(id={self.version_id}, "
             f"created={self.created_at.strftime('%Y-%m-%d %H:%M:%S')}, "
             f"by={self.created_by.name or self.created_by.email}{bbox_str}, "
             f"columns={col_names})"
         )
+
+
+@dataclass(frozen=True, kw_only=True, repr=False)
+class Version(_VersionBase):
+    columns: list[Column]
+    """
+    Columns within this version, each carrying its ``tags``.
+    """
+
+
+@dataclass(frozen=True, kw_only=True, repr=False)
+class ListingVersion(_VersionBase):
+    columns: list[ListingColumn]
+    """
+    Column summaries for a listed version. These never carry ``tags`` — fetch the version
+    individually (e.g. via :meth:`BlockModelAPIClient.get_version`) to get tags.
+    """

@@ -21,7 +21,7 @@ from evo.blockmodels.endpoints.models import (
     BBoxXYZ,
     BlockSize,
     DeltaRequestData,
-    DeltaResponseData,
+    ListingDeltaResponseData,
     FloatRange,
     IntRange,
     JobErrorPayload,
@@ -329,7 +329,7 @@ class TestBlockModelAPIClient(TestWithConnector, TestWithStorage):
         bm_uuid = uuid.uuid4()
         version_uuid = uuid.uuid4()
 
-        delta_response = DeltaResponseData(
+        delta_response = ListingDeltaResponseData(
             delete_deltas=[],
             new_deltas=[],
             update_deltas=[],
@@ -348,7 +348,7 @@ class TestBlockModelAPIClient(TestWithConnector, TestWithStorage):
                     columns=["*"],
                 ),
             )
-        self.assertIsInstance(result, DeltaResponseData)
+        self.assertIsInstance(result, ListingDeltaResponseData)
         self.assertEqual(result.delete_deltas, [])
         self.assertEqual(result.new_deltas, [])
         self.assertEqual(result.update_deltas, [])
@@ -360,7 +360,7 @@ class TestBlockModelAPIClient(TestWithConnector, TestWithStorage):
         update_version_uuid = uuid.uuid4()
         new_version_uuid = uuid.uuid4()
 
-        delta_response = DeltaResponseData(
+        delta_response = ListingDeltaResponseData(
             delete_deltas=[],
             new_deltas=[new_version_uuid],
             update_deltas=[update_version_uuid],
@@ -379,6 +379,6 @@ class TestBlockModelAPIClient(TestWithConnector, TestWithStorage):
                     columns=["*"],
                 ),
             )
-        self.assertIsInstance(result, DeltaResponseData)
+        self.assertIsInstance(result, ListingDeltaResponseData)
         self.assertEqual(result.new_deltas, [new_version_uuid])
         self.assertEqual(result.update_deltas, [update_version_uuid])

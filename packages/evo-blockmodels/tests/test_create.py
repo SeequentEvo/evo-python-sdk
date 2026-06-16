@@ -10,7 +10,7 @@
 #  limitations under the License.
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Iterable
 from unittest import mock
 
@@ -36,7 +36,7 @@ from utils import JobPollingRequestHandler
 BM_UUID = uuid.uuid4()
 GOOSE_UUID = uuid.uuid4()
 GOOSE_VERSION_ID = "2"
-DATE = datetime(2021, 1, 1)
+DATE = datetime(2021, 1, 1, tzinfo=timezone.utc)
 MODEL_USER = models.UserInfo(email="test@test.com", name="Test User", id=uuid.uuid4())
 USER = ServiceUser.from_model(MODEL_USER)
 BM_BBOX = models.BBoxXYZ(
@@ -107,9 +107,9 @@ def _mock_version(
 FIRST_VERSION = _mock_version(1, uuid.uuid4(), "2")
 
 UPDATE_RESULT = models.UpdateWithUrl(
-    changes=models.UpdateDataLiteOutput(
+    changes=models.UpdateDataLite(
         # We don't look at these values, so we can just set them to empty
-        columns=models.UpdateColumnsLiteOutput(new=[], update=[], rename=[], delete=[])
+        columns=models.UpdateColumnsLite(new=[], update=[], rename=[], delete=[])
     ),
     version_uuid=FIRST_VERSION.version_uuid,
     job_uuid=uuid.uuid4(),
@@ -432,8 +432,8 @@ class TestCreateBlockModel(TestWithConnector, TestWithStorage):
             mock_destination.upload_file.assert_called_once()
 
             # Assert that the correct columns are part of the update
-            expected_update_body = models.UpdateDataLiteInput(
-                columns=models.UpdateColumnsLiteInput(
+            expected_update_body = models.UpdateDataLite(
+                columns=models.UpdateColumnsLite(
                     new=[
                         models.ColumnLite(
                             title="col1",
@@ -534,8 +534,8 @@ class TestCreateBlockModel(TestWithConnector, TestWithStorage):
             mock_destination.upload_file.assert_called_once()
 
             # Assert that the correct columns are part of the update
-            expected_update_body = models.UpdateDataLiteInput(
-                columns=models.UpdateColumnsLiteInput(
+            expected_update_body = models.UpdateDataLite(
+                columns=models.UpdateColumnsLite(
                     new=[
                         models.ColumnLite(
                             title="col1",

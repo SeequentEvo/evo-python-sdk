@@ -14,13 +14,13 @@
 
 from __future__ import annotations
 
-from datetime import datetime
 from enum import Enum
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 from uuid import UUID
 
 from pydantic import (
     AnyUrl,
+    AwareDatetime,
     Field,
     StrictBool,
     StrictFloat,
@@ -32,9 +32,9 @@ from .._model_config import CustomBaseModel
 
 
 class BlockSize(CustomBaseModel):
-    x: Annotated[StrictFloat, Field(title="X")]
-    y: Annotated[StrictFloat, Field(title="Y")]
-    z: Annotated[StrictFloat, Field(title="Z")]
+    x: Annotated[StrictFloat, Field(gt=0.0, lt=1000000.0, title="X")]
+    y: Annotated[StrictFloat, Field(gt=0.0, lt=1000000.0, title="Y")]
+    z: Annotated[StrictFloat, Field(gt=0.0, lt=1000000.0, title="Z")]
 
 
 class ColumnHeaderType(Enum):
@@ -43,13 +43,13 @@ class ColumnHeaderType(Enum):
 
 
 class ColumnNameMapping(CustomBaseModel):
-    csv_name: Annotated[StrictStr, Field(title="CSV Name")]
-    new_title: Annotated[StrictStr, Field(title="New Title")]
+    csv_name: Annotated[StrictStr, Field(min_length=1, title="CSV Name")]
+    new_title: Annotated[StrictStr, Field(min_length=1, title="New Title")]
 
 
 class ColumnNameMappingGeneric(CustomBaseModel):
-    column_title: Annotated[StrictStr, Field(title="Title of column in BlockSync")]
-    file_column_name: Annotated[StrictStr, Field(title="Name of column in file")]
+    column_title: Annotated[StrictStr, Field(min_length=1, title="Title of column in BlockSync")]
+    file_column_name: Annotated[StrictStr, Field(min_length=1, title="Name of column in file")]
 
 
 class ColumnRename(CustomBaseModel):
@@ -101,27 +101,45 @@ class GeometryColumns(Enum):
     coordinates = "coordinates"
 
 
+class FileFormat(Enum):
+    csv = "csv"
+
+
 class InputOptionsCSV(CustomBaseModel):
     column_name_mapping: Annotated[
         list[ColumnNameMapping] | list[ColumnNameMappingGeneric] | None,
-        Field(title="Column Name Mapping"),
+        Field(title="Column Name Mapping", validate_default=True),
     ] = []
     decimal_char: Annotated[StrictStr | None, Field(max_length=1, min_length=1, title="Decimal Char")] = "."
     delimiter: Annotated[StrictStr | None, Field(max_length=1, min_length=1, title="Delimiter")] = ","
-    file_format: Literal["csv"] = Field(title="File Format")
+    file_format: Annotated[Literal["csv"], Field(title="File Format")] = "csv"
     quote_char: Annotated[StrictStr | None, Field(max_length=1, min_length=1, title="Quote Char")] = '"'
     skip_rows: Annotated[StrictInt | None, Field(ge=0, title="Skip Rows")] = 0
     skip_rows_after_headers: Annotated[StrictInt | None, Field(ge=0, title="Skip Rows After Headers")] = 0
 
 
+class FileFormat1(Enum):
+    datamine = "datamine"
+
+
 class InputOptionsDatamine(CustomBaseModel):
-    column_name_mapping: Annotated[list[ColumnNameMappingGeneric] | None, Field(title="Column Name Mapping")] = []
-    file_format: Literal["datamine"] = Field(title="File Format")
+    column_name_mapping: Annotated[
+        list[ColumnNameMappingGeneric] | None,
+        Field(title="Column Name Mapping", validate_default=True),
+    ] = []
+    file_format: Annotated[Literal["datamine"], Field(title="File Format")] = "datamine"
+
+
+class FileFormat2(Enum):
+    parquet = "parquet"
 
 
 class InputOptionsParquet(CustomBaseModel):
-    column_name_mapping: Annotated[list[ColumnNameMappingGeneric] | None, Field(title="Column Name Mapping")] = []
-    file_format: Literal["parquet"] = Field(title="File Format")
+    column_name_mapping: Annotated[
+        list[ColumnNameMappingGeneric] | None,
+        Field(title="Column Name Mapping", validate_default=True),
+    ] = []
+    file_format: Annotated[Literal["parquet"], Field(title="File Format")] = "parquet"
 
 
 class IntRange(CustomBaseModel):
@@ -189,6 +207,81 @@ class JobStatus(Enum):
     FAILED = "FAILED"
 
 
+class LineageV100RuneventInputdataset(CustomBaseModel):
+    """
+    An input dataset
+    """
+
+    facets: Annotated[dict[str, Any] | None, Field(title="Facets")] = None
+    inputFacets: Annotated[dict[str, Any] | None, Field(title="Inputfacets")] = None
+    name: Annotated[StrictStr, Field(title="Name")]
+    namespace: Annotated[StrictStr, Field(title="Namespace")]
+
+
+class LineageV100RuneventJob(CustomBaseModel):
+    facets: Annotated[dict[str, Any] | None, Field(title="Facets")] = None
+    name: Annotated[StrictStr, Field(title="Name")]
+    namespace: Annotated[StrictStr, Field(title="Namespace")]
+
+
+class LineageV100RuneventOutputdataset(CustomBaseModel):
+    """
+    An output dataset
+    """
+
+    facets: Annotated[dict[str, Any] | None, Field(title="Facets")] = None
+    name: Annotated[StrictStr, Field(title="Name")]
+    namespace: Annotated[StrictStr, Field(title="Namespace")]
+    outputFacets: Annotated[dict[str, Any] | None, Field(title="Outputfacets")] = None
+
+
+class LineageV100RuneventRun(CustomBaseModel):
+    facets: Annotated[dict[str, Any] | None, Field(title="Facets")] = None
+    runId: Annotated[UUID, Field(title="Runid")]
+
+
+class ListingColumn(CustomBaseModel):
+    """
+    Column variant for listing-style responses; never carries ``tags``.
+    """
+
+    col_id: Annotated[
+        StrictStr,
+        Field(examples=["618d6339-2fa7-4dfd-9c7f-c0b12016639e"], title="Col Id"),
+    ]
+    """
+    The ID of the column, a UUID for non-system columns
+    """
+    data_type: DataType
+    title: Annotated[StrictStr, Field(title="Title")]
+    """
+    The human-readable label used to identify the column
+    """
+    unit_id: Annotated[StrictStr | None, Field(title="Unit Id")] = None
+    """
+    The ID of the column's unit
+    """
+
+
+class ListingMapping(CustomBaseModel):
+    columns: Annotated[list[ListingColumn], Field(title="Columns")]
+
+
+class ListingUpdateMetadataValues(CustomBaseModel):
+    """
+    `UpdateMetadataValues` variant for listing-style responses; never carries ``tags``.
+    """
+
+    title: Annotated[StrictStr | None, Field(title="Title")] = None
+    """
+    The new human-readable label for the column
+    """
+    unit_id: Annotated[StrictStr | None, Field(title="Unit Id")] = None
+    """
+    The new unit ID for the column
+    """
+
+
 class Location(CustomBaseModel):
     x: Annotated[StrictFloat, Field(title="X")]
     y: Annotated[StrictFloat, Field(title="Y")]
@@ -196,9 +289,17 @@ class Location(CustomBaseModel):
 
 
 class OctreeSubblocks(CustomBaseModel):
-    nx: Annotated[StrictInt, Field(title="Nx")]
-    ny: Annotated[StrictInt, Field(title="Ny")]
-    nz: Annotated[StrictInt, Field(title="Nz")]
+    nx: Annotated[StrictInt, Field(ge=1, le=64, title="Nx")]
+    ny: Annotated[StrictInt, Field(ge=1, le=64, title="Ny")]
+    nz: Annotated[StrictInt, Field(ge=1, le=64, title="Nz")]
+
+
+class FileFormat3(Enum):
+    """
+    CSV file
+    """
+
+    csv = "csv"
 
 
 class OutputOptionsCSV(CustomBaseModel):
@@ -218,6 +319,14 @@ class OutputOptionsCSV(CustomBaseModel):
     """
     CSV file
     """
+
+
+class FileFormat4(Enum):
+    """
+    Apache Parquet file
+    """
+
+    parquet = "parquet"
 
 
 class OutputOptionsParquet(CustomBaseModel):
@@ -251,9 +360,9 @@ class QueryDownload(CustomBaseModel):
 
 
 class RegularSubblocks(CustomBaseModel):
-    nx: Annotated[StrictInt, Field(title="Nx")]
-    ny: Annotated[StrictInt, Field(title="Ny")]
-    nz: Annotated[StrictInt, Field(title="Nz")]
+    nx: Annotated[StrictInt, Field(ge=1, le=100, title="Nx")]
+    ny: Annotated[StrictInt, Field(ge=1, le=100, title="Ny")]
+    nz: Annotated[StrictInt, Field(ge=1, le=100, title="Nz")]
 
 
 class Rename(CustomBaseModel):
@@ -291,7 +400,7 @@ class ReportCategory(CustomBaseModel):
     """
     ID of the category column in the block model
     """
-    label: Annotated[StrictStr, Field(title="Label")]
+    label: Annotated[StrictStr, Field(max_length=120, title="Label")]
     """
     The human-readable label used to identify the column
     """
@@ -318,7 +427,7 @@ class ReportColumn(CustomBaseModel):
     """
     ID of the column in the block model
     """
-    label: Annotated[StrictStr, Field(examples=["Au Content"], title="Label")]
+    label: Annotated[StrictStr, Field(examples=["Au Content"], max_length=120, title="Label")]
     """
     The human-readable label used to identify the column
     """
@@ -560,13 +669,21 @@ class RotationAxis(Enum):
 
 
 class Size3D(CustomBaseModel):
-    nx: Annotated[StrictInt, Field(title="Nx")]
-    ny: Annotated[StrictInt, Field(title="Ny")]
-    nz: Annotated[StrictInt, Field(title="Nz")]
+    nx: Annotated[StrictInt, Field(gt=0, le=500000000, title="Nx")]
+    ny: Annotated[StrictInt, Field(gt=0, le=500000000, title="Ny")]
+    nz: Annotated[StrictInt, Field(gt=0, le=500000000, title="Nz")]
+
+
+class ModelType(Enum):
+    """
+    Type of sub-blocking
+    """
+
+    flexible = "flexible"
 
 
 class SizeOptionsFlexible(CustomBaseModel):
-    model_type: Annotated[Literal["flexible"], Field(title="Model Type")]
+    model_type: Annotated[Literal["flexible"], Field(title="Model Type")] = "flexible"
     """
     Type of sub-blocking
     """
@@ -582,10 +699,18 @@ class SizeOptionsFlexible(CustomBaseModel):
     """
     Parent block size.
     """
+
+
+class ModelType1(Enum):
+    """
+    Type of sub-blocking
+    """
+
+    fully_sub_blocked = "fully-sub-blocked"
 
 
 class SizeOptionsFullySubBlocked(CustomBaseModel):
-    model_type: Annotated[Literal["fully-sub-blocked"], Field(title="Model Type")]
+    model_type: Annotated[Literal["fully-sub-blocked"], Field(title="Model Type")] = "fully-sub-blocked"
     """
     Type of sub-blocking
     """
@@ -603,8 +728,16 @@ class SizeOptionsFullySubBlocked(CustomBaseModel):
     """
 
 
+class ModelType2(Enum):
+    """
+    Type of sub-blocking
+    """
+
+    variable_octree = "variable-octree"
+
+
 class SizeOptionsOctree(CustomBaseModel):
-    model_type: Annotated[Literal["variable-octree"], Field(title="Model Type")]
+    model_type: Annotated[Literal["variable-octree"], Field(title="Model Type")] = "variable-octree"
     """
     Type of sub-blocking
     """
@@ -622,12 +755,20 @@ class SizeOptionsOctree(CustomBaseModel):
     """
 
 
+class ModelType3(Enum):
+    """
+    Type of sub-blocking
+    """
+
+    regular = "regular"
+
+
 class SizeOptionsRegular(CustomBaseModel):
     block_size: BlockSize
     """
     Block size
     """
-    model_type: Annotated[Literal["regular"], Field(title="Model Type")]
+    model_type: Annotated[Literal["regular"], Field(title="Model Type")] = "regular"
     """
     Type of sub-blocking
     """
@@ -649,6 +790,10 @@ class UnitType(Enum):
 
 
 class UpdateMetadataValues(CustomBaseModel):
+    tags: Annotated[dict[str, Any] | None, Field(title="Tags")] = None
+    """
+    Replacement `tags` for the column. Omit or send `null` to leave the existing tags untouched; send `{}` to clear them; send a populated object to replace them wholesale. Publisher-supplied free-form metadata for the column, as a JSON object. Keys must be non-empty strings (≤ 256 chars) with no leading whitespace or dot and none of the characters `/ \\ : > < | ? " *`; keys are unique case-insensitively. Values may be any JSON-compatible type. A single column's `tags` object serialised as UTF-8 JSON must be at most 10 KiB.
+    """
     title: Annotated[StrictStr | None, Field(title="Title")] = None
     """
     The new human-readable label for the column
@@ -722,6 +867,10 @@ class Column(CustomBaseModel):
     The ID of the column, a UUID for non-system columns
     """
     data_type: DataType
+    tags: Annotated[dict[str, Any] | None, Field(title="Tags")] = None
+    """
+    Publisher-supplied free-form metadata for the column, as a JSON object. Keys must be non-empty strings (≤ 256 chars) with no leading whitespace or dot and none of the characters `/ \\ : > < | ? " *`; keys are unique case-insensitively. Values may be any JSON-compatible type. A single column's `tags` object serialised as UTF-8 JSON must be at most 10 KiB.
+    """
     title: Annotated[StrictStr, Field(title="Title")]
     """
     The human-readable label used to identify the column
@@ -734,6 +883,10 @@ class Column(CustomBaseModel):
 
 class ColumnLite(CustomBaseModel):
     data_type: DataType
+    tags: Annotated[dict[str, Any] | None, Field(title="Tags")] = None
+    """
+    Publisher-supplied free-form metadata for the column, as a JSON object. Keys must be non-empty strings (≤ 256 chars) with no leading whitespace or dot and none of the characters `/ \\ : > < | ? " *`; keys are unique case-insensitively. Values may be any JSON-compatible type. A single column's `tags` object serialised as UTF-8 JSON must be at most 10 KiB.
+    """
     title: Annotated[StrictStr, Field(title="Title")]
     """
     The human-readable label used to identify the column
@@ -829,7 +982,7 @@ class CreateReportSpecification(CustomBaseModel):
     """
     ID of the unit to use for block density. The unit must be of type `MASS_PER_VOLUME`.
     """
-    density_value: Annotated[StrictFloat | None, Field(examples=[2.5], gt=1, title="Density Value")] = None
+    density_value: Annotated[StrictFloat | None, Field(examples=[2.5], gt=1.0, title="Density Value")] = None
     """
     Value to use for block density
     """
@@ -848,7 +1001,7 @@ class CreateReportSpecification(CustomBaseModel):
     """
     ID of the unit to use for total mass. The unit must be of type `MASS`
     """
-    name: Annotated[StrictStr, Field(title="Name")]
+    name: Annotated[StrictStr, Field(max_length=120, title="Name")]
     """
     The human-readable label used to identify the report
     """
@@ -881,6 +1034,86 @@ class DeltaRequestData(CustomBaseModel):
     """
 
 
+class LineageV100Runevent(CustomBaseModel):
+    eventTime: Annotated[StrictStr, Field(title="Eventtime")]
+    eventType: Annotated[StrictStr | None, Field(title="Eventtype")] = None
+    inputs: Annotated[list[LineageV100RuneventInputdataset] | None, Field(title="Inputs")] = None
+    job: LineageV100RuneventJob
+    outputs: Annotated[list[LineageV100RuneventOutputdataset] | None, Field(title="Outputs")] = None
+    producer: Annotated[StrictStr, Field(title="Producer")]
+    run: LineageV100RuneventRun
+    schemaURL: Annotated[StrictStr, Field(title="Schemaurl")]
+
+
+class ListingUpdateMetadata(CustomBaseModel):
+    col_id: Annotated[
+        StrictStr,
+        Field(examples=["618d6339-2fa7-4dfd-9c7f-c0b12016639e"], title="Col Id"),
+    ]
+    """
+    The ID of the column, a UUID for non-system columns
+    """
+    values: ListingUpdateMetadataValues
+
+
+class ListingVersion(CustomBaseModel):
+    base_version_id: Annotated[StrictInt | None, Field(examples=[4], title="Base Version Id")] = None
+    """
+    Version the update was applied to. This will be the same as `parent_version_id`, except for
+    updates made by Leapfrog, where it is the current local version when the block model is published. This is null if this
+    is the first version.
+    """
+    bbox: BBox | None = None
+    """
+
+    Bounding box of data updated between this version and last version. Will be None for the initial version, and updates
+    that only delete and rename columns.
+
+    """
+    bm_uuid: Annotated[UUID, Field(examples=["e3c277c2-edc6-4a7a-8380-251dd19231f2"], title="Bm Uuid")]
+    """
+    ID of the block model
+    """
+    comment: Annotated[StrictStr, Field(title="Comment")] = ""
+    """
+    User-supplied comment
+    """
+    created_at: Annotated[AwareDatetime, Field(title="Created At")]
+    """
+    When the version was created
+    """
+    created_by: UserInfo
+    """
+    User who performed the action that created the version
+    """
+    geoscience_version_id: Annotated[
+        StrictStr | None, Field(examples=["1234567890"], title="Geoscience Version Id")
+    ] = None
+    """
+    ID of the Geoscience Object Service object version associated with this block model version
+    """
+    mapping: ListingMapping
+    """
+    Columns within this version
+    """
+    parent_version_id: Annotated[StrictInt | None, Field(examples=[4], title="Parent Version Id")] = None
+    """
+    Previous version. 0 if this is the first version.
+    """
+    version_id: Annotated[StrictInt, Field(examples=[5], title="Version Id")]
+    """
+    Identifier for the version within a block model as a monotonically increasing integer, where 1 is
+    the `version_id` for the version created upon creation of the block model.
+    """
+    version_uuid: Annotated[
+        UUID,
+        Field(examples=["3e9ce8de-f6ba-4920-8c6e-0882e90f0ed7"], title="Version Uuid"),
+    ]
+    """
+    A universally unique identifier for the version
+    """
+
+
 class Mapping(CustomBaseModel):
     columns: Annotated[list[Column], Field(title="Columns")]
 
@@ -888,7 +1121,7 @@ class Mapping(CustomBaseModel):
 class QueryCriteria(CustomBaseModel):
     bbox: Annotated[BBox | BBoxXYZ | None, Field(title="Bbox")] = None
     """
-    
+
     Bounding box of the search area as integer indexes or model aligned coordinates. If not provided, this is set to the entire block model.
         If using integer indexes, they must be `>=` zero and `<=` the number of blocks - 1.
         For example, if a block model has:
@@ -908,7 +1141,7 @@ class QueryCriteria(CustomBaseModel):
     """
     columns: Annotated[list[StrictStr], Field(examples=[["*"]], title="Columns")]
     """
-    
+
     List of columns, in addition to the "geometry" columns, that will be included in the output file.
     The `columns` field supports selecting columns by either their title or ID, and can also include a wildcard (`"*"`) placeholder, which will expand to all user columns, ordered alphabetically by title in a case-insensitive manner.
     Please note that the wildcard does not cover the system column `version_id`. To include `version_id` in the output file, it must also be explicitly specified in the `columns` field alongside the wildcard.
@@ -917,7 +1150,7 @@ class QueryCriteria(CustomBaseModel):
     """
     geometry_columns: GeometryColumns = "indices"
     """
-    
+
     Determines whether the blocks in the output file will be primarily identified by their coordinates or their block
     indices.
 
@@ -941,7 +1174,7 @@ class QueryCriteria(CustomBaseModel):
 class QueryResult(CustomBaseModel):
     bbox: Annotated[BBox | BBoxXYZ, Field(title="Bbox")]
     """
-    
+
     Bounding box of the search area as integer indexes or model aligned coordinates. If not provided, this is set to the entire block model.
         If using integer indexes, they must be `>=` zero and `<=` the number of blocks - 1.
         For example, if a block model has:
@@ -965,7 +1198,7 @@ class QueryResult(CustomBaseModel):
     """
     columns: Annotated[list[StrictStr], Field(title="Columns")]
     """
-    
+
     List of columns, in addition to the "geometry" columns, that will be included in the output file.
     The `columns` field supports selecting columns by either their title or ID, and can also include a wildcard (`"*"`) placeholder, which will expand to all user columns, ordered alphabetically by title in a case-insensitive manner.
     Please note that the wildcard does not cover the system column `version_id`. To include `version_id` in the output file, it must also be explicitly specified in the `columns` field alongside the wildcard.
@@ -978,7 +1211,7 @@ class QueryResult(CustomBaseModel):
     """
     mapping: Mapping
     """
-    
+
     List of columns, in addition to the "geometry" columns, that will be included in the output file.
     The `columns` field supports selecting columns by either their title or ID, and can also include a wildcard (`"*"`) placeholder, which will expand to all user columns, ordered alphabetically by title in a case-insensitive manner.
     Please note that the wildcard does not cover the system column `version_id`. To include `version_id` in the output file, it must also be explicitly specified in the `columns` field alongside the wildcard.
@@ -1002,7 +1235,7 @@ class QueryResult(CustomBaseModel):
 class ReportComparisonResultInfo(CustomBaseModel):
     referenced_columns: Annotated[list[ReportResultReferencedColumn], Field(title="Referenced Columns")]
     report_result_created_at: Annotated[
-        datetime,
+        AwareDatetime,
         Field(examples=["2021-01-01T00:00:00Z"], title="Report Result Created At"),
     ]
     """
@@ -1023,7 +1256,7 @@ class ReportComparisonResultInfo(CustomBaseModel):
     Comment of the version of the block model that the report was run on
     """
     version_created_at: Annotated[
-        datetime,
+        AwareDatetime,
         Field(examples=["2021-01-01T00:00:00Z"], title="Version Created At"),
     ]
     """
@@ -1073,7 +1306,7 @@ class ReportResultSet(CustomBaseModel):
 
 class ReportResultSummary(CustomBaseModel):
     report_result_created_at: Annotated[
-        datetime,
+        AwareDatetime,
         Field(examples=["2021-01-01T00:00:00Z"], title="Report Result Created At"),
     ]
     """
@@ -1100,7 +1333,7 @@ class ReportResultSummary(CustomBaseModel):
     ID of the report specification that was run
     """
     version_created_at: Annotated[
-        datetime,
+        AwareDatetime,
         Field(examples=["2021-01-01T00:00:00Z"], title="Version Created At"),
     ]
     """
@@ -1212,7 +1445,7 @@ class ReportSpecificationWithJobUrl(CustomBaseModel):
     """
     ID of the unit to use for block density. The unit must be of type `MASS_PER_VOLUME`.
     """
-    density_value: Annotated[StrictFloat | None, Field(examples=[2.5], gt=1, title="Density Value")] = None
+    density_value: Annotated[StrictFloat | None, Field(examples=[2.5], gt=1.0, title="Density Value")] = None
     """
     Value to use for block density
     """
@@ -1235,7 +1468,7 @@ class ReportSpecificationWithJobUrl(CustomBaseModel):
     """
     ID of the unit to use for total mass. The unit must be of type `MASS`
     """
-    name: Annotated[StrictStr, Field(title="Name")]
+    name: Annotated[StrictStr, Field(max_length=120, title="Name")]
     """
     The human-readable label used to identify the report
     """
@@ -1352,7 +1585,7 @@ class ReportSpecificationWithLastRunInfo(CustomBaseModel):
     """
     ID of the unit to use for block density. The unit must be of type `MASS_PER_VOLUME`.
     """
-    density_value: Annotated[StrictFloat | None, Field(examples=[2.5], gt=1, title="Density Value")] = None
+    density_value: Annotated[StrictFloat | None, Field(examples=[2.5], gt=1.0, title="Density Value")] = None
     """
     Value to use for block density
     """
@@ -1368,7 +1601,7 @@ class ReportSpecificationWithLastRunInfo(CustomBaseModel):
     User-supplied description of the report
     """
     last_result_created_at: Annotated[
-        datetime | None,
+        AwareDatetime | None,
         Field(examples=["2021-01-01T00:00:00Z"], title="Last Result Created At"),
     ] = None
     """
@@ -1382,7 +1615,7 @@ class ReportSpecificationWithLastRunInfo(CustomBaseModel):
     """
     ID of the unit to use for total mass. The unit must be of type `MASS`
     """
-    name: Annotated[StrictStr, Field(title="Name")]
+    name: Annotated[StrictStr, Field(max_length=120, title="Name")]
     """
     The human-readable label used to identify the report
     """
@@ -1432,7 +1665,7 @@ class ReportWarning(CustomBaseModel):
 
 
 class Rotation(CustomBaseModel):
-    angle: Annotated[StrictFloat, Field(title="Angle")]
+    angle: Annotated[StrictFloat, Field(gt=-360.0, lt=360.0, title="Angle")]
     """
     Angle of rotation in degrees
     """
@@ -1497,7 +1730,7 @@ class Version(CustomBaseModel):
     """
     bbox: BBox | None = None
     """
-    
+
     Bounding box of data updated between this version and last version. Will be None for the initial version, and updates
     that only delete and rename columns.
 
@@ -1510,7 +1743,7 @@ class Version(CustomBaseModel):
     """
     User-supplied comment
     """
-    created_at: datetime = Field(..., title="Created At")
+    created_at: Annotated[AwareDatetime, Field(title="Created At")]
     """
     When the version was created
     """
@@ -1548,16 +1781,19 @@ class Version(CustomBaseModel):
 
 class VersionColumnChanges(CustomBaseModel):
     deleted: Annotated[list[StrictStr], Field(title="Deleted")] = []
-    metadata_updated: Annotated[list[UpdateMetadataLite] | None, Field(title="Metadata Updated")] = []
+    metadata_updated: Annotated[
+        list[UpdateMetadataLite] | None,
+        Field(title="Metadata Updated", validate_default=True),
+    ] = []
     new: Annotated[list[StrictStr], Field(title="New")] = []
-    renamed: Annotated[list[ColumnRename], Field(title="Renamed")] = []
+    renamed: Annotated[list[ColumnRename], Field(title="Renamed", validate_default=True)] = []
     updated: Annotated[list[StrictStr], Field(title="Updated")] = []
 
 
 class BlockModel(CustomBaseModel):
     bbox: BBoxXYZ
     """
-    
+
     Axis-aligned bounding box of the block model.
 
     This is the smallest box that fully contains all blocks within the block model, regardless of whether they contain data.
@@ -1566,7 +1802,7 @@ class BlockModel(CustomBaseModel):
     """
     block_rotation: Annotated[list[Rotation], Field(title="Block Rotation")]
     """
-    
+
     The rotation of the block model. Defined by a list of clockwise rotations around given axes.
 
     The combined equation for the rotation is given by:
@@ -1589,14 +1825,14 @@ class BlockModel(CustomBaseModel):
         Field(examples=["EPSG:3395"], title="Coordinate Reference System"),
     ] = None
     """
-    
+
     Coordinate reference system used in the block model.
 
     This may be an EPSG code, signified by the prefix 'EPSG:', or a coordinate system definition in WKT format.
     If an EPSG code is provided, it must be for a coordinate reference system with a length unit type (e.g. `metre`, or `foot`).
 
     """
-    created_at: datetime = Field(..., title="Created At")
+    created_at: Annotated[AwareDatetime, Field(title="Created At")]
     """
     Block model creation time
     """
@@ -1622,7 +1858,7 @@ class BlockModel(CustomBaseModel):
     """
     UUID of the Geoscience Object Service object associated with the block model
     """
-    last_updated_at: datetime = Field(..., title="Last Updated At")
+    last_updated_at: Annotated[AwareDatetime, Field(title="Last Updated At")]
     """
     Date and time of the last block model update, including metadata updates
     """
@@ -1638,7 +1874,7 @@ class BlockModel(CustomBaseModel):
     """
     The human-readable label used to identify the block model
     """
-    normalized_rotation: Annotated[list, Field(max_length=3, min_length=3, title="Normalized Rotation")]
+    normalized_rotation: Annotated[tuple[StrictFloat, StrictFloat, StrictFloat], Field(title="Normalized Rotation")]
     """
     Normalised rotation of the block model, represented as intrinsic rotations around the Z axis, then X axis, then Z axis.
     """
@@ -1672,7 +1908,7 @@ class BlockModel(CustomBaseModel):
 class BlockModelAndJobURL(CustomBaseModel):
     bbox: BBoxXYZ
     """
-    
+
     Axis-aligned bounding box of the block model.
 
     This is the smallest box that fully contains all blocks within the block model, regardless of whether they contain data.
@@ -1681,7 +1917,7 @@ class BlockModelAndJobURL(CustomBaseModel):
     """
     block_rotation: Annotated[list[Rotation], Field(title="Block Rotation")]
     """
-    
+
     The rotation of the block model. Defined by a list of clockwise rotations around given axes.
 
     The combined equation for the rotation is given by:
@@ -1704,14 +1940,14 @@ class BlockModelAndJobURL(CustomBaseModel):
         Field(examples=["EPSG:3395"], title="Coordinate Reference System"),
     ] = None
     """
-    
+
     Coordinate reference system used in the block model.
 
     This may be an EPSG code, signified by the prefix 'EPSG:', or a coordinate system definition in WKT format.
     If an EPSG code is provided, it must be for a coordinate reference system with a length unit type (e.g. `metre`, or `foot`).
 
     """
-    created_at: datetime = Field(..., title="Created At")
+    created_at: Annotated[AwareDatetime, Field(title="Created At")]
     """
     Block model creation time
     """
@@ -1738,7 +1974,7 @@ class BlockModelAndJobURL(CustomBaseModel):
     UUID of the Geoscience Object Service object associated with the block model
     """
     job_url: Annotated[AnyUrl, Field(title="Job Url")]
-    last_updated_at: datetime = Field(..., title="Last Updated At")
+    last_updated_at: Annotated[AwareDatetime, Field(title="Last Updated At")]
     """
     Date and time of the last block model update, including metadata updates
     """
@@ -1754,7 +1990,7 @@ class BlockModelAndJobURL(CustomBaseModel):
     """
     The human-readable label used to identify the block model
     """
-    normalized_rotation: Annotated[list, Field(max_length=3, min_length=3, title="Normalized Rotation")]
+    normalized_rotation: Annotated[tuple[StrictFloat, StrictFloat, StrictFloat], Field(title="Normalized Rotation")]
     """
     Normalised rotation of the block model, represented as intrinsic rotations around the Z axis, then X axis, then Z axis.
     """
@@ -1788,7 +2024,7 @@ class BlockModelAndJobURL(CustomBaseModel):
 class JobResponse(CustomBaseModel):
     job_status: Annotated[JobStatus, Field(examples=["COMPLETE"])]
     """
-    
+
     Status of this job. The statuses have the following meanings:
      - `PENDING_UPLOAD`: This is a model update job, and is awaiting notification that file upload has
        completed before proceeding any further.
@@ -1809,13 +2045,63 @@ class JobResponse(CustomBaseModel):
         Field(title="Payload"),
     ] = None
     """
-    
+
     The payload describes the outcome of the job, and is set for completed or failed jobs. This property will not appear if the
     job is not yet `COMPLETE` or `FAILED`.
      - For all failed jobs, this will be a `JobErrorPayload`.
      - For completed create or update jobs, this will be a `Version`.
      - For completed query jobs, this will be a `QueryDownload`.
 
+    """
+
+
+class LineageV100(CustomBaseModel):
+    """
+    Events describing segments of the input lineage graph of this object
+    """
+
+    events: Annotated[list[LineageV100Runevent], Field(title="Events")]
+    self_link: Annotated[StrictStr | None, Field(title="Self Link")] = None
+
+
+class ListingUpdateColumns(CustomBaseModel):
+    delete: Annotated[list[StrictStr], Field(title="Delete")]
+    """
+    The list of column IDs for deletion
+    """
+    new: Annotated[list[ListingColumn], Field(title="New")]
+    rename: Annotated[list[Rename], Field(title="Rename")]
+    update: Annotated[list[StrictStr], Field(title="Update")]
+    """
+    The list of column IDs for update
+    """
+    update_metadata: Annotated[list[ListingUpdateMetadata] | None, Field(title="Update Metadata")] = None
+
+
+class PaginatedResponseWithUnitsListingVersion(CustomBaseModel):
+    count: Annotated[StrictInt, Field(title="Count")]
+    """
+    Number of results returned in `results`
+    """
+    limit: Annotated[StrictInt, Field(title="Limit")]
+    """
+    Maximum number of items requested
+    """
+    offset: Annotated[StrictInt, Field(title="Offset")]
+    """
+    Index of the first item in `results` with respect to the full list without pagination
+    """
+    referenced_units: Annotated[list[Unit], Field(title="Referenced Units")]
+    """
+    List of all units referenced in the results
+    """
+    results: Annotated[list[ListingVersion], Field(title="Results")]
+    """
+    List of results
+    """
+    total: Annotated[StrictInt, Field(title="Total")]
+    """
+    Total number of items within the full list without pagination
     """
 
 
@@ -1837,33 +2123,6 @@ class PaginatedResponseWithUnitsReportSpecificationWithLastRunInfo(CustomBaseMod
     List of all units referenced in the results
     """
     results: Annotated[list[ReportSpecificationWithLastRunInfo], Field(title="Results")]
-    """
-    List of results
-    """
-    total: Annotated[StrictInt, Field(title="Total")]
-    """
-    Total number of items within the full list without pagination
-    """
-
-
-class PaginatedResponseWithUnitsVersion(CustomBaseModel):
-    count: Annotated[StrictInt, Field(title="Count")]
-    """
-    Number of results returned in `results`
-    """
-    limit: Annotated[StrictInt, Field(title="Limit")]
-    """
-    Maximum number of items requested
-    """
-    offset: Annotated[StrictInt, Field(title="Offset")]
-    """
-    Index of the first item in `results` with respect to the full list without pagination
-    """
-    referenced_units: Annotated[list[Unit], Field(title="Referenced Units")]
-    """
-    List of all units referenced in the results
-    """
-    results: Annotated[list[Version], Field(title="Results")]
     """
     List of results
     """
@@ -1963,7 +2222,7 @@ class ReportResult(CustomBaseModel):
     """
     referenced_columns: Annotated[list[ReportResultReferencedColumn], Field(title="Referenced Columns")]
     report_result_created_at: Annotated[
-        datetime,
+        AwareDatetime,
         Field(examples=["2021-01-01T00:00:00Z"], title="Report Result Created At"),
     ]
     """
@@ -1995,7 +2254,9 @@ class ReportResult(CustomBaseModel):
     """
     Name of the report specification that was run
     """
-    report_specification_revision: Annotated[StrictInt, Field(examples=[1], title="Report Specification Revision")]
+    report_specification_revision: Annotated[
+        StrictInt, Field(examples=[1], ge=0, title="Report Specification Revision")
+    ]
     """
     Revision of the report specification that was run
     """
@@ -2031,7 +2292,7 @@ class ReportResult(CustomBaseModel):
     Comment of the version of the block model that the report was run on
     """
     version_created_at: Annotated[
-        datetime,
+        AwareDatetime,
         Field(examples=["2021-01-01T00:00:00Z"], title="Version Created At"),
     ]
     """
@@ -2065,7 +2326,7 @@ class UpdateBlockModel(CustomBaseModel):
         ),
     ] = None
     """
-    
+
     Coordinate reference system used in the block model.
 
     This may be an EPSG code, signified by the prefix 'EPSG:', or a coordinate system definition in WKT format.
@@ -2078,11 +2339,15 @@ class UpdateBlockModel(CustomBaseModel):
     """
     fill_subblocks: Annotated[StrictBool | None, Field(title="Fill Subblocks")] = False
     """
-    
+
     Sets the default fill_subblocks value for this block model. It can be overridden at the time of an update.
     If this flag is `true`, then updates to a fully subblocked-model with `update_type`=`merge`, and `geometry_change`=`true`
     with missing sub-blocks will fill the missing sub-blocks with data from the parent block.
 
+    """
+    lineage: Annotated[LineageV100 | None, Field(deprecated=True)] = None
+    """
+    Lineage of the block model
     """
     name: Annotated[StrictStr | None, Field(max_length=100, min_length=3, title="Name")] = None
     """
@@ -2108,7 +2373,7 @@ class UpdateColumns(CustomBaseModel):
     update_metadata: Annotated[list[UpdateMetadata] | None, Field(title="Update Metadata")] = None
 
 
-class UpdateColumnsLiteInput(CustomBaseModel):
+class UpdateColumnsLite(CustomBaseModel):
     delete: Annotated[list[StrictStr], Field(title="Delete")]
     """
     The list of column titles for deletion
@@ -2122,33 +2387,19 @@ class UpdateColumnsLiteInput(CustomBaseModel):
     update_metadata: Annotated[list[UpdateMetadataLite] | None, Field(title="Update Metadata")] = None
 
 
-class UpdateColumnsLiteOutput(CustomBaseModel):
-    delete: Annotated[list[StrictStr], Field(title="Delete")]
-    """
-    The list of column titles for deletion
-    """
-    new: Annotated[list[ColumnLite], Field(title="New")]
-    rename: Annotated[list[RenameLite], Field(title="Rename")]
-    update: Annotated[list[StrictStr], Field(title="Update")]
-    """
-    The list of column titles for update
-    """
-    update_metadata: Annotated[list[UpdateMetadataLite] | None, Field(title="Update Metadata")] = None
-
-
-class UpdateDataLiteInput(CustomBaseModel):
-    columns: UpdateColumnsLiteInput
+class UpdateDataLite(CustomBaseModel):
+    columns: UpdateColumnsLite
     comment: Annotated[StrictStr | None, Field(max_length=250, title="Comment")] = None
     fill_subblocks: Annotated[StrictBool | None, Field(title="Fill Subblocks")] = None
     """
-    
+
     If set to true, any missing sub-blocks will be filled with data from the parent block.
     This is only available for fully sub-blocked models, when `update_type` is `merge`, and `geometry_change` is `true`.
 
     """
     geometry_change: Annotated[StrictBool | None, Field(title="Geometry Change")] = None
     """
-    
+
     Whether the update will create or destroy sub-blocks.
     - If set to `false`, no sub-blocks can be created nor destroyed, only sub-blocks that exist in the latest version can be updated.
     - If set to `true`:
@@ -2162,45 +2413,13 @@ class UpdateDataLiteInput(CustomBaseModel):
         InputOptionsParquet | InputOptionsCSV | InputOptionsDatamine | None,
         Field(discriminator="file_format", title="Input Options"),
     ] = None
+    lineage: Annotated[LineageV100 | None, Field(deprecated=True)] = None
+    """
+    Lineage of the block model update
+    """
     update_type: UpdateType = "merge"
     """
-    
-    Behaviour of the update, for blocks that are omitted from the update file.
-    - If set to `replace`, the values for blocks that are omitted will be set to null, for the selected columns. If `geometry_change` is true, the geometry of any parent block that has no blocks in the update file will be reset to an un-subdivided state.
-    - If set to `merge`, blocks that are omitted will be left unchanged, the values within those blocks will be the same as within the previous version.
 
-    """
-
-
-class UpdateDataLiteOutput(CustomBaseModel):
-    columns: UpdateColumnsLiteOutput
-    comment: Annotated[StrictStr | None, Field(max_length=250, title="Comment")] = None
-    fill_subblocks: Annotated[StrictBool | None, Field(title="Fill Subblocks")] = None
-    """
-    
-    If set to true, any missing sub-blocks will be filled with data from the parent block.
-    This is only available for fully sub-blocked models, when `update_type` is `merge`, and `geometry_change` is `true`.
-
-    """
-    geometry_change: Annotated[StrictBool | None, Field(title="Geometry Change")] = None
-    """
-    
-    Whether the update will create or destroy sub-blocks.
-    - If set to `false`, no sub-blocks can be created nor destroyed, only sub-blocks that exist in the latest version can be updated.
-    - If set to `true`:
-        - New sub-blocks can be created and/or existing sub-blocks can be destroyed, but all columns must be provided.
-        - Only `new`, `update`, and `delete` column operations are allowed as standalone operations.
-        - `update_metadata` is allowed, but only when the target columns are being updated as part of the `update` operation, and only when there are no columns being renamed.
-        - If `update_type` is set to `merge`, then all sub-blocks within a parent block must be provided.
-
-    """
-    input_options: Annotated[
-        InputOptionsParquet | InputOptionsCSV | InputOptionsDatamine | None,
-        Field(discriminator="file_format", title="Input Options"),
-    ] = None
-    update_type: UpdateType = "merge"
-    """
-    
     Behaviour of the update, for blocks that are omitted from the update file.
     - If set to `replace`, the values for blocks that are omitted will be set to null, for the selected columns. If `geometry_change` is true, the geometry of any parent block that has no blocks in the update file will be reset to an un-subdivided state.
     - If set to `merge`, blocks that are omitted will be left unchanged, the values within those blocks will be the same as within the previous version.
@@ -2215,14 +2434,14 @@ class UpdateDataWithVersion(CustomBaseModel):
     comment: Annotated[StrictStr | None, Field(max_length=250, title="Comment")] = None
     fill_subblocks: Annotated[StrictBool | None, Field(title="Fill Subblocks")] = None
     """
-    
+
     If set to true, any missing sub-blocks will be filled with data from the parent block.
     This is only available for fully sub-blocked models, when `update_type` is `merge`, and `geometry_change` is `true`.
 
     """
     geometry_change: Annotated[StrictBool | None, Field(title="Geometry Change")] = None
     """
-    
+
     Whether the update will create or destroy sub-blocks.
     - If set to `false`, no sub-blocks can be created nor destroyed, only sub-blocks that exist in the latest version can be updated.
     - If set to `true`:
@@ -2232,9 +2451,13 @@ class UpdateDataWithVersion(CustomBaseModel):
         - If `update_type` is set to `merge`, then all sub-blocks within a parent block must be provided.
 
     """
+    lineage: Annotated[LineageV100 | None, Field(deprecated=True)] = None
+    """
+    Lineage of the block model update
+    """
     update_type: UpdateType = "merge"
     """
-    
+
     Behaviour of the update, for blocks that are omitted from the update file.
     - If set to `replace`, the values for blocks that are omitted will be set to null, for the selected columns. If `geometry_change` is true, the geometry of any parent block that has no blocks in the update file will be reset to an un-subdivided state.
     - If set to `merge`, blocks that are omitted will be left unchanged, the values within those blocks will be the same as within the previous version.
@@ -2243,7 +2466,7 @@ class UpdateDataWithVersion(CustomBaseModel):
 
 
 class UpdateWithUrl(CustomBaseModel):
-    changes: Annotated[UpdateDataWithVersion | UpdateDataLiteOutput, Field(title="Changes")]
+    changes: Annotated[UpdateDataWithVersion | UpdateDataLite, Field(title="Changes")]
     job_url: Annotated[AnyUrl, Field(title="Job Url")]
     job_uuid: Annotated[UUID, Field(title="Job Uuid")]
     upload_url: Annotated[AnyUrl | None, Field(title="Upload Url")] = None
@@ -2256,7 +2479,7 @@ class VersionChanges(CustomBaseModel):
     total_blocks: Annotated[StrictInt, Field(title="Total Blocks")]
     update_type: UpdateType | None = None
     """
-    
+
     Behaviour of the update, for blocks that are omitted from the update file.
     - If set to `replace`, the values for blocks that are omitted will be set to null, for the selected columns. If `geometry_change` is true, the geometry of any parent block that has no blocks in the update file will be reset to an un-subdivided state.
     - If set to `merge`, blocks that are omitted will be left unchanged, the values within those blocks will be the same as within the previous version.
@@ -2275,7 +2498,7 @@ class VersionWithChanges(CustomBaseModel):
     """
     bbox: BBox | None = None
     """
-    
+
     Bounding box of data updated between this version and last version. Will be None for the initial version, and updates
     that only delete and rename columns.
 
@@ -2289,7 +2512,7 @@ class VersionWithChanges(CustomBaseModel):
     """
     User-supplied comment
     """
-    created_at: datetime = Field(..., title="Created At")
+    created_at: Annotated[AwareDatetime, Field(title="Created At")]
     """
     When the version was created
     """
@@ -2328,7 +2551,7 @@ class VersionWithChanges(CustomBaseModel):
 class CreateData(CustomBaseModel):
     block_rotation: Annotated[list[Rotation], Field(max_length=3, title="Block Rotation")]
     """
-    
+
     The rotation of the block model. Defined by a list of clockwise rotations around given axes.
 
     The combined equation for the rotation is given by:
@@ -2352,7 +2575,7 @@ class CreateData(CustomBaseModel):
         ),
     ] = None
     """
-    
+
     Coordinate reference system used in the block model.
 
     This may be an EPSG code, signified by the prefix 'EPSG:', or a coordinate system definition in WKT format.
@@ -2365,20 +2588,24 @@ class CreateData(CustomBaseModel):
     """
     fill_subblocks: Annotated[StrictBool, Field(title="Fill Subblocks")] = False
     """
-    
+
     Sets the default fill_subblocks value for this block model. It can be overridden at the time of an update.
     If this flag is `true`, then updates to a fully subblocked-model with `update_type`=`merge`, and `geometry_change`=`true`
     with missing sub-blocks will fill the missing sub-blocks with data from the parent block.
 
     """
+    lineage: Annotated[LineageV100 | None, Field(deprecated=True)] = None
+    """
+    Lineage of the block model
+    """
     model_origin: Location
-    name: Annotated[StrictStr, Field(title="Name")]
+    name: Annotated[StrictStr, Field(max_length=100, min_length=3, title="Name")]
     """
     Name of the block model. This may not contain `/` nor `\\`. Leading and trailing whitespace will be automatically removed.
     """
     object_path: Annotated[StrictStr | None, Field(examples=["/path/to/folder"], title="Object Path")] = None
     """
-    
+
     Path of the folder in Geoscience Object Service to create the reference object in.
 
     This may not contain relative elements like `.` or `..`. It may not contain double slashes `//`, nor backslashes `\\`,
@@ -2395,16 +2622,16 @@ class CreateData(CustomBaseModel):
     """
 
 
-class DeltaVersionData(CustomBaseModel):
+class ListingDeltaVersionData(CustomBaseModel):
     bbox: BBox | None = None
     """
     Bounding box of the search area as integer indexes
     """
-    mapping: Mapping
+    mapping: ListingMapping
     """
     List of internal column names to be included into the result
     """
-    update_columns: UpdateColumns
+    update_columns: ListingUpdateColumns
     """
     Columns added, updated, or deleted in this version
     """
@@ -2461,7 +2688,9 @@ class ReportComparison(CustomBaseModel):
     """
     Name of the Report Specification that was run
     """
-    report_specification_revision: Annotated[StrictInt, Field(examples=[1], title="Report Specification Revision")]
+    report_specification_revision: Annotated[
+        StrictInt, Field(examples=[1], ge=0, title="Report Specification Revision")
+    ]
     """
     Revision of the Report Specification that was run
     """
@@ -2496,11 +2725,7 @@ class ReportComparison(CustomBaseModel):
     warnings: ReportComparisonWarnings
 
 
-class DeltaResponseData(CustomBaseModel):
-    """
-    Details about changes that occurred between two versions, within the specified bounding box.
-    """
-
+class ListingDeltaResponseData(CustomBaseModel):
     delete_deltas: Annotated[list[UUID], Field(title="Delete Deltas")]
     """
     List of versions that deleted specified columns
@@ -2513,7 +2738,10 @@ class DeltaResponseData(CustomBaseModel):
     """
     List of versions that contain updates within the specified bounding box, to the specified columns
     """
-    version_data: Annotated[list[DeltaVersionData], Field(title="Version Data")]
+    version_data: Annotated[list[ListingDeltaVersionData], Field(title="Version Data")]
     """
     Details about the changes per version
     """
+
+
+ResponseRetrieveBlockModelVersion = VersionWithChanges | Version
