@@ -46,7 +46,9 @@ class ColumnMetadataUpdate(CustomBaseModel):
 
     tags: dict[str, Any] | None = None
     """Replacement tags for the column. Send a populated object to replace the column's tags
-    wholesale, or ``{}`` to clear them. Omit this field to leave the existing tags untouched."""
+    wholesale, or ``{}`` to clear them. Omit this field to leave the existing tags untouched.
+
+    Column tags are a preview feature; the client must be constructed with ``preview=True`` to use them."""
 
 
 @dataclass(frozen=True, kw_only=True)

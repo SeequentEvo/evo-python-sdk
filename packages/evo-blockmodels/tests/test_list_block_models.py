@@ -22,6 +22,7 @@ class TestListBlockModels(TestWithConnector, TestWithStorage):
         TestWithStorage.setUp(self)
         self.environment = Environment(hub_url=BASE_URL, org_id=ORG.id, workspace_id=WORKSPACE_ID)
         self.client = BlockModelAPIClient(connector=self.connector, environment=self.environment)
+        self.preview_client = BlockModelAPIClient(connector=self.connector, environment=self.environment, preview=True)
 
     def make_bm(self, name: str):
         return {
@@ -138,6 +139,19 @@ class TestListBlockModels(TestWithConnector, TestWithStorage):
         self.assertIsInstance(result[1], ListingVersion)
         self.assertEqual(result[0].version_id, 2)
         self.assertEqual(result[1].version_id, 1)
+
+    async def test_list_versions_with_preview_sends_header(self) -> None:
+        bm_id = uuid.uuid4()
+        v1 = self.make_version(1, str(uuid.uuid4()))
+        with self.transport.set_http_response(
+            200,
+            json.dumps({"count": 1, "limit": 100, "offset": 0, "results": [v1], "total": 1, "referenced_units": []}),
+            headers={"Content-Type": "application/json"},
+        ):
+            await self.preview_client.list_versions(bm_id)
+
+        request_headers = self.transport.request.call_args.kwargs["headers"]
+        self.assertEqual(request_headers["Api-Preview"], "opt-in")
 
     async def test_list_versions_empty_returns_empty(self) -> None:
         bm_id = uuid.uuid4()

@@ -136,6 +136,11 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
         TestWithStorage.setUp(self)
         self.bms_client = BlockModelAPIClient(connector=self.connector, environment=self.environment, cache=self.cache)
         self.bms_client_without_cache = BlockModelAPIClient(connector=self.connector, environment=self.environment)
+        self.preview_client_without_cache = BlockModelAPIClient(
+            connector=self.connector,
+            environment=self.environment,
+            preview=True,
+        )
         self.setup_universal_headers(get_header_metadata(BlockModelAPIClient.__module__))
 
     @property
@@ -738,6 +743,49 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
             },
         )
         self.assertEqual(version.bm_uuid, BM_UUID)
+
+    async def test_update_column_metadata_with_preview_sends_header(self) -> None:
+        self.transport.set_request_handler(
+            UpdateRequestHandler(
+                update_result=UPDATE_RESULT,
+                job_response=JobResponse(
+                    job_status=JobStatus.COMPLETE,
+                    payload=UPDATED_VERSION,
+                ),
+            )
+        )
+
+        version = await self.preview_client_without_cache.update_column_metadata(
+            BM_UUID,
+            column_updates={"col1": "%[mass]"},
+        )
+
+        expected_update_body = models.UpdateDataLite(
+            columns=models.UpdateColumnsLite(
+                new=[],
+                update=[],
+                rename=[],
+                delete=[],
+                update_metadata=[
+                    models.UpdateMetadataLite(
+                        title="col1",
+                        values=models.UpdateMetadataValues(unit_id="%[mass]"),
+                    ),
+                ],
+            ),
+            comment=None,
+        )
+        self.assert_any_request_made(
+            method=RequestMethod.PATCH,
+            path=f"{self.base_path}/block-models/{BM_UUID}/blocks",
+            body=expected_update_body.model_dump(mode="json", exclude_unset=True),
+            headers={
+                "Authorization": "Bearer <not-a-real-token>",
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+                "API-Preview": "opt-in",
+            },
+        )
         self.assertEqual(version.version_id, 2)
 
     async def test_rename_block_model_columns(self) -> None:
