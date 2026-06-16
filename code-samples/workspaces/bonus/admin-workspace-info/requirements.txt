@@ -1,0 +1,10 @@
+# Core Evo SDK packages
+evo-sdk
+
+# Notebook runtime
+jupyterlab
+ipywidgets
+
+# Data handling & export
+pandas
+openpyxl
