@@ -20,8 +20,8 @@ from uuid import UUID
 from evo import logging
 from evo.common import APIConnector, BaseAPIClient, Environment, HealthCheckType, ICache, IContext, ServiceHealth
 from evo.common._types import PathLike
-from evo.common.data import EmptyResponse, RequestMethod, ServiceUser
-from evo.common.utils import get_header_metadata, get_service_health
+from evo.common.data import EmptyResponse, ServiceUser
+from evo.common.utils import get_service_health
 
 from ._types import Table
 from ._utils import convert_dtype, extract_payload
@@ -581,22 +581,12 @@ class BlockModelAPIClient(BaseAPIClient):
         :param version_uuid: The UUID of the version to retrieve.
         :return: The ``Version``, with columns carrying their ``tags``.
         """
-        # The generated ``retrieve_block_model_version`` endpoint declares a union 200 response type
-        # (``VersionWithChanges | Version``), which the connector cannot deserialize. Without
-        # ``include_changes`` the server returns a plain ``Version``, so call the endpoint directly
-        # with a concrete response type.
-        header_params = {"Accept": "application/json"} | get_header_metadata(__name__) | self._preview_headers()
-        response = await self._connector.call_api(
-            method=RequestMethod.GET,
-            resource_path="/blockmodel/orgs/{org_id}/workspaces/{workspace_id}/block-models/{bm_id}/versions/{version_id}",
-            path_params={
-                "version_id": str(version_uuid),
-                "workspace_id": str(self._environment.workspace_id),
-                "org_id": str(self._environment.org_id),
-                "bm_id": str(bm_id),
-            },
-            header_params=header_params,
-            response_types_map={"200": models.Version},
+        response = await self._versions_api.retrieve_block_model_version(
+            version_id=str(version_uuid),
+            workspace_id=str(self._environment.workspace_id),
+            org_id=str(self._environment.org_id),
+            bm_id=str(bm_id),
+            additional_headers=self._preview_headers(),
         )
         return _version_from_model(response)
 

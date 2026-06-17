@@ -642,6 +642,33 @@ class TestAPIConnector(TestWithConnector):
 
     @parameterized.expand(
         [
+            (
+                "matches the more specific union member",
+                '{"value": "basic value", "other_value": "extra"}',
+                _ResponseType203(value="basic value", other_value="extra"),
+            ),
+            (
+                "falls back to the less specific union member",
+                '{"value": "basic value"}',
+                _ResponseType200(value="basic value"),
+            ),
+        ]
+    )
+    async def test_union_response_type(
+        self,
+        _name: str,
+        response_content: str,
+        expected_object: Any,
+    ) -> None:
+        actual_value = await self._parse_response(
+            expected_type=_ResponseType203 | _ResponseType200,
+            response=MockResponse(status_code=200, content=response_content),
+        )
+        self.assertEqual(expected_object, actual_value)
+        self.assertIsInstance(actual_value, type(expected_object))
+
+    @parameterized.expand(
+        [
             ("Normal response", 200),
             ("Expected generic error response does not raise", 404),
             # The following happens to be the status code used for failed service health checks.

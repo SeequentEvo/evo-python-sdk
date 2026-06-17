@@ -18,13 +18,13 @@ import re
 from collections.abc import Mapping
 from enum import Enum
 from inspect import isclass
-from types import GenericAlias, NoneType, TracebackType
+from types import GenericAlias, NoneType, TracebackType, UnionType
 from typing import Any, ParamSpec, TypeVar
 from urllib.parse import quote, urlencode
 from uuid import UUID
 
 from dateutil.parser import parse
-from pydantic import BaseModel
+from pydantic import BaseModel, TypeAdapter
 
 from evo import logging
 
@@ -442,6 +442,8 @@ class APIConnector:
 
         if isinstance(response_type, GenericAlias):  # list[T], dict[str, T].
             return cls.__deserialize_generic(data, response_type)
+        elif isinstance(response_type, UnionType):  # T | U, e.g. a union of API models.
+            return TypeAdapter(response_type).validate_python(data)
         elif response_type in {str, int, float, bool, bytes, bytearray, dict}:
             return cls.__deserialize_primitive(data, response_type)
         elif response_type is datetime.datetime:
