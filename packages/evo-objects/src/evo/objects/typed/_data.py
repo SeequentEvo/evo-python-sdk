@@ -143,4 +143,6 @@ class DataTableAndAttributes(SchemaModel):
         builder = SchemaBuilder(cls, context)
         await builder.set_sub_model_value("_table", table_df)
         await builder.set_sub_model_value("attributes", attr_df)
-        return builder.document
+
+        # As we specially handle the _table and attributes sub-models above, we skip them in the default data processing of build_from_data.
+        return await builder.build_from_data(data, skip_sub_models={"_table", "attributes"})

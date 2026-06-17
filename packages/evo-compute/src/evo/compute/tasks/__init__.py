@@ -61,6 +61,9 @@ from .common.runner import TParams, TResult
 # Break Ties-specific result types
 from .geostatistics.break_ties import BreakTiesResult
 
+# Declustering result types
+from .geostatistics.declustering import DeclusteringResult
+
 # Kriging-specific result types
 from .geostatistics.kriging import (
     BlockDiscretisation,
@@ -165,6 +168,7 @@ __all__ = [
     "BlockDiscretisation",
     "BreakTiesResult",
     "CreateAttribute",
+    "DeclusteringResult",
     "Ellipsoid",
     "EllipsoidRanges",
     "KrigingResult",
