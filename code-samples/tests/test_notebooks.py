@@ -19,6 +19,7 @@ from pathlib import Path
 
 import nbformat
 import pytest
+from notebook_auth_patch import patch_notebook_auth_for_ci
 from notebook_helpers import (
     discover_notebooks,
     get_auth_credentials,
@@ -27,6 +28,13 @@ from notebook_helpers import (
     notebook_id,
     sort_by_dependencies,
 )
+
+# ---------------------------------------------------------------------------
+# Paths
+# ---------------------------------------------------------------------------
+REPO_ROOT = Path(__file__).resolve().parents[1]
+CODE_SAMPLES_DIR = REPO_ROOT / "code-samples"
+AUTH_HELPER_DIR = CODE_SAMPLES_DIR
 
 # ---------------------------------------------------------------------------
 # Collect all notebooks once so parametrize can use them
@@ -200,7 +208,17 @@ class TestAuthNotebookExecution:
         }
 
         nb = _read_notebook(notebook_path)
-        client = NotebookClient(nb, timeout=600, kernel_name="python3")
+        nb = patch_notebook_auth_for_ci(
+            nb,
+            auth_helper_dir=AUTH_HELPER_DIR,
+        )
+
+        client = NotebookClient(
+            nb,
+            timeout=600,
+            kernel_name="python3",
+        )
+
         client.execute(cwd=str(notebook_path.parent), env=env)
 
 
