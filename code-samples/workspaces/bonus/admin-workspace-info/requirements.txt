@@ -7,4 +7,3 @@ ipywidgets
 
 # Data handling & export
 pandas
-openpyxl

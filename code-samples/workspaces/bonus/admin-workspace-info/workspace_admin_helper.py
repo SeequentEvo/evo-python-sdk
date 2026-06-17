@@ -37,6 +37,8 @@ from evo.common import APIConnector
 from evo.common.exceptions import ForbiddenException
 from evo.files import FileAPIClient
 from evo.files.data import FileMetadata
+from evo.notebooks._consts import DEFAULT_DISCOVERY_URL
+from evo.notebooks._helpers import build_img_widget
 from evo.objects import ObjectAPIClient
 from evo.objects.data import ObjectMetadata
 from evo.workspaces import User, Workspace, WorkspaceAPIClient
@@ -376,7 +378,7 @@ class InstanceSelectorWidget:
         The authenticated :class:`~evo.oauth.AuthorizationCodeAuthorizer`.
     """
 
-    _DISCOVERY_URL = "https://discover.api.seequent.com"
+    _DISCOVERY_URL = DEFAULT_DISCOVERY_URL
 
     def __init__(self, transport, authorizer) -> None:
         self._transport = transport
@@ -386,23 +388,23 @@ class InstanceSelectorWidget:
         self._hub_code: str | None = None
 
         self.refresh_btn = widgets.Button(
-            description="Refresh",
+            description="Refresh Instances",
             button_style="info",
-            icon="refresh",
-            layout=widgets.Layout(margin="5px", align_self="center"),
+            layout=widgets.Layout(margin="2px 5px 2px 0px", align_self="center"),
         )
         self.refresh_btn.style.button_color = "#265C7F"
         self.refresh_btn.on_click(self._on_refresh_click)
 
-        self.loading_label = widgets.Label(value="")
+        self._loading_widget = build_img_widget("loading.gif")
+        self._loading_widget.layout.display = "none"
 
         self.instance_selector = widgets.Dropdown(
             options=[("Select an instance...", None)],
             value=None,
             description="Instance",
             disabled=True,
-            style={"description_width": "120px"},
-            layout=widgets.Layout(width="460px"),
+            style={"description_width": "80px"},
+            layout=widgets.Layout(margin="2px 5px 2px 0px", align_self="flex-start"),
         )
         self.instance_selector.observe(self._on_org_changed, names="value")
 
@@ -410,10 +412,14 @@ class InstanceSelectorWidget:
 
         self.widget = widgets.VBox(
             [
-                widgets.HBox([self.refresh_btn, self.loading_label]),
-                self.instance_selector,
+                widgets.HBox(
+                    [build_img_widget("EvoBadgeCharcoal_FV.png"), self.refresh_btn, self._loading_widget],
+                    layout=widgets.Layout(align_items="center"),
+                ),
+                widgets.HBox([self.instance_selector]),
                 self.info_display,
-            ]
+            ],
+            layout=widgets.Layout(align_items="flex-start"),
         )
 
     def _on_refresh_click(self, btn) -> None:
@@ -446,7 +452,7 @@ class InstanceSelectorWidget:
 
         self.info_display.value = (
             "<div style='margin-top:10px; padding:10px; background-color:#f0f8e8; border-radius:5px;'>"
-            "<b>Selected configuration:</b><br/>"
+            "<b>Selected configuration</b><br/>"
             f"<b>Instance:</b> {selected_org.display_name}<br/>"
             f"<b>Instance ID:</b> <code>{selected_org.id}</code><br/>"
             f"<b>Hub URL:</b> <code>{hub.url}</code>"
@@ -455,9 +461,10 @@ class InstanceSelectorWidget:
 
     async def refresh(self) -> None:
         """Fetch instances from the Discovery API and populate the dropdown."""
-        self.loading_label.value = "Loading instances…"
+        self._loading_widget.layout.display = "flex"
         self.refresh_btn.disabled = True
         self.instance_selector.disabled = True
+        self.info_display.value = ""
 
         try:
             from evo.discovery import DiscoveryAPIClient
@@ -474,15 +481,23 @@ class InstanceSelectorWidget:
                 # Auto-select when there is only one instance.
                 if len(self._organizations) == 1:
                     self.instance_selector.value = self._organizations[0].id
-                self.loading_label.value = f"Loaded {len(self._organizations)} instance(s)."
             else:
                 self.instance_selector.options = [("No instances found", None)]
-                self.loading_label.value = "No instances found."
+                self.info_display.value = (
+                    "<div style='margin-top:10px; padding:10px; background-color:#fff3cd; border-radius:5px;'>"
+                    "⚠ No instances found."
+                    "</div>"
+                )
 
         except Exception as exc:
-            self.loading_label.value = f"Error: {exc}"
+            self.info_display.value = (
+                "<div style='margin-top:10px; padding:10px; background-color:#f8d7da; border-radius:5px;'>"
+                f"⚠ Error loading instances: {exc}"
+                "</div>"
+            )
 
         finally:
+            self._loading_widget.layout.display = "none"
             self.refresh_btn.disabled = False
             self.instance_selector.disabled = False
 
@@ -495,6 +510,14 @@ class InstanceSelectorWidget:
         """Return the UUID of the selected instance, or ``None`` if not yet selected."""
         return self.instance_selector.value
 
+    def get_org_name(self) -> str | None:
+        """Return the display name of the selected instance, or ``None`` if not yet selected."""
+        org_id = self.instance_selector.value
+        if org_id is None:
+            return None
+        org = next((o for o in self._organizations if o.id == org_id), None)
+        return org.display_name if org else None
+
     def get_hub_url(self) -> str | None:
         """Return the hub URL for the selected instance, or ``None`` if not yet selected."""
         return self._hub_url
@@ -502,3 +525,56 @@ class InstanceSelectorWidget:
     def get_hub_code(self) -> str | None:
         """Return the hub code for the selected instance, or ``None`` if not yet selected."""
         return self._hub_code
+
+
+class UserBrowserWidget:
+    """Widget for browsing users per workspace with a dropdown selector.
+
+    Parameters
+    ----------
+    df_users:
+        A DataFrame with columns: Workspace, Full Name, Email, User ID, Role.
+    """
+
+    def __init__(self, df_users) -> None:
+        workspace_names = sorted(df_users["Workspace"].unique())
+
+        self._df = df_users
+        self._label = widgets.Label(value="Workspace:")
+        self._dropdown = widgets.Dropdown(
+            options=workspace_names,
+            description="",
+            style={"description_width": "0px"},
+            layout=widgets.Layout(width="400px"),
+        )
+        self._title = widgets.HTML()
+        self._output = widgets.Output()
+
+        self._dropdown.observe(self._render, names="value")
+        self._render()
+
+        self.widget = widgets.VBox(
+            [
+                widgets.HBox([self._label, self._dropdown]),
+                self._title,
+                self._output,
+            ],
+            layout=widgets.Layout(align_items="flex-start"),
+        )
+
+    def _render(self, _=None) -> None:
+        ws_name = self._dropdown.value
+        group = (
+            self._df[self._df["Workspace"] == ws_name][["Full Name", "Email", "User ID", "Role"]]
+            .sort_values("Full Name")
+            .reset_index(drop=True)
+        )
+        total = len(group)
+        self._title.value = f"<b>{ws_name}</b> — {total} user{'s' if total != 1 else ''}"
+        with self._output:
+            self._output.clear_output(wait=True)
+            display(group)
+
+    def show(self) -> None:
+        """Display the widget."""
+        display(self.widget)
