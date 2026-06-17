@@ -18,6 +18,7 @@ from unittest import mock
 import pandas as pd
 import pyarrow
 
+from evo.blockmodels.client import _version_from_model
 from evo.blockmodels.endpoints import models
 from evo.blockmodels.endpoints.models import JobResponse, JobStatus, RotationAxis
 from evo.blockmodels.typed import Point3, RegularBlockModel, RegularBlockModelData, Size3d, Size3i
@@ -114,9 +115,7 @@ def _mock_version(
 FIRST_VERSION = _mock_version(1, uuid.uuid4(), "2")
 
 UPDATE_RESULT = models.UpdateWithUrl(
-    changes=models.UpdateDataLite(
-        columns=models.UpdateColumnsLite(new=[], update=[], rename=[], delete=[])
-    ),
+    changes=models.UpdateDataLite(columns=models.UpdateColumnsLite(new=[], update=[], rename=[], delete=[])),
     version_uuid=FIRST_VERSION.version_uuid,
     job_uuid=uuid.uuid4(),
     job_url=f"{BASE_URL}/jobs/{uuid.uuid4()}",
@@ -351,6 +350,7 @@ class TestRegularBlockModelGet(TestWithConnector, TestWithStorage):
             mock.patch.object(BlockModelAPIClient, "get_block_model") as mock_get_bm,
             mock.patch.object(BlockModelAPIClient, "query_block_model_as_table") as mock_query,
             mock.patch.object(BlockModelAPIClient, "list_versions") as mock_list_versions,
+            mock.patch.object(BlockModelAPIClient, "get_version") as mock_get_version,
         ):
             # Setup mock return values
             mock_metadata = BlockModelData(
@@ -378,6 +378,7 @@ class TestRegularBlockModelGet(TestWithConnector, TestWithStorage):
             mock_list_versions.return_value = [
                 self._create_version(1, FIRST_VERSION.version_uuid),
             ]
+            mock_get_version.return_value = self._create_version(1, FIRST_VERSION.version_uuid)
 
             block_model = await RegularBlockModel.get(self.context, BM_UUID)
 
@@ -428,6 +429,7 @@ class TestRegularBlockModelGet(TestWithConnector, TestWithStorage):
             mock.patch.object(BlockModelAPIClient, "get_block_model") as mock_get_bm,
             mock.patch.object(BlockModelAPIClient, "query_block_model_as_table") as mock_query,
             mock.patch.object(BlockModelAPIClient, "list_versions") as mock_list_versions,
+            mock.patch.object(BlockModelAPIClient, "get_version") as mock_get_version,
         ):
             mock_metadata = BlockModelData(
                 environment=self.environment,
@@ -455,6 +457,7 @@ class TestRegularBlockModelGet(TestWithConnector, TestWithStorage):
                 self._create_version(2, version_uuid),
                 self._create_version(1, FIRST_VERSION.version_uuid),
             ]
+            mock_get_version.return_value = self._create_version(2, version_uuid)
 
             block_model = await RegularBlockModel.get(self.context, BM_UUID, version_id=version_uuid)
 
@@ -1052,10 +1055,12 @@ class TestBaseTypedBlockModelRefresh(TestWithConnector, TestWithStorage):
             mock.patch.object(BlockModelAPIClient, "get_block_model") as mock_get,
             mock.patch.object(BlockModelAPIClient, "query_block_model_as_table") as mock_query,
             mock.patch.object(BlockModelAPIClient, "list_versions") as mock_list,
+            mock.patch.object(BlockModelAPIClient, "get_version") as mock_get_version,
         ):
             mock_get.return_value = client._bm_from_model(mock_bm)
             mock_query.return_value = refreshed_table
             mock_list.return_value = [new_version]
+            mock_get_version.return_value = _version_from_model(new_version)
 
             await block_model.refresh()
 

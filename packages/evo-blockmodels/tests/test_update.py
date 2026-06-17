@@ -268,6 +268,22 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
                 },
             )
 
+    async def test_add_new_columns_with_unknown_tag_column(self) -> None:
+        with self.assertRaises(MissingColumnInTable):
+            await self.bms_client.add_new_columns(
+                BM_UUID,
+                REGULAR_DATA,
+                tags={"typo_col": {"source": "assay"}},
+            )
+
+    async def test_add_new_columns_with_unknown_unit_column(self) -> None:
+        with self.assertRaises(MissingColumnInTable):
+            await self.bms_client.add_new_columns(
+                BM_UUID,
+                REGULAR_DATA,
+                units={"typo_col": "g/t"},
+            )
+
     async def test_add_new_subblocked_columns(self) -> None:
         self.transport.set_request_handler(
             UpdateRequestHandler(
@@ -443,6 +459,25 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
                 BM_UUID,
                 REGULAR_DATA,
                 new_columns=["non_existent_column"],
+            )
+
+    async def test_update_columns_with_unknown_tag_column(self) -> None:
+        with self.assertRaises(MissingColumnInTable):
+            await self.bms_client.update_block_model_columns(
+                BM_UUID,
+                REGULAR_DATA,
+                new_columns=["col2"],
+                tags={"col1": {"source": "assay"}},
+            )
+
+    async def test_update_columns_with_unknown_unit_column(self) -> None:
+        with self.assertRaises(MissingColumnInTable):
+            await self.bms_client.update_block_model_columns(
+                BM_UUID,
+                REGULAR_DATA,
+                new_columns=["col2"],
+                update_columns={"col1"},
+                units={"col1": "g/t"},
             )
 
     async def test_update_columns_job_failed(self) -> None:

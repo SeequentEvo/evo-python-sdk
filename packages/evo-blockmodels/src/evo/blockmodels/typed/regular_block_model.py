@@ -265,15 +265,13 @@ class RegularBlockModel(BaseTypedBlockModel):
         # Convert to DataFrame
         cell_data = table.to_pandas()
 
-        # Get version information
-        versions = await client.list_versions(bm_id)
-        if version_id is not None:
-            version = next(
-                (v for v in versions if v.version_uuid == version_id),
-                versions[0] if versions else None,
-            )
-        else:
-            version = versions[0] if versions else None
+        if version_id is None:
+            # Get version information
+            versions = await client.list_versions(bm_id)
+            version_id = versions[0].version_uuid if versions else None
+
+        # Fetch the full version so its columns carry their tags.
+        version = await client.get_version(bm_id, version_id) if version_id else None
 
         fb.progress(1.0, "Block model retrieved successfully")
 

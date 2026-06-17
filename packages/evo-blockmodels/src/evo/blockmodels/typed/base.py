@@ -25,7 +25,7 @@ from evo.common import IContext, IFeedback
 from evo.common.utils import NoFeedback
 
 from ..client import BlockModelAPIClient
-from ..data import BlockModel, Version
+from ..data import BlockModel, ListingVersion, Version
 from ..endpoints.models import ColumnHeaderType
 from ._utils import dataframe_to_pyarrow, get_attribute_columns
 from .report import Report, ReportSpecificationData
@@ -275,8 +275,10 @@ class BaseTypedBlockModel(ABC):
 
     # ---- Version management ----
 
-    async def get_versions(self) -> list[Version]:
+    async def get_versions(self) -> list[ListingVersion]:
         """Get all versions of this block model.
+
+        These are listing versions, whose columns do not carry ``tags``.
 
         :return: List of versions, ordered from newest to oldest.
         """
@@ -392,7 +394,7 @@ class BaseTypedBlockModel(ABC):
 
         versions = await self._client.list_versions(self._metadata.id)
         if versions:
-            self._version = versions[0]
+            self._version = await self._client.get_version(self._metadata.id, versions[0].version_uuid)
 
         fb.progress(1.0, "Block model refreshed")
 

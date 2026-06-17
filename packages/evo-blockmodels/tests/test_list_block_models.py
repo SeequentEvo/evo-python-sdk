@@ -163,6 +163,46 @@ class TestListBlockModels(TestWithConnector, TestWithStorage):
             result = await self.client.list_versions(bm_id)
         self.assertEqual(result, [])
 
+    async def test_get_version_returns_version_with_tags(self) -> None:
+        from evo.blockmodels.data import Version
+
+        bm_id = uuid.uuid4()
+        version_uuid = uuid.uuid4()
+        version = self.make_version(2, str(version_uuid))
+        version["mapping"]["columns"] = [
+            {
+                "col_id": str(uuid.uuid4()),
+                "data_type": "Float64",
+                "title": "Au",
+                "unit_id": "g/t",
+                "tags": {"source": "assay"},
+            }
+        ]
+        with self.transport.set_http_response(
+            200,
+            json.dumps(version),
+            headers={"Content-Type": "application/json"},
+        ):
+            result = await self.client.get_version(bm_id, version_uuid)
+
+        self.assertIsInstance(result, Version)
+        self.assertEqual(result.version_id, 2)
+        self.assertEqual(result.columns[0].tags, {"source": "assay"})
+
+    async def test_get_version_with_preview_sends_header(self) -> None:
+        bm_id = uuid.uuid4()
+        version_uuid = uuid.uuid4()
+        version = self.make_version(1, str(version_uuid))
+        with self.transport.set_http_response(
+            200,
+            json.dumps(version),
+            headers={"Content-Type": "application/json"},
+        ):
+            await self.preview_client.get_version(bm_id, version_uuid)
+
+        request_headers = self.transport.request.call_args.kwargs["headers"]
+        self.assertEqual(request_headers["Api-Preview"], "opt-in")
+
     async def test_list_all_versions_returns_all_versions(self) -> None:
         bm_id = uuid.uuid4()
         v1 = self.make_version(1, str(uuid.uuid4()))

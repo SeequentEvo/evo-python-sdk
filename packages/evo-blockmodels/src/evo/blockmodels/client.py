@@ -20,8 +20,8 @@ from uuid import UUID
 from evo import logging
 from evo.common import APIConnector, BaseAPIClient, Environment, HealthCheckType, ICache, IContext, ServiceHealth
 from evo.common._types import PathLike
-from evo.common.data import EmptyResponse, ServiceUser
-from evo.common.utils import get_service_health
+from evo.common.data import EmptyResponse, RequestMethod, ServiceUser
+from evo.common.utils import get_header_metadata, get_service_health
 
 from ._types import Table
 from ._utils import convert_dtype, extract_payload
@@ -82,7 +82,7 @@ def _job_id_from_url(job_url: AnyUrl) -> UUID:
     return UUID(job_id)
 
 
-def _version_from_model(version: models.Version) -> Version:
+def _version_from_model(version: models.Version | models.VersionWithChanges) -> Version:
     return Version(
         bm_uuid=version.bm_uuid,
         version_id=version.version_id,
@@ -571,6 +571,35 @@ class BlockModelAPIClient(BaseAPIClient):
 
         return all_versions
 
+    async def get_version(self, bm_id: UUID, version_uuid: UUID) -> Version:
+        """Get a single version of a block model, including each column's ``tags``.
+
+        Unlike :meth:`list_versions`, which returns ``ListingVersion``s whose columns never carry
+        ``tags``, this retrieves a single version whose columns carry their ``tags``.
+
+        :param bm_id: The ID of the block model.
+        :param version_uuid: The UUID of the version to retrieve.
+        :return: The ``Version``, with columns carrying their ``tags``.
+        """
+        # The generated ``retrieve_block_model_version`` endpoint declares a union 200 response type
+        # (``VersionWithChanges | Version``), which the connector cannot deserialize. Without
+        # ``include_changes`` the server returns a plain ``Version``, so call the endpoint directly
+        # with a concrete response type.
+        header_params = {"Accept": "application/json"} | get_header_metadata(__name__) | self._preview_headers()
+        response = await self._connector.call_api(
+            method=RequestMethod.GET,
+            resource_path="/blockmodel/orgs/{org_id}/workspaces/{workspace_id}/block-models/{bm_id}/versions/{version_id}",
+            path_params={
+                "version_id": str(version_uuid),
+                "workspace_id": str(self._environment.workspace_id),
+                "org_id": str(self._environment.org_id),
+                "bm_id": str(bm_id),
+            },
+            header_params=header_params,
+            response_types_map={"200": models.Version},
+        )
+        return _version_from_model(response)
+
     async def create_block_model(
         self,
         name: str,
@@ -699,6 +728,13 @@ class BlockModelAPIClient(BaseAPIClient):
             units = {}
         if tags is None:
             tags = {}
+        new_column_names = {name for name in schema.names if name not in _GEOMETRY_COLUMNS}
+        unknown_unit_columns = set(units) - new_column_names
+        if unknown_unit_columns:
+            raise MissingColumnInTable(f"units reference columns that are not being added: {unknown_unit_columns}")
+        unknown_tag_columns = set(tags) - new_column_names
+        if unknown_tag_columns:
+            raise MissingColumnInTable(f"tags reference columns that are not being added: {unknown_tag_columns}")
         columns = models.UpdateColumnsLite(
             new=[
                 models.ColumnLite(
@@ -784,6 +820,20 @@ class BlockModelAPIClient(BaseAPIClient):
         missing = (set(new_columns) | update_columns) - data_type_map.keys()
         if missing:
             raise MissingColumnInTable(f"Columns {missing} are not present in the provided table.")
+
+        unknown_unit_columns = set(units) - set(new_columns)
+        if unknown_unit_columns:
+            raise MissingColumnInTable(
+                f"units reference columns that are not in new_columns: {unknown_unit_columns}. "
+                "To set units on existing columns, use update_column_metadata."
+            )
+
+        unknown_tag_columns = set(tags) - set(new_columns)
+        if unknown_tag_columns:
+            raise MissingColumnInTable(
+                f"tags reference columns that are not in new_columns: {unknown_tag_columns}. "
+                "To tag existing columns, use update_column_metadata."
+            )
 
         columns = models.UpdateColumnsLite(
             new=[
