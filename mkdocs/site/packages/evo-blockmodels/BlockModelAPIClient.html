@@ -118,7 +118,7 @@
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">__init__</span><span class="p">(</span><span class="n">environment</span><span class="p">:</span> <span class="n">Environment</span><span class="p">,</span> <span class="n">connector</span><span class="p">:</span> <span class="n">APIConnector</span><span class="p">,</span> <span class="n">cache</span><span class="p">:</span> <span class="n">ICache</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">__init__</span><span class="p">(</span><span class="n">environment</span><span class="p">:</span> <span class="n">Environment</span><span class="p">,</span> <span class="n">connector</span><span class="p">:</span> <span class="n">APIConnector</span><span class="p">,</span> <span class="n">cache</span><span class="p">:</span> <span class="n">ICache</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">preview</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -186,6 +186,22 @@
                   <code>None</code>
             </td>
           </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>preview</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Whether to use preview mode and include the <code>API-Preview: opt-in</code> header.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
       </tbody>
     </table>
 
@@ -206,7 +222,7 @@
   </span>
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">from_context</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="n">IContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BlockModelAPIClient</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">from_context</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="n">IContext</span><span class="p">,</span> <span class="n">preview</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BlockModelAPIClient</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -240,6 +256,22 @@
             </td>
             <td>
                 <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>preview</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Whether to use preview mode and include the <code>API-Preview: opt-in</code> header.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
             </td>
           </tr>
       </tbody>
@@ -1104,7 +1136,8 @@ returning. This then returns both the block model and the initial block model ve
             </td>
             <td>
               <div class="doc-md-description">
-                <p>A dictionary mapping column names within <code>initial_data</code> to their tags object.</p>
+                <p>A dictionary mapping column names within <code>initial_data</code> to their tags object. Column tags are a
+preview feature; the client must be constructed with <code>preview=True</code> to use them.</p>
               </div>
             </td>
             <td>
@@ -1268,7 +1301,8 @@ sub-blocks with data from the parent block. Defaults to <code>False</code>.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>A dictionary mapping column names within <code>data</code> to their tags object.</p>
+                <p>A dictionary mapping column names within <code>data</code> to their tags object. Column tags are a preview
+feature; the client must be constructed with <code>preview=True</code> to use them.</p>
               </div>
             </td>
             <td>
@@ -1421,7 +1455,8 @@ sub-blocks with data from the parent block. Defaults to <code>False</code>.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>A dictionary mapping column names within <code>data</code> to their tags object.</p>
+                <p>A dictionary mapping column names within <code>data</code> to their tags object. Column tags are a preview
+feature; the client must be constructed with <code>preview=True</code> to use them.</p>
               </div>
             </td>
             <td>
@@ -1628,7 +1663,8 @@ sub-blocks with data from the parent block. Defaults to <code>False</code>.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>A dictionary mapping new column names to their tags object.</p>
+                <p>A dictionary mapping new column names to their tags object. Column tags are a preview feature; the
+client must be constructed with <code>preview=True</code> to use them.</p>
               </div>
             </td>
             <td>
@@ -1874,7 +1910,8 @@ the block model's own <code>fill_subblocks</code> setting is used.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>A dictionary mapping new column names to their tags object.</p>
+                <p>A dictionary mapping new column names to their tags object. Column tags are a preview feature; the
+client must be constructed with <code>preview=True</code> to use them.</p>
               </div>
             </td>
             <td>
@@ -1918,6 +1955,7 @@ the block model's own <code>fill_subblocks</code> setting is used.</p>
   fields explicitly set on the object are sent; unset fields are left untouched. Set
   <code>tags={}</code> to clear a column's tags, or <code>unit_id=None</code> to clear its unit.</li>
 </ul>
+<p>Column tags are a preview feature; the client must be constructed with <code>preview=True</code> to use them.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
