@@ -865,12 +865,13 @@ units defined.</p>
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_versions</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Version</span><span class="p">]</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_versions</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ListingVersion</span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Get all versions of this block model.</p>
+<p>These are listing versions, whose columns do not carry <code>tags</code>.</p>
 
 
     <p><span class="doc-section-title">Returns:</span></p>
@@ -884,7 +885,7 @@ units defined.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><span title="list">list</span>[<span title="evo.blockmodels.data.Version">Version</span>]</code>
+                  <code><span title="list">list</span>[<span title="evo.blockmodels.data.ListingVersion">ListingVersion</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
