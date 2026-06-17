@@ -42,7 +42,7 @@ class ColumnMetadataUpdate(CustomBaseModel):
     """
 
     unit_id: str | None = None
-    """The new unit ID for the column. Set to ``None`` to clear the unit."""
+    """The new unit ID for the column."""
 
     tags: dict[str, Any] | None = None
     """Replacement tags for the column. Send a populated object to replace the column's tags
