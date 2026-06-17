@@ -1263,7 +1263,7 @@ test = [
 
 [[package]]
 name = "evo-sdk-common"
-version = "0.5.23"
+version = "0.5.24"
 source = { editable = "packages/evo-sdk-common" }
 dependencies = [
     { name = "pure-interface" },
