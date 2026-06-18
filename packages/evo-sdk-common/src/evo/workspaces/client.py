@@ -457,7 +457,9 @@ class WorkspaceAPIClient:
         while True:
             # The endpoint does not return the total, so we can't do an asyncio.gather
             # like we did for the list_all_workspaces method.
-            response = await self._instance_users_api.list_instance_users(offset=offset, limit=limit)
+            response = await self._instance_users_api.list_instance_users(
+                org_id=str(self._org_id), offset=offset, limit=limit
+            )
 
             results.extend([parse.instance_user_with_email_model(item) for item in response.results])
 

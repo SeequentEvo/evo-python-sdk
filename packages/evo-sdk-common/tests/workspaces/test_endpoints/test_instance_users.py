@@ -12,7 +12,7 @@
 import json
 
 from evo.common import RequestMethod
-from evo.common.test_tools import TestWithConnector
+from evo.common.test_tools import MockResponse, TestWithConnector
 from evo.common.utils import get_header_metadata
 from evo.workspaces import (
     AddedInstanceUsers,
@@ -68,6 +68,30 @@ class TestWorkspaceClientInstanceUserEndpoints(TestWithConnector):
         self.assertEqual(2, self.transport.request.call_count, "Two requests should be made.")
         self.assertEqual([INSTANCE_USER_1, INSTANCE_USER_2], users_page_1.items())
         self.assertEqual([INSTANCE_USER_3], users_page_2.items())
+
+    async def test_list_all_instance_users(self) -> None:
+        content_1 = load_test_data("instance_users_page_1.json")
+        content_2 = load_test_data("instance_users_page_2.json")
+
+        responses = [
+            MockResponse(status_code=200, content=json.dumps(content_1), headers={"Content-Type": "application/json"}),
+            MockResponse(status_code=200, content=json.dumps(content_2), headers={"Content-Type": "application/json"}),
+        ]
+        self.transport.request.side_effect = responses
+
+        all_users = await self.workspace_client.list_all_instance_users(limit=2)
+        self.assert_any_request_made(
+            method=RequestMethod.GET,
+            path=f"{BASE_PATH}/members/users?limit=2&offset=0",
+            headers={"Accept": "application/json"},
+        )
+        self.assert_any_request_made(
+            method=RequestMethod.GET,
+            path=f"{BASE_PATH}/members/users?limit=2&offset=2",
+            headers={"Accept": "application/json"},
+        )
+        self.assertEqual(2, self.transport.request.call_count, "Two requests should be made.")
+        self.assertEqual([INSTANCE_USER_1, INSTANCE_USER_2, INSTANCE_USER_3], all_users)
 
     async def test_list_instance_user_invitations(self) -> None:
         content = load_test_data("invitations_page_1.json")
