@@ -438,6 +438,33 @@ class WorkspaceAPIClient:
             items=[parse.instance_user_with_email_model(item) for item in response.results],
         )
 
+    async def list_all_instance_users(
+        self, limit: int | None = None, offset: int | None = None
+    ) -> list[InstanceUserWithEmail]:
+        """
+        Returns a complete list of all the instance users.
+        :param limit: The maximum number of users to return per request.
+        :param offset: The offset for pagination.
+
+        :returns: A complete list of instance users with email addresses.
+        """
+        if offset is None:
+            offset = 0
+        if limit is None:
+            limit = 50
+
+        results: list[InstanceUserWithEmail] = []
+        while True:
+            # The endpoint does not return the total, so we can't do an asyncio.gather
+            # like we did for the list_all_workspaces method.
+            response = await self._instance_users_api.list_instance_users(offset=offset, limit=limit)
+
+            results.extend([parse.instance_user_with_email_model(item) for item in response.results])
+
+            if not response.links.next:
+                return results
+            offset += limit
+
     async def add_users_to_instance(self, users: dict[str, list[UUID]]) -> AddedInstanceUsers:
         """
         Adds users to the instance.

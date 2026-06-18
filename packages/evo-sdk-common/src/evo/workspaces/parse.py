@@ -33,6 +33,7 @@ from .data import (
 from .endpoints.models import (
     AddInstanceUsersResponse,
     BaseInstanceUserResponse,
+    BaseInstanceUserWithRolesResponse,
     BasicWorkspaceResponse,
     ListInstanceRolesResponse,
     ListInstanceUserInvitationsResponse,
@@ -151,7 +152,7 @@ def instance_user_model(model: BaseInstanceUserResponse) -> InstanceUser:
     )
 
 
-def instance_user_with_email_model(model: BaseInstanceUserResponse) -> InstanceUserWithEmail:
+def instance_user_with_email_model(model: BaseInstanceUserWithRolesResponse) -> InstanceUserWithEmail:
     """
     Parse an InstanceUserWithEmail from the generated model.
     :param model: The model returned by the generated code.

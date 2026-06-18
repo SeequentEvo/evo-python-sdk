@@ -320,6 +320,8 @@ class Page(Sequence[T]):
     @property
     def is_last(self) -> bool:
         """Whether the page is the last page."""
+        if self.total < 0:
+            return False
         return self.next_offset >= self.total
 
 
