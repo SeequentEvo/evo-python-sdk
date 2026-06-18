@@ -46,83 +46,6 @@ from evo.workspaces import parse as _parse
 from evo.workspaces.endpoints.api import AdminApi, LicenseAccessApi
 
 
-@dataclass
-class WorkspaceReport:
-    """A comprehensive admin report for a single workspace.
-
-    Attributes
-    ----------
-    workspace:
-        The workspace this report belongs to.
-    users:
-        All users that have a role in the workspace.
-    objects:
-        All geoscience objects found in the workspace.
-    files:
-        All files found in the workspace.
-    users_error:
-        Error message if fetching users failed, ``None`` otherwise.
-    objects_error:
-        Error message if fetching objects failed, ``None`` otherwise.
-    files_error:
-        Error message if fetching files failed, ``None`` otherwise.
-    """
-
-    workspace: Workspace
-    users: list[User] = field(default_factory=list)
-    objects: list[ObjectMetadata] = field(default_factory=list)
-    files: list[FileMetadata] = field(default_factory=list)
-    users_error: str | None = None
-    objects_error: str | None = None
-    files_error: str | None = None
-
-    @property
-    def users_by_role(self) -> dict[str, list[User]]:
-        """Return users grouped by their workspace role name (``"owner"``, ``"editor"``, ``"viewer"``)."""
-        grouped: dict[str, list[User]] = defaultdict(list)
-        for user in self.users:
-            role_name = user.role.name if user.role else "unknown"
-            grouped[role_name].append(user)
-        return dict(grouped)
-
-    @property
-    def objects_by_schema(self) -> dict[str, list[ObjectMetadata]]:
-        """Return geoscience objects grouped by their schema ID string."""
-        grouped: dict[str, list[ObjectMetadata]] = defaultdict(list)
-        for obj in self.objects:
-            grouped[str(obj.schema_id)].append(obj)
-        return dict(grouped)
-
-    @property
-    def total_file_size_bytes(self) -> int:
-        """Total size of all files in the workspace, in bytes."""
-        return sum(f.size for f in self.files)
-
-    @property
-    def total_file_size_mb(self) -> float:
-        """Total size of all files in the workspace, in megabytes (rounded to 2 dp)."""
-        return round(self.total_file_size_bytes / (1024 * 1024), 2)
-
-    def summary_dict(self) -> dict:
-        """Return a flat dictionary suitable for display in a pandas DataFrame row."""
-        return {
-            "Workspace Name": self.workspace.display_name,
-            "Workspace ID": str(self.workspace.id),
-            "User Role": self.workspace.user_role.name if self.workspace.user_role else "N/A",
-            "Total Users": len(self.users),
-            "Owners": len(self.users_by_role.get("owner", [])),
-            "Editors": len(self.users_by_role.get("editor", [])),
-            "Viewers": len(self.users_by_role.get("viewer", [])),
-            "Total Objects": len(self.objects),
-            "Object Schema Types": len(self.objects_by_schema),
-            "Total Files": len(self.files),
-            "Total File Size (MB)": self.total_file_size_mb,
-            "Labels": ", ".join(self.workspace.labels) if self.workspace.labels else "",
-            "Created At": str(self.workspace.created_at),
-            "Updated At": str(self.workspace.updated_at),
-        }
-
-
 class WorkspaceAdminHelper:
     """Aggregates administrative information across workspaces in an Evo instance.
 
@@ -578,3 +501,92 @@ class UserBrowserWidget:
     def show(self) -> None:
         """Display the widget."""
         display(self.widget)
+
+
+@dataclass
+class WorkspaceReport:
+    """A comprehensive admin report for a single workspace.
+
+    Attributes
+    ----------
+    workspace:
+        The workspace this report belongs to.
+    users:
+        All users that have a role in the workspace.
+    objects:
+        All geoscience objects found in the workspace.
+    files:
+        All files found in the workspace.
+    users_error:
+        Error message if fetching users failed, ``None`` otherwise.
+    objects_error:
+        Error message if fetching objects failed, ``None`` otherwise.
+    files_error:
+        Error message if fetching files failed, ``None`` otherwise.
+    """
+
+    workspace: Workspace
+    users: list[User] = field(default_factory=list)
+    objects: list[ObjectMetadata] = field(default_factory=list)
+    files: list[FileMetadata] = field(default_factory=list)
+    users_error: str | None = None
+    objects_error: str | None = None
+    files_error: str | None = None
+
+    @property
+    def users_by_role(self) -> dict[str, list[User]]:
+        """Return users grouped by their workspace role name (``"owner"``, ``"editor"``, ``"viewer"``)."""
+        grouped: dict[str, list[User]] = defaultdict(list)
+        for user in self.users:
+            role_name = user.role.name if user.role else "unknown"
+            grouped[role_name].append(user)
+        return dict(grouped)
+
+    @property
+    def objects_by_schema(self) -> dict[str, list[ObjectMetadata]]:
+        """Return geoscience objects grouped by their schema ID string."""
+        grouped: dict[str, list[ObjectMetadata]] = defaultdict(list)
+        for obj in self.objects:
+            grouped[str(obj.schema_id)].append(obj)
+        return dict(grouped)
+
+    @property
+    def total_file_size_bytes(self) -> int:
+        """Total size of all files in the workspace, in bytes."""
+        return sum(f.size for f in self.files)
+
+    @property
+    def total_file_size_mb(self) -> float:
+        """Total size of all files in the workspace, in megabytes (rounded to 2 dp)."""
+        return round(self.total_file_size_bytes / (1024 * 1024), 2)
+
+    def summary_dict(self) -> dict:
+        """Return a flat dictionary suitable for display in a pandas DataFrame row."""
+        return {
+            "Workspace Name": self.workspace.display_name,
+            "Workspace ID": str(self.workspace.id),
+            "User Role": self.workspace.user_role.name if self.workspace.user_role else "N/A",
+            "Total Users": len(self.users),
+            "Owners": len(self.users_by_role.get("owner", [])),
+            "Editors": len(self.users_by_role.get("editor", [])),
+            "Viewers": len(self.users_by_role.get("viewer", [])),
+            "Total Objects": len(self.objects),
+            "Object Schema Types": len(self.objects_by_schema),
+            "Total Files": len(self.files),
+            "Total File Size (MB)": self.total_file_size_mb,
+            "Labels": ", ".join(self.workspace.labels) if self.workspace.labels else "",
+            "Created At": str(self.workspace.created_at),
+            "Updated At": str(self.workspace.updated_at),
+        }
+
+
+def format_size(size_bytes: int) -> str:
+    """Return a human-readable file size string (B / KB / MB / GB)."""
+    if size_bytes < 1024:
+        return f"{size_bytes} B"
+    elif size_bytes < 1024**2:
+        return f"{size_bytes / 1024:.2f} KB"
+    elif size_bytes < 1024**3:
+        return f"{size_bytes / (1024**2):.2f} MB"
+    else:
+        return f"{size_bytes / (1024**3):.2f} GB"
