@@ -238,17 +238,17 @@ class ResourceMetadata(ABC):
         pass
 
 
-_Metadata = TypeVar("_Metadata", bound=ResourceMetadata)
+T = TypeVar("T")
 
 
-class Page(Sequence[_Metadata]):
+class Page(Sequence[T]):
     """A page of resource metadata from a paginated response.
 
     This type exposes paginated metadata from an API response, including the offset, limit, and total number of items.
     The contained items are the actual metadata from the response.
     """
 
-    def __init__(self, *, offset: int, limit: int, total: int, items: Sequence[_Metadata]) -> None:
+    def __init__(self, *, offset: int, limit: int, total: int, items: Sequence[T]) -> None:
         self._offset = offset
         self._limit = limit
         self._total = total
@@ -278,7 +278,7 @@ class Page(Sequence[_Metadata]):
         """The total number of items that are available, as reported by the API."""
         return self._total
 
-    def items(self) -> list[_Metadata]:
+    def items(self) -> list[T]:
         """Get the items that are in the page.
 
         Items are copied to prevent modification of the original items.
@@ -288,12 +288,12 @@ class Page(Sequence[_Metadata]):
         return [copy.deepcopy(item) for item in self._items]
 
     @overload
-    def __getitem__(self, key: int) -> _Metadata: ...
+    def __getitem__(self, key: int) -> T: ...
 
     @overload
-    def __getitem__(self, key: slice) -> list[_Metadata]: ...
+    def __getitem__(self, key: slice) -> list[T]: ...
 
-    def __getitem__(self, key: int | slice) -> _Metadata | list[_Metadata]:
+    def __getitem__(self, key: int | slice) -> T | list[T]:
         """Get an item or items from the page.
 
         If the key is an integer, the item at that index is returned. If the key is a slice, a list of items in the

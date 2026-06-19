@@ -11,7 +11,8 @@
 
 from __future__ import annotations
 
-from typing import Literal, TypeAlias
+import asyncio
+from typing import Awaitable, Literal, TypeAlias
 from uuid import UUID
 
 from pydantic import ValidationError
@@ -186,30 +187,45 @@ class WorkspaceAPIClient:
         deleted: bool | None = None,
         filter_user_id: UUID | None = None,
     ) -> list[Workspace]:
-        workspaces: list[Workspace] = []
+        if order_by is None:
+            order_by = {WorkspaceOrderByEnum.name: OrderByOperatorEnum.asc}
         if offset is None:
             offset = 0
         if limit is None:
             limit = 50
 
-        while True:
-            workspace_page = await self.list_workspaces(
-                limit=limit,
-                offset=offset,
-                order_by=order_by,
-                filter_created_by=filter_created_by,
-                created_at=created_at,
-                updated_at=updated_at,
-                name=name,
-                deleted=deleted,
-                filter_user_id=filter_user_id,
-            )
-            workspaces += workspace_page.items()
-            offset += limit
-            if offset >= workspace_page.total:
-                break
+        first_page = await self.list_workspaces(
+            limit=limit,
+            offset=offset,
+            order_by=order_by,
+            filter_created_by=filter_created_by,
+            created_at=created_at,
+            updated_at=updated_at,
+            name=name,
+            deleted=deleted,
+            filter_user_id=filter_user_id,
+        )
+        page_read_coroutines: list[Awaitable[Page[Workspace]]] = []
 
-        return sorted(workspaces, key=lambda x: x.display_name)
+        for i in range(offset + limit, first_page.total, limit):
+            page_read_coroutines.append(
+                self.list_workspaces(
+                    limit=limit,
+                    offset=i,
+                    order_by=order_by,
+                    filter_created_by=filter_created_by,
+                    created_at=created_at,
+                    updated_at=updated_at,
+                    name=name,
+                    deleted=deleted,
+                    filter_user_id=filter_user_id,
+                )
+            )
+
+        remaining_pages = await asyncio.gather(*page_read_coroutines)
+        workspaces = first_page.items() + [ws for page in remaining_pages for ws in page.items()]
+
+        return workspaces
 
     async def list_workspaces_summary(
         self,

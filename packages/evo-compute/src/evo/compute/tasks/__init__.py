@@ -41,9 +41,13 @@ from . import geostatistics as _geostatistics_module  # noqa: F401
 
 # Shared components from common module
 from .common import (
+    AllOfFilter,
+    AnyOfFilter,
     CreateAttribute,
     Ellipsoid,
     EllipsoidRanges,
+    Filter,
+    FilterCondition,
     Rotation,
     SearchNeighborhood,
     Source,
@@ -68,7 +72,6 @@ from .geostatistics.declustering import DeclusteringResult
 from .geostatistics.kriging import (
     BlockDiscretisation,
     KrigingResult,
-    RegionFilter,
 )
 
 # Location-Wise result types
@@ -165,15 +168,18 @@ async def run(
 
 
 __all__ = [
+    "AllOfFilter",
+    "AnyOfFilter",
     "BlockDiscretisation",
     "BreakTiesResult",
     "CreateAttribute",
     "DeclusteringResult",
     "Ellipsoid",
     "EllipsoidRanges",
+    "Filter",
+    "FilterCondition",
     "KrigingResult",
     "LocationWiseResult",
-    "RegionFilter",
     "Rotation",
     "SearchNeighborhood",
     "Source",

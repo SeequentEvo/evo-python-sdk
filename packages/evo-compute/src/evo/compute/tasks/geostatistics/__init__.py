@@ -15,6 +15,7 @@ This package groups all geostatistics-topic compute tasks:
 
 - **kriging** — Kriging interpolation
 - **break_ties** — Spatial tie-breaking
+- **conditioned_simulator** — Conditional turning-band simulation
 - **declustering** — Grid-based declustering weights
 - **location_wise** — Per-location ensemble statistics
 - **continuous_distribution** — Continuous non-parametric cumulative distribution
@@ -34,6 +35,7 @@ Example:
 """
 
 from . import break_ties as _break_ties_module  # noqa: F401
+from . import conditioned_simulator as _conditioned_simulator_module  # noqa: F401
 from . import continuous_distribution as _continuous_distribution_module  # noqa: F401
 from . import declustering as _declustering_module  # noqa: F401
 from . import kriging as _kriging_module  # noqa: F401
@@ -46,8 +48,8 @@ from .break_ties import BreakTiesResult
 from .declustering import DeclusteringResult
 from .kriging import (
     BlockDiscretisation,
+    Filter,
     KrigingResult,
-    RegionFilter,
 )
 from .location_wise import LocationWiseResult
 
@@ -55,7 +57,7 @@ __all__ = [
     "BlockDiscretisation",
     "BreakTiesResult",
     "DeclusteringResult",
+    "Filter",
     "KrigingResult",
     "LocationWiseResult",
-    "RegionFilter",
 ]

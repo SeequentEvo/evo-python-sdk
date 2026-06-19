@@ -13,6 +13,7 @@
 
 from evo.objects.typed.types import Ellipsoid, EllipsoidRanges, Rotation
 
+from .filters import AllOfFilter, AnyOfFilter, Filter, FilterCondition, FilterExpression, FilterOperator
 from .results import TaskAttribute, TaskResultList, TaskTarget
 from .runner import TaskRegistry, TaskRunner, TParams, TResult, TResultModel, run_tasks
 from .search import SearchNeighborhood
@@ -28,12 +29,18 @@ from .source_target import (
 )
 
 __all__ = [
+    "AllOfFilter",
+    "AnyOfFilter",
     "AnySourceAttribute",
     "AnyTargetAttribute",
     "AttributeExpression",
     "CreateAttribute",
     "Ellipsoid",
     "EllipsoidRanges",
+    "Filter",
+    "FilterCondition",
+    "FilterExpression",
+    "FilterOperator",
     "GeoscienceObjectReference",
     "Rotation",
     "SearchNeighborhood",

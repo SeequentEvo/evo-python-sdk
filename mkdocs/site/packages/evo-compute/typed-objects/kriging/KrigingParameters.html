@@ -93,7 +93,8 @@
 <p>Defines all inputs needed to run a kriging interpolation task.</p>
 <p>Example:
     &gt;&gt;&gt; from evo.compute.tasks import run, SearchNeighborhood, Ellipsoid, EllipsoidRanges
-    &gt;&gt;&gt; from evo.compute.tasks.geostatistics.kriging import KrigingParameters, RegionFilter
+    &gt;&gt;&gt; from evo.compute.tasks.geostatistics.kriging import KrigingParameters
+    &gt;&gt;&gt; from evo.compute.tasks.common import Filter, FilterCondition
     &gt;&gt;&gt;
     &gt;&gt;&gt; params = KrigingParameters(
     ...     source=pointset.attributes["grade"],  # Source attribute
@@ -106,15 +107,18 @@
     ...     # method defaults to ordinary kriging
     ... )
     &gt;&gt;&gt;
-    &gt;&gt;&gt; # With region filter to restrict kriging to specific categories on target:
+    &gt;&gt;&gt; # With a target filter to restrict kriging to specific categories on the target:
     &gt;&gt;&gt; params_filtered = KrigingParameters(
     ...     source=pointset.attributes["grade"],
     ...     target=block_model.attributes["kriged_grade"],
     ...     variogram=variogram,
     ...     search=SearchNeighborhood(...),
-    ...     target_region_filter=RegionFilter(
-    ...         attribute=block_model.attributes["domain"],
-    ...         names=["LMS1", "LMS2"],
+    ...     target_filter=Filter(
+    ...         where=FilterCondition(
+    ...             attribute=block_model.attributes["domain"],
+    ...             operator="in",
+    ...             values=["LMS1", "LMS2"],
+    ...         ),
     ...     ),
     ... )</p>
 
@@ -240,17 +244,37 @@
 
 
 
-<h3 id="evo.compute.tasks.geostatistics.kriging.KrigingParameters.target_region_filter" class="doc doc-heading">
-            <span class="doc doc-object-name doc-attribute-name">target_region_filter</span>
+<h3 id="evo.compute.tasks.geostatistics.kriging.KrigingParameters.source_filter" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">source_filter</span>
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">target_region_filter</span><span class="p">:</span> <span class="n">RegionFilter</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">source_filter</span><span class="p">:</span> <span class="n">Filter</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>Optional region filter to restrict kriging to specific categories on the target object.</p>
+        <p>Optional filter to restrict kriging to a subset of the source data.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.kriging.KrigingParameters.target_filter" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">target_filter</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">target_filter</span><span class="p">:</span> <span class="n">Filter</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Optional filter to restrict kriging to a subset of the target object.</p>
 
     </div>
 

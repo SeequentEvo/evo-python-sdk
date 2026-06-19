@@ -144,8 +144,8 @@ df = await result.to_dataframe()
 <li><strong>Refresh</strong> the local object so it sees the newly created attribute.</li>
 <li>Run the <strong>remaining</strong> tasks — now <code>block_model.attributes["kriged_grade"]</code> resolves to the existing attribute and will update it.</li>
 </ol>
-<pre><code class="language-python">from evo.compute.tasks import run, SearchNeighborhood
-from evo.compute.tasks.geostatistics.kriging import KrigingParameters, RegionFilter
+<pre><code class="language-python">from evo.compute.tasks import run, Filter, FilterCondition, SearchNeighborhood
+from evo.compute.tasks.geostatistics.kriging import KrigingParameters
 
 # Step 1: Run the first task — attribute &quot;kriged_grade&quot; does not exist yet, so it is created
 first_result = await run(manager, KrigingParameters(
@@ -153,9 +153,12 @@ first_result = await run(manager, KrigingParameters(
     target=block_model.attributes[&quot;kriged_grade&quot;],
     variogram=variogram,
     search=SearchNeighborhood(...),
-    target_region_filter=RegionFilter(
-        attribute=block_model.attributes[&quot;domain&quot;],
-        names=[&quot;LMS1&quot;],
+    target_filter=Filter(
+        where=FilterCondition(
+            attribute=block_model.attributes[&quot;domain&quot;],
+            operator=&quot;in&quot;,
+            values=[&quot;LMS1&quot;],
+        ),
     ),
 ), preview=True)
 
@@ -169,9 +172,12 @@ results = await run(manager, [
         target=block_model.attributes[&quot;kriged_grade&quot;],  # Exists → update
         variogram=variogram,
         search=SearchNeighborhood(...),
-        target_region_filter=RegionFilter(
-            attribute=block_model.attributes[&quot;domain&quot;],
-            names=[&quot;LMS2&quot;],
+        target_filter=Filter(
+            where=FilterCondition(
+                attribute=block_model.attributes[&quot;domain&quot;],
+                operator=&quot;in&quot;,
+                values=[&quot;LMS2&quot;],
+            ),
         ),
     ),
     KrigingParameters(
@@ -179,9 +185,12 @@ results = await run(manager, [
         target=block_model.attributes[&quot;kriged_grade&quot;],  # Exists → update
         variogram=variogram,
         search=SearchNeighborhood(...),
-        target_region_filter=RegionFilter(
-            attribute=block_model.attributes[&quot;domain&quot;],
-            names=[&quot;LMS3&quot;],
+        target_filter=Filter(
+            where=FilterCondition(
+                attribute=block_model.attributes[&quot;domain&quot;],
+                operator=&quot;in&quot;,
+                values=[&quot;LMS3&quot;],
+            ),
         ),
     ),
 ], preview=True)
