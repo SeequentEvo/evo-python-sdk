@@ -12,7 +12,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Annotated, Any, ClassVar, TypeAlias, TypedDict
+from typing import Annotated, Any, ClassVar, TypeAlias
 
 import numpy as np
 import pandas as pd
@@ -23,6 +23,7 @@ from evo.objects import SchemaVersion
 from evo.objects.typed._data import DataTable, DataTableAndAttributes
 from evo.objects.typed._model import DataLocation, SchemaList, SchemaLocation, SchemaModel
 from evo.objects.typed.attributes import (
+    AttributeDescription,
     Attributes,
     Category,
 )
@@ -47,11 +48,17 @@ _Z = "z"
 _COORDINATE_COLUMNS = [_X, _Y, _Z]
 
 
-HolePath: TypeAlias = pd.DataFrame
-HoleChunks: TypeAlias = pd.DataFrame
-HoleProperties: TypeAlias = pd.DataFrame
+HolePath: TypeAlias = pd.DataFrame  # [ distance | dip | azimuth | <attributes> ]
+HoleChunks: TypeAlias = pd.DataFrame  # [ hole_id | offset | count ]
+HoleProperties: TypeAlias = pd.DataFrame  # [ hole_id | final | target | current | x | y | z ]
 HoleAttributes: TypeAlias = pd.DataFrame
-Depths: TypeAlias = pd.DataFrame
+
+# If `Depths` has unit descriptions in its `DataFrame.attrs` dictionary, then those units will be used when building
+# the schema object.
+# This is the expected structure:
+#   >>> depths_df.attrs
+#   {'attribute_description': {<column names>:  <AttributeDescription>}, ...}
+Depths: TypeAlias = pd.DataFrame  # [ distance | <attributes> ]
 
 
 @dataclass
@@ -67,16 +74,17 @@ class DownholeCollectionData(BaseSpatialObjectData):
     """Data class for creating a new DownholeCollection
 
     :param name: The name of the object.
-    :param holes: A list of DataFrames representing the paths of the holes. One DataFrame per hole.
-            Mandatory columns: depth, dip, azimuth. Extra columns are treated as attributes.
+    :param holes: A DataFrame describing which parts of `path` belong to which holes.
+            Columns: hole_id, offset, count
     :param properties: DataFrame for the properties of the holes. The ith row corresponds to the ith element of `holes`.
             Mandatory columns: hole_id, final, target, current, x, y, z
     :param attributes: DataFrame for the attributes of the holes. The ith row corresponds to the ith element of `holes`.
     :param path: Dataframe of [ distance | dip | azimuth | <attributes> ]. Distance/dip/azimuth describe the geometry as
             the step since the previous row.
     :param collections: A list of `DistanceCollection` describing a table of distances with attributes.
-    :param distance_unit: The distance unit for the `path` table and the `properties` x/y/z
-    .
+    :param distance_unit: The distance unit for the `path` table and the `properties` x/y/y.
+    :param desurvey: The desurvey method appropriate for this collection.
+            Must be one of: "minimum_curvature", "balanced_tangent", "trench".
     :param coordinate_reference_system: Optional EPSG code or WKT string for the coordinate reference system.
     :param description: Optional description of the object.
     :param tags: Optional dictionary of tags for the object.
@@ -89,6 +97,7 @@ class DownholeCollectionData(BaseSpatialObjectData):
     attributes: HoleAttributes | None
     collections: list[DistanceCollection]
     distance_unit: str | None
+    desurvey: str | None
 
     def __post_init__(self):
         if self.attributes is not None and len(self.holes) != len(self.attributes):
@@ -268,7 +277,7 @@ class DistanceTableDistances(DataTableAndAttributes):
     @classmethod
     async def _data_to_schema(cls, data: pd.DataFrame, context: IContext) -> Any:
         result = await super()._data_to_schema(data, context)
-        attr_desc = data.attrs.get("attribute_descriptions", {}).get("distance")
+        attr_desc: AttributeDescription = data.attrs.get("attribute_descriptions", {}).get("distance")
         if attr_desc is not None:
             result["unit"] = attr_desc.unit
         else:
@@ -300,5 +309,6 @@ class DownholeCollection(BaseSpatialObject):
     location: Annotated[DownholeLocation, SchemaLocation("location"), DataLocation("")]
     collections: Annotated[DownholeCollectionTables, SchemaLocation("collections"), DataLocation("collections")]
     distance_unit: Annotated[str | None, SchemaLocation("distance_unit")]
+    desurvey: Annotated[str | None, SchemaLocation("desurvey")]
 
     type: ClassVar[Annotated[str, SchemaLocation("type")]] = "downhole"

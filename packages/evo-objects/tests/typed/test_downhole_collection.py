@@ -106,6 +106,7 @@ def _make_example_data(
         attributes=attributes,
         collections=collections,
         distance_unit="m",
+        desurvey="trench",
         description=description,
         tags=tags,
     )
@@ -187,6 +188,7 @@ class TestDownholeCollection(TestWithConnector):
         self.assertIsInstance(result, DownholeCollection)
         self.assertEqual(expected.name, result.name)
         self.assertEqual(expected.distance_unit, result.distance_unit)
+        self.assertEqual(expected.desurvey, result.desurvey)
 
         await self._check_locations(expected, result)
         await self._check_path(expected, result)
@@ -350,6 +352,7 @@ class TestDownholeCollection(TestWithConnector):
                 attributes=bad_attributes,
                 collections=[],
                 distance_unit=None,
+                desurvey=None,
             )
 
     async def test_update_dataframe_after_creation(self):
@@ -387,8 +390,10 @@ class TestDownholeCollection(TestWithConnector):
             self.assertIn("bounding_box", object_json)
             self.assertEqual(object_json["coordinate_reference_system"], "unspecified")
 
-            # Verify type field
+            # Verify DHC top level properties
             self.assertEqual(object_json["type"], "downhole")
+            self.assertIn("distance_unit", object_json)
+            self.assertIn("desurvey", object_json)
 
             # Verify location structure
             self.assertIn("location", object_json)
