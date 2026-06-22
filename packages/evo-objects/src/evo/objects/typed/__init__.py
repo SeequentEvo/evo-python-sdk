@@ -22,6 +22,7 @@ from .base import BaseObject, object_from_path, object_from_reference, object_fr
 from .block_model_ref import (
     BlockModel,
 )
+from .downhole_collection import DownholeCollection, DownholeCollectionData
 from .pointset import (
     Locations,
     PointSet,
@@ -80,6 +81,8 @@ __all__ = [
     "BoundingBox",
     "CoordinateReferenceSystem",
     "CubicStructure",
+    "DownholeCollection",
+    "DownholeCollectionData",
     "Ellipsoid",
     "EllipsoidRanges",
     "EpsgCode",
