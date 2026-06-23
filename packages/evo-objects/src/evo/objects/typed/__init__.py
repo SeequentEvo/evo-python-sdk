@@ -1,4 +1,4 @@
-#  Copyright © 2025 Bentley Systems, Incorporated
+#  Copyright © 2026 Bentley Systems, Incorporated
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 #  You may obtain a copy of the License at
@@ -22,6 +22,7 @@ from .base import BaseObject, object_from_path, object_from_reference, object_fr
 from .block_model_ref import (
     BlockModel,
 )
+from .downhole_collection import DownholeCollection, DownholeCollectionData
 from .pointset import (
     Locations,
     PointSet,
@@ -80,6 +81,8 @@ __all__ = [
     "BoundingBox",
     "CoordinateReferenceSystem",
     "CubicStructure",
+    "DownholeCollection",
+    "DownholeCollectionData",
     "Ellipsoid",
     "EllipsoidRanges",
     "EpsgCode",

@@ -1,4 +1,4 @@
-#  Copyright © 2025 Bentley Systems, Incorporated
+#  Copyright © 2026 Bentley Systems, Incorporated
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 #  You may obtain a copy of the License at
@@ -217,6 +217,20 @@ class BoundingBox:
             dz=size.nz * cell_size.dz,
         )
         return cls.from_extent(origin, extent, rotation)
+
+    @classmethod
+    def combine(cls, bboxes: list[BoundingBox]):
+        if not bboxes:
+            raise ValueError("bboxes list is empty")
+
+        return cls(
+            min_x=min(b.min_x for b in bboxes),
+            max_x=max(b.max_x for b in bboxes),
+            min_y=min(b.min_y for b in bboxes),
+            max_y=max(b.max_y for b in bboxes),
+            min_z=min(b.min_z for b in bboxes),
+            max_z=max(b.max_z for b in bboxes),
+        )
 
 
 @dataclass(frozen=True)

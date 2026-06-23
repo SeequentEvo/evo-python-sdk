@@ -1,4 +1,4 @@
-#  Copyright © 2025 Bentley Systems, Incorporated
+#  Copyright © 2026 Bentley Systems, Incorporated
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 #  You may obtain a copy of the License at
@@ -11,7 +11,9 @@
 
 from __future__ import annotations
 
+import typing
 import uuid
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Annotated, Any
 from uuid import UUID
 
@@ -23,6 +25,7 @@ from evo.common.utils import NoFeedback, iter_with_fb
 from evo.objects import DownloadedObject
 from evo.objects.utils.table_formats import (
     BOOL_ARRAY_1,
+    DATE_TIME_ARRAY,
     FLOAT_ARRAY_1,
     INTEGER_ARRAY_1_INT32,
     INTEGER_ARRAY_1_INT64,
@@ -67,6 +70,8 @@ def _infer_attribute_type_from_series(series: pd.Series) -> str:
         return "category"
     elif pd.api.types.is_string_dtype(series):
         return "string"
+    elif pd.api.types.infer_dtype(series, skipna=True) in ["date", "datetime", "datetime64"]:
+        return "date_time"
     else:
         raise UnSupportedDataTypeError(f"Unsupported dtype for attribute: {series.dtype}")
 
@@ -76,7 +81,33 @@ _attribute_table_formats = {
     "integer": [INTEGER_ARRAY_1_INT32, INTEGER_ARRAY_1_INT64],
     "bool": [BOOL_ARRAY_1],
     "string": [STRING_ARRAY],
+    "date_time": [DATE_TIME_ARRAY],
 }
+
+
+@dataclass
+class AttributeDescription:
+    discipline: str = ""
+    type: str = ""
+    unit: str | None = None
+    scale: str | None = None
+    extensions: dict[str, typing.Any] | None = None
+    tags: dict[str, str] | None = None
+
+    def to_schema(self):
+        result = {
+            "discipline": self.discipline,
+            "type": self.type,
+        }
+        if self.unit:
+            result["unit"] = self.unit
+        if self.scale:
+            result["scale"] = self.scale
+        if self.extensions:
+            result["extensions"] = self.extensions
+        if self.tags:
+            result["tags"] = self.tags
+        return result
 
 
 class Attribute(SchemaModel):
@@ -158,7 +189,7 @@ class Attribute(SchemaModel):
             table_formats = _attribute_table_formats.get(attribute_type)
             attr_doc["values"] = await data_client.upload_dataframe(df, table_format=table_formats, fb=fb)
 
-        if attribute_type in ["scalar", "integer", "category"]:
+        if attribute_type in ["scalar", "integer", "category", "date_time"]:
             attr_doc["nan_description"] = {"values": []}
 
 
@@ -203,7 +234,15 @@ class PendingAttribute:
 
 
 class Attributes(SchemaList[Attribute]):
-    """A collection of Geoscience Object Attributes"""
+    """A collection of Geoscience Object Attributes
+
+    The data source is a pandas DataFrame. If the DataFrame has attribute descriptions attached
+    to it, then they will be used to populate the schema's "attribute_description" fields. The
+    attribute descriptions are attached to the DataFrame's `attrs` attribute.
+
+    >>> df.attrs
+    {'attribute_description': {<column names>:  <AttributeDescription>}, ...}
+    """
 
     _schema_path: str | None = None
     """The full JMESPath to this attributes list within the parent object schema."""
@@ -263,7 +302,7 @@ class Attributes(SchemaList[Attribute]):
 
         for col in df.columns:
             series = df[col]
-            attribute_type = _infer_attribute_type_from_series(series)
+            attribute_type = _infer_attribute_type_from_series(df[col])
 
             attr_doc: dict[str, Any] = {
                 "name": str(col),
@@ -271,8 +310,18 @@ class Attributes(SchemaList[Attribute]):
                 "attribute_type": attribute_type,
             }
 
-            col_df = df[[col]]
+            if attribute_type == "date_time":
+                series = pd.to_datetime(series, utc=True).dt.as_unit("us")
+
+            col_df = pd.DataFrame({col: series})
             await Attribute._upload_attribute_values(attr_doc, col_df, attribute_type, data_client)
+
+            attr_desc: AttributeDescription | None = df.attrs.get("attribute_descriptions", {}).get(col)
+            if attr_desc is not None:
+                if not isinstance(attr_desc, AttributeDescription):
+                    raise TypeError("attribute description must be a AttributeDescription.")
+                if attr_desc.unit is not None:
+                    attr_doc["attribute_description"] = attr_desc.to_schema()
 
             attributes_list.append(attr_doc)
 
@@ -528,3 +577,22 @@ class BlockModelAttributes:
     def __repr__(self) -> str:
         names = [attr.name for attr in self._attributes]
         return f"BlockModelAttributes({names})"
+
+
+class Category(SchemaModel):
+    _data: Annotated[str, SchemaLocation("values.data")]
+
+    @classmethod
+    async def _data_to_schema(cls, category_table, context: IContext) -> Any:
+        data_client = get_data_client(context)
+        return await data_client.upload_category_dataframe(category_table)
+
+    async def to_dataframe(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
+        """Load a DataFrame containing values for this table.
+
+        :param fb: Optional feedback object to report download progress.
+        :return: The loaded DataFrame with values for this table.
+        """
+        if self._context.is_data_modified(self._data):
+            raise DataLoaderError("Data was modified since the object was downloaded")
+        return await self._obj.download_dataframe(self.as_dict()["values"], fb=fb)

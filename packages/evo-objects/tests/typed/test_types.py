@@ -1,4 +1,4 @@
-#  Copyright © 2025 Bentley Systems, Incorporated
+#  Copyright © 2026 Bentley Systems, Incorporated
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 #  You may obtain a copy of the License at
@@ -138,6 +138,17 @@ class TestTypes(TestCase):
         self.assertAlmostEqual(box.max_x, 50.0)
         self.assertAlmostEqual(box.max_y, 0.0)
         self.assertAlmostEqual(box.max_z, 25.0)
+
+    def test_combine_boxes(self):
+        box1 = BoundingBox(min_x=-10.0, max_x=5.0, min_y=-5.0, max_y=10.0, min_z=-15.0, max_z=25.0)
+        box2 = BoundingBox(min_x=1.0, max_x=14.0, min_y=1.0, max_y=22.0, min_z=1.0, max_z=33.0)
+        combined = BoundingBox.combine([box1, box2])
+        self.assertAlmostEqual(combined.min_x, -10.0)
+        self.assertAlmostEqual(combined.max_x, 14.0)
+        self.assertAlmostEqual(combined.min_y, -5.0)
+        self.assertAlmostEqual(combined.max_y, 22.0)
+        self.assertAlmostEqual(combined.min_z, -15.0)
+        self.assertAlmostEqual(combined.max_z, 33.0)
 
 
 class TestEllipsoidRanges(TestCase):
