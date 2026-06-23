@@ -39,14 +39,14 @@ from uuid import UUID
 import pandas as pd
 from evo.common import IContext, IFeedback
 from evo.objects import ObjectSchema
-from evo.objects.typed import BaseObject, BlockModelPendingAttribute, PendingAttribute, object_from_reference
-from pydantic import BaseModel, Field, SerializerFunctionWrapHandler, field_validator, model_serializer
+from evo.objects.typed import BaseObject, object_from_reference
+from pydantic import BaseModel, Field, SerializerFunctionWrapHandler, model_serializer
 
 # Import shared components
 from ..common import (
     AnySourceAttribute,
     AnyTargetAttribute,
-    AttributeExpression,
+    Filter,
     GeoscienceObjectReference,
     SearchNeighborhood,
 )
@@ -56,13 +56,13 @@ from ..common.runner import TaskRunner
 __all__ = [
     # Kriging-specific (users import from evo.compute.tasks.kriging)
     "BlockDiscretisation",
+    "Filter",
     "KrigingMethod",
     "KrigingParameters",
     "KrigingResult",
     "KrigingResultModel",
     "KrigingRunner",
     "OrdinaryKriging",
-    "RegionFilter",
     "SimpleKriging",
 ]
 
@@ -160,55 +160,6 @@ class BlockDiscretisation(BaseModel):
 
 
 # =============================================================================
-# Region Filter
-# =============================================================================
-
-
-class RegionFilter(BaseModel):
-    """Region filter for restricting kriging to specific categories on the target.
-
-    Use either `names` OR `values`, not both:
-    - `names`: Category names (strings) - used for CategoryAttribute with string lookup
-    - `values`: Integer values - used for integer-indexed categories or BlockModel integer columns
-
-    Example:
-        >>> # Filter by category names (string lookup)
-        >>> filter_by_name = RegionFilter(
-        ...     attribute=block_model.attributes["domain"],
-        ...     names=["LMS1", "LMS2"],
-        ... )
-        >>>
-        >>> # Filter by integer values (direct index matching)
-        >>> filter_by_value = RegionFilter(
-        ...     attribute=block_model.attributes["domain"],
-        ...     values=[1, 2, 3],
-        ... )
-    """
-
-    attribute: AttributeExpression
-    """The category attribute to filter on (from target object)."""
-
-    names: list[str] | None = None
-    """Category names to include (mutually exclusive with values)."""
-
-    values: list[int] | None = None
-    """Integer category keys to include (mutually exclusive with names)."""
-
-    def model_post_init(self, __context: Any) -> None:
-        if self.names is not None and self.values is not None:
-            raise ValueError("Only one of 'names' or 'values' may be provided, not both.")
-        if self.names is None and self.values is None:
-            raise ValueError("One of 'names' or 'values' must be provided.")
-
-    @field_validator("attribute", mode="before")
-    @classmethod
-    def _validate_attribute(cls, v: Any) -> AttributeExpression:
-        if isinstance(v, (PendingAttribute, BlockModelPendingAttribute)):
-            raise ValueError("RegionFilter attribute cannot be a PendingAttribute. Provide a valid existing attribute.")
-        return v
-
-
-# =============================================================================
 # Kriging Parameters
 # =============================================================================
 
@@ -220,7 +171,8 @@ class KrigingParameters(BaseModel):
 
     Example:
         >>> from evo.compute.tasks import run, SearchNeighborhood, Ellipsoid, EllipsoidRanges
-        >>> from evo.compute.tasks.geostatistics.kriging import KrigingParameters, RegionFilter
+        >>> from evo.compute.tasks.geostatistics.kriging import KrigingParameters
+        >>> from evo.compute.tasks.common import Filter, FilterCondition
         >>>
         >>> params = KrigingParameters(
         ...     source=pointset.attributes["grade"],  # Source attribute
@@ -233,15 +185,18 @@ class KrigingParameters(BaseModel):
         ...     # method defaults to ordinary kriging
         ... )
         >>>
-        >>> # With region filter to restrict kriging to specific categories on target:
+        >>> # With a target filter to restrict kriging to specific categories on the target:
         >>> params_filtered = KrigingParameters(
         ...     source=pointset.attributes["grade"],
         ...     target=block_model.attributes["kriged_grade"],
         ...     variogram=variogram,
         ...     search=SearchNeighborhood(...),
-        ...     target_region_filter=RegionFilter(
-        ...         attribute=block_model.attributes["domain"],
-        ...         names=["LMS1", "LMS2"],
+        ...     target_filter=Filter(
+        ...         where=FilterCondition(
+        ...             attribute=block_model.attributes["domain"],
+        ...             operator="in",
+        ...             values=["LMS1", "LMS2"],
+        ...         ),
         ...     ),
         ... )
     """
@@ -263,8 +218,11 @@ class KrigingParameters(BaseModel):
     method: SimpleKriging | OrdinaryKriging = Field(default_factory=OrdinaryKriging, alias="kriging_method")
     """The kriging method to use. Defaults to ordinary kriging if not specified."""
 
-    target_region_filter: RegionFilter | None = Field(None, exclude=True)
-    """Optional region filter to restrict kriging to specific categories on the target object."""
+    source_filter: Filter | None = Field(None, exclude=True)
+    """Optional filter to restrict kriging to a subset of the source data."""
+
+    target_filter: Filter | None = Field(None, exclude=True)
+    """Optional filter to restrict kriging to a subset of the target object."""
 
     block_discretisation: BlockDiscretisation | None = None
     """Optional sub-block discretisation for block kriging.
@@ -278,8 +236,10 @@ class KrigingParameters(BaseModel):
     @model_serializer(mode="wrap")
     def _serialize(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
         result = handler(self)
-        if self.target_region_filter is not None:
-            result["target"]["region_filter"] = self.target_region_filter.model_dump()
+        if self.source_filter is not None:
+            result["source"]["filter"] = self.source_filter.model_dump()
+        if self.target_filter is not None:
+            result["target"]["filter"] = self.target_filter.model_dump()
         return result
 
 

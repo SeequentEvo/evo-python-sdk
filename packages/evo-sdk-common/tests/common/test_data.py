@@ -450,6 +450,7 @@ class TestPage(unittest.TestCase):
             ("first page", 0, False),
             ("some page", 42, False),
             ("last page", TOTAL - COUNT, True),
+            ("unknown total", -1, False),
         ]
     )
     def test_is_last(self, _label: str, offset: int, expect_last: bool) -> None:

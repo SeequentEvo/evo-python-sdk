@@ -11,7 +11,8 @@
 
 from __future__ import annotations
 
-from typing import Literal, TypeAlias
+import asyncio
+from typing import Awaitable, Literal, TypeAlias
 from uuid import UUID
 
 from pydantic import ValidationError
@@ -186,30 +187,45 @@ class WorkspaceAPIClient:
         deleted: bool | None = None,
         filter_user_id: UUID | None = None,
     ) -> list[Workspace]:
-        workspaces: list[Workspace] = []
+        if order_by is None:
+            order_by = {WorkspaceOrderByEnum.name: OrderByOperatorEnum.asc}
         if offset is None:
             offset = 0
         if limit is None:
             limit = 50
 
-        while True:
-            workspace_page = await self.list_workspaces(
-                limit=limit,
-                offset=offset,
-                order_by=order_by,
-                filter_created_by=filter_created_by,
-                created_at=created_at,
-                updated_at=updated_at,
-                name=name,
-                deleted=deleted,
-                filter_user_id=filter_user_id,
-            )
-            workspaces += workspace_page.items()
-            offset += limit
-            if offset >= workspace_page.total:
-                break
+        first_page = await self.list_workspaces(
+            limit=limit,
+            offset=offset,
+            order_by=order_by,
+            filter_created_by=filter_created_by,
+            created_at=created_at,
+            updated_at=updated_at,
+            name=name,
+            deleted=deleted,
+            filter_user_id=filter_user_id,
+        )
+        page_read_coroutines: list[Awaitable[Page[Workspace]]] = []
 
-        return sorted(workspaces, key=lambda x: x.display_name)
+        for i in range(offset + limit, first_page.total, limit):
+            page_read_coroutines.append(
+                self.list_workspaces(
+                    limit=limit,
+                    offset=i,
+                    order_by=order_by,
+                    filter_created_by=filter_created_by,
+                    created_at=created_at,
+                    updated_at=updated_at,
+                    name=name,
+                    deleted=deleted,
+                    filter_user_id=filter_user_id,
+                )
+            )
+
+        remaining_pages = await asyncio.gather(*page_read_coroutines)
+        workspaces = first_page.items() + [ws for page in remaining_pages for ws in page.items()]
+
+        return workspaces
 
     async def list_workspaces_summary(
         self,
@@ -421,6 +437,35 @@ class WorkspaceAPIClient:
             total=total,
             items=[parse.instance_user_with_email_model(item) for item in response.results],
         )
+
+    async def list_all_instance_users(
+        self, limit: int | None = None, offset: int | None = None
+    ) -> list[InstanceUserWithEmail]:
+        """
+        Returns a complete list of all the instance users.
+        :param limit: The maximum number of users to return per request.
+        :param offset: The offset for pagination.
+
+        :returns: A complete list of instance users with email addresses.
+        """
+        if offset is None:
+            offset = 0
+        if limit is None:
+            limit = 50
+
+        results: list[InstanceUserWithEmail] = []
+        while True:
+            # The endpoint does not return the total, so we can't do an asyncio.gather
+            # like we did for the list_all_workspaces method.
+            response = await self._instance_users_api.list_instance_users(
+                org_id=str(self._org_id), offset=offset, limit=limit
+            )
+
+            results.extend([parse.instance_user_with_email_model(item) for item in response.results])
+
+            if not response.links.next:
+                return results
+            offset += limit
 
     async def add_users_to_instance(self, users: dict[str, list[UUID]]) -> AddedInstanceUsers:
         """

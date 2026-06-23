@@ -176,43 +176,12 @@ class TestWorkspaceClientWorkspaceEndpoints(TestWithConnector):
         self.assertEqual(2, self.transport.request.call_count, "Two requests should be made.")
         self.assert_any_request_made(
             method=RequestMethod.GET,
-            path=f"{BASE_PATH}/workspaces?limit=2&offset=0",
+            path=f"{BASE_PATH}/workspaces?limit=2&offset=0&order_by=asc%3Aname",
             headers=TestHTTPHeaderDict({"Accept": "application/json"}),
         )
         self.assert_any_request_made(
             method=RequestMethod.GET,
-            path=f"{BASE_PATH}/workspaces?limit=2&offset=2",
-            headers=TestHTTPHeaderDict({"Accept": "application/json"}),
-        )
-        self.assertEqual(expected_workspaces, actual_workspaces)
-
-    async def test_list_workspaces_sorted_by_display_name(self) -> None:
-        content_0 = load_test_data("list_workspaces_0.json")
-        content_1 = load_test_data("list_workspaces_1.json")
-
-        # Shuffle the workspaces in the response content.
-        results_0: list = content_0["results"]
-        results_1: list = content_1["results"]
-        results_0.insert(2, results_1.pop(0))
-        results_1.insert(0, results_0.pop(0))
-
-        responses = [
-            MockResponse(status_code=200, content=json.dumps(content_0), headers={"Content-Type": "application/json"}),
-            MockResponse(status_code=200, content=json.dumps(content_1), headers={"Content-Type": "application/json"}),
-        ]
-        self.transport.request.side_effect = responses
-        expected_workspaces = [TEST_WORKSPACE_A, TEST_WORKSPACE_B, TEST_WORKSPACE_C]
-        actual_workspaces = await self.workspace_client.list_all_workspaces(limit=2)
-
-        self.assertEqual(2, self.transport.request.call_count, "Two requests should be made.")
-        self.assert_any_request_made(
-            method=RequestMethod.GET,
-            path=f"{BASE_PATH}/workspaces?limit=2&offset=0",
-            headers=TestHTTPHeaderDict({"Accept": "application/json"}),
-        )
-        self.assert_any_request_made(
-            method=RequestMethod.GET,
-            path=f"{BASE_PATH}/workspaces?limit=2&offset=2",
+            path=f"{BASE_PATH}/workspaces?limit=2&offset=2&order_by=asc%3Aname",
             headers=TestHTTPHeaderDict({"Accept": "application/json"}),
         )
         self.assertEqual(expected_workspaces, actual_workspaces)

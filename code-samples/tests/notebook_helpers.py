@@ -117,7 +117,7 @@ def is_auth_notebook(notebook_path: Path) -> bool:
         return False
 
     try:
-        nb = json.loads(notebook_path.read_text())
+        nb = json.loads(notebook_path.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, OSError):
         return False
 

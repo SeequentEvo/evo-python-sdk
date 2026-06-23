@@ -1,5 +1,20 @@
 # Changelog
 
+## evo-sdk-common@v0.5.24
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+## evo-sdk-common@v0.5.24
+* OIDC notebook updates by @davidknight-seequent in https://github.com/SeequentEvo/evo-python-sdk/pull/294
+* Fix/page type bound and asyncio gather by @sultan-alzoghaibi-seequent in https://github.com/SeequentEvo/evo-python-sdk/pull/299
+* admin-workspace-info by @shivangj-10 in https://github.com/SeequentEvo/evo-python-sdk/pull/302
+* Update workspace instance user listing by @sachinseizer in https://github.com/SeequentEvo/evo-python-sdk/pull/306
+
+## New Contributors
+* @sultan-alzoghaibi-seequent made their first contribution in https://github.com/SeequentEvo/evo-python-sdk/pull/299
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-sdk-common@v0.5.23...evo-sdk-common@v0.5.24
+
 ## evo-blockmodels@v0.4.2
 <!-- Release notes generated using configuration in .github/release.yml at main -->
 
