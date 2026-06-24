@@ -41,6 +41,10 @@ from .tensor_grid import (
     Tensor3DGrid,
     Tensor3DGridData,
 )
+from .triangle_mesh import (
+    TriangleMesh,
+    TriangleMeshData,
+)
 from .types import (
     BoundingBox,
     CoordinateReferenceSystem,
@@ -104,6 +108,8 @@ __all__ = [
     "SpheroidalStructure",
     "Tensor3DGrid",
     "Tensor3DGridData",
+    "TriangleMesh",
+    "TriangleMeshData",
     "Variogram",
     "VariogramCurveData",
     "VariogramData",
