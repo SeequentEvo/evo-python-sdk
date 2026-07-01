@@ -194,10 +194,37 @@ class Target(BaseModel):
 # =============================================================================
 
 
+def _available_attribute_names(attr: PendingAttribute | BlockModelPendingAttribute) -> list[str]:
+    """Best-effort list of the sibling attribute names on the parent object.
+
+    Used only to enrich error messages, so it must never raise.
+
+    Args:
+        attr: A pending attribute whose parent object's existing attributes we want to list.
+
+    Returns:
+        The names of the existing attributes on the parent object, or an empty list if
+        they cannot be determined.
+    """
+    try:
+        # PendingAttribute exposes the parent Attributes collection; BlockModelPendingAttribute
+        # exposes the parent object, whose ``.attributes`` is the collection.
+        collection = getattr(attr, "_parent", None)
+        if collection is None:
+            collection = getattr(getattr(attr, "_obj", None), "attributes", None)
+        if collection is None:
+            return []
+        return [name for a in collection if isinstance(name := getattr(a, "name", None), str)]
+    except Exception:
+        return []
+
+
 def _source_from_attribute(attr: Source | Attribute | BlockModelAttribute) -> Source:
     """Convert a typed ``Attribute`` or ``BlockModelAttribute`` to a :class:`Source`.
 
     Only existing attributes can be used as a source, since source data must already exist.
+    A pending (non-existent) attribute — commonly the result of a typo in the attribute
+    name — is rejected with a clear, actionable error instead of a generic type error.
 
     Args:
         attr: An existing ``Attribute`` from a DownloadedObject, or a ``BlockModelAttribute``.
@@ -206,9 +233,17 @@ def _source_from_attribute(attr: Source | Attribute | BlockModelAttribute) -> So
         A :class:`Source` referencing the parent object and attribute expression.
 
     Raises:
-        TypeError: If *attr* is not a supported attribute type, or if it has
-            no ``_obj`` reference to its parent object.
+        ValueError: If *attr* is a non-existent (pending) attribute, or an existing attribute
+            without an ``_obj`` reference to its parent object.
     """
+    if isinstance(attr, (PendingAttribute, BlockModelPendingAttribute)):
+        available = _available_attribute_names(attr)
+        hint = f" Available attributes: {available}." if available else ""
+        raise ValueError(
+            f"Source attribute {attr.name!r} does not exist on the source object. "
+            f"A source must reference an existing attribute containing the input values.{hint}"
+        )
+
     if not isinstance(attr, (Attribute, BlockModelAttribute)):
         return attr  # Allow passthrough of already-constructed Source or other types
 

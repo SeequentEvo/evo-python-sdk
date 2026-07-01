@@ -11,6 +11,7 @@
 
 """Tests for kriging task parameter handling."""
 
+from types import SimpleNamespace
 from unittest import TestCase
 from unittest.mock import MagicMock
 
@@ -149,8 +150,22 @@ class TestAnySourceAttribute(TestCase):
 
     def test_source_from_attribute_raises_for_pending(self):
         pending = _create_pending_attribute("new_attr")
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(ValidationError) as ctx:
             self.ta.validate_python(pending)
+        message = str(ctx.exception)
+        self.assertIn("new_attr", message)
+        self.assertIn("does not exist", message)
+
+    def test_source_from_pending_lists_available_attributes(self):
+        parent = MagicMock()
+        parent.__iter__.return_value = iter([SimpleNamespace(name="grade"), SimpleNamespace(name="au_ppm")])
+        pending = PendingAttribute(parent, "grde")
+        with self.assertRaises(ValidationError) as ctx:
+            self.ta.validate_python(pending)
+        message = str(ctx.exception)
+        self.assertIn("grde", message)
+        self.assertIn("grade", message)
+        self.assertIn("au_ppm", message)
 
     def test_source_from_attribute_raises_for_block_model_attribute(self):
         bm_attr = BlockModelAttribute(name="grade", attribute_type="Float64")
