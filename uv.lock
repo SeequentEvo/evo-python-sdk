@@ -980,7 +980,7 @@ test = [
 
 [[package]]
 name = "evo-compute"
-version = "0.0.3"
+version = "0.0.4"
 source = { editable = "packages/evo-compute" }
 dependencies = [
     { name = "evo-blockmodels", extra = ["utils"] },
