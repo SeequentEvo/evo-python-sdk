@@ -1,5 +1,22 @@
 # Changelog
 
+## evo-compute@0.0.4
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### Other Changes
+* Updated notebooks for auth and discovery by @davidknight-seequent in https://github.com/SeequentEvo/evo-python-sdk/pull/278
+* Add auto-generated content ignore rule to CODEOWNERS by @aminabedi-bentley in https://github.com/SeequentEvo/evo-python-sdk/pull/312
+* Fix unicode failure by @davidknight-seequent in https://github.com/SeequentEvo/evo-python-sdk/pull/311
+* Block model column tags by @chriscunningham-seequent in https://github.com/SeequentEvo/evo-python-sdk/pull/305
+* Add conditional turning-bands simulation task SDK client by @amirabbas-jalali-bentley in https://github.com/SeequentEvo/evo-python-sdk/pull/308
+* Add KNN and IDW estimation task SDK clients by @amirabbas-jalali-bentley in https://github.com/SeequentEvo/evo-python-sdk/pull/307
+
+## New Contributors
+* @aminabedi-bentley made their first contribution in https://github.com/SeequentEvo/evo-python-sdk/pull/312
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-sdk-common@v0.5.24...evo-compute@0.0.4
+
 ## evo-sdk-common@v0.5.24
 <!-- Release notes generated using configuration in .github/release.yml at main -->
 
