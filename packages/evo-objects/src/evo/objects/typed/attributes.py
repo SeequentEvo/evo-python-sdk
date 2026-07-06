@@ -581,6 +581,11 @@ class BlockModelAttributes:
 
 class Category(SchemaModel):
     _data: Annotated[str, SchemaLocation("values.data")]
+    _length: Annotated[int, SchemaLocation("values.length")]
+
+    @property
+    def length(self):
+        return self._length
 
     @classmethod
     async def _data_to_schema(cls, category_table, context: IContext) -> Any:
