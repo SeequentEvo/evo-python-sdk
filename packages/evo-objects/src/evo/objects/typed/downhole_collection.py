@@ -278,10 +278,9 @@ class DistanceTableDistances(DataTableAndAttributes):
     async def _data_to_schema(cls, data: pd.DataFrame, context: IContext) -> Any:
         result = await super()._data_to_schema(data, context)
         attr_desc: AttributeDescription = data.attrs.get("attribute_descriptions", {}).get("distance")
-        if attr_desc is not None:
+        if attr_desc is not None and attr_desc.unit is not None:
+            # "unit" can be missing, but it must not be `None`
             result["unit"] = attr_desc.unit
-        else:
-            result["unit"] = None
         return result
 
 
