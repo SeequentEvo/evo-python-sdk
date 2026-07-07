@@ -1,4 +1,4 @@
-#  Copyright © 2025 Bentley Systems, Incorporated
+#  Copyright © 2026 Bentley Systems, Incorporated
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 #  You may obtain a copy of the License at
@@ -17,7 +17,7 @@ These formatters are registered with IPython when the extension is loaded.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
 from .html import (
     STYLESHEET,
@@ -33,12 +33,17 @@ from .urls import (
     get_viewer_url_for_object,
 )
 
+if TYPE_CHECKING:
+    from evo.objects.typed import DownholeCollection
+
+
 __all__ = [
     "format_attributes_collection",
     "format_base_object",
     "format_block_model",
     "format_block_model_attributes",
     "format_block_model_version",
+    "format_downhole_collection",
     "format_report",
     "format_report_result",
     "format_task_result_list",
@@ -149,6 +154,27 @@ def _build_html_from_rows(
     return html
 
 
+def _format_attributes_spec(attributes, rows) -> str:
+    attr_rows = []
+    for attr in attributes:
+        attr_info = attr.as_dict()
+        attr_name = attr_info.get("name", "Unknown")
+        attr_type = attr_info.get("attribute_type", "Unknown")
+        attr_rows.append([attr_name, attr_type])
+
+    return build_nested_table(["Attribute", "Type"], attr_rows)
+
+
+def _format_all_attribute_specs(obj, rows) -> None:
+    # Build datasets section - add as rows to the main table
+    sub_models = getattr(obj, "_sub_models", [])
+    for dataset_name in sub_models:
+        dataset = getattr(obj, dataset_name, None)
+        if dataset and hasattr(dataset, "attributes") and len(dataset.attributes) > 0:
+            # Build attribute rows
+            rows.append((f"{dataset_name}", _format_attributes_spec(dataset.attributes, rows)))
+
+
 def format_base_object(obj: Any) -> str:
     """Format a BaseObject (or subclass) as HTML.
 
@@ -169,21 +195,7 @@ def format_base_object(obj: Any) -> str:
     if crs := doc.get("coordinate_reference_system"):
         rows.append(("CRS:", _format_crs(crs)))
 
-    # Build datasets section - add as rows to the main table
-    sub_models = getattr(obj, "_sub_models", [])
-    for dataset_name in sub_models:
-        dataset = getattr(obj, dataset_name, None)
-        if dataset and hasattr(dataset, "attributes") and len(dataset.attributes) > 0:
-            # Build attribute rows
-            attr_rows = []
-            for attr in dataset.attributes:
-                attr_info = attr.as_dict()
-                attr_name = attr_info.get("name", "Unknown")
-                attr_type = attr_info.get("attribute_type", "Unknown")
-                attr_rows.append([attr_name, attr_type])
-
-            attrs_table = build_nested_table(["Attribute", "Type"], attr_rows)
-            rows.append((f"{dataset_name}:", attrs_table))
+    _format_all_attribute_specs(obj, rows)
 
     return _build_html_from_rows(name, title_links, rows)
 
@@ -299,6 +311,45 @@ def format_variogram(obj: Any) -> str:
         )
 
     return _build_html_from_rows(name, title_links, rows, extra_content)
+
+
+def _format_downhole_collection_collections(obj, rows):
+    for i, collection in enumerate(obj.collections):
+        name = f"Collection {i + 1}"
+        rows.append((f"{name} name:", collection.name))
+        rows.append((f"{name} type:", collection.collection_type))
+        if collection.collection_type == "distance":
+            rows.append((f"{name} distance unit:", collection.distance.unit))
+            if attributes := collection.distance.attributes:
+                rows.append({f"{name} attributes:", _format_attributes_spec(attributes, rows)})
+
+
+
+def format_downhole_collection(obj: DownholeCollection) -> str:
+    """Format a DownholeCollection object as HTML.
+    
+    This formatter renders a downhole collection by extracting metadata and rendering it as a styled HTML table with
+    Portal/Viewer links.
+
+    :param obj: A DownholeCollection object from evo.objects.typed.downhole_collection.
+    :return: HTML string representation.
+    """''
+    doc = obj.as_dict()
+    name, title_links, rows = _get_base_metadata(obj)
+    rows.append(("Bounding box:", _format_bounding_box(doc["bounding_box"])))
+    rows.append(("CRS:", _format_crs(doc["coordinate_reference_system"])))
+
+    # DownholeCollection-specific scalar properties
+    rows.append(("Distance unit:", str(obj.distance_unit)))
+    rows.append(("Desurvey method:", str(obj.desurvey)))
+    rows.append(("Type:", obj.type))
+    rows.append(("Number of holes:", str(obj.location.hole_id.length)))
+
+    _format_all_attribute_specs(obj, rows)
+    _format_all_attribute_specs(obj.location, rows)
+    _format_downhole_collection_collections(obj, rows)
+
+    return _build_html_from_rows(name, title_links, rows)
 
 
 def format_block_model_version(obj: Any) -> str:
