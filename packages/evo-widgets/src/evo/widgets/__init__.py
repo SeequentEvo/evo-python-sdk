@@ -39,11 +39,12 @@ from .formatters import (
     format_block_model,
     format_block_model_attributes,
     format_block_model_version,
+    format_downhole_collection,
     format_report,
     format_report_result,
     format_task_result_list,
     format_task_result_with_target,
-    format_variogram, format_downhole_collection,
+    format_variogram,
 )
 from .urls import (
     get_blocksync_base_url,
