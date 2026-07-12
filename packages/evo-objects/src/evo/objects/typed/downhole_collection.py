@@ -131,9 +131,10 @@ class DownholeCollectionData(BaseSpatialObjectData):
             raise ObjectValidationError("depths, dips, and azimuths must have same length")
 
         # Process NaNs
+        # `depths`, `dips`, and `azimuths` could be read-only views, so take copies instead of mutating
         depths = depths[~np.isnan(depths)]
-        dips[np.isnan(dips)] = 90
-        azimuths[np.isnan(azimuths)] = 0
+        dips = np.where(np.isnan(dips), 90.0, dips)
+        azimuths = np.where(np.isnan(azimuths), 0.0, azimuths)
 
         dips_rad = np.deg2rad(dips)
         azimuths_rad = np.deg2rad(azimuths)
