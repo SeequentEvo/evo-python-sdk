@@ -324,16 +324,15 @@ def _format_downhole_collection_collections(obj, rows):
                 rows.append({f"{name} attributes:", _format_attributes_spec(attributes, rows)})
 
 
-
 def format_downhole_collection(obj: DownholeCollection) -> str:
     """Format a DownholeCollection object as HTML.
-    
+
     This formatter renders a downhole collection by extracting metadata and rendering it as a styled HTML table with
     Portal/Viewer links.
 
     :param obj: A DownholeCollection object from evo.objects.typed.downhole_collection.
     :return: HTML string representation.
-    """''
+    """
     doc = obj.as_dict()
     name, title_links, rows = _get_base_metadata(obj)
     rows.append(("Bounding box:", _format_bounding_box(doc["bounding_box"])))
