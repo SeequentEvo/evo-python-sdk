@@ -168,7 +168,7 @@ class DownholeIntervals(BaseSpatialObject):
     Example usage::
 
         import pandas as pd
-        from evo.objects.typed import BoundingBox, DownholeIntervals, DownholeIntervalsData
+        from evo.objects.typed import DownholeIntervals, DownholeIntervalsData
 
         df = pd.DataFrame(
             {
@@ -191,7 +191,6 @@ class DownholeIntervals(BaseSpatialObject):
             intervals=df,
             is_composited=False,
             depth_unit="m",
-            bounding_box=BoundingBox(95.0, 195.0, 205.0, 305.0, -10.0, 0.0),
         )
         obj = await DownholeIntervals.create(context, data)
 
