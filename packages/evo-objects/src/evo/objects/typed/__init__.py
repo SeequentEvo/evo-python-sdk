@@ -23,6 +23,7 @@ from .block_model_ref import (
     BlockModel,
 )
 from .downhole_collection import DownholeCollection, DownholeCollectionData
+from .downhole_intervals import DownholeIntervals, DownholeIntervalsData
 from .pointset import (
     Locations,
     PointSet,
@@ -83,6 +84,8 @@ __all__ = [
     "CubicStructure",
     "DownholeCollection",
     "DownholeCollectionData",
+    "DownholeIntervals",
+    "DownholeIntervalsData",
     "Ellipsoid",
     "EllipsoidRanges",
     "EpsgCode",
