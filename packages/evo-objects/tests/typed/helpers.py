@@ -67,6 +67,27 @@ class MockDownloadedObject(DownloadedObject):
     async def download_attribute_dataframe(self, data: dict, fb) -> pd.DataFrame:
         return self.mock_client.get_dataframe(data["values"])
 
+    async def download_category_dataframe(
+        self, category_info, fb=None, *, nan_values=None, column_names=None
+    ) -> pd.DataFrame:
+        """Download a categorical DataFrame from category info (dict or JMESPath string).
+
+        Handles the legacy mock shape ``{"values": {...}, "category_data": True}``
+        produced by ``MockClient.upload_category_dataframe``.
+        """
+        if isinstance(category_info, str):
+            from evo import jmespath as jp
+
+            resolved = jp.search(category_info, self.object_dict)
+            if hasattr(resolved, "raw"):
+                resolved = resolved.raw
+            category_info = resolved
+        df = self.mock_client.get_dataframe(category_info["values"])
+        if column_names is not None:
+            df = df.copy()
+            df.columns = list(column_names)
+        return df
+
     async def download_array(self, jmespath_expr: str, fb=None):
         """Download an array from the object using a JMESPath expression."""
 
