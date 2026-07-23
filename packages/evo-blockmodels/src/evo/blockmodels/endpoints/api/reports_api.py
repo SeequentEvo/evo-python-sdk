@@ -718,7 +718,7 @@ class ReportsApi:
         workspace_id: str,
         org_id: str,
         bm_id: str,
-        create_report_specification: CreateReportSpecification,  # noqa: F405
+        update_report_specification: UpdateReportSpecification,  # noqa: F405
         run_now: bool | None = None,
         additional_headers: dict[str, str] | None = None,
         request_timeout: int | float | tuple[int | float, int | float] | None = None,
@@ -739,8 +739,8 @@ class ReportsApi:
         :param bm_id: ID of the block model this call is scoped to. Represented as a v4 UUID.
             Format: `uuid`
             Example: `'e3c277c2-edc6-4a7a-8380-251dd19231f2'`
-        :param create_report_specification:
-            Example: `endpoints.CreateReportSpecification()`
+        :param update_report_specification:
+            Example: `endpoints.UpdateReportSpecification()`
         :param run_now: (optional) Whether to trigger a Reporting Job immediately after the update of the Report Specification
             Example: `False`
         :param additional_headers: (optional) Additional headers to send with the request.
@@ -794,7 +794,7 @@ class ReportsApi:
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
-            body=create_report_specification,
+            body=update_report_specification,
             collection_formats=_collection_formats,
             response_types_map=_response_types_map,
             request_timeout=request_timeout,

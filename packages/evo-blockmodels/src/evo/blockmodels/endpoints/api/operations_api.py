@@ -166,7 +166,8 @@ class OperationsApi:
         }
 
         # Prepare the header parameters.
-        _header_params = {} | get_header_metadata(__name__)
+        _header_params = {
+        } | get_header_metadata(__name__)
         if additional_headers is not None:
             _header_params.update(additional_headers)
 

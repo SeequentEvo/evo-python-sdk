@@ -27,7 +27,7 @@ from evo.common.test_tools import MockResponse, TestWithConnector, TestWithStora
 from utils import JobPollingRequestHandler
 
 DATE = datetime(2021, 1, 1, tzinfo=timezone.utc)
-MODEL_USER = models.UserInfo(email="test@test.com", name="Test User", id=uuid.uuid4())
+MODEL_USER = models.IMSUserInfo(email="test@test.com", name="Test User", id=uuid.uuid4())
 
 MOCK_VERSION = models.Version(
     base_version_id=None,

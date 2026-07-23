@@ -22,6 +22,7 @@ from pydantic import (
     AnyUrl,
     AwareDatetime,
     Field,
+    RootModel,
     StrictBool,
     StrictFloat,
     StrictInt,
@@ -55,6 +56,21 @@ class ColumnNameMappingGeneric(CustomBaseModel):
 class ColumnRename(CustomBaseModel):
     new_title: Annotated[StrictStr, Field(title="New Title")]
     old_title: Annotated[StrictStr, Field(title="Old Title")]
+
+
+class CreateReportNegativeValuesPolicy(Enum):
+    USE = "USE"
+    ZERO = "ZERO"
+    IGNORE_BLOCK = "IGNORE_BLOCK"
+    IGNORE_VALUE = "IGNORE_VALUE"
+    MARK_AS_INVALID = "MARK_AS_INVALID"
+
+
+class CreateReportNullValuesPolicy(Enum):
+    ZERO = "ZERO"
+    IGNORE_BLOCK = "IGNORE_BLOCK"
+    IGNORE_VALUE = "IGNORE_VALUE"
+    MARK_AS_INVALID = "MARK_AS_INVALID"
 
 
 class DataType(Enum):
@@ -99,6 +115,67 @@ class FloatRange(CustomBaseModel):
 class GeometryColumns(Enum):
     indices = "indices"
     coordinates = "coordinates"
+
+
+class IMSUserInfo(CustomBaseModel):
+    """
+    Unified user information model for IMS responses.
+
+    All optional fields default to None to clearly indicate missing values.
+    """
+
+    email: Annotated[StrictStr | None, Field(examples=["kim@example.test"], title="Email Address")] = None
+    """
+    The primary email address of the user.
+    """
+    first_name: Annotated[StrictStr | None, Field(examples=["Kim"], title="First Name")] = None
+    """
+    The first name of the user.
+    """
+    group_ids: Annotated[
+        list[StrictStr] | None,
+        Field(examples=[["249160E6-6404-4C09-8F61-8BB2469A4DDF"]], title="Group IDs"),
+    ] = None
+    """
+    The IDs of the groups the user belongs to.
+    """
+    group_names: Annotated[list[StrictStr] | None, Field(examples=[["My Group"]], title="Group Names")] = None
+    """
+    The names of the groups the user belongs to.
+    """
+    id: Annotated[UUID, Field(examples=["59b73891-5538-4e45-ae67-f8c5b00d7405"], title="User ID")]
+    """
+    The unique identifier of the user.
+    """
+    last_name: Annotated[StrictStr | None, Field(examples=["Kim"], title="Last Name")] = None
+    """
+    The last name of the user.
+    """
+    name: Annotated[StrictStr | None, Field(examples=["Kim Kim"], title="Full Name")] = None
+    """
+    The full name of the user.
+    """
+    org_id: Annotated[
+        StrictStr | None,
+        Field(examples=["CAEAADB6-D052-40AA-9DEA-221CA6EA26B9"], title="Organization ID"),
+    ] = None
+    """
+    The organization ID of the user.
+    """
+    org_name: Annotated[
+        StrictStr | None,
+        Field(examples=["Bentley Systems Inc"], title="Organization Name"),
+    ] = None
+    """
+    The organization name of the user.
+    """
+    role_name: Annotated[
+        list[StrictStr] | StrictStr | None,
+        Field(examples=["Account Admin"], title="Role Name"),
+    ] = None
+    """
+    The role name(s) of the user.
+    """
 
 
 class FileFormat(Enum):
@@ -210,6 +287,12 @@ class JobStatus(Enum):
 class LineageV100RuneventInputdataset(CustomBaseModel):
     """
     An input dataset
+
+    Attributes:
+        inputFacets (dict[str, dict[str, typing.Any]], optional): The input facets for this dataset.
+        namespace (str): The namespace containing that dataset
+        name (str): The unique name for that dataset within that namespace
+        facets (dict[str, dict[str, typing.Any]], optional): The facets for this dataset
     """
 
     facets: Annotated[dict[str, Any] | None, Field(title="Facets")] = None
@@ -219,6 +302,14 @@ class LineageV100RuneventInputdataset(CustomBaseModel):
 
 
 class LineageV100RuneventJob(CustomBaseModel):
+    """
+    Attributes:
+
+    namespace (str): The namespace containing that job
+    name (str): The unique name for that job within that namespace
+    facets (dict[str, dict[str, typing.Any]], optional): The job facets.
+    """
+
     facets: Annotated[dict[str, Any] | None, Field(title="Facets")] = None
     name: Annotated[StrictStr, Field(title="Name")]
     namespace: Annotated[StrictStr, Field(title="Namespace")]
@@ -227,6 +318,12 @@ class LineageV100RuneventJob(CustomBaseModel):
 class LineageV100RuneventOutputdataset(CustomBaseModel):
     """
     An output dataset
+
+    Attributes:
+        outputFacets (dict[str, dict[str, typing.Any]], optional): The output facets for this dataset
+        namespace (str): The namespace containing that dataset
+        name (str): The unique name for that dataset within that namespace
+        facets (dict[str, dict[str, typing.Any]], optional): The facets for this dataset
     """
 
     facets: Annotated[dict[str, Any] | None, Field(title="Facets")] = None
@@ -236,6 +333,13 @@ class LineageV100RuneventOutputdataset(CustomBaseModel):
 
 
 class LineageV100RuneventRun(CustomBaseModel):
+    """
+    Attributes:
+
+    runId (uuid.UUID): The globally unique ID of the run associated with the job.
+    facets (dict[str, dict[str, typing.Any]], optional): The run facets.
+    """
+
     facets: Annotated[dict[str, Any] | None, Field(title="Facets")] = None
     runId: Annotated[UUID, Field(title="Runid")]
 
@@ -253,6 +357,10 @@ class ListingColumn(CustomBaseModel):
     The ID of the column, a UUID for non-system columns
     """
     data_type: DataType
+    group_uuid: Annotated[UUID | None, Field(title="Group Uuid")] = None
+    """
+    UUID of the group this column belongs to. Null means ungrouped.
+    """
     title: Annotated[StrictStr, Field(title="Title")]
     """
     The human-readable label used to identify the column
@@ -263,15 +371,15 @@ class ListingColumn(CustomBaseModel):
     """
 
 
-class ListingMapping(CustomBaseModel):
-    columns: Annotated[list[ListingColumn], Field(title="Columns")]
-
-
 class ListingUpdateMetadataValues(CustomBaseModel):
     """
     `UpdateMetadataValues` variant for listing-style responses; never carries ``tags``.
     """
 
+    group_uuid: Annotated[UUID | None, Field(title="Group Uuid")] = None
+    """
+    The new group UUID for the column. The nil UUID (`00000000-0000-0000-0000-000000000000`) indicates an explicit ungroup.
+    """
     title: Annotated[StrictStr | None, Field(title="Title")] = None
     """
     The new human-readable label for the column
@@ -286,6 +394,18 @@ class Location(CustomBaseModel):
     x: Annotated[StrictFloat, Field(title="X")]
     y: Annotated[StrictFloat, Field(title="Y")]
     z: Annotated[StrictFloat, Field(title="Z")]
+
+
+class MeshFilterRelation(Enum):
+    INSIDE = "INSIDE"
+    OUTSIDE = "OUTSIDE"
+
+
+class MissingColumnPolicy(Enum):
+    INHERIT = "INHERIT"
+    USE_PREVIOUS = "USE_PREVIOUS"
+    SET_NULL = "SET_NULL"
+    REJECT = "REJECT"
 
 
 class OctreeSubblocks(CustomBaseModel):
@@ -527,11 +647,15 @@ class ReportNegativeValuesPolicy(Enum):
     USE = "USE"
     ZERO = "ZERO"
     IGNORE_BLOCK = "IGNORE_BLOCK"
+    IGNORE_VALUE = "IGNORE_VALUE"
+    MARK_AS_INVALID = "MARK_AS_INVALID"
 
 
 class ReportNullValuesPolicy(Enum):
     ZERO = "ZERO"
     IGNORE_BLOCK = "IGNORE_BLOCK"
+    IGNORE_VALUE = "IGNORE_VALUE"
+    MARK_AS_INVALID = "MARK_AS_INVALID"
 
 
 class ReportResultCategory(CustomBaseModel):
@@ -659,6 +783,47 @@ class ReportingJobSpec(CustomBaseModel):
     ] = None
     """
     ID of the block model version to run the report against. If not provided, the latest will be used.
+    """
+
+
+class ResolvedGroup(CustomBaseModel):
+    """
+    Stored/output group carrying the server-resolved missing-column policy.
+
+    Clients never submit this model. The resolved policy is computed at update time
+    and persisted on the version.
+    """
+
+    group_uuid: Annotated[
+        UUID,
+        Field(examples=["00633b08-165b-4dcb-bbae-0d3befa74c7e"], title="Group Uuid"),
+    ]
+    """
+    Unique identifier for the group.
+    """
+    is_hidden: Annotated[StrictBool, Field(title="Is Hidden")] = False
+    """
+    When true, the group's direct member columns are excluded from wildcard queries unless include_hidden is set.
+    """
+    missing_column_policy: MissingColumnPolicy | None = "INHERIT"
+    """
+    Policy for columns in this group's zone that are absent from an update. Defaults to INHERIT, which adopts the nearest ancestor's explicit policy zone (USE_PREVIOUS at the root).
+    """
+    parent_group_uuid: Annotated[UUID | None, Field(title="Parent Group Uuid")] = None
+    """
+    UUID of the parent group within the same block model. Null means top-level.
+    """
+    resolved_missing_column_policy: MissingColumnPolicy
+    """
+    Effective missing-column policy after resolving against the stored parent chain. A group with INHERIT (or no policy) adopts the nearest ancestor's explicit policy zone, defaulting to USE_PREVIOUS when no ancestor sets one.
+    """
+    tags: Annotated[dict[str, Any] | None, Field(title="Tags")] = None
+    """
+    Publisher-supplied free-form metadata for the group, as a JSON object. Keys must be 1-100 chars and cannot contain leading whitespace or dot, or the characters `/ \\ : > < | ? " *`; keys are unique case-insensitively. Values may be any JSON-compatible type. A single `tags` object serialised as UTF-8 JSON must be at most 10 KiB.
+    """
+    title: Annotated[StrictStr, Field(title="Title")]
+    """
+    Human-readable label for the group, unique across the parent group, or across top-level groups if no parent. They must be 1-100 chars and cannot contain leading whitespace or dot, or the characters `/ \\ : > < | ? " *`. Must not contain the qualified title separator `▸`.
     """
 
 
@@ -790,9 +955,32 @@ class UnitType(Enum):
 
 
 class UpdateMetadataValues(CustomBaseModel):
+    group_uuid: Annotated[UUID | None, Field(title="Group Uuid")] = None
+    """
+    The new group UUID for the column. The nil UUID (`00000000-0000-0000-0000-000000000000`) can be used to ungroup a column. Omit or send `null` to leave the existing group unchanged.
+    """
     tags: Annotated[dict[str, Any] | None, Field(title="Tags")] = None
     """
-    Replacement `tags` for the column. Omit or send `null` to leave the existing tags untouched; send `{}` to clear them; send a populated object to replace them wholesale. Publisher-supplied free-form metadata for the column, as a JSON object. Keys must be non-empty strings (≤ 256 chars) with no leading whitespace or dot and none of the characters `/ \\ : > < | ? " *`; keys are unique case-insensitively. Values may be any JSON-compatible type. A single column's `tags` object serialised as UTF-8 JSON must be at most 10 KiB.
+    Replacement `tags` for the column. Omit or send `null` to leave the existing tags untouched; send `{}` to clear them; send a populated object to replace them wholesale. Publisher-supplied free-form metadata for the column, as a JSON object. Keys must be 1-100 chars and cannot contain leading whitespace or dot, or the characters `/ \\ : > < | ? " *`; keys are unique case-insensitively. Values may be any JSON-compatible type. A single `tags` object serialised as UTF-8 JSON must be at most 10 KiB.
+    """
+    title: Annotated[StrictStr | None, Field(title="Title")] = None
+    """
+    The new human-readable label for the column
+    """
+    unit_id: Annotated[StrictStr | None, Field(title="Unit Id")] = None
+    """
+    The new unit ID for the column
+    """
+
+
+class UpdateMetadataValuesLite(CustomBaseModel):
+    group: Annotated[StrictStr | None, Field(title="Group")] = None
+    """
+    The qualified title (path) for the new group for the column. An empty string can be used to ungroup a column. Omit or send `null` to leave the existing group unchanged.
+    """
+    tags: Annotated[dict[str, Any] | None, Field(title="Tags")] = None
+    """
+    Replacement `tags` for the column. Omit or send `null` to leave the existing tags untouched; send `{}` to clear them; send a populated object to replace them wholesale. Publisher-supplied free-form metadata for the column, as a JSON object. Keys must be 1-100 chars and cannot contain leading whitespace or dot, or the characters `/ \\ : > < | ? " *`; keys are unique case-insensitively. Values may be any JSON-compatible type. A single `tags` object serialised as UTF-8 JSON must be at most 10 KiB.
     """
     title: Annotated[StrictStr | None, Field(title="Title")] = None
     """
@@ -811,21 +999,6 @@ class UpdateType(Enum):
 
 class UpdatedResponse(CustomBaseModel):
     job_url: Annotated[AnyUrl, Field(title="Job Url")]
-
-
-class UserInfo(CustomBaseModel):
-    email: Annotated[StrictStr | None, Field(examples=["kim@example.test"], title="Email Address")] = None
-    """
-    The primary email address of the user. Can be null if an error occurred while retrieving this information.
-    """
-    id: Annotated[UUID, Field(examples=["59b73891-5538-4e45-ae67-f8c5b00d7405"], title="User ID")]
-    """
-    The ID of the user
-    """
-    name: Annotated[StrictStr | None, Field(examples=["Kim Kim"], title="Full Name")] = None
-    """
-    The full name of the user. Can be null if an error occurred while retrieving this information.
-    """
 
 
 class BBox(CustomBaseModel):
@@ -867,9 +1040,13 @@ class Column(CustomBaseModel):
     The ID of the column, a UUID for non-system columns
     """
     data_type: DataType
+    group_uuid: Annotated[UUID | None, Field(title="Group Uuid")] = None
+    """
+    UUID of the group this column belongs to. Null means ungrouped.
+    """
     tags: Annotated[dict[str, Any] | None, Field(title="Tags")] = None
     """
-    Publisher-supplied free-form metadata for the column, as a JSON object. Keys must be non-empty strings (≤ 256 chars) with no leading whitespace or dot and none of the characters `/ \\ : > < | ? " *`; keys are unique case-insensitively. Values may be any JSON-compatible type. A single column's `tags` object serialised as UTF-8 JSON must be at most 10 KiB.
+    Publisher-supplied free-form metadata for the column, as a JSON object. Keys must be 1-100 chars and cannot contain leading whitespace or dot, or the characters `/ \\ : > < | ? " *`; keys are unique case-insensitively. Values may be any JSON-compatible type. A single `tags` object serialised as UTF-8 JSON must be at most 10 KiB.
     """
     title: Annotated[StrictStr, Field(title="Title")]
     """
@@ -883,9 +1060,13 @@ class Column(CustomBaseModel):
 
 class ColumnLite(CustomBaseModel):
     data_type: DataType
+    group: Annotated[StrictStr | None, Field(title="Group")] = None
+    """
+    Qualified path of the group this column belongs to: a bare title for a top-level group, or segments joined by `▸` for a nested group. Null means ungrouped.
+    """
     tags: Annotated[dict[str, Any] | None, Field(title="Tags")] = None
     """
-    Publisher-supplied free-form metadata for the column, as a JSON object. Keys must be non-empty strings (≤ 256 chars) with no leading whitespace or dot and none of the characters `/ \\ : > < | ? " *`; keys are unique case-insensitively. Values may be any JSON-compatible type. A single column's `tags` object serialised as UTF-8 JSON must be at most 10 KiB.
+    Publisher-supplied free-form metadata for the column, as a JSON object. Keys must be 1-100 chars and cannot contain leading whitespace or dot, or the characters `/ \\ : > < | ? " *`; keys are unique case-insensitively. Values may be any JSON-compatible type. A single `tags` object serialised as UTF-8 JSON must be at most 10 KiB.
     """
     title: Annotated[StrictStr, Field(title="Title")]
     """
@@ -894,124 +1075,6 @@ class ColumnLite(CustomBaseModel):
     unit_id: Annotated[StrictStr | None, Field(title="Unit Id")] = None
     """
     The ID of the column's unit
-    """
-
-
-class CreateReportSpecification(CustomBaseModel):
-    autorun: Annotated[StrictBool, Field(title="Autorun")] = True
-    """
-    Whether to automatically run this Report Specification when a new version is published
-    """
-    bbox: Annotated[
-        BBox | BBoxXYZ | None,
-        Field(
-            examples=[
-                {
-                    "i_minmax": {"max": 1, "min": 0},
-                    "j_minmax": {"max": 1, "min": 0},
-                    "k_minmax": {"max": 1, "min": 0},
-                }
-            ],
-            title="Bbox",
-        ),
-    ] = None
-    """
-    Bounding box for the report
-    """
-    categories: Annotated[
-        list[ReportCategory] | None,
-        Field(
-            examples=[
-                [
-                    {
-                        "col_id": "11c277c2-edc6-4a7a-8380-251dd19231f2",
-                        "label": "Grade",
-                        "values": ["low", "medium", "high"],
-                    }
-                ]
-            ],
-            max_length=5,
-            min_length=0,
-            title="Categories",
-        ),
-    ] = None
-    """
-    Category columns within this Report Specification. If null or empty, the report will have a single total row for each cut-off.
-    """
-    columns: Annotated[
-        list[ReportColumn],
-        Field(
-            examples=[
-                [
-                    {
-                        "aggregation": "SUM",
-                        "col_id": "abc277c2-edc6-4a7a-8380-251dd19231f2",
-                        "label": "Au content",
-                        "output_unit_id": "kg",
-                    }
-                ]
-            ],
-            title="Columns",
-        ),
-    ]
-    """
-    Columns within this Report Specification
-    """
-    cutoff_col_id: Annotated[
-        UUID | None,
-        Field(examples=["13c277c2-edc6-4a7a-8380-251dd19231f2"], title="Cutoff Col Id"),
-    ] = None
-    """
-    ID of the column to use for cut-off evaluation
-    """
-    cutoff_values: Annotated[
-        list[StrictFloat] | None,
-        Field(examples=[[0.5, 1.5, 5]], max_length=20, min_length=1, title="Cutoff Values"),
-    ] = None
-    """
-    Values to use for cut-off evaluation
-    """
-    density_col_id: Annotated[
-        UUID | None,
-        Field(examples=["24c277c2-edc6-4a7a-8380-251dd19231f2"], title="Density Col Id"),
-    ] = None
-    """
-    ID of the column to use for block density
-    """
-    density_unit_id: Annotated[StrictStr | None, Field(examples=["kg/m3"], title="Density Unit Id")] = None
-    """
-    ID of the unit to use for block density. The unit must be of type `MASS_PER_VOLUME`.
-    """
-    density_value: Annotated[StrictFloat | None, Field(examples=[2.5], gt=1.0, title="Density Value")] = None
-    """
-    Value to use for block density
-    """
-    description: Annotated[
-        StrictStr | None,
-        Field(
-            examples=["Gold resource report for test purposes"],
-            max_length=1000,
-            title="Description",
-        ),
-    ] = None
-    """
-    User-supplied description of the report
-    """
-    mass_unit_id: Annotated[StrictStr, Field(examples=["t"], title="Mass Unit Id")]
-    """
-    ID of the unit to use for total mass. The unit must be of type `MASS`
-    """
-    name: Annotated[StrictStr, Field(max_length=120, title="Name")]
-    """
-    The human-readable label used to identify the report
-    """
-    negative_values_policy: Annotated[ReportNegativeValuesPolicy | None, Field(examples=["USE"])] = "IGNORE_BLOCK"
-    """
-    Policy for handling negative values in the report's cut-off or value columns
-    """
-    null_values_policy: Annotated[ReportNullValuesPolicy | None, Field(examples=["ZERO"])] = "IGNORE_BLOCK"
-    """
-    Policy for handling null values in the report's cut-off or value columns
     """
 
 
@@ -1034,7 +1097,135 @@ class DeltaRequestData(CustomBaseModel):
     """
 
 
+class Group(CustomBaseModel):
+    """
+    Group metadata using UUID-based references (``update`` flow).
+    """
+
+    group_uuid: Annotated[
+        UUID,
+        Field(examples=["00633b08-165b-4dcb-bbae-0d3befa74c7e"], title="Group Uuid"),
+    ]
+    """
+    Unique identifier for the group.
+    """
+    is_hidden: Annotated[StrictBool, Field(title="Is Hidden")] = False
+    """
+    When true, the group's direct member columns are excluded from wildcard queries unless include_hidden is set.
+    """
+    missing_column_policy: MissingColumnPolicy | None = "INHERIT"
+    """
+    Policy for columns in this group's zone that are absent from an update. Defaults to INHERIT, which adopts the nearest ancestor's explicit policy zone (USE_PREVIOUS at the root).
+    """
+    parent_group_uuid: Annotated[UUID | None, Field(title="Parent Group Uuid")] = None
+    """
+    UUID of the parent group within the same block model. Null means top-level.
+    """
+    tags: Annotated[dict[str, Any] | None, Field(title="Tags")] = None
+    """
+    Publisher-supplied free-form metadata for the group, as a JSON object. Keys must be 1-100 chars and cannot contain leading whitespace or dot, or the characters `/ \\ : > < | ? " *`; keys are unique case-insensitively. Values may be any JSON-compatible type. A single `tags` object serialised as UTF-8 JSON must be at most 10 KiB.
+    """
+    title: Annotated[StrictStr, Field(title="Title")]
+    """
+    Human-readable label for the group, unique across the parent group, or across top-level groups if no parent. They must be 1-100 chars and cannot contain leading whitespace or dot, or the characters `/ \\ : > < | ? " *`. Must not contain the qualified title separator `▸`.
+    """
+
+
+class GroupLite(CustomBaseModel):
+    """
+    Group metadata using title-based column references (``update_lite`` flow).
+    """
+
+    is_hidden: Annotated[StrictBool, Field(title="Is Hidden")] = False
+    """
+    When true, the group's direct member columns are excluded from wildcard queries unless include_hidden is set.
+    """
+    missing_column_policy: MissingColumnPolicy | None = "INHERIT"
+    """
+    Policy for columns in this group's zone that are absent from an update. Defaults to INHERIT, which adopts the nearest ancestor's explicit policy zone (USE_PREVIOUS at the root).
+    """
+    parent_group: Annotated[StrictStr | None, Field(title="Parent Group")] = None
+    """
+    Qualified path of the parent group within the same block model: a bare title when the parent is a top-level group, or segments joined by `▸` when the parent is itself nested. Null means top-level.
+    """
+    tags: Annotated[dict[str, Any] | None, Field(title="Tags")] = None
+    """
+    Publisher-supplied free-form metadata for the group, as a JSON object. Keys must be 1-100 chars and cannot contain leading whitespace or dot, or the characters `/ \\ : > < | ? " *`; keys are unique case-insensitively. Values may be any JSON-compatible type. A single `tags` object serialised as UTF-8 JSON must be at most 10 KiB.
+    """
+    title: Annotated[StrictStr, Field(title="Title")]
+    """
+    Human-readable label for the group, unique across the parent group, or across top-level groups if no parent. They must be 1-100 chars and cannot contain leading whitespace or dot, or the characters `/ \\ : > < | ? " *`. Must not contain the qualified title separator `▸`.
+    """
+
+
+class GroupUpdateMetadataValues(CustomBaseModel):
+    """
+    Values that may be updated on an existing group via ``groups.update_metadata``.
+    """
+
+    is_hidden: Annotated[StrictBool | None, Field(title="Is Hidden")] = None
+    """
+    New hidden flag value.
+    """
+    missing_column_policy: MissingColumnPolicy | None = None
+    """
+    New missing-column policy. Null/absent means leave unchanged; use INHERIT to adopt the parent chain's policy zone.
+    """
+    parent_group_uuid: Annotated[UUID | None, Field(title="Parent Group Uuid")] = None
+    """
+    New parent group UUID. Null/absent means leave unchanged; the Nil UUID makes the group a top-level group.
+    """
+    tags: Annotated[dict[str, Any] | None, Field(title="Tags")] = None
+    """
+    Publisher-supplied free-form metadata for the group, as a JSON object. Keys must be 1-100 chars and cannot contain leading whitespace or dot, or the characters `/ \\ : > < | ? " *`; keys are unique case-insensitively. Values may be any JSON-compatible type. A single `tags` object serialised as UTF-8 JSON must be at most 10 KiB.
+    """
+    title: Annotated[StrictStr | None, Field(title="Title")] = None
+    """
+    New title for the group.
+    """
+
+
+class GroupUpdateMetadataValuesLite(CustomBaseModel):
+    """
+    Values that may be updated on an existing group via ``groups.update_metadata`` (lite flow).
+    """
+
+    is_hidden: Annotated[StrictBool | None, Field(title="Is Hidden")] = None
+    """
+    New hidden flag value.
+    """
+    missing_column_policy: MissingColumnPolicy | None = None
+    """
+    New missing-column policy. Null/absent means leave unchanged; use INHERIT to adopt the parent chain's policy zone.
+    """
+    parent_group: Annotated[StrictStr | None, Field(title="Parent Group")] = None
+    """
+    New parent group title. Null/absent means leave unchanged; an empty string makes the group a top-level group.
+    """
+    tags: Annotated[dict[str, Any] | None, Field(title="Tags")] = None
+    """
+    Publisher-supplied free-form metadata for the group, as a JSON object. Keys must be 1-100 chars and cannot contain leading whitespace or dot, or the characters `/ \\ : > < | ? " *`; keys are unique case-insensitively. Values may be any JSON-compatible type. A single `tags` object serialised as UTF-8 JSON must be at most 10 KiB.
+    """
+    title: Annotated[StrictStr | None, Field(title="Title")] = None
+    """
+    New title for the group.
+    """
+
+
 class LineageV100Runevent(CustomBaseModel):
+    """
+    Attributes:
+
+    eventTime (str): the time the event occurred at
+    producer (str): URI identifying the producer of this metadata. For example this could be a git url with a given tag or sha
+    schemaURL (str): URI identifying the corresponding version of the schema definition for this RunEvent
+    eventType (str, optional): the current transition of the run state. It is required to issue 1 START event and 1 of [ COMPLETE, ABORT, FAIL ] event per run. Additional events with OTHER eventType can be added to the same run. For example to send additional metadata after the run is complete
+    run (Lineage_V1_0_0_Runevent_Run)
+    job (Lineage_V1_0_0_Runevent_Job)
+    inputs (list[Lineage_V1_0_0_Runevent_Inputdataset], optional): The set of **input** datasets.
+    outputs (list[Lineage_V1_0_0_Runevent_Outputdataset], optional): The set of **output** datasets.
+    """
+
     eventTime: Annotated[StrictStr, Field(title="Eventtime")]
     eventType: Annotated[StrictStr | None, Field(title="Eventtype")] = None
     inputs: Annotated[list[LineageV100RuneventInputdataset] | None, Field(title="Inputs")] = None
@@ -1043,6 +1234,45 @@ class LineageV100Runevent(CustomBaseModel):
     producer: Annotated[StrictStr, Field(title="Producer")]
     run: LineageV100RuneventRun
     schemaURL: Annotated[StrictStr, Field(title="Schemaurl")]
+
+
+class ListingGroup(CustomBaseModel):
+    """
+    Group variant for listing-style responses; never carries ``tags``.
+    """
+
+    group_uuid: Annotated[
+        UUID,
+        Field(examples=["00633b08-165b-4dcb-bbae-0d3befa74c7e"], title="Group Uuid"),
+    ]
+    """
+    Unique identifier for the group.
+    """
+    is_hidden: Annotated[StrictBool, Field(title="Is Hidden")] = False
+    """
+    When true, the group's direct member columns are excluded from wildcard queries unless include_hidden is set.
+    """
+    missing_column_policy: MissingColumnPolicy | None = "INHERIT"
+    """
+    Policy for columns in this group's zone that are absent from an update. Defaults to INHERIT, which adopts the nearest ancestor's explicit policy zone (USE_PREVIOUS at the root).
+    """
+    parent_group_uuid: Annotated[UUID | None, Field(title="Parent Group Uuid")] = None
+    """
+    UUID of the parent group within the same block model. Null means top-level.
+    """
+    resolved_missing_column_policy: MissingColumnPolicy
+    """
+    Effective missing-column policy after resolving against the stored parent chain. A group with INHERIT (or no policy) adopts the nearest ancestor's explicit policy zone, defaulting to USE_PREVIOUS when no ancestor sets one.
+    """
+    title: Annotated[StrictStr, Field(title="Title")]
+    """
+    Human-readable label for the group, unique across the parent group, or across top-level groups if no parent. They must be 1-100 chars and cannot contain leading whitespace or dot, or the characters `/ \\ : > < | ? " *`. Must not contain the qualified title separator `▸`.
+    """
+
+
+class ListingMapping(CustomBaseModel):
+    columns: Annotated[list[ListingColumn], Field(title="Columns")]
+    groups: Annotated[list[ListingGroup], Field(title="Groups", validate_default=True)] = []
 
 
 class ListingUpdateMetadata(CustomBaseModel):
@@ -1082,7 +1312,7 @@ class ListingVersion(CustomBaseModel):
     """
     When the version was created
     """
-    created_by: UserInfo
+    created_by: IMSUserInfo
     """
     User who performed the action that created the version
     """
@@ -1116,6 +1346,15 @@ class ListingVersion(CustomBaseModel):
 
 class Mapping(CustomBaseModel):
     columns: Annotated[list[Column], Field(title="Columns")]
+    groups: Annotated[list[ResolvedGroup], Field(title="Groups", validate_default=True)] = []
+    """
+    Column groups within this version.
+    """
+
+
+class MeshFilter(CustomBaseModel):
+    relation: MeshFilterRelation
+    uuid: Annotated[UUID, Field(title="Uuid")]
 
 
 class QueryCriteria(CustomBaseModel):
@@ -1262,7 +1501,7 @@ class ReportComparisonResultInfo(CustomBaseModel):
     """
     Creation date of the version of the block model that the report was run on
     """
-    version_created_by: UserInfo
+    version_created_by: dict[str, Any]
     """
     User who created the version of the block model that the report was run on
     """
@@ -1305,6 +1544,10 @@ class ReportResultSet(CustomBaseModel):
 
 
 class ReportResultSummary(CustomBaseModel):
+    mesh_filter_used: MeshFilter | None = None
+    """
+    The mesh filter that was active when this report was run, or null if no mesh filter was applied.
+    """
     report_result_created_at: Annotated[
         AwareDatetime,
         Field(examples=["2021-01-01T00:00:00Z"], title="Report Result Created At"),
@@ -1339,7 +1582,7 @@ class ReportResultSummary(CustomBaseModel):
     """
     Creation date of the version of the block model that the report was run on
     """
-    version_created_by: UserInfo
+    version_created_by: dict[str, Any]
     """
     User who created the version of the block model that the report was run on
     """
@@ -1467,6 +1710,10 @@ class ReportSpecificationWithJobUrl(CustomBaseModel):
     mass_unit_id: Annotated[StrictStr, Field(examples=["t"], title="Mass Unit Id")]
     """
     ID of the unit to use for total mass. The unit must be of type `MASS`
+    """
+    mesh_filter: MeshFilter | None = None
+    """
+    Mesh filter to apply when running the report. Blocks are included or excluded based on whether their centroid falls inside or outside the referenced mesh object. Setting to null removes any existing mesh constraint.
     """
     name: Annotated[StrictStr, Field(max_length=120, title="Name")]
     """
@@ -1615,6 +1862,10 @@ class ReportSpecificationWithLastRunInfo(CustomBaseModel):
     """
     ID of the unit to use for total mass. The unit must be of type `MASS`
     """
+    mesh_filter: MeshFilter | None = None
+    """
+    Mesh filter to apply when running the report. Blocks are included or excluded based on whether their centroid falls inside or outside the referenced mesh object. Setting to null removes any existing mesh constraint.
+    """
     name: Annotated[StrictStr, Field(max_length=120, title="Name")]
     """
     The human-readable label used to identify the report
@@ -1714,7 +1965,129 @@ class UpdateMetadataLite(CustomBaseModel):
     """
     The original human-readable label used to identify the column
     """
-    values: UpdateMetadataValues
+    values: UpdateMetadataValuesLite
+
+
+class UpdateReportSpecification(CustomBaseModel):
+    autorun: Annotated[StrictBool, Field(title="Autorun")] = True
+    """
+    Whether to automatically run this Report Specification when a new version is published
+    """
+    bbox: Annotated[
+        BBox | BBoxXYZ | None,
+        Field(
+            examples=[
+                {
+                    "i_minmax": {"max": 1, "min": 0},
+                    "j_minmax": {"max": 1, "min": 0},
+                    "k_minmax": {"max": 1, "min": 0},
+                }
+            ],
+            title="Bbox",
+        ),
+    ] = None
+    """
+    Bounding box for the report
+    """
+    categories: Annotated[
+        list[ReportCategory] | None,
+        Field(
+            examples=[
+                [
+                    {
+                        "col_id": "11c277c2-edc6-4a7a-8380-251dd19231f2",
+                        "label": "Grade",
+                        "values": ["low", "medium", "high"],
+                    }
+                ]
+            ],
+            max_length=5,
+            min_length=0,
+            title="Categories",
+        ),
+    ] = None
+    """
+    Category columns within this Report Specification. If null or empty, the report will have a single total row for each cut-off.
+    """
+    columns: Annotated[
+        list[ReportColumn],
+        Field(
+            examples=[
+                [
+                    {
+                        "aggregation": "SUM",
+                        "col_id": "abc277c2-edc6-4a7a-8380-251dd19231f2",
+                        "label": "Au content",
+                        "output_unit_id": "kg",
+                    }
+                ]
+            ],
+            title="Columns",
+        ),
+    ]
+    """
+    Columns within this Report Specification
+    """
+    cutoff_col_id: Annotated[
+        UUID | None,
+        Field(examples=["13c277c2-edc6-4a7a-8380-251dd19231f2"], title="Cutoff Col Id"),
+    ] = None
+    """
+    ID of the column to use for cut-off evaluation
+    """
+    cutoff_values: Annotated[
+        list[StrictFloat] | None,
+        Field(examples=[[0.5, 1.5, 5]], max_length=20, min_length=1, title="Cutoff Values"),
+    ] = None
+    """
+    Values to use for cut-off evaluation
+    """
+    density_col_id: Annotated[
+        UUID | None,
+        Field(examples=["24c277c2-edc6-4a7a-8380-251dd19231f2"], title="Density Col Id"),
+    ] = None
+    """
+    ID of the column to use for block density
+    """
+    density_unit_id: Annotated[StrictStr | None, Field(examples=["kg/m3"], title="Density Unit Id")] = None
+    """
+    ID of the unit to use for block density. The unit must be of type `MASS_PER_VOLUME`.
+    """
+    density_value: Annotated[StrictFloat | None, Field(examples=[2.5], gt=1.0, title="Density Value")] = None
+    """
+    Value to use for block density
+    """
+    description: Annotated[
+        StrictStr | None,
+        Field(
+            examples=["Gold resource report for test purposes"],
+            max_length=1000,
+            title="Description",
+        ),
+    ] = None
+    """
+    User-supplied description of the report
+    """
+    mass_unit_id: Annotated[StrictStr, Field(examples=["t"], title="Mass Unit Id")]
+    """
+    ID of the unit to use for total mass. The unit must be of type `MASS`
+    """
+    mesh_filter: MeshFilter | None = None
+    """
+    Mesh filter to apply when running the report. Blocks are included or excluded based on whether their centroid falls inside or outside the referenced mesh object. Setting to null removes any existing mesh constraint.
+    """
+    name: Annotated[StrictStr, Field(max_length=120, title="Name")]
+    """
+    The human-readable label used to identify the report
+    """
+    negative_values_policy: Annotated[CreateReportNegativeValuesPolicy | None, Field(examples=["USE"])] = None
+    """
+    Policy for handling negative values in the report's cut-off or value columns. If omitted or null, the existing policy will be retained
+    """
+    null_values_policy: Annotated[CreateReportNullValuesPolicy | None, Field(examples=["ZERO"])] = None
+    """
+    Policy for handling null values in the report's cut-off or value columns. If omitted or null, the existing policy will be retained
+    """
 
 
 class Version(CustomBaseModel):
@@ -1747,7 +2120,7 @@ class Version(CustomBaseModel):
     """
     When the version was created
     """
-    created_by: UserInfo
+    created_by: IMSUserInfo
     """
     User who performed the action that created the version
     """
@@ -1836,7 +2209,7 @@ class BlockModel(CustomBaseModel):
     """
     Block model creation time
     """
-    created_by: UserInfo
+    created_by: IMSUserInfo
     """
     User who created the block model
     """
@@ -1862,7 +2235,7 @@ class BlockModel(CustomBaseModel):
     """
     Date and time of the last block model update, including metadata updates
     """
-    last_updated_by: UserInfo
+    last_updated_by: IMSUserInfo
     """
     User who last updated the block model, including metadata updates
     """
@@ -1951,7 +2324,7 @@ class BlockModelAndJobURL(CustomBaseModel):
     """
     Block model creation time
     """
-    created_by: UserInfo
+    created_by: IMSUserInfo
     """
     User who created the block model
     """
@@ -1978,7 +2351,7 @@ class BlockModelAndJobURL(CustomBaseModel):
     """
     Date and time of the last block model update, including metadata updates
     """
-    last_updated_by: UserInfo
+    last_updated_by: IMSUserInfo
     """
     User who last updated the block model, including metadata updates
     """
@@ -2021,6 +2394,144 @@ class BlockModelAndJobURL(CustomBaseModel):
     """
 
 
+class CreateReportSpecification(CustomBaseModel):
+    autorun: Annotated[StrictBool, Field(title="Autorun")] = True
+    """
+    Whether to automatically run this Report Specification when a new version is published
+    """
+    bbox: Annotated[
+        BBox | BBoxXYZ | None,
+        Field(
+            examples=[
+                {
+                    "i_minmax": {"max": 1, "min": 0},
+                    "j_minmax": {"max": 1, "min": 0},
+                    "k_minmax": {"max": 1, "min": 0},
+                }
+            ],
+            title="Bbox",
+        ),
+    ] = None
+    """
+    Bounding box for the report
+    """
+    categories: Annotated[
+        list[ReportCategory] | None,
+        Field(
+            examples=[
+                [
+                    {
+                        "col_id": "11c277c2-edc6-4a7a-8380-251dd19231f2",
+                        "label": "Grade",
+                        "values": ["low", "medium", "high"],
+                    }
+                ]
+            ],
+            max_length=5,
+            min_length=0,
+            title="Categories",
+        ),
+    ] = None
+    """
+    Category columns within this Report Specification. If null or empty, the report will have a single total row for each cut-off.
+    """
+    columns: Annotated[
+        list[ReportColumn],
+        Field(
+            examples=[
+                [
+                    {
+                        "aggregation": "SUM",
+                        "col_id": "abc277c2-edc6-4a7a-8380-251dd19231f2",
+                        "label": "Au content",
+                        "output_unit_id": "kg",
+                    }
+                ]
+            ],
+            title="Columns",
+        ),
+    ]
+    """
+    Columns within this Report Specification
+    """
+    cutoff_col_id: Annotated[
+        UUID | None,
+        Field(examples=["13c277c2-edc6-4a7a-8380-251dd19231f2"], title="Cutoff Col Id"),
+    ] = None
+    """
+    ID of the column to use for cut-off evaluation
+    """
+    cutoff_values: Annotated[
+        list[StrictFloat] | None,
+        Field(examples=[[0.5, 1.5, 5]], max_length=20, min_length=1, title="Cutoff Values"),
+    ] = None
+    """
+    Values to use for cut-off evaluation
+    """
+    density_col_id: Annotated[
+        UUID | None,
+        Field(examples=["24c277c2-edc6-4a7a-8380-251dd19231f2"], title="Density Col Id"),
+    ] = None
+    """
+    ID of the column to use for block density
+    """
+    density_unit_id: Annotated[StrictStr | None, Field(examples=["kg/m3"], title="Density Unit Id")] = None
+    """
+    ID of the unit to use for block density. The unit must be of type `MASS_PER_VOLUME`.
+    """
+    density_value: Annotated[StrictFloat | None, Field(examples=[2.5], gt=1.0, title="Density Value")] = None
+    """
+    Value to use for block density
+    """
+    description: Annotated[
+        StrictStr | None,
+        Field(
+            examples=["Gold resource report for test purposes"],
+            max_length=1000,
+            title="Description",
+        ),
+    ] = None
+    """
+    User-supplied description of the report
+    """
+    mass_unit_id: Annotated[StrictStr, Field(examples=["t"], title="Mass Unit Id")]
+    """
+    ID of the unit to use for total mass. The unit must be of type `MASS`
+    """
+    mesh_filter: MeshFilter | None = None
+    """
+    Mesh filter to apply when running the report. Blocks are included or excluded based on whether their centroid falls inside or outside the referenced mesh object. Setting to null removes any existing mesh constraint.
+    """
+    name: Annotated[StrictStr, Field(max_length=120, title="Name")]
+    """
+    The human-readable label used to identify the report
+    """
+    negative_values_policy: Annotated[CreateReportNegativeValuesPolicy, Field(examples=["USE"])] = "IGNORE_BLOCK"
+    """
+    Policy for handling negative values in the report's cut-off or value columns
+    """
+    null_values_policy: Annotated[CreateReportNullValuesPolicy, Field(examples=["ZERO"])] = "IGNORE_BLOCK"
+    """
+    Policy for handling null values in the report's cut-off or value columns
+    """
+
+
+class GroupUpdateMetadata(CustomBaseModel):
+    group_uuid: Annotated[UUID, Field(title="Group Uuid")]
+    """
+    UUID of the group to update.
+    """
+    values: GroupUpdateMetadataValues
+
+
+class GroupUpdateMetadataLite(CustomBaseModel):
+    title: Annotated[StrictStr, Field(title="Title")]
+    """
+    Title of the group to update.
+    """
+    values: GroupUpdateMetadataValuesLite
+
+
 class JobResponse(CustomBaseModel):
     job_status: Annotated[JobStatus, Field(examples=["COMPLETE"])]
     """
@@ -2058,6 +2569,10 @@ class JobResponse(CustomBaseModel):
 class LineageV100(CustomBaseModel):
     """
     Events describing segments of the input lineage graph of this object
+
+    Attributes:
+        self_link (str, optional): Self link pointing to where this Geoscience Object is referenced within the events array
+        events (list[Lineage_V1_0_0_Runevent]): List of zero or more OpenLineage run events
     """
 
     events: Annotated[list[LineageV100Runevent], Field(title="Events")]
@@ -2220,6 +2735,10 @@ class ReportResult(CustomBaseModel):
     """
     ID of the column that was used for cut-off evaluation
     """
+    mesh_filter_used: MeshFilter | None = None
+    """
+    The mesh filter that was active when this report was run, or null if no mesh filter was applied.
+    """
     referenced_columns: Annotated[list[ReportResultReferencedColumn], Field(title="Referenced Columns")]
     report_result_created_at: Annotated[
         AwareDatetime,
@@ -2298,7 +2817,7 @@ class ReportResult(CustomBaseModel):
     """
     Creation date of the version of the block model that the report was run on
     """
-    version_created_by: UserInfo
+    version_created_by: dict[str, Any]
     """
     User who created the version of the block model that the report was run on
     """
@@ -2337,7 +2856,7 @@ class UpdateBlockModel(CustomBaseModel):
     """
     Block model description
     """
-    fill_subblocks: Annotated[StrictBool | None, Field(title="Fill Subblocks")] = False
+    fill_subblocks: Annotated[StrictBool | None, Field(title="Fill Subblocks")] = None
     """
 
     Sets the default fill_subblocks value for this block model. It can be overridden at the time of an update.
@@ -2387,90 +2906,33 @@ class UpdateColumnsLite(CustomBaseModel):
     update_metadata: Annotated[list[UpdateMetadataLite] | None, Field(title="Update Metadata")] = None
 
 
-class UpdateDataLite(CustomBaseModel):
-    columns: UpdateColumnsLite
-    comment: Annotated[StrictStr | None, Field(max_length=250, title="Comment")] = None
-    fill_subblocks: Annotated[StrictBool | None, Field(title="Fill Subblocks")] = None
+class UpdateGroups(CustomBaseModel):
+    """
+    Shell for group operations on the ``update`` (UUID-based) flow.
     """
 
-    If set to true, any missing sub-blocks will be filled with data from the parent block.
-    This is only available for fully sub-blocked models, when `update_type` is `merge`, and `geometry_change` is `true`.
-
+    delete: Annotated[list[UUID], Field(title="Delete")] = []
     """
-    geometry_change: Annotated[StrictBool | None, Field(title="Geometry Change")] = None
+    List of group UUIDs to delete.
     """
-
-    Whether the update will create or destroy sub-blocks.
-    - If set to `false`, no sub-blocks can be created nor destroyed, only sub-blocks that exist in the latest version can be updated.
-    - If set to `true`:
-        - New sub-blocks can be created and/or existing sub-blocks can be destroyed, but all columns must be provided.
-        - Only `new`, `update`, and `delete` column operations are allowed as standalone operations.
-        - `update_metadata` is allowed, but only when the target columns are being updated as part of the `update` operation, and only when there are no columns being renamed.
-        - If `update_type` is set to `merge`, then all sub-blocks within a parent block must be provided.
-
-    """
-    input_options: Annotated[
-        InputOptionsParquet | InputOptionsCSV | InputOptionsDatamine | None,
-        Field(discriminator="file_format", title="Input Options"),
-    ] = None
-    lineage: Annotated[LineageV100 | None, Field(deprecated=True)] = None
-    """
-    Lineage of the block model update
-    """
-    update_type: UpdateType = "merge"
-    """
-
-    Behaviour of the update, for blocks that are omitted from the update file.
-    - If set to `replace`, the values for blocks that are omitted will be set to null, for the selected columns. If `geometry_change` is true, the geometry of any parent block that has no blocks in the update file will be reset to an un-subdivided state.
-    - If set to `merge`, blocks that are omitted will be left unchanged, the values within those blocks will be the same as within the previous version.
-
-    """
+    new: Annotated[list[Group], Field(title="New", validate_default=True)] = []
+    update_metadata: Annotated[list[GroupUpdateMetadata], Field(title="Update Metadata", validate_default=True)] = []
 
 
-class UpdateDataWithVersion(CustomBaseModel):
-    base_version_uuid: Annotated[UUID, Field(title="Base Version Uuid")]
-    bbox: Annotated[BBox | BBoxXYZ | None, Field(title="Bbox")] = None
-    columns: UpdateColumns
-    comment: Annotated[StrictStr | None, Field(max_length=250, title="Comment")] = None
-    fill_subblocks: Annotated[StrictBool | None, Field(title="Fill Subblocks")] = None
+class UpdateGroupsLite(CustomBaseModel):
+    """
+    Shell for group operations on the ``update_lite`` (title-based) flow.
     """
 
-    If set to true, any missing sub-blocks will be filled with data from the parent block.
-    This is only available for fully sub-blocked models, when `update_type` is `merge`, and `geometry_change` is `true`.
-
+    delete: Annotated[list[StrictStr], Field(title="Delete")] = []
     """
-    geometry_change: Annotated[StrictBool | None, Field(title="Geometry Change")] = None
+    List of group titles to delete.
     """
-
-    Whether the update will create or destroy sub-blocks.
-    - If set to `false`, no sub-blocks can be created nor destroyed, only sub-blocks that exist in the latest version can be updated.
-    - If set to `true`:
-        - New sub-blocks can be created and/or existing sub-blocks can be destroyed, but all columns must be provided.
-        - Only `new`, `update`, and `delete` column operations are allowed as standalone operations.
-        - `update_metadata` is allowed, but only when the target columns are being updated as part of the `update` operation, and only when there are no columns being renamed.
-        - If `update_type` is set to `merge`, then all sub-blocks within a parent block must be provided.
-
-    """
-    lineage: Annotated[LineageV100 | None, Field(deprecated=True)] = None
-    """
-    Lineage of the block model update
-    """
-    update_type: UpdateType = "merge"
-    """
-
-    Behaviour of the update, for blocks that are omitted from the update file.
-    - If set to `replace`, the values for blocks that are omitted will be set to null, for the selected columns. If `geometry_change` is true, the geometry of any parent block that has no blocks in the update file will be reset to an un-subdivided state.
-    - If set to `merge`, blocks that are omitted will be left unchanged, the values within those blocks will be the same as within the previous version.
-
-    """
-
-
-class UpdateWithUrl(CustomBaseModel):
-    changes: Annotated[UpdateDataWithVersion | UpdateDataLite, Field(title="Changes")]
-    job_url: Annotated[AnyUrl, Field(title="Job Url")]
-    job_uuid: Annotated[UUID, Field(title="Job Uuid")]
-    upload_url: Annotated[AnyUrl | None, Field(title="Upload Url")] = None
-    version_uuid: Annotated[UUID, Field(title="Version Uuid")]
+    new: Annotated[list[GroupLite], Field(title="New", validate_default=True)] = []
+    update_metadata: Annotated[
+        list[GroupUpdateMetadataLite],
+        Field(title="Update Metadata", validate_default=True),
+    ] = []
 
 
 class VersionChanges(CustomBaseModel):
@@ -2516,7 +2978,7 @@ class VersionWithChanges(CustomBaseModel):
     """
     When the version was created
     """
-    created_by: UserInfo
+    created_by: IMSUserInfo
     """
     User who performed the action that created the version
     """
@@ -2723,6 +3185,235 @@ class ReportComparison(CustomBaseModel):
     List of value columns used in the report
     """
     warnings: ReportComparisonWarnings
+
+
+class UpdateDataLite1(CustomBaseModel):
+    columns: UpdateColumnsLite
+    comment: Annotated[StrictStr | None, Field(max_length=250, title="Comment")] = None
+    fill_subblocks: Annotated[StrictBool | None, Field(title="Fill Subblocks")] = None
+    """
+
+    If set to true, any missing sub-blocks will be filled with data from the parent block.
+    This is only available for fully sub-blocked models, when `update_type` is `merge`, and `geometry_change` is `true`.
+
+    """
+    geometry_change: Annotated[StrictBool | None, Field(title="Geometry Change")] = None
+    """
+
+    Whether the update will create or destroy sub-blocks.
+    - If set to `false`, no sub-blocks can be created nor destroyed, only sub-blocks that exist in the latest version can be updated.
+    - If set to `true`:
+        - New sub-blocks can be created and/or existing sub-blocks can be destroyed, but all columns must be provided.
+        - Only `new`, `update`, and `delete` column operations are allowed as standalone operations.
+        - `update_metadata` is allowed, but only when the target columns are being updated as part of the `update` operation, and only when there are no columns being renamed.
+        - If `update_type` is set to `merge`, then all sub-blocks within a parent block must be provided.
+
+    """
+    group_missing_column_override: Annotated[dict[str, Any] | None, Field(title="Group Missing Column Override")] = None
+    """
+
+    Per-request override of the resolved missing-column policy for specific groups, keyed by qualified
+    group title. The override is local-only: it replaces the named group's own resolved policy
+    for this request only, and does not affect other groups in the same zone (the overridden group's columns are
+    excluded from the zone).
+
+    """
+    groups: UpdateGroupsLite | None = None
+    """
+    Group operations for this update.
+    """
+    input_options: Annotated[
+        InputOptionsParquet | InputOptionsCSV | InputOptionsDatamine | None,
+        Field(discriminator="file_format", title="Input Options"),
+    ] = None
+    lineage: Annotated[LineageV100 | None, Field(deprecated=True)] = None
+    """
+    Lineage of the block model update
+    """
+    update_type: UpdateType = "merge"
+    """
+
+    Behaviour of the update, for blocks that are omitted from the update file.
+    - If set to `replace`, the values for blocks that are omitted will be set to null, for the selected columns. If `geometry_change` is true, the geometry of any parent block that has no blocks in the update file will be reset to an un-subdivided state.
+    - If set to `merge`, blocks that are omitted will be left unchanged, the values within those blocks will be the same as within the previous version.
+
+    """
+
+
+class UpdateDataLite2(CustomBaseModel):
+    columns: UpdateColumnsLite | None = None
+    comment: Annotated[StrictStr | None, Field(max_length=250, title="Comment")] = None
+    fill_subblocks: Annotated[StrictBool | None, Field(title="Fill Subblocks")] = None
+    """
+
+    If set to true, any missing sub-blocks will be filled with data from the parent block.
+    This is only available for fully sub-blocked models, when `update_type` is `merge`, and `geometry_change` is `true`.
+
+    """
+    geometry_change: Annotated[StrictBool | None, Field(title="Geometry Change")] = None
+    """
+
+    Whether the update will create or destroy sub-blocks.
+    - If set to `false`, no sub-blocks can be created nor destroyed, only sub-blocks that exist in the latest version can be updated.
+    - If set to `true`:
+        - New sub-blocks can be created and/or existing sub-blocks can be destroyed, but all columns must be provided.
+        - Only `new`, `update`, and `delete` column operations are allowed as standalone operations.
+        - `update_metadata` is allowed, but only when the target columns are being updated as part of the `update` operation, and only when there are no columns being renamed.
+        - If `update_type` is set to `merge`, then all sub-blocks within a parent block must be provided.
+
+    """
+    group_missing_column_override: Annotated[dict[str, Any] | None, Field(title="Group Missing Column Override")] = None
+    """
+
+    Per-request override of the resolved missing-column policy for specific groups, keyed by qualified
+    group title. The override is local-only: it replaces the named group's own resolved policy
+    for this request only, and does not affect other groups in the same zone (the overridden group's columns are
+    excluded from the zone).
+
+    """
+    groups: Annotated[UpdateGroupsLite | None, Field(...)]
+    """
+    Group operations for this update.
+    """
+    input_options: Annotated[
+        InputOptionsParquet | InputOptionsCSV | InputOptionsDatamine | None,
+        Field(discriminator="file_format", title="Input Options"),
+    ] = None
+    lineage: Annotated[LineageV100 | None, Field(deprecated=True)] = None
+    """
+    Lineage of the block model update
+    """
+    update_type: UpdateType = "merge"
+    """
+
+    Behaviour of the update, for blocks that are omitted from the update file.
+    - If set to `replace`, the values for blocks that are omitted will be set to null, for the selected columns. If `geometry_change` is true, the geometry of any parent block that has no blocks in the update file will be reset to an un-subdivided state.
+    - If set to `merge`, blocks that are omitted will be left unchanged, the values within those blocks will be the same as within the previous version.
+
+    """
+
+
+class UpdateDataLite(RootModel[UpdateDataLite1 | UpdateDataLite2]):
+    root: Annotated[UpdateDataLite1 | UpdateDataLite2, Field(title="UpdateDataLite")]
+
+
+class UpdateDataWithVersion1(CustomBaseModel):
+    base_version_uuid: Annotated[UUID, Field(title="Base Version Uuid")]
+    bbox: Annotated[BBox | BBoxXYZ | None, Field(title="Bbox")] = None
+    columns: UpdateColumns
+    comment: Annotated[StrictStr | None, Field(max_length=250, title="Comment")] = None
+    fill_subblocks: Annotated[StrictBool | None, Field(title="Fill Subblocks")] = None
+    """
+
+    If set to true, any missing sub-blocks will be filled with data from the parent block.
+    This is only available for fully sub-blocked models, when `update_type` is `merge`, and `geometry_change` is `true`.
+
+    """
+    geometry_change: Annotated[StrictBool | None, Field(title="Geometry Change")] = None
+    """
+
+    Whether the update will create or destroy sub-blocks.
+    - If set to `false`, no sub-blocks can be created nor destroyed, only sub-blocks that exist in the latest version can be updated.
+    - If set to `true`:
+        - New sub-blocks can be created and/or existing sub-blocks can be destroyed, but all columns must be provided.
+        - Only `new`, `update`, and `delete` column operations are allowed as standalone operations.
+        - `update_metadata` is allowed, but only when the target columns are being updated as part of the `update` operation, and only when there are no columns being renamed.
+        - If `update_type` is set to `merge`, then all sub-blocks within a parent block must be provided.
+
+    """
+    group_missing_column_override: Annotated[
+        dict[StrictStr, Any] | None, Field(title="Group Missing Column Override")
+    ] = None
+    """
+
+    Per-request override of the resolved missing-column policy for specific groups, keyed by group UUID.
+    The override is local-only: it replaces the named group's own resolved policy for this request only, and
+    does not affect other groups in the same zone (the overridden group's columns are excluded from the zone).
+
+    """
+    groups: UpdateGroups | None = None
+    """
+    Group operations for this update.
+    """
+    lineage: Annotated[LineageV100 | None, Field(deprecated=True)] = None
+    """
+    Lineage of the block model update
+    """
+    update_type: UpdateType = "merge"
+    """
+
+    Behaviour of the update, for blocks that are omitted from the update file.
+    - If set to `replace`, the values for blocks that are omitted will be set to null, for the selected columns. If `geometry_change` is true, the geometry of any parent block that has no blocks in the update file will be reset to an un-subdivided state.
+    - If set to `merge`, blocks that are omitted will be left unchanged, the values within those blocks will be the same as within the previous version.
+
+    """
+
+
+class UpdateDataWithVersion2(CustomBaseModel):
+    base_version_uuid: Annotated[UUID, Field(title="Base Version Uuid")]
+    bbox: Annotated[BBox | BBoxXYZ | None, Field(title="Bbox")] = None
+    columns: UpdateColumns | None = None
+    comment: Annotated[StrictStr | None, Field(max_length=250, title="Comment")] = None
+    fill_subblocks: Annotated[StrictBool | None, Field(title="Fill Subblocks")] = None
+    """
+
+    If set to true, any missing sub-blocks will be filled with data from the parent block.
+    This is only available for fully sub-blocked models, when `update_type` is `merge`, and `geometry_change` is `true`.
+
+    """
+    geometry_change: Annotated[StrictBool | None, Field(title="Geometry Change")] = None
+    """
+
+    Whether the update will create or destroy sub-blocks.
+    - If set to `false`, no sub-blocks can be created nor destroyed, only sub-blocks that exist in the latest version can be updated.
+    - If set to `true`:
+        - New sub-blocks can be created and/or existing sub-blocks can be destroyed, but all columns must be provided.
+        - Only `new`, `update`, and `delete` column operations are allowed as standalone operations.
+        - `update_metadata` is allowed, but only when the target columns are being updated as part of the `update` operation, and only when there are no columns being renamed.
+        - If `update_type` is set to `merge`, then all sub-blocks within a parent block must be provided.
+
+    """
+    group_missing_column_override: Annotated[
+        dict[StrictStr, Any] | None, Field(title="Group Missing Column Override")
+    ] = None
+    """
+
+    Per-request override of the resolved missing-column policy for specific groups, keyed by group UUID.
+    The override is local-only: it replaces the named group's own resolved policy for this request only, and
+    does not affect other groups in the same zone (the overridden group's columns are excluded from the zone).
+
+    """
+    groups: Annotated[UpdateGroups | None, Field(...)]
+    """
+    Group operations for this update.
+    """
+    lineage: Annotated[LineageV100 | None, Field(deprecated=True)] = None
+    """
+    Lineage of the block model update
+    """
+    update_type: UpdateType = "merge"
+    """
+
+    Behaviour of the update, for blocks that are omitted from the update file.
+    - If set to `replace`, the values for blocks that are omitted will be set to null, for the selected columns. If `geometry_change` is true, the geometry of any parent block that has no blocks in the update file will be reset to an un-subdivided state.
+    - If set to `merge`, blocks that are omitted will be left unchanged, the values within those blocks will be the same as within the previous version.
+
+    """
+
+
+class UpdateDataWithVersion(RootModel[UpdateDataWithVersion1 | UpdateDataWithVersion2]):
+    root: Annotated[
+        UpdateDataWithVersion1 | UpdateDataWithVersion2,
+        Field(title="UpdateDataWithVersion"),
+    ]
+
+
+class UpdateWithUrl(CustomBaseModel):
+    changes: Annotated[UpdateDataWithVersion | UpdateDataLite, Field(title="Changes")]
+    job_url: Annotated[AnyUrl, Field(title="Job Url")]
+    job_uuid: Annotated[UUID, Field(title="Job Uuid")]
+    upload_url: Annotated[AnyUrl | None, Field(title="Upload Url")] = None
+    version_uuid: Annotated[UUID, Field(title="Version Uuid")]
 
 
 class ListingDeltaResponseData(CustomBaseModel):

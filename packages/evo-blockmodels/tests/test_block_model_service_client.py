@@ -22,6 +22,7 @@ from evo.blockmodels.endpoints.models import (
     BlockSize,
     DeltaRequestData,
     FloatRange,
+    IMSUserInfo,
     IntRange,
     JobErrorPayload,
     JobResponse,
@@ -36,7 +37,6 @@ from evo.blockmodels.endpoints.models import (
     Size3D,
     SizeOptionsRegular,
     UpdateBlockModel,
-    UserInfo,
 )
 from evo.blockmodels.exceptions import CacheNotConfiguredException, JobFailedException
 from evo.common import HealthCheckType, StaticContext
@@ -269,7 +269,7 @@ class TestBlockModelAPIClient(TestWithConnector, TestWithStorage):
     async def test_update_block_model_metadata(self) -> None:
         bm_uuid = uuid.uuid4()
         now = datetime.now(timezone.utc)
-        user_info = UserInfo(email="test@test.com", id=uuid.uuid4(), name="Test User")
+        user_info = IMSUserInfo(email="test@test.com", id=uuid.uuid4(), name="Test User")
         from evo.blockmodels.endpoints.models import BlockModel as EndpointBlockModel
 
         block_model_response = EndpointBlockModel(

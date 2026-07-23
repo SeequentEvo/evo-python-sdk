@@ -9,6 +9,9 @@ lint-fix:
 test-common:
 	uv run --package evo-sdk-common pytest packages/evo-sdk-common/tests
 
+test-blockmodels:
+	uv run --package evo-blockmodels pytest packages/evo-blockmodels/tests
+
 test-files:
 	uv run --package evo-files pytest packages/evo-files/tests
 
@@ -26,6 +29,7 @@ test-notebooks:
 
 test:
 	@make test-common
+	@make test-blockmodels
 	@make test-files
 	@make test-objects
 	@make test-colormaps

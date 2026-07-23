@@ -33,7 +33,7 @@ BM_UUID = uuid.uuid4()
 GOOSE_UUID = uuid.uuid4()
 GOOSE_VERSION_ID = "2"
 DATE = datetime(2021, 1, 1, tzinfo=timezone.utc)
-MODEL_USER = models.UserInfo(email="test@test.com", name="Test User", id=uuid.uuid4())
+MODEL_USER = models.IMSUserInfo(email="test@test.com", name="Test User", id=uuid.uuid4())
 USER = ServiceUser.from_model(MODEL_USER)
 
 
@@ -58,7 +58,7 @@ def _mock_version(
 UPDATE_RESULT = models.UpdateWithUrl(
     changes=models.UpdateDataLite(
         # We don't look at these values, so we can just set them to empty
-        columns=models.UpdateColumnsLite(new=[], update=[], rename=[], delete=[])
+        models.UpdateDataLite1(columns=models.UpdateColumnsLite(new=[], update=[], rename=[], delete=[]))
     ),
     version_uuid=uuid.uuid4(),
     job_uuid=uuid.uuid4(),
@@ -169,7 +169,7 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
             mock_destination.upload_file.assert_called_once()
 
             # Assert that the correct columns are part of the update
-            expected_update_body = models.UpdateDataLite(
+            expected_update_body = models.UpdateDataLite1(
                 columns=models.UpdateColumnsLite(
                     new=[
                         models.ColumnLite(
@@ -235,7 +235,7 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
             mock_destination.upload_file.assert_called_once()
 
             # col2 carries tags; col1 has none, so its body must not contain a tags field.
-            expected_update_body = models.UpdateDataLite(
+            expected_update_body = models.UpdateDataLite1(
                 columns=models.UpdateColumnsLite(
                     new=[
                         models.ColumnLite(
@@ -306,7 +306,7 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
             mock_destination.upload_file.assert_called_once()
 
             # Assert that the correct columns are part of the update
-            expected_update_body = models.UpdateDataLite(
+            expected_update_body = models.UpdateDataLite1(
                 columns=models.UpdateColumnsLite(
                     new=[
                         models.ColumnLite(
@@ -407,7 +407,7 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
             mock_destination.upload_file.assert_called_once()
 
             # Assert that the correct columns are part of the update
-            expected_update_body = models.UpdateDataLite(
+            expected_update_body = models.UpdateDataLite1(
                 columns=models.UpdateColumnsLite(
                     new=[
                         models.ColumnLite(
@@ -539,7 +539,7 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
             mock_destination.upload_file.assert_called_once()
 
             # Assert that the correct columns are part of the update
-            expected_update_body = models.UpdateDataLite(
+            expected_update_body = models.UpdateDataLite1(
                 columns=models.UpdateColumnsLite(
                     new=[
                         models.ColumnLite(
@@ -604,7 +604,7 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
             )
             mock_destination.upload_file.assert_called_once()
 
-            expected_update_body = models.UpdateDataLite(
+            expected_update_body = models.UpdateDataLite1(
                 columns=models.UpdateColumnsLite(
                     new=[
                         models.ColumnLite(
@@ -697,7 +697,7 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
             },
         )
 
-        expected_update_body = models.UpdateDataLite(
+        expected_update_body = models.UpdateDataLite1(
             columns=models.UpdateColumnsLite(
                 new=[],
                 update=[],
@@ -706,15 +706,15 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
                 update_metadata=[
                     models.UpdateMetadataLite(
                         title="col1",
-                        values=models.UpdateMetadataValues(unit_id="%[mass]"),
+                        values=models.UpdateMetadataValuesLite(unit_id="%[mass]"),
                     ),
                     models.UpdateMetadataLite(
                         title="col2",
-                        values=models.UpdateMetadataValues(tags={"source": "assay"}),
+                        values=models.UpdateMetadataValuesLite(tags={"source": "assay"}),
                     ),
                     models.UpdateMetadataLite(
                         title="col3",
-                        values=models.UpdateMetadataValues(unit_id=None, tags={}),
+                        values=models.UpdateMetadataValuesLite(unit_id=None, tags={}),
                     ),
                 ],
             ),
@@ -748,7 +748,7 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
         )
 
         # Assert that the correct metadata update with comment is part of the request
-        expected_update_body = models.UpdateDataLite(
+        expected_update_body = models.UpdateDataLite1(
             columns=models.UpdateColumnsLite(
                 new=[],
                 update=[],
@@ -757,11 +757,11 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
                 update_metadata=[
                     models.UpdateMetadataLite(
                         title="col1",
-                        values=models.UpdateMetadataValues(unit_id="%[mass]"),
+                        values=models.UpdateMetadataValuesLite(unit_id="%[mass]"),
                     ),
                     models.UpdateMetadataLite(
                         title="col2",
-                        values=models.UpdateMetadataValues(unit_id=None),
+                        values=models.UpdateMetadataValuesLite(unit_id=None),
                     ),
                 ],
             ),
@@ -795,7 +795,7 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
             column_updates={"col1": "%[mass]"},
         )
 
-        expected_update_body = models.UpdateDataLite(
+        expected_update_body = models.UpdateDataLite1(
             columns=models.UpdateColumnsLite(
                 new=[],
                 update=[],
@@ -804,7 +804,7 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
                 update_metadata=[
                     models.UpdateMetadataLite(
                         title="col1",
-                        values=models.UpdateMetadataValues(unit_id="%[mass]"),
+                        values=models.UpdateMetadataValuesLite(unit_id="%[mass]"),
                     ),
                 ],
             ),
@@ -859,7 +859,7 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
         )
 
         # Assert that the correct rename request with comment was made
-        expected_update_body = models.UpdateDataLite(
+        expected_update_body = models.UpdateDataLite1(
             columns=models.UpdateColumnsLite(
                 new=[],
                 update=[],
@@ -939,7 +939,7 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
             BM_UUID, ["col1", "col2"], comment="Remove unused columns"
         )
 
-        expected_update_body = models.UpdateDataLite(
+        expected_update_body = models.UpdateDataLite1(
             columns=models.UpdateColumnsLite(
                 new=[],
                 update=[],
