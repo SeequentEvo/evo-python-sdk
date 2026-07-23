@@ -407,8 +407,10 @@ class BlockModelAPIClient(BaseAPIClient):
             workspace_id=str(self._environment.workspace_id),
             bm_id=str(bm_id),
             update_data_lite=models.UpdateDataLite(
-                columns=columns,
-                comment=comment,
+                models.UpdateDataLite1(
+                    columns=columns,
+                    comment=comment,
+                )
             ),
             additional_headers=self._preview_headers(),
         )
@@ -745,9 +747,11 @@ class BlockModelAPIClient(BaseAPIClient):
             workspace_id=str(self._environment.workspace_id),
             bm_id=str(bm_id),
             update_data_lite=models.UpdateDataLite(
-                columns=columns,
-                update_type=models.UpdateType.replace,
-                geometry_change=geometry_change,
+                models.UpdateDataLite1(
+                    columns=columns,
+                    update_type=models.UpdateType.replace,
+                    geometry_change=geometry_change,
+                )
             ),
             additional_headers=self._preview_headers(),
         )
@@ -844,10 +848,12 @@ class BlockModelAPIClient(BaseAPIClient):
             workspace_id=str(self._environment.workspace_id),
             bm_id=str(bm_id),
             update_data_lite=models.UpdateDataLite(
-                columns=columns,
-                update_type=models.UpdateType.replace,
-                geometry_change=geometry_change,
-                **({} if fill_subblocks is None else {"fill_subblocks": fill_subblocks}),
+                models.UpdateDataLite1(
+                    columns=columns,
+                    update_type=models.UpdateType.replace,
+                    geometry_change=geometry_change,
+                    **({} if fill_subblocks is None else {"fill_subblocks": fill_subblocks}),
+                )
             ),
             additional_headers=self._preview_headers(),
         )
@@ -960,11 +966,11 @@ class BlockModelAPIClient(BaseAPIClient):
         :return: The new version of the block model with updated metadata.
         """
 
-        def _to_values(value: str | None | ColumnMetadataUpdate) -> models.UpdateMetadataValues:
+        def _to_values(value: str | None | ColumnMetadataUpdate) -> models.UpdateMetadataValuesLite:
             if isinstance(value, ColumnMetadataUpdate):
                 # Only forward fields the caller set, so untouched fields are omitted on the wire.
-                return models.UpdateMetadataValues(**value.model_dump(exclude_unset=True))
-            return models.UpdateMetadataValues(unit_id=value)
+                return models.UpdateMetadataValuesLite(**value.model_dump(exclude_unset=True))
+            return models.UpdateMetadataValuesLite(unit_id=value)
 
         update_metadata_list = [
             models.UpdateMetadataLite(title=col_title, values=_to_values(value))

@@ -37,7 +37,7 @@ BM_UUID = uuid.uuid4()
 GOOSE_UUID = uuid.uuid4()
 GOOSE_VERSION_ID = "2"
 DATE = datetime(2021, 1, 1, tzinfo=timezone.utc)
-MODEL_USER = models.UserInfo(email="test@test.com", name="Test User", id=uuid.uuid4())
+MODEL_USER = models.IMSUserInfo(email="test@test.com", name="Test User", id=uuid.uuid4())
 USER = ServiceUser.from_model(MODEL_USER)
 BM_BBOX = models.BBoxXYZ(
     x_minmax=models.FloatRange(min=0, max=10),
@@ -109,7 +109,7 @@ FIRST_VERSION = _mock_version(1, uuid.uuid4(), "2")
 UPDATE_RESULT = models.UpdateWithUrl(
     changes=models.UpdateDataLite(
         # We don't look at these values, so we can just set them to empty
-        columns=models.UpdateColumnsLite(new=[], update=[], rename=[], delete=[])
+        models.UpdateDataLite1(columns=models.UpdateColumnsLite(new=[], update=[], rename=[], delete=[]))
     ),
     version_uuid=FIRST_VERSION.version_uuid,
     job_uuid=uuid.uuid4(),
@@ -432,7 +432,7 @@ class TestCreateBlockModel(TestWithConnector, TestWithStorage):
             mock_destination.upload_file.assert_called_once()
 
             # Assert that the correct columns are part of the update
-            expected_update_body = models.UpdateDataLite(
+            expected_update_body = models.UpdateDataLite1(
                 columns=models.UpdateColumnsLite(
                     new=[
                         models.ColumnLite(
@@ -534,7 +534,7 @@ class TestCreateBlockModel(TestWithConnector, TestWithStorage):
             mock_destination.upload_file.assert_called_once()
 
             # Assert that the correct columns are part of the update
-            expected_update_body = models.UpdateDataLite(
+            expected_update_body = models.UpdateDataLite1(
                 columns=models.UpdateColumnsLite(
                     new=[
                         models.ColumnLite(
