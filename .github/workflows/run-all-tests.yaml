@@ -34,7 +34,7 @@ jobs:
           - "3.13"
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/testing
         with:
           PYTHON_VERSION: ${{ matrix.python-version }}

@@ -37,9 +37,9 @@ class TestEvoScopes(unittest.TestCase):
             (EvoScopes.evo_file,),
             (EvoScopes.evo_audit,),
         ],
-        name_func=lambda func,
-        index,
-        params: f"{func.__name__}_{index}_{parameterized.to_safe_name(str(params[0][0]))}",
+        name_func=lambda func, index, params: (
+            f"{func.__name__}_{index}_{parameterized.to_safe_name(str(params[0][0]))}"
+        ),
     )
     def test_single_scope_string(self, scope: EvoScopes) -> None:
         self.assertIn(scope, EXPECTED_SCOPE_NAMES)

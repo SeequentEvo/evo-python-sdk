@@ -29,7 +29,7 @@ test = [
 dev = [
     "bumpver",
     "coverage[toml]",
-    "ruff==0.14.0",
+    "ruff==0.15.16",
     {include-group="test"},
 ]
 

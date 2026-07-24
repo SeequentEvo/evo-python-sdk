@@ -16,7 +16,7 @@ from parameterized import param, parameterized
 
 from evo.common.data import RequestMethod
 from evo.common.test_tools import MockResponse, TestWithConnector
-from evo.discovery import DiscoveryAPIClient, Hub, Organization
+from evo.discovery import CentralInstance, DiscoveryAPIClient, Hub, Organization
 
 from ..data import load_test_data
 
@@ -37,6 +37,21 @@ def _sample_data_as_expected_orgs(sample_data: dict) -> list[Organization]:
     all_hubs = sorted(sample_data["hubs"], key=lambda h: h["display_name"])
     org_data = sorted(sample_data["organizations"], key=lambda o: o["display_name"])
     service_access = {(sa["org_id"], sa["hub_code"]) for sa in sample_data["service_access"]}
+    accounts = sample_data.get("accounts", [])
+
+    def central_instance_for_org(org_id: str) -> CentralInstance | None:
+        for account in accounts:
+            for instance in account.get("instances", []):
+                if instance["id"] == org_id and (ci := instance.get("central")) is not None:
+                    return CentralInstance(
+                        id=UUID(ci["id"]),
+                        display_name=ci["display_name"],
+                        name=ci["name"],
+                        host=ci["host"],
+                        organization_name=ci["organization_name"],
+                    )
+        return None
+
     return [
         Organization(
             id=UUID(org["id"]),
@@ -51,6 +66,7 @@ def _sample_data_as_expected_orgs(sample_data: dict) -> list[Organization]:
                 for hub in all_hubs
                 if (org["id"], hub["code"]) in service_access
             ),
+            central=central_instance_for_org(org["id"]),
         )
         for org in org_data
     ]
@@ -114,6 +130,13 @@ class TestDiscoveryAPIClient(TestWithConnector):
                     display_name="Test Hub",
                     services=("service1", "service2"),
                 ),
+            ),
+            central=CentralInstance(
+                id=UUID("87654321-4321-8765-4321-876543218765"),
+                display_name="Central Instance",
+                name="central_instance",
+                host="central.example.com",
+                organization_name="Hashable central org name",
             ),
         )
         try:
