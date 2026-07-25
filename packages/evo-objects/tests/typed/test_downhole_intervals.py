@@ -42,22 +42,22 @@ def _make_intervals(**overrides) -> pd.DataFrame:
         "hole_id": pd.Categorical(["DH001", "DH001", "DH002", "DH002"]),
         "from": [0.0, 5.0, 0.0, 3.0],
         "to": [5.0, 10.0, 3.0, 6.0],
-        "x_start": [100.0, 100.0, 200.0, 200.0],
-        "y_start": [200.0, 200.0, 300.0, 300.0],
-        "z_start": [0.0, -5.0, 0.0, -3.0],
-        "x_end": [100.0, 100.0, 200.0, 200.0],
-        "y_end": [200.0, 200.0, 300.0, 300.0],
-        "z_end": [-5.0, -10.0, -3.0, -6.0],
-        "x_mid": [100.0, 100.0, 200.0, 200.0],
-        "y_mid": [200.0, 200.0, 300.0, 300.0],
-        "z_mid": [-2.5, -7.5, -1.5, -4.5],
+        "x_start": [100.0, 101.0, 200.0, 200.0],
+        "y_start": [200.0, 200.0, 300.0, 301.0],
+        "z_start": [0.0, -4.8, 0.0, -2.9],
+        "x_end": [101.0, 102.5, 200.0, 200.0],
+        "y_end": [200.0, 200.0, 301.0, 302.5],
+        "z_end": [-4.8, -9.5, -2.9, -5.7],
+        "x_mid": [100.5, 101.75, 200.0, 200.0],
+        "y_mid": [200.0, 200.0, 300.5, 301.75],
+        "z_mid": [-2.4, -7.15, -1.45, -4.3],
     }
     base.update(overrides)
     return pd.DataFrame(base)
 
 
 _BBOX = BoundingBox(
-    min_x=100.0, min_y=200.0, max_x=200.0, max_y=300.0, min_z=-10.0, max_z=0.0
+    min_x=100.0, min_y=200.0, max_x=200.0, max_y=302.5, min_z=-9.5, max_z=0.0
 )
 
 
@@ -284,8 +284,8 @@ class TestDownholeIntervals(TestWithConnector):
         self.assertAlmostEqual(bbox.min_x, 100.0)
         self.assertAlmostEqual(bbox.max_x, 200.0)
         self.assertAlmostEqual(bbox.min_y, 200.0)
-        self.assertAlmostEqual(bbox.max_y, 300.0)
-        self.assertAlmostEqual(bbox.min_z, -10.0)
+        self.assertAlmostEqual(bbox.max_y, 302.5)
+        self.assertAlmostEqual(bbox.min_z, -9.5)
         self.assertAlmostEqual(bbox.max_z, 0.0)
 
     async def test_bounding_box_stored_in_schema(self):
@@ -294,7 +294,7 @@ class TestDownholeIntervals(TestWithConnector):
         bbox = obj.bounding_box
         self.assertAlmostEqual(bbox.min_x, 100.0)
         self.assertAlmostEqual(bbox.max_x, 200.0)
-        self.assertAlmostEqual(bbox.min_z, -10.0)
+        self.assertAlmostEqual(bbox.min_z, -9.5)
         self.assertAlmostEqual(bbox.max_z, 0.0)
 
     # ------------------------------------------------------------------
@@ -327,3 +327,58 @@ class TestDownholeIntervals(TestWithConnector):
             pd.api.types.is_string_dtype(data.intervals["hole_id"]),
             f"Expected string dtype, got {data.intervals['hole_id'].dtype}",
         )
+
+    # ------------------------------------------------------------------
+    # JSON structure
+    # ------------------------------------------------------------------
+
+    async def test_json(self):
+        """Verify the raw schema document has the expected structure."""
+        df = _make_intervals(grade=[1.0, 2.0, 3.0, 4.0])
+        data = DownholeIntervalsData(
+            name="Test Intervals JSON",
+            intervals=df,
+            is_composited=False,
+            depth_unit="m",
+        )
+        with self._mock_geoscience_objects() as mock_client:
+            obj = await DownholeIntervals.create(context=self.context, data=data)
+            object_json = mock_client.objects[str(obj.metadata.url.object_id)]
+
+            # Verify schema
+            self.assertEqual(
+                object_json["schema"],
+                "/objects/downhole-intervals/1.3.0/downhole-intervals.schema.json",
+            )
+
+            # Verify base properties
+            self.assertEqual(object_json["name"], "Test Intervals JSON")
+            self.assertIn("uuid", object_json)
+            self.assertIn("bounding_box", object_json)
+            self.assertEqual(object_json["coordinate_reference_system"], "unspecified")
+
+            # Verify top-level properties
+            self.assertFalse(object_json["is_composited"])
+
+            # Verify coordinate structures
+            self.assertIn("coordinates", object_json["start"])
+            self.assertIn("data", object_json["start"]["coordinates"])
+            self.assertIn("coordinates", object_json["end"])
+            self.assertIn("data", object_json["end"]["coordinates"])
+            self.assertIn("coordinates", object_json["mid_points"])
+            self.assertIn("data", object_json["mid_points"]["coordinates"])
+
+            # Verify from_to structure
+            self.assertIn("from_to", object_json)
+            self.assertIn("intervals", object_json["from_to"])
+            self.assertIn("start_and_end", object_json["from_to"]["intervals"])
+            self.assertIn("data", object_json["from_to"]["intervals"]["start_and_end"])
+            self.assertEqual(object_json["from_to"]["unit"], "m")
+
+            # Verify hole_id
+            self.assertIn("hole_id", object_json)
+
+            # Verify attributes
+            self.assertEqual(len(object_json["attributes"]), 1)
+            self.assertEqual(object_json["attributes"][0]["name"], "grade")
+            self.assertEqual(object_json["attributes"][0]["attribute_type"], "scalar")
