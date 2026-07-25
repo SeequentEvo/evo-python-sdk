@@ -23,7 +23,7 @@ from parameterized import parameterized
 from evo.common import Environment, StaticContext
 from evo.common.test_tools import BASE_URL, ORG, WORKSPACE_ID, TestWithConnector
 from evo.objects import ObjectReference
-from evo.objects.typed import BoundingBox, DownholeIntervals, DownholeIntervalsData
+from evo.objects.typed import DownholeIntervals, DownholeIntervalsData
 from evo.objects.typed.base import BaseObject
 from evo.objects.typed.exceptions import ObjectValidationError
 
@@ -55,10 +55,6 @@ def _make_intervals(**overrides) -> pd.DataFrame:
     base.update(overrides)
     return pd.DataFrame(base)
 
-
-_BBOX = BoundingBox(
-    min_x=100.0, min_y=200.0, max_x=200.0, max_y=302.5, min_z=-9.5, max_z=0.0
-)
 
 
 class TestDownholeIntervals(TestWithConnector):
