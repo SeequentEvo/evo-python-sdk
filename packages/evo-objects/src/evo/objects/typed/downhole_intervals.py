@@ -24,9 +24,8 @@ from evo.objects import SchemaVersion
 from evo.objects.utils.table_formats import FLOAT_ARRAY_2, FLOAT_ARRAY_3
 
 from ._data import DataTable
-from ._model import DataLocation, SchemaBuilder, SchemaLocation, SchemaModel
-from ._utils import get_data_client
-from .attributes import Attributes
+from ._model import DataLocation, SchemaLocation, SchemaModel
+from .attributes import Attributes, Category
 from .exceptions import ObjectValidationError
 from .spatial import BaseSpatialObject, BaseSpatialObjectData
 from .types import BoundingBox
@@ -103,53 +102,96 @@ class DownholeIntervalsData(BaseSpatialObjectData):
 
 
 # ---------------------------------------------------------------------------
-# Schema sub-models for reading
+# Schema sub-models
 # ---------------------------------------------------------------------------
 
 
-class _StartCoordTable(DataTable):
+class StartCoordTable(DataTable):
     table_format: ClassVar = FLOAT_ARRAY_3
     data_columns: ClassVar[list[str]] = _START_COLS
 
+    @classmethod
+    async def _data_to_schema(cls, data: pd.DataFrame, context: IContext) -> Any:
+        return await super()._data_to_schema(data[_START_COLS], context)
 
-class _EndCoordTable(DataTable):
+
+class EndCoordTable(DataTable):
     table_format: ClassVar = FLOAT_ARRAY_3
     data_columns: ClassVar[list[str]] = _END_COLS
 
+    @classmethod
+    async def _data_to_schema(cls, data: pd.DataFrame, context: IContext) -> Any:
+        return await super()._data_to_schema(data[_END_COLS], context)
 
-class _MidCoordTable(DataTable):
+
+class MidCoordTable(DataTable):
     table_format: ClassVar = FLOAT_ARRAY_3
     data_columns: ClassVar[list[str]] = _MID_COLS
 
-
-class _StartLocations(SchemaModel):
-    _coords: Annotated[_StartCoordTable, SchemaLocation("coordinates")]
-
-
-class _EndLocations(SchemaModel):
-    _coords: Annotated[_EndCoordTable, SchemaLocation("coordinates")]
+    @classmethod
+    async def _data_to_schema(cls, data: pd.DataFrame, context: IContext) -> Any:
+        return await super()._data_to_schema(data[_MID_COLS], context)
 
 
-class _MidLocations(SchemaModel):
-    _coords: Annotated[_MidCoordTable, SchemaLocation("coordinates")]
+class StartLocations(SchemaModel):
+    _coords: Annotated[StartCoordTable, SchemaLocation("coordinates")]
 
 
-class _DepthIntervalsTable(DataTable):
+class EndLocations(SchemaModel):
+    _coords: Annotated[EndCoordTable, SchemaLocation("coordinates")]
+
+
+class MidLocations(SchemaModel):
+    _coords: Annotated[MidCoordTable, SchemaLocation("coordinates")]
+
+
+class DepthIntervalsTable(DataTable):
     table_format: ClassVar = FLOAT_ARRAY_2
     data_columns: ClassVar[list[str]] = _DEPTH_COLS
 
+    @classmethod
+    async def _data_to_schema(cls, data: pd.DataFrame, context: IContext) -> Any:
+        return await super()._data_to_schema(data[_DEPTH_COLS], context)
 
-class _IntervalsWrapper(SchemaModel):
+
+class IntervalsWrapper(SchemaModel):
     """Wraps the 'intervals' sub-object inside 'from_to'."""
 
-    _table: Annotated[_DepthIntervalsTable, SchemaLocation("start_and_end")]
+    _table: Annotated[DepthIntervalsTable, SchemaLocation("start_and_end")]
 
 
-class _FromToModel(SchemaModel):
+class HoleIdCategory(Category):
+    """Categorical hole identifier column."""
+
+    @classmethod
+    async def _data_to_schema(cls, data: pd.DataFrame, context: IContext) -> Any:
+        category_table = data[[_HOLE_ID_COL]].astype("category")
+        return await super()._data_to_schema(category_table, context=context)
+
+
+class IntervalAttributes(Attributes):
+    """Attributes sub-model that filters out required columns before upload."""
+
+    @classmethod
+    async def _data_to_schema(cls, data: Any, context: IContext) -> list[dict[str, Any]]:
+        if data is not None:
+            attr_cols = [c for c in data.columns if c not in _ALL_REQUIRED_COLS]
+            data = data[attr_cols] if attr_cols else None
+        return await super()._data_to_schema(data, context)
+
+
+class FromToModel(SchemaModel):
     """Schema model for the from_to component of a downhole intervals object."""
 
-    _intervals: Annotated[_IntervalsWrapper, SchemaLocation("intervals")]
+    _intervals: Annotated[IntervalsWrapper, SchemaLocation("intervals"), DataLocation("intervals")]
     unit: Annotated[str | None, SchemaLocation("unit")]
+
+    @classmethod
+    async def _data_to_schema(cls, data: DownholeIntervalsData, context: IContext) -> Any:
+        result = await super()._data_to_schema(data, context)
+        if data.depth_unit is not None:
+            result["unit"] = data.depth_unit
+        return result
 
 
 # ---------------------------------------------------------------------------
@@ -206,12 +248,13 @@ class DownholeIntervals(BaseSpatialObject):
     # --- schema properties ---
     is_composited: Annotated[bool, SchemaLocation("is_composited")]
 
-    # --- sub-models (reading only; skipped in _data_to_schema) ---
-    _start: Annotated[_StartLocations, SchemaLocation("start")]
-    _end: Annotated[_EndLocations, SchemaLocation("end")]
-    _mid_points: Annotated[_MidLocations, SchemaLocation("mid_points")]
-    _from_to: Annotated[_FromToModel, SchemaLocation("from_to")]
-    attributes: Annotated[Attributes, SchemaLocation("attributes"), DataLocation("intervals")]
+    # --- sub-models ---
+    _start: Annotated[StartLocations, SchemaLocation("start"), DataLocation("intervals")]
+    _end: Annotated[EndLocations, SchemaLocation("end"), DataLocation("intervals")]
+    _mid_points: Annotated[MidLocations, SchemaLocation("mid_points"), DataLocation("intervals")]
+    _from_to: Annotated[FromToModel, SchemaLocation("from_to")]
+    _hole_id: Annotated[HoleIdCategory, SchemaLocation("hole_id"), DataLocation("intervals")]
+    attributes: Annotated[IntervalAttributes, SchemaLocation("attributes"), DataLocation("intervals")]
 
     @property
     def depth_unit(self) -> str | None:
@@ -222,71 +265,6 @@ class DownholeIntervals(BaseSpatialObject):
     def num_intervals(self) -> int:
         """The number of intervals in this object."""
         return self._from_to._intervals._table.length
-
-    # ------------------------------------------------------------------
-    # Schema creation
-    # ------------------------------------------------------------------
-
-    @classmethod
-    async def _data_to_schema(cls, data: DownholeIntervalsData, context: IContext) -> dict[str, Any]:
-        """Build the schema document for a new DownholeIntervals object.
-
-        Handles the complex multi-table upload while delegating scalar
-        properties (name, description, coordinate_reference_system, etc.) to
-        the standard SchemaBuilder machinery.
-        """
-        from evo.objects import ObjectSchema
-
-        schema_id = ObjectSchema("objects", cls.sub_classification, cls.creation_schema_version)
-
-        # Build scalar properties from the full inheritance chain, skipping all
-        # sub-models which are handled manually below.
-        all_sub_models = set(cls._sub_models.keys())
-        builder = SchemaBuilder(cls, context)
-        result = await builder.build_from_data(data, skip_sub_models=all_sub_models)
-
-        # schema ID (normally added by _BaseObject._data_to_schema)
-        result["schema"] = str(schema_id)
-
-        # bounding_box — _bounding_box is a schema property that resolves to None
-        # from the data class (BaseSpatialObjectData doesn't store _bounding_box),
-        # so we compute and set it explicitly here.
-        result["bounding_box"] = cls._bbox_type_adapter.dump_python(data.compute_bounding_box())
-
-        # Upload all table data
-        df = data.intervals
-        data_client = get_data_client(context)
-
-        # Start coordinates (x_start, y_start, z_start) → start.coordinates
-        start_info = await data_client.upload_dataframe(df[_START_COLS], table_format=FLOAT_ARRAY_3)
-        result["start"] = {"coordinates": start_info}
-
-        # End coordinates (x_end, y_end, z_end) → end.coordinates
-        end_info = await data_client.upload_dataframe(df[_END_COLS], table_format=FLOAT_ARRAY_3)
-        result["end"] = {"coordinates": end_info}
-
-        # Mid-point coordinates (x_mid, y_mid, z_mid) → mid_points.coordinates
-        mid_info = await data_client.upload_dataframe(df[_MID_COLS], table_format=FLOAT_ARRAY_3)
-        result["mid_points"] = {"coordinates": mid_info}
-
-        # From/to depths → from_to.intervals.start_and_end
-        depth_info = await data_client.upload_dataframe(df[_DEPTH_COLS], table_format=FLOAT_ARRAY_2)
-        result["from_to"] = {"intervals": {"start_and_end": depth_info}}
-        if data.depth_unit is not None:
-            result["from_to"]["unit"] = data.depth_unit
-
-        # Hole IDs → hole_id (category data: lookup table + integer indices)
-        hole_id_df = df[[_HOLE_ID_COL]]
-        category_info = await data_client.upload_category_dataframe(hole_id_df)
-        result["hole_id"] = category_info
-
-        # Interval attributes (any extra columns beyond the required set)
-        attr_cols = [c for c in df.columns if c not in _ALL_REQUIRED_COLS]
-        result["attributes"] = []
-        if attr_cols:
-            await Attributes._upload_attributes_to_list(result["attributes"], df[attr_cols], context)
-
-        return result
 
     # ------------------------------------------------------------------
     # Data access

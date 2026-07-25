@@ -76,7 +76,6 @@ class TestDownholeIntervals(TestWithConnector):
         with (
             patch("evo.objects.typed.attributes.get_data_client", lambda _: mock_client),
             patch("evo.objects.typed._data.get_data_client", lambda _: mock_client),
-            patch("evo.objects.typed.downhole_intervals.get_data_client", lambda _: mock_client),
             patch("evo.objects.typed.base.create_geoscience_object", mock_client.create_geoscience_object),
             patch("evo.objects.typed.base.replace_geoscience_object", mock_client.replace_geoscience_object),
             patch("evo.objects.DownloadedObject.from_context", mock_client.from_reference),
