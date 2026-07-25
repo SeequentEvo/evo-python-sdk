@@ -316,6 +316,32 @@ class TestFormatBaseObject(unittest.TestCase):
         # Should NOT have a second "locations attributes:" section
         self.assertNotIn("locations attributes:", html)
 
+    def test_no_double_rendering_across_multiple_objects(self):
+        """Test that attributes are not rendered twice when multiple objects
+        share the same attribute collection (e.g., DownholeCollection pattern)."""
+        from evo.widgets.formatters import _append_attribute_rows
+
+        attr1 = MagicMock()
+        attr1.as_dict.return_value = {"name": "grade", "attribute_type": "scalar"}
+        attributes_list = [attr1]
+
+        # Simulate: obj has sub-model "location" with attributes
+        location = MagicMock()
+        location._sub_models = []
+        location.attributes = attributes_list
+
+        obj = MagicMock()
+        obj._sub_models = ["location"]
+        obj.location = location
+        obj.attributes = None  # obj itself has no top-level attributes
+
+        rows: list = []
+        _append_attribute_rows(rows, obj, location)
+
+        # "grade" should appear exactly once
+        combined = "".join(str(r) for r in rows)
+        self.assertEqual(combined.count("grade"), 1)
+
 
 class TestFormatAttributes(unittest.TestCase):
     """Tests for the format_attributes_collection function (formats Attributes class)."""
