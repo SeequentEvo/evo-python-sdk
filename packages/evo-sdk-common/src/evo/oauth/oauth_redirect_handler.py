@@ -118,7 +118,7 @@ class OAuthRedirectHandler:
         """
         self.__oauth_connector = oauth_connector
         self.__runner: web.AppRunner | None = None  # The HTTP server runner.
-        self.__authorisation: asyncio.Future[AccessToken] = asyncio.get_event_loop().create_future()
+        self.__authorisation: asyncio.Future[AccessToken] | None = None
         self.__redirect_url = redirect_url
         self.__state: str | None = None
         self.__verifier: str | None = None
@@ -131,6 +131,8 @@ class OAuthRedirectHandler:
 
         The context is pending if the token has not been fetched and no errors have occurred.
         """
+        if self.__authorisation is None:
+            return True
         return not self.__authorisation.done()
 
     def __check_server_started(self) -> None:
@@ -145,6 +147,8 @@ class OAuthRedirectHandler:
         """Start the OAuth HTTP server."""
         if self.__runner is not None:
             raise OAuthError("OAuth redirect server cannot be reused.")
+
+        self.__authorisation = asyncio.get_running_loop().create_future()
 
         logger.debug("Opening connector...")
         await self.__oauth_connector.__aenter__()
@@ -203,8 +207,7 @@ class OAuthRedirectHandler:
         except Exception as exc:  # noqa: E722
             logger.error("Unable to fetch access token.", exc_info=True)
             self.__authorisation.set_exception(OAuthError(str(exc)).with_traceback(exc.__traceback__))
-        finally:  # Always return the response to the web client.
-            return response
+        return response
 
     async def get_result(self, timeout_seconds: int | float = 60) -> AccessToken:
         """Get the result of the authorisation process.
