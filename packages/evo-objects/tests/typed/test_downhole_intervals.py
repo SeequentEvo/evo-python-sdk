@@ -56,7 +56,6 @@ def _make_intervals(**overrides) -> pd.DataFrame:
     return pd.DataFrame(base)
 
 
-
 class TestDownholeIntervals(TestWithConnector):
     def setUp(self) -> None:
         TestWithConnector.setUp(self)
@@ -131,9 +130,7 @@ class TestDownholeIntervals(TestWithConnector):
     async def test_from_reference(self):
         with self._mock_geoscience_objects():
             original = await DownholeIntervals.create(context=self.context, data=self.example_data)
-            result = await DownholeIntervals.from_reference(
-                context=self.context, reference=original.metadata.url
-            )
+            result = await DownholeIntervals.from_reference(context=self.context, reference=original.metadata.url)
         self.assertIsInstance(result, DownholeIntervals)
         self.assertEqual(result.name, "Test Downhole Intervals")
         self.assertEqual(result.num_intervals, _N)
@@ -161,10 +158,17 @@ class TestDownholeIntervals(TestWithConnector):
 
         expected_cols = [
             "hole_id",
-            "from", "to",
-            "x_start", "y_start", "z_start",
-            "x_end", "y_end", "z_end",
-            "x_mid", "y_mid", "z_mid",
+            "from",
+            "to",
+            "x_start",
+            "y_start",
+            "z_start",
+            "x_end",
+            "y_end",
+            "z_end",
+            "x_mid",
+            "y_mid",
+            "z_mid",
         ]
         for col in expected_cols:
             self.assertIn(col, df.columns, f"Missing column: {col}")
@@ -192,9 +196,7 @@ class TestDownholeIntervals(TestWithConnector):
         """Coordinate columns survive a create → from_reference → to_dataframe round-trip."""
         with self._mock_geoscience_objects():
             created = await DownholeIntervals.create(context=self.context, data=self.example_data)
-            obj = await DownholeIntervals.from_reference(
-                context=self.context, reference=created.metadata.url
-            )
+            obj = await DownholeIntervals.from_reference(context=self.context, reference=created.metadata.url)
             df = await obj.to_dataframe()
 
         source = self.example_data.intervals

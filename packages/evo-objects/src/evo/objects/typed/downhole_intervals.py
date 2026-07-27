@@ -47,9 +47,7 @@ _END_COLS: list[str] = ["x_end", "y_end", "z_end"]
 _MID_COLS: list[str] = ["x_mid", "y_mid", "z_mid"]
 _DEPTH_COLS: list[str] = [_FROM_COL, _TO_COL]
 
-_ALL_REQUIRED_COLS: frozenset[str] = frozenset(
-    [_HOLE_ID_COL, _FROM_COL, _TO_COL] + _START_COLS + _END_COLS + _MID_COLS
-)
+_ALL_REQUIRED_COLS: frozenset[str] = frozenset([_HOLE_ID_COL, _FROM_COL, _TO_COL] + _START_COLS + _END_COLS + _MID_COLS)
 
 
 # ---------------------------------------------------------------------------
@@ -88,9 +86,7 @@ class DownholeIntervalsData(BaseSpatialObjectData):
     def __post_init__(self) -> None:
         missing = _ALL_REQUIRED_COLS - set(self.intervals.columns)
         if missing:
-            raise ObjectValidationError(
-                f"intervals DataFrame is missing required columns: {sorted(missing)}"
-            )
+            raise ObjectValidationError(f"intervals DataFrame is missing required columns: {sorted(missing)}")
 
     def compute_bounding_box(self) -> BoundingBox:
         """Compute the bounding box from all start, end, and mid-point coordinates."""
@@ -287,9 +283,7 @@ class DownholeIntervals(BaseSpatialObject):
         :param fb: Optional feedback object to report download progress.
         :return: A combined DataFrame of all interval data and attributes.
         """
-        hole_id_df = await self._obj.download_category_dataframe(
-            "hole_id", column_names=[_HOLE_ID_COL]
-        )
+        hole_id_df = await self._obj.download_category_dataframe("hole_id", column_names=[_HOLE_ID_COL])
         depth_df = await self._from_to._intervals._table.to_dataframe(fb=fb)
         start_df = await self._start._coords.to_dataframe(fb=fb)
         end_df = await self._end._coords.to_dataframe(fb=fb)
