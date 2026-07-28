@@ -1,5 +1,44 @@
 # Changelog
 
+## evo-sdk@v0.2.3
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### evo-sdk
+* Add support for Central Instance discovery by @ThomasMatern in https://github.com/SeequentEvo/evo-python-sdk/pull/318
+* Bump packages by @GriffinBaxterSeequent in https://github.com/SeequentEvo/evo-python-sdk/pull/321
+
+## New Contributors
+* @ThomasMatern made their first contribution in https://github.com/SeequentEvo/evo-python-sdk/pull/318
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-sdk@v0.2.2...evo-sdk@v0.2.3
+
+## evo-widgets@v0.2.1
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### evo-widgets
+* Add support for Central Instance discovery by @ThomasMatern in https://github.com/SeequentEvo/evo-python-sdk/pull/318
+* Bump packages by @GriffinBaxterSeequent in https://github.com/SeequentEvo/evo-python-sdk/pull/321
+
+## New Contributors
+* @ThomasMatern made their first contribution in https://github.com/SeequentEvo/evo-python-sdk/pull/318
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-widgets@v0.2.0...evo-widgets@v0.2.1
+
+## evo-sdk-common@v0.5.25
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### evo-sdk-common
+* Add support for Central Instance discovery by @ThomasMatern in https://github.com/SeequentEvo/evo-python-sdk/pull/318
+* Bump packages by @GriffinBaxterSeequent in https://github.com/SeequentEvo/evo-python-sdk/pull/321
+
+## New Contributors
+* @ThomasMatern made their first contribution in https://github.com/SeequentEvo/evo-python-sdk/pull/318
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-sdk-common@v0.5.24...evo-sdk-common@v0.5.25
+
 ## evo-compute@0.0.4
 <!-- Release notes generated using configuration in .github/release.yml at main -->
 
