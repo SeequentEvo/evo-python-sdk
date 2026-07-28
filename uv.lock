@@ -1194,7 +1194,7 @@ test = [
 
 [[package]]
 name = "evo-sdk"
-version = "0.2.2"
+version = "0.2.3"
 source = { editable = "." }
 dependencies = [
     { name = "authlib" },
@@ -1263,7 +1263,7 @@ test = [
 
 [[package]]
 name = "evo-sdk-common"
-version = "0.5.24"
+version = "0.5.25"
 source = { editable = "packages/evo-sdk-common" }
 dependencies = [
     { name = "pure-interface" },
@@ -1351,7 +1351,7 @@ test = [
 
 [[package]]
 name = "evo-widgets"
-version = "0.2.0"
+version = "0.2.1"
 source = { editable = "packages/evo-widgets" }
 dependencies = [
     { name = "evo-sdk-common" },
