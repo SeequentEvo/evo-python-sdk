@@ -89,7 +89,7 @@ class TestDownholeIntervals(TestWithConnector):
     # ------------------------------------------------------------------
 
     @parameterized.expand([BaseObject, DownholeIntervals])
-    async def test_create(self):
+    async def test_create(self, class_to_call):
         class_to_call = DownholeIntervals
         with self._mock_geoscience_objects():
             result = await class_to_call.create(context=self.context, data=self.example_data)
