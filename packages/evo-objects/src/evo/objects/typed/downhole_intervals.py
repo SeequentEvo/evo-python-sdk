@@ -129,18 +129,6 @@ class MidCoordTable(DataTable):
         return await super()._data_to_schema(data[_MID_COLS], context)
 
 
-class StartLocations(SchemaModel):
-    _coords: Annotated[StartCoordTable, SchemaLocation("coordinates")]
-
-
-class EndLocations(SchemaModel):
-    _coords: Annotated[EndCoordTable, SchemaLocation("coordinates")]
-
-
-class MidLocations(SchemaModel):
-    _coords: Annotated[MidCoordTable, SchemaLocation("coordinates")]
-
-
 class DepthIntervalsTable(DataTable):
     table_format: ClassVar = FLOAT_ARRAY_2
     data_columns: ClassVar[list[str]] = _DEPTH_COLS
@@ -148,12 +136,6 @@ class DepthIntervalsTable(DataTable):
     @classmethod
     async def _data_to_schema(cls, data: pd.DataFrame, context: IContext) -> Any:
         return await super()._data_to_schema(data[_DEPTH_COLS], context)
-
-
-class IntervalsWrapper(SchemaModel):
-    """Wraps the 'intervals' sub-object inside 'from_to'."""
-
-    _table: Annotated[DepthIntervalsTable, SchemaLocation("start_and_end")]
 
 
 class HoleIdCategory(Category):
@@ -179,8 +161,8 @@ class IntervalAttributes(Attributes):
 class FromToModel(SchemaModel):
     """Schema model for the from_to component of a downhole intervals object."""
 
-    _intervals: Annotated[IntervalsWrapper, SchemaLocation("intervals"), DataLocation("intervals")]
-    unit: Annotated[str | None, SchemaLocation("unit")]
+    intervals: Annotated[DepthIntervalsTable, SchemaLocation("intervals.start_and_end"), DataLocation("intervals")]
+    unit: Annotated[str | None, SchemaLocation("unit"), DataLocation("depth_unit")]
 
     @classmethod
     async def _data_to_schema(cls, data: DownholeIntervalsData, context: IContext) -> Any:
@@ -245,22 +227,22 @@ class DownholeIntervals(BaseSpatialObject):
     is_composited: Annotated[bool, SchemaLocation("is_composited")]
 
     # --- sub-models ---
-    _start: Annotated[StartLocations, SchemaLocation("start"), DataLocation("intervals")]
-    _end: Annotated[EndLocations, SchemaLocation("end"), DataLocation("intervals")]
-    _mid_points: Annotated[MidLocations, SchemaLocation("mid_points"), DataLocation("intervals")]
-    _from_to: Annotated[FromToModel, SchemaLocation("from_to")]
-    _hole_id: Annotated[HoleIdCategory, SchemaLocation("hole_id"), DataLocation("intervals")]
+    start: Annotated[StartCoordTable, SchemaLocation("start.coordinates"), DataLocation("intervals")]
+    end: Annotated[EndCoordTable, SchemaLocation("end.coordinates"), DataLocation("intervals")]
+    mid_points: Annotated[MidCoordTable, SchemaLocation("mid_points.coordinates"), DataLocation("intervals")]
+    from_to: Annotated[FromToModel, SchemaLocation("from_to")]
+    hole_id: Annotated[HoleIdCategory, SchemaLocation("hole_id"), DataLocation("intervals")]
     attributes: Annotated[IntervalAttributes, SchemaLocation("attributes"), DataLocation("intervals")]
 
     @property
     def depth_unit(self) -> str | None:
         """The unit of the from/to depths, or None if not specified."""
-        return self._from_to.unit
+        return self.from_to.unit
 
     @property
     def num_intervals(self) -> int:
         """The number of intervals in this object."""
-        return self._from_to._intervals._table.length
+        return self.from_to.intervals.length
 
     # ------------------------------------------------------------------
     # Data access
@@ -283,11 +265,11 @@ class DownholeIntervals(BaseSpatialObject):
         :param fb: Optional feedback object to report download progress.
         :return: A combined DataFrame of all interval data and attributes.
         """
-        hole_id_df = await self._obj.download_category_dataframe("hole_id", column_names=[_HOLE_ID_COL])
-        depth_df = await self._from_to._intervals._table.to_dataframe(fb=fb)
-        start_df = await self._start._coords.to_dataframe(fb=fb)
-        end_df = await self._end._coords.to_dataframe(fb=fb)
-        mid_df = await self._mid_points._coords.to_dataframe(fb=fb)
+        hole_id_df = await self.hole_id.to_dataframe(fb=fb)
+        depth_df = await self.from_to.intervals.to_dataframe(fb=fb)
+        start_df = await self.start.to_dataframe(fb=fb)
+        end_df = await self.end.to_dataframe(fb=fb)
+        mid_df = await self.mid_points.to_dataframe(fb=fb)
 
         parts: list[pd.DataFrame] = [hole_id_df, depth_df, start_df, end_df, mid_df]
 

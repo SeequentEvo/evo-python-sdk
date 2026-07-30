@@ -165,27 +165,17 @@ def _format_attributes_spec(attributes) -> str:
     return build_nested_table(["Attribute", "Type"], attr_rows)
 
 
-def _append_attribute_rows(rows: list[tuple[str, str]], *objects: Any) -> None:
-    """Append attribute spec rows for one or more objects, deduplicating by identity.
+def _format_all_attribute_specs(obj, rows) -> None:
+    # Build datasets section - add as rows to the main table
+    if hasattr(obj, "attributes") and len(obj.attributes) > 0:
+        rows.append(("Attributes:", _format_attributes_spec(obj.attributes)))
 
-    For each object, renders its top-level `attributes` (if present) and any
-    attributes found on sub-models. Each unique attribute collection is rendered
-    at most once across all objects.
-    """
-    seen: set[int] = set()
-    for obj in objects:
-        top = getattr(obj, "attributes", None)
-        if top is not None and len(top) > 0 and id(top) not in seen:
-            seen.add(id(top))
-            rows.append(("Attributes:", _format_attributes_spec(top)))
-
-        for name in getattr(obj, "_sub_models", []):
-            dataset = getattr(obj, name, None)
-            if dataset and hasattr(dataset, "attributes") and len(dataset.attributes) > 0:
-                dataset_attrs = dataset.attributes
-                if id(dataset_attrs) not in seen:
-                    seen.add(id(dataset_attrs))
-                    rows.append((f"{name} attributes:", _format_attributes_spec(dataset_attrs)))
+    sub_models = getattr(obj, "_sub_models", [])
+    for dataset_name in sub_models:
+        dataset = getattr(obj, dataset_name, None)
+        if dataset and hasattr(dataset, "attributes") and len(dataset.attributes) > 0:
+            # Build attribute rows
+            rows.append((f"{dataset_name} attributes:", _format_attributes_spec(dataset.attributes)))
 
 
 def format_base_object(obj: Any) -> str:
@@ -208,7 +198,7 @@ def format_base_object(obj: Any) -> str:
     if crs := doc.get("coordinate_reference_system"):
         rows.append(("CRS:", _format_crs(crs)))
 
-    _append_attribute_rows(rows, obj)
+    _format_all_attribute_specs(obj, rows)
 
     return _build_html_from_rows(name, title_links, rows)
 
@@ -357,7 +347,7 @@ def format_downhole_collection(obj: DownholeCollection) -> str:
     rows.append(("Type:", obj.type))
     rows.append(("Number of holes:", str(obj.location.hole_id.length)))
 
-    _append_attribute_rows(rows, obj, obj.location)
+    _format_all_attribute_specs(obj, rows)
     _format_downhole_collection_collections(obj, rows)
 
     return _build_html_from_rows(name, title_links, rows)
