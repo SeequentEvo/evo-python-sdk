@@ -89,7 +89,8 @@ class TestDownholeIntervals(TestWithConnector):
     # ------------------------------------------------------------------
 
     @parameterized.expand([BaseObject, DownholeIntervals])
-    async def test_create(self, class_to_call):
+    async def test_create(self):
+        class_to_call = DownholeIntervals
         with self._mock_geoscience_objects():
             result = await class_to_call.create(context=self.context, data=self.example_data)
         self.assertIsInstance(result, DownholeIntervals)
@@ -238,7 +239,7 @@ class TestDownholeIntervals(TestWithConnector):
     async def test_start_coordinates(self):
         with self._mock_geoscience_objects():
             obj = await DownholeIntervals.create(context=self.context, data=self.example_data)
-            start_df = await obj._start._coords.to_dataframe()
+            start_df = await obj.start.to_dataframe()
 
         self.assertEqual(list(start_df.columns), ["x_start", "y_start", "z_start"])
         self.assertEqual(len(start_df), _N)
@@ -246,14 +247,14 @@ class TestDownholeIntervals(TestWithConnector):
     async def test_end_coordinates(self):
         with self._mock_geoscience_objects():
             obj = await DownholeIntervals.create(context=self.context, data=self.example_data)
-            end_df = await obj._end._coords.to_dataframe()
+            end_df = await obj.end.to_dataframe()
 
         self.assertEqual(list(end_df.columns), ["x_end", "y_end", "z_end"])
 
     async def test_mid_coordinates(self):
         with self._mock_geoscience_objects():
             obj = await DownholeIntervals.create(context=self.context, data=self.example_data)
-            mid_df = await obj._mid_points._coords.to_dataframe()
+            mid_df = await obj.mid_points.to_dataframe()
 
         self.assertEqual(list(mid_df.columns), ["x_mid", "y_mid", "z_mid"])
 

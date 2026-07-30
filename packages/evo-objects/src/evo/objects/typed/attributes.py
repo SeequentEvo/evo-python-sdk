@@ -600,4 +600,4 @@ class Category(SchemaModel):
         """
         if self._context.is_data_modified(self._data):
             raise DataLoaderError("Data was modified since the object was downloaded")
-        return await self._obj.download_dataframe(self.as_dict()["values"], fb=fb)
+        return await self._obj.download_category_dataframe(self.as_dict(), fb=fb)
