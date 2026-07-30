@@ -167,14 +167,18 @@ def _format_attributes_spec(attributes) -> str:
 
 def _format_all_attribute_specs(obj, rows) -> None:
     # Build datasets section - add as rows to the main table
+    top_level_attrs = None
     if hasattr(obj, "attributes") and len(obj.attributes) > 0:
+        top_level_attrs = obj.attributes
         rows.append(("Attributes:", _format_attributes_spec(obj.attributes)))
 
     sub_models = getattr(obj, "_sub_models", [])
     for dataset_name in sub_models:
         dataset = getattr(obj, dataset_name, None)
         if dataset and hasattr(dataset, "attributes") and len(dataset.attributes) > 0:
-            # Build attribute rows
+            # Skip sub-model attributes that are an alias for the already-rendered top-level attributes
+            if dataset.attributes is top_level_attrs:
+                continue
             rows.append((f"{dataset_name} attributes:", _format_attributes_spec(dataset.attributes)))
 
 
