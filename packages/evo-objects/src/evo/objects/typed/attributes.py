@@ -41,6 +41,7 @@ if TYPE_CHECKING:
 
 __all__ = [
     "Attribute",
+    "AttributeDescription",
     "Attributes",
     "BlockModelAttribute",
     "BlockModelAttributes",
@@ -87,18 +88,23 @@ _attribute_table_formats = {
 
 @dataclass
 class AttributeDescription:
-    discipline: str = ""
-    type: str = ""
-    unit: str | None = None
+    discipline: str | None = None
+    type: str | None = None
+    unit: Any | None = None
     scale: str | None = None
     extensions: dict[str, typing.Any] | None = None
     tags: dict[str, str] | None = None
 
-    def to_schema(self):
-        result = {
-            "discipline": self.discipline,
-            "type": self.type,
-        }
+    def __post_init__(self) -> None:
+        if self.unit is not None and not isinstance(self.unit, str):
+            self.unit = str(self.unit.value)
+
+    def to_schema(self) -> dict[str, Any]:
+        result: dict[str, Any] = {}
+        if self.discipline:
+            result["discipline"] = self.discipline
+        if self.type:
+            result["type"] = self.type
         if self.unit:
             result["unit"] = self.unit
         if self.scale:
@@ -117,6 +123,7 @@ class Attribute(SchemaModel):
     _attribute_type: Annotated[str, SchemaLocation("attribute_type")]
     _key: Annotated[str | None, SchemaLocation("key")]
     _data: Annotated[str, SchemaLocation("values.data")]
+    _attribute_description: Annotated[dict[str, Any] | None, SchemaLocation("attribute_description")]
 
     @property
     def key(self) -> str:
@@ -131,6 +138,12 @@ class Attribute(SchemaModel):
     def attribute_type(self) -> str:
         """The type of this attribute."""
         return self._attribute_type
+
+    @property
+    def attribute_description(self) -> AttributeDescription | None:
+        """Optional descriptive metadata associated with this attribute."""
+        raw = self._attribute_description
+        return AttributeDescription(**raw) if raw else None
 
     @property
     def exists(self) -> bool:
@@ -320,8 +333,8 @@ class Attributes(SchemaList[Attribute]):
             if attr_desc is not None:
                 if not isinstance(attr_desc, AttributeDescription):
                     raise TypeError("attribute description must be a AttributeDescription.")
-                if attr_desc.unit is not None:
-                    attr_doc["attribute_description"] = attr_desc.to_schema()
+                if description := attr_desc.to_schema():
+                    attr_doc["attribute_description"] = description
 
             attributes_list.append(attr_doc)
 
@@ -337,7 +350,15 @@ class Attributes(SchemaList[Attribute]):
         """
         attributes = [self[key] for key in keys] if keys else list(self)
         parts = [await attribute.to_dataframe(fb=fb_part) for attribute, fb_part in iter_with_fb(attributes, fb)]
-        return pd.concat(parts, axis=1) if len(parts) > 0 else pd.DataFrame()
+        result = pd.concat(parts, axis=1) if len(parts) > 0 else pd.DataFrame()
+        descriptions = {
+            attribute.name: description
+            for attribute in attributes
+            if isinstance(attribute, Attribute) and (description := attribute.attribute_description) is not None
+        }
+        if descriptions:
+            result.attrs["attribute_descriptions"] = descriptions
+        return result
 
     async def append_attribute(self, df: pd.DataFrame, fb: IFeedback = NoFeedback):
         """Add a new attribute to the object.
