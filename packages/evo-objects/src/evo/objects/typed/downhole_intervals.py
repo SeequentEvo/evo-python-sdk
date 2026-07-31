@@ -35,9 +35,6 @@ __all__ = [
     "DownholeIntervalsData",
 ]
 
-# ---------------------------------------------------------------------------
-# Column name constants
-# ---------------------------------------------------------------------------
 
 _HOLE_ID_COL = "hole_id"
 _FROM_COL = "from"
@@ -48,11 +45,6 @@ _MID_COLS: list[str] = ["x_mid", "y_mid", "z_mid"]
 _DEPTH_COLS: list[str] = [_FROM_COL, _TO_COL]
 
 _ALL_REQUIRED_COLS: frozenset[str] = frozenset([_HOLE_ID_COL, _FROM_COL, _TO_COL] + _START_COLS + _END_COLS + _MID_COLS)
-
-
-# ---------------------------------------------------------------------------
-# Data class (used when creating new objects)
-# ---------------------------------------------------------------------------
 
 
 @dataclass(kw_only=True, frozen=True)
@@ -95,11 +87,6 @@ class DownholeIntervalsData(BaseSpatialObjectData):
         all_y = pd.concat([df["y_start"], df["y_end"], df["y_mid"]])
         all_z = pd.concat([df["z_start"], df["z_end"], df["z_mid"]])
         return BoundingBox.from_points(all_x.values, all_y.values, all_z.values)
-
-
-# ---------------------------------------------------------------------------
-# Schema sub-models
-# ---------------------------------------------------------------------------
 
 
 class StartCoordTable(DataTable):
@@ -172,11 +159,6 @@ class FromToModel(SchemaModel):
         return result
 
 
-# ---------------------------------------------------------------------------
-# Typed object
-# ---------------------------------------------------------------------------
-
-
 class DownholeIntervals(BaseSpatialObject):
     """A GeoscienceObject representing downhole intervals.
 
@@ -223,10 +205,8 @@ class DownholeIntervals(BaseSpatialObject):
     sub_classification = "downhole-intervals"
     creation_schema_version = SchemaVersion(major=1, minor=3, patch=0)
 
-    # --- schema properties ---
     is_composited: Annotated[bool, SchemaLocation("is_composited")]
 
-    # --- sub-models ---
     start: Annotated[StartCoordTable, SchemaLocation("start.coordinates"), DataLocation("intervals")]
     end: Annotated[EndCoordTable, SchemaLocation("end.coordinates"), DataLocation("intervals")]
     mid_points: Annotated[MidCoordTable, SchemaLocation("mid_points.coordinates"), DataLocation("intervals")]
@@ -243,10 +223,6 @@ class DownholeIntervals(BaseSpatialObject):
     def num_intervals(self) -> int:
         """The number of intervals in this object."""
         return self.from_to.intervals.length
-
-    # ------------------------------------------------------------------
-    # Data access
-    # ------------------------------------------------------------------
 
     async def to_dataframe(self, *keys: str, fb: IFeedback = NoFeedback) -> pd.DataFrame:
         """Get all interval data as a single DataFrame.
