@@ -54,17 +54,17 @@ class DownholeIntervalsData(BaseSpatialObjectData):
     :param name: The name of the object.
     :param intervals: DataFrame containing the interval data. Required columns:
 
-        * ``hole_id`` — hole identifier (string or Categorical)
-        * ``from`` — depth of the top of the interval
-        * ``to`` — depth of the base of the interval
-        * ``x_start``, ``y_start``, ``z_start`` — 3D start-point coordinates
-        * ``x_end``, ``y_end``, ``z_end`` — 3D end-point coordinates
-        * ``x_mid``, ``y_mid``, ``z_mid`` — 3D mid-point coordinates
+        * `hole_id` — hole identifier (string or Categorical)
+        * `from` — depth of the top of the interval
+        * `to` — depth of the base of the interval
+        * `x_start`, `y_start`, `z_start` — 3D start-point coordinates
+        * `x_end`, `y_end`, `z_end` — 3D end-point coordinates
+        * `x_mid`, `y_mid`, `z_mid` — 3D mid-point coordinates
 
         Any additional columns are uploaded as interval attributes.
 
     :param is_composited: Whether the intervals have been composited.
-    :param depth_unit: Optional unit identifier for the from/to depths (e.g. ``"m"``).
+    :param depth_unit: Optional unit identifier for the from/to depths (e.g. `"m"`).
     :param coordinate_reference_system: Optional EPSG code or OGC WKT string for the CRS.
     :param description: Optional description of the object.
     :param tags: Optional dictionary of tags for the object.
@@ -229,11 +229,11 @@ class DownholeIntervals(BaseSpatialObject):
 
         The returned DataFrame has the following columns, in order:
 
-        * ``hole_id`` — hole identifier
-        * ``from``, ``to`` — depth interval
-        * ``x_start``, ``y_start``, ``z_start`` — start-point coordinates
-        * ``x_end``, ``y_end``, ``z_end`` — end-point coordinates
-        * ``x_mid``, ``y_mid``, ``z_mid`` — mid-point coordinates
+        * `hole_id` — hole identifier
+        * `from`, `to` — depth interval
+        * `x_start`, `y_start`, `z_start` — start-point coordinates
+        * `x_end`, `y_end`, `z_end` — end-point coordinates
+        * `x_mid`, `y_mid`, `z_mid` — mid-point coordinates
         * Any attribute columns
 
         :param keys: Optional attribute keys/names to include.  If omitted, all
