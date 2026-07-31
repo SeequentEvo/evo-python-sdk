@@ -21,11 +21,12 @@ import pandas as pd
 from evo.common import IContext, IFeedback
 from evo.common.utils import NoFeedback
 from evo.objects import SchemaVersion
-from evo.objects.utils.table_formats import FLOAT_ARRAY_2, FLOAT_ARRAY_3
+from evo.objects.utils.table_formats import FLOAT_ARRAY_3
 
 from ._data import DataTable
+from ._downhole import DepthIntervalsTable, FromToModel, HoleIdCategory
 from ._model import DataLocation, SchemaLocation, SchemaModel
-from .attributes import Attributes, Category
+from .attributes import Attributes
 from .exceptions import ObjectValidationError
 from .spatial import BaseSpatialObject, BaseSpatialObjectData
 from .types import BoundingBox
@@ -42,7 +43,6 @@ _TO_COL = "to"
 _START_COLS: list[str] = ["x_start", "y_start", "z_start"]
 _END_COLS: list[str] = ["x_end", "y_end", "z_end"]
 _MID_COLS: list[str] = ["x_mid", "y_mid", "z_mid"]
-_DEPTH_COLS: list[str] = [_FROM_COL, _TO_COL]
 
 _ALL_REQUIRED_COLS: frozenset[str] = frozenset([_HOLE_ID_COL, _FROM_COL, _TO_COL] + _START_COLS + _END_COLS + _MID_COLS)
 
@@ -116,24 +116,6 @@ class MidCoordTable(DataTable):
         return await super()._data_to_schema(data[_MID_COLS], context)
 
 
-class DepthIntervalsTable(DataTable):
-    table_format: ClassVar = FLOAT_ARRAY_2
-    data_columns: ClassVar[list[str]] = _DEPTH_COLS
-
-    @classmethod
-    async def _data_to_schema(cls, data: pd.DataFrame, context: IContext) -> Any:
-        return await super()._data_to_schema(data[_DEPTH_COLS], context)
-
-
-class HoleIdCategory(Category):
-    """Categorical hole identifier column."""
-
-    @classmethod
-    async def _data_to_schema(cls, data: pd.DataFrame, context: IContext) -> Any:
-        category_table = data[[_HOLE_ID_COL]].astype("category")
-        return await super()._data_to_schema(category_table, context=context)
-
-
 class IntervalAttributes(Attributes):
     """Attributes sub-model that filters out required columns before upload."""
 
@@ -143,20 +125,6 @@ class IntervalAttributes(Attributes):
             attr_cols = [c for c in data.columns if c not in _ALL_REQUIRED_COLS]
             data = data[attr_cols] if attr_cols else None
         return await super()._data_to_schema(data, context)
-
-
-class FromToModel(SchemaModel):
-    """Schema model for the from_to component of a downhole intervals object."""
-
-    intervals: Annotated[DepthIntervalsTable, SchemaLocation("intervals.start_and_end"), DataLocation("intervals")]
-    unit: Annotated[str | None, SchemaLocation("unit"), DataLocation("depth_unit")]
-
-    @classmethod
-    async def _data_to_schema(cls, data: DownholeIntervalsData, context: IContext) -> Any:
-        result = await super()._data_to_schema(data, context)
-        if data.depth_unit is not None:
-            result["unit"] = data.depth_unit
-        return result
 
 
 class DownholeIntervals(BaseSpatialObject):
