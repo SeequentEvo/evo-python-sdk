@@ -313,7 +313,10 @@ class TestDownholeIntervals(TestWithConnector):
         )
         with self._mock_geoscience_objects():
             obj = await DownholeIntervals.create(context=self.context, data=data)
-            assert obj.attributes[0].as_dict()["attribute_description"]["unit"] == attribute_desc.unit
+            self.assertEqual(
+                obj.attributes[0].as_dict()["attribute_description"]["unit"],
+                attribute_desc.unit,
+            )
 
     async def test_json(self):
         """Verify the raw schema document has the expected structure."""
