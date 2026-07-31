@@ -11,7 +11,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Annotated, Any, ClassVar, TypeAlias
 
 import numpy as np
@@ -33,13 +33,16 @@ from evo.objects.typed.types import BoundingBox
 from evo.objects.utils.table_formats import (
     DOWNHOLE_COLLECTION_LOCATION_HOLES,
     FLOAT_ARRAY_1,
+    FLOAT_ARRAY_2,
     FLOAT_ARRAY_3,
     KnownTableFormat,
 )
 
 __all__ = [
+    "DistanceCollection",
     "DownholeCollection",
     "DownholeCollectionData",
+    "IntervalCollection",
 ]
 
 _X = "x"
@@ -59,6 +62,7 @@ HoleAttributes: TypeAlias = pd.DataFrame
 #   >>> depths_df.attrs
 #   {'attribute_description': {<column names>:  <AttributeDescription>}, ...}
 Depths: TypeAlias = pd.DataFrame  # [ distance | <attributes> ]
+Intervals: TypeAlias = pd.DataFrame  # [ from | to | <attributes> ]
 
 
 @dataclass
@@ -67,6 +71,19 @@ class DistanceCollection:
     holes: HoleChunks
     distance_table: Depths
     collection_type: str = "distance"
+    unit: str | None = None
+
+
+@dataclass
+class IntervalCollection:
+    name: str
+    holes: HoleChunks
+    interval_table: Intervals
+    collection_type: str = "interval"
+    unit: str | None = None
+
+
+DownholeCollectionEntry: TypeAlias = DistanceCollection | IntervalCollection
 
 
 @dataclass(kw_only=True, frozen=True)
@@ -95,9 +112,17 @@ class DownholeCollectionData(BaseSpatialObjectData):
     holes: HoleChunks
     properties: HoleProperties
     attributes: HoleAttributes | None
-    collections: list[DistanceCollection]
-    distance_unit: str | None
-    desurvey: str | None
+    collections: list[DownholeCollectionEntry]
+    distance_unit: str | None = None
+    desurvey: str | None = None
+
+    @property
+    def hole_id_dtype(self) -> pd.CategoricalDtype:
+        """The categorical dtype whose codes are used by every ``hole_index``."""
+        hole_ids = self.properties["hole_id"]
+        if isinstance(hole_ids.dtype, pd.CategoricalDtype):
+            return hole_ids.dtype
+        return pd.CategoricalDtype(categories=sorted(hole_ids.dropna().unique()))
 
     def __post_init__(self):
         if self.attributes is not None and len(self.holes) != len(self.attributes):
@@ -105,13 +130,40 @@ class DownholeCollectionData(BaseSpatialObjectData):
 
         assert self.attributes is None or len(self.holes) == len(self.attributes)
 
+        self._validate_hole_chunks(self.holes, len(self.path), require_coverage=True)
+        for collection in self.collections:
+            table = (
+                collection.distance_table if isinstance(collection, DistanceCollection) else collection.interval_table
+            )
+            self._validate_hole_chunks(collection.holes, len(table), require_coverage=False)
+
+    def _validate_hole_chunks(self, holes: HoleChunks, table_length: int, *, require_coverage: bool) -> None:
+        required = {"hole_index", "offset", "count"}
+        if missing := required - set(holes.columns):
+            raise ObjectValidationError(f"Hole chunks are missing columns: {sorted(missing)}")
+        indices = holes["hole_index"].astype(int)
+        valid = set(range(len(self.hole_id_dtype.categories)))
+        if not set(indices).issubset(valid):
+            raise ObjectValidationError("hole_index must be a code in properties['hole_id'] categorical dtype")
+        if indices.duplicated().any():
+            raise ObjectValidationError("Each hole_index may occur only once in a holes table")
+        if require_coverage and set(indices) != valid:
+            raise ObjectValidationError("Location holes must cover every hole_id categorical code exactly once")
+        offsets = holes["offset"].astype(int)
+        counts = holes["count"].astype(int)
+        if (offsets < 0).any() or (counts < 0).any() or ((offsets + counts) > table_length).any():
+            raise ObjectValidationError("Hole chunk offsets and counts must be within the associated table")
+
     def compute_bounding_box(self) -> BoundingBox:
         bboxes = []
 
-        for i in range(len(self.holes)):
-            offset = self.holes.iat[i, 1]
-            count = self.holes.iat[i, 2]
-            collar = tuple(self.properties.loc[i, _COORDINATE_COLUMNS])
+        collars = self.properties.copy()
+        collars["_hole_index"] = collars["hole_id"].astype(self.hole_id_dtype).cat.codes
+        collars_by_index = collars.set_index("_hole_index")
+        for chunk in self.holes.itertuples(index=False):
+            offset = int(chunk.offset)
+            count = int(chunk.count)
+            collar = tuple(collars_by_index.loc[int(chunk.hole_index), _COORDINATE_COLUMNS])
             path_table = self.path[offset : offset + count]
             bboxes.append(self._compute_hole_bounding_box(path_table, collar))
 
@@ -254,6 +306,21 @@ class DownholeLocation(SchemaModel):
     coordinates: Annotated[CollarCoordinates, SchemaLocation("coordinates"), DataLocation("properties")]
     attributes: Annotated[Attributes, SchemaLocation("attributes"), DataLocation("attributes")]
 
+    async def to_dataframe(self) -> pd.DataFrame:
+        """Return collars with a categorical ``hole_id`` aligned to hole-index codes."""
+        parts = [
+            await self.hole_id.to_dataframe(),
+            await self.coordinates.to_dataframe(),
+            await self.distances.to_dataframe(),
+        ]
+        if len(self.attributes):
+            parts.append(await self.attributes.to_dataframe())
+        return pd.concat(parts, axis=1)
+
+    async def path_to_dataframe(self) -> pd.DataFrame:
+        """Return the desurvey path and its attributes."""
+        return await self.path.to_dataframe()
+
 
 class _Distances(DataTable):
     table_format: ClassVar[KnownTableFormat] = FLOAT_ARRAY_1
@@ -267,10 +334,13 @@ class DistanceTableDistances(DataTableAndAttributes):
     @classmethod
     async def _data_to_schema(cls, data: pd.DataFrame, context: IContext) -> Any:
         result = await super()._data_to_schema(data, context)
+        unit = data.attrs.get("unit")
         attr_desc: AttributeDescription = data.attrs.get("attribute_descriptions", {}).get("distance")
-        if attr_desc is not None and attr_desc.unit is not None:
+        if unit is None and attr_desc is not None:
+            unit = attr_desc.unit
+        if unit is not None:
             # "unit" can be missing, but it must not be `None`
-            result["unit"] = attr_desc.unit
+            result["unit"] = unit
         return result
 
 
@@ -283,9 +353,98 @@ class DistanceTable(SchemaModel):
 class DownholeDistanceTable(DistanceTable):
     holes: Annotated[HoleChunksTable, SchemaLocation("holes"), DataLocation("holes")]
 
+    async def to_dataframe(self) -> pd.DataFrame:
+        return await self.distance.to_dataframe()
 
-class DownholeCollectionTables(SchemaList[DownholeDistanceTable]):
-    pass
+    async def to_dataframe_by_hole(self) -> dict[str, pd.DataFrame]:
+        return await _table_by_hole(self, await self.to_dataframe())
+
+
+class _Intervals(DataTable):
+    table_format: ClassVar[KnownTableFormat] = FLOAT_ARRAY_2
+    data_columns: ClassVar[list[str]] = ["from", "to"]
+
+
+class IntervalTableFromTo(DataTableAndAttributes):
+    _table: Annotated[_Intervals, SchemaLocation("intervals.start_and_end"), DataLocation("")]
+    unit: Annotated[str | None, SchemaLocation("unit")]
+
+    @classmethod
+    async def _data_to_schema(cls, data: pd.DataFrame, context: IContext) -> Any:
+        result = await super()._data_to_schema(data, context)
+        unit = data.attrs.get("unit")
+        description = data.attrs.get("attribute_descriptions", {}).get("from")
+        if unit is None and description is not None:
+            unit = description.unit
+        if unit is not None:
+            result["unit"] = unit
+        return result
+
+
+class DownholeIntervalTable(SchemaModel):
+    name: Annotated[str, SchemaLocation("name"), DataLocation("name")]
+    collection_type: Annotated[str, SchemaLocation("collection_type"), DataLocation("collection_type")]
+    from_to: Annotated[IntervalTableFromTo, SchemaLocation("from_to"), DataLocation("interval_table")]
+    holes: Annotated[HoleChunksTable, SchemaLocation("holes"), DataLocation("holes")]
+
+    async def to_dataframe(self) -> pd.DataFrame:
+        return await self.from_to.to_dataframe()
+
+    async def to_dataframe_by_hole(self) -> dict[str, pd.DataFrame]:
+        return await _table_by_hole(self, await self.to_dataframe())
+
+
+class DownholeCollectionTables(SchemaList[DownholeDistanceTable | DownholeIntervalTable]):
+    @classmethod
+    def _resolve_item_type(cls, document: dict[str, Any]) -> type[DownholeDistanceTable | DownholeIntervalTable]:
+        return DownholeIntervalTable if "from_to" in document else DownholeDistanceTable
+
+    @classmethod
+    async def _data_to_schema(cls, data: Any, context: IContext) -> list[Any]:
+        if data is None:
+            return []
+        result = []
+        for collection in data:
+            model = DownholeIntervalTable if isinstance(collection, IntervalCollection) else DownholeDistanceTable
+            table = (
+                collection.interval_table if isinstance(collection, IntervalCollection) else collection.distance_table
+            )
+            table = table.copy()
+            table.attrs = dict(table.attrs)
+            if collection.unit is not None:
+                table.attrs["unit"] = collection.unit
+            field = "interval_table" if isinstance(collection, IntervalCollection) else "distance_table"
+            result.append(await model._data_to_schema(replace(collection, **{field: table}), context))
+        return result
+
+    def get(self, name: str) -> DownholeDistanceTable | DownholeIntervalTable | None:
+        return next((collection for collection in self if collection.name == name), None)
+
+    def __contains__(self, name: object) -> bool:
+        return isinstance(name, str) and self.get(name) is not None
+
+    def names(self) -> list[str]:
+        return [collection.name for collection in self]
+
+    async def add(self, collection: DownholeCollectionEntry, *, replace: bool = False) -> None:
+        existing = self.names()
+        if collection.name in existing and not replace:
+            raise ValueError(f"Collection '{collection.name}' already exists")
+        location_holes = await self._context.root_model.location.holes.to_dataframe()
+        valid_indices = set(location_holes["hole_index"].astype(int))
+        if not set(collection.holes["hole_index"].astype(int)).issubset(valid_indices):
+            raise ObjectValidationError("Collection hole_index is not present in the location holes table")
+        schema = await self._data_to_schema([collection], self._obj)
+        if collection.name in existing:
+            self._document[existing.index(collection.name)] = schema[0]
+        else:
+            self._document.append(schema[0])
+
+    def remove(self, *names: str) -> int:
+        requested = set(names)
+        previous = len(self._document)
+        self._document[:] = [item for item in self._document if item.get("name") not in requested]
+        return previous - len(self._document)
 
 
 class DownholeCollection(BaseSpatialObject):
@@ -301,3 +460,30 @@ class DownholeCollection(BaseSpatialObject):
     desurvey: Annotated[str | None, SchemaLocation("desurvey")]
 
     type: ClassVar[Annotated[str, SchemaLocation("type")]] = "downhole"
+
+    async def prefetch_collections(self, *names: str, include_location: bool = True, **kwargs: Any) -> None:
+        """Prefetch data referenced by named collections and optionally location data."""
+        from evo.objects.typed._prefetch import collect_data_ids
+
+        documents = []
+        if include_location:
+            documents.append(self.location.as_dict())
+        for name in names:
+            collection = self.collections.get(name)
+            if collection is None:
+                raise KeyError(f"Unknown collection '{name}'")
+            documents.append(collection.as_dict())
+        await self.prefetch(data_ids=collect_data_ids(documents), **kwargs)
+
+
+async def _table_by_hole(
+    table: DownholeDistanceTable | DownholeIntervalTable, data: pd.DataFrame
+) -> dict[str, pd.DataFrame]:
+    root = table._context.root_model
+    collar_ids = await root.location.hole_id.to_dataframe()
+    categories = collar_ids.iloc[:, 0]
+    result: dict[str, pd.DataFrame] = {}
+    for chunk in (await table.holes.to_dataframe()).itertuples(index=False):
+        hole_id = str(categories.cat.categories[int(chunk.hole_index)])
+        result[hole_id] = data.iloc[int(chunk.offset) : int(chunk.offset) + int(chunk.count)].reset_index(drop=True)
+    return result

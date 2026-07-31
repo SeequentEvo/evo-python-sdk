@@ -32,6 +32,7 @@ from evo.objects.typed.downhole_collection import (
     DistanceCollection,
     DownholeCollection,
     DownholeCollectionData,
+    IntervalCollection,
 )
 from evo.objects.typed.exceptions import ObjectValidationError
 
@@ -208,6 +209,36 @@ class TestDownholeCollection(TestWithConnector):
             result = await DownholeCollection.create(context=self.context, data=data)
         self.assertIsInstance(result, DownholeCollection)
 
+    async def test_mixed_collections_round_trip_and_mutation(self):
+        interval = IntervalCollection(
+            name="intervals",
+            holes=pd.DataFrame({"hole_index": [0], "offset": [0], "count": [2]}),
+            interval_table=pd.DataFrame({"from": [0.0, 1.0], "to": [1.0, 2.0], "lithology": ["a", "b"]}),
+            unit="m",
+        )
+        data = _make_example_data(collections=[_make_example_data().collections[0], interval])
+        with self._mock_geoscience_objects() as mock_client:
+            result = await DownholeCollection.create(context=self.context, data=data)
+            self.assertEqual(result.collections.names(), ["collection1", "intervals"])
+            self.assertEqual(result.collections.get("intervals").from_to.unit, "m")
+            self.assertListEqual(
+                (await result.collections.get("intervals").to_dataframe()).columns.tolist(), ["from", "to", "lithology"]
+            )
+            self.assertEqual(result.collections.remove("missing", "collection1"), 1)
+            await result.collections.add(data.collections[0])
+            self.assertEqual(result.collections.names(), ["intervals", "collection1"])
+            object_json = mock_client.objects[str(result.metadata.url.object_id)]
+            self.assertIn("start_and_end", object_json["collections"][1]["from_to"]["intervals"])
+
+    async def test_none_optional_fields_are_omitted(self):
+        data = _make_example_data()
+        data = dataclasses.replace(data, distance_unit=None, desurvey=None)
+        with self._mock_geoscience_objects() as mock_client:
+            result = await DownholeCollection.create(context=self.context, data=data)
+            document = mock_client.objects[str(result.metadata.url.object_id)]
+        self.assertNotIn("distance_unit", document)
+        self.assertNotIn("desurvey", document)
+
     @parameterized.expand([BaseObject, DownholeCollection])
     async def test_replace(self, class_to_call):
         data = _make_example_data()
@@ -259,6 +290,17 @@ class TestDownholeCollection(TestWithConnector):
         data = dataclasses.replace(data, path=path)
         bbox = data.compute_bounding_box()
         self._assert_bounding_box_equal(bbox, 100.0, 200.0, 150.0, 300.0, -30.0, 50.0)
+
+    def test_bounding_box_uses_hole_index_not_property_position(self):
+        data = _make_example_data()
+        expected = data.compute_bounding_box()
+        properties = data.properties.iloc[[1, 0]].copy()
+        properties.index = [10, 20]
+        data = dataclasses.replace(data, properties=properties)
+        bbox = data.compute_bounding_box()
+        self._assert_bounding_box_equal(
+            bbox, expected.min_x, expected.max_x, expected.min_y, expected.max_y, expected.min_z, expected.max_z
+        )
 
     def test_bounding_box_from_spiral(self):
         # First hole spirals, second hole zig-zags

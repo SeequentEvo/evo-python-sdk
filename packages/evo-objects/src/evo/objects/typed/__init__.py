@@ -12,6 +12,7 @@
 from ._grid import BlockModelData, BlockModelGeometry
 from .attributes import (
     Attribute,
+    AttributeDescription,
     Attributes,
     BlockModelAttribute,
     BlockModelAttributes,
@@ -22,7 +23,12 @@ from .base import BaseObject, object_from_path, object_from_reference, object_fr
 from .block_model_ref import (
     BlockModel,
 )
-from .downhole_collection import DownholeCollection, DownholeCollectionData
+from .downhole_collection import (
+    DistanceCollection,
+    DownholeCollection,
+    DownholeCollectionData,
+    IntervalCollection,
+)
 from .downhole_intervals import DownholeIntervals, DownholeIntervalsData
 from .pointset import (
     Locations,
@@ -70,6 +76,7 @@ from .variogram import (
 
 __all__ = [
     "Attribute",
+    "AttributeDescription",
     "Attributes",
     "BaseObject",
     "BaseSpatialObject",
@@ -82,6 +89,7 @@ __all__ = [
     "BoundingBox",
     "CoordinateReferenceSystem",
     "CubicStructure",
+    "DistanceCollection",
     "DownholeCollection",
     "DownholeCollectionData",
     "DownholeIntervals",
@@ -92,6 +100,7 @@ __all__ = [
     "ExponentialStructure",
     "GaussianStructure",
     "GeneralisedCauchyStructure",
+    "IntervalCollection",
     "LinearStructure",
     "Locations",
     "MaskedCells",

@@ -454,11 +454,20 @@ class SchemaList(Sequence[_M]):
                     break
 
     def __getitem__(self, index: int) -> _M:
-        return self._item_type(self._context, self._document[index])
+        document = self._document[index]
+        return self._resolve_item_type(document)(self._context, document)
 
     def __iter__(self):
         for item in self._document:
-            yield self._item_type(self._context, item)
+            yield self._resolve_item_type(item)(self._context, item)
+
+    @classmethod
+    def _resolve_item_type(cls, document: dict[str, Any]) -> type[_M]:
+        """Resolve the schema model used for a document item.
+
+        Subclasses with heterogeneous document items can override this hook.
+        """
+        return cls._item_type
 
     def __len__(self) -> int:
         return len(self._document)
