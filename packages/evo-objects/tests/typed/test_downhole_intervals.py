@@ -16,7 +16,6 @@ import dataclasses
 import uuid
 from unittest.mock import patch
 
-from evo.objects.typed.attributes import AttributeDescription
 import numpy as np
 import pandas as pd
 from parameterized import parameterized
@@ -25,6 +24,7 @@ from evo.common import Environment, StaticContext
 from evo.common.test_tools import BASE_URL, ORG, WORKSPACE_ID, TestWithConnector
 from evo.objects import ObjectReference
 from evo.objects.typed import DownholeIntervals, DownholeIntervalsData
+from evo.objects.typed.attributes import AttributeDescription
 from evo.objects.typed.base import BaseObject
 from evo.objects.typed.exceptions import ObjectValidationError
 
@@ -80,7 +80,6 @@ class TestDownholeIntervals(TestWithConnector):
         is_composited=False,
         depth_unit="m",
     )
-
 
     @parameterized.expand([BaseObject, DownholeIntervals])
     async def test_create(self, class_to_call):
@@ -140,7 +139,6 @@ class TestDownholeIntervals(TestWithConnector):
         self.assertEqual(obj.name, "Updated Intervals")
         self.assertTrue(obj.is_composited)
         self.assertEqual(obj.metadata.version_id, "2")
-
 
     async def test_to_dataframe_columns(self):
         """to_dataframe() returns all required columns."""
@@ -223,7 +221,6 @@ class TestDownholeIntervals(TestWithConnector):
         # Compare as plain strings (mock may not preserve Categorical dtype)
         self.assertEqual(list(result.astype(str)), list(source.astype(str)))
 
-
     async def test_start_coordinates(self):
         with self._mock_geoscience_objects():
             obj = await DownholeIntervals.create(context=self.context, data=self.example_data)
@@ -246,7 +243,6 @@ class TestDownholeIntervals(TestWithConnector):
 
         self.assertEqual(list(mid_df.columns), ["x_mid", "y_mid", "z_mid"])
 
-
     async def test_depth_unit_none_when_not_set(self):
         data = dataclasses.replace(self.example_data, depth_unit=None)
         with self._mock_geoscience_objects():
@@ -258,7 +254,6 @@ class TestDownholeIntervals(TestWithConnector):
         with self._mock_geoscience_objects():
             obj = await DownholeIntervals.create(context=self.context, data=data)
         self.assertTrue(obj.is_composited)
-
 
     def test_compute_bounding_box(self):
         bbox = self.example_data.compute_bounding_box()
@@ -309,7 +304,7 @@ class TestDownholeIntervals(TestWithConnector):
         """Attribute descriptions and units are preserved in the schema."""
         df = _make_intervals(grade=pd.Series([1.0, 2.0, 3.0, 4.0]))
         attribute_desc = AttributeDescription(unit="ppm")
-        df.attrs['attribute_descriptions'] = {'grade': attribute_desc}
+        df.attrs["attribute_descriptions"] = {"grade": attribute_desc}
         data = DownholeIntervalsData(
             name="Test Intervals with Attributes",
             intervals=df,
@@ -318,8 +313,7 @@ class TestDownholeIntervals(TestWithConnector):
         )
         with self._mock_geoscience_objects():
             obj = await DownholeIntervals.create(context=self.context, data=data)
-            assert obj.attributes[0].as_dict()['attribute_description']['unit'] == attribute_desc.unit
-
+            assert obj.attributes[0].as_dict()["attribute_description"]["unit"] == attribute_desc.unit
 
     async def test_json(self):
         """Verify the raw schema document has the expected structure."""

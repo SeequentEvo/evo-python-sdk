@@ -24,8 +24,8 @@ from evo.objects import SchemaVersion
 from evo.objects.utils.table_formats import FLOAT_ARRAY_3
 
 from ._data import DataTable
-from ._downhole import DepthIntervalsTable, FromToModel, HoleIdCategory
-from ._model import DataLocation, SchemaLocation, SchemaModel
+from ._downhole import FromToModel, HoleIdCategory
+from ._model import DataLocation, SchemaLocation
 from .attributes import Attributes
 from .exceptions import ObjectValidationError
 from .spatial import BaseSpatialObject, BaseSpatialObjectData
