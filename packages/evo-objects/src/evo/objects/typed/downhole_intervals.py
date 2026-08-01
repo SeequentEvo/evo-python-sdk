@@ -229,6 +229,18 @@ class DownholeIntervals(BaseSpatialObject):
         return pd.concat(parts, axis=1)
 
     def validate(self) -> None:
-        """Validate the object, checking that all attribute lengths match num_intervals."""
+        """Validate the object, checking that all interval tables have consistent lengths."""
         super().validate()
-        self.attributes.validate_lengths(self.num_intervals)
+        expected_length = self.num_intervals
+        for table_name, table in (
+            ("hole_id", self.hole_id),
+            ("start.coordinates", self.start),
+            ("end.coordinates", self.end),
+            ("mid_points.coordinates", self.mid_points),
+        ):
+            if table.length != expected_length:
+                raise ObjectValidationError(
+                    f"{table_name} length ({table.length}) does not match expected length ({expected_length})"
+                )
+
+        self.attributes.validate_lengths(expected_length)

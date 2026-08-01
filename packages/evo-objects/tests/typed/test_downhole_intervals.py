@@ -318,6 +318,21 @@ class TestDownholeIntervals(TestWithConnector):
                 attribute_desc.unit,
             )
 
+    async def test_validate_table_length_mismatch(self):
+        """Validation fails when one of the interval tables has a different length."""
+        with self._mock_geoscience_objects():
+            obj = await DownholeIntervals.create(context=self.context, data=self.example_data)
+
+            obj._document["start"]["coordinates"]["length"] = 100
+            obj._rebuild_models()
+
+            with self.assertRaises(ObjectValidationError) as cm:
+                obj.validate()
+            self.assertIn(
+                f"start.coordinates length (100) does not match expected length ({_N})",
+                str(cm.exception),
+            )
+
     async def test_json(self):
         """Verify the raw schema document has the expected structure."""
         df = _make_intervals(grade=[1.0, 2.0, 3.0, 4.0])
