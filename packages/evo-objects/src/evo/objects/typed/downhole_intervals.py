@@ -61,7 +61,12 @@ class DownholeIntervalsData(BaseSpatialObjectData):
         * `x_end`, `y_end`, `z_end` — 3D end-point coordinates
         * `x_mid`, `y_mid`, `z_mid` — 3D mid-point coordinates
 
-        Any additional columns are uploaded as interval attributes.
+        Any additional columns are uploaded as interval attributes. Per-attribute
+        units can be specified via the DataFrame's `attrs` dictionary using
+        :class:`~evo.objects.typed.attributes.AttributeDescription`::
+
+            from evo.objects.typed.attributes import AttributeDescription
+            df.attrs["attribute_descriptions"] = {"grade": AttributeDescription(unit="ppm")}
 
     :param is_composited: Whether the intervals have been composited.
     :param depth_unit: Optional unit identifier for the from/to depths (e.g. `"m"`).
