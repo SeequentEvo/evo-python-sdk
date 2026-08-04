@@ -248,6 +248,77 @@ class TestFormatBaseObject(unittest.TestCase):
         self.assertIn("key1", html)
         self.assertIn("value1", html)
 
+    def test_formats_object_with_top_level_attributes(self):
+        """Test formatting an object that has top-level attributes."""
+        attr1 = MagicMock()
+        attr1.as_dict.return_value = {"name": "grade", "attribute_type": "scalar"}
+        attr2 = MagicMock()
+        attr2.as_dict.return_value = {"name": "lithology", "attribute_type": "category"}
+
+        obj = MagicMock()
+        obj.as_dict.return_value = {
+            "name": "Test Object",
+            "schema": "test-schema",
+            "uuid": "12345",
+        }
+        obj._sub_models = []
+        obj.attributes = [attr1, attr2]
+        obj.metadata = MagicMock()
+        obj.metadata.environment = MagicMock()
+        obj.metadata.environment.org_id = "org-123"
+        obj.metadata.environment.workspace_id = "ws-456"
+        obj.metadata.environment.hub_url = "https://test.api.seequent.com"
+        obj.metadata.id = "12345"
+
+        html = format_base_object(obj)
+
+        self.assertIn("Attributes:", html)
+        self.assertIn("grade", html)
+        self.assertIn("scalar", html)
+        self.assertIn("lithology", html)
+        self.assertIn("category", html)
+
+    def test_does_not_double_render_aliased_attributes(self):
+        """Test that top-level attributes aliased from a sub-model are only rendered once.
+
+        Types like PointSet expose obj.attributes as a property returning
+        sub_model.attributes. Without the identity guard, both the top-level
+        check and the sub-model loop would render the same attributes.
+        """
+        attr1 = MagicMock()
+        attr1.as_dict.return_value = {"name": "grade", "attribute_type": "scalar"}
+
+        shared_attrs = [attr1]
+
+        sub_dataset = MagicMock()
+        sub_dataset.attributes = shared_attrs
+
+        obj = MagicMock()
+        obj.as_dict.return_value = {
+            "name": "Test Object",
+            "schema": "test-schema",
+            "uuid": "12345",
+        }
+        # obj.attributes is an alias for the sub-model's attributes (same object)
+        obj.attributes = shared_attrs
+        obj._sub_models = ["locations"]
+        obj.locations = sub_dataset
+        obj.metadata = MagicMock()
+        obj.metadata.environment = MagicMock()
+        obj.metadata.environment.org_id = "org-123"
+        obj.metadata.environment.workspace_id = "ws-456"
+        obj.metadata.environment.hub_url = "https://test.api.seequent.com"
+        obj.metadata.id = "12345"
+
+        html = format_base_object(obj)
+
+        self.assertIn("Attributes:", html)
+        self.assertIn("grade", html)
+        # "locations attributes:" should not appear since it is the same data
+        self.assertNotIn("locations attributes:", html)
+        # "grade" should appear exactly once (one nested table cell)
+        self.assertEqual(html.count(">grade<"), 1)
+
 
 class TestFormatAttributes(unittest.TestCase):
     """Tests for the format_attributes_collection function (formats Attributes class)."""

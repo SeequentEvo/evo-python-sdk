@@ -154,7 +154,7 @@ def _build_html_from_rows(
     return html
 
 
-def _format_attributes_spec(attributes, rows) -> str:
+def _format_attributes_spec(attributes) -> str:
     attr_rows = []
     for attr in attributes:
         attr_info = attr.as_dict()
@@ -167,12 +167,19 @@ def _format_attributes_spec(attributes, rows) -> str:
 
 def _format_all_attribute_specs(obj, rows) -> None:
     # Build datasets section - add as rows to the main table
+    top_level_attrs = None
+    if hasattr(obj, "attributes") and len(obj.attributes) > 0:
+        top_level_attrs = obj.attributes
+        rows.append(("Attributes:", _format_attributes_spec(obj.attributes)))
+
     sub_models = getattr(obj, "_sub_models", [])
     for dataset_name in sub_models:
         dataset = getattr(obj, dataset_name, None)
         if dataset and hasattr(dataset, "attributes") and len(dataset.attributes) > 0:
-            # Build attribute rows
-            rows.append((f"{dataset_name}", _format_attributes_spec(dataset.attributes, rows)))
+            # Skip sub-model attributes that are an alias for the already-rendered top-level attributes
+            if dataset.attributes is top_level_attrs:
+                continue
+            rows.append((f"{dataset_name} attributes:", _format_attributes_spec(dataset.attributes)))
 
 
 def format_base_object(obj: Any) -> str:
@@ -321,7 +328,7 @@ def _format_downhole_collection_collections(obj, rows):
         if collection.collection_type == "distance":
             rows.append((f"{name} distance unit:", collection.distance.unit))
             if attributes := collection.distance.attributes:
-                rows.append({f"{name} attributes:", _format_attributes_spec(attributes, rows)})
+                rows.append((f"{name} attributes:", _format_attributes_spec(attributes)))
 
 
 def format_downhole_collection(obj: DownholeCollection) -> str:
@@ -345,7 +352,6 @@ def format_downhole_collection(obj: DownholeCollection) -> str:
     rows.append(("Number of holes:", str(obj.location.hole_id.length)))
 
     _format_all_attribute_specs(obj, rows)
-    _format_all_attribute_specs(obj.location, rows)
     _format_downhole_collection_collections(obj, rows)
 
     return _build_html_from_rows(name, title_links, rows)

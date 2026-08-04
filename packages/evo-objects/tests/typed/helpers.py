@@ -67,6 +67,9 @@ class MockDownloadedObject(DownloadedObject):
     async def download_attribute_dataframe(self, data: dict, fb) -> pd.DataFrame:
         return self.mock_client.get_dataframe(data["values"])
 
+    async def download_category_dataframe(self, category_info: dict, fb) -> pd.DataFrame:
+        return self.mock_client.get_dataframe(category_info["values"])
+
     async def download_array(self, jmespath_expr: str, fb=None):
         """Download an array from the object using a JMESPath expression."""
 

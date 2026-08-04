@@ -21,11 +21,11 @@ from numpy._typing import NDArray
 from evo.common.interfaces import IContext
 from evo.objects import SchemaVersion
 from evo.objects.typed._data import DataTable, DataTableAndAttributes
+from evo.objects.typed._downhole import HoleIdCategory
 from evo.objects.typed._model import DataLocation, SchemaList, SchemaLocation, SchemaModel
 from evo.objects.typed.attributes import (
     AttributeDescription,
     Attributes,
-    Category,
 )
 from evo.objects.typed.exceptions import ObjectValidationError
 from evo.objects.typed.spatial import BaseSpatialObject, BaseSpatialObjectData
@@ -209,17 +209,6 @@ class HoleChunksTable(DataTable):
     data_columns: ClassVar[list[str]] = ["hole_index", "offset", "count"]
 
 
-class DownholeCategory(Category):
-    @classmethod
-    def _extract_category_table(cls, data: HoleAttributes):
-        return data[["hole_id"]].astype("category")
-
-    @classmethod
-    async def _data_to_schema(cls, data: HoleAttributes, context: IContext) -> Any:
-        category_table = cls._extract_category_table(data)
-        return await super()._data_to_schema(category_table, context=context)
-
-
 class PathTable(DataTable):
     table_format: ClassVar[KnownTableFormat] = FLOAT_ARRAY_3
     data_columns: ClassVar[list[str]] = ["distance", "azimuth", "dip"]
@@ -258,7 +247,7 @@ class CollarCoordinates(DataTable):
 
 
 class DownholeLocation(SchemaModel):
-    hole_id: Annotated[DownholeCategory, SchemaLocation("hole_id"), DataLocation("properties")]
+    hole_id: Annotated[HoleIdCategory, SchemaLocation("hole_id"), DataLocation("properties")]
     path: Annotated[DownholePath, SchemaLocation("path"), DataLocation("path")]
     holes: Annotated[HoleChunksTable, SchemaLocation("holes"), DataLocation("holes")]
     distances: Annotated[DistancesTable, SchemaLocation("distances"), DataLocation("properties")]
