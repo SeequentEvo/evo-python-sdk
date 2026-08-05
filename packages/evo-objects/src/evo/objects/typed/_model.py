@@ -450,7 +450,13 @@ class SchemaList(Sequence[_M]):
             if get_origin(base) is SchemaList:
                 args = get_args(base)
                 if args:
-                    cls._item_type = args[0]
+                    item_type = args[0]
+                    if isinstance(item_type, type):
+                        cls._item_type = item_type
+                    elif "_resolve_item_type" not in cls.__dict__ or "_data_to_schema" not in cls.__dict__:
+                        raise TypeError(
+                            "SchemaList with a non-class item type must override _resolve_item_type() and _data_to_schema()"
+                        )
                     break
 
     def __getitem__(self, index: int) -> _M:

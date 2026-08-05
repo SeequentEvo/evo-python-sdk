@@ -31,3 +31,16 @@ class TestDownholeUtils(unittest.TestCase):
             hole_chunks_from_ids(pd.Series(["A", "B", "A"]), dtype=dtype)
         with self.assertRaises(ValueError):
             hole_chunks_from_ids(pd.Series(["C"]), dtype=dtype)
+
+    def test_empty_input_emits_zero_count_entries_with_schema_dtypes(self):
+        chunks = hole_chunks_from_ids(pd.Series([], dtype="string"), dtype=pd.CategoricalDtype(categories=["A", "B"]))
+        self.assertListEqual(chunks["hole_index"].tolist(), [0, 1])
+        self.assertListEqual(chunks["offset"].tolist(), [0, 0])
+        self.assertListEqual(chunks["count"].tolist(), [0, 0])
+        self.assertEqual(str(chunks["hole_index"].dtype), "int32")
+        self.assertEqual(str(chunks["offset"].dtype), "uint64")
+        self.assertEqual(str(chunks["count"].dtype), "uint64")
+
+    def test_expand_rejects_out_of_bounds_chunks(self):
+        with self.assertRaises(ValueError):
+            expand_hole_index(pd.DataFrame({"hole_index": [0], "offset": [1], "count": [2]}), 2)

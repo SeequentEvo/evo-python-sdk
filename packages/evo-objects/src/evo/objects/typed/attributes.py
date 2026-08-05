@@ -254,7 +254,7 @@ class Attributes(SchemaList[Attribute]):
     attribute descriptions are attached to the DataFrame's `attrs` attribute.
 
     >>> df.attrs
-    {'attribute_description': {<column names>:  <AttributeDescription>}, ...}
+    {'attribute_descriptions': {<column names>: <AttributeDescription>}, ...}
     """
 
     _schema_path: str | None = None

@@ -18,7 +18,9 @@ import numpy as np
 import pandas as pd
 from numpy._typing import NDArray
 
+from evo.common import IFeedback
 from evo.common.interfaces import IContext
+from evo.common.utils import NoFeedback
 from evo.objects import SchemaVersion
 from evo.objects.typed._data import DataTable, DataTableAndAttributes
 from evo.objects.typed._downhole import HoleIdCategory
@@ -52,7 +54,7 @@ _COORDINATE_COLUMNS = [_X, _Y, _Z]
 
 
 HolePath: TypeAlias = pd.DataFrame  # [ distance | dip | azimuth | <attributes> ]
-HoleChunks: TypeAlias = pd.DataFrame  # [ hole_id | offset | count ]
+HoleChunks: TypeAlias = pd.DataFrame  # [ hole_index | offset | count ]
 HoleProperties: TypeAlias = pd.DataFrame  # [ hole_id | final | target | current | x | y | z ]
 HoleAttributes: TypeAlias = pd.DataFrame
 
@@ -60,7 +62,7 @@ HoleAttributes: TypeAlias = pd.DataFrame
 # the schema object.
 # This is the expected structure:
 #   >>> depths_df.attrs
-#   {'attribute_description': {<column names>:  <AttributeDescription>}, ...}
+#   {'attribute_descriptions': {<column names>: <AttributeDescription>}, ...}
 Depths: TypeAlias = pd.DataFrame  # [ distance | <attributes> ]
 Intervals: TypeAlias = pd.DataFrame  # [ from | to | <attributes> ]
 
@@ -92,13 +94,13 @@ class DownholeCollectionData(BaseSpatialObjectData):
 
     :param name: The name of the object.
     :param holes: A DataFrame describing which parts of `path` belong to which holes.
-            Columns: hole_id, offset, count
-    :param properties: DataFrame for the properties of the holes. The ith row corresponds to the ith element of `holes`.
+            Columns: hole_index, offset, count. ``hole_index`` is a code in ``properties.hole_id``.
+    :param properties: DataFrame for the properties of the holes, joined to ``holes`` by the categorical hole-id code.
             Mandatory columns: hole_id, final, target, current, x, y, z
-    :param attributes: DataFrame for the attributes of the holes. The ith row corresponds to the ith element of `holes`.
+    :param attributes: DataFrame for the attributes of the holes, in the same order as ``properties``.
     :param path: Dataframe of [ distance | dip | azimuth | <attributes> ]. Distance/dip/azimuth describe the geometry as
             the step since the previous row.
-    :param collections: A list of `DistanceCollection` describing a table of distances with attributes.
+    :param collections: Distance and interval collection tables.
     :param distance_unit: The distance unit for the `path` table and the `properties` x/y/y.
     :param desurvey: The desurvey method appropriate for this collection.
             Must be one of: "minimum_curvature", "balanced_tangent", "trench".
@@ -153,6 +155,14 @@ class DownholeCollectionData(BaseSpatialObjectData):
         counts = holes["count"].astype(int)
         if (offsets < 0).any() or (counts < 0).any() or ((offsets + counts) > table_length).any():
             raise ObjectValidationError("Hole chunk offsets and counts must be within the associated table")
+        non_empty = sorted(zip(offsets[counts > 0], counts[counts > 0], strict=True))
+        expected_offset = 0
+        for offset, count in non_empty:
+            if offset != expected_offset:
+                raise ObjectValidationError("Hole chunk ranges must cover the associated table exactly once")
+            expected_offset = offset + count
+        if expected_offset != table_length:
+            raise ObjectValidationError("Hole chunk ranges must cover the associated table exactly once")
 
     def compute_bounding_box(self) -> BoundingBox:
         bboxes = []
@@ -306,20 +316,20 @@ class DownholeLocation(SchemaModel):
     coordinates: Annotated[CollarCoordinates, SchemaLocation("coordinates"), DataLocation("properties")]
     attributes: Annotated[Attributes, SchemaLocation("attributes"), DataLocation("attributes")]
 
-    async def to_dataframe(self) -> pd.DataFrame:
+    async def to_dataframe(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
         """Return collars with a categorical ``hole_id`` aligned to hole-index codes."""
         parts = [
-            await self.hole_id.to_dataframe(),
-            await self.coordinates.to_dataframe(),
-            await self.distances.to_dataframe(),
+            await self.hole_id.to_dataframe(fb=fb),
+            await self.coordinates.to_dataframe(fb=fb),
+            await self.distances.to_dataframe(fb=fb),
         ]
         if len(self.attributes):
-            parts.append(await self.attributes.to_dataframe())
+            parts.append(await self.attributes.to_dataframe(fb=fb))
         return pd.concat(parts, axis=1)
 
-    async def path_to_dataframe(self) -> pd.DataFrame:
+    async def path_to_dataframe(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
         """Return the desurvey path and its attributes."""
-        return await self.path.to_dataframe()
+        return await self.path.to_dataframe(fb=fb)
 
 
 class _Distances(DataTable):
@@ -353,11 +363,11 @@ class DistanceTable(SchemaModel):
 class DownholeDistanceTable(DistanceTable):
     holes: Annotated[HoleChunksTable, SchemaLocation("holes"), DataLocation("holes")]
 
-    async def to_dataframe(self) -> pd.DataFrame:
-        return await self.distance.to_dataframe()
+    async def to_dataframe(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
+        return await self.distance.to_dataframe(fb=fb)
 
-    async def to_dataframe_by_hole(self) -> dict[str, pd.DataFrame]:
-        return await _table_by_hole(self, await self.to_dataframe())
+    async def to_dataframe_by_hole(self, fb: IFeedback = NoFeedback) -> dict[str, pd.DataFrame]:
+        return await _table_by_hole(self, await self.to_dataframe(fb=fb), fb=fb)
 
 
 class _Intervals(DataTable):
@@ -387,11 +397,11 @@ class DownholeIntervalTable(SchemaModel):
     from_to: Annotated[IntervalTableFromTo, SchemaLocation("from_to"), DataLocation("interval_table")]
     holes: Annotated[HoleChunksTable, SchemaLocation("holes"), DataLocation("holes")]
 
-    async def to_dataframe(self) -> pd.DataFrame:
-        return await self.from_to.to_dataframe()
+    async def to_dataframe(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
+        return await self.from_to.to_dataframe(fb=fb)
 
-    async def to_dataframe_by_hole(self) -> dict[str, pd.DataFrame]:
-        return await _table_by_hole(self, await self.to_dataframe())
+    async def to_dataframe_by_hole(self, fb: IFeedback = NoFeedback) -> dict[str, pd.DataFrame]:
+        return await _table_by_hole(self, await self.to_dataframe(fb=fb), fb=fb)
 
 
 class DownholeCollectionTables(SchemaList[DownholeDistanceTable | DownholeIntervalTable]):
@@ -434,6 +444,8 @@ class DownholeCollectionTables(SchemaList[DownholeDistanceTable | DownholeInterv
         valid_indices = set(location_holes["hole_index"].astype(int))
         if not set(collection.holes["hole_index"].astype(int)).issubset(valid_indices):
             raise ObjectValidationError("Collection hole_index is not present in the location holes table")
+        table = collection.distance_table if isinstance(collection, DistanceCollection) else collection.interval_table
+        _validate_chunk_ranges(collection.holes, len(table))
         schema = await self._data_to_schema([collection], self._obj)
         if collection.name in existing:
             self._document[existing.index(collection.name)] = schema[0]
@@ -476,14 +488,33 @@ class DownholeCollection(BaseSpatialObject):
         await self.prefetch(data_ids=collect_data_ids(documents), **kwargs)
 
 
+def _validate_chunk_ranges(holes: HoleChunks, table_length: int) -> None:
+    required = {"hole_index", "offset", "count"}
+    if missing := required - set(holes.columns):
+        raise ObjectValidationError(f"Hole chunks are missing columns: {sorted(missing)}")
+    if holes["hole_index"].astype(int).duplicated().any():
+        raise ObjectValidationError("Each hole_index may occur only once in a holes table")
+    offsets = holes["offset"].astype(int)
+    counts = holes["count"].astype(int)
+    if (offsets < 0).any() or (counts < 0).any() or ((offsets + counts) > table_length).any():
+        raise ObjectValidationError("Hole chunk offsets and counts must be within the associated table")
+    expected_offset = 0
+    for offset, count in sorted(zip(offsets[counts > 0], counts[counts > 0], strict=True)):
+        if offset != expected_offset:
+            raise ObjectValidationError("Hole chunk ranges must cover the associated table exactly once")
+        expected_offset = offset + count
+    if expected_offset != table_length:
+        raise ObjectValidationError("Hole chunk ranges must cover the associated table exactly once")
+
+
 async def _table_by_hole(
-    table: DownholeDistanceTable | DownholeIntervalTable, data: pd.DataFrame
+    table: DownholeDistanceTable | DownholeIntervalTable, data: pd.DataFrame, *, fb: IFeedback
 ) -> dict[str, pd.DataFrame]:
     root = table._context.root_model
-    collar_ids = await root.location.hole_id.to_dataframe()
+    collar_ids = await root.location.hole_id.to_dataframe(fb=fb)
     categories = collar_ids.iloc[:, 0]
     result: dict[str, pd.DataFrame] = {}
-    for chunk in (await table.holes.to_dataframe()).itertuples(index=False):
+    for chunk in (await table.holes.to_dataframe(fb=fb)).itertuples(index=False):
         hole_id = str(categories.cat.categories[int(chunk.hole_index)])
         result[hole_id] = data.iloc[int(chunk.offset) : int(chunk.offset) + int(chunk.count)].reset_index(drop=True)
     return result
