@@ -247,6 +247,87 @@ class TestDownholeCollection(TestWithConnector):
         self.assertEqual(collection.from_to.unit, "ft")
         self.assertListEqual((await collection.to_dataframe()).columns.tolist(), ["from", "to", "grade"])
 
+    @parameterized.expand(
+        [
+            ("explicit", "m", "ft", "m"),
+            ("metadata", None, "ft", "ft"),
+            ("omitted", None, None, None),
+        ]
+    )
+    async def test_interval_collection_unit_precedence(self, _name, explicit_unit, metadata_unit, expected_unit):
+        table = pd.DataFrame({"from": [0.0], "to": [1.0]})
+        if metadata_unit is not None:
+            table.attrs["attribute_descriptions"] = {"from": AttributeDescription(unit=metadata_unit)}
+        collection = IntervalCollection(
+            name="intervals",
+            holes=pd.DataFrame({"hole_index": [0], "offset": [0], "count": [1]}),
+            interval_table=table,
+            unit=explicit_unit,
+        )
+        with self._mock_geoscience_objects() as mock_client:
+            result = await DownholeCollection.create(
+                context=self.context, data=_make_example_data(collections=[collection])
+            )
+            document = mock_client.objects[str(result.metadata.url.object_id)]
+        from_to = document["collections"][0]["from_to"]
+        self.assertEqual(result.collections.get("intervals").from_to.unit, expected_unit)
+        if expected_unit is None:
+            self.assertNotIn("unit", from_to)
+        else:
+            self.assertEqual(from_to["unit"], expected_unit)
+
+    async def test_interval_collection_round_trips_all_attribute_types(self):
+        table = pd.DataFrame(
+            {
+                "from": [0.0, 1.0],
+                "to": [1.0, 2.0],
+                "scalar": pd.Series([1.5, 2.5], dtype="float64"),
+                "integer": pd.Series([1, 2], dtype="int64"),
+                "boolean": pd.Series([True, False], dtype="bool"),
+                "string": pd.Series(["a", "b"], dtype="string"),
+                "category": pd.Series(pd.Categorical(["ore", "waste"])),
+                "date_time": pd.to_datetime(["2026-01-01", "2026-01-02"]),
+            }
+        )
+        collection = IntervalCollection(
+            name="intervals",
+            holes=pd.DataFrame({"hole_index": [0], "offset": [0], "count": [2]}),
+            interval_table=table,
+        )
+        expected_types = {
+            "scalar": "scalar",
+            "integer": "integer",
+            "boolean": "bool",
+            "string": "string",
+            "category": "category",
+            "date_time": "date_time",
+        }
+        with self._mock_geoscience_objects() as mock_client:
+            result = await DownholeCollection.create(
+                context=self.context, data=_make_example_data(collections=[collection])
+            )
+            document = mock_client.objects[str(result.metadata.url.object_id)]
+        interval = result.collections.get("intervals")
+        self.assertIsNotNone(interval)
+        self.assertEqual(
+            {
+                attribute["name"]: attribute["attribute_type"]
+                for attribute in document["collections"][0]["from_to"]["attributes"]
+            },
+            expected_types,
+        )
+        self.assertListEqual((await interval.to_dataframe()).columns.tolist(), list(table.columns))
+
+    @parameterized.expand([("missing_from", {"to": [1.0]}), ("missing_to", {"from": [0.0]})])
+    async def test_interval_collection_requires_from_and_to_columns(self, _name, table_data):
+        collection = IntervalCollection(
+            name="invalid",
+            holes=pd.DataFrame({"hole_index": [0], "offset": [0], "count": [1]}),
+            interval_table=pd.DataFrame(table_data),
+        )
+        with self._mock_geoscience_objects(), self.assertRaises(ObjectValidationError):
+            await DownholeCollection.create(context=self.context, data=_make_example_data(collections=[collection]))
+
     async def test_explicit_collection_unit_overrides_dataframe_metadata(self):
         table = pd.DataFrame({"distance": [0.0], "grade": [1.0]})
         table.attrs["attribute_descriptions"] = {"distance": AttributeDescription(unit="ft")}
