@@ -84,6 +84,8 @@ class MockDownloadedObject(DownloadedObject):
 
     async def update(self, object_dict):
         new_version_id = str(int(self.metadata.version_id) + 1)
+        persisted = copy.deepcopy(object_dict)
+        self.mock_client.objects[persisted["uuid"]] = persisted
         return MockDownloadedObject(self.mock_client, object_dict, new_version_id)
 
 
