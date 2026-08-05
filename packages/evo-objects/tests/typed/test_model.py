@@ -72,13 +72,13 @@ class TestSchemaConstants(TestWithConnector):
                 pass
 
 
-class TestTable(DataTable):
+class CoordinateTable(DataTable):
     table_format: ClassVar[KnownTableFormat] = FLOAT_ARRAY_3
     data_columns: ClassVar[list[str]] = ["x", "y", "z"]
 
 
 class ExtendedLocations(DataTableAndAttributes):
-    _table: Annotated[TestTable, SchemaLocation("coordinates")]
+    _table: Annotated[CoordinateTable, SchemaLocation("coordinates")]
     point_count: Annotated[int, SchemaLocation("point_count")]
 
 
