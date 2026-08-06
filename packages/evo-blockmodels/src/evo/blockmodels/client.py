@@ -397,7 +397,7 @@ class BlockModelAPIClient(BaseAPIClient):
         return await self.upload_block_model(bm_id, job_id, upload_url, cache_location)
 
     async def _update_model_no_data(
-        self, bm_id: UUID, columns: models.UpdateColumnsLite, comment: str | None = None,
+        self, bm_id: UUID, columns: models.UpdateColumnsLite, comment: str | None = None
     ) -> Version:
         """Helper to apply an UpdateColumnsLite and return the resulting Version.
         This is for column operations where new data is not required.
