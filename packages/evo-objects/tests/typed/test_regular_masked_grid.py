@@ -61,7 +61,7 @@ class TestRegularMaskedGrid(TestWithConnector):
             {
                 "value": np.random.rand(np.sum(example_mask)),
                 "cat": pd.Categorical(
-                    np.random.choice(range(4), size=np.sum(example_mask)), categories=["a", "b", "c", "d"]
+                    np.random.choice(["a", "b", "c", "d"], size=np.sum(example_mask)), categories=["a", "b", "c", "d"]
                 ),
             }
         ),

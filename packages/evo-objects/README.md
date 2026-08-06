@@ -69,6 +69,40 @@ You can also get a list of all objects. Internally, this recursively calls the `
 
 Check out the other methods on the `ObjectAPIClient` for more details on how to upload and download objects, or get object versions.
 
+### Typed downhole collections
+
+`DownholeCollection` provides a DataFrame-based API for creating and reading downhole objects. A collection can contain
+distance tables, interval tables, or both. Hole chunk tables always use a zero-based `hole_index`: it is the code in the
+shared categorical `properties["hole_id"]` dtype, not the row position of a collar.
+
+```python
+import pandas as pd
+
+from evo.objects.typed import DownholeCollection, DownholeCollectionData
+from evo.objects.typed.downhole_collection import IntervalCollection
+from evo.objects.utils.downhole import hole_chunks_from_ids
+
+hole_dtype = pd.CategoricalDtype(categories=["DH-01"])
+intervals = pd.DataFrame({"from": [0.0], "to": [1.5], "lithology": ["sandstone"]})
+collections = [
+    IntervalCollection(
+        name="geology",
+        holes=hole_chunks_from_ids(pd.Series(["DH-01"]), dtype=hole_dtype),
+        interval_table=intervals,
+        unit="m",  # Explicit collection units override DataFrame metadata.
+    )
+]
+
+# Build DownholeCollectionData with matching path, location-hole chunks, and collar properties,
+# then create it with: await DownholeCollection.create(context, data)
+```
+
+Use `await dhc.location.to_dataframe()` and `await dhc.location.path_to_dataframe()` to read collars and paths.
+Distance and interval tables provide `to_dataframe()` and `to_dataframe_by_hole()`. Before reading a large object, call
+`await dhc.prefetch_collections("geology")` to warm only the requested collection data (and location data by default).
+Attribute descriptions round-trip through `DataFrame.attrs["attribute_descriptions"]`; an explicit collection `unit`
+takes precedence over unit metadata on the distance or `from` column.
+
 ## Contributing
 
 For instructions on contributing to the development of this library, please refer to the [evo-python-sdk documentation](https://github.com/seequentevo/evo-python-sdk).
