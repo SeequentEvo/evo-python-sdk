@@ -3230,7 +3230,7 @@ class UpdateDataLite1(CustomBaseModel):
     """
     Lineage of the block model update
     """
-    update_type: UpdateType = "merge"
+    update_type: UpdateType = UpdateType.merge
     """
 
     Behaviour of the update, for blocks that are omitted from the update file.
@@ -3283,7 +3283,7 @@ class UpdateDataLite2(CustomBaseModel):
     """
     Lineage of the block model update
     """
-    update_type: UpdateType = "merge"
+    update_type: UpdateType = UpdateType.merge
     """
 
     Behaviour of the update, for blocks that are omitted from the update file.

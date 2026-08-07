@@ -27,7 +27,7 @@ from evo.common import ServiceUser
 from evo.common.data import HTTPHeaderDict, RequestMethod
 from evo.common.test_tools import BASE_URL, MockResponse, TestWithConnector, TestWithStorage
 from evo.common.utils import get_header_metadata
-from utils import JobPollingRequestHandler
+from utils import DEFAULT_EXPECTED_HEADERS, JobPollingRequestHandler
 
 BM_UUID = uuid.uuid4()
 GOOSE_UUID = uuid.uuid4()
@@ -35,7 +35,6 @@ GOOSE_VERSION_ID = "2"
 DATE = datetime(2021, 1, 1, tzinfo=timezone.utc)
 MODEL_USER = models.IMSUserInfo(email="test@test.com", name="Test User", id=uuid.uuid4())
 USER = ServiceUser.from_model(MODEL_USER)
-
 
 def _mock_version(
     version_id: int, version_uuid: uuid.UUID, goose_version_id: str, bbox=None, columns: Iterable[models.Column] = ()
@@ -194,11 +193,7 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
                 method=RequestMethod.PATCH,
                 path=f"{self.base_path}/block-models/{BM_UUID}/blocks",
                 body=expected_update_body.model_dump(mode="json", exclude_unset=True),
-                headers={
-                    "Authorization": "Bearer <not-a-real-token>",
-                    "Content-Type": "application/json",
-                    "Accept": "application/json",
-                },
+                headers=DEFAULT_EXPECTED_HEADERS,
             )
         self.assertEqual(version.bm_uuid, BM_UUID)
         self.assertEqual(version.version_id, 2)
@@ -261,11 +256,7 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
                 method=RequestMethod.PATCH,
                 path=f"{self.base_path}/block-models/{BM_UUID}/blocks",
                 body=expected_update_body.model_dump(mode="json", exclude_unset=True),
-                headers={
-                    "Authorization": "Bearer <not-a-real-token>",
-                    "Content-Type": "application/json",
-                    "Accept": "application/json",
-                },
+                headers=DEFAULT_EXPECTED_HEADERS,
             )
 
     async def test_add_new_columns_with_unknown_tag_column(self) -> None:
@@ -331,11 +322,7 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
                 method=RequestMethod.PATCH,
                 path=f"{self.base_path}/block-models/{BM_UUID}/blocks",
                 body=expected_update_body.model_dump(mode="json", exclude_unset=True),
-                headers={
-                    "Authorization": "Bearer <not-a-real-token>",
-                    "Content-Type": "application/json",
-                    "Accept": "application/json",
-                },
+                headers=DEFAULT_EXPECTED_HEADERS,
             )
         self.assertEqual(version.bm_uuid, BM_UUID)
         self.assertEqual(version.version_id, 2)
@@ -422,16 +409,13 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
                 ),
                 update_type=models.UpdateType.replace,
                 geometry_change=None,
+                fill_subblocks=None,
             )
             self.assert_any_request_made(
                 method=RequestMethod.PATCH,
                 path=f"{self.base_path}/block-models/{BM_UUID}/blocks",
                 body=expected_update_body.model_dump(mode="json", exclude_unset=True),
-                headers={
-                    "Authorization": "Bearer <not-a-real-token>",
-                    "Content-Type": "application/json",
-                    "Accept": "application/json",
-                },
+                headers=DEFAULT_EXPECTED_HEADERS,
             )
         self.assertEqual(version.bm_uuid, BM_UUID)
         self.assertEqual(version.version_id, 2)
@@ -509,11 +493,11 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
 
     @parameterized.expand(
         [
-            (True,),
-            (False,),
+            (True, True),
+            (False,False),
         ]
     )
-    async def test_update_subblocked_columns(self, geometry_change: bool) -> None:
+    async def test_update_subblocked_columns(self, geometry_change: bool, fill_subblocks: bool) -> None:
         self.transport.set_request_handler(
             UpdateRequestHandler(
                 update_result=UPDATE_RESULT,
@@ -535,6 +519,7 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
                 delete_columns={"col3"},
                 units={"col2": "g/t"},
                 geometry_change=geometry_change,
+                fill_subblocks=fill_subblocks
             )
             mock_destination.upload_file.assert_called_once()
 
@@ -554,16 +539,13 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
                 ),
                 update_type=models.UpdateType.replace,
                 geometry_change=geometry_change,
+                fill_subblocks=fill_subblocks,
             )
             self.assert_any_request_made(
                 method=RequestMethod.PATCH,
                 path=f"{self.base_path}/block-models/{BM_UUID}/blocks",
                 body=expected_update_body.model_dump(mode="json", exclude_unset=True),
-                headers={
-                    "Authorization": "Bearer <not-a-real-token>",
-                    "Content-Type": "application/json",
-                    "Accept": "application/json",
-                },
+                headers=DEFAULT_EXPECTED_HEADERS,
             )
         self.assertEqual(version.bm_uuid, BM_UUID)
         self.assertEqual(version.version_id, 2)
@@ -625,14 +607,112 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
                 method=RequestMethod.PATCH,
                 path=f"{self.base_path}/block-models/{BM_UUID}/blocks",
                 body=expected_update_body.model_dump(mode="json", exclude_unset=True),
-                headers={
-                    "Authorization": "Bearer <not-a-real-token>",
-                    "Content-Type": "application/json",
-                    "Accept": "application/json",
-                },
+                headers=DEFAULT_EXPECTED_HEADERS,
             )
         self.assertEqual(version.bm_uuid, BM_UUID)
         self.assertEqual(version.version_id, 2)
+
+    async def test_update_block_model_columns_merge(self) -> None:
+        """update_type=merge is passed through the stack to UpdateDataLite for regular models."""
+        self.transport.set_request_handler(
+            UpdateRequestHandler(
+                update_result=UPDATE_RESULT,
+                job_response=JobResponse(
+                    job_status=JobStatus.COMPLETE,
+                    payload=UPDATED_VERSION,
+                ),
+            )
+        )
+        with (
+            mock.patch("evo.common.io.upload.StorageDestination") as mock_destination,
+        ):
+            mock_destination.upload_file = mock.AsyncMock()
+            await self.bms_client.update_block_model_columns(
+                BM_UUID,
+                REGULAR_DATA,
+                new_columns=["col2"],
+                update_columns={"col1"},
+                delete_columns={"col3"},
+                units={"col2": "g/t"},
+                update_type=models.UpdateType.merge,
+            )
+            mock_destination.upload_file.assert_called_once()
+
+            expected_update_body = models.UpdateDataLite1(
+                columns=models.UpdateColumnsLite(
+                    new=[
+                        models.ColumnLite(
+                            title="col2",
+                            data_type=models.DataType.Float64,
+                            unit_id="g/t",
+                        ),
+                    ],
+                    update=["col1"],
+                    rename=[],
+                    delete=["col3"],
+                ),
+                update_type=models.UpdateType.merge,
+                geometry_change=None,
+                fill_subblocks=None,
+            )
+            self.assert_any_request_made(
+                method=RequestMethod.PATCH,
+                path=f"{self.base_path}/block-models/{BM_UUID}/blocks",
+                body=expected_update_body.model_dump(mode="json", exclude_unset=True),
+                headers=DEFAULT_EXPECTED_HEADERS,
+            )
+
+    async def test_update_subblocked_columns_merge(self) -> None:
+        """update_type=merge is passed through the stack to UpdateDataLite for sub-blocked models."""
+        self.transport.set_request_handler(
+            UpdateRequestHandler(
+                update_result=UPDATE_RESULT,
+                job_response=JobResponse(
+                    job_status=JobStatus.COMPLETE,
+                    payload=UPDATED_VERSION,
+                ),
+            )
+        )
+        with (
+            mock.patch("evo.common.io.upload.StorageDestination") as mock_destination,
+        ):
+            mock_destination.upload_file = mock.AsyncMock()
+            await self.bms_client.update_subblocked_columns(
+                BM_UUID,
+                SUBBLOCKED_DATA,
+                new_columns=["col2"],
+                update_columns={"col1"},
+                delete_columns={"col3"},
+                units={"col2": "g/t"},
+                geometry_change=True,
+                fill_subblocks=True,
+                update_type=models.UpdateType.merge,
+            )
+            mock_destination.upload_file.assert_called_once()
+
+            expected_update_body = models.UpdateDataLite1(
+                columns=models.UpdateColumnsLite(
+                    new=[
+                        models.ColumnLite(
+                            title="col2",
+                            data_type=models.DataType.Float64,
+                            unit_id="g/t",
+                        ),
+                    ],
+                    update=["col1"],
+                    rename=[],
+                    delete=["col3"],
+                ),
+                update_type=models.UpdateType.merge,
+                geometry_change=True,
+                fill_subblocks=True,
+            )
+            self.assert_any_request_made(
+                method=RequestMethod.PATCH,
+                path=f"{self.base_path}/block-models/{BM_UUID}/blocks",
+                body=expected_update_body.model_dump(mode="json", exclude_unset=True),
+                headers=DEFAULT_EXPECTED_HEADERS,
+            )
 
     async def test_update_column_metadata(self) -> None:
         self.transport.set_request_handler(
@@ -724,11 +804,7 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
             method=RequestMethod.PATCH,
             path=f"{self.base_path}/block-models/{BM_UUID}/blocks",
             body=expected_update_body.model_dump(mode="json", exclude_unset=True),
-            headers={
-                "Authorization": "Bearer <not-a-real-token>",
-                "Content-Type": "application/json",
-                "Accept": "application/json",
-            },
+            headers=DEFAULT_EXPECTED_HEADERS,
         )
 
     async def test_update_column_metadata_with_comment(self) -> None:
@@ -771,11 +847,7 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
             method=RequestMethod.PATCH,
             path=f"{self.base_path}/block-models/{BM_UUID}/blocks",
             body=expected_update_body.model_dump(mode="json", exclude_unset=True),
-            headers={
-                "Authorization": "Bearer <not-a-real-token>",
-                "Content-Type": "application/json",
-                "Accept": "application/json",
-            },
+            headers=DEFAULT_EXPECTED_HEADERS,
         )
         self.assertEqual(version.bm_uuid, BM_UUID)
 
@@ -814,12 +886,7 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
             method=RequestMethod.PATCH,
             path=f"{self.base_path}/block-models/{BM_UUID}/blocks",
             body=expected_update_body.model_dump(mode="json", exclude_unset=True),
-            headers={
-                "Authorization": "Bearer <not-a-real-token>",
-                "Content-Type": "application/json",
-                "Accept": "application/json",
-                "API-Preview": "opt-in",
-            },
+            headers=DEFAULT_EXPECTED_HEADERS | {"API-Preview": "opt-in"},
         )
         self.assertEqual(version.version_id, 2)
 
@@ -875,11 +942,7 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
             method=RequestMethod.PATCH,
             path=f"{self.base_path}/block-models/{BM_UUID}/blocks",
             body=expected_update_body.model_dump(mode="json", exclude_unset=True),
-            headers={
-                "Authorization": "Bearer <not-a-real-token>",
-                "Content-Type": "application/json",
-                "Accept": "application/json",
-            },
+            headers=DEFAULT_EXPECTED_HEADERS,
         )
         self.assertEqual(version.bm_uuid, BM_UUID)
         self.assertEqual(version.version_id, 2)
@@ -952,11 +1015,7 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
             method=RequestMethod.PATCH,
             path=f"{self.base_path}/block-models/{BM_UUID}/blocks",
             body=expected_update_body.model_dump(mode="json", exclude_unset=True),
-            headers={
-                "Authorization": "Bearer <not-a-real-token>",
-                "Content-Type": "application/json",
-                "Accept": "application/json",
-            },
+            headers=DEFAULT_EXPECTED_HEADERS,
         )
         self.assertEqual(version.bm_uuid, BM_UUID)
         self.assertEqual(version.version_id, 2)
