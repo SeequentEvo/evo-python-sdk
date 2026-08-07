@@ -1,5 +1,43 @@
 # Changelog
 
+## evo-blockmodels@v0.5.1
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### evo-blockmodels
+* Block model column tags by @chriscunningham-seequent in https://github.com/SeequentEvo/evo-python-sdk/pull/305
+* Data model update for column groups management by @chriscunningham-seequent in https://github.com/SeequentEvo/evo-python-sdk/pull/317
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-blockmodels@v0.4.2...evo-blockmodels@v0.5.1
+
+## evo-objects@v0.6.1
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### evo-objects
+* Add evo.common.crs with EpsgCode and parse_crs by @sergiopeixoto-seequent in https://github.com/SeequentEvo/evo-python-sdk/pull/323
+* Fix common package version by @GriffinBaxterSeequent in https://github.com/SeequentEvo/evo-python-sdk/pull/324
+
+## New Contributors
+* @sergiopeixoto-seequent made their first contribution in https://github.com/SeequentEvo/evo-python-sdk/pull/323
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-objects@v0.4.3...evo-objects@v0.6.1
+
+## evo-sdk-common@v0.5.26
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### evo-sdk-common
+* Couple of changes to support Python 3.14 by @shivangj-10 in https://github.com/SeequentEvo/evo-python-sdk/pull/319
+* add typed dh intervals by @geostats-BSY in https://github.com/SeequentEvo/evo-python-sdk/pull/316
+* Add evo.common.crs with EpsgCode and parse_crs by @sergiopeixoto-seequent in https://github.com/SeequentEvo/evo-python-sdk/pull/323
+* Fix common package version by @GriffinBaxterSeequent in https://github.com/SeequentEvo/evo-python-sdk/pull/324
+
+## New Contributors
+* @sergiopeixoto-seequent made their first contribution in https://github.com/SeequentEvo/evo-python-sdk/pull/323
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-sdk-common@v0.5.25...evo-sdk-common@v0.5.26
+
 ## evo-sdk@v0.2.3
 <!-- Release notes generated using configuration in .github/release.yml at main -->
 
