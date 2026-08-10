@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import contextlib
 import dataclasses
+import inspect
 import math
 import uuid
 from datetime import date
@@ -75,6 +76,7 @@ def _make_example_data(
                 "attr_num": [1.1, 2.2, 3.3, 4.4],
             }
         ),
+        unit=None,
     )
 
     holes = pd.DataFrame(
@@ -115,6 +117,17 @@ def _make_example_data(
 
 
 class TestDownholeCollection(TestWithConnector):
+    def test_nullable_domain_arguments_are_required(self):
+        for data_class, arguments in (
+            (DistanceCollection, ("unit",)),
+            (IntervalCollection, ("unit",)),
+            (DownholeCollectionData, ("distance_unit", "desurvey")),
+        ):
+            parameters = inspect.signature(data_class).parameters
+            for argument in arguments:
+                with self.subTest(data_class=data_class.__name__, argument=argument):
+                    self.assertIs(parameters[argument].default, inspect.Parameter.empty)
+
     def setUp(self) -> None:
         TestWithConnector.setUp(self)
         self.environment = Environment(hub_url=BASE_URL, org_id=ORG.id, workspace_id=WORKSPACE_ID)
@@ -236,6 +249,7 @@ class TestDownholeCollection(TestWithConnector):
             name="intervals",
             holes=pd.DataFrame({"hole_index": [0], "offset": [0], "count": [2]}),
             table=table,
+            unit=None,
         )
         data = _make_example_data(collections=[interval])
         with self._mock_geoscience_objects():
@@ -291,6 +305,7 @@ class TestDownholeCollection(TestWithConnector):
             name="intervals",
             holes=pd.DataFrame({"hole_index": [0], "offset": [0], "count": [2]}),
             table=table,
+            unit=None,
         )
         expected_types = {
             "scalar": "scalar",
@@ -322,6 +337,7 @@ class TestDownholeCollection(TestWithConnector):
             name="invalid",
             holes=pd.DataFrame({"hole_index": [0], "offset": [0], "count": [1]}),
             table=pd.DataFrame(table_data),
+            unit=None,
         )
         with self._mock_geoscience_objects(), self.assertRaises(ObjectValidationError):
             await DownholeCollection.create(context=self.context, data=_make_example_data(collections=[collection]))
@@ -355,6 +371,7 @@ class TestDownholeCollection(TestWithConnector):
             name="grades",
             holes=pd.DataFrame({"hole_index": [0], "offset": [0], "count": [1]}),
             table=table,
+            unit=None,
         )
         with self._mock_geoscience_objects():
             result = await DownholeCollection.create(
@@ -553,6 +570,7 @@ class TestDownholeCollection(TestWithConnector):
             name="repeated",
             holes=pd.DataFrame({"hole_index": [0, 0], "offset": [0, 2], "count": [1, 1]}),
             table=table,
+            unit=None,
         )
         dataclasses.replace(base, collections=[collection])
 
@@ -564,6 +582,7 @@ class TestDownholeCollection(TestWithConnector):
                         name="invalid",
                         holes=pd.DataFrame({"hole_index": [2], "offset": [0], "count": [2]}),
                         table=table,
+                        unit=None,
                     )
                 ],
             )
@@ -574,6 +593,7 @@ class TestDownholeCollection(TestWithConnector):
             name="sparse",
             holes=pd.DataFrame({"hole_index": [0, 1], "offset": [0, 0], "count": [2, 0]}),
             table=pd.DataFrame({"distance": [0.0, 1.0]}),
+            unit=None,
         )
         data = dataclasses.replace(base, collections=[collection])
         with self._mock_geoscience_objects():
@@ -588,6 +608,7 @@ class TestDownholeCollection(TestWithConnector):
                 name="measurements",
                 holes=pd.DataFrame({"hole_index": [0], "offset": [0], "count": [1]}),
                 table=pd.DataFrame({"distance": [0.0]}),
+                unit=None,
             )
             await result.collections.add(collection)
             replacement = dataclasses.replace(collection, table=pd.DataFrame({"distance": [1.0]}))
@@ -607,16 +628,19 @@ class TestDownholeCollection(TestWithConnector):
             name="first",
             holes=pd.DataFrame({"hole_index": [0], "offset": [0], "count": [1]}),
             table=pd.DataFrame({"distance": [0.0]}),
+            unit=None,
         )
         middle = DistanceCollection(
             name="middle",
             holes=pd.DataFrame({"hole_index": [1], "offset": [0], "count": [1]}),
             table=pd.DataFrame({"distance": [1.0]}),
+            unit=None,
         )
         last = DistanceCollection(
             name="last",
             holes=pd.DataFrame({"hole_index": [0], "offset": [0], "count": [1]}),
             table=pd.DataFrame({"distance": [2.0]}),
+            unit=None,
         )
         replacement = dataclasses.replace(middle, table=pd.DataFrame({"distance": [10.0]}))
         with self._mock_geoscience_objects():
@@ -662,6 +686,7 @@ class TestDownholeCollection(TestWithConnector):
             name="repeated",
             holes=pd.DataFrame({"hole_index": [0, 0], "offset": [2, 0], "count": [1, 1]}),
             table=pd.DataFrame({"distance": [0.0, 1.0, 2.0]}),
+            unit=None,
         )
         with self._mock_geoscience_objects():
             result = await DownholeCollection.create(

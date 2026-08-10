@@ -72,8 +72,8 @@ class DistanceCollection:
     name: str
     holes: HoleChunks
     table: Depths
+    unit: str | None
     collection_type: str = "distance"
-    unit: str | None = None
 
 
 @dataclass
@@ -81,8 +81,8 @@ class IntervalCollection:
     name: str
     holes: HoleChunks
     table: Intervals
+    unit: str | None
     collection_type: str = "interval"
-    unit: str | None = None
 
 
 DownholeCollectionEntry: TypeAlias = DistanceCollection | IntervalCollection
@@ -117,8 +117,8 @@ class DownholeCollectionData(BaseSpatialObjectData):
     properties: HoleProperties
     attributes: HoleAttributes | None
     collections: list[DownholeCollectionEntry]
-    distance_unit: str | None = None
-    desurvey: str | None = None
+    distance_unit: str | None
+    desurvey: str | None
 
     @property
     def hole_id_dtype(self) -> pd.CategoricalDtype:
