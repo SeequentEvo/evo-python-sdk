@@ -667,6 +667,43 @@ class TestDownholeCollection(TestWithConnector):
         self.assertListEqual(list(by_hole), ["H001"])
         self.assertEqual(len(by_hole["H001"]), 4)
 
+    async def test_dataframe_read_wrappers_select_attributes(self):
+        interval = IntervalCollection(
+            name="intervals",
+            holes=pd.DataFrame({"hole_index": [0], "offset": [0], "count": [1]}),
+            table=pd.DataFrame({"from": [0.0], "to": [1.0], "lithology": ["ore"]}),
+            unit=None,
+        )
+        data = _make_example_data(
+            attributes=pd.DataFrame({"collar_attribute": ["first", "second"]}),
+            collections=[_make_example_data().collections[0], interval],
+        )
+        data = dataclasses.replace(data, path=data.path.assign(path_attribute=[1] * len(data.path)))
+
+        with self._mock_geoscience_objects():
+            result = await DownholeCollection.create(context=self.context, data=data)
+
+        self.assertListEqual(
+            (await result.location.to_dataframe("collar_attribute")).columns.tolist(),
+            ["hole_id", "x", "y", "z", "final", "target", "current", "collar_attribute"],
+        )
+        self.assertListEqual(
+            (await result.location.path_to_dataframe("path_attribute")).columns.tolist(),
+            ["distance", "azimuth", "dip", "path_attribute"],
+        )
+        distance = result.collections.get("collection1")
+        self.assertIsNotNone(distance)
+        self.assertListEqual((await distance.to_dataframe("attr_num")).columns.tolist(), ["distance", "attr_num"])
+        self.assertListEqual(
+            (await distance.to_dataframe_by_hole("attr_num"))["H001"].columns.tolist(), ["distance", "attr_num"]
+        )
+        intervals = result.collections.get("intervals")
+        self.assertIsNotNone(intervals)
+        self.assertListEqual((await intervals.to_dataframe("lithology")).columns.tolist(), ["from", "to", "lithology"])
+        self.assertListEqual(
+            (await intervals.to_dataframe_by_hole("lithology"))["H001"].columns.tolist(), ["from", "to", "lithology"]
+        )
+
     async def test_collection_read_uses_persisted_non_contiguous_lookup_keys(self):
         with self._mock_geoscience_objects() as mock_client:
             result = await DownholeCollection.create(context=self.context, data=_make_example_data())

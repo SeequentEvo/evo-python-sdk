@@ -320,20 +320,20 @@ class DownholeLocation(SchemaModel):
     coordinates: Annotated[CollarCoordinates, SchemaLocation("coordinates"), DataLocation("properties")]
     attributes: Annotated[Attributes, SchemaLocation("attributes"), DataLocation("attributes")]
 
-    async def to_dataframe(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
-        """Return collars with a categorical ``hole_id`` column."""
+    async def to_dataframe(self, *keys: str, fb: IFeedback = NoFeedback) -> pd.DataFrame:
+        """Return collars with a categorical ``hole_id`` column and selected attributes."""
         parts = [
             await self.hole_id.to_dataframe(fb=fb),
             await self.coordinates.to_dataframe(fb=fb),
             await self.distances.to_dataframe(fb=fb),
         ]
         if len(self.attributes):
-            parts.append(await self.attributes.to_dataframe(fb=fb))
+            parts.append(await self.attributes.to_dataframe(*keys, fb=fb))
         return pd.concat(parts, axis=1)
 
-    async def path_to_dataframe(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
+    async def path_to_dataframe(self, *keys: str, fb: IFeedback = NoFeedback) -> pd.DataFrame:
         """Return the desurvey path and its attributes."""
-        return await self.path.to_dataframe(fb=fb)
+        return await self.path.to_dataframe(*keys, fb=fb)
 
 
 class _Distances(DataTable):
@@ -367,11 +367,13 @@ class DistanceTable(SchemaModel):
 class DownholeDistanceTable(DistanceTable):
     holes: Annotated[HoleChunksTable, SchemaLocation("holes"), DataLocation("holes")]
 
-    async def to_dataframe(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
-        return await self.distance.to_dataframe(fb=fb)
+    async def to_dataframe(self, *keys: str, fb: IFeedback = NoFeedback) -> pd.DataFrame:
+        """Return collection values and selected attributes."""
+        return await self.distance.to_dataframe(*keys, fb=fb)
 
-    async def to_dataframe_by_hole(self, fb: IFeedback = NoFeedback) -> dict[str, pd.DataFrame]:
-        return await _table_by_hole(self, await self.to_dataframe(fb=fb), fb=fb)
+    async def to_dataframe_by_hole(self, *keys: str, fb: IFeedback = NoFeedback) -> dict[str, pd.DataFrame]:
+        """Return per-hole collection values and selected attributes."""
+        return await _table_by_hole(self, await self.to_dataframe(*keys, fb=fb), fb=fb)
 
 
 class _Intervals(DataTable):
@@ -401,11 +403,13 @@ class DownholeIntervalTable(SchemaModel):
     from_to: Annotated[IntervalTableFromTo, SchemaLocation("from_to"), DataLocation("table")]
     holes: Annotated[HoleChunksTable, SchemaLocation("holes"), DataLocation("holes")]
 
-    async def to_dataframe(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
-        return await self.from_to.to_dataframe(fb=fb)
+    async def to_dataframe(self, *keys: str, fb: IFeedback = NoFeedback) -> pd.DataFrame:
+        """Return collection intervals and selected attributes."""
+        return await self.from_to.to_dataframe(*keys, fb=fb)
 
-    async def to_dataframe_by_hole(self, fb: IFeedback = NoFeedback) -> dict[str, pd.DataFrame]:
-        return await _table_by_hole(self, await self.to_dataframe(fb=fb), fb=fb)
+    async def to_dataframe_by_hole(self, *keys: str, fb: IFeedback = NoFeedback) -> dict[str, pd.DataFrame]:
+        """Return per-hole collection intervals and selected attributes."""
+        return await _table_by_hole(self, await self.to_dataframe(*keys, fb=fb), fb=fb)
 
 
 class DownholeCollectionTables(SchemaList[DownholeDistanceTable | DownholeIntervalTable]):
