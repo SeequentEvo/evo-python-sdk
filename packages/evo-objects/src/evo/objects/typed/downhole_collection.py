@@ -130,22 +130,27 @@ class DownholeCollectionData(BaseSpatialObjectData):
         if len(names) != len(set(names)):
             raise ObjectValidationError("Collection names must be unique")
 
-        self._validate_hole_chunks(self.holes, len(self.path), require_coverage=True)
+        valid_indices = set(range(len(self.hole_id_dtype.categories)))
+        self._validate_hole_chunks(self.holes, len(self.path), valid_indices=valid_indices, require_coverage=True)
         for collection in self.collections:
             table = collection.table
-            self._validate_hole_chunks(collection.holes, len(table), require_coverage=False)
+            self._validate_hole_chunks(
+                collection.holes, len(table), valid_indices=valid_indices, require_coverage=False
+            )
 
-    def _validate_hole_chunks(self, holes: HoleChunks, table_length: int, *, require_coverage: bool) -> None:
+    @staticmethod
+    def _validate_hole_chunks(
+        holes: HoleChunks, table_length: int, *, valid_indices: set[int], require_coverage: bool
+    ) -> None:
         required = {"hole_index", "offset", "count"}
         if missing := required - set(holes.columns):
             raise ObjectValidationError(f"Hole chunks are missing columns: {sorted(missing)}")
         indices = holes["hole_index"].astype(int)
-        valid = set(range(len(self.hole_id_dtype.categories)))
-        if not set(indices).issubset(valid):
-            raise ObjectValidationError("hole_index must be a code in properties['hole_id'] categorical dtype")
+        if not set(indices).issubset(valid_indices):
+            raise ObjectValidationError("hole_index must reference a valid hole")
         if require_coverage and indices.duplicated().any():
             raise ObjectValidationError("Each hole_index may occur only once in a holes table")
-        if require_coverage and set(indices) != valid:
+        if require_coverage and set(indices) != valid_indices:
             raise ObjectValidationError("Location holes must cover every hole_id categorical code exactly once")
         offsets = holes["offset"].astype(int)
         counts = holes["count"].astype(int)
@@ -434,10 +439,10 @@ class DownholeCollectionTables(SchemaList[DownholeDistanceTable | DownholeInterv
             raise ObjectValidationError(f"Collection '{collection.name}' already exists")
         location_holes = await self._context.root_model.location.holes.to_dataframe()
         valid_indices = set(location_holes["hole_index"].astype(int))
-        if not set(collection.holes["hole_index"].astype(int)).issubset(valid_indices):
-            raise ObjectValidationError("Collection hole_index is not present in the location holes table")
         table = collection.table
-        _validate_chunk_ranges(collection.holes, len(table))
+        DownholeCollectionData._validate_hole_chunks(
+            collection.holes, len(table), valid_indices=valid_indices, require_coverage=False
+        )
         schema = await self._data_to_schema([collection], self._obj)
         if existing_indices:
             self._document[existing_indices[0]] = schema[0]
@@ -484,16 +489,6 @@ class DownholeCollection(BaseSpatialObject):
                 raise KeyError(f"Unknown collection '{name}'")
             documents.append(collection.as_dict())
         await self.prefetch(data_ids=collect_data_ids(documents), max_concurrent=max_concurrent, fb=fb)
-
-
-def _validate_chunk_ranges(holes: HoleChunks, table_length: int) -> None:
-    required = {"hole_index", "offset", "count"}
-    if missing := required - set(holes.columns):
-        raise ObjectValidationError(f"Hole chunks are missing columns: {sorted(missing)}")
-    offsets = holes["offset"].astype(int)
-    counts = holes["count"].astype(int)
-    if (offsets < 0).any() or (counts < 0).any() or ((offsets + counts) > table_length).any():
-        raise ObjectValidationError("Hole chunk offsets and counts must be within the associated table")
 
 
 async def _table_by_hole(
