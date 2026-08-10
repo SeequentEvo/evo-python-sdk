@@ -242,7 +242,7 @@ class TestDownholeCollection(TestWithConnector):
             object_json = mock_client.objects[str(result.metadata.url.object_id)]
             self.assertIn("start_and_end", object_json["collections"][1]["from_to"]["intervals"])
 
-    async def test_interval_only_collection_uses_attribute_unit_when_not_explicit(self):
+    async def test_interval_collection_ignores_coordinate_attribute_metadata(self):
         table = pd.DataFrame({"from": [0.0, 1.0], "to": [1.0, 2.0], "grade": [1.0, 2.0]})
         table.attrs["attribute_descriptions"] = {"from": AttributeDescription(unit="ft")}
         interval = IntervalCollection(
@@ -252,24 +252,23 @@ class TestDownholeCollection(TestWithConnector):
             unit=None,
         )
         data = _make_example_data(collections=[interval])
-        with self._mock_geoscience_objects():
+        with self._mock_geoscience_objects() as mock_client:
             result = await DownholeCollection.create(context=self.context, data=data)
         collection = result.collections.get("intervals")
         self.assertIsNotNone(collection)
-        self.assertEqual(collection.from_to.unit, "ft")
+        self.assertIsNone(collection.from_to.unit)
         self.assertListEqual((await collection.to_dataframe()).columns.tolist(), ["from", "to", "grade"])
+        document = mock_client.objects[str(result.metadata.url.object_id)]
+        self.assertNotIn("unit", document["collections"][0]["from_to"])
 
     @parameterized.expand(
         [
-            ("explicit", "m", "ft", "m"),
-            ("metadata", None, "ft", "ft"),
-            ("omitted", None, None, None),
+            ("explicit", "m", "m"),
+            ("omitted", None, None),
         ]
     )
-    async def test_interval_collection_unit_precedence(self, _name, explicit_unit, metadata_unit, expected_unit):
+    async def test_interval_collection_uses_explicit_unit_only(self, _name, explicit_unit, expected_unit):
         table = pd.DataFrame({"from": [0.0], "to": [1.0]})
-        if metadata_unit is not None:
-            table.attrs["attribute_descriptions"] = {"from": AttributeDescription(unit=metadata_unit)}
         collection = IntervalCollection(
             name="intervals",
             holes=pd.DataFrame({"hole_index": [0], "offset": [0], "count": [1]}),
@@ -342,20 +341,32 @@ class TestDownholeCollection(TestWithConnector):
         with self._mock_geoscience_objects(), self.assertRaises(ObjectValidationError):
             await DownholeCollection.create(context=self.context, data=_make_example_data(collections=[collection]))
 
-    async def test_explicit_collection_unit_overrides_dataframe_metadata(self):
+    @parameterized.expand(
+        [
+            ("explicit", "m", "m"),
+            ("metadata_only", None, None),
+        ]
+    )
+    async def test_distance_collection_uses_explicit_unit_only(self, _name, collection_unit, expected_unit):
         table = pd.DataFrame({"distance": [0.0], "grade": [1.0]})
         table.attrs["attribute_descriptions"] = {"distance": AttributeDescription(unit="ft")}
         collection = DistanceCollection(
             name="distances",
             holes=pd.DataFrame({"hole_index": [0], "offset": [0], "count": [1]}),
             table=table,
-            unit="m",
+            unit=collection_unit,
         )
-        with self._mock_geoscience_objects():
+        with self._mock_geoscience_objects() as mock_client:
             result = await DownholeCollection.create(
                 context=self.context, data=_make_example_data(collections=[collection])
             )
-        self.assertEqual(result.collections.get("distances").distance.unit, "m")
+        self.assertEqual(result.collections.get("distances").distance.unit, expected_unit)
+        document = mock_client.objects[str(result.metadata.url.object_id)]
+        distance = document["collections"][0]["distance"]
+        if expected_unit is None:
+            self.assertNotIn("unit", distance)
+        else:
+            self.assertEqual(distance["unit"], expected_unit)
 
     async def test_attribute_descriptions_round_trip_to_dataframe_metadata(self):
         table = pd.DataFrame({"distance": [0.0], "grade": [1.0]})

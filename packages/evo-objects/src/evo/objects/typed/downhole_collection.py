@@ -11,7 +11,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from typing import Annotated, Any, ClassVar, TypeAlias
 
 import numpy as np
@@ -25,10 +25,7 @@ from evo.objects import SchemaVersion
 from evo.objects.typed._data import DataTable, DataTableAndAttributes
 from evo.objects.typed._downhole import HoleIdCategory
 from evo.objects.typed._model import DataLocation, SchemaList, SchemaLocation, SchemaModel
-from evo.objects.typed.attributes import (
-    AttributeDescription,
-    Attributes,
-)
+from evo.objects.typed.attributes import Attributes
 from evo.objects.typed.exceptions import ObjectValidationError
 from evo.objects.typed.spatial import BaseSpatialObject, BaseSpatialObjectData
 from evo.objects.typed.types import BoundingBox
@@ -58,11 +55,6 @@ HoleChunks: TypeAlias = pd.DataFrame  # [ hole_index | offset | count ]
 HoleProperties: TypeAlias = pd.DataFrame  # [ hole_id | final | target | current | x | y | z ]
 HoleAttributes: TypeAlias = pd.DataFrame
 
-# If `Depths` has unit descriptions in its `DataFrame.attrs` dictionary, then those units will be used when building
-# the schema object.
-# This is the expected structure:
-#   >>> depths_df.attrs
-#   {'attribute_descriptions': {<column names>: <AttributeDescription>}, ...}
 Depths: TypeAlias = pd.DataFrame  # [ distance | <attributes> ]
 Intervals: TypeAlias = pd.DataFrame  # [ from | to | <attributes> ]
 
@@ -345,18 +337,6 @@ class DistanceTableDistances(DataTableAndAttributes):
     _table: Annotated[_Distances, SchemaLocation("values"), DataLocation("")]
     unit: Annotated[str | None, SchemaLocation("unit")]
 
-    @classmethod
-    async def _data_to_schema(cls, data: pd.DataFrame, context: IContext) -> Any:
-        result = await super()._data_to_schema(data, context)
-        unit = data.attrs.get("unit")
-        attr_desc: AttributeDescription = data.attrs.get("attribute_descriptions", {}).get("distance")
-        if unit is None and attr_desc is not None:
-            unit = attr_desc.unit
-        if unit is not None:
-            # "unit" can be missing, but it must not be `None`
-            result["unit"] = unit
-        return result
-
 
 class DistanceTable(SchemaModel):
     name: Annotated[str, SchemaLocation("name"), DataLocation("name")]
@@ -384,17 +364,6 @@ class _Intervals(DataTable):
 class IntervalTableFromTo(DataTableAndAttributes):
     _table: Annotated[_Intervals, SchemaLocation("intervals.start_and_end"), DataLocation("")]
     unit: Annotated[str | None, SchemaLocation("unit")]
-
-    @classmethod
-    async def _data_to_schema(cls, data: pd.DataFrame, context: IContext) -> Any:
-        result = await super()._data_to_schema(data, context)
-        unit = data.attrs.get("unit")
-        description = data.attrs.get("attribute_descriptions", {}).get("from")
-        if unit is None and description is not None:
-            unit = description.unit
-        if unit is not None:
-            result["unit"] = unit
-        return result
 
 
 class DownholeIntervalTable(SchemaModel):
@@ -424,12 +393,13 @@ class DownholeCollectionTables(SchemaList[DownholeDistanceTable | DownholeInterv
         result = []
         for collection in data:
             model = DownholeIntervalTable if isinstance(collection, IntervalCollection) else DownholeDistanceTable
-            table = collection.table
-            table = table.copy()
-            table.attrs = dict(table.attrs)
+            schema = await model._data_to_schema(collection, context)
             if collection.unit is not None:
-                table.attrs["unit"] = collection.unit
-            result.append(await model._data_to_schema(replace(collection, table=table), context))
+                if isinstance(collection, IntervalCollection):
+                    schema["from_to"]["unit"] = collection.unit
+                else:
+                    schema["distance"]["unit"] = collection.unit
+            result.append(schema)
         return result
 
     def get(self, name: str) -> DownholeDistanceTable | DownholeIntervalTable | None:
