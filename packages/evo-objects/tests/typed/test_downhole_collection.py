@@ -19,7 +19,7 @@ import math
 import uuid
 import warnings
 from datetime import date
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 import numpy as np
 import numpy.testing as npt
@@ -28,6 +28,7 @@ from parameterized import parameterized
 
 from evo.common import Environment, StaticContext
 from evo.common.test_tools import BASE_URL, ORG, WORKSPACE_ID, TestWithConnector
+from evo.common.utils import NoFeedback
 from evo.objects import ObjectReference
 from evo.objects.typed import BoundingBox
 from evo.objects.typed.attributes import AttributeDescription
@@ -702,6 +703,23 @@ class TestDownholeCollection(TestWithConnector):
         by_hole = await result.collections.get("collection1").to_dataframe_by_hole()
         self.assertListEqual(list(by_hole), ["H001"])
         self.assertEqual(len(by_hole["H001"]), 4)
+
+    async def test_prefetch_collections_exposes_and_forwards_explicit_options(self):
+        with self._mock_geoscience_objects():
+            result = await DownholeCollection.create(context=self.context, data=_make_example_data())
+
+        parameters = inspect.signature(DownholeCollection.prefetch_collections).parameters
+        self.assertNotIn("kwargs", parameters)
+        self.assertEqual(parameters["max_concurrent"].default, 100)
+        self.assertIs(parameters["fb"].default, NoFeedback)
+
+        with patch.object(DownholeCollection, "prefetch", new_callable=AsyncMock) as prefetch:
+            await result.prefetch_collections("collection1", include_location=False, max_concurrent=2, fb=NoFeedback)
+
+        self.assertEqual(prefetch.await_count, 1)
+        self.assertEqual(prefetch.await_args.kwargs["max_concurrent"], 2)
+        self.assertIs(prefetch.await_args.kwargs["fb"], NoFeedback)
+        self.assertTrue(prefetch.await_args.kwargs["data_ids"])
 
     async def test_dataframe_read_wrappers_select_attributes(self):
         interval = IntervalCollection(

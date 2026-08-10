@@ -465,7 +465,13 @@ class DownholeCollection(BaseSpatialObject):
 
     type: ClassVar[Annotated[str, SchemaLocation("type")]] = "downhole"
 
-    async def prefetch_collections(self, *names: str, include_location: bool = True, **kwargs: Any) -> None:
+    async def prefetch_collections(
+        self,
+        *names: str,
+        include_location: bool = True,
+        max_concurrent: int = 100,
+        fb: IFeedback = NoFeedback,
+    ) -> None:
         """Prefetch data referenced by named collections and optionally location data."""
         from evo.objects.typed._prefetch import collect_data_ids
 
@@ -477,7 +483,7 @@ class DownholeCollection(BaseSpatialObject):
             if collection is None:
                 raise KeyError(f"Unknown collection '{name}'")
             documents.append(collection.as_dict())
-        await self.prefetch(data_ids=collect_data_ids(documents), **kwargs)
+        await self.prefetch(data_ids=collect_data_ids(documents), max_concurrent=max_concurrent, fb=fb)
 
 
 def _validate_chunk_ranges(holes: HoleChunks, table_length: int) -> None:
