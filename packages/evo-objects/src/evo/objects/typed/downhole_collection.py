@@ -343,13 +343,13 @@ class DistanceTable(SchemaModel):
     collection_type: Annotated[str, SchemaLocation("collection_type"), DataLocation("collection_type")]
     distance: Annotated[DistanceTableDistances, SchemaLocation("distance"), DataLocation("table")]
 
+    async def to_dataframe(self, *keys: str, fb: IFeedback = NoFeedback) -> pd.DataFrame:
+        """Return distance values and selected attributes."""
+        return await self.distance.to_dataframe(*keys, fb=fb)
+
 
 class DownholeDistanceTable(DistanceTable):
     holes: Annotated[HoleChunksTable, SchemaLocation("holes"), DataLocation("holes")]
-
-    async def to_dataframe(self, *keys: str, fb: IFeedback = NoFeedback) -> pd.DataFrame:
-        """Return collection values and selected attributes."""
-        return await self.distance.to_dataframe(*keys, fb=fb)
 
     async def to_dataframe_by_hole(self, *keys: str, fb: IFeedback = NoFeedback) -> dict[str, pd.DataFrame]:
         """Return per-hole collection values and selected attributes."""
