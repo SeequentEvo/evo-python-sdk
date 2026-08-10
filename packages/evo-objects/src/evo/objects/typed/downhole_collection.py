@@ -23,7 +23,7 @@ from evo.common.interfaces import IContext
 from evo.common.utils import NoFeedback
 from evo.objects import SchemaVersion
 from evo.objects.typed._data import DataTable, DataTableAndAttributes
-from evo.objects.typed._downhole import HoleIdCategory
+from evo.objects.typed._downhole import DepthIntervalsTable, HoleIdCategory
 from evo.objects.typed._model import DataLocation, SchemaList, SchemaLocation, SchemaModel
 from evo.objects.typed.attributes import Attributes
 from evo.objects.typed.exceptions import ObjectValidationError
@@ -32,7 +32,6 @@ from evo.objects.typed.types import BoundingBox
 from evo.objects.utils.table_formats import (
     DOWNHOLE_COLLECTION_LOCATION_HOLES,
     FLOAT_ARRAY_1,
-    FLOAT_ARRAY_2,
     FLOAT_ARRAY_3,
     KnownTableFormat,
 )
@@ -356,13 +355,8 @@ class DownholeDistanceTable(DistanceTable):
         return await _table_by_hole(self, await self.to_dataframe(*keys, fb=fb), fb=fb)
 
 
-class _Intervals(DataTable):
-    table_format: ClassVar[KnownTableFormat] = FLOAT_ARRAY_2
-    data_columns: ClassVar[list[str]] = ["from", "to"]
-
-
 class IntervalTableFromTo(DataTableAndAttributes):
-    _table: Annotated[_Intervals, SchemaLocation("intervals.start_and_end"), DataLocation("")]
+    _table: Annotated[DepthIntervalsTable, SchemaLocation("intervals.start_and_end"), DataLocation("")]
     unit: Annotated[str | None, SchemaLocation("unit")]
 
 
