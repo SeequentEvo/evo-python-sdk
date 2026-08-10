@@ -71,7 +71,7 @@ Intervals: TypeAlias = pd.DataFrame  # [ from | to | <attributes> ]
 class DistanceCollection:
     name: str
     holes: HoleChunks
-    distance_table: Depths
+    table: Depths
     collection_type: str = "distance"
     unit: str | None = None
 
@@ -80,7 +80,7 @@ class DistanceCollection:
 class IntervalCollection:
     name: str
     holes: HoleChunks
-    interval_table: Intervals
+    table: Intervals
     collection_type: str = "interval"
     unit: str | None = None
 
@@ -134,9 +134,7 @@ class DownholeCollectionData(BaseSpatialObjectData):
 
         self._validate_hole_chunks(self.holes, len(self.path), require_coverage=True)
         for collection in self.collections:
-            table = (
-                collection.distance_table if isinstance(collection, DistanceCollection) else collection.interval_table
-            )
+            table = collection.table
             self._validate_hole_chunks(collection.holes, len(table), require_coverage=False)
 
     def _validate_hole_chunks(self, holes: HoleChunks, table_length: int, *, require_coverage: bool) -> None:
@@ -357,7 +355,7 @@ class DistanceTableDistances(DataTableAndAttributes):
 class DistanceTable(SchemaModel):
     name: Annotated[str, SchemaLocation("name"), DataLocation("name")]
     collection_type: Annotated[str, SchemaLocation("collection_type"), DataLocation("collection_type")]
-    distance: Annotated[DistanceTableDistances, SchemaLocation("distance"), DataLocation("distance_table")]
+    distance: Annotated[DistanceTableDistances, SchemaLocation("distance"), DataLocation("table")]
 
 
 class DownholeDistanceTable(DistanceTable):
@@ -394,7 +392,7 @@ class IntervalTableFromTo(DataTableAndAttributes):
 class DownholeIntervalTable(SchemaModel):
     name: Annotated[str, SchemaLocation("name"), DataLocation("name")]
     collection_type: Annotated[str, SchemaLocation("collection_type"), DataLocation("collection_type")]
-    from_to: Annotated[IntervalTableFromTo, SchemaLocation("from_to"), DataLocation("interval_table")]
+    from_to: Annotated[IntervalTableFromTo, SchemaLocation("from_to"), DataLocation("table")]
     holes: Annotated[HoleChunksTable, SchemaLocation("holes"), DataLocation("holes")]
 
     async def to_dataframe(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
@@ -416,15 +414,12 @@ class DownholeCollectionTables(SchemaList[DownholeDistanceTable | DownholeInterv
         result = []
         for collection in data:
             model = DownholeIntervalTable if isinstance(collection, IntervalCollection) else DownholeDistanceTable
-            table = (
-                collection.interval_table if isinstance(collection, IntervalCollection) else collection.distance_table
-            )
+            table = collection.table
             table = table.copy()
             table.attrs = dict(table.attrs)
             if collection.unit is not None:
                 table.attrs["unit"] = collection.unit
-            field = "interval_table" if isinstance(collection, IntervalCollection) else "distance_table"
-            result.append(await model._data_to_schema(replace(collection, **{field: table}), context))
+            result.append(await model._data_to_schema(replace(collection, table=table), context))
         return result
 
     def get(self, name: str) -> DownholeDistanceTable | DownholeIntervalTable | None:
@@ -444,7 +439,7 @@ class DownholeCollectionTables(SchemaList[DownholeDistanceTable | DownholeInterv
         valid_indices = set(location_holes["hole_index"].astype(int))
         if not set(collection.holes["hole_index"].astype(int)).issubset(valid_indices):
             raise ObjectValidationError("Collection hole_index is not present in the location holes table")
-        table = collection.distance_table if isinstance(collection, DistanceCollection) else collection.interval_table
+        table = collection.table
         _validate_chunk_ranges(collection.holes, len(table))
         schema = await self._data_to_schema([collection], self._obj)
         if collection.name in existing:

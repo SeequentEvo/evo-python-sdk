@@ -88,7 +88,7 @@ collections = [
     IntervalCollection(
         name="geology",
         holes=hole_chunks_from_ids(pd.Series(["DH-01"]), dtype=hole_dtype),
-        interval_table=intervals,
+        table=intervals,
         unit="m",  # Explicit collection units override DataFrame metadata.
     )
 ]

@@ -67,7 +67,7 @@ def _make_example_data(
                 "count": [4],
             }
         ),
-        distance_table=pd.DataFrame(
+        table=pd.DataFrame(
             {
                 "distance": [0.0, 10.0, 20.0, 30.0],
                 "attr_str": ["a", "b", "a", "c"],
@@ -169,12 +169,10 @@ class TestDownholeCollection(TestWithConnector):
 
     async def _check_collections(self, expected: DownholeCollectionData, result: DownholeCollection):
         for expected_collection, result_collection in zip(expected.collections, result.collections, strict=True):
-            expected_distance_unit = expected_collection.distance_table.attrs.get("attribute_descriptions", {}).get(
-                "distance"
-            )
+            expected_distance_unit = expected_collection.table.attrs.get("attribute_descriptions", {}).get("distance")
             self.assertEqual(expected_distance_unit, result_collection.distance.unit)
 
-            expected_table = expected_collection.distance_table
+            expected_table = expected_collection.table
             result_table = await result_collection.distance.to_dataframe()
 
             for col in result_table.columns:
@@ -214,7 +212,7 @@ class TestDownholeCollection(TestWithConnector):
         interval = IntervalCollection(
             name="intervals",
             holes=pd.DataFrame({"hole_index": [0], "offset": [0], "count": [2]}),
-            interval_table=pd.DataFrame({"from": [0.0, 1.0], "to": [1.0, 2.0], "lithology": ["a", "b"]}),
+            table=pd.DataFrame({"from": [0.0, 1.0], "to": [1.0, 2.0], "lithology": ["a", "b"]}),
             unit="m",
         )
         data = _make_example_data(collections=[_make_example_data().collections[0], interval])
@@ -237,7 +235,7 @@ class TestDownholeCollection(TestWithConnector):
         interval = IntervalCollection(
             name="intervals",
             holes=pd.DataFrame({"hole_index": [0], "offset": [0], "count": [2]}),
-            interval_table=table,
+            table=table,
         )
         data = _make_example_data(collections=[interval])
         with self._mock_geoscience_objects():
@@ -261,7 +259,7 @@ class TestDownholeCollection(TestWithConnector):
         collection = IntervalCollection(
             name="intervals",
             holes=pd.DataFrame({"hole_index": [0], "offset": [0], "count": [1]}),
-            interval_table=table,
+            table=table,
             unit=explicit_unit,
         )
         with self._mock_geoscience_objects() as mock_client:
@@ -292,7 +290,7 @@ class TestDownholeCollection(TestWithConnector):
         collection = IntervalCollection(
             name="intervals",
             holes=pd.DataFrame({"hole_index": [0], "offset": [0], "count": [2]}),
-            interval_table=table,
+            table=table,
         )
         expected_types = {
             "scalar": "scalar",
@@ -323,7 +321,7 @@ class TestDownholeCollection(TestWithConnector):
         collection = IntervalCollection(
             name="invalid",
             holes=pd.DataFrame({"hole_index": [0], "offset": [0], "count": [1]}),
-            interval_table=pd.DataFrame(table_data),
+            table=pd.DataFrame(table_data),
         )
         with self._mock_geoscience_objects(), self.assertRaises(ObjectValidationError):
             await DownholeCollection.create(context=self.context, data=_make_example_data(collections=[collection]))
@@ -334,7 +332,7 @@ class TestDownholeCollection(TestWithConnector):
         collection = DistanceCollection(
             name="distances",
             holes=pd.DataFrame({"hole_index": [0], "offset": [0], "count": [1]}),
-            distance_table=table,
+            table=table,
             unit="m",
         )
         with self._mock_geoscience_objects():
@@ -356,7 +354,7 @@ class TestDownholeCollection(TestWithConnector):
         collection = DistanceCollection(
             name="grades",
             holes=pd.DataFrame({"hole_index": [0], "offset": [0], "count": [1]}),
-            distance_table=table,
+            table=table,
         )
         with self._mock_geoscience_objects():
             result = await DownholeCollection.create(
@@ -548,7 +546,7 @@ class TestDownholeCollection(TestWithConnector):
             with self.assertRaises(ObjectValidationError):
                 dataclasses.replace(
                     base,
-                    collections=[DistanceCollection(name="invalid", holes=holes, distance_table=table)],
+                    collections=[DistanceCollection(name="invalid", holes=holes, table=table)],
                 )
 
     async def test_collection_allows_zero_row_hole(self):
@@ -556,7 +554,7 @@ class TestDownholeCollection(TestWithConnector):
         collection = DistanceCollection(
             name="sparse",
             holes=pd.DataFrame({"hole_index": [0, 1], "offset": [0, 0], "count": [2, 0]}),
-            distance_table=pd.DataFrame({"distance": [0.0, 1.0]}),
+            table=pd.DataFrame({"distance": [0.0, 1.0]}),
         )
         data = dataclasses.replace(base, collections=[collection])
         with self._mock_geoscience_objects():
@@ -570,10 +568,10 @@ class TestDownholeCollection(TestWithConnector):
             collection = DistanceCollection(
                 name="measurements",
                 holes=pd.DataFrame({"hole_index": [0], "offset": [0], "count": [1]}),
-                distance_table=pd.DataFrame({"distance": [0.0]}),
+                table=pd.DataFrame({"distance": [0.0]}),
             )
             await result.collections.add(collection)
-            replacement = dataclasses.replace(collection, distance_table=pd.DataFrame({"distance": [1.0]}))
+            replacement = dataclasses.replace(collection, table=pd.DataFrame({"distance": [1.0]}))
             with self.assertRaises(ValueError):
                 await result.collections.add(replacement)
             await result.collections.add(replacement, replace=True)
@@ -590,19 +588,19 @@ class TestDownholeCollection(TestWithConnector):
         first = DistanceCollection(
             name="first",
             holes=pd.DataFrame({"hole_index": [0], "offset": [0], "count": [1]}),
-            distance_table=pd.DataFrame({"distance": [0.0]}),
+            table=pd.DataFrame({"distance": [0.0]}),
         )
         middle = DistanceCollection(
             name="middle",
             holes=pd.DataFrame({"hole_index": [1], "offset": [0], "count": [1]}),
-            distance_table=pd.DataFrame({"distance": [1.0]}),
+            table=pd.DataFrame({"distance": [1.0]}),
         )
         last = DistanceCollection(
             name="last",
             holes=pd.DataFrame({"hole_index": [0], "offset": [0], "count": [1]}),
-            distance_table=pd.DataFrame({"distance": [2.0]}),
+            table=pd.DataFrame({"distance": [2.0]}),
         )
-        replacement = dataclasses.replace(middle, distance_table=pd.DataFrame({"distance": [10.0]}))
+        replacement = dataclasses.replace(middle, table=pd.DataFrame({"distance": [10.0]}))
         with self._mock_geoscience_objects():
             result = await DownholeCollection.create(context=self.context, data=_make_example_data(collections=[]))
             await result.collections.add(first)
