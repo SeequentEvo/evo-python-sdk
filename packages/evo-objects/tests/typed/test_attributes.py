@@ -73,8 +73,12 @@ class TestPendingAttribute(TestCase):
 
 
 class TestAttributeDescription(TestCase):
-    def test_empty_description_is_omitted(self):
-        self.assertEqual(AttributeDescription().to_schema(), {})
+    def test_default_description_preserves_required_fields(self):
+        self.assertEqual(AttributeDescription().to_schema(), {"discipline": "", "type": ""})
+
+    def test_unitless_description_omits_unit(self):
+        description = AttributeDescription(discipline="Geology", type="Azimuth")
+        self.assertEqual(description.to_schema(), {"discipline": "Geology", "type": "Azimuth"})
 
     def test_description_normalizes_value_units(self):
         class Unit:

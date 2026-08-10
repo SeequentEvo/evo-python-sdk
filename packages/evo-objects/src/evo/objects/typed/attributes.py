@@ -88,8 +88,8 @@ _attribute_table_formats = {
 
 @dataclass
 class AttributeDescription:
-    discipline: str | None = None
-    type: str | None = None
+    discipline: str = ""
+    type: str = ""
     unit: Any | None = None
     scale: str | None = None
     extensions: dict[str, typing.Any] | None = None
@@ -100,11 +100,10 @@ class AttributeDescription:
             self.unit = str(self.unit.value)
 
     def to_schema(self) -> dict[str, Any]:
-        result: dict[str, Any] = {}
-        if self.discipline:
-            result["discipline"] = self.discipline
-        if self.type:
-            result["type"] = self.type
+        result: dict[str, Any] = {
+            "discipline": self.discipline,
+            "type": self.type,
+        }
         if self.unit:
             result["unit"] = self.unit
         if self.scale:
