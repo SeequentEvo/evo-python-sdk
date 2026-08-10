@@ -12,10 +12,12 @@
 from __future__ import annotations
 
 import contextlib
+import copy
 import dataclasses
 import inspect
 import math
 import uuid
+import warnings
 from datetime import date
 from unittest.mock import patch
 
@@ -623,7 +625,7 @@ class TestDownholeCollection(TestWithConnector):
             )
             await result.collections.add(collection)
             replacement = dataclasses.replace(collection, table=pd.DataFrame({"distance": [1.0]}))
-            with self.assertRaises(ValueError):
+            with self.assertRaises(ObjectValidationError):
                 await result.collections.add(replacement)
             await result.collections.add(replacement, replace=True)
             self.assertEqual(result.collections.names(), ["measurements"])
@@ -633,6 +635,29 @@ class TestDownholeCollection(TestWithConnector):
                 holes=pd.DataFrame({"hole_index": [0, 0], "offset": [0, 1], "count": [1, 0]}),
             )
             await result.collections.add(repeated, replace=True)
+
+    def test_collection_creation_rejects_duplicate_names(self):
+        collection = _make_example_data().collections[0]
+        with self.assertRaisesRegex(ObjectValidationError, "Collection names must be unique"):
+            _make_example_data(collections=[collection, dataclasses.replace(collection)])
+
+    async def test_legacy_duplicate_collection_names_warn_and_return_first(self):
+        data = _make_example_data()
+        with self._mock_geoscience_objects() as mock_client:
+            result = await DownholeCollection.create(context=self.context, data=data)
+            document = mock_client.objects[str(result.metadata.url.object_id)]
+            document["collections"].append(copy.deepcopy(document["collections"][0]))
+            legacy = await DownholeCollection.from_reference(context=self.context, reference=result.metadata.url)
+
+        self.assertEqual(legacy.collections.names(), ["collection1", "collection1"])
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            self.assertIn("collection1", legacy.collections)
+        with self.assertWarnsRegex(UserWarning, "Multiple collections named 'collection1'"):
+            collection = legacy.collections.get("collection1")
+        self.assertIsNotNone(collection)
+        with self.assertRaisesRegex(ObjectValidationError, "Multiple collections named 'collection1' already exist"):
+            await legacy.collections.add(data.collections[0], replace=True)
 
     async def test_collection_replacement_preserves_position_and_persists_after_update(self):
         first = DistanceCollection(

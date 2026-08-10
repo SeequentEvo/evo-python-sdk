@@ -11,6 +11,7 @@
 
 from __future__ import annotations
 
+import warnings
 from dataclasses import dataclass
 from typing import Annotated, Any, ClassVar, TypeAlias
 
@@ -124,6 +125,10 @@ class DownholeCollectionData(BaseSpatialObjectData):
             raise ObjectValidationError("The number of attributes rows must match the number or holes rows")
 
         assert self.attributes is None or len(self.holes) == len(self.attributes)
+
+        names = [collection.name for collection in self.collections]
+        if len(names) != len(set(names)):
+            raise ObjectValidationError("Collection names must be unique")
 
         self._validate_hole_chunks(self.holes, len(self.path), require_coverage=True)
         for collection in self.collections:
@@ -396,19 +401,37 @@ class DownholeCollectionTables(SchemaList[DownholeDistanceTable | DownholeInterv
             result.append(schema)
         return result
 
+    def _indices_for_name(self, name: str) -> list[int]:
+        return [index for index, document in enumerate(self._document) if document.get("name") == name]
+
     def get(self, name: str) -> DownholeDistanceTable | DownholeIntervalTable | None:
-        return next((collection for collection in self if collection.name == name), None)
+        """Return the first collection named ``name``.
+
+        Collection names are the only schema-provided identifier. Legacy documents may contain duplicate names; in
+        that case the first collection in document order is returned and a warning is emitted.
+        """
+        indices = self._indices_for_name(name)
+        if len(indices) > 1:
+            warnings.warn(
+                f"Multiple collections named '{name}' were found; returning the first one",
+                UserWarning,
+            )
+        return self[indices[0]] if indices else None
 
     def __contains__(self, name: object) -> bool:
-        return isinstance(name, str) and self.get(name) is not None
+        return isinstance(name, str) and bool(self._indices_for_name(name))
 
     def names(self) -> list[str]:
         return [collection.name for collection in self]
 
     async def add(self, collection: DownholeCollectionEntry, *, replace: bool = False) -> None:
-        existing = self.names()
-        if collection.name in existing and not replace:
-            raise ValueError(f"Collection '{collection.name}' already exists")
+        existing_indices = self._indices_for_name(collection.name)
+        if len(existing_indices) > 1:
+            raise ObjectValidationError(
+                f"Multiple collections named '{collection.name}' already exist; remove duplicates before adding a replacement"
+            )
+        if existing_indices and not replace:
+            raise ObjectValidationError(f"Collection '{collection.name}' already exists")
         location_holes = await self._context.root_model.location.holes.to_dataframe()
         valid_indices = set(location_holes["hole_index"].astype(int))
         if not set(collection.holes["hole_index"].astype(int)).issubset(valid_indices):
@@ -416,8 +439,8 @@ class DownholeCollectionTables(SchemaList[DownholeDistanceTable | DownholeInterv
         table = collection.table
         _validate_chunk_ranges(collection.holes, len(table))
         schema = await self._data_to_schema([collection], self._obj)
-        if collection.name in existing:
-            self._document[existing.index(collection.name)] = schema[0]
+        if existing_indices:
+            self._document[existing_indices[0]] = schema[0]
         else:
             self._document.append(schema[0])
 
