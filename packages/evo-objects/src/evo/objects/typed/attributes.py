@@ -621,3 +621,14 @@ class Category(SchemaModel):
         if self._context.is_data_modified(self._data):
             raise DataLoaderError("Data was modified since the object was downloaded")
         return await self._obj.download_category_dataframe(self.as_dict(), fb=fb)
+
+    async def to_indexed_dataframe(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
+        """Load the persisted category lookup as ``[key, value]`` rows.
+
+        Pandas categorical codes are dense positional values and must not be used
+        as schema lookup keys.  This method is intended for joins involving an
+        index column such as ``hole_index``.
+        """
+        if self._context.is_data_modified(self._data):
+            raise DataLoaderError("Data was modified since the object was downloaded")
+        return await self._obj.download_dataframe(self.as_dict()["table"], fb=fb)

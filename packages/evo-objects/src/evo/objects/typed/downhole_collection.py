@@ -94,8 +94,10 @@ class DownholeCollectionData(BaseSpatialObjectData):
 
     :param name: The name of the object.
     :param holes: A DataFrame describing which parts of `path` belong to which holes.
-            Columns: hole_index, offset, count. ``hole_index`` is a code in ``properties.hole_id``.
-    :param properties: DataFrame for the properties of the holes, joined to ``holes`` by the categorical hole-id code.
+            Columns: hole_index, offset, count. For object creation, ``hole_index`` is the zero-based categorical code
+            in ``properties.hole_id``.
+    :param properties: DataFrame for the properties of the holes. Its categorical ``hole_id`` codes are the lookup
+            keys referenced by creation-time ``holes`` tables.
             Mandatory columns: hole_id, final, target, current, x, y, z
     :param attributes: DataFrame for the attributes of the holes, in the same order as ``properties``.
     :param path: Dataframe of [ distance | dip | azimuth | <attributes> ]. Distance/dip/azimuth describe the geometry as
@@ -120,7 +122,7 @@ class DownholeCollectionData(BaseSpatialObjectData):
 
     @property
     def hole_id_dtype(self) -> pd.CategoricalDtype:
-        """The categorical dtype whose codes are used by every ``hole_index``."""
+        """The categorical dtype used to encode hole indices when creating this object."""
         hole_ids = self.properties["hole_id"]
         if isinstance(hole_ids.dtype, pd.CategoricalDtype):
             return hole_ids.dtype
@@ -145,7 +147,7 @@ class DownholeCollectionData(BaseSpatialObjectData):
         valid = set(range(len(self.hole_id_dtype.categories)))
         if not set(indices).issubset(valid):
             raise ObjectValidationError("hole_index must be a code in properties['hole_id'] categorical dtype")
-        if indices.duplicated().any():
+        if require_coverage and indices.duplicated().any():
             raise ObjectValidationError("Each hole_index may occur only once in a holes table")
         if require_coverage and set(indices) != valid:
             raise ObjectValidationError("Location holes must cover every hole_id categorical code exactly once")
@@ -153,6 +155,9 @@ class DownholeCollectionData(BaseSpatialObjectData):
         counts = holes["count"].astype(int)
         if (offsets < 0).any() or (counts < 0).any() or ((offsets + counts) > table_length).any():
             raise ObjectValidationError("Hole chunk offsets and counts must be within the associated table")
+        if not require_coverage:
+            return
+
         non_empty = sorted(zip(offsets[counts > 0], counts[counts > 0], strict=True))
         expected_offset = 0
         for offset, count in non_empty:
@@ -166,7 +171,8 @@ class DownholeCollectionData(BaseSpatialObjectData):
         bboxes = []
 
         collars = self.properties.copy()
-        collars["_hole_index"] = collars["hole_id"].astype(self.hole_id_dtype).cat.codes
+        hole_indices = {hole_id: index for index, hole_id in enumerate(self.hole_id_dtype.categories)}
+        collars["_hole_index"] = collars["hole_id"].astype(object).map(hole_indices)
         collars_by_index = collars.set_index("_hole_index")
         for chunk in self.holes.itertuples(index=False):
             offset = int(chunk.offset)
@@ -315,7 +321,7 @@ class DownholeLocation(SchemaModel):
     attributes: Annotated[Attributes, SchemaLocation("attributes"), DataLocation("attributes")]
 
     async def to_dataframe(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
-        """Return collars with a categorical ``hole_id`` aligned to hole-index codes."""
+        """Return collars with a categorical ``hole_id`` column."""
         parts = [
             await self.hole_id.to_dataframe(fb=fb),
             await self.coordinates.to_dataframe(fb=fb),
@@ -487,29 +493,29 @@ def _validate_chunk_ranges(holes: HoleChunks, table_length: int) -> None:
     required = {"hole_index", "offset", "count"}
     if missing := required - set(holes.columns):
         raise ObjectValidationError(f"Hole chunks are missing columns: {sorted(missing)}")
-    if holes["hole_index"].astype(int).duplicated().any():
-        raise ObjectValidationError("Each hole_index may occur only once in a holes table")
     offsets = holes["offset"].astype(int)
     counts = holes["count"].astype(int)
     if (offsets < 0).any() or (counts < 0).any() or ((offsets + counts) > table_length).any():
         raise ObjectValidationError("Hole chunk offsets and counts must be within the associated table")
-    expected_offset = 0
-    for offset, count in sorted(zip(offsets[counts > 0], counts[counts > 0], strict=True)):
-        if offset != expected_offset:
-            raise ObjectValidationError("Hole chunk ranges must cover the associated table exactly once")
-        expected_offset = offset + count
-    if expected_offset != table_length:
-        raise ObjectValidationError("Hole chunk ranges must cover the associated table exactly once")
 
 
 async def _table_by_hole(
     table: DownholeDistanceTable | DownholeIntervalTable, data: pd.DataFrame, *, fb: IFeedback
 ) -> dict[str, pd.DataFrame]:
     root = table._context.root_model
-    collar_ids = await root.location.hole_id.to_dataframe(fb=fb)
-    categories = collar_ids.iloc[:, 0]
-    result: dict[str, pd.DataFrame] = {}
+    lookup = await root.location.hole_id.to_indexed_dataframe(fb=fb)
+    hole_ids = dict(zip(lookup["key"].astype(int), lookup["value"].astype(str), strict=True))
+    result: dict[str, list[tuple[int, pd.DataFrame]]] = {}
     for chunk in (await table.holes.to_dataframe(fb=fb)).itertuples(index=False):
-        hole_id = str(categories.cat.categories[int(chunk.hole_index)])
-        result[hole_id] = data.iloc[int(chunk.offset) : int(chunk.offset) + int(chunk.count)].reset_index(drop=True)
-    return result
+        try:
+            hole_id = hole_ids[int(chunk.hole_index)]
+        except KeyError as exc:
+            raise ObjectValidationError(f"Unknown hole_index in collection chunks: {chunk.hole_index}") from exc
+        offset = int(chunk.offset)
+        result.setdefault(hole_id, []).append(
+            (offset, data.iloc[offset : offset + int(chunk.count)].reset_index(drop=True))
+        )
+    return {
+        hole_id: pd.concat([chunk for _, chunk in sorted(chunks, key=lambda item: item[0])], ignore_index=True)
+        for hole_id, chunks in result.items()
+    }

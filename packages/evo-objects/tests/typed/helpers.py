@@ -112,8 +112,13 @@ class MockClient:
         return {"data": data_id, "length": len(table)}
 
     async def upload_category_dataframe(self, df: pd.DataFrame, *args, **kwargs) -> dict:
+        series = df.iloc[:, 0].astype("category")
+        categories = series.cat.categories
         return {
-            "values": await self.upload_dataframe(df),
+            "values": await self.upload_dataframe(pd.DataFrame({df.columns[0]: series})),
+            "table": await self.upload_dataframe(
+                pd.DataFrame({"key": range(len(categories)), "value": categories.astype(str)})
+            ),
             "category_data": True,
         }
 

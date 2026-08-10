@@ -535,19 +535,38 @@ class TestDownholeCollection(TestWithConnector):
                 desurvey=None,
             )
 
-    def test_collection_chunk_overlap_gap_and_invalid_index_raise(self):
+    def test_location_chunks_require_each_creation_code_and_exact_path_coverage(self):
         base = _make_example_data(collections=[])
-        table = pd.DataFrame({"distance": [0.0, 1.0]})
         for holes in (
-            pd.DataFrame({"hole_index": [0, 1], "offset": [0, 0], "count": [1, 1]}),
-            pd.DataFrame({"hole_index": [0], "offset": [1], "count": [1]}),
-            pd.DataFrame({"hole_index": [2], "offset": [0], "count": [2]}),
+            pd.DataFrame({"hole_index": [0], "offset": [0], "count": [7]}),
+            pd.DataFrame({"hole_index": [0, 0], "offset": [0, 4], "count": [4, 3]}),
+            pd.DataFrame({"hole_index": [0, 1], "offset": [0, 5], "count": [4, 2]}),
+            pd.DataFrame({"hole_index": [0, 1], "offset": [0, 3], "count": [4, 3]}),
         ):
-            with self.assertRaises(ObjectValidationError):
-                dataclasses.replace(
-                    base,
-                    collections=[DistanceCollection(name="invalid", holes=holes, table=table)],
-                )
+            with self.subTest(holes=holes.to_dict("records")), self.assertRaises(ObjectValidationError):
+                dataclasses.replace(base, holes=holes)
+
+    def test_collection_chunk_ranges_are_not_required_to_partition_the_table(self):
+        base = _make_example_data(collections=[])
+        table = pd.DataFrame({"distance": [0.0, 1.0, 2.0]})
+        collection = DistanceCollection(
+            name="repeated",
+            holes=pd.DataFrame({"hole_index": [0, 0], "offset": [0, 2], "count": [1, 1]}),
+            table=table,
+        )
+        dataclasses.replace(base, collections=[collection])
+
+        with self.assertRaises(ObjectValidationError):
+            dataclasses.replace(
+                base,
+                collections=[
+                    DistanceCollection(
+                        name="invalid",
+                        holes=pd.DataFrame({"hole_index": [2], "offset": [0], "count": [2]}),
+                        table=table,
+                    )
+                ],
+            )
 
     async def test_collection_allows_zero_row_hole(self):
         base = _make_example_data(collections=[])
@@ -562,7 +581,7 @@ class TestDownholeCollection(TestWithConnector):
         by_hole = await result.collections.get("sparse").to_dataframe_by_hole()
         self.assertEqual({hole_id: len(table) for hole_id, table in by_hole.items()}, {"H001": 2, "H002": 0})
 
-    async def test_collection_add_rejects_duplicate_hole_chunks_and_replaces_in_place(self):
+    async def test_collection_add_allows_repeated_hole_chunks_and_replaces_in_place(self):
         with self._mock_geoscience_objects():
             result = await DownholeCollection.create(context=self.context, data=_make_example_data(collections=[]))
             collection = DistanceCollection(
@@ -577,12 +596,11 @@ class TestDownholeCollection(TestWithConnector):
             await result.collections.add(replacement, replace=True)
             self.assertEqual(result.collections.names(), ["measurements"])
             self.assertEqual((await result.collections.get("measurements").to_dataframe()).iloc[0, 0], 1.0)
-            invalid = dataclasses.replace(
+            repeated = dataclasses.replace(
                 collection,
                 holes=pd.DataFrame({"hole_index": [0, 0], "offset": [0, 1], "count": [1, 0]}),
             )
-            with self.assertRaises(ObjectValidationError):
-                await result.collections.add(invalid, replace=True)
+            await result.collections.add(repeated, replace=True)
 
     async def test_collection_replacement_preserves_position_and_persists_after_update(self):
         first = DistanceCollection(
@@ -624,6 +642,35 @@ class TestDownholeCollection(TestWithConnector):
         by_hole = await result.collections.get("collection1").to_dataframe_by_hole()
         self.assertListEqual(list(by_hole), ["H001"])
         self.assertEqual(len(by_hole["H001"]), 4)
+
+    async def test_collection_read_uses_persisted_non_contiguous_lookup_keys(self):
+        with self._mock_geoscience_objects() as mock_client:
+            result = await DownholeCollection.create(context=self.context, data=_make_example_data())
+            lookup_info = result.location.hole_id.as_dict()["table"]
+            mock_client.data[lookup_info["data"]]["key"] = [10, 20]
+            collection = result.collections.get("collection1")
+            holes_info = collection.holes.as_dict()
+            mock_client.data[holes_info["data"]]["hole_index"] = [10]
+
+            by_hole = await collection.to_dataframe_by_hole()
+
+        self.assertListEqual(list(by_hole), ["H001"])
+        self.assertEqual(len(by_hole["H001"]), 4)
+
+    async def test_repeated_collection_chunks_are_concatenated_in_table_order(self):
+        collection = DistanceCollection(
+            name="repeated",
+            holes=pd.DataFrame({"hole_index": [0, 0], "offset": [2, 0], "count": [1, 1]}),
+            table=pd.DataFrame({"distance": [0.0, 1.0, 2.0]}),
+        )
+        with self._mock_geoscience_objects():
+            result = await DownholeCollection.create(
+                context=self.context,
+                data=_make_example_data(collections=[collection]),
+            )
+            by_hole = await result.collections.get("repeated").to_dataframe_by_hole()
+
+        self.assertListEqual(by_hole["H001"]["distance"].tolist(), [0.0, 2.0])
 
     async def test_update_dataframe_after_creation(self):
         """Test updating the path DataFrame after downhole collection creation."""
