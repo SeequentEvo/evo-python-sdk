@@ -357,12 +357,45 @@ class DistanceTable(SchemaModel):
         return await self.distance.to_dataframe(*keys, fb=fb)
 
 
-class DownholeDistanceTable(DistanceTable):
+class _DownholeCollectionChild:
+    """Shared behavior for models that must be nested in a DownholeCollection."""
+
+    @property
+    def _downhole_collection(self) -> DownholeCollection:
+        """Return the containing DownholeCollection or raise if this model is used out of context."""
+        root = self._context.root_model
+        if not isinstance(root, DownholeCollection):
+            raise ObjectValidationError(
+                f"{type(self).__name__} must be attached to a DownholeCollection, not {type(root).__name__}"
+            )
+        return root
+
+    async def _table_by_hole(self, data: pd.DataFrame, *, fb: IFeedback) -> dict[str, pd.DataFrame]:
+        """Group table rows by hole using the containing DownholeCollection's hole-id lookup."""
+        lookup = await self._downhole_collection.location.hole_id.to_indexed_dataframe(fb=fb)
+        hole_ids = dict(zip(lookup["key"].astype(int), lookup["value"].astype(str), strict=True))
+        result: dict[str, list[tuple[int, pd.DataFrame]]] = {}
+        for chunk in (await self.holes.to_dataframe(fb=fb)).itertuples(index=False):
+            try:
+                hole_id = hole_ids[int(chunk.hole_index)]
+            except KeyError as exc:
+                raise ObjectValidationError(f"Unknown hole_index in collection chunks: {chunk.hole_index}") from exc
+            offset = int(chunk.offset)
+            result.setdefault(hole_id, []).append(
+                (offset, data.iloc[offset : offset + int(chunk.count)].reset_index(drop=True))
+            )
+        return {
+            hole_id: pd.concat([chunk for _, chunk in sorted(chunks, key=lambda item: item[0])], ignore_index=True)
+            for hole_id, chunks in result.items()
+        }
+
+
+class DownholeDistanceTable(_DownholeCollectionChild, DistanceTable):
     holes: Annotated[HoleChunksTable, SchemaLocation("holes"), DataLocation("holes")]
 
     async def to_dataframe_by_hole(self, *keys: str, fb: IFeedback = NoFeedback) -> dict[str, pd.DataFrame]:
         """Return per-hole collection values and selected attributes."""
-        return await _table_by_hole(self, await self.to_dataframe(*keys, fb=fb), fb=fb)
+        return await self._table_by_hole(await self.to_dataframe(*keys, fb=fb), fb=fb)
 
 
 class IntervalTableFromTo(DataTableAndAttributes):
@@ -370,7 +403,7 @@ class IntervalTableFromTo(DataTableAndAttributes):
     unit: Annotated[str | None, SchemaLocation("unit")]
 
 
-class DownholeIntervalTable(SchemaModel):
+class DownholeIntervalTable(_DownholeCollectionChild, SchemaModel):
     name: Annotated[str, SchemaLocation("name"), DataLocation("name")]
     collection_type: Annotated[str, SchemaLocation("collection_type"), DataLocation("collection_type")]
     from_to: Annotated[IntervalTableFromTo, SchemaLocation("from_to"), DataLocation("table")]
@@ -382,10 +415,10 @@ class DownholeIntervalTable(SchemaModel):
 
     async def to_dataframe_by_hole(self, *keys: str, fb: IFeedback = NoFeedback) -> dict[str, pd.DataFrame]:
         """Return per-hole collection intervals and selected attributes."""
-        return await _table_by_hole(self, await self.to_dataframe(*keys, fb=fb), fb=fb)
+        return await self._table_by_hole(await self.to_dataframe(*keys, fb=fb), fb=fb)
 
 
-class DownholeCollectionTables(SchemaList[DownholeDistanceTable | DownholeIntervalTable]):
+class DownholeCollectionTables(_DownholeCollectionChild, SchemaList[DownholeDistanceTable | DownholeIntervalTable]):
     @classmethod
     def _resolve_item_type(cls, document: dict[str, Any]) -> type[DownholeDistanceTable | DownholeIntervalTable]:
         return DownholeIntervalTable if "from_to" in document else DownholeDistanceTable
@@ -437,7 +470,7 @@ class DownholeCollectionTables(SchemaList[DownholeDistanceTable | DownholeInterv
             )
         if existing_indices and not replace:
             raise ObjectValidationError(f"Collection '{collection.name}' already exists")
-        location_holes = await self._context.root_model.location.holes.to_dataframe()
+        location_holes = await self._downhole_collection.location.holes.to_dataframe()
         valid_indices = set(location_holes["hole_index"].astype(int))
         table = collection.table
         DownholeCollectionData._validate_hole_chunks(
@@ -489,25 +522,3 @@ class DownholeCollection(BaseSpatialObject):
                 raise KeyError(f"Unknown collection '{name}'")
             documents.append(collection.as_dict())
         await self.prefetch(data_ids=collect_data_ids(documents), max_concurrent=max_concurrent, fb=fb)
-
-
-async def _table_by_hole(
-    table: DownholeDistanceTable | DownholeIntervalTable, data: pd.DataFrame, *, fb: IFeedback
-) -> dict[str, pd.DataFrame]:
-    root = table._context.root_model
-    lookup = await root.location.hole_id.to_indexed_dataframe(fb=fb)
-    hole_ids = dict(zip(lookup["key"].astype(int), lookup["value"].astype(str), strict=True))
-    result: dict[str, list[tuple[int, pd.DataFrame]]] = {}
-    for chunk in (await table.holes.to_dataframe(fb=fb)).itertuples(index=False):
-        try:
-            hole_id = hole_ids[int(chunk.hole_index)]
-        except KeyError as exc:
-            raise ObjectValidationError(f"Unknown hole_index in collection chunks: {chunk.hole_index}") from exc
-        offset = int(chunk.offset)
-        result.setdefault(hole_id, []).append(
-            (offset, data.iloc[offset : offset + int(chunk.count)].reset_index(drop=True))
-        )
-    return {
-        hole_id: pd.concat([chunk for _, chunk in sorted(chunks, key=lambda item: item[0])], ignore_index=True)
-        for hole_id, chunks in result.items()
-    }
