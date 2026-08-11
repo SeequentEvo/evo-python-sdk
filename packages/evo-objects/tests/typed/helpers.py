@@ -68,7 +68,13 @@ class MockDownloadedObject(DownloadedObject):
         return self.mock_client.get_dataframe(data["values"])
 
     async def download_category_dataframe(self, category_info: dict, fb) -> pd.DataFrame:
-        return self.mock_client.get_dataframe(category_info["values"])
+        values = self.mock_client.get_dataframe(category_info["values"])
+        if not pd.api.types.is_integer_dtype(values.iloc[:, 0]):
+            # Legacy mock uploads store category values directly rather than as lookup keys.
+            return values
+        lookup = self.mock_client.get_dataframe(category_info["table"])
+        mapping = dict(zip(lookup["key"], lookup["value"]))
+        return values.apply(lambda column: column.map(mapping))
 
     async def download_array(self, jmespath_expr: str, fb=None):
         """Download an array from the object using a JMESPath expression."""

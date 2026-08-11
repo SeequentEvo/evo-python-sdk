@@ -13,42 +13,51 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+
 import numpy as np
 import pandas as pd
 
 __all__ = ["expand_hole_index", "hole_chunks_from_ids"]
 
 
-def hole_chunks_from_ids(hole_ids: pd.Series, *, dtype: pd.CategoricalDtype) -> pd.DataFrame:
-    """Run-length encode contiguous hole IDs using their categorical codes.
+def hole_chunks_from_ids(hole_ids: pd.Series, *, hole_indices: Mapping[str, int] | None = None) -> pd.DataFrame:
+    """Run-length encode contiguous hole IDs into ``[hole_index, offset, count]`` chunks.
 
-    A zero-count entry is emitted for categories absent from ``hole_ids``.  An ID
-    outside ``dtype`` or a repeated non-contiguous run is rejected.
+    ``hole_indices`` maps hole IDs to their lookup-table keys. When omitted, this
+    creation helper assigns dense zero-based keys in sorted ID order. Persisted
+    objects are not required to use those keys. Only IDs present in ``hole_ids``
+    produce chunks; an empty collection therefore produces no chunks.
     """
-    unknown_mask = hole_ids.notna() & ~hole_ids.isin(dtype.categories)
-    if unknown_mask.any():
-        unknown = hole_ids[unknown_mask].unique().tolist()
-        raise ValueError(f"hole_ids contains values absent from dtype: {unknown}")
-    categorical = hole_ids.astype(dtype)
-    codes = categorical.cat.codes.to_numpy(dtype=np.int32)
-    chunks: dict[int, tuple[int, int]] = {}
+    if hole_ids.isna().any():
+        raise ValueError("hole_ids cannot contain missing values")
+    ids = hole_ids.astype(str)
+    if hole_indices is None:
+        indices = {hole_id: index for index, hole_id in enumerate(sorted(set(ids)))}
+    else:
+        indices = dict(hole_indices)
+        unknown = sorted(set(ids) - set(indices))
+        if unknown:
+            raise ValueError(f"hole_ids contains values absent from hole_indices: {unknown}")
+        if len(set(indices.values())) != len(indices):
+            raise ValueError("hole_indices must map each hole_id to a unique hole_index")
+    codes = ids.map(indices).to_numpy(dtype=np.int32)
+    chunks: list[tuple[int, int, int]] = []
     start = 0
     while start < len(codes):
         code = int(codes[start])
-        if code < 0:
-            raise ValueError("hole_ids cannot contain missing values")
         end = start + 1
         while end < len(codes) and codes[end] == code:
             end += 1
-        if code in chunks:
+        if any(chunk_code == code for chunk_code, _, _ in chunks):
             raise ValueError("Rows for each hole_id must be contiguous")
-        chunks[code] = (start, end - start)
+        chunks.append((code, start, end - start))
         start = end
     return pd.DataFrame(
         {
-            "hole_index": np.arange(len(dtype.categories), dtype=np.int32),
-            "offset": np.array([chunks.get(code, (0, 0))[0] for code in range(len(dtype.categories))], dtype=np.uint64),
-            "count": np.array([chunks.get(code, (0, 0))[1] for code in range(len(dtype.categories))], dtype=np.uint64),
+            "hole_index": np.array([code for code, _, _ in chunks], dtype=np.int32),
+            "offset": np.array([offset for _, offset, _ in chunks], dtype=np.uint64),
+            "count": np.array([count for _, _, count in chunks], dtype=np.uint64),
         }
     )
 

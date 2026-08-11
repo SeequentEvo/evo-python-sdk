@@ -23,6 +23,7 @@ from evo.common import IFeedback
 from evo.common.interfaces import IContext
 from evo.common.utils import NoFeedback
 from evo.objects import SchemaVersion
+from evo.objects.typed import attributes as _attributes
 from evo.objects.typed._data import DataTable, DataTableAndAttributes
 from evo.objects.typed._downhole import DepthIntervalsTable, HoleIdCategory
 from evo.objects.typed._model import DataLocation, SchemaList, SchemaLocation, SchemaModel
@@ -35,6 +36,8 @@ from evo.objects.utils.table_formats import (
     DOWNHOLE_COLLECTION_LOCATION_HOLES,
     FLOAT_ARRAY_1,
     FLOAT_ARRAY_3,
+    INTEGER_ARRAY_1_INT32,
+    LOOKUP_TABLE_INT32,
     KnownTableFormat,
 )
 
@@ -83,14 +86,12 @@ DownholeCollectionEntry: TypeAlias = DistanceCollection | IntervalCollection
 
 @dataclass(kw_only=True, frozen=True)
 class DownholeCollectionData(BaseSpatialObjectData):
-    """Data class for creating a new DownholeCollection
+    """Data class representing a DownholeCollection.
 
     :param name: The name of the object.
     :param holes: A DataFrame describing which parts of `path` belong to which holes.
-            Columns: hole_index, offset, count. For object creation, ``hole_index`` is the zero-based categorical code
-            in ``properties.hole_id``.
-    :param properties: DataFrame for the properties of the holes. Its categorical ``hole_id`` codes are the lookup
-            keys referenced by creation-time ``holes`` tables.
+            Columns: hole_index, offset, count. ``hole_index`` is an integer lookup key, not a row position.
+    :param properties: DataFrame for the properties of the holes.
             Mandatory columns: hole_id, final, target, current, x, y, z
     :param attributes: DataFrame for the attributes of the holes, in the same order as ``properties``.
     :param path: Dataframe of [ distance | dip | azimuth | <attributes> ]. Distance/dip/azimuth describe the geometry as
@@ -113,14 +114,6 @@ class DownholeCollectionData(BaseSpatialObjectData):
     distance_unit: str | None
     desurvey: str | None
 
-    @property
-    def hole_id_dtype(self) -> pd.CategoricalDtype:
-        """The categorical dtype used to encode hole indices when creating this object."""
-        hole_ids = self.properties["hole_id"]
-        if isinstance(hole_ids.dtype, pd.CategoricalDtype):
-            return hole_ids.dtype
-        return pd.CategoricalDtype(categories=sorted(hole_ids.dropna().unique()))
-
     def __post_init__(self):
         if self.attributes is not None and len(self.holes) != len(self.attributes):
             raise ObjectValidationError("The number of attributes rows must match the number or holes rows")
@@ -131,28 +124,16 @@ class DownholeCollectionData(BaseSpatialObjectData):
         if len(names) != len(set(names)):
             raise ObjectValidationError("Collection names must be unique")
 
-        valid_indices = set(range(len(self.hole_id_dtype.categories)))
-        self._validate_hole_chunks(self.holes, len(self.path), valid_indices=valid_indices, require_coverage=True)
+        self._validate_hole_chunks(self.holes, len(self.path), require_coverage=True)
         for collection in self.collections:
             table = collection.table
-            self._validate_hole_chunks(
-                collection.holes, len(table), valid_indices=valid_indices, require_coverage=False
-            )
+            self._validate_hole_chunks(collection.holes, len(table), require_coverage=False)
 
     @staticmethod
-    def _validate_hole_chunks(
-        holes: HoleChunks, table_length: int, *, valid_indices: set[int], require_coverage: bool
-    ) -> None:
+    def _validate_hole_chunks(holes: HoleChunks, table_length: int, *, require_coverage: bool) -> None:
         required = {"hole_index", "offset", "count"}
         if missing := required - set(holes.columns):
             raise ObjectValidationError(f"Hole chunks are missing columns: {sorted(missing)}")
-        indices = holes["hole_index"].astype(int)
-        if not set(indices).issubset(valid_indices):
-            raise ObjectValidationError("hole_index must reference a valid hole")
-        if require_coverage and indices.duplicated().any():
-            raise ObjectValidationError("Each hole_index may occur only once in a holes table")
-        if require_coverage and set(indices) != valid_indices:
-            raise ObjectValidationError("Location holes must cover every hole_id categorical code exactly once")
         offsets = holes["offset"].astype(int)
         counts = holes["count"].astype(int)
         if (offsets < 0).any() or (counts < 0).any() or ((offsets + counts) > table_length).any():
@@ -169,21 +150,62 @@ class DownholeCollectionData(BaseSpatialObjectData):
         if expected_offset != table_length:
             raise ObjectValidationError("Hole chunk ranges must cover the associated table exactly once")
 
-    def compute_bounding_box(self) -> BoundingBox:
-        bboxes = []
+    def _collars_by_hole_index(self) -> dict[int, tuple[float, float, float]] | None:
+        """Map hole lookup keys to collar coordinates, or ``None`` when the mapping is not known.
 
-        collars = self.properties.copy()
-        hole_indices = {hole_id: index for index, hole_id in enumerate(self.hole_id_dtype.categories)}
-        collars["_hole_index"] = collars["hole_id"].astype(object).map(hole_indices)
-        collars_by_index = collars.set_index("_hole_index")
+        Keys are taken from an explicit ``properties["hole_index"]`` column when present. Otherwise the SDK creation
+        convention (dense zero-based keys in sorted hole-ID order) is used, and only when it accounts for every key
+        referenced by ``holes``.
+        """
+        hole_ids = self.properties["hole_id"].astype(str)
+        if "hole_index" in self.properties:
+            keys = self.properties["hole_index"].astype(int)
+        else:
+            dense = {hole_id: index for index, hole_id in enumerate(sorted(hole_ids.unique()))}
+            keys = hole_ids.map(dense).astype(int)
+        coordinates = self.properties[_COORDINATE_COLUMNS].astype(float)
+        collars = {
+            int(key): coordinate
+            for key, coordinate in zip(keys, coordinates.itertuples(index=False, name=None), strict=True)
+        }
+        referenced = {int(chunk.hole_index) for chunk in self.holes.itertuples(index=False)}
+        return collars if referenced <= set(collars) else None
+
+    def compute_bounding_box(self) -> BoundingBox:
+        collars_by_hole_index = self._collars_by_hole_index()
+        if collars_by_hole_index is not None:
+            bboxes = [
+                self._compute_hole_bounding_box(
+                    self.path[int(chunk.offset) : int(chunk.offset) + int(chunk.count)],
+                    collars_by_hole_index[int(chunk.hole_index)],
+                )
+                for chunk in self.holes.itertuples(index=False)
+                if int(chunk.count)
+            ]
+            if bboxes:
+                return BoundingBox.combine(bboxes)
+
+        # The collar for each chunk cannot be identified, so fall back to an envelope that contains every hole.
+        collars = BoundingBox.from_points(self.properties[_COORDINATE_COLUMNS].astype(float).to_numpy())
+        relative_bboxes = []
         for chunk in self.holes.itertuples(index=False):
             offset = int(chunk.offset)
             count = int(chunk.count)
-            collar = tuple(collars_by_index.loc[int(chunk.hole_index), _COORDINATE_COLUMNS])
-            path_table = self.path[offset : offset + count]
-            bboxes.append(self._compute_hole_bounding_box(path_table, collar))
-
-        return BoundingBox.combine(bboxes)
+            if count:
+                relative_bboxes.append(
+                    self._compute_hole_bounding_box(self.path[offset : offset + count], (0.0, 0.0, 0.0))
+                )
+        if not relative_bboxes:
+            return collars
+        relative = BoundingBox.combine(relative_bboxes)
+        return BoundingBox(
+            min_x=collars.min_x + relative.min_x,
+            max_x=collars.max_x + relative.max_x,
+            min_y=collars.min_y + relative.min_y,
+            max_y=collars.max_y + relative.max_y,
+            min_z=collars.min_z + relative.min_z,
+            max_z=collars.max_z + relative.max_z,
+        )
 
     @staticmethod
     def _compute_bounding_box_np(
@@ -314,8 +336,39 @@ class CollarCoordinates(DataTable):
         return await super()._data_to_schema(distances_df, context)
 
 
+class LocationHoleIdCategory(HoleIdCategory):
+    """Collar hole IDs persisted with explicit integer lookup keys.
+
+    ``properties`` may provide a ``hole_index`` column to persist specific lookup keys, for example when rewriting a
+    downloaded object. When it is absent, dense zero-based keys are generated in sorted hole-ID order as an SDK
+    creation convenience.
+    """
+
+    @classmethod
+    async def _data_to_schema(cls, data: pd.DataFrame, context: IContext) -> Any:
+        hole_ids = data["hole_id"].astype(str)
+        if hole_ids.duplicated().any():
+            raise ObjectValidationError("properties hole_id values must be unique")
+        if "hole_index" in data:
+            keys = data["hole_index"].astype("int32")
+            if keys.duplicated().any():
+                raise ObjectValidationError("properties hole_index values must be unique")
+        else:
+            dense = {hole_id: index for index, hole_id in enumerate(sorted(hole_ids.unique()))}
+            keys = hole_ids.map(dense).astype("int32")
+        data_client = _attributes.get_data_client(context)
+        return {
+            "values": await data_client.upload_dataframe(
+                pd.DataFrame({"hole_id": keys}), table_format=INTEGER_ARRAY_1_INT32
+            ),
+            "table": await data_client.upload_dataframe(
+                pd.DataFrame({"key": keys, "value": hole_ids}), table_format=LOOKUP_TABLE_INT32
+            ),
+        }
+
+
 class DownholeLocation(SchemaModel):
-    hole_id: Annotated[HoleIdCategory, SchemaLocation("hole_id"), DataLocation("properties")]
+    hole_id: Annotated[LocationHoleIdCategory, SchemaLocation("hole_id"), DataLocation("properties")]
     path: Annotated[DownholePath, SchemaLocation("path"), DataLocation("path")]
     holes: Annotated[HoleChunksTable, SchemaLocation("holes"), DataLocation("holes")]
     distances: Annotated[DistancesTable, SchemaLocation("distances"), DataLocation("properties")]
@@ -323,7 +376,7 @@ class DownholeLocation(SchemaModel):
     attributes: Annotated[Attributes, SchemaLocation("attributes"), DataLocation("attributes")]
 
     async def to_dataframe(self, *keys: str, fb: IFeedback = NoFeedback) -> pd.DataFrame:
-        """Return collars with a categorical ``hole_id`` column and selected attributes."""
+        """Return collars with resolved ``hole_id`` values and selected attributes."""
         parts = [
             await self.hole_id.to_dataframe(fb=fb),
             await self.coordinates.to_dataframe(fb=fb),
@@ -472,11 +525,11 @@ class DownholeCollectionTables(_DownholeCollectionChild, SchemaList[DownholeDist
         if existing_indices and not replace:
             raise ObjectValidationError(f"Collection '{collection.name}' already exists")
         location_holes = await self._downhole_collection.location.holes.to_dataframe()
-        valid_indices = set(location_holes["hole_index"].astype(int))
         table = collection.table
-        DownholeCollectionData._validate_hole_chunks(
-            collection.holes, len(table), valid_indices=valid_indices, require_coverage=False
-        )
+        DownholeCollectionData._validate_hole_chunks(collection.holes, len(table), require_coverage=False)
+        valid_indices = set(location_holes["hole_index"].astype(int))
+        if not set(collection.holes["hole_index"].astype(int)).issubset(valid_indices):
+            raise ObjectValidationError("hole_index must reference a key in the location holes table")
         schema = await self._data_to_schema([collection], self._obj)
         if existing_indices:
             self._document[existing_indices[0]] = schema[0]

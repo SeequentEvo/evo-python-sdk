@@ -72,8 +72,10 @@ Check out the other methods on the `ObjectAPIClient` for more details on how to 
 ### Typed downhole collections
 
 `DownholeCollection` provides a DataFrame-based API for creating and reading downhole objects. A collection can contain
-distance tables, interval tables, or both. Hole chunk tables always use a zero-based `hole_index`: it is the code in the
-shared categorical `properties["hole_id"]` dtype, not the row position of a collar.
+distance tables, interval tables, or both. `hole_index` is an integer key in the persisted `hole_id` lookup table; it is
+not a row position and need not be zero-based or contiguous. `hole_chunks_from_ids()` is a convenience helper that emits
+dense zero-based keys for new objects. Pass `hole_indices={"DH-01": 1}` when writing against an existing or explicit
+lookup table; the helper creates chunks only for IDs present in its input.
 
 ```python
 import pandas as pd
@@ -82,12 +84,11 @@ from evo.objects.typed import DownholeCollection, DownholeCollectionData
 from evo.objects.typed.downhole_collection import IntervalCollection
 from evo.objects.utils.downhole import hole_chunks_from_ids
 
-hole_dtype = pd.CategoricalDtype(categories=["DH-01"])
 intervals = pd.DataFrame({"from": [0.0], "to": [1.5], "lithology": ["sandstone"]})
 collections = [
     IntervalCollection(
         name="geology",
-        holes=hole_chunks_from_ids(pd.Series(["DH-01"]), dtype=hole_dtype),
+        holes=hole_chunks_from_ids(pd.Series(["DH-01"])),
         table=intervals,
         unit="m",  # Explicit collection units override DataFrame metadata.
     )

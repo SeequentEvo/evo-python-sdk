@@ -170,6 +170,7 @@ class TestDownholeCollection(TestWithConnector):
         npt.assert_array_equal(expected.properties[xyz], await loc.coordinates.to_dataframe())
         npt.assert_array_equal(expected.properties[distances], await loc.distances.to_dataframe())
         npt.assert_array_equal(expected.properties[["hole_id"]], await loc.hole_id.to_dataframe())
+        npt.assert_array_equal(expected.properties[["hole_id"]], (await loc.to_dataframe())[["hole_id"]])
         npt.assert_array_equal(expected.holes, await loc.holes.to_dataframe())
         if expected.attributes:
             npt.assert_array_equal(expected.attributes, await result.location.hole_id.to_dataframe())
@@ -566,11 +567,9 @@ class TestDownholeCollection(TestWithConnector):
                 desurvey=None,
             )
 
-    def test_location_chunks_require_each_creation_code_and_exact_path_coverage(self):
+    def test_location_chunks_require_exact_path_coverage_without_key_constraints(self):
         base = _make_example_data(collections=[])
         for holes in (
-            pd.DataFrame({"hole_index": [0], "offset": [0], "count": [7]}),
-            pd.DataFrame({"hole_index": [0, 0], "offset": [0, 4], "count": [4, 3]}),
             pd.DataFrame({"hole_index": [0, 1], "offset": [0, 5], "count": [4, 2]}),
             pd.DataFrame({"hole_index": [0, 1], "offset": [0, 3], "count": [4, 3]}),
         ):
@@ -588,18 +587,46 @@ class TestDownholeCollection(TestWithConnector):
         )
         dataclasses.replace(base, collections=[collection])
 
-        with self.assertRaises(ObjectValidationError):
-            dataclasses.replace(
-                base,
-                collections=[
-                    DistanceCollection(
-                        name="invalid",
-                        holes=pd.DataFrame({"hole_index": [2], "offset": [0], "count": [2]}),
-                        table=table,
-                        unit=None,
-                    )
-                ],
-            )
+        dataclasses.replace(
+            base,
+            collections=[
+                DistanceCollection(
+                    name="opaque-key",
+                    holes=pd.DataFrame({"hole_index": [2], "offset": [0], "count": [2]}),
+                    table=table,
+                    unit=None,
+                )
+            ],
+        )
+
+    async def test_data_and_reads_support_one_based_sparse_lookup_keys(self):
+        data = _make_example_data(collections=[])
+        properties = data.properties.assign(hole_index=[1, 42])
+        holes = pd.DataFrame({"hole_index": [1, 42], "offset": [0, 4], "count": [4, 3]})
+        collection = DistanceCollection(
+            name="measurements",
+            holes=pd.DataFrame({"hole_index": [42], "offset": [0], "count": [1]}),
+            table=pd.DataFrame({"distance": [1.0]}),
+            unit=None,
+        )
+        data = dataclasses.replace(data, properties=properties, holes=holes, collections=[collection])
+        with self._mock_geoscience_objects() as mock_client:
+            result = await DownholeCollection.create(context=self.context, data=data)
+            lookup_info = result.location.hole_id.as_dict()["table"]
+            self.assertListEqual(mock_client.data[lookup_info["data"]]["key"].tolist(), [1, 42])
+            self.assertListEqual((await result.location.to_dataframe())["hole_id"].tolist(), ["H001", "H002"])
+            self.assertListEqual(list((await result.collections.get("measurements").to_dataframe_by_hole())), ["H002"])
+        self.assertEqual(data.compute_bounding_box(), _make_example_data(collections=[]).compute_bounding_box())
+
+    def test_bounding_box_falls_back_to_envelope_for_undeclared_keys(self):
+        base = _make_example_data(collections=[])
+        data = dataclasses.replace(base, holes=pd.DataFrame({"hole_index": [7, 9], "offset": [0, 4], "count": [4, 3]}))
+        exact = base.compute_bounding_box()
+        bbox = data.compute_bounding_box()
+        self.assertLessEqual(bbox.min_x, exact.min_x)
+        self.assertGreaterEqual(bbox.max_x, exact.max_x)
+        self.assertLessEqual(bbox.min_z, exact.min_z)
+        self.assertGreaterEqual(bbox.max_z, exact.max_z)
 
     async def test_collection_allows_zero_row_hole(self):
         base = _make_example_data(collections=[])
