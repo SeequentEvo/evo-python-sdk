@@ -18,6 +18,7 @@ from .attributes import (
     BlockModelAttributes,
     BlockModelPendingAttribute,
     PendingAttribute,
+    Unit,
 )
 from .base import BaseObject, object_from_path, object_from_reference, object_from_uuid
 from .block_model_ref import (
@@ -119,6 +120,7 @@ __all__ = [
     "SpheroidalStructure",
     "Tensor3DGrid",
     "Tensor3DGridData",
+    "Unit",
     "Variogram",
     "VariogramCurveData",
     "VariogramData",

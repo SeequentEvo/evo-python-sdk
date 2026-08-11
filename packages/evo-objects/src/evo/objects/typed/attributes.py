@@ -14,7 +14,7 @@ from __future__ import annotations
 import typing
 import uuid
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Annotated, Any
+from typing import TYPE_CHECKING, Annotated, Any, Protocol, runtime_checkable
 from uuid import UUID
 
 import pandas as pd
@@ -47,11 +47,19 @@ __all__ = [
     "BlockModelAttributes",
     "BlockModelPendingAttribute",
     "PendingAttribute",
+    "Unit",
 ]
 
 
 class UnSupportedDataTypeError(Exception):
     """An unsupported data type was encountered while processing data."""
+
+
+@runtime_checkable
+class Unit(Protocol):
+    """A schema unit enum represented by its string value."""
+
+    value: str
 
 
 def _infer_attribute_type_from_series(series: pd.Series) -> str:
@@ -90,14 +98,17 @@ _attribute_table_formats = {
 class AttributeDescription:
     discipline: str = ""
     type: str = ""
-    unit: Any | None = None
+    unit: str | Unit | None = None
     scale: str | None = None
     extensions: dict[str, typing.Any] | None = None
     tags: dict[str, str] | None = None
 
     def __post_init__(self) -> None:
-        if self.unit is not None and not isinstance(self.unit, str):
-            self.unit = str(self.unit.value)
+        if self.unit is None or isinstance(self.unit, str):
+            return
+        if not isinstance(self.unit, Unit) or not isinstance(self.unit.value, str):
+            raise TypeError("unit must be a str, a Unit with a string value, or None")
+        self.unit = self.unit.value
 
     def to_schema(self) -> dict[str, Any]:
         result: dict[str, Any] = {

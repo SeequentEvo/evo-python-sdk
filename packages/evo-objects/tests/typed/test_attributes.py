@@ -11,6 +11,7 @@
 
 from __future__ import annotations
 
+from typing import Any, cast
 from unittest import TestCase
 
 import pandas as pd
@@ -80,9 +81,17 @@ class TestAttributeDescription(TestCase):
         description = AttributeDescription(discipline="Geology", type="Azimuth")
         self.assertEqual(description.to_schema(), {"discipline": "Geology", "type": "Azimuth"})
 
+    def test_description_preserves_string_units(self):
+        description = AttributeDescription(discipline="geology", type="length", unit="m")
+        self.assertEqual(description.to_schema(), {"discipline": "geology", "type": "length", "unit": "m"})
+
     def test_description_normalizes_value_units(self):
         class Unit:
             value = "m"
 
         description = AttributeDescription(discipline="geology", type="length", unit=Unit())
         self.assertEqual(description.to_schema(), {"discipline": "geology", "type": "length", "unit": "m"})
+
+    def test_description_rejects_invalid_units(self):
+        with self.assertRaisesRegex(TypeError, "unit must be"):
+            AttributeDescription(unit=cast(Any, object()))
