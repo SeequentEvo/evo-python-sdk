@@ -46,7 +46,7 @@ async def prefetch_object_data(
     obj: DownloadedObject,
     *,
     data_ids: Sequence[str] | None = None,
-    max_concurrent: int = 100,
+    max_concurrent: int = 8,
     fb: IFeedback = NoFeedback,
 ) -> None:
     """Warm cache entries referenced by an object, downloading each ID at most once."""

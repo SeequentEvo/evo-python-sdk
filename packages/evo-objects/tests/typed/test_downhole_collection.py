@@ -710,8 +710,11 @@ class TestDownholeCollection(TestWithConnector):
 
         parameters = inspect.signature(DownholeCollection.prefetch_collections).parameters
         self.assertNotIn("kwargs", parameters)
-        self.assertEqual(parameters["max_concurrent"].default, 100)
+        self.assertEqual(parameters["max_concurrent"].default, 8)
         self.assertIs(parameters["fb"].default, NoFeedback)
+
+        base_parameters = inspect.signature(BaseObject.prefetch).parameters
+        self.assertEqual(base_parameters["max_concurrent"].default, 8)
 
         with patch.object(DownholeCollection, "prefetch", new_callable=AsyncMock) as prefetch:
             await result.prefetch_collections("collection1", include_location=False, max_concurrent=2, fb=NoFeedback)

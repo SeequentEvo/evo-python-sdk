@@ -423,7 +423,7 @@ class BaseObject(_BaseObject):
         self,
         *,
         data_ids: Sequence[str] | None = None,
-        max_concurrent: int = 100,
+        max_concurrent: int = 8,
         fb: IFeedback = NoFeedback,
     ) -> None:
         """Warm cached data files referenced by this object."""

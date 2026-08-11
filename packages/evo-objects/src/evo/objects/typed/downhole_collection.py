@@ -508,7 +508,7 @@ class DownholeCollection(BaseSpatialObject):
         self,
         *names: str,
         include_location: bool = True,
-        max_concurrent: int = 100,
+        max_concurrent: int = 8,
         fb: IFeedback = NoFeedback,
     ) -> None:
         """Prefetch data referenced by named collections and optionally location data."""
