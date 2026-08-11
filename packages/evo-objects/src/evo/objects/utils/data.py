@@ -9,6 +9,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import asyncio
 from collections.abc import Iterator, Sequence
 from pathlib import Path
 from typing import Any, Iterable, cast
@@ -46,6 +47,7 @@ __all__ = ["ObjectDataClient"]
 logger = logging.getLogger("object.data")
 
 _DATA_ID_KEY = "data"  # The key used to identify data references in geoscience objects.
+_DEFAULT_MAX_CONCURRENCY = 4
 
 
 def _iter_refs(target: Any, _key: str | None = None) -> Iterator[str]:
@@ -331,6 +333,64 @@ class ObjectDataClient:
         ).with_feedback(fb) as loader:
             loader.validate_with_table_info(table_info)
             return loader.load_as_table()
+
+    async def download_tables(
+        self,
+        object_id: UUID,
+        version_id: str,
+        table_infos: Sequence[dict],
+        fb: IFeedback = NoFeedback,
+        max_concurrency: int = _DEFAULT_MAX_CONCURRENCY,
+    ) -> dict[str, pa.Table]:
+        """Download multiple pyarrow tables with one object metadata request.
+
+        The data references are prepared once and the table downloads are performed concurrently, up to
+        ``max_concurrency`` at a time. Duplicate data references are downloaded only once.
+
+        :param object_id: The object ID to download data from.
+        :param version_id: The version ID of the object to download data from.
+        :param table_infos: The table information that defines the expected format of each table.
+        :param fb: A feedback object for tracking download progress.
+        :param max_concurrency: The maximum number of tables to download concurrently.
+
+        :return: A mapping of data IDs to loaded pyarrow tables.
+
+        :raises ValueError: If ``max_concurrency`` is less than one.
+        :raises DataNotFoundError: If a data ID is not associated with this object version.
+        :raises TableFormatError: If a table does not match its expected format.
+        :raises SchemaValidationError: If a table has a different number of rows than expected.
+        """
+        if max_concurrency < 1:
+            raise ValueError("max_concurrency must be at least 1")
+
+        table_infos_by_data_id: dict[str, dict] = {}
+        for table_info in table_infos:
+            table_infos_by_data_id.setdefault(str(table_info["data"]), table_info)
+        if not table_infos_by_data_id:
+            return {}
+
+        data_ids = list(table_infos_by_data_id)
+        downloads = await self._prepare_data_downloads(object_id, version_id, data_ids)
+        feedbacks = split_feedback(fb, [1.0] * len(data_ids))
+        semaphore = asyncio.Semaphore(max_concurrency)
+
+        async def download_one(data_id: str, table_info: dict, table_fb: IFeedback) -> tuple[str, pa.Table]:
+            async with semaphore:
+                table = await self._download_prepared_table(downloads[data_id], table_info, table_fb)
+            return data_id, table
+
+        tasks = [
+            asyncio.create_task(download_one(data_id, table_info, table_fb))
+            for (data_id, table_info), table_fb in zip(table_infos_by_data_id.items(), feedbacks, strict=True)
+        ]
+        try:
+            results = await asyncio.gather(*tasks)
+        except BaseException:
+            for task in tasks:
+                task.cancel()
+            await asyncio.gather(*tasks, return_exceptions=True)
+            raise
+        return dict(results)
 
     if _PD_AVAILABLE:
         # Optional support for pandas dataframes. Depends on both pyarrow and pandas.
