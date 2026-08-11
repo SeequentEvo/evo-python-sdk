@@ -16,8 +16,9 @@ from unittest import TestCase
 import numpy as np
 import numpy.testing as npt
 from parameterized import parameterized
-from pydantic import TypeAdapter
+from pydantic import TypeAdapter, ValidationError
 
+from evo.common import EpsgCode as CommonEpsgCode
 from evo.objects.typed import (
     BoundingBox,
     CoordinateReferenceSystem,
@@ -29,6 +30,8 @@ from evo.objects.typed import (
     Size3d,
     Size3i,
 )
+from evo.objects.typed.spatial import BaseSpatialObject
+from evo.objects.typed.types import EpsgCode as TypesEpsgCode
 
 
 class TestTypes(TestCase):
@@ -75,6 +78,28 @@ class TestTypes(TestCase):
         self.assertEqual(type_adapter.dump_python(crs1), {"epsg_code": 4326})
         self.assertEqual(type_adapter.dump_python(crs2), {"ogc_wkt": "WKT_STRING"})
         self.assertEqual(type_adapter.dump_python(crs3), "unspecified")
+
+    def test_epsg_code_reexport_is_the_same_class(self):
+        self.assertIs(CommonEpsgCode, EpsgCode)
+        self.assertIs(CommonEpsgCode, TypesEpsgCode)
+
+    def test_spatial_crs_serializer_uses_schema_wire_shape(self):
+        adapter = BaseSpatialObject._crs_type_adapter
+        self.assertEqual(adapter.dump_python(EpsgCode(2193)), {"epsg_code": 2193})
+        self.assertEqual(adapter.dump_python("WKT_STRING"), {"ogc_wkt": "WKT_STRING"})
+        self.assertEqual(adapter.dump_python(None), "unspecified")
+
+    @parameterized.expand(
+        [
+            ("both", {"epsg_code": 4326, "ogc_wkt": "WKT_STRING"}),
+            ("extra", {"epsg_code": 4326, "extra": True}),
+            ("wrong_wkt_type", {"ogc_wkt": 42}),
+            ("unexpected", {"unexpected": 4326}),
+        ]
+    )
+    def test_invalid_crs_wire_shapes_raise(self, _name, value):
+        with self.assertRaises(ValidationError):
+            TypeAdapter(CoordinateReferenceSystem).validate_python(value)
 
     def test_bounding_box_from_extent_no_rotation(self):
         """Test BoundingBox.from_extent without rotation."""

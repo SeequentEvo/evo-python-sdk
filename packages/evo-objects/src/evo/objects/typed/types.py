@@ -17,9 +17,9 @@ from typing import Annotated, Any, overload
 import numpy as np
 import numpy.typing as npt
 import pydantic
-from pydantic_core import core_schema
 
 # Import basic geometry types from evo.common and re-export
+from evo.common.crs import EpsgCode, parse_crs
 from evo.common.typed import Point3, Size3d, Size3i
 
 __all__ = [
@@ -35,36 +35,6 @@ __all__ = [
 ]
 
 
-class EpsgCode(int):
-    """An integer representing an EPSG code."""
-
-    def __new__(cls, value: int | str) -> EpsgCode:
-        if isinstance(value, str):
-            try:
-                value = int(value)
-            except ValueError as ve:
-                raise ValueError(f"Cannot convert '{value}' to an integer EPSG code") from ve
-
-        if not (1024 <= value <= 32767):
-            raise ValueError(f"EPSG code must be between 1024 and 32767, got {value}")
-
-        return int.__new__(cls, value)
-
-    def __repr__(self) -> str:
-        return f"EpsgCode({int(self)})"
-
-    def __str__(self):
-        return f"EPSG:{int(self)}"
-
-    @classmethod
-    def __get_pydantic_core_schema__(cls, source_type: Any, handler: Any) -> core_schema.CoreSchema:
-        return core_schema.no_info_after_validator_function(
-            cls,
-            core_schema.int_schema(),
-            serialization=core_schema.plain_serializer_function_ser_schema(int),
-        )
-
-
 def _dump_crs(value: EpsgCode | str | None) -> Any:
     if value is None:
         return "unspecified"
@@ -78,16 +48,15 @@ def _dump_crs(value: EpsgCode | str | None) -> Any:
 
 def _load_crs(value: Any) -> EpsgCode | str | None:
     if value == "unspecified":
-        return None
-    elif isinstance(value, dict):
-        if "epsg_code" in value:
-            return EpsgCode(value["epsg_code"])
-        elif "ogc_wkt" in value:
-            return value["ogc_wkt"]
-        else:
-            raise ValueError("Invalid CRS dictionary format")
-    else:
+        return parse_crs(value)
+    if not isinstance(value, dict):
         raise ValueError("Invalid CRS format")
+
+    if set(value) == {"epsg_code"}:
+        return parse_crs(value["epsg_code"])
+    if set(value) == {"ogc_wkt"} and isinstance(value["ogc_wkt"], str):
+        return value["ogc_wkt"]
+    raise ValueError("Invalid CRS dictionary format")
 
 
 CoordinateReferenceSystem = Annotated[

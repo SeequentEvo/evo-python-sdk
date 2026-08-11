@@ -11,6 +11,7 @@
 
 from .connector import APIConnector, NoAuth
 from .context import StaticContext
+from .crs import EpsgCode, parse_crs
 from .data import (
     DependencyStatus,
     EmptyResponse,
@@ -36,6 +37,7 @@ __all__ = [
     "DependencyStatus",
     "EmptyResponse",
     "Environment",
+    "EpsgCode",
     "EvoContext",
     "HTTPHeaderDict",
     "HTTPResponse",
@@ -56,4 +58,5 @@ __all__ = [
     "Size3d",
     "Size3i",
     "StaticContext",
+    "parse_crs",
 ]
