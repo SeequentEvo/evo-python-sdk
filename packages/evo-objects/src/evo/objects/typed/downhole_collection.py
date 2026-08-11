@@ -514,9 +514,15 @@ class DownholeCollectionTables(_DownholeCollectionChild, SchemaList[DownholeDist
         return isinstance(name, str) and bool(self._indices_for_name(name))
 
     def names(self) -> list[str]:
+        """Return collection names in document order."""
         return [collection.name for collection in self]
 
     async def add(self, collection: DownholeCollectionEntry, *, replace: bool = False) -> None:
+        """Add ``collection`` or replace an existing collection with the same name.
+
+        Set ``replace`` to ``True`` to replace a single existing collection in place. Collection hole-index keys must
+        reference holes in the containing downhole collection.
+        """
         existing_indices = self._indices_for_name(collection.name)
         if len(existing_indices) > 1:
             raise ObjectValidationError(
@@ -537,6 +543,12 @@ class DownholeCollectionTables(_DownholeCollectionChild, SchemaList[DownholeDist
             self._document.append(schema[0])
 
     def remove(self, *names: str) -> int:
+        """Remove collections whose names are supplied and return the number of documents removed.
+
+        The count includes every matching legacy document when duplicate collection names are present. Unknown names do
+        not raise an error and contribute zero to the result. To require that a name exists, check membership before
+        calling this method.
+        """
         requested = set(names)
         previous = len(self._document)
         self._document[:] = [item for item in self._document if item.get("name") not in requested]
