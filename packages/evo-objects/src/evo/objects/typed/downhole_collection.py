@@ -26,6 +26,7 @@ from evo.objects import SchemaVersion
 from evo.objects.typed._data import DataTable, DataTableAndAttributes
 from evo.objects.typed._downhole import DepthIntervalsTable, HoleIdCategory
 from evo.objects.typed._model import DataLocation, SchemaList, SchemaLocation, SchemaModel
+from evo.objects.typed._prefetch import collect_data_ids
 from evo.objects.typed.attributes import Attributes
 from evo.objects.typed.exceptions import ObjectValidationError
 from evo.objects.typed.spatial import BaseSpatialObject, BaseSpatialObjectData
@@ -511,7 +512,6 @@ class DownholeCollection(BaseSpatialObject):
         fb: IFeedback = NoFeedback,
     ) -> None:
         """Prefetch data referenced by named collections and optionally location data."""
-        from evo.objects.typed._prefetch import collect_data_ids
 
         documents = []
         if include_location:
