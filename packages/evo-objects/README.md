@@ -90,7 +90,7 @@ collections = [
         name="geology",
         holes=hole_chunks_from_ids(pd.Series(["DH-01"])),
         table=intervals,
-        unit="m",  # Explicit collection units override DataFrame metadata.
+        unit="m",  # Collection coordinate units are set explicitly here.
     )
 ]
 
@@ -101,8 +101,9 @@ collections = [
 Use `await dhc.location.to_dataframe()` and `await dhc.location.path_to_dataframe()` to read collars and paths.
 Distance and interval tables provide `to_dataframe()` and `to_dataframe_by_hole()`. Before reading a large object, call
 `await dhc.prefetch_collections("geology")` to warm only the requested collection data (and location data by default).
-Attribute descriptions round-trip through `DataFrame.attrs["attribute_descriptions"]`; an explicit collection `unit`
-takes precedence over unit metadata on the distance or `from` column.
+Attribute descriptions for ordinary attributes round-trip through `DataFrame.attrs["attribute_descriptions"]`.
+Collection coordinate units come only from `DistanceCollection.unit` or `IntervalCollection.unit`; unit metadata on the
+distance or `from` column is ignored.
 
 ## Contributing
 
