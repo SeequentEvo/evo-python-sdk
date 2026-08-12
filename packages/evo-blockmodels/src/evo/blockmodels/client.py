@@ -791,7 +791,7 @@ class BlockModelAPIClient(BaseAPIClient):
         geometry_change: bool | None = None,
         fill_subblocks: bool | None = None,
         tags: dict[str, dict[str, Any]] | None = None,
-        update_type: models.UpdateType = models.UpdateType.replace
+        update_type: models.UpdateType = models.UpdateType.replace,
     ) -> Version:
         if self._cache is None:
             raise CacheNotConfiguredException(
@@ -869,7 +869,7 @@ class BlockModelAPIClient(BaseAPIClient):
         delete_columns: set[str] | None = None,
         units: dict[str, str] | None = None,
         tags: dict[str, dict[str, Any]] | None = None,
-        update_type: models.UpdateType = models.UpdateType.replace
+        update_type: models.UpdateType = models.UpdateType.replace,
     ) -> Version:
         """Add, update, or delete regular block model columns.
 
@@ -890,7 +890,15 @@ class BlockModelAPIClient(BaseAPIClient):
         :return: The new version of the block model with the added columns.
         """
         return await self._update_columns(
-            bm_id, data, new_columns, update_columns, delete_columns, units, geometry_change=None, tags=tags, update_type=update_type,
+            bm_id,
+            data,
+            new_columns,
+            update_columns,
+            delete_columns,
+            units,
+            geometry_change=None,
+            tags=tags,
+            update_type=update_type,
         )
 
     async def update_subblocked_columns(
@@ -904,7 +912,7 @@ class BlockModelAPIClient(BaseAPIClient):
         geometry_change: bool = False,
         fill_subblocks: bool | None = None,
         tags: dict[str, dict[str, Any]] | None = None,
-        update_type: models.UpdateType = models.UpdateType.replace
+        update_type: models.UpdateType = models.UpdateType.replace,
     ) -> Version:
         """Add, update, or delete sub-blocked block model columns.
 
@@ -941,7 +949,7 @@ class BlockModelAPIClient(BaseAPIClient):
             geometry_change=geometry_change,
             fill_subblocks=fill_subblocks,
             tags=tags,
-            update_type=update_type
+            update_type=update_type,
         )
 
     async def update_column_metadata(

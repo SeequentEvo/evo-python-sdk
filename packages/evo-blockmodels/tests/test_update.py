@@ -36,6 +36,7 @@ DATE = datetime(2021, 1, 1, tzinfo=timezone.utc)
 MODEL_USER = models.IMSUserInfo(email="test@test.com", name="Test User", id=uuid.uuid4())
 USER = ServiceUser.from_model(MODEL_USER)
 
+
 def _mock_version(
     version_id: int, version_uuid: uuid.UUID, goose_version_id: str, bbox=None, columns: Iterable[models.Column] = ()
 ) -> models.Version:
@@ -494,7 +495,7 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
     @parameterized.expand(
         [
             (True, True),
-            (False,False),
+            (False, False),
         ]
     )
     async def test_update_subblocked_columns(self, geometry_change: bool, fill_subblocks: bool) -> None:
@@ -519,7 +520,7 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
                 delete_columns={"col3"},
                 units={"col2": "g/t"},
                 geometry_change=geometry_change,
-                fill_subblocks=fill_subblocks
+                fill_subblocks=fill_subblocks,
             )
             mock_destination.upload_file.assert_called_once()
 

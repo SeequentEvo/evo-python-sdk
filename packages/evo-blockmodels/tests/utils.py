@@ -18,6 +18,7 @@ DEFAULT_EXPECTED_HEADERS = {
     "Accept": "application/json",
 }
 
+
 class JobPollingRequestHandler(AbstractTestRequestHandler):
     def __init__(self, job_response: JobResponse, pending_request: int = 0) -> None:
         self._job_response = job_response
