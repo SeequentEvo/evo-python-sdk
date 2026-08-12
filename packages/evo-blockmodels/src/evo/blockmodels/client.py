@@ -94,6 +94,7 @@ def _version_from_model(version: models.Version | models.VersionWithChanges) -> 
         base_version_id=version.base_version_id,
         parent_version_id=version.parent_version_id,
         columns=version.mapping.columns,
+        groups=version.mapping.groups,
         geoscience_version_id=version.geoscience_version_id,
     )
 
@@ -110,6 +111,7 @@ def _version_listing_from_model(version: models.ListingVersion) -> ListingVersio
         base_version_id=version.base_version_id,
         parent_version_id=version.parent_version_id,
         columns=version.mapping.columns,
+        groups=version.mapping.groups,
         geoscience_version_id=version.geoscience_version_id,
     )
 
