@@ -309,8 +309,9 @@ class ObjectDataClient:
         # Import here to avoid circular import.
         from ..client import ObjectAPIClient
 
-        data_ids = list(dict.fromkeys(str(data_id) for data_id in data_identifiers))
-        if not data_ids:
+        data_ids = list({str(data_id) for data_id in data_identifiers})
+
+        if len(data_ids) == 0:
             return {}
 
         client = ObjectAPIClient(self._environment, self._connector)
@@ -363,10 +364,9 @@ class ObjectDataClient:
         if max_concurrency < 1:
             raise ValueError("max_concurrency must be at least 1")
 
-        table_infos_by_data_id: dict[str, dict] = {}
-        for table_info in table_infos:
-            table_infos_by_data_id.setdefault(str(table_info["data"]), table_info)
-        if not table_infos_by_data_id:
+        table_infos_by_data_id: dict[str, dict] = {str(table_info["data"]): table_info for table_info in table_infos}
+
+        if len(table_infos_by_data_id) == 0:
             return {}
 
         data_ids = list(table_infos_by_data_id)
@@ -381,7 +381,7 @@ class ObjectDataClient:
 
         tasks = [
             asyncio.create_task(download_one(data_id, table_info, table_fb))
-            for (data_id, table_info), table_fb in zip(table_infos_by_data_id.items(), feedbacks, strict=True)
+            for (data_id, table_info), table_fb in zip(table_infos_by_data_id.items(), feedbacks)
         ]
         try:
             results = await asyncio.gather(*tasks)
