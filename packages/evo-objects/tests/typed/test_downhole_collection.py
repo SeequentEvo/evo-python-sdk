@@ -539,7 +539,7 @@ class TestDownholeCollection(TestWithConnector):
         self.assertEqual(result.tags, {"site": "alpha", "status": "active"})
 
     def test_attributes_length_raises(self):
-        """attributes length must match holes length."""
+        """attributes length must match properties length."""
         path = pd.DataFrame({"distance": [0.0, 10.0], "azimuth": [0.0, 0.0], "dip": [90.0, 90.0]})
         holes = pd.DataFrame({"hole_index": [0, 1], "offset": [0, 1], "count": [1, 1]})
         properties = pd.DataFrame(
@@ -567,9 +567,12 @@ class TestDownholeCollection(TestWithConnector):
                 desurvey=None,
             )
 
-    def test_location_chunks_require_exact_path_coverage_without_key_constraints(self):
+    def test_location_chunks_require_each_dense_index_and_exact_path_coverage(self):
         base = _make_example_data(collections=[])
         for holes in (
+            pd.DataFrame({"hole_index": [0], "offset": [0], "count": [7]}),
+            pd.DataFrame({"hole_index": [0, 0], "offset": [0, 4], "count": [4, 3]}),
+            pd.DataFrame({"hole_index": [1, 2], "offset": [0, 4], "count": [4, 3]}),
             pd.DataFrame({"hole_index": [0, 1], "offset": [0, 5], "count": [4, 2]}),
             pd.DataFrame({"hole_index": [0, 1], "offset": [0, 3], "count": [4, 3]}),
         ):
@@ -587,46 +590,39 @@ class TestDownholeCollection(TestWithConnector):
         )
         dataclasses.replace(base, collections=[collection])
 
-        dataclasses.replace(
-            base,
-            collections=[
-                DistanceCollection(
-                    name="opaque-key",
-                    holes=pd.DataFrame({"hole_index": [2], "offset": [0], "count": [2]}),
-                    table=table,
-                    unit=None,
-                )
-            ],
+        invalid_collection = DistanceCollection(
+            name="invalid-index",
+            holes=pd.DataFrame({"hole_index": [2], "offset": [0], "count": [2]}),
+            table=table,
+            unit=None,
         )
+        with self.assertRaisesRegex(ObjectValidationError, "hole_index must reference a valid hole"):
+            dataclasses.replace(base, collections=[invalid_collection])
 
-    async def test_data_and_reads_support_one_based_sparse_lookup_keys(self):
+    async def test_location_holes_may_be_out_of_hole_index_order(self):
         data = _make_example_data(collections=[])
-        properties = data.properties.assign(hole_index=[1, 42])
-        holes = pd.DataFrame({"hole_index": [1, 42], "offset": [0, 4], "count": [4, 3]})
+        holes = pd.DataFrame({"hole_index": [1, 0], "offset": [4, 0], "count": [3, 4]})
         collection = DistanceCollection(
             name="measurements",
-            holes=pd.DataFrame({"hole_index": [42], "offset": [0], "count": [1]}),
+            holes=pd.DataFrame({"hole_index": [1], "offset": [0], "count": [1]}),
             table=pd.DataFrame({"distance": [1.0]}),
             unit=None,
         )
-        data = dataclasses.replace(data, properties=properties, holes=holes, collections=[collection])
-        with self._mock_geoscience_objects() as mock_client:
+        data = dataclasses.replace(data, holes=holes, collections=[collection])
+        with self._mock_geoscience_objects():
             result = await DownholeCollection.create(context=self.context, data=data)
-            lookup_info = result.location.hole_id.as_dict()["table"]
-            self.assertListEqual(mock_client.data[lookup_info["data"]]["key"].tolist(), [1, 42])
-            self.assertListEqual((await result.location.to_dataframe())["hole_id"].tolist(), ["H001", "H002"])
             self.assertListEqual(list((await result.collections.get("measurements").to_dataframe_by_hole())), ["H002"])
         self.assertEqual(data.compute_bounding_box(), _make_example_data(collections=[]).compute_bounding_box())
 
-    def test_bounding_box_falls_back_to_envelope_for_undeclared_keys(self):
+    def test_bounding_box_includes_collar_for_hole_without_path_rows(self):
         base = _make_example_data(collections=[])
-        data = dataclasses.replace(base, holes=pd.DataFrame({"hole_index": [7, 9], "offset": [0, 4], "count": [4, 3]}))
-        exact = base.compute_bounding_box()
+        data = dataclasses.replace(
+            base,
+            path=base.path.iloc[:4],
+            holes=pd.DataFrame({"hole_index": [0, 1], "offset": [0, 4], "count": [4, 0]}),
+        )
         bbox = data.compute_bounding_box()
-        self.assertLessEqual(bbox.min_x, exact.min_x)
-        self.assertGreaterEqual(bbox.max_x, exact.max_x)
-        self.assertLessEqual(bbox.min_z, exact.min_z)
-        self.assertGreaterEqual(bbox.max_z, exact.max_z)
+        self._assert_bounding_box_equal(bbox, 100.0, 200.0, 150.0, 300.0, -30.0, 50.0)
 
     async def test_collection_allows_zero_row_hole(self):
         base = _make_example_data(collections=[])

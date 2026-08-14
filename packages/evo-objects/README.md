@@ -72,10 +72,10 @@ Check out the other methods on the `ObjectAPIClient` for more details on how to 
 ### Typed downhole collections
 
 `DownholeCollection` provides a DataFrame-based API for creating and reading downhole objects. A collection can contain
-distance tables, interval tables, or both. `hole_index` is an integer key in the persisted `hole_id` lookup table; it is
-not a row position and need not be zero-based or contiguous. `hole_chunks_from_ids()` is a convenience helper that emits
-dense zero-based keys for new objects. Pass `hole_indices={"DH-01": 1}` when writing against an existing or explicit
-lookup table; the helper creates chunks only for IDs present in its input.
+distance tables, interval tables, or both. For `DownholeCollectionData`, `hole_index` is a dense zero-based key in the
+sorted `hole_id` lookup. Location holes must contain each key exactly once, in any row order. Collection holes may
+contain a subset or repeated chunks, but every key must reference a location hole. Persisted objects are read using their
+actual lookup keys, which need not be zero-based or contiguous.
 
 ```python
 import pandas as pd

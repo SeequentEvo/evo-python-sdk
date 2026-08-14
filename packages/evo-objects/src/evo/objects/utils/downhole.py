@@ -27,7 +27,9 @@ def hole_chunks_from_ids(hole_ids: pd.Series, *, hole_indices: Mapping[str, int]
     ``hole_indices`` maps hole IDs to their lookup-table keys. When omitted, this
     creation helper assigns dense zero-based keys in sorted ID order. Persisted
     objects are not required to use those keys. Only IDs present in ``hole_ids``
-    produce chunks; an empty collection therefore produces no chunks.
+    produce chunks; an empty collection therefore produces no chunks. Explicit
+    mappings are intended for collection chunks used with persisted objects;
+    location chunks in ``DownholeCollectionData`` must use dense zero-based keys.
     """
     if hole_ids.isna().any():
         raise ValueError("hole_ids cannot contain missing values")
