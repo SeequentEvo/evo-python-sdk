@@ -104,7 +104,7 @@ def _generate_timestamp_data(n_samples: int) -> Iterator[datetime]:
     min_ = datetime(1970, 1, 1, tzinfo=timezone.utc).timestamp()
     max_ = datetime(2038, 12, 31, 23, 59, 59, 999999, tzinfo=timezone.utc).timestamp()
     for _ in range(n_samples):
-        yield datetime.utcfromtimestamp(random.uniform(min_, max_))
+        yield datetime.fromtimestamp(random.uniform(min_, max_), timezone.utc)
 
 
 def _generate_data(format_id: str, n_samples: int) -> Iterator:

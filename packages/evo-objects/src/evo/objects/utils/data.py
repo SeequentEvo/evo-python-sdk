@@ -17,7 +17,7 @@ from uuid import UUID
 import numpy as np
 
 from evo import logging
-from evo.common import APIConnector, Environment, ICache, IFeedback
+from evo.common import APIConnector, Environment, ICache, IFeedback, StaticContext
 from evo.common.exceptions import StorageFileNotFoundError
 from evo.common.io.exceptions import DataExistsError
 from evo.common.utils import NoFeedback, PartialFeedback, split_feedback
@@ -116,6 +116,15 @@ class ObjectDataClient:
     def clear_cache(self) -> None:
         """Clear the cache used by this client."""
         self._cache.clear_cache(environment=self._environment, scope=_CACHE_SCOPE)
+
+    def get_static_context(self) -> StaticContext:
+        """Build a typed-object context from this client's environment and infrastructure."""
+        return StaticContext(
+            connector=self._connector,
+            cache=self._cache,
+            org_id=self._environment.org_id,
+            workspace_id=self._environment.workspace_id,
+        )
 
     async def upload_referenced_data(self, object_model: dict, fb: IFeedback = NoFeedback) -> None:
         """Upload all data referenced by a geoscience object.

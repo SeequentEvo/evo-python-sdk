@@ -69,6 +69,42 @@ You can also get a list of all objects. Internally, this recursively calls the `
 
 Check out the other methods on the `ObjectAPIClient` for more details on how to upload and download objects, or get object versions.
 
+### Typed downhole collections
+
+`DownholeCollection` provides a DataFrame-based API for creating and reading downhole objects. A collection can contain
+distance tables, interval tables, or both. For `DownholeCollectionData`, `hole_index` is a dense zero-based key in the
+sorted `hole_id` lookup. Location holes must contain each key exactly once, in any row order. Collection holes may
+contain a subset or repeated chunks, but every key must reference a location hole. Persisted objects are read using their
+actual lookup keys, which need not be zero-based or contiguous.
+
+```python
+import pandas as pd
+
+from evo.objects.typed import DownholeCollection, DownholeCollectionData
+from evo.objects.typed.downhole_collection import IntervalCollection
+from evo.objects.utils.downhole import hole_chunks_from_ids
+
+intervals = pd.DataFrame({"from": [0.0], "to": [1.5], "lithology": ["sandstone"]})
+collections = [
+    IntervalCollection(
+        name="geology",
+        holes=hole_chunks_from_ids(pd.Series(["DH-01"])),
+        table=intervals,
+        unit="m",  # Collection coordinate units are set explicitly here.
+    )
+]
+
+# Build DownholeCollectionData with matching path, location-hole chunks, and collar properties,
+# then create it with: await DownholeCollection.create(context, data)
+```
+
+Use `await dhc.location.to_dataframe()` and `await dhc.location.path_to_dataframe()` to read collars and paths.
+Distance and interval tables provide `to_dataframe()` and `to_dataframe_by_hole()`. Before reading a large object, call
+`await dhc.prefetch_collections("geology")` to warm only the requested collection data (and location data by default).
+Attribute descriptions for ordinary attributes round-trip through `DataFrame.attrs["attribute_descriptions"]`.
+Collection coordinate units come only from `DistanceCollection.unit` or `IntervalCollection.unit`; unit metadata on the
+distance or `from` column is ignored.
+
 ## Contributing
 
 For instructions on contributing to the development of this library, please refer to the [evo-python-sdk documentation](https://github.com/seequentevo/evo-python-sdk).

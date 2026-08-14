@@ -12,11 +12,14 @@
 from __future__ import annotations
 
 import contextlib
+import copy
 import dataclasses
+import inspect
 import math
 import uuid
+import warnings
 from datetime import date
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 import numpy as np
 import numpy.testing as npt
@@ -25,13 +28,16 @@ from parameterized import parameterized
 
 from evo.common import Environment, StaticContext
 from evo.common.test_tools import BASE_URL, ORG, WORKSPACE_ID, TestWithConnector
+from evo.common.utils import NoFeedback
 from evo.objects import ObjectReference
 from evo.objects.typed import BoundingBox
+from evo.objects.typed.attributes import AttributeDescription
 from evo.objects.typed.base import BaseObject
 from evo.objects.typed.downhole_collection import (
     DistanceCollection,
     DownholeCollection,
     DownholeCollectionData,
+    IntervalCollection,
 )
 from evo.objects.typed.exceptions import ObjectValidationError
 
@@ -65,7 +71,7 @@ def _make_example_data(
                 "count": [4],
             }
         ),
-        distance_table=pd.DataFrame(
+        table=pd.DataFrame(
             {
                 "distance": [0.0, 10.0, 20.0, 30.0],
                 "attr_str": ["a", "b", "a", "c"],
@@ -73,6 +79,7 @@ def _make_example_data(
                 "attr_num": [1.1, 2.2, 3.3, 4.4],
             }
         ),
+        unit=None,
     )
 
     holes = pd.DataFrame(
@@ -113,6 +120,17 @@ def _make_example_data(
 
 
 class TestDownholeCollection(TestWithConnector):
+    def test_nullable_domain_arguments_are_required(self):
+        for data_class, arguments in (
+            (DistanceCollection, ("unit",)),
+            (IntervalCollection, ("unit",)),
+            (DownholeCollectionData, ("distance_unit", "desurvey")),
+        ):
+            parameters = inspect.signature(data_class).parameters
+            for argument in arguments:
+                with self.subTest(data_class=data_class.__name__, argument=argument):
+                    self.assertIs(parameters[argument].default, inspect.Parameter.empty)
+
     def setUp(self) -> None:
         TestWithConnector.setUp(self)
         self.environment = Environment(hub_url=BASE_URL, org_id=ORG.id, workspace_id=WORKSPACE_ID)
@@ -152,6 +170,7 @@ class TestDownholeCollection(TestWithConnector):
         npt.assert_array_equal(expected.properties[xyz], await loc.coordinates.to_dataframe())
         npt.assert_array_equal(expected.properties[distances], await loc.distances.to_dataframe())
         npt.assert_array_equal(expected.properties[["hole_id"]], await loc.hole_id.to_dataframe())
+        npt.assert_array_equal(expected.properties[["hole_id"]], (await loc.to_dataframe())[["hole_id"]])
         npt.assert_array_equal(expected.holes, await loc.holes.to_dataframe())
         if expected.attributes:
             npt.assert_array_equal(expected.attributes, await result.location.hole_id.to_dataframe())
@@ -167,12 +186,10 @@ class TestDownholeCollection(TestWithConnector):
 
     async def _check_collections(self, expected: DownholeCollectionData, result: DownholeCollection):
         for expected_collection, result_collection in zip(expected.collections, result.collections, strict=True):
-            expected_distance_unit = expected_collection.distance_table.attrs.get("attribute_descriptions", {}).get(
-                "distance"
-            )
+            expected_distance_unit = expected_collection.table.attrs.get("attribute_descriptions", {}).get("distance")
             self.assertEqual(expected_distance_unit, result_collection.distance.unit)
 
-            expected_table = expected_collection.distance_table
+            expected_table = expected_collection.table
             result_table = await result_collection.distance.to_dataframe()
 
             for col in result_table.columns:
@@ -207,6 +224,190 @@ class TestDownholeCollection(TestWithConnector):
         with self._mock_geoscience_objects():
             result = await DownholeCollection.create(context=self.context, data=data)
         self.assertIsInstance(result, DownholeCollection)
+
+    async def test_mixed_collections_round_trip_and_mutation(self):
+        interval = IntervalCollection(
+            name="intervals",
+            holes=pd.DataFrame({"hole_index": [0], "offset": [0], "count": [2]}),
+            table=pd.DataFrame({"from": [0.0, 1.0], "to": [1.0, 2.0], "lithology": ["a", "b"]}),
+            unit="m",
+        )
+        data = _make_example_data(collections=[_make_example_data().collections[0], interval])
+        with self._mock_geoscience_objects() as mock_client:
+            result = await DownholeCollection.create(context=self.context, data=data)
+            self.assertEqual(result.collections.names(), ["collection1", "intervals"])
+            self.assertEqual(result.collections.get("intervals").from_to.unit, "m")
+            self.assertListEqual(
+                (await result.collections.get("intervals").to_dataframe()).columns.tolist(), ["from", "to", "lithology"]
+            )
+            self.assertEqual(result.collections.remove("missing", "collection1"), 1)
+            await result.collections.add(data.collections[0])
+            self.assertEqual(result.collections.names(), ["intervals", "collection1"])
+            object_json = mock_client.objects[str(result.metadata.url.object_id)]
+            self.assertIn("start_and_end", object_json["collections"][1]["from_to"]["intervals"])
+
+    async def test_interval_collection_ignores_coordinate_attribute_metadata(self):
+        table = pd.DataFrame({"from": [0.0, 1.0], "to": [1.0, 2.0], "grade": [1.0, 2.0]})
+        table.attrs["attribute_descriptions"] = {"from": AttributeDescription(unit="ft")}
+        interval = IntervalCollection(
+            name="intervals",
+            holes=pd.DataFrame({"hole_index": [0], "offset": [0], "count": [2]}),
+            table=table,
+            unit=None,
+        )
+        data = _make_example_data(collections=[interval])
+        with self._mock_geoscience_objects() as mock_client:
+            result = await DownholeCollection.create(context=self.context, data=data)
+        collection = result.collections.get("intervals")
+        self.assertIsNotNone(collection)
+        self.assertIsNone(collection.from_to.unit)
+        self.assertListEqual((await collection.to_dataframe()).columns.tolist(), ["from", "to", "grade"])
+        document = mock_client.objects[str(result.metadata.url.object_id)]
+        self.assertNotIn("unit", document["collections"][0]["from_to"])
+
+    @parameterized.expand(
+        [
+            ("explicit", "m", "m"),
+            ("omitted", None, None),
+        ]
+    )
+    async def test_interval_collection_uses_explicit_unit_only(self, _name, explicit_unit, expected_unit):
+        table = pd.DataFrame({"from": [0.0], "to": [1.0]})
+        collection = IntervalCollection(
+            name="intervals",
+            holes=pd.DataFrame({"hole_index": [0], "offset": [0], "count": [1]}),
+            table=table,
+            unit=explicit_unit,
+        )
+        with self._mock_geoscience_objects() as mock_client:
+            result = await DownholeCollection.create(
+                context=self.context, data=_make_example_data(collections=[collection])
+            )
+            document = mock_client.objects[str(result.metadata.url.object_id)]
+        from_to = document["collections"][0]["from_to"]
+        self.assertEqual(result.collections.get("intervals").from_to.unit, expected_unit)
+        if expected_unit is None:
+            self.assertNotIn("unit", from_to)
+        else:
+            self.assertEqual(from_to["unit"], expected_unit)
+
+    async def test_interval_collection_round_trips_all_attribute_types(self):
+        table = pd.DataFrame(
+            {
+                "from": [0.0, 1.0],
+                "to": [1.0, 2.0],
+                "scalar": pd.Series([1.5, 2.5], dtype="float64"),
+                "integer": pd.Series([1, 2], dtype="int64"),
+                "boolean": pd.Series([True, False], dtype="bool"),
+                "string": pd.Series(["a", "b"], dtype="string"),
+                "category": pd.Series(pd.Categorical(["ore", "waste"])),
+                "date_time": pd.to_datetime(["2026-01-01", "2026-01-02"]),
+            }
+        )
+        collection = IntervalCollection(
+            name="intervals",
+            holes=pd.DataFrame({"hole_index": [0], "offset": [0], "count": [2]}),
+            table=table,
+            unit=None,
+        )
+        expected_types = {
+            "scalar": "scalar",
+            "integer": "integer",
+            "boolean": "bool",
+            "string": "string",
+            "category": "category",
+            "date_time": "date_time",
+        }
+        with self._mock_geoscience_objects() as mock_client:
+            result = await DownholeCollection.create(
+                context=self.context, data=_make_example_data(collections=[collection])
+            )
+            document = mock_client.objects[str(result.metadata.url.object_id)]
+        interval = result.collections.get("intervals")
+        self.assertIsNotNone(interval)
+        self.assertEqual(
+            {
+                attribute["name"]: attribute["attribute_type"]
+                for attribute in document["collections"][0]["from_to"]["attributes"]
+            },
+            expected_types,
+        )
+        self.assertListEqual((await interval.to_dataframe()).columns.tolist(), list(table.columns))
+
+    @parameterized.expand([("missing_from", {"to": [1.0]}), ("missing_to", {"from": [0.0]})])
+    async def test_interval_collection_requires_from_and_to_columns(self, _name, table_data):
+        collection = IntervalCollection(
+            name="invalid",
+            holes=pd.DataFrame({"hole_index": [0], "offset": [0], "count": [1]}),
+            table=pd.DataFrame(table_data),
+            unit=None,
+        )
+        with self._mock_geoscience_objects(), self.assertRaises(ObjectValidationError):
+            await DownholeCollection.create(context=self.context, data=_make_example_data(collections=[collection]))
+
+    @parameterized.expand(
+        [
+            ("explicit", "m", "m"),
+            ("metadata_only", None, None),
+        ]
+    )
+    async def test_distance_collection_uses_explicit_unit_only(self, _name, collection_unit, expected_unit):
+        table = pd.DataFrame({"distance": [0.0], "grade": [1.0]})
+        table.attrs["attribute_descriptions"] = {"distance": AttributeDescription(unit="ft")}
+        collection = DistanceCollection(
+            name="distances",
+            holes=pd.DataFrame({"hole_index": [0], "offset": [0], "count": [1]}),
+            table=table,
+            unit=collection_unit,
+        )
+        with self._mock_geoscience_objects() as mock_client:
+            result = await DownholeCollection.create(
+                context=self.context, data=_make_example_data(collections=[collection])
+            )
+        self.assertEqual(result.collections.get("distances").distance.unit, expected_unit)
+        document = mock_client.objects[str(result.metadata.url.object_id)]
+        distance = document["collections"][0]["distance"]
+        if expected_unit is None:
+            self.assertNotIn("unit", distance)
+        else:
+            self.assertEqual(distance["unit"], expected_unit)
+
+    async def test_attribute_descriptions_round_trip_to_dataframe_metadata(self):
+        table = pd.DataFrame({"distance": [0.0], "grade": [1.0]})
+        description = AttributeDescription(
+            discipline="geology",
+            type="grade",
+            unit="ppm",
+            scale="linear",
+            tags={"source": "assay"},
+        )
+        table.attrs["attribute_descriptions"] = {"grade": description}
+        collection = DistanceCollection(
+            name="grades",
+            holes=pd.DataFrame({"hole_index": [0], "offset": [0], "count": [1]}),
+            table=table,
+            unit=None,
+        )
+        with self._mock_geoscience_objects():
+            result = await DownholeCollection.create(
+                context=self.context, data=_make_example_data(collections=[collection])
+            )
+        round_tripped = await result.collections.get("grades").to_dataframe()
+        self.assertEqual(round_tripped.attrs["attribute_descriptions"]["grade"], description)
+
+    async def test_attribute_without_description_reads_as_none(self):
+        with self._mock_geoscience_objects():
+            result = await DownholeCollection.create(context=self.context, data=_make_example_data())
+        self.assertIsNone(result.collections.get("collection1").distance.attributes["attr_str"].attribute_description)
+
+    async def test_none_optional_fields_are_omitted(self):
+        data = _make_example_data()
+        data = dataclasses.replace(data, distance_unit=None, desurvey=None)
+        with self._mock_geoscience_objects() as mock_client:
+            result = await DownholeCollection.create(context=self.context, data=data)
+            document = mock_client.objects[str(result.metadata.url.object_id)]
+        self.assertNotIn("distance_unit", document)
+        self.assertNotIn("desurvey", document)
 
     @parameterized.expand([BaseObject, DownholeCollection])
     async def test_replace(self, class_to_call):
@@ -259,6 +460,17 @@ class TestDownholeCollection(TestWithConnector):
         data = dataclasses.replace(data, path=path)
         bbox = data.compute_bounding_box()
         self._assert_bounding_box_equal(bbox, 100.0, 200.0, 150.0, 300.0, -30.0, 50.0)
+
+    def test_bounding_box_uses_hole_index_not_property_position(self):
+        data = _make_example_data()
+        expected = data.compute_bounding_box()
+        properties = data.properties.iloc[[1, 0]].copy()
+        properties.index = [10, 20]
+        data = dataclasses.replace(data, properties=properties)
+        bbox = data.compute_bounding_box()
+        self._assert_bounding_box_equal(
+            bbox, expected.min_x, expected.max_x, expected.min_y, expected.max_y, expected.min_z, expected.max_z
+        )
 
     def test_bounding_box_from_spiral(self):
         # First hole spirals, second hole zig-zags
@@ -327,7 +539,7 @@ class TestDownholeCollection(TestWithConnector):
         self.assertEqual(result.tags, {"site": "alpha", "status": "active"})
 
     def test_attributes_length_raises(self):
-        """attributes length must match holes length."""
+        """attributes length must match properties length."""
         path = pd.DataFrame({"distance": [0.0, 10.0], "azimuth": [0.0, 0.0], "dip": [90.0, 90.0]})
         holes = pd.DataFrame({"hole_index": [0, 1], "offset": [0, 1], "count": [1, 1]})
         properties = pd.DataFrame(
@@ -354,6 +566,253 @@ class TestDownholeCollection(TestWithConnector):
                 distance_unit=None,
                 desurvey=None,
             )
+
+    def test_location_chunks_require_each_dense_index_and_exact_path_coverage(self):
+        base = _make_example_data(collections=[])
+        for holes in (
+            pd.DataFrame({"hole_index": [0], "offset": [0], "count": [7]}),
+            pd.DataFrame({"hole_index": [0, 0], "offset": [0, 4], "count": [4, 3]}),
+            pd.DataFrame({"hole_index": [1, 2], "offset": [0, 4], "count": [4, 3]}),
+            pd.DataFrame({"hole_index": [0, 1], "offset": [0, 5], "count": [4, 2]}),
+            pd.DataFrame({"hole_index": [0, 1], "offset": [0, 3], "count": [4, 3]}),
+        ):
+            with self.subTest(holes=holes.to_dict("records")), self.assertRaises(ObjectValidationError):
+                dataclasses.replace(base, holes=holes)
+
+    def test_collection_chunk_ranges_are_not_required_to_partition_the_table(self):
+        base = _make_example_data(collections=[])
+        table = pd.DataFrame({"distance": [0.0, 1.0, 2.0]})
+        collection = DistanceCollection(
+            name="repeated",
+            holes=pd.DataFrame({"hole_index": [0, 0], "offset": [0, 2], "count": [1, 1]}),
+            table=table,
+            unit=None,
+        )
+        dataclasses.replace(base, collections=[collection])
+
+        invalid_collection = DistanceCollection(
+            name="invalid-index",
+            holes=pd.DataFrame({"hole_index": [2], "offset": [0], "count": [2]}),
+            table=table,
+            unit=None,
+        )
+        with self.assertRaisesRegex(ObjectValidationError, "hole_index must reference a valid hole"):
+            dataclasses.replace(base, collections=[invalid_collection])
+
+    async def test_location_holes_may_be_out_of_hole_index_order(self):
+        data = _make_example_data(collections=[])
+        holes = pd.DataFrame({"hole_index": [1, 0], "offset": [4, 0], "count": [3, 4]})
+        collection = DistanceCollection(
+            name="measurements",
+            holes=pd.DataFrame({"hole_index": [1], "offset": [0], "count": [1]}),
+            table=pd.DataFrame({"distance": [1.0]}),
+            unit=None,
+        )
+        data = dataclasses.replace(data, holes=holes, collections=[collection])
+        with self._mock_geoscience_objects():
+            result = await DownholeCollection.create(context=self.context, data=data)
+            self.assertListEqual(list((await result.collections.get("measurements").to_dataframe_by_hole())), ["H002"])
+        self.assertEqual(data.compute_bounding_box(), _make_example_data(collections=[]).compute_bounding_box())
+
+    def test_bounding_box_includes_collar_for_hole_without_path_rows(self):
+        base = _make_example_data(collections=[])
+        data = dataclasses.replace(
+            base,
+            path=base.path.iloc[:4],
+            holes=pd.DataFrame({"hole_index": [0, 1], "offset": [0, 4], "count": [4, 0]}),
+        )
+        bbox = data.compute_bounding_box()
+        self._assert_bounding_box_equal(bbox, 100.0, 200.0, 150.0, 300.0, -30.0, 50.0)
+
+    async def test_collection_allows_zero_row_hole(self):
+        base = _make_example_data(collections=[])
+        collection = DistanceCollection(
+            name="sparse",
+            holes=pd.DataFrame({"hole_index": [0, 1], "offset": [0, 0], "count": [2, 0]}),
+            table=pd.DataFrame({"distance": [0.0, 1.0]}),
+            unit=None,
+        )
+        data = dataclasses.replace(base, collections=[collection])
+        with self._mock_geoscience_objects():
+            result = await DownholeCollection.create(context=self.context, data=data)
+        by_hole = await result.collections.get("sparse").to_dataframe_by_hole()
+        self.assertEqual({hole_id: len(table) for hole_id, table in by_hole.items()}, {"H001": 2, "H002": 0})
+
+    async def test_collection_add_allows_repeated_hole_chunks_and_replaces_in_place(self):
+        with self._mock_geoscience_objects():
+            result = await DownholeCollection.create(context=self.context, data=_make_example_data(collections=[]))
+            collection = DistanceCollection(
+                name="measurements",
+                holes=pd.DataFrame({"hole_index": [0], "offset": [0], "count": [1]}),
+                table=pd.DataFrame({"distance": [0.0]}),
+                unit=None,
+            )
+            await result.collections.add(collection)
+            replacement = dataclasses.replace(collection, table=pd.DataFrame({"distance": [1.0]}))
+            with self.assertRaises(ObjectValidationError):
+                await result.collections.add(replacement)
+            await result.collections.add(replacement, replace=True)
+            self.assertEqual(result.collections.names(), ["measurements"])
+            self.assertEqual((await result.collections.get("measurements").to_dataframe()).iloc[0, 0], 1.0)
+            repeated = dataclasses.replace(
+                collection,
+                holes=pd.DataFrame({"hole_index": [0, 0], "offset": [0, 1], "count": [1, 0]}),
+            )
+            await result.collections.add(repeated, replace=True)
+
+    def test_collection_creation_rejects_duplicate_names(self):
+        collection = _make_example_data().collections[0]
+        with self.assertRaisesRegex(ObjectValidationError, "Collection names must be unique"):
+            _make_example_data(collections=[collection, dataclasses.replace(collection)])
+
+    async def test_legacy_duplicate_collection_names_warn_and_return_first(self):
+        data = _make_example_data()
+        with self._mock_geoscience_objects() as mock_client:
+            result = await DownholeCollection.create(context=self.context, data=data)
+            document = mock_client.objects[str(result.metadata.url.object_id)]
+            document["collections"].append(copy.deepcopy(document["collections"][0]))
+            legacy = await DownholeCollection.from_reference(context=self.context, reference=result.metadata.url)
+
+        self.assertEqual(legacy.collections.names(), ["collection1", "collection1"])
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            self.assertIn("collection1", legacy.collections)
+        with self.assertWarnsRegex(UserWarning, "Multiple collections named 'collection1'"):
+            collection = legacy.collections.get("collection1")
+        self.assertIsNotNone(collection)
+        with self.assertRaisesRegex(ObjectValidationError, "Multiple collections named 'collection1' already exist"):
+            await legacy.collections.add(data.collections[0], replace=True)
+
+    async def test_collection_replacement_preserves_position_and_persists_after_update(self):
+        first = DistanceCollection(
+            name="first",
+            holes=pd.DataFrame({"hole_index": [0], "offset": [0], "count": [1]}),
+            table=pd.DataFrame({"distance": [0.0]}),
+            unit=None,
+        )
+        middle = DistanceCollection(
+            name="middle",
+            holes=pd.DataFrame({"hole_index": [1], "offset": [0], "count": [1]}),
+            table=pd.DataFrame({"distance": [1.0]}),
+            unit=None,
+        )
+        last = DistanceCollection(
+            name="last",
+            holes=pd.DataFrame({"hole_index": [0], "offset": [0], "count": [1]}),
+            table=pd.DataFrame({"distance": [2.0]}),
+            unit=None,
+        )
+        replacement = dataclasses.replace(middle, table=pd.DataFrame({"distance": [10.0]}))
+        with self._mock_geoscience_objects():
+            result = await DownholeCollection.create(context=self.context, data=_make_example_data(collections=[]))
+            await result.collections.add(first)
+            await result.collections.add(middle)
+            await result.collections.add(last)
+            await result.collections.add(replacement, replace=True)
+            self.assertEqual(result.collections.names(), ["first", "middle", "last"])
+            await result.update()
+            persisted = await DownholeCollection.from_reference(context=self.context, reference=result.metadata.url)
+        self.assertEqual(persisted.collections.names(), ["first", "middle", "last"])
+        self.assertEqual((await persisted.collections.get("middle").to_dataframe()).iloc[0, 0], 10.0)
+
+    async def test_location_path_and_collection_reads(self):
+        with self._mock_geoscience_objects():
+            result = await DownholeCollection.create(context=self.context, data=_make_example_data())
+        collars = await result.location.to_dataframe()
+        self.assertListEqual(collars.columns.tolist(), ["hole_id", "x", "y", "z", "final", "target", "current"])
+        self.assertListEqual(
+            (await result.location.path_to_dataframe()).columns.tolist(), ["distance", "azimuth", "dip"]
+        )
+        by_hole = await result.collections.get("collection1").to_dataframe_by_hole()
+        self.assertListEqual(list(by_hole), ["H001"])
+        self.assertEqual(len(by_hole["H001"]), 4)
+
+    async def test_prefetch_collections_exposes_and_forwards_explicit_options(self):
+        with self._mock_geoscience_objects():
+            result = await DownholeCollection.create(context=self.context, data=_make_example_data())
+
+        parameters = inspect.signature(DownholeCollection.prefetch_collections).parameters
+        self.assertNotIn("kwargs", parameters)
+        self.assertEqual(parameters["max_concurrent"].default, 8)
+        self.assertIs(parameters["fb"].default, NoFeedback)
+
+        base_parameters = inspect.signature(BaseObject.prefetch).parameters
+        self.assertEqual(base_parameters["max_concurrent"].default, 8)
+
+        with patch.object(DownholeCollection, "prefetch", new_callable=AsyncMock) as prefetch:
+            await result.prefetch_collections("collection1", include_location=False, max_concurrent=2, fb=NoFeedback)
+
+        self.assertEqual(prefetch.await_count, 1)
+        self.assertEqual(prefetch.await_args.kwargs["max_concurrent"], 2)
+        self.assertIs(prefetch.await_args.kwargs["fb"], NoFeedback)
+        self.assertTrue(prefetch.await_args.kwargs["data_ids"])
+
+    async def test_dataframe_read_wrappers_select_attributes(self):
+        interval = IntervalCollection(
+            name="intervals",
+            holes=pd.DataFrame({"hole_index": [0], "offset": [0], "count": [1]}),
+            table=pd.DataFrame({"from": [0.0], "to": [1.0], "lithology": ["ore"]}),
+            unit=None,
+        )
+        data = _make_example_data(
+            attributes=pd.DataFrame({"collar_attribute": ["first", "second"]}),
+            collections=[_make_example_data().collections[0], interval],
+        )
+        data = dataclasses.replace(data, path=data.path.assign(path_attribute=[1] * len(data.path)))
+
+        with self._mock_geoscience_objects():
+            result = await DownholeCollection.create(context=self.context, data=data)
+
+        self.assertListEqual(
+            (await result.location.to_dataframe("collar_attribute")).columns.tolist(),
+            ["hole_id", "x", "y", "z", "final", "target", "current", "collar_attribute"],
+        )
+        self.assertListEqual(
+            (await result.location.path_to_dataframe("path_attribute")).columns.tolist(),
+            ["distance", "azimuth", "dip", "path_attribute"],
+        )
+        distance = result.collections.get("collection1")
+        self.assertIsNotNone(distance)
+        self.assertListEqual((await distance.to_dataframe("attr_num")).columns.tolist(), ["distance", "attr_num"])
+        self.assertListEqual(
+            (await distance.to_dataframe_by_hole("attr_num"))["H001"].columns.tolist(), ["distance", "attr_num"]
+        )
+        intervals = result.collections.get("intervals")
+        self.assertIsNotNone(intervals)
+        self.assertListEqual((await intervals.to_dataframe("lithology")).columns.tolist(), ["from", "to", "lithology"])
+        self.assertListEqual(
+            (await intervals.to_dataframe_by_hole("lithology"))["H001"].columns.tolist(), ["from", "to", "lithology"]
+        )
+
+    async def test_collection_read_uses_persisted_non_contiguous_lookup_keys(self):
+        with self._mock_geoscience_objects() as mock_client:
+            result = await DownholeCollection.create(context=self.context, data=_make_example_data())
+            lookup_info = result.location.hole_id.as_dict()["table"]
+            mock_client.data[lookup_info["data"]]["key"] = [10, 20]
+            collection = result.collections.get("collection1")
+            holes_info = collection.holes.as_dict()
+            mock_client.data[holes_info["data"]]["hole_index"] = [10]
+
+            by_hole = await collection.to_dataframe_by_hole()
+
+        self.assertListEqual(list(by_hole), ["H001"])
+        self.assertEqual(len(by_hole["H001"]), 4)
+
+    async def test_repeated_collection_chunks_are_concatenated_in_table_order(self):
+        collection = DistanceCollection(
+            name="repeated",
+            holes=pd.DataFrame({"hole_index": [0, 0], "offset": [2, 0], "count": [1, 1]}),
+            table=pd.DataFrame({"distance": [0.0, 1.0, 2.0]}),
+            unit=None,
+        )
+        with self._mock_geoscience_objects():
+            result = await DownholeCollection.create(
+                context=self.context,
+                data=_make_example_data(collections=[collection]),
+            )
+            by_hole = await result.collections.get("repeated").to_dataframe_by_hole()
+
+        self.assertListEqual(by_hole["H001"]["distance"].tolist(), [0.0, 2.0])
 
     async def test_update_dataframe_after_creation(self):
         """Test updating the path DataFrame after downhole collection creation."""
