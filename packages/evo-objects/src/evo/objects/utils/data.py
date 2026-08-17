@@ -374,23 +374,16 @@ class ObjectDataClient:
         feedbacks = split_feedback(fb, [1.0] * len(data_ids))
         semaphore = asyncio.Semaphore(max_concurrency)
 
-        async def download_one(data_id: str, table_info: dict, table_fb: IFeedback) -> tuple[str, pa.Table]:
+        async def download_one(data_id: str, table_info: dict, table_fb: IFeedback) -> pa.Table:
             async with semaphore:
-                table = await self._download_prepared_table(downloads[data_id], table_info, table_fb)
-            return data_id, table
+                return await self._download_prepared_table(downloads[data_id], table_info, table_fb)
 
-        tasks = [
-            asyncio.create_task(download_one(data_id, table_info, table_fb))
-            for (data_id, table_info), table_fb in zip(table_infos_by_data_id.items(), feedbacks)
-        ]
-        try:
-            results = await asyncio.gather(*tasks)
-        except BaseException:
-            for task in tasks:
-                task.cancel()
-            await asyncio.gather(*tasks, return_exceptions=True)
-            raise
-        return dict(results)
+        async with asyncio.TaskGroup() as tg:
+            tasks = {
+                data_id: tg.create_task(download_one(data_id, table_info, table_fb))
+                for (data_id, table_info), table_fb in zip(table_infos_by_data_id.items(), feedbacks)
+            }
+        return {data_id: task.result() for data_id, task in tasks.items()}
 
     if _PD_AVAILABLE:
         # Optional support for pandas dataframes. Depends on both pyarrow and pandas.
