@@ -9,6 +9,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+from pathlib import Path
 from unittest import mock
 
 from evo.common.connector import APIConnector
@@ -74,6 +75,20 @@ class TestHTTPSource(TestISource, TestWithDownloadHandler):
         test_data_file = self.CACHE_DIR / "test_data_download.csv"
         self.assertFalse(test_data_file.exists())
         await HTTPSource.download_file(str(test_data_file), self.url_generator.get_new_url, self.transport)
+        self.assertTrue(test_data_file.exists())
+        self.assertEqual(TEST_DATA, test_data_file.read_bytes())
+
+    async def test_download_file_uses_concurrently_published_file(self) -> None:
+        """Test that a concurrent process publishing the destination is accepted."""
+        test_data_file = self.CACHE_DIR / "test_data_download_concurrent.csv"
+
+        def publish_from_other_process(destination: Path) -> None:
+            destination.write_bytes(TEST_DATA)
+            raise PermissionError("The destination is in use")
+
+        with mock.patch("evo.common.io.http.Path.replace", side_effect=publish_from_other_process):
+            await HTTPSource.download_file(test_data_file, self.url_generator.get_new_url, self.transport)
+
         self.assertTrue(test_data_file.exists())
         self.assertEqual(TEST_DATA, test_data_file.read_bytes())
 
