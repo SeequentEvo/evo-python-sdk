@@ -47,7 +47,7 @@ __all__ = ["ObjectDataClient"]
 logger = logging.getLogger("object.data")
 
 _DATA_ID_KEY = "data"  # The key used to identify data references in geoscience objects.
-_DEFAULT_MAX_CONCURRENCY = 4
+_DEFAULT_MAX_CONCURRENCY = 4  # Decent performance improvement going from 1 to 4 but beyond that not so much
 
 
 def _iter_refs(target: Any, _key: str | None = None) -> Iterator[str]:
@@ -309,10 +309,10 @@ class ObjectDataClient:
         # Import here to avoid circular import.
         from ..client import ObjectAPIClient
 
-        data_ids = list({str(data_id) for data_id in data_identifiers})
-
-        if len(data_ids) == 0:
+        if len(data_identifiers) == 0:
             return {}
+
+        data_ids = list({str(data_id) for data_id in data_identifiers})
 
         client = ObjectAPIClient(self._environment, self._connector)
         downloads = [download async for download in client.prepare_data_download(object_id, version_id, data_ids)]
@@ -327,6 +327,7 @@ class ObjectDataClient:
 
         :return: A pyarrow table loaded directly from the parquet file.
         """
+        # Import here to avoid circular import.
         from ..parquet import ParquetDownloader
 
         async with ParquetDownloader(
@@ -378,11 +379,18 @@ class ObjectDataClient:
             async with semaphore:
                 return await self._download_prepared_table(downloads[data_id], table_info, table_fb)
 
-        async with asyncio.TaskGroup() as tg:
-            tasks = {
-                data_id: tg.create_task(download_one(data_id, table_info, table_fb))
-                for (data_id, table_info), table_fb in zip(table_infos_by_data_id.items(), feedbacks)
-            }
+        tasks = {
+            data_id: asyncio.create_task(download_one(data_id, table_info, table_fb))
+            for (data_id, table_info), table_fb in zip(table_infos_by_data_id.items(), feedbacks)
+        }
+        try:
+            await asyncio.gather(*tasks.values())
+        except BaseException:
+            # asyncio.gather doesn't cancel sibling tasks if one fails, manually cancel other tasks if one fails
+            for task in tasks.values():
+                task.cancel()
+            await asyncio.gather(*tasks.values(), return_exceptions=True)
+            raise
         return {data_id: task.result() for data_id, task in tasks.items()}
 
     if _PD_AVAILABLE:
