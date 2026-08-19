@@ -26,7 +26,7 @@ from evo.objects.typed._data import DataTable, DataTableAndAttributes
 from evo.objects.typed._model import SchemaBuilder, SchemaLocation, SchemaModel
 from evo.objects.utils.table_formats import FLOAT_ARRAY_3, KnownTableFormat
 
-from .helpers import MockClient
+from .helpers import MockClient, mock_data_client
 
 
 class TestSchemaConstants(TestWithConnector):
@@ -85,8 +85,8 @@ class TestDataTableAndAttributesBuildFromData(TestWithConnector):
     def _mock_geoscience_objects(self):
         mock_client = MockClient(self.environment)
         with (
-            patch("evo.objects.typed.attributes.get_data_client", lambda _: mock_client),
-            patch("evo.objects.typed._data.get_data_client", lambda _: mock_client),
+            patch("evo.objects.typed.attributes.get_data_client", mock_data_client(mock_client)),
+            patch("evo.objects.typed._data.get_data_client", mock_data_client(mock_client)),
         ):
             yield mock_client
 
