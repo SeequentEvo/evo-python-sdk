@@ -9,7 +9,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from collections.abc import Iterator
+import asyncio
+from collections.abc import Iterator, Sequence
 from pathlib import Path
 from typing import Any, Iterable, cast
 from uuid import UUID
@@ -23,7 +24,7 @@ from evo.common.io.exceptions import DataExistsError
 from evo.common.utils import NoFeedback, PartialFeedback, split_feedback
 
 from ..exceptions import TableFormatError
-from ..io import _CACHE_SCOPE, ObjectDataUpload
+from ..io import _CACHE_SCOPE, ObjectDataDownload, ObjectDataUpload
 from .table_formats import INTEGER_ARRAY_1_INT32, INTEGER_ARRAY_MD_INT32, LOOKUP_TABLE_INT32
 from .tables import KnownTableFormat
 from .types import ArrayTableInfo, CategoryInfo, LookupTableInfo
@@ -46,6 +47,7 @@ __all__ = ["ObjectDataClient"]
 logger = logging.getLogger("object.data")
 
 _DATA_ID_KEY = "data"  # The key used to identify data references in geoscience objects.
+_DEFAULT_MAX_CONCURRENCY = 4  # Decent performance improvement going from 1 to 4 but beyond that not so much
 
 
 def _iter_refs(target: Any, _key: str | None = None) -> Iterator[str]:
@@ -287,19 +289,109 @@ class ObjectDataClient:
         :raises TableFormatError: If the data does not match the expected format.
         :raises SchemaValidationError: If the data has a different number of rows than expected.
         """
+        data_id = str(table_info["data"])
+        downloads = await self._prepare_data_downloads(object_id, version_id, [data_id])
+        return await self._download_prepared_table(downloads[data_id], table_info, fb)
+
+    async def _prepare_data_downloads(
+        self, object_id: UUID, version_id: str, data_identifiers: Sequence[str | UUID]
+    ) -> dict[str, ObjectDataDownload]:
+        """Prepare download contexts for multiple data files with one object metadata request.
+
+        :param object_id: The object ID to download data from.
+        :param version_id: The version ID of the object to download data from.
+        :param data_identifiers: The data IDs to download.
+
+        :return: A mapping of data IDs to prepared download contexts.
+
+        :raises DataNotFoundError: If a data ID is not associated with this object version.
+        """
         # Import here to avoid circular import.
         from ..client import ObjectAPIClient
-        from ..parquet import ParquetDownloader
+
+        if len(data_identifiers) == 0:
+            return {}
+
+        data_ids = list({str(data_id) for data_id in data_identifiers})
 
         client = ObjectAPIClient(self._environment, self._connector)
-        (download,) = [d async for d in client.prepare_data_download(object_id, version_id, [table_info["data"]])]
+        downloads = [download async for download in client.prepare_data_download(object_id, version_id, data_ids)]
+        return {download.name: download for download in downloads}
 
-        # Defer downloading the table to the new ParquetLoader class.
+    async def _download_prepared_table(self, download: ObjectDataDownload, table_info: dict, fb: IFeedback) -> pa.Table:
+        """Download and load one table using a prepared download context.
+
+        :param download: The prepared context for the table's data.
+        :param table_info: The table info that defines the expected format.
+        :param fb: A feedback object for tracking download progress.
+
+        :return: A pyarrow table loaded directly from the parquet file.
+        """
+        # Import here to avoid circular import.
+        from ..parquet import ParquetDownloader
+
         async with ParquetDownloader(
             download=download, transport=self._connector.transport, cache=self._cache
         ).with_feedback(fb) as loader:
             loader.validate_with_table_info(table_info)
             return loader.load_as_table()
+
+    async def download_tables(
+        self,
+        object_id: UUID,
+        version_id: str,
+        table_infos: Sequence[dict],
+        fb: IFeedback = NoFeedback,
+        max_concurrency: int = _DEFAULT_MAX_CONCURRENCY,
+    ) -> dict[str, pa.Table]:
+        """Download multiple pyarrow tables with one object metadata request.
+
+        The data references are prepared once and the table downloads are performed concurrently, up to
+        ``max_concurrency`` at a time. Duplicate data references are downloaded only once.
+
+        :param object_id: The object ID to download data from.
+        :param version_id: The version ID of the object to download data from.
+        :param table_infos: The table information that defines the expected format of each table.
+        :param fb: A feedback object for tracking download progress.
+        :param max_concurrency: The maximum number of tables to download concurrently.
+
+        :return: A mapping of data IDs to loaded pyarrow tables.
+
+        :raises ValueError: If ``max_concurrency`` is less than one.
+        :raises DataNotFoundError: If a data ID is not associated with this object version.
+        :raises TableFormatError: If a table does not match its expected format.
+        :raises SchemaValidationError: If a table has a different number of rows than expected.
+        """
+        if max_concurrency < 1:
+            raise ValueError("max_concurrency must be at least 1")
+
+        table_infos_by_data_id: dict[str, dict] = {str(table_info["data"]): table_info for table_info in table_infos}
+
+        if len(table_infos_by_data_id) == 0:
+            return {}
+
+        data_ids = list(table_infos_by_data_id)
+        downloads = await self._prepare_data_downloads(object_id, version_id, data_ids)
+        feedbacks = split_feedback(fb, [1.0] * len(data_ids))
+        semaphore = asyncio.Semaphore(max_concurrency)
+
+        async def download_one(data_id: str, table_info: dict, table_fb: IFeedback) -> pa.Table:
+            async with semaphore:
+                return await self._download_prepared_table(downloads[data_id], table_info, table_fb)
+
+        tasks = {
+            data_id: asyncio.create_task(download_one(data_id, table_info, table_fb))
+            for (data_id, table_info), table_fb in zip(table_infos_by_data_id.items(), feedbacks)
+        }
+        try:
+            await asyncio.gather(*tasks.values())
+        except BaseException:
+            # asyncio.gather doesn't cancel sibling tasks if one fails, manually cancel other tasks if one fails
+            for task in tasks.values():
+                task.cancel()
+            await asyncio.gather(*tasks.values(), return_exceptions=True)
+            raise
+        return {data_id: task.result() for data_id, task in tasks.items()}
 
     if _PD_AVAILABLE:
         # Optional support for pandas dataframes. Depends on both pyarrow and pandas.
