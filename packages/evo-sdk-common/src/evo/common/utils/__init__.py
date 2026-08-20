@@ -11,6 +11,7 @@
 
 from .cache import Cache
 from .data import parse_order_by
+from .evo_api_retry import EvoAPIRetry
 from .feedback import (
     NoFeedback,
     PartialFeedback,
@@ -30,6 +31,7 @@ __all__ = [
     "BackoffLinear",
     "BackoffMethod",
     "Cache",
+    "EvoAPIRetry",
     "NoFeedback",
     "PartialFeedback",
     "Retry",
