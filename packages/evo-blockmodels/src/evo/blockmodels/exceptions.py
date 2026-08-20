@@ -26,7 +26,7 @@ class JobFailedException(EvoClientException):
     def __init__(self, job_id: UUID, error_payload: JobErrorPayload):
         self.job_id = job_id
         self.error_payload = error_payload
-        super().__init__(f"Job {job_id} failed: {self.error_payload.title}")
+        super().__init__(f"Job {job_id} failed: {self.error_payload.title}: {self.error_payload.detail}")
 
 
 class UnknownJobPayload(EvoClientException):
