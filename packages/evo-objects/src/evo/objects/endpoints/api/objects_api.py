@@ -24,13 +24,18 @@ This code is generated from the OpenAPI specification for Geoscience Object API.
 API version: 1.21.0
 """
 
+import logging
+
 from evo.common.connector import APIConnector
 from evo.common.data import EmptyResponse, RequestMethod
-from evo.common.utils import get_header_metadata
+from evo.common.utils import EvoAPIRetry, get_header_metadata
+from evo.common.utils.retry import BackoffExponential
 
 from ..models import *  # noqa: F403
 
 __all__ = ["ObjectsApi"]
+
+logger = logging.getLogger("objects.endpoints.api")
 
 
 class ObjectsApi:
@@ -46,6 +51,12 @@ class ObjectsApi:
 
     def __init__(self, connector: APIConnector):
         self.connector = connector
+        self.api_retry = EvoAPIRetry(
+            logger,
+            max_attempts=3,
+            backoff_method=BackoffExponential(backoff_factor=1, max_delay=15),
+            statuses={429, 503},
+        )
 
     async def delete_object_by_path(
         self,
@@ -103,15 +114,19 @@ class ObjectsApi:
             "204": EmptyResponse,
         }
 
-        return await self.connector.call_api(
-            method=RequestMethod.DELETE,
-            resource_path="/geoscience-object/orgs/{org_id}/workspaces/{workspace_id}/objects/path/{objects_path}",
-            path_params=_path_params,
-            header_params=_header_params,
-            collection_formats=_collection_formats,
-            response_types_map=_response_types_map,
-            request_timeout=request_timeout,
-        )
+        async for handle in self.api_retry():
+            with handle.suppress_errors():
+                return await self.connector.call_api(
+                    method=RequestMethod.DELETE,
+                    resource_path="/geoscience-object/orgs/{org_id}/workspaces/{workspace_id}/objects/path/{objects_path}",
+                    path_params=_path_params,
+                    header_params=_header_params,
+                    collection_formats=_collection_formats,
+                    response_types_map=_response_types_map,
+                    request_timeout=request_timeout,
+                )
+
+        raise RuntimeError("EvoAPIRetry neither yielded nor raised any errors")
 
     async def delete_objects_by_id(
         self,
@@ -170,15 +185,19 @@ class ObjectsApi:
             "204": EmptyResponse,
         }
 
-        return await self.connector.call_api(
-            method=RequestMethod.DELETE,
-            resource_path="/geoscience-object/orgs/{org_id}/workspaces/{workspace_id}/objects/{object_id}",
-            path_params=_path_params,
-            header_params=_header_params,
-            collection_formats=_collection_formats,
-            response_types_map=_response_types_map,
-            request_timeout=request_timeout,
-        )
+        async for handle in self.api_retry():
+            with handle.suppress_errors():
+                return await self.connector.call_api(
+                    method=RequestMethod.DELETE,
+                    resource_path="/geoscience-object/orgs/{org_id}/workspaces/{workspace_id}/objects/{object_id}",
+                    path_params=_path_params,
+                    header_params=_header_params,
+                    collection_formats=_collection_formats,
+                    response_types_map=_response_types_map,
+                    request_timeout=request_timeout,
+                )
+
+        raise RuntimeError("EvoAPIRetry neither yielded nor raised any errors")
 
     async def get_object(
         self,
@@ -257,16 +276,20 @@ class ObjectsApi:
             "304": EmptyResponse,
         }
 
-        return await self.connector.call_api(
-            method=RequestMethod.GET,
-            resource_path="/geoscience-object/orgs/{org_id}/workspaces/{workspace_id}/objects/path/{objects_path}",
-            path_params=_path_params,
-            query_params=_query_params,
-            header_params=_header_params,
-            collection_formats=_collection_formats,
-            response_types_map=_response_types_map,
-            request_timeout=request_timeout,
-        )
+        async for handle in self.api_retry():
+            with handle.suppress_errors():
+                return await self.connector.call_api(
+                    method=RequestMethod.GET,
+                    resource_path="/geoscience-object/orgs/{org_id}/workspaces/{workspace_id}/objects/path/{objects_path}",
+                    path_params=_path_params,
+                    query_params=_query_params,
+                    header_params=_header_params,
+                    collection_formats=_collection_formats,
+                    response_types_map=_response_types_map,
+                    request_timeout=request_timeout,
+                )
+
+        raise RuntimeError("EvoAPIRetry neither yielded nor raised any errors")
 
     async def get_object_by_id(
         self,
@@ -351,16 +374,20 @@ class ObjectsApi:
             "304": EmptyResponse,
         }
 
-        return await self.connector.call_api(
-            method=RequestMethod.GET,
-            resource_path="/geoscience-object/orgs/{org_id}/workspaces/{workspace_id}/objects/{object_id}",
-            path_params=_path_params,
-            query_params=_query_params,
-            header_params=_header_params,
-            collection_formats=_collection_formats,
-            response_types_map=_response_types_map,
-            request_timeout=request_timeout,
-        )
+        async for handle in self.api_retry():
+            with handle.suppress_errors():
+                return await self.connector.call_api(
+                    method=RequestMethod.GET,
+                    resource_path="/geoscience-object/orgs/{org_id}/workspaces/{workspace_id}/objects/{object_id}",
+                    path_params=_path_params,
+                    query_params=_query_params,
+                    header_params=_header_params,
+                    collection_formats=_collection_formats,
+                    response_types_map=_response_types_map,
+                    request_timeout=request_timeout,
+                )
+
+        raise RuntimeError("EvoAPIRetry neither yielded nor raised any errors")
 
     async def list_object_version_ids(
         self,
@@ -645,16 +672,18 @@ class ObjectsApi:
             "200": ListObjectsResponse,  # noqa: F405
         }
 
-        return await self.connector.call_api(
-            method=RequestMethod.GET,
-            resource_path="/geoscience-object/orgs/{org_id}/workspaces/{workspace_id}/objects",
-            path_params=_path_params,
-            query_params=_query_params,
-            header_params=_header_params,
-            collection_formats=_collection_formats,
-            response_types_map=_response_types_map,
-            request_timeout=request_timeout,
-        )
+        async for handle in self.api_retry():
+            with handle.suppress_errors():
+                return await self.connector.call_api(
+                    method=RequestMethod.GET,
+                    resource_path="/geoscience-object/orgs/{org_id}/workspaces/{workspace_id}/objects",
+                    path_params=_path_params,
+                    query_params=_query_params,
+                    header_params=_header_params,
+                    collection_formats=_collection_formats,
+                    response_types_map=_response_types_map,
+                    request_timeout=request_timeout,
+                )
 
     async def list_objects_by_org(
         self,
@@ -788,16 +817,18 @@ class ObjectsApi:
             "200": ListOrgObjectsResponse,  # noqa: F405
         }
 
-        return await self.connector.call_api(
-            method=RequestMethod.GET,
-            resource_path="/geoscience-object/orgs/{org_id}/objects",
-            path_params=_path_params,
-            query_params=_query_params,
-            header_params=_header_params,
-            collection_formats=_collection_formats,
-            response_types_map=_response_types_map,
-            request_timeout=request_timeout,
-        )
+        async for handle in self.api_retry():
+            with handle.suppress_errors():
+                return await self.connector.call_api(
+                    method=RequestMethod.GET,
+                    resource_path="/geoscience-object/orgs/{org_id}/objects",
+                    path_params=_path_params,
+                    query_params=_query_params,
+                    header_params=_header_params,
+                    collection_formats=_collection_formats,
+                    response_types_map=_response_types_map,
+                    request_timeout=request_timeout,
+                )
 
     async def post_objects(
         self,
