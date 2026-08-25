@@ -195,15 +195,13 @@ Learn about Evo auth and the Evo discovery service:
 ### 🧊 Block models
 **📁 [blockmodels](blockmodels/)**
 
-Block model workflow examples using both SDK and direct API approaches:
-- `sdk-examples.ipynb` - High-level Block Model SDK examples (recommended)
-- `api-examples.ipynb` - Direct API calls for advanced use cases
+Start with the [Block Model SDK tutorials](blockmodels/README.md), which provide the recommended learning path for creating, querying, and managing block models.
 
-These notebooks demonstrate:
-- Creating regular block models
-- Adding and updating columns
-- Querying data with bounding boxes
-- Working with PyArrow tables and pandas DataFrames
+- `sdk/01-create-and-query-regular-block-model.ipynb` - Create a regular block model, add columns, and query its data
+- `sdk/02-block-model-reports.ipynb` - Create resource-estimation reports from a block model
+- `api/block-model-api-reference-workflows.ipynb` - Advanced direct API reference for debugging and unsupported workflows
+
+The SDK tutorials use high-level Evo interfaces with PyArrow integration. The API reference shows raw service requests, responses, and asynchronous job handling when direct control is required.
 
 ### 🗂️ File operations
 **📁 [files](files/)**
