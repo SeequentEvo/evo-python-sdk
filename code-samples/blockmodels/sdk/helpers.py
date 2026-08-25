@@ -74,3 +74,24 @@ class BlockModelAttributeSelectorWidget(widgets.VBox):
     def new_attribute(self) -> str:
         """Return the requested name for the transformed attribute."""
         return self.new_attribute_input.value.strip()
+
+
+class ExistingBlockModelAttributeSelectorWidget(widgets.VBox):
+    """Select an existing block model attribute to transform in place."""
+
+    def __init__(self, attributes: list[object]) -> None:
+        attribute_names = sorted({attribute.name for attribute in attributes}, key=str.casefold)
+        if not attribute_names:
+            raise RuntimeError("The selected block model has no attributes to transform.")
+        self.selector = widgets.Dropdown(
+            description="Attribute:",
+            options=attribute_names,
+            layout=widgets.Layout(width="max-content"),
+        )
+        self.selector.style.description_width = "7em"
+        super().__init__([self.selector], layout=widgets.Layout(padding="4px 0"))
+
+    @property
+    def value(self) -> str:
+        """Return the name of the selected block model attribute."""
+        return self.selector.value
