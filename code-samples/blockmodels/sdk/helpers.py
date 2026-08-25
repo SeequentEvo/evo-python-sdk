@@ -36,24 +36,34 @@ class BlockModelSelectorWidget(widgets.VBox):
         return cls(sorted(block_models, key=lambda block_model: block_model.name.casefold()))
 
 
-class BlockModelColumnSelectorWidget(widgets.VBox):
+class BlockModelAttributeSelectorWidget(widgets.VBox):
     """Select a source attribute and enter a name for its transformed attribute."""
 
     def __init__(self, attributes: list[object]) -> None:
-        column_names = sorted({attribute.name for attribute in attributes}, key=str.casefold)
-        if not column_names:
+        attribute_names = sorted({attribute.name for attribute in attributes}, key=str.casefold)
+        if not attribute_names:
             raise RuntimeError("The selected block model has no attributes to transform.")
         self.selector = widgets.Dropdown(
-            description="Column:",
-            options=column_names,
-            layout=widgets.Layout(width="auto"),
+            description="Attribute:",
+            options=attribute_names,
+            layout=widgets.Layout(width="max-content", margin="0 0 6px 0"),
         )
-        self.new_column_input = widgets.Text(
-            description="New column:",
+        self.selector.style.description_width = "7em"
+        self.new_attribute_input = widgets.Text(
+            description="New attribute:",
             placeholder="Enter a new attribute name",
-            layout=widgets.Layout(width="auto"),
+            value=f"{self.selector.value}_transformed",
+            layout=widgets.Layout(width="40ch"),
         )
-        super().__init__([self.selector, self.new_column_input])
+        self.new_attribute_input.style.description_width = "7em"
+        self.selector.observe(self._update_new_attribute_name, names="value")
+        super().__init__(
+            [self.selector, self.new_attribute_input],
+            layout=widgets.Layout(padding="4px 0"),
+        )
+
+    def _update_new_attribute_name(self, change: dict[str, object]) -> None:
+        self.new_attribute_input.value = f"{change['new']}_transformed"
 
     @property
     def value(self) -> str:
@@ -61,6 +71,6 @@ class BlockModelColumnSelectorWidget(widgets.VBox):
         return self.selector.value
 
     @property
-    def new_column(self) -> str:
+    def new_attribute(self) -> str:
         """Return the requested name for the transformed attribute."""
-        return self.new_column_input.value.strip()
+        return self.new_attribute_input.value.strip()
