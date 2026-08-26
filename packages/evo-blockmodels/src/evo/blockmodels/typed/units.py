@@ -36,11 +36,14 @@ class UnitType(Enum):
 
     MASS_PER_MASS = "MASS_PER_MASS"
     MASS_PER_VOLUME = "MASS_PER_VOLUME"
+    DIMENSIONLESS = "DIMENSIONLESS"
     MASS = "MASS"
     LENGTH = "LENGTH"
     VOLUME = "VOLUME"
     VALUE_PER_MASS = "VALUE_PER_MASS"
     VALUE = "VALUE"
+    CATEGORY = "CATEGORY"
+    ANGLE = "ANGLE"
     VOLUME_PER_VOLUME = "VOLUME_PER_VOLUME"
 
 
@@ -106,6 +109,11 @@ class Units(Enum):
     TONNES_PER_CUBIC_METRE = "t/m3"
     SHORT_TON_PER_CUBIC_FOOT = "ton[US]/ft3"
 
+    # Dimensionless units
+    PERCENTAGE = "%"
+    COUNT = "count"
+    RATIO = "ratio"
+
     # Mass units
     CARATS = "ct"
     GRAMS = "g"
@@ -140,6 +148,11 @@ class Units(Enum):
     DOLLARS_PER_TONNE = "$/t"
     DOLLARS_PER_SHORT_TON = "$/ton[US]"
     DOLLARS = "$"
+
+    # Angle units
+    DEGREES = "dega"
+    RADIANS = "rad"
+    REVOLUTIONS = "rev"
 
 
 async def get_available_units(context: IContext) -> list[UnitInfo]:
