@@ -11,10 +11,7 @@ class BlockModelSelectorWidget(widgets.VBox):
     """Select an available block model and expose its UUID through ``value``."""
 
     def __init__(self, block_models: list[object]) -> None:
-        options = [
-            (f"{block_model.name} ({block_model.id})", block_model.id)
-            for block_model in block_models
-        ]
+        options = [(f"{block_model.name} ({block_model.id})", block_model.id) for block_model in block_models]
         self.selector = widgets.Dropdown(
             description="Block model:",
             options=options,
