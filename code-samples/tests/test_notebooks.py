@@ -75,7 +75,9 @@ def _get_platform_skip_imports() -> frozenset[str]:
     current_version = sys.version_info[:2]
     skip = set()
     for mod, (platforms, max_version) in _PLATFORM_SPECIFIC_IMPORTS.items():
-        if current_platform not in platforms or max_version is not None and current_version >= max_version:
+        if current_platform not in platforms or (
+            max_version is not None and current_version >= max_version
+        ):
             skip.add(mod)
     return frozenset(skip)
 
