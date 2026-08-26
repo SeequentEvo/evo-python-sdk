@@ -44,7 +44,6 @@ class UnitType(Enum):
     VALUE = "VALUE"
     CATEGORY = "CATEGORY"
     ANGLE = "ANGLE"
-    VOLUME_PER_VOLUME = "VOLUME_PER_VOLUME"
 
 
 @dataclass(frozen=True)
