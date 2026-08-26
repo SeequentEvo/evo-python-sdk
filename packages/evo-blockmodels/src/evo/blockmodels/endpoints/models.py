@@ -944,14 +944,14 @@ class SizeOptionsRegular(CustomBaseModel):
 
 
 class UnitType(Enum):
-    LENGTH = "LENGTH"
-    MASS = "MASS"
-    VOLUME = "VOLUME"
-    VALUE = "VALUE"
-    MASS_PER_VOLUME = "MASS_PER_VOLUME"
     MASS_PER_MASS = "MASS_PER_MASS"
-    VOLUME_PER_VOLUME = "VOLUME_PER_VOLUME"
+    MASS_PER_VOLUME = "MASS_PER_VOLUME"
+    MASS = "MASS"
+    LENGTH = "LENGTH"
+    VOLUME = "VOLUME"
     VALUE_PER_MASS = "VALUE_PER_MASS"
+    VALUE = "VALUE"
+    VOLUME_PER_VOLUME = "VOLUME_PER_VOLUME"
 
 
 class UpdateMetadataValues(CustomBaseModel):

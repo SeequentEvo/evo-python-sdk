@@ -86,10 +86,25 @@ class Units(Enum):
         await bm_ref.add_attribute(df, "metal_content", unit=Units.KILOS_PER_CUBIC_METRE)
     """
 
-    # Length units
-    METRES = "m"
-    FEET = "ft"
-    CENTIMETRES = "cm"
+    # Mass per mass (grade) units
+    PERCENT = "%[mass]"
+    PARTS_PER_MILLION = "ppm[mass]"
+    GRAMS_PER_TONNE = "g/t"
+    MILLIGRAMS_PER_GRAM = "mg/g"
+    MILLIGRAMS_PER_KILOGRAM = "mg/kg"
+    MICROGRAMS_PER_GRAM = "ug/g"
+    CARATS_PER_HUNDRED_TONNE = "0.01 ct/t"
+    PARTS_PER_BILLION = "ppb[mass]"
+    TROY_OUNCES_PER_SHORT_TON = "oz t/ton[US]"
+    CARATS_PER_TONNE = "ct/t"
+    MICROGRAMS_PER_KILOGRAM = "ug/kg"
+
+    # Mass per volume (density) units
+    KILOS_PER_CUBIC_METRE = "kg/m3"
+    GRAMS_PER_CUBIC_CENTIMETRE = "g/cm3"
+    POUNDS_PER_CUBIC_FOOT = "lbm/ft3"
+    TONNES_PER_CUBIC_METRE = "t/m3"
+    SHORT_TON_PER_CUBIC_FOOT = "ton[US]/ft3"
 
     # Mass units
     CARATS = "ct"
@@ -111,35 +126,20 @@ class Units(Enum):
     MILLION_TROY_OUNCES = "1000000 ozm[troy]"
     MILLION_POUNDS = "Mlbm"
 
-    # Mass per mass (grade) units
-    PERCENT = "%[mass]"
-    PARTS_PER_MILLION = "ppm[mass]"
-    GRAMS_PER_TONNE = "g/t"
-    MILLIGRAMS_PER_GRAM = "mg/g"
-    MILLIGRAMS_PER_KILOGRAM = "mg/kg"
-    MICROGRAMS_PER_GRAM = "ug/g"
-    CARATS_PER_HUNDRED_TONNE = "0.01 ct/t"
-    PARTS_PER_BILLION = "ppb[mass]"
-    TROY_OUNCES_PER_SHORT_TON = "oz t/ton[US]"
-    CARATS_PER_TONNE = "ct/t"
-    MICROGRAMS_PER_KILOGRAM = "ug/kg"
-
-    # Mass per volume (density) units
-    KILOS_PER_CUBIC_METRE = "kg/m3"
-    GRAMS_PER_CUBIC_CENTIMETRE = "g/cm3"
-    POUNDS_PER_CUBIC_FOOT = "lbm/ft3"
-    TONNES_PER_CUBIC_METRE = "t/m3"
-    SHORT_TON_PER_CUBIC_FOOT = "ton[US]/ft3"
-
-    # Value units
-    DOLLARS_PER_TONNE = "$/t"
-    DOLLARS_PER_SHORT_TON = "$/ton[US]"
-    DOLLARS = "$"
+    # Length units
+    METRES = "m"
+    FEET = "ft"
+    CENTIMETRES = "cm"
 
     # Volume units
     CUBIC_CENTIMETRES = "cm3"
     CUBIC_METRES = "m3"
     CUBIC_FEET = "ft3"
+
+    # Value units
+    DOLLARS_PER_TONNE = "$/t"
+    DOLLARS_PER_SHORT_TON = "$/ton[US]"
+    DOLLARS = "$"
 
 
 async def get_available_units(context: IContext) -> list[UnitInfo]:
