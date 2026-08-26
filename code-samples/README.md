@@ -164,8 +164,8 @@ Before diving into the geoscience code samples, we recommend that you first test
 <img src="../docs/img/jupyter-start-here.png" alt="Jupyter start here" width="350" />
 
 a. Click to open **auth-and-evo-discovery**.
-b. Click to open **native-app-token.ipynb**.
-c. Enter your **client ID** and **callback URL** from when you registered your Evo app.
+b. Click to open **sdk-examples.ipynb**.
+c. Enter your **client ID** and **callback URL** from when you created your Evo app.
 
 <img src="../docs/img/notebook-auth-setup.png" alt="Auth setup" width="500" />
 
@@ -175,7 +175,7 @@ e. Run the next code cell. You may see red warning text - this is normal.
 
 f. If everything is set up correctly, your web browser should open a new tab and ask you to sign in with your Bentley ID. Once you have signed in and granted access to the app, return to the tab with Jupyter running.
 
-g. Using the widget that appears under the code cell, select your Organisation, Hub and Workspace.
+g. Using the widget that appears under the code cell, select your Evo instance and workspace.
 
 h. Run the next code cell. You should see a printout of your Evo hub URL, organisation ID and workspace ID.
 
@@ -198,7 +198,8 @@ Learn about Evo auth and the Evo discovery service:
 Start with the [Block Model SDK tutorials](blockmodels/README.md), which provide the recommended learning path for creating, querying, and managing block models.
 
 - `sdk/01-create-and-query-regular-block-model.ipynb` - Create a regular block model, add columns, and query its data
-- `sdk/02-block-model-reports.ipynb` - Create resource-estimation reports from a block model
+- `sdk/02-transform-existing-block-model-attribute.ipynb` - Transform an existing block model attribute and publish the result as a new attribute
+- `sdk/03-block-model-reports.ipynb` - Create resource-estimation reports from a block model
 - `api/block-model-api-reference-workflows.ipynb` - Advanced direct API reference for debugging and unsupported workflows
 
 The SDK tutorials use high-level Evo interfaces with PyArrow integration. The API reference shows raw service requests, responses, and asynchronous job handling when direct control is required.
