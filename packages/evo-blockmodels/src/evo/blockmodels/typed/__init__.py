@@ -11,8 +11,6 @@
 
 """Typed access for block models with pandas DataFrame support."""
 
-from evo.common.typed import BoundingBox, Point3, Size3d, Size3i
-
 from .base import BaseTypedBlockModel
 from .regular_block_model import RegularBlockModel, RegularBlockModelData
 from .report import (
