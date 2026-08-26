@@ -34,14 +34,14 @@ __all__ = [
 class UnitType(Enum):
     """Types of units supported by the Block Model Service."""
 
-    LENGTH = "LENGTH"
-    MASS = "MASS"
-    VOLUME = "VOLUME"
-    VALUE = "VALUE"
-    MASS_PER_VOLUME = "MASS_PER_VOLUME"
     MASS_PER_MASS = "MASS_PER_MASS"
-    VOLUME_PER_VOLUME = "VOLUME_PER_VOLUME"
+    MASS_PER_VOLUME = "MASS_PER_VOLUME"
+    MASS = "MASS"
+    LENGTH = "LENGTH"
+    VOLUME = "VOLUME"
     VALUE_PER_MASS = "VALUE_PER_MASS"
+    VALUE = "VALUE"
+    VOLUME_PER_VOLUME = "VOLUME_PER_VOLUME"
 
 
 @dataclass(frozen=True)
