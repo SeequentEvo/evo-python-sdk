@@ -66,7 +66,7 @@ class UnitInfo:
     """Conversion factor to the reference unit for this unit type."""
 
 
-class Units(Enum):
+class Units(str, Enum):
     """Common unit IDs for block model attributes.
 
     These are the most commonly used unit IDs. For a complete list,
