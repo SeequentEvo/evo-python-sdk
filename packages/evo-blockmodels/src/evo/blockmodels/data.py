@@ -18,7 +18,15 @@ from evo.common import ResourceMetadata
 from evo.workspaces import ServiceUser
 
 from ._model_config import CustomBaseModel
-from .endpoints.models import BBox, BBoxXYZ, Column, ListingColumn, RotationAxis
+from .endpoints.models import (
+    BBox,
+    BBoxXYZ,
+    Column,
+    ListingColumn,
+    ListingGroup,
+    ResolvedGroup,
+    RotationAxis,
+)
 
 __all__ = [
     "BaseGridDefinition",
@@ -28,9 +36,11 @@ __all__ = [
     "FlexibleGridDefinition",
     "FullySubBlockedGridDefinition",
     "ListingColumn",
+    "ListingGroup",
     "ListingVersion",
     "OctreeGridDefinition",
     "RegularGridDefinition",
+    "ResolvedGroup",
     "Version",
 ]
 
@@ -277,11 +287,22 @@ class Version(_VersionBase):
     Columns within this version, each carrying its ``tags``.
     """
 
+    groups: list[ResolvedGroup]
+    """
+    Column groups within this version, each carrying its missing-column policy and its ``tags``.
+    """
+
 
 @dataclass(frozen=True, kw_only=True, repr=False)
 class ListingVersion(_VersionBase):
     columns: list[ListingColumn]
     """
     Column summaries for a listed version. These never carry ``tags`` — fetch the version
+    individually (e.g. via :meth:`BlockModelAPIClient.get_version`) to get tags.
+    """
+
+    groups: list[ListingGroup]
+    """
+    Group summaries for a listed version. These never carry ``tags`` — fetch the version
     individually (e.g. via :meth:`BlockModelAPIClient.get_version`) to get tags.
     """
