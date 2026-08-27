@@ -5,6 +5,7 @@ from uuid import uuid4
 
 from evo.blockmodels import BlockModelAPIClient
 from evo.blockmodels.data import ListingVersion, RegularGridDefinition
+from evo.blockmodels.endpoints.models import MissingColumnPolicy
 from evo.common import Environment
 from evo.common.test_tools import (
     BASE_URL,
@@ -53,7 +54,7 @@ class TestListBlockModels(TestWithConnector, TestWithStorage):
             "workspace_id": str(uuid4()),
         }
 
-    def make_version(self, version_id: int, version_uuid: str):
+    def make_version(self, version_id: int, version_uuid: str, mapping: dict | None = None):
         return json.loads(
             json.dumps(
                 {
@@ -67,10 +68,29 @@ class TestListBlockModels(TestWithConnector, TestWithStorage):
                     "base_version_id": None,
                     "parent_version_id": version_id - 1 if version_id > 1 else None,
                     "geoscience_version_id": str(version_id),
-                    "mapping": {"columns": []},
+                    "mapping": mapping if mapping is not None else {"columns": []},
                 }
             )
         )
+
+    @staticmethod
+    def make_group(
+        group_uuid: str,
+        title: str,
+        parent_group_uuid: str | None = None,
+        is_hidden: bool = False,
+        tags: dict | None = None,
+    ) -> dict:
+        group = {
+            "group_uuid": group_uuid,
+            "title": title,
+            "parent_group_uuid": parent_group_uuid,
+            "is_hidden": is_hidden,
+            "resolved_missing_column_policy": "USE_PREVIOUS",
+        }
+        if tags is not None:
+            group["tags"] = tags
+        return group
 
     async def test_list_block_models_converts_endpoint_models_to_dataclass(self) -> None:
         # Prepare a fake endpoint BlockModel
@@ -272,3 +292,187 @@ class TestListBlockModels(TestWithConnector, TestWithStorage):
             result = await self.client.list_all_block_models(deleted=True)
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0].name, "deleted-bm")
+
+    async def test_list_versions_returns_listing_groups(self) -> None:
+        bm_id = uuid.uuid4()
+        parent_uuid = str(uuid.uuid4())
+        child_uuid = str(uuid.uuid4())
+        version = self.make_version(
+            1,
+            str(uuid.uuid4()),
+            mapping={
+                "columns": [],
+                "groups": [
+                    self.make_group(parent_uuid, "Assays"),
+                    self.make_group(child_uuid, "Internal", parent_group_uuid=parent_uuid, is_hidden=True),
+                ],
+            },
+        )
+        with self.transport.set_http_response(
+            200,
+            json.dumps(
+                {"count": 1, "limit": 100, "offset": 0, "results": [version], "total": 1, "referenced_units": []}
+            ),
+            headers={"Content-Type": "application/json"},
+        ):
+            result = await self.client.list_versions(bm_id)
+
+        groups = result[0].groups
+        self.assertEqual(len(groups), 2)
+        self.assertEqual(str(groups[0].group_uuid), parent_uuid)
+        self.assertEqual(groups[0].title, "Assays")
+        self.assertIsNone(groups[0].parent_group_uuid)
+        self.assertFalse(groups[0].is_hidden)
+        self.assertEqual(str(groups[1].group_uuid), child_uuid)
+        self.assertEqual(groups[1].title, "Internal")
+        self.assertEqual(str(groups[1].parent_group_uuid), parent_uuid)
+        self.assertTrue(groups[1].is_hidden)
+
+    async def test_get_version_returns_resolved_groups_with_tags(self) -> None:
+        bm_id = uuid.uuid4()
+        version_uuid = uuid.uuid4()
+        group_uuid = str(uuid.uuid4())
+        version = self.make_version(
+            2,
+            str(version_uuid),
+            mapping={
+                "columns": [],
+                "groups": [
+                    {
+                        "group_uuid": group_uuid,
+                        "title": "Assays",
+                        "parent_group_uuid": None,
+                        "is_hidden": False,
+                        "missing_column_policy": "REJECT",
+                        "resolved_missing_column_policy": "REJECT",
+                        "tags": {"source": "assay"},
+                    }
+                ],
+            },
+        )
+        with self.transport.set_http_response(
+            200,
+            json.dumps(version),
+            headers={"Content-Type": "application/json"},
+        ):
+            result = await self.client.get_version(bm_id, version_uuid)
+
+        self.assertEqual(len(result.groups), 1)
+        self.assertEqual(str(result.groups[0].group_uuid), group_uuid)
+        self.assertEqual(result.groups[0].tags, {"source": "assay"})
+        self.assertEqual(result.groups[0].resolved_missing_column_policy, MissingColumnPolicy.REJECT)
+
+    async def test_list_versions_preserves_column_group_assignment(self) -> None:
+        bm_id = uuid.uuid4()
+        group_uuid = str(uuid.uuid4())
+        version = self.make_version(
+            1,
+            str(uuid.uuid4()),
+            mapping={
+                "columns": [
+                    {
+                        "col_id": str(uuid.uuid4()),
+                        "data_type": "Float64",
+                        "title": "Au",
+                        "unit_id": "g/t",
+                        "group_uuid": group_uuid,
+                    },
+                    {"col_id": str(uuid.uuid4()), "data_type": "Float64", "title": "Ag", "unit_id": "g/t"},
+                ],
+                "groups": [self.make_group(group_uuid, "Assays")],
+            },
+        )
+        with self.transport.set_http_response(
+            200,
+            json.dumps(
+                {"count": 1, "limit": 100, "offset": 0, "results": [version], "total": 1, "referenced_units": []}
+            ),
+            headers={"Content-Type": "application/json"},
+        ):
+            result = await self.client.list_versions(bm_id)
+
+        columns = result[0].columns
+        self.assertEqual(str(columns[0].group_uuid), group_uuid)
+        self.assertIsNone(columns[1].group_uuid)
+
+    async def test_get_version_preserves_column_group_assignment(self) -> None:
+        bm_id = uuid.uuid4()
+        version_uuid = uuid.uuid4()
+        group_uuid = str(uuid.uuid4())
+        version = self.make_version(
+            1,
+            str(version_uuid),
+            mapping={
+                "columns": [
+                    {
+                        "col_id": str(uuid.uuid4()),
+                        "data_type": "Float64",
+                        "title": "Au",
+                        "unit_id": "g/t",
+                        "group_uuid": group_uuid,
+                    },
+                    {"col_id": str(uuid.uuid4()), "data_type": "Float64", "title": "Ag", "unit_id": "g/t"},
+                ],
+                "groups": [self.make_group(group_uuid, "Assays")],
+            },
+        )
+        with self.transport.set_http_response(
+            200,
+            json.dumps(version),
+            headers={"Content-Type": "application/json"},
+        ):
+            result = await self.client.get_version(bm_id, version_uuid)
+
+        self.assertEqual(str(result.columns[0].group_uuid), group_uuid)
+        self.assertIsNone(result.columns[1].group_uuid)
+
+    async def test_get_version_without_groups_returns_empty_groups(self) -> None:
+        bm_id = uuid.uuid4()
+        version_uuid = uuid.uuid4()
+        version = self.make_version(
+            1,
+            str(version_uuid),
+            mapping={
+                "columns": [{"col_id": str(uuid.uuid4()), "data_type": "Float64", "title": "Au", "unit_id": "g/t"}]
+            },
+        )
+        with self.transport.set_http_response(
+            200,
+            json.dumps(version),
+            headers={"Content-Type": "application/json"},
+        ):
+            result = await self.client.get_version(bm_id, version_uuid)
+
+        self.assertEqual(result.groups, [])
+
+    async def test_list_all_versions_preserves_groups_across_pages(self) -> None:
+        bm_id = uuid.uuid4()
+        group_uuid = str(uuid.uuid4())
+        v2 = self.make_version(2, str(uuid.uuid4()))
+        v1 = self.make_version(
+            1,
+            str(uuid.uuid4()),
+            mapping={"columns": [], "groups": [self.make_group(group_uuid, "Assays")]},
+        )
+        self.transport.request.side_effect = [
+            MockResponse(
+                status_code=200,
+                content=json.dumps(
+                    {"count": 1, "limit": 1, "offset": 0, "results": [v2], "total": 2, "referenced_units": []}
+                ),
+                headers={"Content-Type": "application/json"},
+            ),
+            MockResponse(
+                status_code=200,
+                content=json.dumps(
+                    {"count": 1, "limit": 1, "offset": 1, "results": [v1], "total": 2, "referenced_units": []}
+                ),
+                headers={"Content-Type": "application/json"},
+            ),
+        ]
+
+        result = await self.client.list_all_versions(bm_id, page_limit=1)
+        self.assertEqual(result[0].groups, [])
+        self.assertEqual(len(result[1].groups), 1)
+        self.assertEqual(str(result[1].groups[0].group_uuid), group_uuid)
+        self.assertEqual(result[1].groups[0].title, "Assays")

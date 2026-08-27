@@ -74,6 +74,7 @@ class TestVersionRepr(unittest.TestCase):
             comment=with_comment,
             bbox=bbox,
             columns=columns,
+            groups=[],
         )
 
     def test_repr_returns_concise_string(self) -> None:
@@ -113,6 +114,7 @@ class TestVersionRepr(unittest.TestCase):
             comment="",
             bbox=None,
             columns=columns,
+            groups=[],
         )
         repr_str = repr(version)
         self.assertIn("by=test@example.com", repr_str)
