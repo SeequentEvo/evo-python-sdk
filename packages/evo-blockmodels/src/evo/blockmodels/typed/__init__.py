@@ -22,6 +22,7 @@ from .report import (
     ReportResult,
     ReportSpecificationData,
 )
+from .types import BoundingBox, Point3, Size3d, Size3i
 from .units import UnitInfo, Units, UnitType, get_available_units
 
 __all__ = [
