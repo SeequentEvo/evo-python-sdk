@@ -12,6 +12,12 @@
 from evo.blockmodels.endpoints.models import JobResponse, JobStatus
 from evo.common.test_tools import AbstractTestRequestHandler, MockResponse
 
+DEFAULT_EXPECTED_HEADERS = {
+    "Authorization": "Bearer <not-a-real-token>",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+}
+
 
 class JobPollingRequestHandler(AbstractTestRequestHandler):
     def __init__(self, job_response: JobResponse, pending_request: int = 0) -> None:
