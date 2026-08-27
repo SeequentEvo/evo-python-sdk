@@ -148,6 +148,9 @@ class Units(str, Enum):
     DOLLARS_PER_SHORT_TON = "$/ton[US]"
     DOLLARS_PER_TONNE = "$/t"
 
+    # Category units
+    NUMERIC_CATEGORY = "numeric_category"
+
     # Angle units
     DEGREES = "dega"
     RADIANS = "rad"
