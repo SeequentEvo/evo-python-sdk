@@ -59,7 +59,7 @@ def parquet_to_csv(parquet_file, csv_path):
     """
     row_groups = parquet_file.num_row_groups
 
-    for grp in range(0, row_groups):
+    for grp in range(row_groups):
         table = parquet_file.read_row_group(grp)
         df = table.to_pandas()
         if grp == 0:
