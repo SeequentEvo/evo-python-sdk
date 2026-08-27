@@ -19,6 +19,7 @@ from typing import Annotated
 from uuid import UUID
 
 import pandas as pd
+from pydantic import AliasChoices, Field
 
 from evo.common import IFeedback
 from evo.common.utils import NoFeedback
@@ -198,8 +199,8 @@ class BlockModelGeometry:
 
     model_type: str
     origin: Point3
-    n_blocks: Size3i
-    block_size: Size3d
+    n_blocks: Annotated[Size3i, Field(validation_alias=AliasChoices("n_blocks", "n_parent_blocks"))]
+    block_size: Annotated[Size3d, Field(validation_alias=AliasChoices("block_size", "parent_block_size"))]
     rotation: Rotation | None = None
 
 
