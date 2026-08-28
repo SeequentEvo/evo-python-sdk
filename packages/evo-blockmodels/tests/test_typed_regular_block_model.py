@@ -406,6 +406,7 @@ class TestRegularBlockModelGet(TestWithConnector, TestWithStorage):
             base_version_id=None if version_id == 1 else version_id - 1,
             parent_version_id=version_id - 1,
             columns=[],
+            groups=[],
             geoscience_version_id=str(version_id + 1),
         )
 
@@ -531,6 +532,7 @@ class TestRegularBlockModelUpdateAttributes(TestWithConnector, TestWithStorage):
             base_version_id=None,
             parent_version_id=0,
             columns=[],
+            groups=[],
             geoscience_version_id="2",
         )
         cell_data = pd.DataFrame(
@@ -656,6 +658,7 @@ def _make_block_model_instance(context, client):
             models.Column(col_id=str(uuid.uuid4()), title="Au", data_type=models.DataType.Float64),
             models.Column(col_id=str(uuid.uuid4()), title="density", data_type=models.DataType.Float64),
         ],
+        groups=[],
         geoscience_version_id="2",
     )
     cell_data = pd.DataFrame(
@@ -981,6 +984,7 @@ class TestBaseTypedBlockModelColumnIdMap(TestWithConnector, TestWithStorage):
                 models.Column(col_id="i", title="i_idx", data_type=models.DataType.UInt32),
                 models.Column(col_id=str(uuid.uuid4()), title="Au", data_type=models.DataType.Float64),
             ],
+            groups=[],
             geoscience_version_id="2",
         )
 
@@ -1137,6 +1141,7 @@ class TestBaseTypedBlockModelGetContext(TestWithConnector, TestWithStorage):
             base_version_id=None,
             parent_version_id=0,
             columns=[],
+            groups=[],
             geoscience_version_id="2",
         )
 

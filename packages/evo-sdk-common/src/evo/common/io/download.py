@@ -9,11 +9,13 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import asyncio
 from abc import ABC, abstractmethod
 from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Generic, TypeVar
+from weakref import WeakValueDictionary
 
 from evo import logging
 
@@ -26,6 +28,8 @@ from .http import HTTPSource
 logger = logging.getLogger("io.download")
 
 T = TypeVar("T", bound=ResourceMetadata)
+
+_cache_download_locks: WeakValueDictionary[Path, asyncio.Lock] = WeakValueDictionary()
 
 
 class Download(ABC, Generic[T]):
@@ -141,12 +145,16 @@ class Download(ABC, Generic[T]):
         :raises ChunkedIOException: if a non-recoverable exception occurred.
         :raises RetryError: if the maximum number of consecutive attempts have failed.
         """
-        location = self._get_cache_location(cache)
-        if not location.exists() or overwrite:
-            await self.download_to_path(
-                filename=location, transport=transport, max_workers=max_workers, retry=retry, fb=fb
-            )
-        else:
-            logger.debug(f"Skipping download because data already in cache (label: {self.label})")
-            fb.progress(1.0)
+        location = self._get_cache_location(cache).resolve()
+        # Serialize same-process downloads for this path. The weak-value dictionary drops the entry once no active
+        # caller or waiter holds the lock.
+        lock = _cache_download_locks.setdefault(location, asyncio.Lock())
+        async with lock:
+            if not location.exists() or overwrite:
+                await self.download_to_path(
+                    filename=location, transport=transport, max_workers=max_workers, retry=retry, fb=fb
+                )
+            else:
+                logger.debug(f"Skipping download because data already in cache (label: {self.label})")
+                fb.progress(1.0)
         return location

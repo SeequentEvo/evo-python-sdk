@@ -31,7 +31,7 @@ from evo.common import ServiceUser
 from evo.common.data import HTTPHeaderDict, RequestMethod
 from evo.common.test_tools import BASE_URL, MockResponse, TestWithConnector, TestWithStorage
 from evo.common.utils import get_header_metadata
-from utils import JobPollingRequestHandler
+from utils import DEFAULT_EXPECTED_HEADERS, JobPollingRequestHandler
 
 BM_UUID = uuid.uuid4()
 GOOSE_UUID = uuid.uuid4()
@@ -276,11 +276,7 @@ class TestCreateBlockModel(TestWithConnector, TestWithStorage):
                 comment=comment,
                 fill_subblocks=fill_subblocks,
             ).model_dump(mode="json", exclude_unset=True),
-            headers={
-                "Authorization": "Bearer <not-a-real-token>",
-                "Content-Type": "application/json",
-                "Accept": "application/json",
-            },
+            headers=DEFAULT_EXPECTED_HEADERS,
         )
 
     async def test_create_block_model(self) -> None:
@@ -457,11 +453,7 @@ class TestCreateBlockModel(TestWithConnector, TestWithStorage):
                 method=RequestMethod.PATCH,
                 path=f"{self.base_path}/block-models/{BM_UUID}/blocks",
                 body=expected_update_body.model_dump(mode="json", exclude_unset=True),
-                headers={
-                    "Authorization": "Bearer <not-a-real-token>",
-                    "Content-Type": "application/json",
-                    "Accept": "application/json",
-                },
+                headers=DEFAULT_EXPECTED_HEADERS,
             )
         self.assertEqual(bm.id, BM_UUID)
 
@@ -559,11 +551,7 @@ class TestCreateBlockModel(TestWithConnector, TestWithStorage):
                 method=RequestMethod.PATCH,
                 path=f"{self.base_path}/block-models/{BM_UUID}/blocks",
                 body=expected_update_body.model_dump(mode="json", exclude_unset=True),
-                headers={
-                    "Authorization": "Bearer <not-a-real-token>",
-                    "Content-Type": "application/json",
-                    "Accept": "application/json",
-                },
+                headers=DEFAULT_EXPECTED_HEADERS,
             )
         self.assertEqual(bm.id, BM_UUID)
 
