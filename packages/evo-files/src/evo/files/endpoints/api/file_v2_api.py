@@ -497,7 +497,7 @@ class FileV2Api:
     ) -> UploadFileResponse:  # noqa: F405
         """Update a file
 
-        Request an upload link for a new version of the specified file. If the file does not exist an error will be returned. Follow up a successful request with a call to the returned pre-signed upload link. Specify a binary body containing the file to upload, with the addition of header key-value pair `x-ms-blob-type: BlockBlob`. The upload link is pre-signed and will expire after 30 minutes.  Including a `version_id` parameter allows creating a link to a blob with uncommitted blocks, i.e. the upload has not been completed properly, or the original pre-signed link has expired. Uncommitted blocks are valid for up to one week, after which they are automatically deleted.  Including a `deleted` parameter with a value of `false` will restore a deleted file.
+        Request an upload link for a new version of the specified file. If the file does not exist an error will be returned. Follow up a successful request with a call to the returned pre-signed upload link. Specify a binary body containing the file to upload, with the addition of header key-value pair `Content-Type: application/binary`. The upload link is pre-signed and will expire after 30 minutes.  Including a `version_id` parameter allows creating a link to a blob with uncommitted blocks, i.e. the upload has not been completed properly, or the original pre-signed link has expired. Uncommitted blocks are valid for up to one week, after which they are automatically deleted.  Including a `deleted` parameter with a value of `false` will restore a deleted file.
 
         :param file_id:
             Format: `uuid`
@@ -582,7 +582,7 @@ class FileV2Api:
     ) -> UploadFileResponse:  # noqa: F405
         """Upload a file
 
-        Request an upload link for a new version of the specified file. If the folders in the file path do not exist, they will be created. If the file already exists, a new version will be created with the updated file content. Follow up a successful request with a call to the returned pre-signed upload link. Specify a binary body containing the file to upload, with the addition of header key-value pair `x-ms-blob-type: BlockBlob`. The upload link is pre-signed and will expire after 30 minutes.  Including a `version_id` parameter allows creating a link to data with uncommitted blocks, i.e. the upload has not been completed properly, or the original pre-signed link has expired. Uncommitted blocks are valid for up to one week, after which they are automatically deleted.
+        Request an upload link for a new version of the specified file. If the folders in the file path do not exist, they will be created. If the file already exists, a new version will be created with the updated file content. Follow up a successful request with a call to the returned pre-signed upload link. Specify a binary body containing the file to upload, with the addition of header key-value pair `Content-Type: application/binary`. The upload link is pre-signed and will expire after 30 minutes.  Including a `version_id` parameter allows creating a link to data with uncommitted blocks, i.e. the upload has not been completed properly, or the original pre-signed link has expired. Uncommitted blocks are valid for up to one week, after which they are automatically deleted.
 
         :param file_path: Path to the file.
             Example: `'a/b/file.txt'`
