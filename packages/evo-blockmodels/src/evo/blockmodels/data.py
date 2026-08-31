@@ -61,6 +61,8 @@ class ColumnMetadataUpdate(CustomBaseModel):
     Only the fields you explicitly set are sent to the service; unset fields are left untouched.
     """
 
+    model_config = ConfigDict(extra="forbid", protected_namespaces=())
+
     unit_id: str | None = None
     """The new unit ID for the column."""
 
@@ -69,13 +71,6 @@ class ColumnMetadataUpdate(CustomBaseModel):
     wholesale, or ``{}`` to clear them. Omit this field to leave the existing tags untouched.
 
     Column tags are a preview feature; the client must be constructed with ``preview=True`` to use them."""
-
-    group: str | None = None
-    """Move the column to a different group, identified by its qualified group title (a bare title for a
-    top-level group, or segments joined by ``▸`` for a nested group). Send an empty string (``""``) to
-    ungroup the column. Omit this field to leave the column's group unchanged.
-
-    Column groups are a preview feature; the client must be constructed with ``preview=True`` to use them."""
 
 
 class GroupDefinition(CustomBaseModel):

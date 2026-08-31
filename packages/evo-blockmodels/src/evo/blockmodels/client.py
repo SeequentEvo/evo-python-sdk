@@ -26,6 +26,9 @@ from evo.common.utils import get_service_health
 from ._types import Table
 from ._utils import convert_dtype, extract_payload
 from .data import (
+    QUALIFIED_TITLE_SEPARATOR as _QUALIFIED_TITLE_SEPARATOR,
+)
+from .data import (
     BaseGridDefinition,
     BlockModel,
     ColumnMetadataUpdate,
@@ -169,6 +172,33 @@ def _build_update_groups_lite(
         ],
         delete=list(delete or []),
     )
+
+
+def _qualified_heading(group: str | None, title: str) -> str:
+    """Return the parquet upload heading the lite ingest expects for a column.
+
+    A grouped column must be uploaded under its fully-qualified title (``group▸…▸leaf``); an
+    ungrouped column (no group, or ``group == ""``) keeps its bare title. The service binds
+    uploaded data to a column by matching this heading, so it must be applied to the data table
+    before upload or the column's data is silently discarded.
+    """
+    if group:
+        return f"{group}{_QUALIFIED_TITLE_SEPARATOR}{title}"
+    return title
+
+
+def _apply_group_headings(data: Table, column_groups: dict[str, str]) -> Table:
+    """Rename grouped columns in ``data`` to the qualified upload headings the service expects.
+
+    ``column_groups`` maps a bare column title to the qualified title of the group the column is
+    being placed in (or ``""`` to ungroup). Columns absent from the mapping are left untouched.
+    """
+    if not column_groups:
+        return data
+    new_names = [
+        _qualified_heading(column_groups[name], name) if name in column_groups else name for name in data.schema.names
+    ]
+    return data.rename_columns(new_names)
 
 
 class BlockModelAPIClient(BaseAPIClient):
@@ -805,6 +835,8 @@ class BlockModelAPIClient(BaseAPIClient):
             delete=[],
             rename=[],
         )
+        # Grouped columns must be uploaded under their qualified heading, or the service drops their data.
+        data = _apply_group_headings(data, column_groups)
         update_response = await self._column_operations_api.update_block_model_from_latest_version(
             org_id=str(self._environment.org_id),
             workspace_id=str(self._environment.workspace_id),
@@ -902,12 +934,24 @@ class BlockModelAPIClient(BaseAPIClient):
                 "To tag existing columns, use update_column_metadata."
             )
 
-        unknown_group_columns = set(column_groups) - set(new_columns)
+        # A group assignment requires the column's data to be (re-)uploaded in this same request, so
+        # column_groups may only reference new columns or existing columns being updated. Moving a
+        # column without its data is rejected by the service, so there is no metadata-only path.
+        movable_columns = set(new_columns) | update_columns
+        unknown_group_columns = set(column_groups) - movable_columns
         if unknown_group_columns:
             raise MissingColumnInTable(
-                f"column_groups reference columns that are not in new_columns: {unknown_group_columns}. "
-                "To move existing columns to a group, use update_column_metadata."
+                f"column_groups reference columns that are neither new nor being updated: {unknown_group_columns}. "
+                "A column's group can only be changed when its data is re-uploaded, so the column must be listed "
+                "in new_columns or update_columns."
             )
+
+        # Existing columns are moved by pairing their re-uploaded data with an update_metadata group change.
+        update_metadata_entries = [
+            models.UpdateMetadataLite(title=column, values=models.UpdateMetadataValuesLite(group=group))
+            for column, group in column_groups.items()
+            if column in update_columns
+        ]
 
         columns = models.UpdateColumnsLite(
             new=[
@@ -924,6 +968,10 @@ class BlockModelAPIClient(BaseAPIClient):
             delete=list(delete_columns),
             rename=[],
         )
+        if update_metadata_entries:
+            columns.update_metadata = update_metadata_entries
+        # Grouped columns must be uploaded under their qualified heading, or the service drops their data.
+        data = _apply_group_headings(data, column_groups)
         update_response = await self._column_operations_api.update_block_model_from_latest_version(
             org_id=str(self._environment.org_id),
             workspace_id=str(self._environment.workspace_id),
@@ -966,9 +1014,11 @@ class BlockModelAPIClient(BaseAPIClient):
         :param units: A dictionary mapping column names within `data` to units.
         :param tags: A dictionary mapping new column names to their tags object. Column tags are a preview feature; the
             client must be constructed with ``preview=True`` to use them.
-        :param column_groups: A dictionary mapping new column names to the qualified title of the group the column
-            should be placed in. To move an existing column to a group, use :meth:`update_column_metadata`. Column
-            groups are a preview feature; the client must be constructed with ``preview=True`` to use them.
+        :param column_groups: A dictionary mapping column names to the qualified title of the group the column
+            should be placed in (or ``""`` to move it out of any group). New columns are grouped as they are added.
+            To move an *existing* column, it must also be listed in ``update_columns`` so its data is re-uploaded in
+            the same request. Column groups are a preview feature; the client must be constructed with
+            ``preview=True`` to use them.
         :param: update_type: Provide the type of update. Either 'replace' or 'merge' (default: replace)
         :raises CacheNotConfiguredException: If the cache is not configured.
         :return: The new version of the block model with the added columns.
@@ -1023,9 +1073,11 @@ class BlockModelAPIClient(BaseAPIClient):
             the block model's own ``fill_subblocks`` setting is used.
         :param tags: A dictionary mapping new column names to their tags object. Column tags are a preview feature; the
             client must be constructed with ``preview=True`` to use them.
-        :param column_groups: A dictionary mapping new column names to the qualified title of the group the column
-            should be placed in. To move an existing column to a group, use :meth:`update_column_metadata`. Column
-            groups are a preview feature; the client must be constructed with ``preview=True`` to use them.
+        :param column_groups: A dictionary mapping column names to the qualified title of the group the column
+            should be placed in (or ``""`` to move it out of any group). New columns are grouped as they are added.
+            To move an *existing* column, it must also be listed in ``update_columns`` so its data is re-uploaded in
+            the same request. Column groups are a preview feature; the client must be constructed with
+            ``preview=True`` to use them.
         :param: update_type: Provide the type of update. Either 'replace' or 'merge' (default: replace)
         """
         return await self._update_columns(
@@ -1048,7 +1100,7 @@ class BlockModelAPIClient(BaseAPIClient):
         column_updates: dict[str, str | None | ColumnMetadataUpdate],
         comment: str | None = None,
     ) -> Version:
-        """Update metadata (e.g., units, tags and group) for existing block model columns.
+        """Update metadata (e.g., units and tags) for existing block model columns.
 
         This method updates column properties without requiring data upload or cache configuration.
 
@@ -1056,17 +1108,21 @@ class BlockModelAPIClient(BaseAPIClient):
 
         - A ``str`` sets the column's unit ID.
         - ``None`` clears the column's unit ID.
-        - A :class:`ColumnMetadataUpdate` sets any combination of unit ID, tags and/or group. Only the
+        - A :class:`ColumnMetadataUpdate` sets any combination of unit ID and/or tags. Only the
           fields explicitly set on the object are sent; unset fields are left untouched. Set
-          ``tags={}`` to clear a column's tags, ``unit_id=None`` to clear its unit, ``group=""`` to
-          ungroup the column, or ``group="<qualified title>"`` to move it to a different group.
+          ``tags={}`` to clear a column's tags or ``unit_id=None`` to clear its unit.
 
-        Column tags and groups are a preview feature; the client must be constructed with ``preview=True`` to use them.
+        A column's group cannot be changed here: the service requires the column's data to be re-uploaded
+        when its group membership changes. Use the ``column_groups`` parameter on
+        :meth:`update_block_model_columns` / :meth:`update_subblocked_columns` (listing the column in
+        ``update_columns``) to move an existing column.
+
+        Column tags are a preview feature; the client must be constructed with ``preview=True`` to use them.
 
         :param bm_id: The ID of the block model to update.
         :param column_updates: A dictionary mapping column titles to their metadata update.
                                Example: {"Cu": "%[mass]", "Au": None,
-                               "Ag": ColumnMetadataUpdate(tags={"source": "assay"}, group="Assays")}
+                               "Ag": ColumnMetadataUpdate(tags={"source": "assay"})}
         :param comment: An optional comment describing the metadata changes. This is max 250 characters.
         :return: The new version of the block model with updated metadata.
         """
@@ -1108,8 +1164,8 @@ class BlockModelAPIClient(BaseAPIClient):
 
         Groups are addressed by their qualified title (a bare title for a top-level group, or segments
         joined by ``▸`` for a nested group). To assign columns to a group, use the ``column_groups``
-        parameter on the column methods (for new columns) or :meth:`update_column_metadata` (to move an
-        existing column). To resolve a written group back to its server-assigned UUID and resolved policy,
+        parameter on the column methods (for new columns, or existing columns whose data is re-uploaded
+        in the same call). To resolve a written group back to its server-assigned UUID and resolved policy,
         use the helpers on the returned :class:`~evo.blockmodels.data.Version`, e.g.
         :meth:`~evo.blockmodels.data.Version.group_by_qualified_title`.
 
