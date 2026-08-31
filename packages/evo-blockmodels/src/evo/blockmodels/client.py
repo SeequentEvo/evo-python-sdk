@@ -31,6 +31,8 @@ from .data import (
     ColumnMetadataUpdate,
     FlexibleGridDefinition,
     FullySubBlockedGridDefinition,
+    GroupDefinition,
+    GroupMetadataUpdate,
     ListingVersion,
     OctreeGridDefinition,
     RegularGridDefinition,
@@ -134,6 +136,39 @@ _GEOMETRY_COLUMNS = {
     "dy",
     "dz",
 }
+
+
+def _group_lite_from_definition(definition: GroupDefinition) -> models.GroupLite:
+    """Convert a public :class:`GroupDefinition` to the generated title-addressed ``GroupLite``."""
+    return models.GroupLite(**definition.model_dump(exclude_unset=True))
+
+
+def _group_values_from_update(update: GroupMetadataUpdate) -> models.GroupUpdateMetadataValuesLite:
+    """Convert a public :class:`GroupMetadataUpdate` to the generated ``GroupUpdateMetadataValuesLite``.
+
+    Only fields the caller explicitly set are forwarded, so untouched fields are omitted on the wire.
+    The public ``new_title`` is mapped onto the wire field ``title`` (a group rename).
+    """
+    values = update.model_dump(exclude_unset=True)
+    if "new_title" in values:
+        values["title"] = values.pop("new_title")
+    return models.GroupUpdateMetadataValuesLite(**values)
+
+
+def _build_update_groups_lite(
+    new: list[GroupDefinition] | None,
+    update: dict[str, GroupMetadataUpdate] | None,
+    delete: list[str] | None,
+) -> models.UpdateGroupsLite:
+    """Build the title-addressed ``UpdateGroupsLite`` payload from the public group arguments."""
+    return models.UpdateGroupsLite(
+        new=[_group_lite_from_definition(definition) for definition in (new or [])],
+        update_metadata=[
+            models.GroupUpdateMetadataLite(title=title, values=_group_values_from_update(values))
+            for title, values in (update or {}).items()
+        ],
+        delete=list(delete or []),
+    )
 
 
 class BlockModelAPIClient(BaseAPIClient):
@@ -399,21 +434,24 @@ class BlockModelAPIClient(BaseAPIClient):
         return await self.upload_block_model(bm_id, job_id, upload_url, cache_location)
 
     async def _update_model_no_data(
-        self, bm_id: UUID, columns: models.UpdateColumnsLite, comment: str | None = None
+        self,
+        bm_id: UUID,
+        columns: models.UpdateColumnsLite,
+        comment: str | None = None,
+        groups: models.UpdateGroupsLite | None = None,
     ) -> Version:
         """Helper to apply an UpdateColumnsLite and return the resulting Version.
         This is for column operations where new data is not required.
         """
+        # Only set ``groups`` when provided so it stays unset (and off the wire) otherwise.
+        update_data = models.UpdateDataLite1(columns=columns, comment=comment)
+        if groups is not None:
+            update_data.groups = groups
         update_response = await self._column_operations_api.update_block_model_from_latest_version(
             org_id=str(self._environment.org_id),
             workspace_id=str(self._environment.workspace_id),
             bm_id=str(bm_id),
-            update_data_lite=models.UpdateDataLite(
-                models.UpdateDataLite1(
-                    columns=columns,
-                    comment=comment,
-                )
-            ),
+            update_data_lite=models.UpdateDataLite(update_data),
             additional_headers=self._preview_headers(),
         )
 
@@ -605,6 +643,7 @@ class BlockModelAPIClient(BaseAPIClient):
         initial_data: Table | None = None,
         units: dict[str, str] | None = None,
         tags: dict[str, dict[str, Any]] | None = None,
+        column_groups: dict[str, str] | None = None,
         comment: str | None = None,
         fill_subblocks: bool = False,
     ) -> tuple[BlockModel, Version]:
@@ -631,6 +670,9 @@ class BlockModelAPIClient(BaseAPIClient):
         :param units: A dictionary mapping column names within `initial_data` to units.
         :param tags: A dictionary mapping column names within `initial_data` to their tags object. Column tags are a
             preview feature; the client must be constructed with ``preview=True`` to use them.
+        :param column_groups: A dictionary mapping column names within `initial_data` to the qualified title of the
+            group the column should be placed in. Column groups are a preview feature; the client must be constructed
+            with ``preview=True`` to use them.
         :param comment: An optional comment describing the initial data.
         :param fill_subblocks: Sets the default fill_subblocks behaviour for this block model. If ``True``, updates to a
             fully sub-blocked model with ``update_type``=``merge`` and ``geometry_change``=``True`` will fill any missing
@@ -641,6 +683,8 @@ class BlockModelAPIClient(BaseAPIClient):
             raise ValueError("units can only be provided if initial_data is provided")
         if tags is not None and initial_data is None:
             raise ValueError("tags can only be provided if initial_data is provided")
+        if column_groups is not None and initial_data is None:
+            raise ValueError("column_groups can only be provided if initial_data is provided")
         if initial_data is not None and self._cache is None:
             raise CacheNotConfiguredException(
                 "Cache must be configured to use this method. Please set the 'cache' parameter in the constructor."
@@ -661,7 +705,9 @@ class BlockModelAPIClient(BaseAPIClient):
                 geometry_change = True
             else:
                 geometry_change = None
-            version = await self._add_new_columns(create_result.bm_uuid, initial_data, units, geometry_change, tags)
+            version = await self._add_new_columns(
+                create_result.bm_uuid, initial_data, units, geometry_change, tags, column_groups
+            )
         return self._bm_from_model(create_result), version
 
     async def add_new_subblocked_columns(
@@ -670,6 +716,7 @@ class BlockModelAPIClient(BaseAPIClient):
         data: Table,
         units: dict[str, str] | None = None,
         tags: dict[str, dict[str, Any]] | None = None,
+        column_groups: dict[str, str] | None = None,
     ) -> Version:
         """Add new columns to an existing sub-blocked block model. This will not change the sub-blocking structure, thus the provided data must match existing sub-blocks in the model.
 
@@ -682,10 +729,15 @@ class BlockModelAPIClient(BaseAPIClient):
         :param units: A dictionary mapping column names within `data` to units.
         :param tags: A dictionary mapping column names within `data` to their tags object. Column tags are a preview
             feature; the client must be constructed with ``preview=True`` to use them.
+        :param column_groups: A dictionary mapping column names within `data` to the qualified title of the group the
+            column should be placed in. Column groups are a preview feature; the client must be constructed with
+            ``preview=True`` to use them.
         :raises CacheNotConfiguredException: If the cache is not configured.
         :return: The new version of the block model with the added columns.
         """
-        return await self._add_new_columns(bm_id, data, units, geometry_change=False, tags=tags)
+        return await self._add_new_columns(
+            bm_id, data, units, geometry_change=False, tags=tags, column_groups=column_groups
+        )
 
     async def _add_new_columns(
         self,
@@ -694,6 +746,7 @@ class BlockModelAPIClient(BaseAPIClient):
         units: dict[str, str] | None = None,
         geometry_change: bool | None = None,
         tags: dict[str, dict[str, Any]] | None = None,
+        column_groups: dict[str, str] | None = None,
     ) -> Version:
         """Add new columns to an existing block model.
 
@@ -709,6 +762,9 @@ class BlockModelAPIClient(BaseAPIClient):
         :param geometry_change: Whether the geometry of the block model is changing.
         :param tags: A dictionary mapping column names within `data` to their tags object. Column tags are a preview
             feature; the client must be constructed with ``preview=True`` to use them.
+        :param column_groups: A dictionary mapping column names within `data` to the qualified title of the group the
+            column should be placed in. Column groups are a preview feature; the client must be constructed with
+            ``preview=True`` to use them.
         :raises CacheNotConfiguredException: If the cache is not configured.
         :return: The new version of the block model with the added columns.
         """
@@ -722,6 +778,8 @@ class BlockModelAPIClient(BaseAPIClient):
             units = {}
         if tags is None:
             tags = {}
+        if column_groups is None:
+            column_groups = {}
         new_column_names = {name for name in schema.names if name not in _GEOMETRY_COLUMNS}
         unknown_unit_columns = set(units) - new_column_names
         if unknown_unit_columns:
@@ -729,6 +787,11 @@ class BlockModelAPIClient(BaseAPIClient):
         unknown_tag_columns = set(tags) - new_column_names
         if unknown_tag_columns:
             raise MissingColumnInTable(f"tags reference columns that are not being added: {unknown_tag_columns}")
+        unknown_group_columns = set(column_groups) - new_column_names
+        if unknown_group_columns:
+            raise MissingColumnInTable(
+                f"column_groups reference columns that are not being added: {unknown_group_columns}"
+            )
         columns = models.UpdateColumnsLite(
             new=[
                 models.ColumnLite(
@@ -736,6 +799,7 @@ class BlockModelAPIClient(BaseAPIClient):
                     data_type=convert_dtype(data_type),
                     unit_id=units.get(name),
                     **({"tags": tags[name]} if name in tags else {}),
+                    **({"group": column_groups[name]} if name in column_groups else {}),
                 )
                 for name, data_type in zip(schema.names, schema.types)
                 if name not in _GEOMETRY_COLUMNS
@@ -765,6 +829,7 @@ class BlockModelAPIClient(BaseAPIClient):
         data: Table,
         units: dict[str, str] | None = None,
         tags: dict[str, dict[str, Any]] | None = None,
+        column_groups: dict[str, str] | None = None,
     ) -> Version:
         """Add new columns to an existing regular block model.
 
@@ -777,10 +842,15 @@ class BlockModelAPIClient(BaseAPIClient):
         :param units: A dictionary mapping column names within `data` to units.
         :param tags: A dictionary mapping column names within `data` to their tags object. Column tags are a preview
             feature; the client must be constructed with ``preview=True`` to use them.
+        :param column_groups: A dictionary mapping column names within `data` to the qualified title of the group the
+            column should be placed in. Column groups are a preview feature; the client must be constructed with
+            ``preview=True`` to use them.
         :raises CacheNotConfiguredException: If the cache is not configured.
         :return: The new version of the block model with the added columns.
         """
-        return await self._add_new_columns(bm_id, data, units, geometry_change=None, tags=tags)
+        return await self._add_new_columns(
+            bm_id, data, units, geometry_change=None, tags=tags, column_groups=column_groups
+        )
 
     async def _update_columns(
         self,
@@ -793,6 +863,7 @@ class BlockModelAPIClient(BaseAPIClient):
         geometry_change: bool | None = None,
         fill_subblocks: bool | None = None,
         tags: dict[str, dict[str, Any]] | None = None,
+        column_groups: dict[str, str] | None = None,
         update_type: models.UpdateType = models.UpdateType.replace,
     ) -> Version:
         if self._cache is None:
@@ -805,6 +876,8 @@ class BlockModelAPIClient(BaseAPIClient):
             units = {}
         if tags is None:
             tags = {}
+        if column_groups is None:
+            column_groups = {}
         data_type_map = {name: data_type for name, data_type in zip(schema.names, schema.types)}
 
         if update_columns is None:
@@ -832,6 +905,13 @@ class BlockModelAPIClient(BaseAPIClient):
                 "To tag existing columns, use update_column_metadata."
             )
 
+        unknown_group_columns = set(column_groups) - set(new_columns)
+        if unknown_group_columns:
+            raise MissingColumnInTable(
+                f"column_groups reference columns that are not in new_columns: {unknown_group_columns}. "
+                "To move existing columns to a group, use update_column_metadata."
+            )
+
         columns = models.UpdateColumnsLite(
             new=[
                 models.ColumnLite(
@@ -839,6 +919,7 @@ class BlockModelAPIClient(BaseAPIClient):
                     data_type=convert_dtype(data_type_map[new_column]),
                     unit_id=units.get(new_column),
                     **({"tags": tags[new_column]} if new_column in tags else {}),
+                    **({"group": column_groups[new_column]} if new_column in column_groups else {}),
                 )
                 for new_column in new_columns
             ],
@@ -871,6 +952,7 @@ class BlockModelAPIClient(BaseAPIClient):
         delete_columns: set[str] | None = None,
         units: dict[str, str] | None = None,
         tags: dict[str, dict[str, Any]] | None = None,
+        column_groups: dict[str, str] | None = None,
         update_type: models.UpdateType = models.UpdateType.replace,
     ) -> Version:
         """Add, update, or delete regular block model columns.
@@ -887,6 +969,9 @@ class BlockModelAPIClient(BaseAPIClient):
         :param units: A dictionary mapping column names within `data` to units.
         :param tags: A dictionary mapping new column names to their tags object. Column tags are a preview feature; the
             client must be constructed with ``preview=True`` to use them.
+        :param column_groups: A dictionary mapping new column names to the qualified title of the group the column
+            should be placed in. To move an existing column to a group, use :meth:`update_column_metadata`. Column
+            groups are a preview feature; the client must be constructed with ``preview=True`` to use them.
         :param: update_type: Provide the type of update. Either 'replace' or 'merge' (default: replace)
         :raises CacheNotConfiguredException: If the cache is not configured.
         :return: The new version of the block model with the added columns.
@@ -900,6 +985,7 @@ class BlockModelAPIClient(BaseAPIClient):
             units,
             geometry_change=None,
             tags=tags,
+            column_groups=column_groups,
             update_type=update_type,
         )
 
@@ -914,6 +1000,7 @@ class BlockModelAPIClient(BaseAPIClient):
         geometry_change: bool = False,
         fill_subblocks: bool | None = None,
         tags: dict[str, dict[str, Any]] | None = None,
+        column_groups: dict[str, str] | None = None,
         update_type: models.UpdateType = models.UpdateType.replace,
     ) -> Version:
         """Add, update, or delete sub-blocked block model columns.
@@ -939,6 +1026,9 @@ class BlockModelAPIClient(BaseAPIClient):
             the block model's own ``fill_subblocks`` setting is used.
         :param tags: A dictionary mapping new column names to their tags object. Column tags are a preview feature; the
             client must be constructed with ``preview=True`` to use them.
+        :param column_groups: A dictionary mapping new column names to the qualified title of the group the column
+            should be placed in. To move an existing column to a group, use :meth:`update_column_metadata`. Column
+            groups are a preview feature; the client must be constructed with ``preview=True`` to use them.
         :param: update_type: Provide the type of update. Either 'replace' or 'merge' (default: replace)
         """
         return await self._update_columns(
@@ -951,6 +1041,7 @@ class BlockModelAPIClient(BaseAPIClient):
             geometry_change=geometry_change,
             fill_subblocks=fill_subblocks,
             tags=tags,
+            column_groups=column_groups,
             update_type=update_type,
         )
 
@@ -960,7 +1051,7 @@ class BlockModelAPIClient(BaseAPIClient):
         column_updates: dict[str, str | None | ColumnMetadataUpdate],
         comment: str | None = None,
     ) -> Version:
-        """Update metadata (e.g., units and tags) for existing block model columns.
+        """Update metadata (e.g., units, tags and group) for existing block model columns.
 
         This method updates column properties without requiring data upload or cache configuration.
 
@@ -968,16 +1059,17 @@ class BlockModelAPIClient(BaseAPIClient):
 
         - A ``str`` sets the column's unit ID.
         - ``None`` clears the column's unit ID.
-        - A :class:`ColumnMetadataUpdate` sets any combination of unit ID and/or tags. Only the
+        - A :class:`ColumnMetadataUpdate` sets any combination of unit ID, tags and/or group. Only the
           fields explicitly set on the object are sent; unset fields are left untouched. Set
-          ``tags={}`` to clear a column's tags, or ``unit_id=None`` to clear its unit.
+          ``tags={}`` to clear a column's tags, ``unit_id=None`` to clear its unit, ``group=""`` to
+          ungroup the column, or ``group="<qualified title>"`` to move it to a different group.
 
-        Column tags are a preview feature; the client must be constructed with ``preview=True`` to use them.
+        Column tags and groups are a preview feature; the client must be constructed with ``preview=True`` to use them.
 
         :param bm_id: The ID of the block model to update.
         :param column_updates: A dictionary mapping column titles to their metadata update.
                                Example: {"Cu": "%[mass]", "Au": None,
-                               "Ag": ColumnMetadataUpdate(tags={"source": "assay"})}
+                               "Ag": ColumnMetadataUpdate(tags={"source": "assay"}, group="Assays")}
         :param comment: An optional comment describing the metadata changes. This is max 250 characters.
         :return: The new version of the block model with updated metadata.
         """
@@ -1002,6 +1094,51 @@ class BlockModelAPIClient(BaseAPIClient):
         )
 
         return await self._update_model_no_data(bm_id, columns, comment=comment)
+
+    async def update_groups(
+        self,
+        bm_id: UUID,
+        *,
+        new: list[GroupDefinition] | None = None,
+        update: dict[str, GroupMetadataUpdate] | None = None,
+        delete: list[str] | None = None,
+        comment: str | None = None,
+    ) -> Version:
+        """Create, update, and/or delete column groups on a block model.
+
+        This method manages group definitions without requiring data upload or cache configuration. Any
+        combination of ``new``, ``update`` and ``delete`` can be supplied in a single call.
+
+        Groups are addressed by their qualified title (a bare title for a top-level group, or segments
+        joined by ``▸`` for a nested group). To assign columns to a group, use the ``column_groups``
+        parameter on the column methods (for new columns) or :meth:`update_column_metadata` (to move an
+        existing column). To resolve a written group back to its server-assigned UUID and resolved policy,
+        use the helpers on the returned :class:`~evo.blockmodels.data.Version`, e.g.
+        :meth:`~evo.blockmodels.data.Version.group_by_qualified_title`.
+
+        Column groups are a preview feature; the client must be constructed with ``preview=True`` to use them.
+
+        :param bm_id: The ID of the block model to update.
+        :param new: Definitions of new groups to create.
+        :param update: A dictionary mapping the qualified title of an existing group to the metadata update
+            to apply to it. Use :class:`GroupMetadataUpdate` to rename, re-parent, change the missing-column
+            policy, replace tags, or toggle the hidden flag.
+        :param delete: Qualified titles of groups to delete.
+        :param comment: An optional comment describing the changes. This is max 250 characters.
+        :return: The new version of the block model with the updated groups.
+        """
+        if not new and not update and not delete:
+            raise ValueError("At least one of 'new', 'update' or 'delete' must be provided.")
+
+        columns = models.UpdateColumnsLite(
+            new=[],
+            update=[],
+            delete=[],
+            rename=[],
+        )
+        groups = _build_update_groups_lite(new, update, delete)
+
+        return await self._update_model_no_data(bm_id, columns, comment=comment, groups=groups)
 
     async def rename_block_model_columns(
         self,

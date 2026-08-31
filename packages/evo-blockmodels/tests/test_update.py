@@ -19,7 +19,7 @@ import pyarrow
 from parameterized import parameterized
 
 from evo.blockmodels import BlockModelAPIClient
-from evo.blockmodels.data import ColumnMetadataUpdate
+from evo.blockmodels.data import ColumnMetadataUpdate, GroupDefinition, GroupMetadataUpdate, MissingColumnPolicy
 from evo.blockmodels.endpoints import models
 from evo.blockmodels.endpoints.models import JobResponse, JobStatus
 from evo.blockmodels.exceptions import CacheNotConfiguredException, JobFailedException, MissingColumnInTable
@@ -139,6 +139,12 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
         self.preview_client_without_cache = BlockModelAPIClient(
             connector=self.connector,
             environment=self.environment,
+            preview=True,
+        )
+        self.preview_client = BlockModelAPIClient(
+            connector=self.connector,
+            environment=self.environment,
+            cache=self.cache,
             preview=True,
         )
         self.setup_universal_headers(get_header_metadata(BlockModelAPIClient.__module__))
@@ -1038,3 +1044,251 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
         )
         with self.assertRaises(JobFailedException):
             await self.bms_client_without_cache.delete_block_model_columns(BM_UUID, ["col1"])
+
+    async def test_add_new_columns_with_column_groups(self) -> None:
+        """New columns can be assigned to a group via ``column_groups``."""
+        self.transport.set_request_handler(
+            UpdateRequestHandler(
+                update_result=UPDATE_RESULT,
+                job_response=JobResponse(job_status=JobStatus.COMPLETE, payload=UPDATED_VERSION),
+            )
+        )
+        with mock.patch("evo.common.io.upload.StorageDestination") as mock_destination:
+            mock_destination.upload_file = mock.AsyncMock()
+            await self.preview_client.add_new_columns(
+                BM_UUID,
+                REGULAR_DATA,
+                column_groups={"col2": "Assays"},
+            )
+            mock_destination.upload_file.assert_called_once()
+
+            # col2 is placed in the "Assays" group; col1 stays ungrouped so has no group field on the wire.
+            expected_update_body = models.UpdateDataLite1(
+                columns=models.UpdateColumnsLite(
+                    new=[
+                        models.ColumnLite(title="col1", data_type=models.DataType.Utf8, unit_id=None),
+                        models.ColumnLite(
+                            title="col2", data_type=models.DataType.Float64, unit_id=None, group="Assays"
+                        ),
+                    ],
+                    update=[],
+                    rename=[],
+                    delete=[],
+                ),
+                update_type=models.UpdateType.replace,
+                geometry_change=None,
+            )
+            self.assert_any_request_made(
+                method=RequestMethod.PATCH,
+                path=f"{self.base_path}/block-models/{BM_UUID}/blocks",
+                body=expected_update_body.model_dump(mode="json", exclude_unset=True),
+                headers=DEFAULT_EXPECTED_HEADERS | {"API-Preview": "opt-in"},
+            )
+
+    async def test_add_new_columns_with_unknown_group_column(self) -> None:
+        with self.assertRaises(MissingColumnInTable):
+            await self.bms_client.add_new_columns(
+                BM_UUID,
+                REGULAR_DATA,
+                column_groups={"does_not_exist": "Assays"},
+            )
+
+    async def test_update_block_model_columns_with_column_groups(self) -> None:
+        """New columns added through update_block_model_columns can be grouped."""
+        self.transport.set_request_handler(
+            UpdateRequestHandler(
+                update_result=UPDATE_RESULT,
+                job_response=JobResponse(job_status=JobStatus.COMPLETE, payload=UPDATED_VERSION),
+            )
+        )
+        with mock.patch("evo.common.io.upload.StorageDestination") as mock_destination:
+            mock_destination.upload_file = mock.AsyncMock()
+            await self.bms_client.update_block_model_columns(
+                BM_UUID,
+                REGULAR_DATA,
+                new_columns=["col1", "col2"],
+                column_groups={"col1": "Assays\u25b8Primary"},
+            )
+
+            expected_update_body = models.UpdateDataLite1(
+                columns=models.UpdateColumnsLite(
+                    new=[
+                        models.ColumnLite(
+                            title="col1",
+                            data_type=models.DataType.Utf8,
+                            unit_id=None,
+                            group="Assays\u25b8Primary",
+                        ),
+                        models.ColumnLite(title="col2", data_type=models.DataType.Float64, unit_id=None),
+                    ],
+                    update=[],
+                    rename=[],
+                    delete=[],
+                ),
+                update_type=models.UpdateType.replace,
+                geometry_change=None,
+                fill_subblocks=None,
+            )
+            self.assert_any_request_made(
+                method=RequestMethod.PATCH,
+                path=f"{self.base_path}/block-models/{BM_UUID}/blocks",
+                body=expected_update_body.model_dump(mode="json", exclude_unset=True),
+                headers=DEFAULT_EXPECTED_HEADERS,
+            )
+
+    async def test_update_columns_with_unknown_group_column(self) -> None:
+        with self.assertRaises(MissingColumnInTable):
+            await self.bms_client.update_block_model_columns(
+                BM_UUID,
+                REGULAR_DATA,
+                new_columns=["col1"],
+                column_groups={"col2": "Assays"},  # col2 not in new_columns
+            )
+
+    async def test_update_column_metadata_moves_column_group(self) -> None:
+        """An existing column can be moved to another group (or ungrouped) via update_column_metadata."""
+        self.transport.set_request_handler(
+            UpdateRequestHandler(
+                update_result=UPDATE_RESULT,
+                job_response=JobResponse(job_status=JobStatus.COMPLETE, payload=UPDATED_VERSION),
+            )
+        )
+        await self.preview_client_without_cache.update_column_metadata(
+            BM_UUID,
+            column_updates={
+                "col1": ColumnMetadataUpdate(group="Assays"),  # move to a group
+                "col2": ColumnMetadataUpdate(group=""),  # ungroup
+            },
+        )
+
+        expected_update_body = models.UpdateDataLite1(
+            columns=models.UpdateColumnsLite(
+                new=[],
+                update=[],
+                rename=[],
+                delete=[],
+                update_metadata=[
+                    models.UpdateMetadataLite(title="col1", values=models.UpdateMetadataValuesLite(group="Assays")),
+                    models.UpdateMetadataLite(title="col2", values=models.UpdateMetadataValuesLite(group="")),
+                ],
+            ),
+            comment=None,
+        )
+        self.assert_any_request_made(
+            method=RequestMethod.PATCH,
+            path=f"{self.base_path}/block-models/{BM_UUID}/blocks",
+            body=expected_update_body.model_dump(mode="json", exclude_unset=True),
+            headers=DEFAULT_EXPECTED_HEADERS | {"API-Preview": "opt-in"},
+        )
+
+    async def test_update_groups_create(self) -> None:
+        self.transport.set_request_handler(
+            UpdateRequestHandler(
+                update_result=UPDATE_RESULT,
+                job_response=JobResponse(job_status=JobStatus.COMPLETE, payload=UPDATED_VERSION),
+            )
+        )
+        version = await self.preview_client_without_cache.update_groups(
+            BM_UUID,
+            new=[
+                GroupDefinition(title="Assays", missing_column_policy=MissingColumnPolicy.SET_NULL),
+                GroupDefinition(title="Primary", parent_group="Assays", is_hidden=True),
+            ],
+        )
+
+        expected_update_body = models.UpdateDataLite1(
+            columns=models.UpdateColumnsLite(new=[], update=[], delete=[], rename=[]),
+            comment=None,
+        )
+        expected_update_body.groups = models.UpdateGroupsLite(
+            new=[
+                models.GroupLite(title="Assays", missing_column_policy=MissingColumnPolicy.SET_NULL),
+                models.GroupLite(title="Primary", parent_group="Assays", is_hidden=True),
+            ],
+            update_metadata=[],
+            delete=[],
+        )
+        self.assert_any_request_made(
+            method=RequestMethod.PATCH,
+            path=f"{self.base_path}/block-models/{BM_UUID}/blocks",
+            body=expected_update_body.model_dump(mode="json", exclude_unset=True),
+            headers=DEFAULT_EXPECTED_HEADERS | {"API-Preview": "opt-in"},
+        )
+        self.assertEqual(version.bm_uuid, BM_UUID)
+        self.assertEqual(version.version_id, 2)
+
+    async def test_update_groups_update_metadata_and_delete(self) -> None:
+        self.transport.set_request_handler(
+            UpdateRequestHandler(
+                update_result=UPDATE_RESULT,
+                job_response=JobResponse(job_status=JobStatus.COMPLETE, payload=UPDATED_VERSION),
+            )
+        )
+        await self.preview_client_without_cache.update_groups(
+            BM_UUID,
+            update={
+                "Assays": GroupMetadataUpdate(
+                    new_title="Assay Results", missing_column_policy=MissingColumnPolicy.INHERIT
+                ),
+                "Waste": GroupMetadataUpdate(parent_group="", tags={}),
+            },
+            delete=["Old Group"],
+            comment="Reorganise groups",
+        )
+
+        expected_update_body = models.UpdateDataLite1(
+            columns=models.UpdateColumnsLite(new=[], update=[], delete=[], rename=[]),
+            comment="Reorganise groups",
+        )
+        expected_update_body.groups = models.UpdateGroupsLite(
+            new=[],
+            update_metadata=[
+                models.GroupUpdateMetadataLite(
+                    title="Assays",
+                    values=models.GroupUpdateMetadataValuesLite(
+                        title="Assay Results", missing_column_policy=MissingColumnPolicy.INHERIT
+                    ),
+                ),
+                models.GroupUpdateMetadataLite(
+                    title="Waste",
+                    values=models.GroupUpdateMetadataValuesLite(parent_group="", tags={}),
+                ),
+            ],
+            delete=["Old Group"],
+        )
+        self.assert_any_request_made(
+            method=RequestMethod.PATCH,
+            path=f"{self.base_path}/block-models/{BM_UUID}/blocks",
+            body=expected_update_body.model_dump(mode="json", exclude_unset=True),
+            headers=DEFAULT_EXPECTED_HEADERS | {"API-Preview": "opt-in"},
+        )
+
+    async def test_update_groups_requires_an_operation(self) -> None:
+        with self.assertRaises(ValueError):
+            await self.preview_client_without_cache.update_groups(BM_UUID)
+
+    async def test_update_groups_job_failed(self) -> None:
+        self.transport.set_request_handler(
+            UpdateRequestHandler(
+                update_result=UPDATE_RESULT,
+                job_response=JobResponse(
+                    job_status=JobStatus.FAILED,
+                    payload=models.JobErrorPayload(
+                        detail="Group update failed",
+                        status=500,
+                        title="Group update failed",
+                        type="https://seequent.com/error-codes/block-model-service/job/internal-error",
+                    ),
+                ),
+            )
+        )
+        with self.assertRaises(JobFailedException):
+            await self.preview_client_without_cache.update_groups(BM_UUID, delete=["Assays"])
+
+    async def test_create_block_model_column_groups_requires_initial_data(self) -> None:
+        with self.assertRaises(ValueError):
+            await self.bms_client.create_block_model(
+                name="test",
+                grid_definition=mock.MagicMock(),
+                column_groups={"col1": "Assays"},
+            )
