@@ -110,7 +110,6 @@ class Units(str, Enum):
 
     # Dimensionless units
     COUNT = "count"
-    PERCENTAGE = "%"
     RATIO = "ratio"
 
     # Mass units
