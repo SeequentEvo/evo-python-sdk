@@ -14,6 +14,8 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID
 
+from pydantic import ConfigDict
+
 from evo.common import ResourceMetadata
 from evo.workspaces import ServiceUser
 
@@ -82,6 +84,8 @@ class GroupDefinition(CustomBaseModel):
     Column groups are a preview feature; the client must be constructed with ``preview=True`` to use them.
     """
 
+    model_config = ConfigDict(extra="forbid", protected_namespaces=())
+
     title: str
     """Human-readable label for the group, unique across its siblings. Must not contain the qualified
     title separator ``▸``."""
@@ -109,6 +113,8 @@ class GroupMetadataUpdate(CustomBaseModel):
 
     Column groups are a preview feature; the client must be constructed with ``preview=True`` to use them.
     """
+
+    model_config = ConfigDict(extra="forbid", protected_namespaces=())
 
     new_title: str | None = None
     """Rename the group to this title. Omit to leave the title unchanged."""

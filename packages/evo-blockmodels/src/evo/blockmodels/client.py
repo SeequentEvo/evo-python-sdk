@@ -643,7 +643,6 @@ class BlockModelAPIClient(BaseAPIClient):
         initial_data: Table | None = None,
         units: dict[str, str] | None = None,
         tags: dict[str, dict[str, Any]] | None = None,
-        column_groups: dict[str, str] | None = None,
         comment: str | None = None,
         fill_subblocks: bool = False,
     ) -> tuple[BlockModel, Version]:
@@ -670,21 +669,21 @@ class BlockModelAPIClient(BaseAPIClient):
         :param units: A dictionary mapping column names within `initial_data` to units.
         :param tags: A dictionary mapping column names within `initial_data` to their tags object. Column tags are a
             preview feature; the client must be constructed with ``preview=True`` to use them.
-        :param column_groups: A dictionary mapping column names within `initial_data` to the qualified title of the
-            group the column should be placed in. Column groups are a preview feature; the client must be constructed
-            with ``preview=True`` to use them.
         :param comment: An optional comment describing the initial data.
         :param fill_subblocks: Sets the default fill_subblocks behaviour for this block model. If ``True``, updates to a
             fully sub-blocked model with ``update_type``=``merge`` and ``geometry_change``=``True`` will fill any missing
             sub-blocks with data from the parent block. Defaults to ``False``.
         :return: A tuple containing the created block model and the version of the block model.
+
+        .. note::
+            To place columns in a group, first create the model, define the groups with :meth:`update_groups`,
+            then add the columns with ``column_groups`` on :meth:`add_new_columns` /
+            :meth:`update_block_model_columns`. Groups cannot be referenced during creation because none exist yet.
         """
         if units is not None and initial_data is None:
             raise ValueError("units can only be provided if initial_data is provided")
         if tags is not None and initial_data is None:
             raise ValueError("tags can only be provided if initial_data is provided")
-        if column_groups is not None and initial_data is None:
-            raise ValueError("column_groups can only be provided if initial_data is provided")
         if initial_data is not None and self._cache is None:
             raise CacheNotConfiguredException(
                 "Cache must be configured to use this method. Please set the 'cache' parameter in the constructor."
@@ -705,9 +704,7 @@ class BlockModelAPIClient(BaseAPIClient):
                 geometry_change = True
             else:
                 geometry_change = None
-            version = await self._add_new_columns(
-                create_result.bm_uuid, initial_data, units, geometry_change, tags, column_groups
-            )
+            version = await self._add_new_columns(create_result.bm_uuid, initial_data, units, geometry_change, tags)
         return self._bm_from_model(create_result), version
 
     async def add_new_subblocked_columns(
@@ -952,8 +949,8 @@ class BlockModelAPIClient(BaseAPIClient):
         delete_columns: set[str] | None = None,
         units: dict[str, str] | None = None,
         tags: dict[str, dict[str, Any]] | None = None,
-        column_groups: dict[str, str] | None = None,
         update_type: models.UpdateType = models.UpdateType.replace,
+        column_groups: dict[str, str] | None = None,
     ) -> Version:
         """Add, update, or delete regular block model columns.
 
@@ -1000,8 +997,8 @@ class BlockModelAPIClient(BaseAPIClient):
         geometry_change: bool = False,
         fill_subblocks: bool | None = None,
         tags: dict[str, dict[str, Any]] | None = None,
-        column_groups: dict[str, str] | None = None,
         update_type: models.UpdateType = models.UpdateType.replace,
+        column_groups: dict[str, str] | None = None,
     ) -> Version:
         """Add, update, or delete sub-blocked block model columns.
 

@@ -1284,11 +1284,3 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
         )
         with self.assertRaises(JobFailedException):
             await self.preview_client_without_cache.update_groups(BM_UUID, delete=["Assays"])
-
-    async def test_create_block_model_column_groups_requires_initial_data(self) -> None:
-        with self.assertRaises(ValueError):
-            await self.bms_client.create_block_model(
-                name="test",
-                grid_definition=mock.MagicMock(),
-                column_groups={"col1": "Assays"},
-            )

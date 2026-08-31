@@ -125,3 +125,23 @@ class TestVersionGroupHelpers(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestGroupInputModelsRejectExtras(unittest.TestCase):
+    def test_group_definition_forbids_unknown_fields(self) -> None:
+        from pydantic import ValidationError
+
+        from evo.blockmodels.data import GroupDefinition
+
+        with self.assertRaises(ValidationError):
+            GroupDefinition(title="Assays", parnet_group="typo")
+
+    def test_group_metadata_update_forbids_title_field(self) -> None:
+        # The wire rename field is ``new_title``; passing ``title`` (the wire name) must be rejected
+        # so it can't silently collide with the new_title -> title remap.
+        from pydantic import ValidationError
+
+        from evo.blockmodels.data import GroupMetadataUpdate
+
+        with self.assertRaises(ValidationError):
+            GroupMetadataUpdate(title="X")
