@@ -157,7 +157,7 @@ class TestGroupInputModelsRejectExtras(unittest.TestCase):
             ColumnMetadataUpdate(group="Assays")
 
 
-class TestQualifyHeadings(unittest.TestCase):
+class TestQualifyColumnTitles(unittest.TestCase):
     def test_get_qualified_title_builds_qualified_and_bare_titles(self) -> None:
         from evo.blockmodels.data import get_qualified_title
 
@@ -185,7 +185,7 @@ class TestQualifyHeadings(unittest.TestCase):
             column_groups,
             {f"Assays{QUALIFIED_TITLE_SEPARATOR}Cu": "Assays", f"Assays{QUALIFIED_TITLE_SEPARATOR}Au": "Assays"},
         )
-        # Untouched columns keep their bare heading and are absent from column_groups.
+        # Untouched columns keep their plain title and are absent from column_groups.
         self.assertEqual(renamed.column("i").to_pylist(), [1])
 
     def test_qualify_column_titles_treats_empty_group_as_ungrouped(self) -> None:

@@ -1059,7 +1059,7 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
             mock.patch("pyarrow.parquet.write_table", wraps=pyarrow.parquet.write_table) as mock_write,
         ):
             mock_destination.upload_file = mock.AsyncMock()
-            # The caller keys the grouped column by its qualified upload heading; the SDK never renames data.
+            # The caller keys the grouped column by its qualified title; the SDK never renames data.
             data = pyarrow.table(
                 {
                     "i": [1, 2, 3],
@@ -1100,7 +1100,7 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
             )
 
             # The uploaded data is untouched: the caller already keyed the grouped column by its
-            # qualified heading, and the ungrouped column keeps its bare heading.
+            # qualified title, and the ungrouped column keeps its plain title.
             uploaded_table = mock_write.call_args.args[0]
             self.assertEqual(uploaded_table.schema.names, ["i", "j", "k", "col1", "Assays\u25b8col2"])
 
@@ -1125,7 +1125,7 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
             mock.patch("pyarrow.parquet.write_table", wraps=pyarrow.parquet.write_table) as mock_write,
         ):
             mock_destination.upload_file = mock.AsyncMock()
-            # New columns are named by their upload heading; the grouped one is qualified.
+            # New columns are named by their title; the grouped one is qualified.
             data = pyarrow.table(
                 {
                     "i": [1, 2, 3],
@@ -1169,7 +1169,7 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
             )
 
             uploaded_table = mock_write.call_args.args[0]
-            # Data is uploaded exactly as provided (already keyed by the qualified heading).
+            # Data is uploaded exactly as provided (already keyed by the qualified title).
             self.assertEqual(uploaded_table.schema.names, ["i", "j", "k", "Assays\u25b8Primary\u25b8col1", "col2"])
 
     async def test_update_columns_with_unknown_group_column(self) -> None:
@@ -1194,7 +1194,7 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
             mock.patch("pyarrow.parquet.write_table", wraps=pyarrow.parquet.write_table) as mock_write,
         ):
             mock_destination.upload_file = mock.AsyncMock()
-            # col1 is currently ungrouped; its data is re-uploaded under its NEW qualified heading.
+            # col1 is currently ungrouped; its data is re-uploaded under its NEW qualified title.
             data = pyarrow.table(
                 {
                     "i": [1, 2, 3],
@@ -1234,7 +1234,7 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
             )
 
             uploaded_table = mock_write.call_args.args[0]
-            # col1 is uploaded under its new qualified heading so the service binds its re-uploaded data.
+            # col1 is uploaded under its new qualified title so the service binds its re-uploaded data.
             self.assertEqual(uploaded_table.schema.names, ["i", "j", "k", "Assays\u25b8col1", "col2"])
 
     async def test_update_block_model_columns_ungroups_existing_column(self) -> None:
@@ -1250,7 +1250,7 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
             mock.patch("pyarrow.parquet.write_table", wraps=pyarrow.parquet.write_table) as mock_write,
         ):
             mock_destination.upload_file = mock.AsyncMock()
-            # col2 currently lives in "Assays"; ungrouping re-uploads its data under its NEW bare heading.
+            # col2 currently lives in "Assays"; ungrouping re-uploads its data under its NEW plain title.
             data = pyarrow.table(
                 {
                     "i": [1, 2, 3],
@@ -1293,7 +1293,7 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
             )
 
             uploaded_table = mock_write.call_args.args[0]
-            # The now-ungrouped column is uploaded under its new bare heading.
+            # The now-ungrouped column is uploaded under its new plain title.
             self.assertEqual(uploaded_table.schema.names, ["i", "j", "k", "col1", "col2"])
 
     async def test_update_block_model_columns_moves_currently_grouped_column(self) -> None:
@@ -1309,7 +1309,7 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
             mock.patch("pyarrow.parquet.write_table", wraps=pyarrow.parquet.write_table) as mock_write,
         ):
             mock_destination.upload_file = mock.AsyncMock()
-            # col1 currently lives in "Assays"; moving it re-uploads its data under its NEW qualified heading.
+            # col1 currently lives in "Assays"; moving it re-uploads its data under its NEW qualified title.
             data = pyarrow.table(
                 {
                     "i": [1, 2, 3],
@@ -1351,7 +1351,7 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
             )
 
             uploaded_table = mock_write.call_args.args[0]
-            # The moved column is uploaded under its NEW qualified heading.
+            # The moved column is uploaded under its NEW qualified title.
             self.assertEqual(uploaded_table.schema.names, ["i", "j", "k", "Geology\u25b8col1", "col2"])
 
     async def test_update_block_model_columns_data_only_update_of_grouped_column(self) -> None:
@@ -1367,7 +1367,7 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
             mock.patch("pyarrow.parquet.write_table", wraps=pyarrow.parquet.write_table) as mock_write,
         ):
             mock_destination.upload_file = mock.AsyncMock()
-            # A data-only update keeps the grouped column under its current qualified heading.
+            # A data-only update keeps the grouped column under its current qualified title.
             data = pyarrow.table(
                 {
                     "i": [1, 2, 3],
@@ -1404,7 +1404,7 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
             )
 
             uploaded_table = mock_write.call_args.args[0]
-            # The grouped column keeps its current qualified heading so its data binds correctly.
+            # The grouped column keeps its current qualified title so its data binds correctly.
             self.assertEqual(uploaded_table.schema.names, ["i", "j", "k", "Assays\u25b8col1", "col2"])
 
     async def test_column_metadata_update_rejects_group(self) -> None:

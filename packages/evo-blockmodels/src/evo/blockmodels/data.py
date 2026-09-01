@@ -59,15 +59,15 @@ QUALIFIED_TITLE_SEPARATOR = "\u25b8"
 
 
 def get_qualified_title(group: str | None, title: str, separator: str = QUALIFIED_TITLE_SEPARATOR) -> str:
-    """Build the upload heading the block model service expects for a column.
+    """Build the column title the block model service expects for a column.
 
-    A grouped column must be uploaded under its fully-qualified title (``group▸…▸leaf``); an
-    ungrouped column (no group, or ``group == ""``) keeps its bare title.
+    A grouped column must be uploaded under its qualified title (``group▸…▸title``); an
+    ungrouped column (no group, or ``group == ""``) keeps its plain title.
 
     :param group: The qualified title (path) of the column's group, or ``None``/``""`` if ungrouped.
-    :param title: The column's bare (leaf) title.
+    :param title: The column's title.
     :param separator: Separator used to join the path segments.
-    :return: The qualified heading (``group▸title``) if grouped, otherwise ``title``.
+    :return: The qualified title (``group▸title``) if grouped, otherwise ``title``.
     """
     if group:
         return f"{group}{separator}{title}"
@@ -77,22 +77,21 @@ def get_qualified_title(group: str | None, title: str, separator: str = QUALIFIE
 def qualify_column_titles(
     data: Table, groups: dict[str, str], separator: str = QUALIFIED_TITLE_SEPARATOR
 ) -> tuple[Table, dict[str, str]]:
-    """Rename a table's columns to the qualified upload headings the service expects.
+    """Rename a table's columns to the qualified titles the service expects.
 
     The column methods on :class:`~evo.blockmodels.client.BlockModelAPIClient` expect ``data`` to be
-    keyed by each column's exact upload heading — a qualified ``group▸leaf`` title for a grouped column,
-    or the bare title for an ungrouped one — and do not rename anything for you. This opt-in helper
-    performs that shift: pass a table keyed by bare (leaf) titles plus a mapping of the columns you want
-    grouped, and it returns the renamed table alongside the ``column_groups`` mapping to hand back to the
-    client.
+    keyed by each column's title — a qualified ``group▸title`` for a grouped column, or the plain title
+    for an ungrouped one — and do not rename anything for you. This opt-in helper performs that shift:
+    pass a table keyed by plain titles plus a mapping of the columns you want grouped, and it returns the
+    renamed table alongside the ``column_groups`` mapping to hand back to the client.
 
-    :param data: A table keyed by bare (leaf) column titles.
-    :param groups: A mapping of a column's bare title to the qualified title of the group it should be
+    :param data: A table keyed by plain column titles.
+    :param groups: A mapping of a column's title to the qualified title of the group it should be
         placed in. Columns absent from the mapping (or mapped to ``""``) are treated as ungrouped and
-        left with their bare heading.
+        left with their plain title.
     :param separator: Separator used to build qualified titles.
     :return: A ``(table, column_groups)`` pair: the table with grouped columns renamed to their qualified
-        heading, and a ``{qualified_title: group}`` mapping to pass as ``column_groups``.
+        title, and a ``{qualified_title: group}`` mapping to pass as ``column_groups``.
     :raises KeyError: If ``groups`` references a column that is not present in ``data``.
     """
     existing = set(data.schema.names)
@@ -104,10 +103,10 @@ def qualify_column_titles(
     column_groups: dict[str, str] = {}
     for name in data.schema.names:
         group = groups.get(name)
-        heading = get_qualified_title(group, name, separator)
-        new_names.append(heading)
+        column_title = get_qualified_title(group, name, separator)
+        new_names.append(column_title)
         if group:
-            column_groups[heading] = group
+            column_groups[column_title] = group
     return data.rename_columns(new_names), column_groups
 
 
