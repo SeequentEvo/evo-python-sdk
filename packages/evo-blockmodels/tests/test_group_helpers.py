@@ -155,3 +155,55 @@ class TestGroupInputModelsRejectExtras(unittest.TestCase):
 
         with self.assertRaises(ValidationError):
             ColumnMetadataUpdate(group="Assays")
+
+
+class TestQualifyHeadings(unittest.TestCase):
+    def test_qualified_heading_builds_qualified_and_bare_titles(self) -> None:
+        from evo.blockmodels.data import qualified_heading
+
+        self.assertEqual(qualified_heading("Assays", "Cu"), f"Assays{QUALIFIED_TITLE_SEPARATOR}Cu")
+        self.assertEqual(
+            qualified_heading("Assays\u25b8Primary", "Cu"), f"Assays\u25b8Primary{QUALIFIED_TITLE_SEPARATOR}Cu"
+        )
+        # An ungrouped column keeps its bare title.
+        self.assertEqual(qualified_heading(None, "Cu"), "Cu")
+        self.assertEqual(qualified_heading("", "Cu"), "Cu")
+
+    def test_qualify_headings_renames_and_builds_column_groups(self) -> None:
+        import pyarrow
+
+        from evo.blockmodels.data import qualify_headings
+
+        data = pyarrow.table({"i": [1], "Cu": [2.0], "Au": [3.0], "rock": ["x"]})
+        renamed, column_groups = qualify_headings(data, {"Cu": "Assays", "Au": "Assays"})
+
+        self.assertEqual(
+            renamed.schema.names,
+            ["i", f"Assays{QUALIFIED_TITLE_SEPARATOR}Cu", f"Assays{QUALIFIED_TITLE_SEPARATOR}Au", "rock"],
+        )
+        self.assertEqual(
+            column_groups,
+            {f"Assays{QUALIFIED_TITLE_SEPARATOR}Cu": "Assays", f"Assays{QUALIFIED_TITLE_SEPARATOR}Au": "Assays"},
+        )
+        # Untouched columns keep their bare heading and are absent from column_groups.
+        self.assertEqual(renamed.column("i").to_pylist(), [1])
+
+    def test_qualify_headings_treats_empty_group_as_ungrouped(self) -> None:
+        import pyarrow
+
+        from evo.blockmodels.data import qualify_headings
+
+        data = pyarrow.table({"Cu": [2.0]})
+        renamed, column_groups = qualify_headings(data, {"Cu": ""})
+
+        self.assertEqual(renamed.schema.names, ["Cu"])
+        self.assertEqual(column_groups, {})
+
+    def test_qualify_headings_rejects_unknown_columns(self) -> None:
+        import pyarrow
+
+        from evo.blockmodels.data import qualify_headings
+
+        data = pyarrow.table({"Cu": [2.0]})
+        with self.assertRaises(KeyError):
+            qualify_headings(data, {"Au": "Assays"})

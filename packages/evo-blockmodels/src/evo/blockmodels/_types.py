@@ -74,6 +74,10 @@ class Table(Protocol):
     def to_pandas(self) -> DataFrame:
         """Convert to a pandas-compatible NumPy array or DataFrame, as appropriate"""
 
+    def rename_columns(self, names: list[str]) -> "Table":
+        """Return a copy of this table with its columns renamed to ``names`` (positional)."""
+        ...
+
 
 class DataFrame(Protocol):
     """Pandas DataFrame.

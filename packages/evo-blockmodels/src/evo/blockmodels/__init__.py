@@ -10,7 +10,11 @@
 #  limitations under the License.
 
 from .client import BlockModelAPIClient
+from .data import QUALIFIED_TITLE_SEPARATOR, qualified_heading, qualify_headings
 
 __all__ = [
+    "QUALIFIED_TITLE_SEPARATOR",
     "BlockModelAPIClient",
+    "qualified_heading",
+    "qualify_headings",
 ]
