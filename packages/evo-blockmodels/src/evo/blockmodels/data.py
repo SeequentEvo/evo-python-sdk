@@ -14,35 +14,100 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID
 
+from pydantic import ConfigDict
+
 from evo.common import ResourceMetadata
 from evo.workspaces import ServiceUser
 
 from ._model_config import CustomBaseModel
+from ._types import Table
 from .endpoints.models import (
     BBox,
     BBoxXYZ,
     Column,
     ListingColumn,
     ListingGroup,
+    MissingColumnPolicy,
     ResolvedGroup,
     RotationAxis,
 )
 
 __all__ = [
+    "QUALIFIED_TITLE_SEPARATOR",
     "BaseGridDefinition",
     "BlockModel",
     "Column",
     "ColumnMetadataUpdate",
     "FlexibleGridDefinition",
     "FullySubBlockedGridDefinition",
+    "GroupDefinition",
+    "GroupMetadataUpdate",
     "ListingColumn",
     "ListingGroup",
     "ListingVersion",
+    "MissingColumnPolicy",
     "OctreeGridDefinition",
     "RegularGridDefinition",
     "ResolvedGroup",
     "Version",
+    "get_qualified_title",
+    "qualify_column_titles",
 ]
+
+QUALIFIED_TITLE_SEPARATOR = "\u25b8"
+"""Default single-character separator (``▸``) used to build and parse qualified group titles."""
+
+
+def get_qualified_title(group: str | None, title: str, separator: str = QUALIFIED_TITLE_SEPARATOR) -> str:
+    """Build the column title the block model service expects for a column.
+
+    A grouped column must be uploaded under its qualified title (``group▸…▸title``); an
+    ungrouped column (no group, or ``group == ""``) keeps its plain title.
+
+    :param group: The qualified title (path) of the column's group, or ``None``/``""`` if ungrouped.
+    :param title: The column's title.
+    :param separator: Separator used to join the path segments.
+    :return: The qualified title (``group▸title``) if grouped, otherwise ``title``.
+    """
+    if group:
+        return f"{group}{separator}{title}"
+    return title
+
+
+def qualify_column_titles(
+    data: Table, groups: dict[str, str], separator: str = QUALIFIED_TITLE_SEPARATOR
+) -> tuple[Table, dict[str, str]]:
+    """Rename a table's columns to the qualified titles the service expects.
+
+    The column methods on :class:`~evo.blockmodels.client.BlockModelAPIClient` expect ``data`` to be
+    keyed by each column's title — a qualified ``group▸title`` for a grouped column, or the plain title
+    for an ungrouped one — and do not rename anything for you. This opt-in helper performs that shift:
+    pass a table keyed by plain titles plus a mapping of the columns you want grouped, and it returns the
+    renamed table alongside the ``column_groups`` mapping to hand back to the client.
+
+    :param data: A table keyed by plain column titles.
+    :param groups: A mapping of a column's title to the qualified title of the group it should be
+        placed in. Columns absent from the mapping (or mapped to ``""``) are treated as ungrouped and
+        left with their plain title.
+    :param separator: Separator used to build qualified titles.
+    :return: A ``(table, column_groups)`` pair: the table with grouped columns renamed to their qualified
+        title, and a ``{qualified_title: group}`` mapping to pass as ``column_groups``.
+    :raises KeyError: If ``groups`` references a column that is not present in ``data``.
+    """
+    existing = set(data.schema.names)
+    unknown = set(groups) - existing
+    if unknown:
+        raise KeyError(f"groups reference columns that are not present in the table: {unknown}")
+
+    new_names: list[str] = []
+    column_groups: dict[str, str] = {}
+    for name in data.schema.names:
+        group = groups.get(name)
+        column_title = get_qualified_title(group, name, separator)
+        new_names.append(column_title)
+        if group:
+            column_groups[column_title] = group
+    return data.rename_columns(new_names), column_groups
 
 
 class ColumnMetadataUpdate(CustomBaseModel):
@@ -50,6 +115,8 @@ class ColumnMetadataUpdate(CustomBaseModel):
 
     Only the fields you explicitly set are sent to the service; unset fields are left untouched.
     """
+
+    model_config = ConfigDict(extra="forbid", protected_namespaces=())
 
     unit_id: str | None = None
     """The new unit ID for the column."""
@@ -59,6 +126,63 @@ class ColumnMetadataUpdate(CustomBaseModel):
     wholesale, or ``{}`` to clear them. Omit this field to leave the existing tags untouched.
 
     Column tags are a preview feature; the client must be constructed with ``preview=True`` to use them."""
+
+
+class GroupDefinition(CustomBaseModel):
+    """Definition of a new column group to create via :meth:`BlockModelAPIClient.update_groups`.
+
+    Column groups are a preview feature; the client must be constructed with ``preview=True`` to use them.
+    """
+
+    model_config = ConfigDict(extra="forbid", protected_namespaces=())
+
+    title: str
+    """Human-readable label for the group, unique across its siblings. Must not contain the qualified
+    title separator ``▸``."""
+
+    parent_group: str | None = None
+    """Qualified title of the parent group (a bare title for a top-level parent, or segments joined by
+    ``▸`` for a nested parent). ``None`` (the default) makes this a top-level group."""
+
+    missing_column_policy: MissingColumnPolicy | None = None
+    """Policy for columns in this group's zone that are absent from an update. ``None`` (the default)
+    lets the service apply its default of ``INHERIT``."""
+
+    tags: dict[str, Any] | None = None
+    """Publisher-supplied free-form metadata for the group."""
+
+    is_hidden: bool = False
+    """When ``True``, the group's direct member columns are excluded from wildcard queries unless
+    ``include_hidden`` is set."""
+
+
+class GroupMetadataUpdate(CustomBaseModel):
+    """A metadata update for an existing column group, used by :meth:`BlockModelAPIClient.update_groups`.
+
+    Only the fields you explicitly set are sent to the service; unset fields are left unchanged.
+
+    Column groups are a preview feature; the client must be constructed with ``preview=True`` to use them.
+    """
+
+    model_config = ConfigDict(extra="forbid", protected_namespaces=())
+
+    new_title: str | None = None
+    """Rename the group to this title. Omit to leave the title unchanged."""
+
+    parent_group: str | None = None
+    """Re-parent the group. Provide the qualified title of the new parent group, or an empty string
+    (``""``) to make it a top-level group. Omit to leave the parent unchanged."""
+
+    missing_column_policy: MissingColumnPolicy | None = None
+    """Set the group's missing-column policy. Use ``INHERIT`` to adopt the parent chain's policy zone.
+    Omit to leave the policy unchanged."""
+
+    tags: dict[str, Any] | None = None
+    """Replacement tags for the group. Send a populated object to replace the group's tags wholesale,
+    or ``{}`` to clear them. Omit to leave the existing tags untouched."""
+
+    is_hidden: bool | None = None
+    """Set the group's hidden flag. Omit to leave it unchanged."""
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -278,6 +402,68 @@ class _VersionBase:
             f"by={self.created_by.name or self.created_by.email}{bbox_str}, "
             f"columns={col_names})"
         )
+
+    def group_by_uuid(self, group_uuid: UUID) -> "ResolvedGroup | ListingGroup | None":
+        """Return the group on this version with the given UUID, or ``None`` if there is no match."""
+        for group in self.groups:
+            if group.group_uuid == group_uuid:
+                return group
+        return None
+
+    def group_for_column(self, column: "Column | ListingColumn") -> "ResolvedGroup | ListingGroup | None":
+        """Resolve the group a column belongs to.
+
+        This bridges the read path (columns reference their group by UUID) so a caller can get the
+        group's title, parent and resolved missing-column policy without hand-rolling a lookup.
+
+        A column object is required rather than a title: titles are only unique within a group, so a
+        title can be ambiguous across groups. The column carries its group reference unambiguously.
+
+        :param column: A column from this version.
+        :return: The column's group, or ``None`` if the column is ungrouped or its group is not on
+            this version.
+        """
+        if column.group_uuid is None:
+            return None
+        return self.group_by_uuid(column.group_uuid)
+
+    def qualified_group_title(
+        self, group: "ResolvedGroup | ListingGroup", separator: str = QUALIFIED_TITLE_SEPARATOR
+    ) -> str:
+        """Build the qualified (``▸``-joined) title of a group by walking its parent chain.
+
+        :param group: A group from this version.
+        :param separator: Separator used to join the path segments.
+        :return: The fully-qualified group title.
+        """
+        titles = [group.title]
+        seen = {group.group_uuid}
+        parent_uuid = group.parent_group_uuid
+        while parent_uuid is not None and parent_uuid not in seen:
+            parent = self.group_by_uuid(parent_uuid)
+            if parent is None:
+                break
+            titles.append(parent.title)
+            seen.add(parent.group_uuid)
+            parent_uuid = parent.parent_group_uuid
+        return separator.join(reversed(titles))
+
+    def group_by_qualified_title(
+        self, qualified_title: str, separator: str = QUALIFIED_TITLE_SEPARATOR
+    ) -> "ResolvedGroup | ListingGroup | None":
+        """Find a group by the qualified title it was created with.
+
+        This bridges the write/read asymmetry: groups are written by title but read back by UUID, so a
+        caller who created a group by title can find it again on the returned version.
+
+        :param qualified_title: A bare title for a top-level group, or ``▸``-joined segments for a nested group.
+        :param separator: Separator used to parse and rebuild qualified titles.
+        :return: The matching group, or ``None`` if there is no match.
+        """
+        for group in self.groups:
+            if self.qualified_group_title(group, separator) == qualified_title:
+                return group
+        return None
 
 
 @dataclass(frozen=True, kw_only=True, repr=False)
