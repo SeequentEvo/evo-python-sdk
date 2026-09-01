@@ -158,24 +158,24 @@ class TestGroupInputModelsRejectExtras(unittest.TestCase):
 
 
 class TestQualifyHeadings(unittest.TestCase):
-    def test_qualified_heading_builds_qualified_and_bare_titles(self) -> None:
-        from evo.blockmodels.data import qualified_heading
+    def test_get_qualified_title_builds_qualified_and_bare_titles(self) -> None:
+        from evo.blockmodels.data import get_qualified_title
 
-        self.assertEqual(qualified_heading("Assays", "Cu"), f"Assays{QUALIFIED_TITLE_SEPARATOR}Cu")
+        self.assertEqual(get_qualified_title("Assays", "Cu"), f"Assays{QUALIFIED_TITLE_SEPARATOR}Cu")
         self.assertEqual(
-            qualified_heading("Assays\u25b8Primary", "Cu"), f"Assays\u25b8Primary{QUALIFIED_TITLE_SEPARATOR}Cu"
+            get_qualified_title("Assays\u25b8Primary", "Cu"), f"Assays\u25b8Primary{QUALIFIED_TITLE_SEPARATOR}Cu"
         )
         # An ungrouped column keeps its bare title.
-        self.assertEqual(qualified_heading(None, "Cu"), "Cu")
-        self.assertEqual(qualified_heading("", "Cu"), "Cu")
+        self.assertEqual(get_qualified_title(None, "Cu"), "Cu")
+        self.assertEqual(get_qualified_title("", "Cu"), "Cu")
 
-    def test_qualify_headings_renames_and_builds_column_groups(self) -> None:
+    def test_qualify_column_titles_renames_and_builds_column_groups(self) -> None:
         import pyarrow
 
-        from evo.blockmodels.data import qualify_headings
+        from evo.blockmodels.data import qualify_column_titles
 
         data = pyarrow.table({"i": [1], "Cu": [2.0], "Au": [3.0], "rock": ["x"]})
-        renamed, column_groups = qualify_headings(data, {"Cu": "Assays", "Au": "Assays"})
+        renamed, column_groups = qualify_column_titles(data, {"Cu": "Assays", "Au": "Assays"})
 
         self.assertEqual(
             renamed.schema.names,
@@ -188,22 +188,22 @@ class TestQualifyHeadings(unittest.TestCase):
         # Untouched columns keep their bare heading and are absent from column_groups.
         self.assertEqual(renamed.column("i").to_pylist(), [1])
 
-    def test_qualify_headings_treats_empty_group_as_ungrouped(self) -> None:
+    def test_qualify_column_titles_treats_empty_group_as_ungrouped(self) -> None:
         import pyarrow
 
-        from evo.blockmodels.data import qualify_headings
+        from evo.blockmodels.data import qualify_column_titles
 
         data = pyarrow.table({"Cu": [2.0]})
-        renamed, column_groups = qualify_headings(data, {"Cu": ""})
+        renamed, column_groups = qualify_column_titles(data, {"Cu": ""})
 
         self.assertEqual(renamed.schema.names, ["Cu"])
         self.assertEqual(column_groups, {})
 
-    def test_qualify_headings_rejects_unknown_columns(self) -> None:
+    def test_qualify_column_titles_rejects_unknown_columns(self) -> None:
         import pyarrow
 
-        from evo.blockmodels.data import qualify_headings
+        from evo.blockmodels.data import qualify_column_titles
 
         data = pyarrow.table({"Cu": [2.0]})
         with self.assertRaises(KeyError):
-            qualify_headings(data, {"Au": "Assays"})
+            qualify_column_titles(data, {"Au": "Assays"})

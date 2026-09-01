@@ -50,15 +50,15 @@ __all__ = [
     "RegularGridDefinition",
     "ResolvedGroup",
     "Version",
-    "qualified_heading",
-    "qualify_headings",
+    "get_qualified_title",
+    "qualify_column_titles",
 ]
 
 QUALIFIED_TITLE_SEPARATOR = "\u25b8"
 """Default single-character separator (``▸``) used to build and parse qualified group titles."""
 
 
-def qualified_heading(group: str | None, title: str, separator: str = QUALIFIED_TITLE_SEPARATOR) -> str:
+def get_qualified_title(group: str | None, title: str, separator: str = QUALIFIED_TITLE_SEPARATOR) -> str:
     """Build the upload heading the block model service expects for a column.
 
     A grouped column must be uploaded under its fully-qualified title (``group▸…▸leaf``); an
@@ -74,7 +74,7 @@ def qualified_heading(group: str | None, title: str, separator: str = QUALIFIED_
     return title
 
 
-def qualify_headings(
+def qualify_column_titles(
     data: Table, groups: dict[str, str], separator: str = QUALIFIED_TITLE_SEPARATOR
 ) -> tuple[Table, dict[str, str]]:
     """Rename a table's columns to the qualified upload headings the service expects.
@@ -92,7 +92,7 @@ def qualify_headings(
         left with their bare heading.
     :param separator: Separator used to build qualified titles.
     :return: A ``(table, column_groups)`` pair: the table with grouped columns renamed to their qualified
-        heading, and a ``{qualified_heading: group}`` mapping to pass as ``column_groups``.
+        heading, and a ``{qualified_title: group}`` mapping to pass as ``column_groups``.
     :raises KeyError: If ``groups`` references a column that is not present in ``data``.
     """
     existing = set(data.schema.names)
@@ -104,7 +104,7 @@ def qualify_headings(
     column_groups: dict[str, str] = {}
     for name in data.schema.names:
         group = groups.get(name)
-        heading = qualified_heading(group, name, separator)
+        heading = get_qualified_title(group, name, separator)
         new_names.append(heading)
         if group:
             column_groups[heading] = group

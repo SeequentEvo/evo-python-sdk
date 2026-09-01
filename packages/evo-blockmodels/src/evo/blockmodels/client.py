@@ -43,7 +43,7 @@ from .data import (
     Version,
 )
 from .data import (
-    qualified_heading as _qualified_heading,
+    get_qualified_title as _get_qualified_title,
 )
 from .endpoints import models
 from .endpoints.api import ColumnOperationsApi, JobsApi, MetadataApi, OperationsApi, ReportsApi, VersionsApi
@@ -190,7 +190,7 @@ def _leaf_title(heading: str, group: str | None) -> str:
     if not heading.startswith(prefix):
         raise MissingColumnInTable(
             f"column '{heading}' is declared in group '{group}' but its data heading is not the qualified "
-            f"title '{prefix}<leaf>'. Key the data by its exact upload heading (see qualify_headings)."
+            f"title '{prefix}<leaf>'. Key the data by its exact upload heading (see qualify_column_titles)."
         )
     return heading[len(prefix) :]
 
@@ -754,7 +754,7 @@ class BlockModelAPIClient(BaseAPIClient):
         :param column_groups: A dictionary mapping a grouped column's qualified upload heading (its key in
             `data`, e.g. ``"Assays▸Cu"``) to the qualified title of the group it belongs to (e.g. ``"Assays"``).
             Ungrouped columns are keyed by their bare title in `data` and omitted here. `data` must be keyed by each
-            column's exact upload heading; :func:`~evo.blockmodels.data.qualify_headings` can build that from
+            column's exact upload heading; :func:`~evo.blockmodels.data.qualify_column_titles` can build that from
             bare-titled data. Column groups are a preview feature; the client must be constructed with
             ``preview=True`` to use them.
         :raises CacheNotConfiguredException: If the cache is not configured.
@@ -791,7 +791,7 @@ class BlockModelAPIClient(BaseAPIClient):
         :param column_groups: A dictionary mapping a grouped column's qualified upload heading (its key in
             `data`, e.g. ``"Assays▸Cu"``) to the qualified title of the group it belongs to (e.g. ``"Assays"``).
             Ungrouped columns are keyed by their bare title in `data` and omitted here. `data` must be keyed by each
-            column's exact upload heading; :func:`~evo.blockmodels.data.qualify_headings` can build that from
+            column's exact upload heading; :func:`~evo.blockmodels.data.qualify_column_titles` can build that from
             bare-titled data. Column groups are a preview feature; the client must be constructed with
             ``preview=True`` to use them.
         :raises CacheNotConfiguredException: If the cache is not configured.
@@ -875,7 +875,7 @@ class BlockModelAPIClient(BaseAPIClient):
         :param column_groups: A dictionary mapping a grouped column's qualified upload heading (its key in
             `data`, e.g. ``"Assays▸Cu"``) to the qualified title of the group it belongs to (e.g. ``"Assays"``).
             Ungrouped columns are keyed by their bare title in `data` and omitted here. `data` must be keyed by each
-            column's exact upload heading; :func:`~evo.blockmodels.data.qualify_headings` can build that from
+            column's exact upload heading; :func:`~evo.blockmodels.data.qualify_column_titles` can build that from
             bare-titled data. Column groups are a preview feature; the client must be constructed with
             ``preview=True`` to use them.
         :raises CacheNotConfiguredException: If the cache is not configured.
@@ -927,7 +927,7 @@ class BlockModelAPIClient(BaseAPIClient):
             if column in update_columns and column in column_groups:
                 # A move re-uploads the column's data under its NEW heading (new group + current leaf).
                 leaf = column.rsplit(_QUALIFIED_TITLE_SEPARATOR, 1)[-1]
-                return _qualified_heading(column_groups[column], leaf)
+                return _get_qualified_title(column_groups[column], leaf)
             # New columns and plain data updates are uploaded under their own title/heading.
             return column
 
@@ -1027,7 +1027,7 @@ class BlockModelAPIClient(BaseAPIClient):
         :param bm_id: The ID of the block model to add columns to.
         :param data: The data containing the affected columns, keyed by each column's exact upload heading
             (a bare title for an ungrouped column, or the qualified ``group▸leaf`` title for a grouped one).
-            :func:`~evo.blockmodels.data.qualify_headings` can build these headings from bare-titled data.
+            :func:`~evo.blockmodels.data.qualify_column_titles` can build these headings from bare-titled data.
         :param new_columns: A list of new columns to add, named by their upload heading in `data` (qualified
             ``group▸leaf`` for a grouped column, bare otherwise).
         :param update_columns: A set of existing columns to re-upload, each identified by the title the service
@@ -1087,7 +1087,7 @@ class BlockModelAPIClient(BaseAPIClient):
         :param bm_id: The ID of the block model to add columns to.
         :param data: The data containing the affected columns, keyed by each column's exact upload heading
             (a bare title for an ungrouped column, or the qualified ``group▸leaf`` title for a grouped one).
-            :func:`~evo.blockmodels.data.qualify_headings` can build these headings from bare-titled data.
+            :func:`~evo.blockmodels.data.qualify_column_titles` can build these headings from bare-titled data.
         :param new_columns: A list of new columns to add, named by their upload heading in `data` (qualified
             ``group▸leaf`` for a grouped column, bare otherwise).
         :param update_columns: A set of existing columns to re-upload, each identified by the title the service
