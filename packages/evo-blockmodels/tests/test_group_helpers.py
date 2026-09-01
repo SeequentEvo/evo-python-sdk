@@ -99,16 +99,46 @@ class TestVersionGroupHelpers(unittest.TestCase):
         self.assertEqual(group.group_uuid, CHILD_UUID)
         self.assertEqual(group.resolved_missing_column_policy, MissingColumnPolicy.SET_NULL)
 
-    def test_group_for_column_by_title(self) -> None:
-        group = self.version.group_for_column("Cu")
-        self.assertIsNotNone(group)
-        self.assertEqual(group.group_uuid, CHILD_UUID)
-
     def test_group_for_ungrouped_column(self) -> None:
-        self.assertIsNone(self.version.group_for_column("Au"))
+        # columns[1] ("Au") has no group_uuid.
+        self.assertIsNone(self.version.group_for_column(self.version.columns[1]))
 
-    def test_group_for_unknown_column(self) -> None:
-        self.assertIsNone(self.version.group_for_column("does_not_exist"))
+    def test_group_for_column_with_dangling_group(self) -> None:
+        # A column referencing a group that is not on this version resolves to None rather than guessing.
+        orphan_column = models.Column(
+            col_id=str(uuid.uuid4()), title="Cu", data_type=models.DataType.Float64, group_uuid=uuid.uuid4()
+        )
+        self.assertIsNone(self.version.group_for_column(orphan_column))
+
+    def test_group_for_column_is_unambiguous_across_groups(self) -> None:
+        # Two columns share the title "Cu" but live in different groups; each resolves to its own group
+        # because the lookup uses the column's group_uuid, not its (non-unique) title.
+        other_uuid = uuid.uuid4()
+        version = Version(
+            bm_uuid=uuid.uuid4(),
+            version_id=2,
+            version_uuid=uuid.uuid4(),
+            parent_version_id=1,
+            base_version_id=1,
+            geoscience_version_id="3",
+            created_at=DATE,
+            created_by=USER,
+            comment="",
+            columns=[
+                models.Column(
+                    col_id=str(uuid.uuid4()), title="Cu", data_type=models.DataType.Float64, group_uuid=CHILD_UUID
+                ),
+                models.Column(
+                    col_id=str(uuid.uuid4()), title="Cu", data_type=models.DataType.Float64, group_uuid=other_uuid
+                ),
+            ],
+            groups=[
+                _resolved_group(CHILD_UUID, "Primary"),
+                _resolved_group(other_uuid, "Secondary"),
+            ],
+        )
+        self.assertEqual(version.group_for_column(version.columns[0]).group_uuid, CHILD_UUID)
+        self.assertEqual(version.group_for_column(version.columns[1]).group_uuid, other_uuid)
 
     def test_qualified_group_title_tolerates_broken_parent_chain(self) -> None:
         # A dangling parent reference must not loop or raise; it just stops walking.

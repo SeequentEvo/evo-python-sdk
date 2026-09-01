@@ -410,19 +410,19 @@ class _VersionBase:
                 return group
         return None
 
-    def group_for_column(self, column: "Column | ListingColumn | str") -> "ResolvedGroup | ListingGroup | None":
+    def group_for_column(self, column: "Column | ListingColumn") -> "ResolvedGroup | ListingGroup | None":
         """Resolve the group a column belongs to.
 
         This bridges the read path (columns reference their group by UUID) so a caller can get the
         group's title, parent and resolved missing-column policy without hand-rolling a lookup.
 
-        :param column: A column from this version, or a column title.
-        :return: The column's group, or ``None`` if the column is ungrouped or unknown.
+        A column object is required rather than a title: titles are only unique within a group, so a
+        title can be ambiguous across groups. The column carries its group reference unambiguously.
+
+        :param column: A column from this version.
+        :return: The column's group, or ``None`` if the column is ungrouped or its group is not on
+            this version.
         """
-        if isinstance(column, str):
-            column = next((c for c in self.columns if c.title == column), None)
-            if column is None:
-                return None
         if column.group_uuid is None:
             return None
         return self.group_by_uuid(column.group_uuid)
