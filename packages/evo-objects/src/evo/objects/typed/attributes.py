@@ -637,7 +637,7 @@ class Category(SchemaModel):
         """Load the persisted category lookup as ``[key, value]`` rows.
 
         Pandas categorical codes are dense positional values and must not be used
-        as schema lookup keys.  This method is intended for joins involving an
+        as schema lookup keys. This method is intended for joins involving an
         index column such as ``hole_index``.
         """
         if self._context.is_data_modified(self._data):

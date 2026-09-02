@@ -120,6 +120,6 @@ class TestDownholeUtils(unittest.TestCase):
         with self.assertRaises(ValueError):
             expand_hole_index(pd.DataFrame({"hole_index": [0], "offset": [1], "count": [2]}), 2)
 
-    def test_expand_preserves_sparse_persisted_lookup_keys(self):
+    def test_expand_preserves_hole_indices(self):
         holes = pd.DataFrame({"hole_index": [1, 42], "offset": [0, 1], "count": [1, 2]})
         self.assertListEqual(expand_hole_index(holes, 3).tolist(), [1, 42, 42])

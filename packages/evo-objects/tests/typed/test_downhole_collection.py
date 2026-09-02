@@ -461,11 +461,12 @@ class TestDownholeCollection(TestWithConnector):
         bbox = data.compute_bounding_box()
         self._assert_bounding_box_equal(bbox, 100.0, 200.0, 150.0, 300.0, -30.0, 50.0)
 
-    def test_bounding_box_uses_hole_index_not_property_position(self):
+    def test_bounding_box_uses_explicit_hole_index_mapping(self):
         data = _make_example_data()
         expected = data.compute_bounding_box()
         properties = data.properties.iloc[[1, 0]].copy()
         properties.index = [10, 20]
+        properties["hole_index"] = [1, 0]
         data = dataclasses.replace(data, properties=properties)
         bbox = data.compute_bounding_box()
         self._assert_bounding_box_equal(
@@ -567,7 +568,7 @@ class TestDownholeCollection(TestWithConnector):
                 desurvey=None,
             )
 
-    def test_location_chunks_require_each_dense_index_and_exact_path_coverage(self):
+    def test_location_chunks_require_each_lookup_key_and_exact_path_coverage(self):
         base = _make_example_data(collections=[])
         for holes in (
             pd.DataFrame({"hole_index": [0], "offset": [0], "count": [7]}),
@@ -596,7 +597,7 @@ class TestDownholeCollection(TestWithConnector):
             table=table,
             unit=None,
         )
-        with self.assertRaisesRegex(ObjectValidationError, "hole_index must reference a valid hole"):
+        with self.assertRaisesRegex(ObjectValidationError, "hole_index must reference a valid hole lookup key"):
             dataclasses.replace(base, collections=[invalid_collection])
 
     async def test_location_holes_may_be_out_of_hole_index_order(self):
@@ -613,6 +614,33 @@ class TestDownholeCollection(TestWithConnector):
             result = await DownholeCollection.create(context=self.context, data=data)
             self.assertListEqual(list((await result.collections.get("measurements").to_dataframe_by_hole())), ["H002"])
         self.assertEqual(data.compute_bounding_box(), _make_example_data(collections=[]).compute_bounding_box())
+
+    async def test_data_and_reads_support_one_based_sparse_lookup_keys(self):
+        data = _make_example_data(collections=[])
+        properties = data.properties.assign(hole_index=[1, 42])
+        holes = pd.DataFrame({"hole_index": [1, 42], "offset": [0, 4], "count": [4, 3]})
+        collection = DistanceCollection(
+            name="measurements",
+            holes=pd.DataFrame({"hole_index": [42], "offset": [0], "count": [1]}),
+            table=pd.DataFrame({"distance": [1.0]}),
+            unit=None,
+        )
+        data = dataclasses.replace(data, properties=properties, holes=holes, collections=[collection])
+        with self._mock_geoscience_objects() as mock_client:
+            result = await DownholeCollection.create(context=self.context, data=data)
+            lookup_info = result.location.hole_id.as_dict()["table"]
+            self.assertListEqual(mock_client.data[lookup_info["data"]]["key"].tolist(), [1, 42])
+            self.assertListEqual((await result.location.to_dataframe())["hole_id"].tolist(), ["H001", "H002"])
+            self.assertListEqual(list((await result.collections.get("measurements").to_dataframe_by_hole())), ["H002"])
+        self.assertEqual(data.compute_bounding_box(), _make_example_data(collections=[]).compute_bounding_box())
+
+    def test_undeclared_lookup_keys_are_rejected(self):
+        base = _make_example_data(collections=[])
+        with self.assertRaisesRegex(ObjectValidationError, "hole_index must reference a valid hole lookup key"):
+            dataclasses.replace(
+                base,
+                holes=pd.DataFrame({"hole_index": [7, 9], "offset": [0, 4], "count": [4, 3]}),
+            )
 
     def test_bounding_box_includes_collar_for_hole_without_path_rows(self):
         base = _make_example_data(collections=[])
