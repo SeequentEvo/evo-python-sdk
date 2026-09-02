@@ -1,11 +1,13 @@
 import json
 import uuid
 from datetime import datetime, timezone
+from unittest import mock
 from uuid import uuid4
 
 from evo.blockmodels import BlockModelAPIClient
 from evo.blockmodels.data import ListingVersion, RegularGridDefinition
 from evo.blockmodels.endpoints.models import MissingColumnPolicy
+from evo.blockmodels.endpoints.models import UnitType as EndpointUnitType
 from evo.common import Environment
 from evo.common.test_tools import (
     BASE_URL,
@@ -159,6 +161,52 @@ class TestListBlockModels(TestWithConnector, TestWithStorage):
         self.assertIsInstance(result[1], ListingVersion)
         self.assertEqual(result[0].version_id, 2)
         self.assertEqual(result[1].version_id, 1)
+
+    async def test_list_versions_accepts_unknown_referenced_unit_type(self) -> None:
+        bm_id = uuid.uuid4()
+        version = self.make_version(1, str(uuid.uuid4()))
+        referenced_units = [
+            {
+                "conversion_factor": 1.0,
+                "description": "A future unit",
+                "symbol": "future",
+                "unit_id": "future",
+                "unit_type": "FUTURE_UNIT_TYPE",
+            },
+        ]
+        captured_units = []
+        list_block_model_versions = self.client._versions_api.list_block_model_versions
+
+        async def capture_referenced_units(*args, **kwargs):
+            response = await list_block_model_versions(*args, **kwargs)
+            captured_units.extend(response.referenced_units)
+            return response
+
+        with (
+            self.transport.set_http_response(
+                200,
+                json.dumps(
+                    {
+                        "count": 1,
+                        "limit": 100,
+                        "offset": 0,
+                        "results": [version],
+                        "total": 1,
+                        "referenced_units": referenced_units,
+                    }
+                ),
+                headers={"Content-Type": "application/json"},
+            ),
+            mock.patch.object(
+                self.client._versions_api,
+                "list_block_model_versions",
+                side_effect=capture_referenced_units,
+            ),
+        ):
+            result = await self.client.list_versions(bm_id)
+
+        self.assertEqual(len(result), 1)
+        self.assertIs(captured_units[0].unit_type, EndpointUnitType.UNKNOWN)
 
     async def test_list_versions_with_preview_sends_header(self) -> None:
         bm_id = uuid.uuid4()

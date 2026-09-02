@@ -34,6 +34,7 @@ __all__ = [
 class UnitType(Enum):
     """Types of units supported by the Block Model Service."""
 
+    UNKNOWN = "UNKNOWN"  # For unit types introduced after this SDK version
     MASS_PER_MASS = "MASS_PER_MASS"
     MASS_PER_VOLUME = "MASS_PER_VOLUME"
     DIMENSIONLESS = "GENERIC_DIMENSIONLESS"
@@ -44,6 +45,12 @@ class UnitType(Enum):
     VALUE = "VALUE"
     CATEGORY = "CATEGORY"
     ANGLE = "ANGLE"
+
+    @classmethod
+    def _missing_(cls, value: object) -> UnitType | None:
+        if isinstance(value, str):
+            return cls.UNKNOWN
+        return None
 
 
 @dataclass(frozen=True)
