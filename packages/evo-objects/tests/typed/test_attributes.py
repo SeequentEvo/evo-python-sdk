@@ -11,12 +11,18 @@
 
 from __future__ import annotations
 
+from typing import Any, cast
 from unittest import TestCase
 
 import pandas as pd
 from parameterized import parameterized
 
-from evo.objects.typed.attributes import PendingAttribute, UnSupportedDataTypeError, _infer_attribute_type_from_series
+from evo.objects.typed.attributes import (
+    AttributeDescription,
+    PendingAttribute,
+    UnSupportedDataTypeError,
+    _infer_attribute_type_from_series,
+)
 
 
 class TestAttributeTypeInference(TestCase):
@@ -65,3 +71,27 @@ class TestPendingAttribute(TestCase):
         """Test that PendingAttribute has a useful repr."""
         pending = PendingAttribute(None, "test_attr")
         self.assertEqual(repr(pending), "PendingAttribute(name='test_attr', exists=False)")
+
+
+class TestAttributeDescription(TestCase):
+    def test_default_description_preserves_required_fields(self):
+        self.assertEqual(AttributeDescription().to_schema(), {"discipline": "", "type": ""})
+
+    def test_unitless_description_omits_unit(self):
+        description = AttributeDescription(discipline="Geology", type="Azimuth")
+        self.assertEqual(description.to_schema(), {"discipline": "Geology", "type": "Azimuth"})
+
+    def test_description_preserves_string_units(self):
+        description = AttributeDescription(discipline="geology", type="length", unit="m")
+        self.assertEqual(description.to_schema(), {"discipline": "geology", "type": "length", "unit": "m"})
+
+    def test_description_normalizes_value_units(self):
+        class Unit:
+            value = "m"
+
+        description = AttributeDescription(discipline="geology", type="length", unit=Unit())
+        self.assertEqual(description.to_schema(), {"discipline": "geology", "type": "length", "unit": "m"})
+
+    def test_description_rejects_invalid_units(self):
+        with self.assertRaisesRegex(TypeError, "unit must be"):
+            AttributeDescription(unit=cast(Any, object()))
