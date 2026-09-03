@@ -35,7 +35,7 @@ from evo.objects.typed.downhole_collection import (
 )
 from evo.objects.typed.exceptions import ObjectValidationError
 
-from .helpers import MockClient
+from .helpers import MockClient, mock_data_client
 
 
 def _make_example_data(
@@ -125,9 +125,9 @@ class TestDownholeCollection(TestWithConnector):
     def _mock_geoscience_objects(self):
         mock_client = MockClient(self.environment)
         with (
-            patch("evo.objects.typed.attributes.get_data_client", lambda _: mock_client),
-            patch("evo.objects.typed._data.get_data_client", lambda _: mock_client),
-            patch("evo.objects.typed._utils.get_data_client", lambda _: mock_client),
+            patch("evo.objects.typed.attributes.get_data_client", mock_data_client(mock_client)),
+            patch("evo.objects.typed._data.get_data_client", mock_data_client(mock_client)),
+            patch("evo.objects.typed._utils.get_data_client", mock_data_client(mock_client)),
             patch("evo.objects.typed.base.create_geoscience_object", mock_client.create_geoscience_object),
             patch("evo.objects.typed.base.replace_geoscience_object", mock_client.replace_geoscience_object),
             patch("evo.objects.DownloadedObject.from_context", mock_client.from_reference),

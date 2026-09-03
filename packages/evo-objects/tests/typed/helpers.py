@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import copy
 import uuid
+from collections.abc import Callable
 from unittest.mock import Mock
 
 import pandas as pd
@@ -136,3 +137,19 @@ class MockClient:
         assert reference.object_id is not None, "Reference must have an object ID"
         object_dict = copy.deepcopy(self.objects[str(reference.object_id)])
         return MockDownloadedObject(self, object_dict)
+
+
+def mock_data_client(mock_client: MockClient) -> Callable[[IContext], MockClient]:
+    """Build a `get_data_client` stand-in for patching.
+
+    The accessors are called so that a caller passing something that is not an `IContext` fails here, exactly as it
+    would against the real `get_data_client`.
+    """
+
+    def get_data_client(context: IContext) -> MockClient:
+        context.get_connector()
+        context.get_environment()
+        context.get_cache()
+        return mock_client
+
+    return get_data_client
