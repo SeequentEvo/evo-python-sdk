@@ -944,14 +944,23 @@ class SizeOptionsRegular(CustomBaseModel):
 
 
 class UnitType(Enum):
-    LENGTH = "LENGTH"
-    MASS = "MASS"
-    VOLUME = "VOLUME"
-    VALUE = "VALUE"
-    MASS_PER_VOLUME = "MASS_PER_VOLUME"
+    UNKNOWN = "UNKNOWN"  # For unit types introduced after this SDK version
     MASS_PER_MASS = "MASS_PER_MASS"
-    VOLUME_PER_VOLUME = "VOLUME_PER_VOLUME"
+    MASS_PER_VOLUME = "MASS_PER_VOLUME"
+    DIMENSIONLESS = "GENERIC_DIMENSIONLESS"
+    MASS = "MASS"
+    LENGTH = "LENGTH"
+    VOLUME = "VOLUME"
     VALUE_PER_MASS = "VALUE_PER_MASS"
+    VALUE = "VALUE"
+    CATEGORY = "CATEGORY"
+    ANGLE = "ANGLE"
+
+    @classmethod
+    def _missing_(cls, value: object) -> UnitType | None:
+        if isinstance(value, str):
+            return cls.UNKNOWN
+        return None
 
 
 class UpdateMetadataValues(CustomBaseModel):
