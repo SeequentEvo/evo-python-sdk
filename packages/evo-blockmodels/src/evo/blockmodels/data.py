@@ -121,6 +121,13 @@ class ColumnMetadataUpdate(CustomBaseModel):
     unit_id: str | None = None
     """The new unit ID for the column."""
 
+    group: str | None = None
+    """The qualified title of the new group for the column (a bare title for a top-level group, or
+    segments joined by ``▸`` for a nested group). Send ``""`` to move the column out of any group.
+    Omit this field to leave the column's current group unchanged.
+
+    Column groups are a preview feature; the client must be constructed with ``preview=True`` to use them."""
+
     tags: dict[str, Any] | None = None
     """Replacement tags for the column. Send a populated object to replace the column's tags
     wholesale, or ``{}`` to clear them. Omit this field to leave the existing tags untouched.

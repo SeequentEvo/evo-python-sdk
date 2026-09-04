@@ -898,6 +898,75 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
         )
         self.assertEqual(version.version_id, 2)
 
+    async def test_update_column_metadata_moves_column_between_groups(self) -> None:
+        """An existing grouped column is moved to another group as a metadata-only update (no data)."""
+        self.transport.set_request_handler(
+            UpdateRequestHandler(
+                update_result=UPDATE_RESULT,
+                job_response=JobResponse(job_status=JobStatus.COMPLETE, payload=UPDATED_VERSION),
+            )
+        )
+        await self.preview_client_without_cache.update_column_metadata(
+            BM_UUID,
+            # The column is addressed by its current qualified title; the group is set to the new path.
+            column_updates={"Assays\u25b8col1": ColumnMetadataUpdate(group="Geology")},
+        )
+
+        expected_update_body = models.UpdateDataLite1(
+            columns=models.UpdateColumnsLite(
+                new=[],
+                update=[],
+                rename=[],
+                delete=[],
+                update_metadata=[
+                    models.UpdateMetadataLite(
+                        title="Assays\u25b8col1", values=models.UpdateMetadataValuesLite(group="Geology")
+                    ),
+                ],
+            ),
+            comment=None,
+        )
+        self.assert_any_request_made(
+            method=RequestMethod.PATCH,
+            path=f"{self.base_path}/block-models/{BM_UUID}/blocks",
+            body=expected_update_body.model_dump(mode="json", exclude_unset=True),
+            headers=DEFAULT_EXPECTED_HEADERS | {"API-Preview": "opt-in"},
+        )
+
+    async def test_update_column_metadata_ungroups_column(self) -> None:
+        """An existing grouped column is ungrouped as a metadata-only update by sending ``group=""``."""
+        self.transport.set_request_handler(
+            UpdateRequestHandler(
+                update_result=UPDATE_RESULT,
+                job_response=JobResponse(job_status=JobStatus.COMPLETE, payload=UPDATED_VERSION),
+            )
+        )
+        await self.bms_client_without_cache.update_column_metadata(
+            BM_UUID,
+            column_updates={"Assays\u25b8col2": ColumnMetadataUpdate(group="")},
+        )
+
+        expected_update_body = models.UpdateDataLite1(
+            columns=models.UpdateColumnsLite(
+                new=[],
+                update=[],
+                rename=[],
+                delete=[],
+                update_metadata=[
+                    models.UpdateMetadataLite(
+                        title="Assays\u25b8col2", values=models.UpdateMetadataValuesLite(group="")
+                    ),
+                ],
+            ),
+            comment=None,
+        )
+        self.assert_any_request_made(
+            method=RequestMethod.PATCH,
+            path=f"{self.base_path}/block-models/{BM_UUID}/blocks",
+            body=expected_update_body.model_dump(mode="json", exclude_unset=True),
+            headers=DEFAULT_EXPECTED_HEADERS,
+        )
+
     async def test_rename_block_model_columns(self) -> None:
         self.transport.set_request_handler(
             UpdateRequestHandler(
@@ -1178,181 +1247,8 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
                 BM_UUID,
                 REGULAR_DATA,
                 new_columns=["col1"],
-                column_groups={"col2": "Assays"},  # col2 neither new nor updated
+                column_groups={"col2": "Assays"},  # col2 is not a new column
             )
-
-    async def test_update_block_model_columns_moves_existing_column_group(self) -> None:
-        """An existing column is moved to another group by re-uploading its data with a group change."""
-        self.transport.set_request_handler(
-            UpdateRequestHandler(
-                update_result=UPDATE_RESULT,
-                job_response=JobResponse(job_status=JobStatus.COMPLETE, payload=UPDATED_VERSION),
-            )
-        )
-        with (
-            mock.patch("evo.common.io.upload.StorageDestination") as mock_destination,
-            mock.patch("pyarrow.parquet.write_table", wraps=pyarrow.parquet.write_table) as mock_write,
-        ):
-            mock_destination.upload_file = mock.AsyncMock()
-            # col1 is currently ungrouped; its data is re-uploaded under its NEW qualified title.
-            data = pyarrow.table(
-                {
-                    "i": [1, 2, 3],
-                    "j": [4, 5, 6],
-                    "k": [7, 8, 9],
-                    "Assays\u25b8col1": ["A", "B", "B"],
-                    "col2": [4.5, 5.3, 6.2],
-                }
-            )
-            await self.bms_client.update_block_model_columns(
-                BM_UUID,
-                data,
-                new_columns=[],
-                update_columns={"col1"},  # current (bare) title of the ungrouped column
-                column_groups={"col1": "Assays"},  # move existing col1 into a group
-            )
-
-            expected_update_body = models.UpdateDataLite1(
-                columns=models.UpdateColumnsLite(
-                    new=[],
-                    update=["col1"],
-                    rename=[],
-                    delete=[],
-                    update_metadata=[
-                        models.UpdateMetadataLite(title="col1", values=models.UpdateMetadataValuesLite(group="Assays")),
-                    ],
-                ),
-                update_type=models.UpdateType.replace,
-                geometry_change=None,
-                fill_subblocks=None,
-            )
-            self.assert_any_request_made(
-                method=RequestMethod.PATCH,
-                path=f"{self.base_path}/block-models/{BM_UUID}/blocks",
-                body=expected_update_body.model_dump(mode="json", exclude_unset=True),
-                headers=DEFAULT_EXPECTED_HEADERS,
-            )
-
-            uploaded_table = mock_write.call_args.args[0]
-            # col1 is uploaded under its new qualified title so the service binds its re-uploaded data.
-            self.assertEqual(uploaded_table.schema.names, ["i", "j", "k", "Assays\u25b8col1", "col2"])
-
-    async def test_update_block_model_columns_ungroups_existing_column(self) -> None:
-        """An existing grouped column is moved out of its group by re-uploading its data with ``group=""``."""
-        self.transport.set_request_handler(
-            UpdateRequestHandler(
-                update_result=UPDATE_RESULT,
-                job_response=JobResponse(job_status=JobStatus.COMPLETE, payload=UPDATED_VERSION),
-            )
-        )
-        with (
-            mock.patch("evo.common.io.upload.StorageDestination") as mock_destination,
-            mock.patch("pyarrow.parquet.write_table", wraps=pyarrow.parquet.write_table) as mock_write,
-        ):
-            mock_destination.upload_file = mock.AsyncMock()
-            # col2 currently lives in "Assays"; ungrouping re-uploads its data under its NEW plain title.
-            data = pyarrow.table(
-                {
-                    "i": [1, 2, 3],
-                    "j": [4, 5, 6],
-                    "k": [7, 8, 9],
-                    "col1": ["A", "B", "B"],
-                    "col2": [4.5, 5.3, 6.2],
-                }
-            )
-            await self.bms_client.update_block_model_columns(
-                BM_UUID,
-                data,
-                new_columns=[],
-                update_columns={"Assays\u25b8col2"},  # current qualified title of the grouped column
-                column_groups={"Assays\u25b8col2": ""},  # ungroup existing col2
-            )
-
-            # col2 is currently grouped, so the service identifies it by its current qualified title.
-            expected_update_body = models.UpdateDataLite1(
-                columns=models.UpdateColumnsLite(
-                    new=[],
-                    update=["Assays\u25b8col2"],
-                    rename=[],
-                    delete=[],
-                    update_metadata=[
-                        models.UpdateMetadataLite(
-                            title="Assays\u25b8col2", values=models.UpdateMetadataValuesLite(group="")
-                        ),
-                    ],
-                ),
-                update_type=models.UpdateType.replace,
-                geometry_change=None,
-                fill_subblocks=None,
-            )
-            self.assert_any_request_made(
-                method=RequestMethod.PATCH,
-                path=f"{self.base_path}/block-models/{BM_UUID}/blocks",
-                body=expected_update_body.model_dump(mode="json", exclude_unset=True),
-                headers=DEFAULT_EXPECTED_HEADERS,
-            )
-
-            uploaded_table = mock_write.call_args.args[0]
-            # The now-ungrouped column is uploaded under its new plain title.
-            self.assertEqual(uploaded_table.schema.names, ["i", "j", "k", "col1", "col2"])
-
-    async def test_update_block_model_columns_moves_currently_grouped_column(self) -> None:
-        """An already-grouped column is moved to another group, referenced by its current qualified title."""
-        self.transport.set_request_handler(
-            UpdateRequestHandler(
-                update_result=UPDATE_RESULT,
-                job_response=JobResponse(job_status=JobStatus.COMPLETE, payload=UPDATED_VERSION),
-            )
-        )
-        with (
-            mock.patch("evo.common.io.upload.StorageDestination") as mock_destination,
-            mock.patch("pyarrow.parquet.write_table", wraps=pyarrow.parquet.write_table) as mock_write,
-        ):
-            mock_destination.upload_file = mock.AsyncMock()
-            # col1 currently lives in "Assays"; moving it re-uploads its data under its NEW qualified title.
-            data = pyarrow.table(
-                {
-                    "i": [1, 2, 3],
-                    "j": [4, 5, 6],
-                    "k": [7, 8, 9],
-                    "Geology\u25b8col1": ["A", "B", "B"],
-                    "col2": [4.5, 5.3, 6.2],
-                }
-            )
-            await self.bms_client.update_block_model_columns(
-                BM_UUID,
-                data,
-                new_columns=[],
-                update_columns={"Assays\u25b8col1"},  # current qualified title
-                column_groups={"Assays\u25b8col1": "Geology"},  # move col1 from "Assays" to "Geology"
-            )
-
-            expected_update_body = models.UpdateDataLite1(
-                columns=models.UpdateColumnsLite(
-                    new=[],
-                    update=["Assays\u25b8col1"],  # current reference
-                    rename=[],
-                    delete=[],
-                    update_metadata=[
-                        models.UpdateMetadataLite(
-                            title="Assays\u25b8col1", values=models.UpdateMetadataValuesLite(group="Geology")
-                        ),
-                    ],
-                ),
-                update_type=models.UpdateType.replace,
-                geometry_change=None,
-                fill_subblocks=None,
-            )
-            self.assert_any_request_made(
-                method=RequestMethod.PATCH,
-                path=f"{self.base_path}/block-models/{BM_UUID}/blocks",
-                body=expected_update_body.model_dump(mode="json", exclude_unset=True),
-                headers=DEFAULT_EXPECTED_HEADERS,
-            )
-
-            uploaded_table = mock_write.call_args.args[0]
-            # The moved column is uploaded under its NEW qualified title.
-            self.assertEqual(uploaded_table.schema.names, ["i", "j", "k", "Geology\u25b8col1", "col2"])
 
     async def test_update_block_model_columns_data_only_update_of_grouped_column(self) -> None:
         """A plain data update of an already-grouped column references it by its current qualified title."""
@@ -1406,11 +1302,6 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
             uploaded_table = mock_write.call_args.args[0]
             # The grouped column keeps its current qualified title so its data binds correctly.
             self.assertEqual(uploaded_table.schema.names, ["i", "j", "k", "Assays\u25b8col1", "col2"])
-
-    async def test_column_metadata_update_rejects_group(self) -> None:
-        """Group membership can no longer be changed through metadata; the service requires re-uploaded data."""
-        with self.assertRaises(ValueError):
-            ColumnMetadataUpdate(group="Assays")
 
     async def test_update_groups_create(self) -> None:
         self.transport.set_request_handler(

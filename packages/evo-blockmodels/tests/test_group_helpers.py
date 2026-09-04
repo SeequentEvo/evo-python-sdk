@@ -176,15 +176,25 @@ class TestGroupInputModelsRejectExtras(unittest.TestCase):
         with self.assertRaises(ValidationError):
             GroupMetadataUpdate(title="X")
 
-    def test_column_metadata_update_forbids_group_field(self) -> None:
-        # A column's group can only change when its data is re-uploaded, so metadata-only group moves
-        # are not supported. ``group`` must be rejected rather than silently forwarded onto the wire.
+    def test_column_metadata_update_accepts_group_field(self) -> None:
+        # A column's group is metadata and can be changed without re-uploading data, so ``group`` is a
+        # supported field. Only fields explicitly set are forwarded onto the wire.
+        from evo.blockmodels.data import ColumnMetadataUpdate
+
+        update = ColumnMetadataUpdate(group="Assays")
+        self.assertEqual(update.group, "Assays")
+        self.assertEqual(update.model_dump(exclude_unset=True), {"group": "Assays"})
+
+        # An empty string ungroups the column.
+        self.assertEqual(ColumnMetadataUpdate(group="").model_dump(exclude_unset=True), {"group": ""})
+
+    def test_column_metadata_update_forbids_unknown_field(self) -> None:
         from pydantic import ValidationError
 
         from evo.blockmodels.data import ColumnMetadataUpdate
 
         with self.assertRaises(ValidationError):
-            ColumnMetadataUpdate(group="Assays")
+            ColumnMetadataUpdate(not_a_field="x")
 
 
 class TestQualifyColumnTitles(unittest.TestCase):
