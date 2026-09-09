@@ -58,6 +58,7 @@ from .knn import KNNResult
 from .kriging import (
     BlockDiscretisation,
     Filter,
+    KrigingDiagnostics,
     KrigingResult,
 )
 from .location_wise import LocationWiseResult
@@ -70,6 +71,7 @@ __all__ = [
     "Filter",
     "IDWResult",
     "KNNResult",
+    "KrigingDiagnostics",
     "KrigingResult",
     "LocationWiseResult",
 ]

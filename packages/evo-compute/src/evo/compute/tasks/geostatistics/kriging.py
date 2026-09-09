@@ -40,28 +40,42 @@ import pandas as pd
 from evo.common import IContext, IFeedback
 from evo.objects import ObjectSchema
 from evo.objects.typed import BaseObject, object_from_reference
-from pydantic import BaseModel, Field, SerializerFunctionWrapHandler, model_serializer
+from pydantic import (
+    BaseModel,
+    Field,
+    SerializerFunctionWrapHandler,
+    ValidationInfo,
+    field_validator,
+    model_serializer,
+)
 
 # Import shared components
 from ..common import (
     AnySourceAttribute,
     AnyTargetAttribute,
+    CreateAttribute,
     Filter,
     GeoscienceObjectReference,
     SearchNeighborhood,
+    UpdateAttribute,
+    attribute_spec,
 )
-from ..common.results import TaskTarget
+from ..common.results import TaskAttribute, TaskTarget
 from ..common.runner import TaskRunner
 
 __all__ = [
     # Kriging-specific (users import from evo.compute.tasks.kriging)
+    "RECOMMENDED_DIAGNOSTIC_NAMES",
     "BlockDiscretisation",
     "Filter",
+    "KrigingDiagnostics",
+    "KrigingDiagnosticsResult",
     "KrigingMethod",
     "KrigingParameters",
     "KrigingResult",
     "KrigingResultModel",
     "KrigingRunner",
+    "KrigingTargetResult",
     "OrdinaryKriging",
     "SimpleKriging",
 ]
@@ -160,6 +174,127 @@ class BlockDiscretisation(BaseModel):
 
 
 # =============================================================================
+# Diagnostic Outputs
+# =============================================================================
+
+RECOMMENDED_DIAGNOSTIC_NAMES: dict[str, str] = {
+    "valid": "valid",
+    "kriging_variance": "KV",
+    "slope_of_regression": "SoR",
+    "kriging_efficiency": "KE",
+    "kriging_mean": "KM",
+    "num_samples": "NS",
+    "num_drillholes": "NDh",
+    "num_duplicates": "ND",
+    "num_equidistant": "NeD",
+    "sum_weights": "Sum",
+    "sum_positive_weights": "SumP",
+    "sum_negative_weights": "SumN",
+    "min_distance": "MinD",
+    "mean_distance": "AvgD",
+    "aniso_min_distance": "MinAD",
+    "aniso_mean_distance": "AvgAD",
+}
+"""Recommended attribute name for each diagnostic, matching Leapfrog's naming convention."""
+
+
+class KrigingDiagnostics(BaseModel):
+    """Optional per-location diagnostics written alongside the kriging estimate.
+
+    Each field selects one diagnostic and says where to write it on the target object.
+    Only the diagnostics you set are computed; the rest are left out entirely.
+
+    Every field accepts:
+
+    - ``True`` — create an attribute using the Leapfrog-aligned recommended name from
+      :data:`RECOMMENDED_DIAGNOSTIC_NAMES` (for example ``KV`` for ``kriging_variance``).
+    - a ``str`` — create an attribute with that name.
+    - a typed attribute from the target object — update it if it already exists,
+      otherwise create it.
+    - a :class:`~evo.compute.tasks.common.CreateAttribute` or
+      :class:`~evo.compute.tasks.common.UpdateAttribute` for full control.
+
+    Every output of a kriging task writes to its own attribute, so each diagnostic name
+    must differ from the estimate's attribute name and from every other diagnostic.
+
+    Example:
+        >>> diagnostics = KrigingDiagnostics(
+        ...     kriging_variance=True,  # creates "KV"
+        ...     num_samples="sample_count",  # creates "sample_count"
+        ...     slope_of_regression=block_model.attributes["SoR"],  # updates if it exists
+        ... )
+    """
+
+    model_config = {"extra": "forbid"}
+
+    valid: CreateAttribute | UpdateAttribute | None = None
+    """Whether each target location's neighbourhood satisfied the search constraints."""
+
+    kriging_variance: CreateAttribute | UpdateAttribute | None = None
+    """The kriging variance (estimation uncertainty)."""
+
+    slope_of_regression: CreateAttribute | UpdateAttribute | None = None
+    """The slope of regression, a diagnostic for conditional bias."""
+
+    kriging_efficiency: CreateAttribute | UpdateAttribute | None = None
+    """The proportion of point or intra-block variance explained by the kriging weights."""
+
+    kriging_mean: CreateAttribute | UpdateAttribute | None = None
+    """The GLS mean for ordinary kriging, or the supplied constant mean for simple kriging."""
+
+    num_samples: CreateAttribute | UpdateAttribute | None = None
+    """The number of data samples used in the estimate."""
+
+    num_drillholes: CreateAttribute | UpdateAttribute | None = None
+    """The number of distinct drillholes contributing to the estimate.
+
+    Requires a downhole intervals source object.
+    """
+
+    num_duplicates: CreateAttribute | UpdateAttribute | None = None
+    """The number of duplicate sample locations used in the estimate."""
+
+    num_equidistant: CreateAttribute | UpdateAttribute | None = None
+    """A hint of how many other samples could have replaced the last returned sample
+    because they were the same distance from the target location. Counted after searching
+    and before clipping to the maximum number of samples."""
+
+    sum_weights: CreateAttribute | UpdateAttribute | None = None
+    """The sum of kriging weights applied to data samples."""
+
+    sum_positive_weights: CreateAttribute | UpdateAttribute | None = None
+    """The sum of positive kriging weights applied to data samples."""
+
+    sum_negative_weights: CreateAttribute | UpdateAttribute | None = None
+    """The sum of negative kriging weights applied to data samples (zero when
+    negative-weight removal is enabled)."""
+
+    min_distance: CreateAttribute | UpdateAttribute | None = None
+    """The minimum isotropic Euclidean distance from the target location to any neighbour."""
+
+    mean_distance: CreateAttribute | UpdateAttribute | None = None
+    """The mean isotropic Euclidean distance from the target location to all neighbours."""
+
+    aniso_min_distance: CreateAttribute | UpdateAttribute | None = None
+    """The minimum anisotropic (ellipsoid-space) distance from the target location to any neighbour."""
+
+    aniso_mean_distance: CreateAttribute | UpdateAttribute | None = None
+    """The mean anisotropic (ellipsoid-space) distance from the target location to all neighbours."""
+
+    @field_validator("*", mode="before")
+    @classmethod
+    def _resolve_attribute(cls, value: Any, info: ValidationInfo) -> Any:
+        """Expand the shorthands each diagnostic accepts into an attribute specification."""
+        if value is True:
+            return CreateAttribute(name=RECOMMENDED_DIAGNOSTIC_NAMES[info.field_name])
+        if value is False:
+            return None
+        if isinstance(value, str):
+            return CreateAttribute(name=value)
+        return attribute_spec(value)
+
+
+# =============================================================================
 # Kriging Parameters
 # =============================================================================
 
@@ -199,6 +334,15 @@ class KrigingParameters(BaseModel):
         ...         ),
         ...     ),
         ... )
+        >>>
+        >>> # With diagnostics written alongside the estimate:
+        >>> params_with_diagnostics = KrigingParameters(
+        ...     source=pointset.attributes["grade"],
+        ...     target=block_model.attributes["kriged_grade"],
+        ...     variogram=variogram,
+        ...     search=SearchNeighborhood(...),
+        ...     diagnostics=KrigingDiagnostics(kriging_variance=True, num_samples=True),
+        ... )
     """
 
     model_config = {"populate_by_name": True}
@@ -233,6 +377,13 @@ class KrigingParameters(BaseModel):
     or block model.
     """
 
+    diagnostics: KrigingDiagnostics | None = Field(None, exclude=True)
+    """Optional diagnostics to write onto the target object alongside the estimate.
+
+    Only the diagnostics you select are computed. See :class:`KrigingDiagnostics`
+    for the available outputs and the shorthands each of them accepts.
+    """
+
     @model_serializer(mode="wrap")
     def _serialize(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
         result = handler(self)
@@ -240,6 +391,8 @@ class KrigingParameters(BaseModel):
             result["source"]["filter"] = self.source_filter.model_dump()
         if self.target_filter is not None:
             result["target"]["filter"] = self.target_filter.model_dump()
+        if self.diagnostics is not None:
+            result["target"]["diagnostics"] = self.diagnostics.model_dump(mode="json", exclude_none=True)
         return result
 
 
@@ -271,6 +424,37 @@ class _BlockModelToDataFrameProtocol(Protocol):
     ) -> pd.DataFrame: ...
 
 
+class KrigingDiagnosticsResult(BaseModel):
+    """The diagnostic attributes that were written alongside the kriging estimate.
+
+    Diagnostics that were not requested come back as ``None``.
+    """
+
+    valid: TaskAttribute | None = None
+    kriging_variance: TaskAttribute | None = None
+    slope_of_regression: TaskAttribute | None = None
+    kriging_efficiency: TaskAttribute | None = None
+    kriging_mean: TaskAttribute | None = None
+    num_samples: TaskAttribute | None = None
+    num_drillholes: TaskAttribute | None = None
+    num_duplicates: TaskAttribute | None = None
+    num_equidistant: TaskAttribute | None = None
+    sum_weights: TaskAttribute | None = None
+    sum_positive_weights: TaskAttribute | None = None
+    sum_negative_weights: TaskAttribute | None = None
+    min_distance: TaskAttribute | None = None
+    mean_distance: TaskAttribute | None = None
+    aniso_min_distance: TaskAttribute | None = None
+    aniso_mean_distance: TaskAttribute | None = None
+
+
+class KrigingTargetResult(TaskTarget):
+    """Target information from a kriging task result."""
+
+    diagnostics: KrigingDiagnosticsResult | None = None
+    """The diagnostic attributes that were written, when any were requested."""
+
+
 class KrigingResultModel(BaseModel):
     """Base class for compute task results.
 
@@ -283,7 +467,7 @@ class KrigingResultModel(BaseModel):
     message: str
     """A message describing what happened in the task."""
 
-    target: TaskTarget
+    target: KrigingTargetResult
     """Target information from the task result."""
 
 
@@ -314,6 +498,27 @@ class KrigingResult:
     def attribute_name(self) -> str:
         """The name of the attribute that was created/updated."""
         return self._target.attribute.name
+
+    @property
+    def diagnostics(self) -> dict[str, TaskAttribute]:
+        """The diagnostic attributes that were written, keyed by diagnostic name.
+
+        Only the diagnostics requested through
+        :attr:`KrigingParameters.diagnostics` are present.
+
+        Example:
+            >>> result = await run(manager, params, preview=True)
+            >>> result.diagnostics["kriging_variance"].name
+            'KV'
+        """
+        diagnostics = self._target.diagnostics
+        if diagnostics is None:
+            return {}
+        return {
+            name: attribute
+            for name in type(diagnostics).model_fields
+            if (attribute := getattr(diagnostics, name)) is not None
+        }
 
     @property
     def schema(self) -> ObjectSchema:
@@ -381,6 +586,8 @@ class KrigingResult:
             f"  Target:    {self.target_name}",
             f"  Attribute: {self.attribute_name}",
         ]
+        if diagnostics := self.diagnostics:
+            lines.append(f"  Diagnostics: {', '.join(a.name for a in diagnostics.values())}")
         return "\n".join(lines)
 
 

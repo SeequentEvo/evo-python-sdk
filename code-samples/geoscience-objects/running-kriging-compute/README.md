@@ -38,6 +38,7 @@ The variogram uses two nested spherical structures aligned with the dominant ori
 The notebook includes work-in-progress sections demonstrating:
 - Creating a target `BlockModel` for estimation
 - Configuring `KrigingParameters` with search neighborhoods
+- Requesting `KrigingDiagnostics` (kriging variance, slope of regression, sample counts, ...) alongside the estimate
 - Running kriging tasks with `evo.compute`
 - Running multiple scenarios in parallel for sensitivity analysis
 

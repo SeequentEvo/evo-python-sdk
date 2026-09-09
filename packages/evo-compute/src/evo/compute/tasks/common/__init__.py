@@ -26,6 +26,7 @@ from .source_target import (
     Source,
     Target,
     UpdateAttribute,
+    attribute_spec,
 )
 
 __all__ = [
@@ -55,5 +56,6 @@ __all__ = [
     "TaskRunner",
     "TaskTarget",
     "UpdateAttribute",
+    "attribute_spec",
     "run_tasks",
 ]
