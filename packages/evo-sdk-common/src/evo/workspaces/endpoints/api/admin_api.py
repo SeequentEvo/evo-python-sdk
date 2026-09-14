@@ -385,7 +385,7 @@ class AdminApi:
         deleted: bool | None = None,
         additional_headers: dict[str, str] | None = None,
         request_timeout: int | float | tuple[int | float, int | float] | None = None,
-    ) -> WorkspaceRoleOptionalResponse:  # noqa: F405
+    ) -> ResponseGetWorkspaceAdmin:  # noqa: F405
         """Get workspace
 
         Get a workspace by its ID. Admin endpoints allow organization admin users to access any workspace, regardless of their role or lack thereof within the workspace.
@@ -437,7 +437,7 @@ class AdminApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "200": WorkspaceRoleOptionalResponse,  # noqa: F405
+            "200": ResponseGetWorkspaceAdmin,  # noqa: F405
         }
 
         return await self.connector.call_api(
@@ -540,8 +540,8 @@ class AdminApi:
         order_by: str | None = None,
         filter_created_by: str | None = None,
         created_by: str | None = None,
-        created_at: str | None = None,
-        updated_at: str | None = None,
+        created_at: CreatedAtFilter | None = None,  # noqa: F405
+        updated_at: UpdatedAtFilter | None = None,  # noqa: F405
         filter_name: str | None = None,
         name: str | None = None,
         deleted: bool | None = None,
@@ -572,9 +572,9 @@ class AdminApi:
         :param created_by: (optional) Filter by workspace that a user has created, by user ID.
             Example: `'created_by_example'`
         :param created_at: (optional) Filter by the time workspace has created.
-            Example: `'created_at_example'`
+            Example: `endpoints.CreatedAtFilter()`
         :param updated_at: (optional) Filter by the latest time workspace was updated.
-            Example: `'updated_at_example'`
+            Example: `endpoints.UpdatedAtFilter()`
         :param filter_name: (optional) Filter by workspace name.
             Example: `'filter_name_example'`
         :param name: (optional) Filter by workspace name.
@@ -663,8 +663,8 @@ class AdminApi:
         order_by: str | None = None,
         filter_created_by: str | None = None,
         created_by: str | None = None,
-        created_at: str | None = None,
-        updated_at: str | None = None,
+        created_at: CreatedAtFilter | None = None,  # noqa: F405
+        updated_at: UpdatedAtFilter | None = None,  # noqa: F405
         filter_name: str | None = None,
         name: str | None = None,
         deleted: bool | None = None,
@@ -694,9 +694,9 @@ class AdminApi:
         :param created_by: (optional) Filter by workspace that a user has created, by user ID.
             Example: `'created_by_example'`
         :param created_at: (optional) Filter by the time workspace has created.
-            Example: `'created_at_example'`
+            Example: `endpoints.CreatedAtFilter()`
         :param updated_at: (optional) Filter by the latest time workspace was updated.
-            Example: `'updated_at_example'`
+            Example: `endpoints.UpdatedAtFilter()`
         :param filter_name: (optional) Filter by workspace name.
             Example: `'filter_name_example'`
         :param name: (optional) Filter by workspace name.

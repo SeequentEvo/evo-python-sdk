@@ -130,7 +130,7 @@ class WorkspacesApi:
         create_workspace_request: CreateWorkspaceRequest,  # noqa: F405
         additional_headers: dict[str, str] | None = None,
         request_timeout: int | float | tuple[int | float, int | float] | None = None,
-    ) -> WorkspaceRoleRequiredResponse:  # noqa: F405
+    ) -> ResponseCreateWorkspace:  # noqa: F405
         """Create workspace
 
         Creates a new workspace in your organization.
@@ -174,7 +174,7 @@ class WorkspacesApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "201": WorkspaceRoleRequiredResponse,  # noqa: F405
+            "201": ResponseCreateWorkspace,  # noqa: F405
         }
 
         return await self.connector.call_api(
@@ -388,7 +388,7 @@ class WorkspacesApi:
         deleted: bool | None = None,
         additional_headers: dict[str, str] | None = None,
         request_timeout: int | float | tuple[int | float, int | float] | None = None,
-    ) -> WorkspaceRoleRequiredResponse:  # noqa: F405
+    ) -> ResponseGetWorkspace:  # noqa: F405
         """Get workspace
 
         Returns a workspace by its ID, provided your user has a role to access it. To retrieve a workspace by ID regardless of your user role, see the 'Admin' equivalent API.
@@ -440,7 +440,7 @@ class WorkspacesApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "200": WorkspaceRoleRequiredResponse,  # noqa: F405
+            "200": ResponseGetWorkspace,  # noqa: F405
         }
 
         return await self.connector.call_api(
@@ -542,8 +542,8 @@ class WorkspacesApi:
         order_by: str | None = None,
         filter_created_by: str | None = None,
         created_by: str | None = None,
-        created_at: str | None = None,
-        updated_at: str | None = None,
+        created_at: CreatedAtFilter | None = None,  # noqa: F405
+        updated_at: UpdatedAtFilter | None = None,  # noqa: F405
         filter_name: str | None = None,
         name: str | None = None,
         deleted: bool | None = None,
@@ -573,9 +573,9 @@ class WorkspacesApi:
         :param created_by: (optional) Filter by workspace that a user has created, by user ID.
             Example: `'created_by_example'`
         :param created_at: (optional) Filter by the time workspace has created.
-            Example: `'created_at_example'`
+            Example: `endpoints.CreatedAtFilter()`
         :param updated_at: (optional) Filter by the latest time workspace was updated.
-            Example: `'updated_at_example'`
+            Example: `endpoints.UpdatedAtFilter()`
         :param filter_name: (optional) Filter by workspace name.
             Example: `'filter_name_example'`
         :param name: (optional) Filter by workspace name.
@@ -672,8 +672,8 @@ class WorkspacesApi:
         order_by: str | None = None,
         filter_created_by: str | None = None,
         created_by: str | None = None,
-        created_at: str | None = None,
-        updated_at: str | None = None,
+        created_at: CreatedAtFilter | None = None,  # noqa: F405
+        updated_at: UpdatedAtFilter | None = None,  # noqa: F405
         filter_name: str | None = None,
         name: str | None = None,
         deleted: bool | None = None,
@@ -702,9 +702,9 @@ class WorkspacesApi:
         :param created_by: (optional) Filter by workspace that a user has created, by user ID.
             Example: `'created_by_example'`
         :param created_at: (optional) Filter by the time workspace has created.
-            Example: `'created_at_example'`
+            Example: `endpoints.CreatedAtFilter()`
         :param updated_at: (optional) Filter by the latest time workspace was updated.
-            Example: `'updated_at_example'`
+            Example: `endpoints.UpdatedAtFilter()`
         :param filter_name: (optional) Filter by workspace name.
             Example: `'filter_name_example'`
         :param name: (optional) Filter by workspace name.
@@ -873,7 +873,7 @@ class WorkspacesApi:
         update_workspace_request: UpdateWorkspaceRequest,  # noqa: F405
         additional_headers: dict[str, str] | None = None,
         request_timeout: int | float | tuple[int | float, int | float] | None = None,
-    ) -> WorkspaceRoleRequiredResponse:  # noqa: F405
+    ) -> ResponseUpdateWorkspace:  # noqa: F405
         """Update workspace
 
         Updates a workspace.
@@ -921,7 +921,7 @@ class WorkspacesApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "200": WorkspaceRoleRequiredResponse,  # noqa: F405
+            "200": ResponseUpdateWorkspace,  # noqa: F405
         }
 
         return await self.connector.call_api(

@@ -15,7 +15,6 @@
 from __future__ import annotations
 
 from enum import Enum
-from pathlib import Path
 from typing import Annotated, Any
 from uuid import UUID
 
@@ -85,6 +84,14 @@ class Label(RootModel[StrictStr]):
     root: Annotated[StrictStr, Field(max_length=100, min_length=1)]
 
 
+class DiscoveryCentralResponse(CustomBaseModel):
+    display_name: Annotated[StrictStr, Field(title="Display Name")]
+    host: Annotated[StrictStr, Field(title="Host")]
+    id: Annotated[StrictStr, Field(title="Id")]
+    name: Annotated[StrictStr, Field(title="Name")]
+    organization_name: Annotated[StrictStr, Field(title="Organization Name")]
+
+
 class ErrorInvalidParam(CustomBaseModel):
     name: Annotated[StrictStr, Field(title="Name")]
     reason: Annotated[StrictStr, Field(title="Reason")]
@@ -101,35 +108,6 @@ class ErrorResponse(CustomBaseModel):
     type: Annotated[StrictStr, Field(title="Type")]
 
 
-class FolderCreateRequest(CustomBaseModel):
-    name: Annotated[StrictStr, Field(max_length=100, min_length=1, title="Name")]
-    """
-    The name of the folder
-    """
-    parent_folder_id: Annotated[UUID | None, Field(title="Parent Folder Id")] = None
-    """
-    The ID of the parent folder
-    """
-    parent_folder_path: Annotated[Path | None, Field(title="Parent Folder Path")] = None
-    """
-    The path of the parent folder
-    """
-
-
-class FolderMoveRequest(CustomBaseModel):
-    parent_folder_id: Annotated[UUID, Field(title="Parent Folder Id")]
-    """
-    The ID of the new parent folder
-    """
-
-
-class FolderUpdateRequest(CustomBaseModel):
-    name: Annotated[StrictStr, Field(max_length=100, min_length=1, title="Name")]
-    """
-    The new name of the folder
-    """
-
-
 class GeometryTypeEnum(Enum):
     Polygon = "Polygon"
 
@@ -138,6 +116,13 @@ class Hub(CustomBaseModel):
     code: Annotated[StrictStr, Field(title="Code")]
     display_name: Annotated[StrictStr, Field(title="Display Name")]
     url: Annotated[StrictStr, Field(title="Url")]
+
+
+class ImsGroupDetailResponse(CustomBaseModel):
+    description: Annotated[StrictStr, Field(title="Description")]
+    id: Annotated[UUID, Field(title="Id")]
+    is_federated_group: Annotated[StrictBool, Field(title="Is Federated Group")]
+    name: Annotated[StrictStr, Field(title="Name")]
 
 
 class ImsGroupResponse(CustomBaseModel):
@@ -405,24 +390,11 @@ class CreateWorkspaceRequest(CustomBaseModel):
     """
 
 
-class DiscoveryResponseContent(CustomBaseModel):
-    hubs: Annotated[list[Hub], Field(title="Hubs")]
-    organizations: Annotated[list[Organization], Field(title="Organizations")]
-    service_access: Annotated[list[ServiceAccess], Field(title="Service Access")]
-    services: Annotated[list[Service], Field(title="Services")]
-
-
-class FolderResponse(CustomBaseModel):
-    created_at: Annotated[AwareDatetime, Field(title="Created At")]
-    created_by: UserModel
-    deleted: Annotated[StrictBool, Field(title="Deleted")]
-    folder_id: Annotated[UUID, Field(title="Folder Id")]
-    name: Annotated[StrictStr, Field(title="Name")]
-    parent_folder_id: Annotated[UUID | None, Field(title="Parent Folder Id")] = None
-    path: Annotated[Path, Field(title="Path")]
-    updated_at: Annotated[AwareDatetime, Field(title="Updated At")]
-    updated_by: UserModel
-    workspace_id: Annotated[UUID, Field(title="Workspace Id")]
+class DiscoveryInstanceResponse(CustomBaseModel):
+    central: DiscoveryCentralResponse | None = None
+    display_name: Annotated[StrictStr, Field(title="Display Name")]
+    hub: Hub
+    id: Annotated[StrictStr, Field(title="Id")]
 
 
 class LicenseAccessResponseModel(CustomBaseModel):
@@ -529,6 +501,26 @@ class UserWorkspaceResponse(CustomBaseModel):
     user_role: RoleEnum
 
 
+class UserWorkspaceResponseWithThumbnailLink(CustomBaseModel):
+    bounding_box: BoundingBox | None = None
+    created_at: Annotated[AwareDatetime, Field(title="Created At")]
+    created_by: UserModel
+    default_coordinate_system: Annotated[StrictStr, Field(title="Default Coordinate System")] = ""
+    description: Annotated[StrictStr, Field(title="Description")] = ""
+    id: Annotated[UUID, Field(title="Id")]
+    labels: Annotated[list[StrictStr], Field(title="Labels")] = []
+    ml_enabled: Annotated[StrictBool, Field(title="Ml Enabled")] = False
+    name: Annotated[StrictStr, Field(max_length=60, min_length=1, title="Name")]
+    """
+    The name of the workspace, unique within an organization and hub
+    """
+    self_link: Annotated[AnyUrl, Field(title="Self Link")]
+    thumbnail_link: Annotated[AnyUrl | None, Field(title="Thumbnail Link")] = None
+    updated_at: Annotated[AwareDatetime, Field(title="Updated At")]
+    updated_by: UserModel
+    user_role: RoleEnum
+
+
 class WorkspaceRoleOptionalResponse(CustomBaseModel):
     bounding_box: BoundingBox | None = None
     created_at: Annotated[AwareDatetime, Field(title="Created At")]
@@ -544,6 +536,26 @@ class WorkspaceRoleOptionalResponse(CustomBaseModel):
     The name of the workspace, unique within an organization and hub
     """
     self_link: Annotated[AnyUrl, Field(title="Self Link")]
+    updated_at: Annotated[AwareDatetime, Field(title="Updated At")]
+    updated_by: UserModel
+
+
+class WorkspaceRoleOptionalResponseWithThumbnailLink(CustomBaseModel):
+    bounding_box: BoundingBox | None = None
+    created_at: Annotated[AwareDatetime, Field(title="Created At")]
+    created_by: UserModel
+    current_user_role: RoleEnum | None = None
+    default_coordinate_system: Annotated[StrictStr, Field(title="Default Coordinate System")] = ""
+    description: Annotated[StrictStr, Field(title="Description")] = ""
+    id: Annotated[UUID, Field(title="Id")]
+    labels: Annotated[list[StrictStr], Field(title="Labels")] = []
+    ml_enabled: Annotated[StrictBool, Field(title="Ml Enabled")] = False
+    name: Annotated[StrictStr, Field(max_length=60, min_length=1, title="Name")]
+    """
+    The name of the workspace, unique within an organization and hub
+    """
+    self_link: Annotated[AnyUrl, Field(title="Self Link")]
+    thumbnail_link: Annotated[AnyUrl | None, Field(title="Thumbnail Link")] = None
     updated_at: Annotated[AwareDatetime, Field(title="Updated At")]
     updated_by: UserModel
 
@@ -567,43 +579,63 @@ class WorkspaceRoleRequiredResponse(CustomBaseModel):
     updated_by: UserModel
 
 
+class WorkspaceRoleRequiredResponseWithThumbnailLink(CustomBaseModel):
+    bounding_box: BoundingBox | None = None
+    created_at: Annotated[AwareDatetime, Field(title="Created At")]
+    created_by: UserModel
+    current_user_role: RoleEnum
+    default_coordinate_system: Annotated[StrictStr, Field(title="Default Coordinate System")] = ""
+    description: Annotated[StrictStr, Field(title="Description")] = ""
+    id: Annotated[UUID, Field(title="Id")]
+    labels: Annotated[list[StrictStr], Field(title="Labels")] = []
+    ml_enabled: Annotated[StrictBool, Field(title="Ml Enabled")] = False
+    name: Annotated[StrictStr, Field(max_length=60, min_length=1, title="Name")]
+    """
+    The name of the workspace, unique within an organization and hub
+    """
+    self_link: Annotated[AnyUrl, Field(title="Self Link")]
+    thumbnail_link: Annotated[AnyUrl | None, Field(title="Thumbnail Link")] = None
+    updated_at: Annotated[AwareDatetime, Field(title="Updated At")]
+    updated_by: UserModel
+
+
 class AddInstanceUsersResponse(CustomBaseModel):
     invitations: Annotated[list[BaseInstanceUserInvitationWithRolesResponse], Field(title="Invitations")]
     members: Annotated[list[BaseInstanceUserWithRolesResponse], Field(title="Members")]
 
 
-class ChildFolderListResponse(CustomBaseModel):
-    count: Annotated[StrictInt, Field(title="Count")]
-    folders: Annotated[list[FolderResponse], Field(title="Folders")]
-    limit: Annotated[StrictInt, Field(title="Limit")]
-    offset: Annotated[StrictInt, Field(title="Offset")]
-    total: Annotated[StrictInt, Field(title="Total")]
+class DiscoveryAccountResponse(CustomBaseModel):
+    id: Annotated[StrictStr, Field(title="Id")]
+    instances: Annotated[list[DiscoveryInstanceResponse], Field(title="Instances")]
+    name: Annotated[StrictStr, Field(title="Name")]
 
 
-class CreatePathFoldersResponse(CustomBaseModel):
-    folders: Annotated[list[FolderResponse], Field(title="Folders")]
-
-
-class DiscoveryResponse(CustomBaseModel):
-    discovery: DiscoveryResponseContent
-
-
-class GetFolderResponse(CustomBaseModel):
-    child_folders: ChildFolderListResponse
-    folder: FolderResponse
+class DiscoveryResponseContent(CustomBaseModel):
+    accounts: Annotated[list[DiscoveryAccountResponse] | None, Field(title="Accounts")] = None
+    hubs: Annotated[list[Hub], Field(title="Hubs")]
+    organizations: Annotated[list[Organization], Field(title="Organizations")]
+    service_access: Annotated[list[ServiceAccess], Field(title="Service Access")]
+    services: Annotated[list[Service], Field(title="Services")]
 
 
 class ListUserWorkspacesResponse(CustomBaseModel):
     links: PaginationLinks
-    results: Annotated[list[UserWorkspaceResponse], Field(title="Results")]
+    results: Annotated[
+        list[UserWorkspaceResponse] | list[UserWorkspaceResponseWithThumbnailLink],
+        Field(title="Results"),
+    ]
 
 
 class ListWorkspacesResponse(CustomBaseModel):
     links: PaginationLinks
     results: Annotated[
-        list[WorkspaceRoleRequiredResponse] | list[WorkspaceRoleOptionalResponse],
+        list[WorkspaceRoleOptionalResponse] | list[WorkspaceRoleOptionalResponseWithThumbnailLink],
         Field(title="Results"),
     ]
+
+
+class DiscoveryResponse(CustomBaseModel):
+    discovery: DiscoveryResponseContent
 
 
 CoordinateSystemCategory.model_rebuild()

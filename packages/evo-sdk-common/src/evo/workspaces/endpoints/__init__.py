@@ -36,7 +36,6 @@ API version: 1.0
 from .api import (
     AdminApi,
     DiscoveryApi,
-    FoldersApi,
     GeneralApi,
     GroupsApi,
     InstanceGroupsApi,
@@ -50,7 +49,6 @@ from .api import (
 __all__ = [
     "AdminApi",
     "DiscoveryApi",
-    "FoldersApi",
     "GeneralApi",
     "GroupsApi",
     "InstanceGroupsApi",
