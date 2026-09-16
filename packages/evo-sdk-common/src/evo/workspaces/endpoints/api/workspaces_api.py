@@ -130,7 +130,7 @@ class WorkspacesApi:
         create_workspace_request: CreateWorkspaceRequest,  # noqa: F405
         additional_headers: dict[str, str] | None = None,
         request_timeout: int | float | tuple[int | float, int | float] | None = None,
-    ) -> ResponseCreateWorkspace:  # noqa: F405
+    ) -> WorkspaceResponse:  # noqa: F405
         """Create workspace
 
         Creates a new workspace in your organization.
@@ -174,7 +174,7 @@ class WorkspacesApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "201": ResponseCreateWorkspace,  # noqa: F405
+            "201": WorkspaceResponse,  # noqa: F405
         }
 
         return await self.connector.call_api(
@@ -388,7 +388,7 @@ class WorkspacesApi:
         deleted: bool | None = None,
         additional_headers: dict[str, str] | None = None,
         request_timeout: int | float | tuple[int | float, int | float] | None = None,
-    ) -> ResponseGetWorkspace:  # noqa: F405
+    ) -> AnyWorkspaceResponse:  # noqa: F405
         """Get workspace
 
         Returns a workspace by its ID, provided your user has a role to access it. To retrieve a workspace by ID regardless of your user role, see the 'Admin' equivalent API.
@@ -440,7 +440,7 @@ class WorkspacesApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "200": ResponseGetWorkspace,  # noqa: F405
+            "200": AnyWorkspaceResponse,  # noqa: F405
         }
 
         return await self.connector.call_api(
@@ -873,7 +873,7 @@ class WorkspacesApi:
         update_workspace_request: UpdateWorkspaceRequest,  # noqa: F405
         additional_headers: dict[str, str] | None = None,
         request_timeout: int | float | tuple[int | float, int | float] | None = None,
-    ) -> ResponseUpdateWorkspace:  # noqa: F405
+    ) -> WorkspaceResponse:  # noqa: F405
         """Update workspace
 
         Updates a workspace.
@@ -921,7 +921,7 @@ class WorkspacesApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "200": ResponseUpdateWorkspace,  # noqa: F405
+            "200": WorkspaceResponse,  # noqa: F405
         }
 
         return await self.connector.call_api(

@@ -385,7 +385,7 @@ class AdminApi:
         deleted: bool | None = None,
         additional_headers: dict[str, str] | None = None,
         request_timeout: int | float | tuple[int | float, int | float] | None = None,
-    ) -> ResponseGetWorkspaceAdmin:  # noqa: F405
+    ) -> WorkspaceAdminResponse:  # noqa: F405
         """Get workspace
 
         Get a workspace by its ID. Admin endpoints allow organization admin users to access any workspace, regardless of their role or lack thereof within the workspace.
@@ -437,7 +437,7 @@ class AdminApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "200": ResponseGetWorkspaceAdmin,  # noqa: F405
+            "200": WorkspaceAdminResponse,  # noqa: F405
         }
 
         return await self.connector.call_api(

@@ -84,6 +84,13 @@ class Label(RootModel[StrictStr]):
     root: Annotated[StrictStr, Field(max_length=100, min_length=1)]
 
 
+class CreatedAtFilter(RootModel[StrictStr | list[StrictStr] | None]):
+    root: StrictStr | list[StrictStr] | None = None
+    """
+    Filter by the time workspace has created.
+    """
+
+
 class DiscoveryCentralResponse(CustomBaseModel):
     display_name: Annotated[StrictStr, Field(title="Display Name")]
     host: Annotated[StrictStr, Field(title="Host")]
@@ -259,6 +266,13 @@ class UpdateInstanceUserRolesRequest(CustomBaseModel):
 class UpdateInstanceUserRolesResponse(CustomBaseModel):
     id: Annotated[UUID, Field(title="Id")]
     roles: Annotated[list[BaseInstanceUserRoleResponse], Field(title="Roles")]
+
+
+class UpdatedAtFilter(RootModel[StrictStr | list[StrictStr] | None]):
+    root: StrictStr | list[StrictStr] | None = None
+    """
+    Filter by the latest time workspace was updated.
+    """
 
 
 class User(CustomBaseModel):
@@ -604,6 +618,26 @@ class AddInstanceUsersResponse(CustomBaseModel):
     members: Annotated[list[BaseInstanceUserWithRolesResponse], Field(title="Members")]
 
 
+class AnyWorkspaceResponse(
+    RootModel[
+        WorkspaceRoleRequiredResponse
+        | WorkspaceRoleOptionalResponse
+        | WorkspaceRoleRequiredResponseWithThumbnailLink
+        | WorkspaceRoleOptionalResponseWithThumbnailLink
+    ]
+):
+    root: Annotated[
+        WorkspaceRoleRequiredResponse
+        | WorkspaceRoleOptionalResponse
+        | WorkspaceRoleRequiredResponseWithThumbnailLink
+        | WorkspaceRoleOptionalResponseWithThumbnailLink,
+        Field(title="AnyWorkspaceResponse"),
+    ]
+    """
+    Named union of get-workspace responses (role-required or role-optional). See `WorkspaceResponse`.
+    """
+
+
 class DiscoveryAccountResponse(CustomBaseModel):
     id: Annotated[StrictStr, Field(title="Id")]
     instances: Annotated[list[DiscoveryInstanceResponse], Field(title="Instances")]
@@ -632,6 +666,29 @@ class ListWorkspacesResponse(CustomBaseModel):
         list[WorkspaceRoleOptionalResponse] | list[WorkspaceRoleOptionalResponseWithThumbnailLink],
         Field(title="Results"),
     ]
+
+
+class WorkspaceAdminResponse(RootModel[WorkspaceRoleOptionalResponse | WorkspaceRoleOptionalResponseWithThumbnailLink]):
+    root: Annotated[
+        WorkspaceRoleOptionalResponse | WorkspaceRoleOptionalResponseWithThumbnailLink,
+        Field(title="WorkspaceAdminResponse"),
+    ]
+    """
+    Named union of admin-scoped get-workspace responses. See `WorkspaceResponse` for why this is named.
+    """
+
+
+class WorkspaceResponse(RootModel[WorkspaceRoleRequiredResponse | WorkspaceRoleRequiredResponseWithThumbnailLink]):
+    root: Annotated[
+        WorkspaceRoleRequiredResponse | WorkspaceRoleRequiredResponseWithThumbnailLink,
+        Field(title="WorkspaceResponse"),
+    ]
+    """
+    Named union of create/update workspace responses.
+
+    Named so FastAPI emits a `$ref` to a shared component schema instead of an inline `anyOf`
+    with an auto-generated title, which client code generators cannot resolve consistently.
+    """
 
 
 class DiscoveryResponse(CustomBaseModel):

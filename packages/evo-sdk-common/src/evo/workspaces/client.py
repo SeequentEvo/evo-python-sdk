@@ -273,7 +273,7 @@ class WorkspaceAPIClient:
         response = await self._workspaces_api.get_workspace(
             org_id=str(self._org_id), workspace_id=str(workspace_id), deleted=deleted
         )
-        return parse.workspace_model(response, self._org_id, self._connector.base_url)
+        return parse.workspace_model(response.root, self._org_id, self._connector.base_url)
 
     async def delete_workspace(
         self,
@@ -340,7 +340,7 @@ class WorkspaceAPIClient:
         model = await self._workspaces_api.create_workspace(
             org_id=str(self._org_id), create_workspace_request=create_workspace_request
         )
-        return parse.workspace_model(model, self._org_id, self._connector.base_url)
+        return parse.workspace_model(model.root, self._org_id, self._connector.base_url)
 
     async def update_workspace(
         self,
@@ -391,7 +391,7 @@ class WorkspaceAPIClient:
         model = await self._workspaces_api.update_workspace(
             org_id=str(self._org_id), workspace_id=str(workspace_id), update_workspace_request=update_workspace_request
         )
-        return parse.workspace_model(model, self._org_id, self._connector.base_url)
+        return parse.workspace_model(model.root, self._org_id, self._connector.base_url)
 
     async def restore_deleted_workspace(self, workspace_id: UUID) -> None:
         """

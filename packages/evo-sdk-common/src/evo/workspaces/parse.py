@@ -38,7 +38,9 @@ from .endpoints.models import (
     ListInstanceRolesResponse,
     ListInstanceUserInvitationsResponse,
     WorkspaceRoleOptionalResponse,
+    WorkspaceRoleOptionalResponseWithThumbnailLink,
     WorkspaceRoleRequiredResponse,
+    WorkspaceRoleRequiredResponseWithThumbnailLink,
 )
 from .endpoints.models import BoundingBox as PydanticBoundingBox
 from .endpoints.models import Coordinate as PydanticCoordinate
@@ -75,7 +77,12 @@ def bounding_box(model: PydanticBoundingBox) -> BoundingBox:
 
 
 def workspace_model(
-    model: WorkspaceRoleOptionalResponse | WorkspaceRoleRequiredResponse, org_id: UUID, base_url: str
+    model: WorkspaceRoleOptionalResponse
+    | WorkspaceRoleRequiredResponse
+    | WorkspaceRoleOptionalResponseWithThumbnailLink
+    | WorkspaceRoleRequiredResponseWithThumbnailLink,
+    org_id: UUID,
+    base_url: str,
 ) -> Workspace:
     """
     Parse a Workspace from the generated model.
