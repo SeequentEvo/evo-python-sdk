@@ -14,15 +14,18 @@ from __future__ import annotations
 import copy
 import sys
 import weakref
+from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Annotated, Any, ClassVar
 from uuid import UUID
 
 from evo import jmespath
-from evo.common import IContext, StaticContext
+from evo.common import IContext, IFeedback, StaticContext
+from evo.common.utils import NoFeedback
 from evo.objects import DownloadedObject, ObjectMetadata, ObjectReference, ObjectSchema, SchemaVersion
 
 from ._model import ModelContext, SchemaLocation, SchemaModel
+from ._prefetch import prefetch_object_data
 from ._utils import (
     create_geoscience_object,
     replace_geoscience_object,
@@ -415,6 +418,17 @@ class BaseObject(_BaseObject):
     description: Annotated[str | None, SchemaLocation("description")]
     tags: Annotated[dict[str, str], SchemaLocation("tags")] = {}
     extensions: Annotated[dict, SchemaLocation("extensions")] = {}
+
+    async def prefetch(
+        self,
+        *,
+        data_ids: Sequence[str] | None = None,
+        max_concurrent: int = 8,
+        fb: IFeedback = NoFeedback,
+    ) -> None:
+        """Warm cached data files referenced by this object."""
+
+        await prefetch_object_data(self._obj, data_ids=data_ids, max_concurrent=max_concurrent, fb=fb)
 
     @classmethod
     def create(

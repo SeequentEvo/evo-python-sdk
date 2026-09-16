@@ -27,6 +27,7 @@ from evo.common import Environment
 from evo.common.test_tools import BASE_URL
 from evo.common.utils import Cache
 from evo.objects.exceptions import SchemaValidationError, TableFormatError
+from evo.objects.parquet import ParquetLoader
 from evo.objects.utils import (
     ArrowTableFormat,
     BaseTableFormat,
@@ -80,6 +81,13 @@ def _get_table_digest(table: pa.Table) -> str:
     buffer = BytesIO()
     pq.write_table(table=table, where=buffer, version="2.4", compression="gzip")
     return _get_buffer_digest(buffer=buffer)
+
+
+def _load_table(table_info: dict, source: Path) -> pa.Table:
+    with pa.OSFile(str(source / str(table_info["data"])), mode="r") as parquet_file:
+        with ParquetLoader(parquet_file) as loader:
+            loader.validate_with_table_info(table_info)
+            return loader.load_as_table()
 
 
 def _test_name_from_known_format(cls: type, num: int, params_dict: dict) -> str:
@@ -185,7 +193,7 @@ class TestKnownFormat(unittest.TestCase):
         self.assertTrue(self.parquet_file.is_file())
         inferred_format = KnownTableFormat.from_table_info(table_info)
 
-        actual_table = KnownTableFormat.load_table(table_info, self.data_dir)
+        actual_table = _load_table(table_info, self.data_dir)
         self.assertEqual(inferred_format.width, actual_table.num_columns)
         self.assertEqual(table_info["length"], actual_table.num_rows)
 
@@ -196,34 +204,34 @@ class TestKnownFormat(unittest.TestCase):
         table_info = self._save_parquet_file(add_column=True)
         self.assertTrue(self.parquet_file.is_file())
 
-        with self.assertRaises(TableFormatError):
-            KnownTableFormat.load_table(table_info, self.data_dir)
+        with self.assertRaises(SchemaValidationError):
+            _load_table(table_info, self.data_dir)
 
     def test_load_table_with_too_many_rows(self) -> None:
         table_info = self._save_parquet_file(add_row=True)
         self.assertTrue(self.parquet_file.is_file())
 
         with self.assertRaises(SchemaValidationError):
-            KnownTableFormat.load_table(table_info, self.data_dir)
+            _load_table(table_info, self.data_dir)
 
     def test_load_table_with_wrong_data_types(self) -> None:
         table_info = self._save_parquet_file(change_type=True)
         self.assertTrue(self.parquet_file.is_file())
 
-        with self.assertRaises(TableFormatError):
-            KnownTableFormat.load_table(table_info, self.data_dir)
+        with self.assertRaises(SchemaValidationError):
+            _load_table(table_info, self.data_dir)
 
-    def test_load_table_from_uuid(self) -> None:
+    def test_load_table_with_uuid_identifier(self) -> None:
         table_info = self._save_parquet_file()
         self.assertTrue(self.parquet_file.is_file())
 
-        table_info["data"] = uuid.uuid4()
-        self.parquet_file = self.parquet_file.rename(self.parquet_file.parent / str(table_info["data"]))
+        table_info["data"] = str(uuid.uuid4())
+        self.parquet_file = self.parquet_file.rename(self.parquet_file.parent / table_info["data"])
         self.assertTrue(self.parquet_file.is_file())
 
         inferred_format = KnownTableFormat.from_table_info(table_info)
 
-        actual_table = KnownTableFormat.load_table(table_info, self.data_dir)
+        actual_table = _load_table(table_info, self.data_dir)
         self.assertEqual(inferred_format.width, actual_table.num_columns)
         self.assertEqual(table_info["length"], actual_table.num_rows)
 

@@ -23,7 +23,7 @@ import pandas as pd
 from evo.common import Environment, StaticContext
 from evo.common.test_tools import BASE_URL, ORG, WORKSPACE_ID, TestWithConnector
 from evo.objects.typed._data import DataTable, DataTableAndAttributes
-from evo.objects.typed._model import SchemaBuilder, SchemaLocation, SchemaModel
+from evo.objects.typed._model import SchemaBuilder, SchemaList, SchemaLocation, SchemaModel
 from evo.objects.utils.table_formats import FLOAT_ARRAY_3, KnownTableFormat
 
 from .helpers import MockClient
@@ -59,14 +59,26 @@ class TestSchemaConstants(TestWithConnector):
         self.assertEqual(result["format_version"], "1.0.0")
         self.assertEqual(result["name"], "test")
 
+    def test_union_schema_list_requires_polymorphic_overrides(self):
+        class First(SchemaModel):
+            pass
 
-class TestTable(DataTable):
+        class Second(SchemaModel):
+            pass
+
+        with self.assertRaisesRegex(TypeError, r"must override _resolve_item_type\(\) and _data_to_schema\(\)"):
+
+            class InvalidUnionList(SchemaList[First | Second]):
+                pass
+
+
+class CoordinateTable(DataTable):
     table_format: ClassVar[KnownTableFormat] = FLOAT_ARRAY_3
     data_columns: ClassVar[list[str]] = ["x", "y", "z"]
 
 
 class ExtendedLocations(DataTableAndAttributes):
-    _table: Annotated[TestTable, SchemaLocation("coordinates")]
+    _table: Annotated[CoordinateTable, SchemaLocation("coordinates")]
     point_count: Annotated[int, SchemaLocation("point_count")]
 
 
