@@ -674,7 +674,7 @@ class WorkspaceAdminResponse(RootModel[WorkspaceRoleOptionalResponse | Workspace
         Field(title="WorkspaceAdminResponse"),
     ]
     """
-    Named union of admin-scoped get-workspace responses. See `WorkspaceResponse` for why this is named.
+    Named union of admin-scoped get-workspace responses. See `WorkspaceResponse`.
     """
 
 
@@ -684,10 +684,7 @@ class WorkspaceResponse(RootModel[WorkspaceRoleRequiredResponse | WorkspaceRoleR
         Field(title="WorkspaceResponse"),
     ]
     """
-    Named union of create/update workspace responses.
-
-    Named so FastAPI emits a `$ref` to a shared component schema instead of an inline `anyOf`
-    with an auto-generated title, which client code generators cannot resolve consistently.
+    Named union of create/update workspace responses. Shared component schema for inline anyOf references.
     """
 
 
