@@ -8,7 +8,7 @@
         
         
         <link rel="shortcut icon" href="../../../../img/favicon.ico">
-        <title>PendingAttribute - Evo Python SDK</title>
+        <title>KNNResult - Evo Python SDK</title>
         <link href="../../../../css/bootstrap.min.css" rel="stylesheet">
         <link href="../../../../css/fontawesome.min.css" rel="stylesheet">
         <link href="../../../../css/brands.min.css" rel="stylesheet">
@@ -34,12 +34,12 @@
 
                     <ul class="nav navbar-nav ms-md-auto">
                             <li class="nav-item">
-                                <a rel="prev" href="BlockModelPendingAttribute.html" class="nav-link">
+                                <a rel="prev" href="KNNParameters.html" class="nav-link">
                                     <i class="fa fa-arrow-left"></i> Previous
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a rel="next" href="Unit.html" class="nav-link">
+                                <a rel="next" href="KNNResultModel.html" class="nav-link">
                                     Next <i class="fa fa-arrow-right"></i>
                                 </a>
                             </li>
@@ -61,7 +61,7 @@
     <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
         <ul class="nav flex-column">
             
-            <li class="nav-item" data-bs-level="2"><a href="#evo.objects.typed.attributes.PendingAttribute" class="nav-link">PendingAttribute</a>
+            <li class="nav-item" data-bs-level="2"><a href="#evo.compute.tasks.geostatistics.knn.KNNResult" class="nav-link">KNNResult</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -70,7 +70,7 @@
 </div></div>
                     <div class="col-md-9" role="main">
 
-<p><a href="https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-objects/src/evo/objects/typed/attributes.py">GitHub source</a>
+<p><a href="https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-compute/src/evo/compute/tasks/geostatistics/knn.py">GitHub source</a>
 </p>
 
 
@@ -78,8 +78,8 @@
 
 
 
-<h2 id="evo.objects.typed.attributes.PendingAttribute" class="doc doc-heading">
-            <span class="doc doc-object-name doc-class-name">evo.objects.typed.attributes.PendingAttribute</span>
+<h2 id="evo.compute.tasks.geostatistics.knn.KNNResult" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">evo.compute.tasks.geostatistics.knn.KNNResult</span>
 
 
 </h2>
@@ -89,9 +89,7 @@
 
 
 
-        <p>A placeholder for an attribute that doesn't exist yet on a Geoscience Object.</p>
-<p>This is returned when accessing an attribute by name that doesn't exist.
-It can be used as a target for compute tasks, which will create the attribute.</p>
+        <p>Rich result object for the KNN estimation task.</p>
 
 
 
@@ -115,17 +113,17 @@ It can be used as a target for compute tasks, which will create the attribute.</
 
 
 
-<h3 id="evo.objects.typed.attributes.PendingAttribute.name" class="doc doc-heading">
-            <span class="doc doc-object-name doc-attribute-name">name</span>
+<h3 id="evo.compute.tasks.geostatistics.knn.KNNResult.message" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">message</span>
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">message</span><span class="p">:</span> <span class="nb">str</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>The name of this attribute.</p>
+        <p>A message describing what happened in the task.</p>
 
     </div>
 
@@ -135,40 +133,77 @@ It can be used as a target for compute tasks, which will create the attribute.</
 
 
 
-<h3 id="evo.objects.typed.attributes.PendingAttribute.exists" class="doc doc-heading">
-            <span class="doc doc-object-name doc-attribute-name">exists</span>
+<h3 id="evo.compute.tasks.geostatistics.knn.KNNResult.target_name" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">target_name</span>
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">exists</span><span class="p">:</span> <span class="nb">bool</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">target_name</span><span class="p">:</span> <span class="nb">str</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>Whether this attribute exists on the object.</p>
+        <p>The name of the target object.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
 
 
-    <p><span class="doc-section-title">Returns:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                  <code><span title="bool">bool</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>False for pending attributes.</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
+
+<h3 id="evo.compute.tasks.geostatistics.knn.KNNResult.target_reference" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">target_reference</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">target_reference</span><span class="p">:</span> <span class="nb">str</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Reference URL to the target object.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.knn.KNNResult.attribute_name" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">attribute_name</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">attribute_name</span><span class="p">:</span> <span class="nb">str</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The name of the attribute that was created or updated.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.knn.KNNResult.schema" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">schema</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">schema</span><span class="p">:</span> <span class="n">ObjectSchema</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The schema type of the target object (e.g., <code>'pointset'</code>).</p>
 
     </div>
 
@@ -180,64 +215,41 @@ It can be used as a target for compute tasks, which will create the attribute.</
 <div class="doc doc-object doc-function">
 
 
-<h3 id="evo.objects.typed.attributes.PendingAttribute.__init__" class="doc doc-heading">
-            <span class="doc doc-object-name doc-function-name">__init__</span>
+<h3 id="evo.compute.tasks.geostatistics.knn.KNNResult.get_target_object" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">get_target_object</span>
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">__init__</span><span class="p">(</span><span class="n">parent</span><span class="p">:</span> <span class="s1">&#39;Attributes&#39;</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_target_object</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">BaseObject</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        
+        <p>Load and return the target geoscience object.</p>
 
 
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>parent</code>
-            </td>
-            <td>
-                  <code>&#39;Attributes&#39;</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The Attributes collection this pending attribute belongs to.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>name</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The name of the attribute to create.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-      </tbody>
-    </table>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.compute.tasks.geostatistics.knn.KNNResult.to_dataframe" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">to_dataframe</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">to_dataframe</span><span class="p">(</span><span class="o">*</span><span class="n">columns</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Load the target object and return its data as a DataFrame.</p>
+<p>Args:
+    *columns: Optional column names to select.</p>
+<p>Raises:
+    TypeError: If the target object type does not support DataFrame export.</p>
 
 
     </div>

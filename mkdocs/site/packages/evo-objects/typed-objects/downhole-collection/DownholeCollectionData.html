@@ -8,7 +8,7 @@
         
         
         <link rel="shortcut icon" href="../../../../img/favicon.ico">
-        <title>RegularBlockModelData - Evo Python SDK</title>
+        <title>DownholeCollectionData - Evo Python SDK</title>
         <link href="../../../../css/bootstrap.min.css" rel="stylesheet">
         <link href="../../../../css/fontawesome.min.css" rel="stylesheet">
         <link href="../../../../css/brands.min.css" rel="stylesheet">
@@ -34,12 +34,12 @@
 
                     <ul class="nav navbar-nav ms-md-auto">
                             <li class="nav-item">
-                                <a rel="prev" href="BlockModelData.html" class="nav-link">
+                                <a rel="prev" href="DownholeCollection.html" class="nav-link">
                                     <i class="fa fa-arrow-left"></i> Previous
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a rel="next" href="../downhole-collection/DistanceCollection.html" class="nav-link">
+                                <a rel="next" href="IntervalCollection.html" class="nav-link">
                                     Next <i class="fa fa-arrow-right"></i>
                                 </a>
                             </li>
@@ -61,7 +61,7 @@
     <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
         <ul class="nav flex-column">
             
-            <li class="nav-item" data-bs-level="2"><a href="#evo.objects.typed.block_model_ref.RegularBlockModelData" class="nav-link">RegularBlockModelData</a>
+            <li class="nav-item" data-bs-level="2"><a href="#evo.objects.typed.downhole_collection.DownholeCollectionData" class="nav-link">DownholeCollectionData</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -70,7 +70,7 @@
 </div></div>
                     <div class="col-md-9" role="main">
 
-<p><a href="https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-objects/src/evo/objects/typed/block_model_ref.py">GitHub source</a>
+<p><a href="https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-objects/src/evo/objects/typed/downhole_collection.py">GitHub source</a>
 </p>
 
 
@@ -78,8 +78,8 @@
 
 
 
-<h2 id="evo.objects.typed.block_model_ref.RegularBlockModelData" class="doc doc-heading">
-            <span class="doc doc-object-name doc-class-name">evo.objects.typed.block_model_ref.RegularBlockModelData</span>
+<h2 id="evo.objects.typed.downhole_collection.DownholeCollectionData" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">evo.objects.typed.downhole_collection.DownholeCollectionData</span>
 
 
 </h2>
@@ -89,9 +89,7 @@
 
 
 
-        <p>Data for creating a regular block model.</p>
-<p>This creates a new block model in the Block Model Service and a corresponding
-Geoscience Object reference.</p>
+        <p>Data class representing a DownholeCollection.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -114,7 +112,7 @@ Geoscience Object reference.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The name of the block model.</p>
+                <p>The name of the object.</p>
               </div>
             </td>
             <td>
@@ -123,14 +121,15 @@ Geoscience Object reference.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                <code>origin</code>
+                <code>holes</code>
             </td>
             <td>
-                  <code><a class="autorefs autorefs-internal" title="evo.objects.typed.types.Point3" href="../types/Point3.html#evo.objects.typed.types.Point3">Point3</a></code>
+                  <code><span title="evo.objects.typed.downhole_collection.HoleChunks">HoleChunks</span></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The origin point (x, y, z) of the block model.</p>
+                <p>A DataFrame describing which parts of <code>path</code> belong to which holes.
+Columns: hole_index, offset, count. <code>hole_index</code> is an integer lookup key, not a row position.</p>
               </div>
             </td>
             <td>
@@ -139,14 +138,16 @@ Geoscience Object reference.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                <code>n_blocks</code>
+                <code>properties</code>
             </td>
             <td>
-                  <code><a class="autorefs autorefs-internal" title="evo.objects.typed.types.Size3i" href="../types/Size3i.html#evo.objects.typed.types.Size3i">Size3i</a></code>
+                  <code><span title="evo.objects.typed.downhole_collection.HoleProperties">HoleProperties</span></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The number of blocks in each dimension (nx, ny, nz).</p>
+                <p>DataFrame for the properties of the holes, with one row per unique hole ID.
+Mandatory columns: hole_id, final, target, current, x, y, z. An optional hole_index column supplies explicit
+lookup keys; otherwise dense zero-based keys are generated in sorted hole-ID order.</p>
               </div>
             </td>
             <td>
@@ -155,14 +156,14 @@ Geoscience Object reference.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                <code>block_size</code>
+                <code>attributes</code>
             </td>
             <td>
-                  <code><a class="autorefs autorefs-internal" title="evo.objects.typed.types.Size3d" href="../types/Size3d.html#evo.objects.typed.types.Size3d">Size3d</a></code>
+                  <code><span title="evo.objects.typed.downhole_collection.HoleAttributes">HoleAttributes</span> | None</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The size of each block (dx, dy, dz).</p>
+                <p>DataFrame for the attributes of the holes, in the same order as <code>properties</code>.</p>
               </div>
             </td>
             <td>
@@ -171,14 +172,80 @@ Geoscience Object reference.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                <code>cell_data</code>
+                <code>path</code>
             </td>
             <td>
-                  <code><span title="pandas.DataFrame">DataFrame</span> | None</code>
+                  <code><span title="evo.objects.typed.downhole_collection.HolePath">HolePath</span></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>DataFrame with block data. Must contain (x, y, z) or (i, j, k) columns.</p>
+                <p>Dataframe of [ distance | dip | azimuth | <attributes> ]. Distance/dip/azimuth describe the geometry as
+the step since the previous row.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>collections</code>
+            </td>
+            <td>
+                  <code><span title="list">list</span>[<span title="evo.objects.typed.downhole_collection.DownholeCollectionEntry">DownholeCollectionEntry</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Distance and interval collection tables.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>distance_unit</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The distance unit for the <code>path</code> table and the <code>properties</code> x/y/y.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>desurvey</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The desurvey method appropriate for this collection.
+Must be one of: "minimum_curvature", "balanced_tangent", "trench".</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>coordinate_reference_system</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="evo.objects.typed.types.EpsgCode" href="../types/EpsgCode.html#evo.objects.typed.types.EpsgCode">EpsgCode</a> | <span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional EPSG code or WKT string for the coordinate reference system.</p>
               </div>
             </td>
             <td>
@@ -194,7 +261,7 @@ Geoscience Object reference.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Optional description.</p>
+                <p>Optional description of the object.</p>
               </div>
             </td>
             <td>
@@ -203,14 +270,14 @@ Geoscience Object reference.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                <code>coordinate_reference_system</code>
+                <code>tags</code>
             </td>
             <td>
-                  <code><span title="str">str</span> | None</code>
+                  <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="str">str</span>] | None</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Coordinate reference system (e.g., "EPSG:28354").</p>
+                <p>Optional dictionary of tags for the object.</p>
               </div>
             </td>
             <td>
@@ -219,34 +286,18 @@ Geoscience Object reference.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
-                <code>size_unit_id</code>
+                <code>extensions</code>
             </td>
             <td>
-                  <code><span title="str">str</span> | None</code>
+                  <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="typing.Any">Any</span>] | None</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Unit for block sizes (e.g., "m").</p>
+                <p>Optional dictionary of extensions for the object.</p>
               </div>
             </td>
             <td>
                   <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>units</code>
-            </td>
-            <td>
-                  <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="str">str</span>]</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Dictionary mapping column names to unit IDs.</p>
-              </div>
-            </td>
-            <td>
-                  <code><span title="dict">dict</span>()</code>
             </td>
           </tr>
       </tbody>

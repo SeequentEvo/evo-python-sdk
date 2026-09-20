@@ -8,7 +8,7 @@
         
         
         <link rel="shortcut icon" href="../../../../img/favicon.ico">
-        <title>PendingAttribute - Evo Python SDK</title>
+        <title>DownholeIntervalsData - Evo Python SDK</title>
         <link href="../../../../css/bootstrap.min.css" rel="stylesheet">
         <link href="../../../../css/fontawesome.min.css" rel="stylesheet">
         <link href="../../../../css/brands.min.css" rel="stylesheet">
@@ -34,12 +34,12 @@
 
                     <ul class="nav navbar-nav ms-md-auto">
                             <li class="nav-item">
-                                <a rel="prev" href="BlockModelPendingAttribute.html" class="nav-link">
+                                <a rel="prev" href="DownholeIntervals.html" class="nav-link">
                                     <i class="fa fa-arrow-left"></i> Previous
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a rel="next" href="Unit.html" class="nav-link">
+                                <a rel="next" href="../pointset/Locations.html" class="nav-link">
                                     Next <i class="fa fa-arrow-right"></i>
                                 </a>
                             </li>
@@ -61,7 +61,7 @@
     <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
         <ul class="nav flex-column">
             
-            <li class="nav-item" data-bs-level="2"><a href="#evo.objects.typed.attributes.PendingAttribute" class="nav-link">PendingAttribute</a>
+            <li class="nav-item" data-bs-level="2"><a href="#evo.objects.typed.downhole_intervals.DownholeIntervalsData" class="nav-link">DownholeIntervalsData</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -70,7 +70,7 @@
 </div></div>
                     <div class="col-md-9" role="main">
 
-<p><a href="https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-objects/src/evo/objects/typed/attributes.py">GitHub source</a>
+<p><a href="https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-objects/src/evo/objects/typed/downhole_intervals.py">GitHub source</a>
 </p>
 
 
@@ -78,8 +78,8 @@
 
 
 
-<h2 id="evo.objects.typed.attributes.PendingAttribute" class="doc doc-heading">
-            <span class="doc doc-object-name doc-class-name">evo.objects.typed.attributes.PendingAttribute</span>
+<h2 id="evo.objects.typed.downhole_intervals.DownholeIntervalsData" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">evo.objects.typed.downhole_intervals.DownholeIntervalsData</span>
 
 
 </h2>
@@ -89,9 +89,164 @@
 
 
 
-        <p>A placeholder for an attribute that doesn't exist yet on a Geoscience Object.</p>
-<p>This is returned when accessing an attribute by name that doesn't exist.
-It can be used as a target for compute tasks, which will create the attribute.</p>
+        <p>Data for creating a new DownholeIntervals object.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>name</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The name of the object.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>intervals</code>
+            </td>
+            <td>
+                  <code><span title="pandas.DataFrame">DataFrame</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>DataFrame containing the interval data. Required columns:</p>
+<ul>
+<li><code>hole_id</code> — hole identifier (string or Categorical)</li>
+<li><code>from</code> — depth of the top of the interval</li>
+<li><code>to</code> — depth of the base of the interval</li>
+<li><code>x_start</code>, <code>y_start</code>, <code>z_start</code> — 3D start-point coordinates</li>
+<li><code>x_end</code>, <code>y_end</code>, <code>z_end</code> — 3D end-point coordinates</li>
+<li><code>x_mid</code>, <code>y_mid</code>, <code>z_mid</code> — 3D mid-point coordinates</li>
+</ul>
+<p>Any additional columns are uploaded as interval attributes. Per-attribute
+units can be specified via the DataFrame's <code>attrs</code> dictionary using
+:class:<code>~evo.objects.typed.attributes.AttributeDescription</code>::</p>
+<pre><code>from evo.objects.typed.attributes import AttributeDescription
+df.attrs["attribute_descriptions"] = {"grade": AttributeDescription(unit="ppm")}
+</code></pre>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>is_composited</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Whether the intervals have been composited.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>depth_unit</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional unit identifier for the from/to depths (e.g. <code>"m"</code>).</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>coordinate_reference_system</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="evo.objects.typed.types.EpsgCode" href="../types/EpsgCode.html#evo.objects.typed.types.EpsgCode">EpsgCode</a> | <span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional EPSG code or OGC WKT string for the CRS.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>description</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional description of the object.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>tags</code>
+            </td>
+            <td>
+                  <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="str">str</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional dictionary of tags for the object.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>extensions</code>
+            </td>
+            <td>
+                  <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="typing.Any">Any</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional dictionary of extensions for the object.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
 
@@ -111,133 +266,23 @@ It can be used as a target for compute tasks, which will create the attribute.</
 
 
 
-<div class="doc doc-object doc-attribute">
-
-
-
-<h3 id="evo.objects.typed.attributes.PendingAttribute.name" class="doc doc-heading">
-            <span class="doc doc-object-name doc-attribute-name">name</span>
-
-
-</h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
-</code></pre></div>
-
-    <div class="doc doc-contents ">
-
-        <p>The name of this attribute.</p>
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-attribute">
-
-
-
-<h3 id="evo.objects.typed.attributes.PendingAttribute.exists" class="doc doc-heading">
-            <span class="doc doc-object-name doc-attribute-name">exists</span>
-
-
-</h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">exists</span><span class="p">:</span> <span class="nb">bool</span>
-</code></pre></div>
-
-    <div class="doc doc-contents ">
-
-        <p>Whether this attribute exists on the object.</p>
-
-
-    <p><span class="doc-section-title">Returns:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                  <code><span title="bool">bool</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>False for pending attributes.</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-    </div>
-
-</div>
-
 
 
 
 <div class="doc doc-object doc-function">
 
 
-<h3 id="evo.objects.typed.attributes.PendingAttribute.__init__" class="doc doc-heading">
-            <span class="doc doc-object-name doc-function-name">__init__</span>
+<h3 id="evo.objects.typed.downhole_intervals.DownholeIntervalsData.compute_bounding_box" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">compute_bounding_box</span>
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">__init__</span><span class="p">(</span><span class="n">parent</span><span class="p">:</span> <span class="s1">&#39;Attributes&#39;</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">compute_bounding_box</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">BoundingBox</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>parent</code>
-            </td>
-            <td>
-                  <code>&#39;Attributes&#39;</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The Attributes collection this pending attribute belongs to.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>name</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The name of the attribute to create.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-      </tbody>
-    </table>
+        <p>Compute the bounding box from all start, end, and mid-point coordinates.</p>
 
 
     </div>

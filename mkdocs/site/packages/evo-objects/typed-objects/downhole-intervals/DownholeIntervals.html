@@ -8,7 +8,7 @@
         
         
         <link rel="shortcut icon" href="../../../../img/favicon.ico">
-        <title>PendingAttribute - Evo Python SDK</title>
+        <title>DownholeIntervals - Evo Python SDK</title>
         <link href="../../../../css/bootstrap.min.css" rel="stylesheet">
         <link href="../../../../css/fontawesome.min.css" rel="stylesheet">
         <link href="../../../../css/brands.min.css" rel="stylesheet">
@@ -34,12 +34,12 @@
 
                     <ul class="nav navbar-nav ms-md-auto">
                             <li class="nav-item">
-                                <a rel="prev" href="BlockModelPendingAttribute.html" class="nav-link">
+                                <a rel="prev" href="../downhole-collection/IntervalCollection.html" class="nav-link">
                                     <i class="fa fa-arrow-left"></i> Previous
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a rel="next" href="Unit.html" class="nav-link">
+                                <a rel="next" href="DownholeIntervalsData.html" class="nav-link">
                                     Next <i class="fa fa-arrow-right"></i>
                                 </a>
                             </li>
@@ -61,7 +61,7 @@
     <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
         <ul class="nav flex-column">
             
-            <li class="nav-item" data-bs-level="2"><a href="#evo.objects.typed.attributes.PendingAttribute" class="nav-link">PendingAttribute</a>
+            <li class="nav-item" data-bs-level="2"><a href="#evo.objects.typed.downhole_intervals.DownholeIntervals" class="nav-link">DownholeIntervals</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -70,7 +70,7 @@
 </div></div>
                     <div class="col-md-9" role="main">
 
-<p><a href="https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-objects/src/evo/objects/typed/attributes.py">GitHub source</a>
+<p><a href="https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-objects/src/evo/objects/typed/downhole_intervals.py">GitHub source</a>
 </p>
 
 
@@ -78,8 +78,8 @@
 
 
 
-<h2 id="evo.objects.typed.attributes.PendingAttribute" class="doc doc-heading">
-            <span class="doc doc-object-name doc-class-name">evo.objects.typed.attributes.PendingAttribute</span>
+<h2 id="evo.objects.typed.downhole_intervals.DownholeIntervals" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">evo.objects.typed.downhole_intervals.DownholeIntervals</span>
 
 
 </h2>
@@ -89,9 +89,42 @@
 
 
 
-        <p>A placeholder for an attribute that doesn't exist yet on a Geoscience Object.</p>
-<p>This is returned when accessing an attribute by name that doesn't exist.
-It can be used as a target for compute tasks, which will create the attribute.</p>
+        <p>A GeoscienceObject representing downhole intervals.</p>
+<p>Downhole intervals describe depth-ranged samples along drill holes.  Each
+interval is defined by a hole identifier, a from/to depth range, and the
+3D coordinates of the interval's start, end, and mid-point.  Optional
+attributes (assay values, lithology codes, etc.) may also be attached.</p>
+<p>Example usage::</p>
+<pre><code>import pandas as pd
+from evo.objects.typed import DownholeIntervals, DownholeIntervalsData
+
+df = pd.DataFrame(
+    {
+        "hole_id": pd.Categorical(["DH001", "DH001", "DH002"]),
+        "from":    [0.0,  5.0,  0.0],
+        "to":      [5.0, 10.0,  3.0],
+        "x_start": [100.0, 100.0, 200.0],
+        "y_start": [200.0, 200.0, 300.0],
+        "z_start": [  0.0,  -5.0,   0.0],
+        "x_end":   [100.0, 100.0, 200.0],
+        "y_end":   [200.0, 200.0, 300.0],
+        "z_end":   [ -5.0, -10.0,  -3.0],
+        "x_mid":   [100.0, 100.0, 200.0],
+        "y_mid":   [200.0, 200.0, 300.0],
+        "z_mid":   [ -2.5,  -7.5,  -1.5],
+    }
+)
+data = DownholeIntervalsData(
+    name="My Downhole Intervals",
+    intervals=df,
+    is_composited=False,
+    depth_unit="m",
+)
+obj = await DownholeIntervals.create(context, data)
+
+# Download all data as a single DataFrame
+df = await obj.to_dataframe()
+</code></pre>
 
 
 
@@ -115,17 +148,17 @@ It can be used as a target for compute tasks, which will create the attribute.</
 
 
 
-<h3 id="evo.objects.typed.attributes.PendingAttribute.name" class="doc doc-heading">
-            <span class="doc doc-object-name doc-attribute-name">name</span>
+<h3 id="evo.objects.typed.downhole_intervals.DownholeIntervals.depth_unit" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">depth_unit</span>
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">depth_unit</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>The name of this attribute.</p>
+        <p>The unit of the from/to depths, or None if not specified.</p>
 
     </div>
 
@@ -135,40 +168,17 @@ It can be used as a target for compute tasks, which will create the attribute.</
 
 
 
-<h3 id="evo.objects.typed.attributes.PendingAttribute.exists" class="doc doc-heading">
-            <span class="doc doc-object-name doc-attribute-name">exists</span>
+<h3 id="evo.objects.typed.downhole_intervals.DownholeIntervals.num_intervals" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">num_intervals</span>
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">exists</span><span class="p">:</span> <span class="nb">bool</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">num_intervals</span><span class="p">:</span> <span class="nb">int</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>Whether this attribute exists on the object.</p>
-
-
-    <p><span class="doc-section-title">Returns:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                  <code><span title="bool">bool</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>False for pending attributes.</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
+        <p>The number of intervals in this object.</p>
 
     </div>
 
@@ -180,17 +190,26 @@ It can be used as a target for compute tasks, which will create the attribute.</
 <div class="doc doc-object doc-function">
 
 
-<h3 id="evo.objects.typed.attributes.PendingAttribute.__init__" class="doc doc-heading">
-            <span class="doc doc-object-name doc-function-name">__init__</span>
+<h3 id="evo.objects.typed.downhole_intervals.DownholeIntervals.to_dataframe" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">to_dataframe</span>
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">__init__</span><span class="p">(</span><span class="n">parent</span><span class="p">:</span> <span class="s1">&#39;Attributes&#39;</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">to_dataframe</span><span class="p">(</span><span class="o">*</span><span class="n">keys</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">fb</span><span class="p">:</span> <span class="n">IFeedback</span> <span class="o">=</span> <span class="n">NoFeedback</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        
+        <p>Get all interval data as a single DataFrame.</p>
+<p>The returned DataFrame has the following columns, in order:</p>
+<ul>
+<li><code>hole_id</code> — hole identifier</li>
+<li><code>from</code>, <code>to</code> — depth interval</li>
+<li><code>x_start</code>, <code>y_start</code>, <code>z_start</code> — start-point coordinates</li>
+<li><code>x_end</code>, <code>y_end</code>, <code>z_end</code> — end-point coordinates</li>
+<li><code>x_mid</code>, <code>y_mid</code>, <code>z_mid</code> — mid-point coordinates</li>
+<li>Any attribute columns</li>
+</ul>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -206,38 +225,82 @@ It can be used as a target for compute tasks, which will create the attribute.</
       <tbody>
           <tr class="doc-section-item">
             <td>
-                <code>parent</code>
-            </td>
-            <td>
-                  <code>&#39;Attributes&#39;</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The Attributes collection this pending attribute belongs to.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>name</code>
+                <code>keys</code>
             </td>
             <td>
                   <code><span title="str">str</span></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The name of the attribute to create.</p>
+                <p>Optional attribute keys/names to include.  If omitted, all
+attributes are included.</p>
               </div>
             </td>
             <td>
-                <em>required</em>
+                  <code>()</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>fb</code>
+            </td>
+            <td>
+                  <code><span title="evo.common.IFeedback">IFeedback</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional feedback object to report download progress.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="evo.common.utils.NoFeedback">NoFeedback</span></code>
             </td>
           </tr>
       </tbody>
     </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="pandas.DataFrame">DataFrame</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A combined DataFrame of all interval data and attributes.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.typed.downhole_intervals.DownholeIntervals.validate" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">validate</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">validate</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Validate the object, checking that all interval tables have consistent lengths.</p>
 
 
     </div>
