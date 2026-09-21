@@ -39,6 +39,8 @@ from ..endpoints.models import (
     CreateReportSpecification,
     ReportAggregation,
     ReportCategory,
+    ReportCell,
+    ReportCellStatus,
     ReportColumn,
     ReportingJobSpec,
     ReportSpecificationWithJobUrl,
@@ -53,6 +55,8 @@ __all__ = [
     "MassUnits",
     "Report",
     "ReportCategorySpec",
+    "ReportCell",
+    "ReportCellStatus",
     "ReportColumnSpec",
     "ReportResult",
     "ReportSpecificationData",
@@ -247,6 +251,18 @@ class ReportSpecificationData:
     run_now: bool = True
 
 
+def _unpack_cell(cell: Any) -> tuple[int | float | None, str | None]:
+    """Return the ``(value, status)`` pair for a report cell.
+
+    Handles both the current schema, where a cell is a ``{"value", "status"}``
+    object, and the legacy schema, where a cell was a bare number.
+    """
+    if isinstance(cell, dict):
+        return cell.get("value"), cell.get("status")
+    # Legacy schema: the cell was a plain number (or None).
+    return cell, None
+
+
 @dataclass(frozen=True, kw_only=True)
 class ReportResult:
     """A result from running a report.
@@ -279,12 +295,23 @@ class ReportResult:
             result_sets=[rs.model_dump() for rs in result.result_sets],
         )
 
-    def to_dataframe(self) -> pd.DataFrame:
+    def to_dataframe(self, include_status: bool = False) -> pd.DataFrame:
         """Convert the report result to a pandas DataFrame.
 
         Returns a DataFrame with one row per category/cut-off combination,
         containing the aggregated values for each report column.
 
+        Each cell in the report is a `ReportCell` (`{"value": ..., "status": ...}`).
+        By default only the numeric ``value`` is placed in the DataFrame (with
+        ``None`` where a value could not be aggregated), keeping the output the
+        same shape as previous SDK versions. Set ``include_status=True`` to add a
+        companion ``"{column} status"`` column exposing each cell's status.
+
+        Results produced by older Block Model Service deployments, where a cell was
+        a bare number, are handled transparently.
+
+        :param include_status: When True, add a status column alongside each value
+            column.
         :return: DataFrame with report results.
         """
         rows = []
@@ -302,7 +329,11 @@ class ReportResult:
                 # Add column values
                 values = row_data.get("values", [])
                 for i, label in enumerate(column_labels):
-                    row[label] = values[i] if i < len(values) else None
+                    cell = values[i] if i < len(values) else None
+                    value, status = _unpack_cell(cell)
+                    row[label] = value
+                    if include_status:
+                        row[f"{label} status"] = status
                 rows.append(row)
 
         return pd.DataFrame(rows)
