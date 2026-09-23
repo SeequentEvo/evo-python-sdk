@@ -31,6 +31,7 @@ from evo.compute.tasks.geostatistics.conditioned_simulator import (
     ConSimTargetResult,
     ConSimValidationSummary,
     DistributionParams,
+    LowerTailParams,
     ReportContext,
     ReportMeanThresholds,
     TailExtrapolationParams,
@@ -161,6 +162,33 @@ class TestConSimParametersSerialization(unittest.TestCase):
         )
         d = _dump(params)
         self.assertEqual(d["distribution"]["tail_extrapolation"]["upper"]["power"], 0.5)
+
+    def test_distribution_without_tail_extrapolation_sends_null(self):
+        d = _dump(_params(distribution=DistributionParams(weights="declustering_weights")))
+        self.assertEqual(d["distribution"], {"weights": "declustering_weights", "tail_extrapolation": None})
+
+    def test_tail_extrapolation_without_lower_sends_null(self):
+        params = _params(
+            distribution=DistributionParams(
+                tail_extrapolation=TailExtrapolationParams(upper=UpperTailParams(power=0.5, max=100.0)),
+            ),
+        )
+        d = _dump(params)
+        self.assertEqual(
+            d["distribution"]["tail_extrapolation"], {"upper": {"power": 0.5, "max": 100.0}, "lower": None}
+        )
+
+    def test_tail_extrapolation_with_lower(self):
+        params = _params(
+            distribution=DistributionParams(
+                tail_extrapolation=TailExtrapolationParams(
+                    upper=UpperTailParams(power=0.5, max=100.0),
+                    lower=LowerTailParams(power=0.3, min=0.0),
+                ),
+            ),
+        )
+        d = _dump(params)
+        self.assertEqual(d["distribution"]["tail_extrapolation"]["lower"], {"power": 0.3, "min": 0.0})
 
     def test_loss_calculation_params(self):
         params = _params(
