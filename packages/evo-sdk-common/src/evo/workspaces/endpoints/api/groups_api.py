@@ -36,7 +36,7 @@ from evo.common.connector import APIConnector
 from evo.common.data import EmptyResponse, RequestMethod  # noqa: F401
 from evo.common.utils import get_header_metadata
 
-from ..models import *  # noqa: F403
+from ..models import *
 
 __all__ = ["GroupsApi"]
 
@@ -57,23 +57,23 @@ class GroupsApi:
 
     async def get_group_description(
         self,
-        group_id: str,
         org_id: str,
+        group_id: str,
         api_preview: str | None = None,
         preview_api: str | None = None,
         additional_headers: dict[str, str] | None = None,
-        request_timeout: int | float | tuple[int | float, int | float] | None = None,
-    ) -> ImsGroupDetailResponse:  # noqa: F405
+        request_timeout: float | tuple[int | float, int | float] | None = None,
+    ) -> ImsGroupDetailResponse:
         """Get IMS group details
 
         Returns the details of an IMS group
 
-        :param group_id:
-            Format: `uuid`
-            Example: `'group_id_example'`
         :param org_id:
             Format: `uuid`
             Example: `'org_id_example'`
+        :param group_id:
+            Format: `uuid`
+            Example: `'group_id_example'`
         :param api_preview: (optional) Set to \"opt-in\" to be able to use this API.
             Example: `'api_preview_example'`
         :param preview_api: (optional) Set to \"opt-in\" to be able to use this API. This header is being deprecated. Please use the API-Preview header.
@@ -97,8 +97,8 @@ class GroupsApi:
         """
         # Prepare the path parameters.
         _path_params = {
-            "group_id": group_id,
             "org_id": org_id,
+            "group_id": group_id,
         }
 
         # Prepare the header parameters.
@@ -116,7 +116,7 @@ class GroupsApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "200": ImsGroupDetailResponse,  # noqa: F405
+            "200": ImsGroupDetailResponse,
         }
 
         return await self.connector.call_api(
@@ -134,8 +134,8 @@ class GroupsApi:
         org_id: str,
         email: str,
         additional_headers: dict[str, str] | None = None,
-        request_timeout: int | float | tuple[int | float, int | float] | None = None,
-    ) -> ListUsersResponse:  # noqa: F405
+        request_timeout: float | tuple[int | float, int | float] | None = None,
+    ) -> ListUsersResponse:
         """Get IMS users
 
         Returns a list of users in an IMS organization, filtered by the first characters of their email address
@@ -183,7 +183,7 @@ class GroupsApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "200": ListUsersResponse,  # noqa: F405
+            "200": ListUsersResponse,
         }
 
         return await self.connector.call_api(
@@ -199,23 +199,23 @@ class GroupsApi:
 
     async def list_ims_group_members(
         self,
-        group_id: str,
         org_id: str,
+        group_id: str,
         api_preview: str | None = None,
         preview_api: str | None = None,
         additional_headers: dict[str, str] | None = None,
-        request_timeout: int | float | tuple[int | float, int | float] | None = None,
-    ) -> ListUsersResponse:  # noqa: F405
+        request_timeout: float | tuple[int | float, int | float] | None = None,
+    ) -> ListUsersResponse:
         """List IMS group members
 
         Returns a list of users that are members of the specified IMS group
 
-        :param group_id:
-            Format: `uuid`
-            Example: `'group_id_example'`
         :param org_id:
             Format: `uuid`
             Example: `'org_id_example'`
+        :param group_id:
+            Format: `uuid`
+            Example: `'group_id_example'`
         :param api_preview: (optional) Set to \"opt-in\" to be able to use this API.
             Example: `'api_preview_example'`
         :param preview_api: (optional) Set to \"opt-in\" to be able to use this API. This header is being deprecated. Please use the API-Preview header.
@@ -239,8 +239,8 @@ class GroupsApi:
         """
         # Prepare the path parameters.
         _path_params = {
-            "group_id": group_id,
             "org_id": org_id,
+            "group_id": group_id,
         }
 
         # Prepare the header parameters.
@@ -258,7 +258,7 @@ class GroupsApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "200": ListUsersResponse,  # noqa: F405
+            "200": ListUsersResponse,
         }
 
         return await self.connector.call_api(
@@ -277,8 +277,8 @@ class GroupsApi:
         api_preview: str | None = None,
         preview_api: str | None = None,
         additional_headers: dict[str, str] | None = None,
-        request_timeout: int | float | tuple[int | float, int | float] | None = None,
-    ) -> list[ImsGroupResponse]:  # noqa: F405
+        request_timeout: float | tuple[int | float, int | float] | None = None,
+    ) -> list[ImsGroupResponse]:
         """List IMS groups
 
         Returns a list of available IMS groups for the organization
@@ -327,7 +327,7 @@ class GroupsApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "200": list[ImsGroupResponse],  # noqa: F405
+            "200": list[ImsGroupResponse],
         }
 
         return await self.connector.call_api(

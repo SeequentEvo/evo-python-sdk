@@ -36,7 +36,7 @@ from evo.common.connector import APIConnector
 from evo.common.data import EmptyResponse, RequestMethod
 from evo.common.utils import get_header_metadata
 
-from ..models import *  # noqa: F403
+from ..models import *
 
 __all__ = ["WorkspacesApi"]
 
@@ -59,10 +59,10 @@ class WorkspacesApi:
         self,
         org_id: str,
         workspace_id: str,
-        assign_role_request: AssignRoleRequest,  # noqa: F405
+        assign_role_request: AssignRoleRequest,
         additional_headers: dict[str, str] | None = None,
-        request_timeout: int | float | tuple[int | float, int | float] | None = None,
-    ) -> UserRole:  # noqa: F405
+        request_timeout: float | tuple[int | float, int | float] | None = None,
+    ) -> UserRole:
         """Assign user role
 
         Assigns a user a role in a workspace.
@@ -110,7 +110,7 @@ class WorkspacesApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "201": UserRole,  # noqa: F405
+            "201": UserRole,
         }
 
         return await self.connector.call_api(
@@ -127,10 +127,10 @@ class WorkspacesApi:
     async def create_workspace(
         self,
         org_id: str,
-        create_workspace_request: CreateWorkspaceRequest,  # noqa: F405
+        create_workspace_request: CreateWorkspaceRequest,
         additional_headers: dict[str, str] | None = None,
-        request_timeout: int | float | tuple[int | float, int | float] | None = None,
-    ) -> WorkspaceResponse:  # noqa: F405
+        request_timeout: float | tuple[int | float, int | float] | None = None,
+    ) -> WorkspaceResponse:
         """Create workspace
 
         Creates a new workspace in your organization.
@@ -174,7 +174,7 @@ class WorkspacesApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "201": WorkspaceResponse,  # noqa: F405
+            "201": WorkspaceResponse,
         }
 
         return await self.connector.call_api(
@@ -190,25 +190,25 @@ class WorkspacesApi:
 
     async def delete_user_role(
         self,
-        org_id: str,
         workspace_id: str,
         user_id: str,
+        org_id: str,
         additional_headers: dict[str, str] | None = None,
-        request_timeout: int | float | tuple[int | float, int | float] | None = None,
+        request_timeout: float | tuple[int | float, int | float] | None = None,
     ) -> EmptyResponse:
         """Remove user from workspace
 
         Removes a user by removing their role from the workspace.
 
-        :param org_id:
-            Format: `uuid`
-            Example: `'org_id_example'`
         :param workspace_id:
             Format: `uuid`
             Example: `'workspace_id_example'`
         :param user_id:
             Format: `uuid`
             Example: `'user_id_example'`
+        :param org_id:
+            Format: `uuid`
+            Example: `'org_id_example'`
         :param additional_headers: (optional) Additional headers to send with the request.
         :param request_timeout: (optional) Timeout setting for this request. If one number is provided, it will be the
             total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.
@@ -228,9 +228,9 @@ class WorkspacesApi:
         """
         # Prepare the path parameters.
         _path_params = {
-            "org_id": org_id,
             "workspace_id": workspace_id,
             "user_id": user_id,
+            "org_id": org_id,
         }
 
         # Prepare the header parameters.
@@ -257,21 +257,21 @@ class WorkspacesApi:
 
     async def delete_workspace(
         self,
-        org_id: str,
         workspace_id: str,
+        org_id: str,
         additional_headers: dict[str, str] | None = None,
-        request_timeout: int | float | tuple[int | float, int | float] | None = None,
+        request_timeout: float | tuple[int | float, int | float] | None = None,
     ) -> EmptyResponse:
         """Delete workspace
 
         Deletes a workspace. Use of this API requires an \"owner\" role in the workspace. Deleted workspaces will no longer be returned in \"get workspace\" and \"list workspace\" requests, however you can include them by appending `deleted=true` to your request parameters.
 
-        :param org_id:
-            Format: `uuid`
-            Example: `'org_id_example'`
         :param workspace_id:
             Format: `uuid`
             Example: `'workspace_id_example'`
+        :param org_id:
+            Format: `uuid`
+            Example: `'org_id_example'`
         :param additional_headers: (optional) Additional headers to send with the request.
         :param request_timeout: (optional) Timeout setting for this request. If one number is provided, it will be the
             total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.
@@ -291,8 +291,8 @@ class WorkspacesApi:
         """
         # Prepare the path parameters.
         _path_params = {
-            "org_id": org_id,
             "workspace_id": workspace_id,
+            "org_id": org_id,
         }
 
         # Prepare the header parameters.
@@ -319,21 +319,21 @@ class WorkspacesApi:
 
     async def get_current_user_role(
         self,
-        org_id: str,
         workspace_id: str,
+        org_id: str,
         additional_headers: dict[str, str] | None = None,
-        request_timeout: int | float | tuple[int | float, int | float] | None = None,
-    ) -> UserRole:  # noqa: F405
+        request_timeout: float | tuple[int | float, int | float] | None = None,
+    ) -> UserRole:
         """Get current user role
 
         Returns your user account's role in a workspace.
 
-        :param org_id:
-            Format: `uuid`
-            Example: `'org_id_example'`
         :param workspace_id:
             Format: `uuid`
             Example: `'workspace_id_example'`
+        :param org_id:
+            Format: `uuid`
+            Example: `'org_id_example'`
         :param additional_headers: (optional) Additional headers to send with the request.
         :param request_timeout: (optional) Timeout setting for this request. If one number is provided, it will be the
             total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.
@@ -353,8 +353,8 @@ class WorkspacesApi:
         """
         # Prepare the path parameters.
         _path_params = {
-            "org_id": org_id,
             "workspace_id": workspace_id,
+            "org_id": org_id,
         }
 
         # Prepare the header parameters.
@@ -368,7 +368,7 @@ class WorkspacesApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "200": UserRole,  # noqa: F405
+            "200": UserRole,
         }
 
         return await self.connector.call_api(
@@ -387,8 +387,8 @@ class WorkspacesApi:
         workspace_id: str,
         deleted: bool | None = None,
         additional_headers: dict[str, str] | None = None,
-        request_timeout: int | float | tuple[int | float, int | float] | None = None,
-    ) -> AnyWorkspaceResponse:  # noqa: F405
+        request_timeout: float | tuple[int | float, int | float] | None = None,
+    ) -> AnyWorkspaceResponse:
         """Get workspace
 
         Returns a workspace by its ID, provided your user has a role to access it. To retrieve a workspace by ID regardless of your user role, see the 'Admin' equivalent API.
@@ -440,7 +440,7 @@ class WorkspacesApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "200": AnyWorkspaceResponse,  # noqa: F405
+            "200": AnyWorkspaceResponse,
         }
 
         return await self.connector.call_api(
@@ -456,23 +456,23 @@ class WorkspacesApi:
 
     async def list_user_roles(
         self,
-        org_id: str,
         workspace_id: str,
+        org_id: str,
         filter_user_id: str | None = None,
         user_id: str | None = None,
         additional_headers: dict[str, str] | None = None,
-        request_timeout: int | float | tuple[int | float, int | float] | None = None,
-    ) -> ListUserRoleResponse:  # noqa: F405
+        request_timeout: float | tuple[int | float, int | float] | None = None,
+    ) -> ListUserRoleResponse:
         """List users
 
         Returns a list of all users with a role in a workspace.
 
-        :param org_id:
-            Format: `uuid`
-            Example: `'org_id_example'`
         :param workspace_id:
             Format: `uuid`
             Example: `'workspace_id_example'`
+        :param org_id:
+            Format: `uuid`
+            Example: `'org_id_example'`
         :param filter_user_id: (optional) Filter to see the role of a specific user ID.
             Format: `uuid`
             Example: `'filter_user_id_example'`
@@ -497,8 +497,8 @@ class WorkspacesApi:
         """
         # Prepare the path parameters.
         _path_params = {
-            "org_id": org_id,
             "workspace_id": workspace_id,
+            "org_id": org_id,
         }
 
         # Prepare the query parameters.
@@ -519,7 +519,7 @@ class WorkspacesApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "200": ListUserRoleResponse,  # noqa: F405
+            "200": ListUserRoleResponse,
         }
 
         return await self.connector.call_api(
@@ -542,16 +542,16 @@ class WorkspacesApi:
         order_by: str | None = None,
         filter_created_by: str | None = None,
         created_by: str | None = None,
-        created_at: CreatedAtFilter | None = None,  # noqa: F405
-        updated_at: UpdatedAtFilter | None = None,  # noqa: F405
+        created_at: CreatedAtFilter | None = None,
+        updated_at: UpdatedAtFilter | None = None,
         filter_name: str | None = None,
         name: str | None = None,
         deleted: bool | None = None,
         filter_user_id: str | None = None,
         user_id: str | None = None,
         additional_headers: dict[str, str] | None = None,
-        request_timeout: int | float | tuple[int | float, int | float] | None = None,
-    ) -> ListWorkspacesResponse:  # noqa: F405
+        request_timeout: float | tuple[int | float, int | float] | None = None,
+    ) -> ListWorkspacesResponse:
         """List workspaces
 
         Returns a paginated list of all workspaces that you have a role to access in your organization. For a list of all workspaces regardless of your user role, see the 'Admin' equivalent API.
@@ -649,7 +649,7 @@ class WorkspacesApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "200": ListWorkspacesResponse,  # noqa: F405
+            "200": ListWorkspacesResponse,
         }
 
         return await self.connector.call_api(
@@ -672,16 +672,16 @@ class WorkspacesApi:
         order_by: str | None = None,
         filter_created_by: str | None = None,
         created_by: str | None = None,
-        created_at: CreatedAtFilter | None = None,  # noqa: F405
-        updated_at: UpdatedAtFilter | None = None,  # noqa: F405
+        created_at: CreatedAtFilter | None = None,
+        updated_at: UpdatedAtFilter | None = None,
         filter_name: str | None = None,
         name: str | None = None,
         deleted: bool | None = None,
         filter_user_id: str | None = None,
         user_id: str | None = None,
         additional_headers: dict[str, str] | None = None,
-        request_timeout: int | float | tuple[int | float, int | float] | None = None,
-    ) -> ListWorkspaceSummaryResponse:  # noqa: F405
+        request_timeout: float | tuple[int | float, int | float] | None = None,
+    ) -> ListWorkspaceSummaryResponse:
         """List workspaces summary
 
 
@@ -778,7 +778,7 @@ class WorkspacesApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "200": ListWorkspaceSummaryResponse,  # noqa: F405
+            "200": ListWorkspaceSummaryResponse,
         }
 
         return await self.connector.call_api(
@@ -794,22 +794,22 @@ class WorkspacesApi:
 
     async def restore_soft_deleted_workspace(
         self,
-        org_id: str,
         workspace_id: str,
+        org_id: str,
         deleted: str | None = None,
         additional_headers: dict[str, str] | None = None,
-        request_timeout: int | float | tuple[int | float, int | float] | None = None,
+        request_timeout: float | tuple[int | float, int | float] | None = None,
     ) -> EmptyResponse:
         """Restore a deleted workspace
 
         If a workspace has been soft deleted, this API allows you to restore it again. After restoring, the workspace will no longer be included in \"get workspace\" and \"list workspace\" when the `deleted=true` parameter is appended to your request parameters.
 
-        :param org_id:
-            Format: `uuid`
-            Example: `'org_id_example'`
         :param workspace_id:
             Format: `uuid`
             Example: `'workspace_id_example'`
+        :param org_id:
+            Format: `uuid`
+            Example: `'org_id_example'`
         :param deleted: (optional)
             Example: `'deleted_example'`
         :param additional_headers: (optional) Additional headers to send with the request.
@@ -831,8 +831,8 @@ class WorkspacesApi:
         """
         # Prepare the path parameters.
         _path_params = {
-            "org_id": org_id,
             "workspace_id": workspace_id,
+            "org_id": org_id,
         }
 
         # Prepare the query parameters.
@@ -852,7 +852,7 @@ class WorkspacesApi:
 
         _response_types_map = {
             "204": EmptyResponse,
-            "303": ErrorResponse,  # noqa: F405
+            "303": ErrorResponse,
         }
 
         return await self.connector.call_api(
@@ -870,10 +870,10 @@ class WorkspacesApi:
         self,
         org_id: str,
         workspace_id: str,
-        update_workspace_request: UpdateWorkspaceRequest,  # noqa: F405
+        update_workspace_request: UpdateWorkspaceRequest,
         additional_headers: dict[str, str] | None = None,
-        request_timeout: int | float | tuple[int | float, int | float] | None = None,
-    ) -> WorkspaceResponse:  # noqa: F405
+        request_timeout: float | tuple[int | float, int | float] | None = None,
+    ) -> WorkspaceResponse:
         """Update workspace
 
         Updates a workspace.
@@ -921,7 +921,7 @@ class WorkspacesApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "200": WorkspaceResponse,  # noqa: F405
+            "200": WorkspaceResponse,
         }
 
         return await self.connector.call_api(

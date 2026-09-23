@@ -36,7 +36,7 @@ from evo.common.connector import APIConnector
 from evo.common.data import EmptyResponse, RequestMethod
 from evo.common.utils import get_header_metadata
 
-from ..models import *  # noqa: F403
+from ..models import *
 
 __all__ = ["ThumbnailsApi"]
 
@@ -57,21 +57,21 @@ class ThumbnailsApi:
 
     async def delete_workspace_thumbnail(
         self,
-        org_id: str,
         workspace_id: str,
+        org_id: str,
         additional_headers: dict[str, str] | None = None,
-        request_timeout: int | float | tuple[int | float, int | float] | None = None,
+        request_timeout: float | tuple[int | float, int | float] | None = None,
     ) -> EmptyResponse:
         """Delete thumbnail for workspace
 
         Deletes the thumbnail image for a workspace.
 
-        :param org_id:
-            Format: `uuid`
-            Example: `'org_id_example'`
         :param workspace_id:
             Format: `uuid`
             Example: `'workspace_id_example'`
+        :param org_id:
+            Format: `uuid`
+            Example: `'org_id_example'`
         :param additional_headers: (optional) Additional headers to send with the request.
         :param request_timeout: (optional) Timeout setting for this request. If one number is provided, it will be the
             total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.
@@ -91,8 +91,8 @@ class ThumbnailsApi:
         """
         # Prepare the path parameters.
         _path_params = {
-            "org_id": org_id,
             "workspace_id": workspace_id,
+            "org_id": org_id,
         }
 
         # Prepare the header parameters.
@@ -119,21 +119,21 @@ class ThumbnailsApi:
 
     async def get_thumbnail(
         self,
-        org_id: str,
         workspace_id: str,
+        org_id: str,
         additional_headers: dict[str, str] | None = None,
-        request_timeout: int | float | tuple[int | float, int | float] | None = None,
+        request_timeout: float | tuple[int | float, int | float] | None = None,
     ) -> bytearray:
         """Get thumbnail for workspace
 
         Returns the thumbnail image for a workspace.
 
-        :param org_id:
-            Format: `uuid`
-            Example: `'org_id_example'`
         :param workspace_id:
             Format: `uuid`
             Example: `'workspace_id_example'`
+        :param org_id:
+            Format: `uuid`
+            Example: `'org_id_example'`
         :param additional_headers: (optional) Additional headers to send with the request.
         :param request_timeout: (optional) Timeout setting for this request. If one number is provided, it will be the
             total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.
@@ -153,8 +153,8 @@ class ThumbnailsApi:
         """
         # Prepare the path parameters.
         _path_params = {
-            "org_id": org_id,
             "workspace_id": workspace_id,
+            "org_id": org_id,
         }
 
         # Prepare the header parameters.
@@ -183,22 +183,22 @@ class ThumbnailsApi:
 
     async def put_thumbnail(
         self,
-        org_id: str,
         workspace_id: str,
+        org_id: str,
         body: bytearray | None = None,
         additional_headers: dict[str, str] | None = None,
-        request_timeout: int | float | tuple[int | float, int | float] | None = None,
+        request_timeout: float | tuple[int | float, int | float] | None = None,
     ) -> EmptyResponse:
         """Upload thumbnail for workspace
 
         Upload a new thumbnail image for a workspace. The image must be of type png, jpeg, or jpg. Maximum file size is 10 MB. Max dimensions are 10000 pixels with a total number of pixels not exceeding 20 million.
 
-        :param org_id:
-            Format: `uuid`
-            Example: `'org_id_example'`
         :param workspace_id:
             Format: `uuid`
             Example: `'workspace_id_example'`
+        :param org_id:
+            Format: `uuid`
+            Example: `'org_id_example'`
         :param body: (optional)
             Example: `None`
         :param additional_headers: (optional) Additional headers to send with the request.
@@ -220,8 +220,8 @@ class ThumbnailsApi:
         """
         # Prepare the path parameters.
         _path_params = {
-            "org_id": org_id,
             "workspace_id": workspace_id,
+            "org_id": org_id,
         }
 
         # Prepare the header parameters.

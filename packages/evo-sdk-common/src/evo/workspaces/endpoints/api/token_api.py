@@ -36,7 +36,7 @@ from evo.common.connector import APIConnector
 from evo.common.data import EmptyResponse, RequestMethod  # noqa: F401
 from evo.common.utils import get_header_metadata
 
-from ..models import *  # noqa: F403
+from ..models import *
 
 __all__ = ["TokenApi"]
 
@@ -61,7 +61,7 @@ class TokenApi:
         hub: list[str] | None = None,
         org_id: list[str] | None = None,
         additional_headers: dict[str, str] | None = None,
-        request_timeout: int | float | tuple[int | float, int | float] | None = None,
+        request_timeout: float | tuple[int | float, int | float] | None = None,
     ) -> dict:
         """V1 Token
 

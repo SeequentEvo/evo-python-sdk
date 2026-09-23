@@ -36,7 +36,7 @@ from evo.common.connector import APIConnector
 from evo.common.data import EmptyResponse, RequestMethod  # noqa: F401
 from evo.common.utils import get_header_metadata
 
-from ..models import *  # noqa: F403
+from ..models import *
 
 __all__ = ["DiscoveryApi"]
 
@@ -61,8 +61,8 @@ class DiscoveryApi:
         user_agent: str | None = None,
         origin: str | None = None,
         additional_headers: dict[str, str] | None = None,
-        request_timeout: int | float | tuple[int | float, int | float] | None = None,
-    ) -> DiscoveryResponse:  # noqa: F405
+        request_timeout: float | tuple[int | float, int | float] | None = None,
+    ) -> DiscoveryResponse:
         """V1 Discovery
 
 
@@ -111,7 +111,7 @@ class DiscoveryApi:
         }
 
         _response_types_map = {
-            "200": DiscoveryResponse,  # noqa: F405
+            "200": DiscoveryResponse,
         }
 
         return await self.connector.call_api(
@@ -130,8 +130,8 @@ class DiscoveryApi:
         user_agent: str | None = None,
         origin: str | None = None,
         additional_headers: dict[str, str] | None = None,
-        request_timeout: int | float | tuple[int | float, int | float] | None = None,
-    ) -> DiscoveryResponse:  # noqa: F405
+        request_timeout: float | tuple[int | float, int | float] | None = None,
+    ) -> DiscoveryResponse:
         """V2 Discovery
 
 
@@ -180,7 +180,7 @@ class DiscoveryApi:
         }
 
         _response_types_map = {
-            "200": DiscoveryResponse,  # noqa: F405
+            "200": DiscoveryResponse,
         }
 
         return await self.connector.call_api(
