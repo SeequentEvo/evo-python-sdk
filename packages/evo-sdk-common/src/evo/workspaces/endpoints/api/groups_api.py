@@ -36,7 +36,7 @@ from evo.common.connector import APIConnector
 from evo.common.data import EmptyResponse, RequestMethod  # noqa: F401
 from evo.common.utils import get_header_metadata
 
-from ..models import *
+from ..models import *  # noqa: F403
 
 __all__ = ["GroupsApi"]
 
@@ -63,7 +63,7 @@ class GroupsApi:
         preview_api: str | None = None,
         additional_headers: dict[str, str] | None = None,
         request_timeout: float | tuple[int | float, int | float] | None = None,
-    ) -> ImsGroupDetailResponse:
+    ) -> ImsGroupDetailResponse:  # noqa: F405
         """Get IMS group details
 
         Returns the details of an IMS group
@@ -116,7 +116,7 @@ class GroupsApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "200": ImsGroupDetailResponse,
+            "200": ImsGroupDetailResponse,  # noqa: F405
         }
 
         return await self.connector.call_api(
@@ -135,7 +135,7 @@ class GroupsApi:
         email: str,
         additional_headers: dict[str, str] | None = None,
         request_timeout: float | tuple[int | float, int | float] | None = None,
-    ) -> ListUsersResponse:
+    ) -> ListUsersResponse:  # noqa: F405
         """Get IMS users
 
         Returns a list of users in an IMS organization, filtered by the first characters of their email address
@@ -183,7 +183,7 @@ class GroupsApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "200": ListUsersResponse,
+            "200": ListUsersResponse,  # noqa: F405
         }
 
         return await self.connector.call_api(
@@ -205,7 +205,7 @@ class GroupsApi:
         preview_api: str | None = None,
         additional_headers: dict[str, str] | None = None,
         request_timeout: float | tuple[int | float, int | float] | None = None,
-    ) -> ListUsersResponse:
+    ) -> ListUsersResponse:  # noqa: F405
         """List IMS group members
 
         Returns a list of users that are members of the specified IMS group
@@ -258,7 +258,7 @@ class GroupsApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "200": ListUsersResponse,
+            "200": ListUsersResponse,  # noqa: F405
         }
 
         return await self.connector.call_api(
@@ -278,7 +278,7 @@ class GroupsApi:
         preview_api: str | None = None,
         additional_headers: dict[str, str] | None = None,
         request_timeout: float | tuple[int | float, int | float] | None = None,
-    ) -> list[ImsGroupResponse]:
+    ) -> list[ImsGroupResponse]:  # noqa: F405
         """List IMS groups
 
         Returns a list of available IMS groups for the organization
@@ -327,7 +327,7 @@ class GroupsApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "200": list[ImsGroupResponse],
+            "200": list[ImsGroupResponse],  # noqa: F405
         }
 
         return await self.connector.call_api(

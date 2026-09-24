@@ -36,7 +36,7 @@ from evo.common.connector import APIConnector
 from evo.common.data import EmptyResponse, RequestMethod  # noqa: F401
 from evo.common.utils import get_header_metadata
 
-from ..models import *
+from ..models import *  # noqa: F403
 
 __all__ = ["GeneralApi"]
 
@@ -128,7 +128,7 @@ class GeneralApi:
         org_id: str,
         additional_headers: dict[str, str] | None = None,
         request_timeout: float | tuple[int | float, int | float] | None = None,
-    ) -> ListCoordinateSystemsResponse:
+    ) -> ListCoordinateSystemsResponse:  # noqa: F405
         """List coordinate systems
 
         Returns a list of coordinate systems for an organization.
@@ -169,7 +169,7 @@ class GeneralApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "200": ListCoordinateSystemsResponse,
+            "200": ListCoordinateSystemsResponse,  # noqa: F405
         }
 
         return await self.connector.call_api(

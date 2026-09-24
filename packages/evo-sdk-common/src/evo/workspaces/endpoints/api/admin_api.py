@@ -36,7 +36,7 @@ from evo.common.connector import APIConnector
 from evo.common.data import EmptyResponse, RequestMethod
 from evo.common.utils import get_header_metadata
 
-from ..models import *
+from ..models import *  # noqa: F403
 
 __all__ = ["AdminApi"]
 
@@ -59,10 +59,10 @@ class AdminApi:
         self,
         org_id: str,
         workspace_id: str,
-        assign_role_request: AssignRoleRequest,
+        assign_role_request: AssignRoleRequest,  # noqa: F405
         additional_headers: dict[str, str] | None = None,
         request_timeout: float | tuple[int | float, int | float] | None = None,
-    ) -> UserRole:
+    ) -> UserRole:  # noqa: F405
         """Assign user role
 
         Assigns a user a role in a workspace. Admin endpoints allow organization admin users to access any workspace, regardless of their role or lack thereof within the workspace.
@@ -110,7 +110,7 @@ class AdminApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "201": UserRole,
+            "201": UserRole,  # noqa: F405
         }
 
         return await self.connector.call_api(
@@ -127,7 +127,7 @@ class AdminApi:
     async def bulk_assign_roles_admin(
         self,
         org_id: str,
-        bulk_user_role_assignments_request: BulkUserRoleAssignmentsRequest,
+        bulk_user_role_assignments_request: BulkUserRoleAssignmentsRequest,  # noqa: F405
         additional_headers: dict[str, str] | None = None,
         request_timeout: float | tuple[int | float, int | float] | None = None,
     ) -> dict:
@@ -260,7 +260,7 @@ class AdminApi:
         org_id: str,
         additional_headers: dict[str, str] | None = None,
         request_timeout: float | tuple[int | float, int | float] | None = None,
-    ) -> OrganizationSettingsResponse:
+    ) -> OrganizationSettingsResponse:  # noqa: F405
         """Get organization settings
 
         Returns org settings, provided your user has access to the org.
@@ -301,7 +301,7 @@ class AdminApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "200": OrganizationSettingsResponse,
+            "200": OrganizationSettingsResponse,  # noqa: F405
         }
 
         return await self.connector.call_api(
@@ -383,9 +383,10 @@ class AdminApi:
         org_id: str,
         workspace_id: str,
         deleted: bool | None = None,
+        user_agent: str | None = None,
         additional_headers: dict[str, str] | None = None,
         request_timeout: float | tuple[int | float, int | float] | None = None,
-    ) -> WorkspaceAdminResponse:
+    ) -> WorkspaceAdminResponse:  # noqa: F405
         """Get workspace
 
         Get a workspace by its ID. Admin endpoints allow organization admin users to access any workspace, regardless of their role or lack thereof within the workspace.
@@ -398,6 +399,8 @@ class AdminApi:
             Example: `'workspace_id_example'`
         :param deleted: (optional) Only list workspaces that have been deleted.
             Example: `False`
+        :param user_agent: (optional)
+            Example: `''`
         :param additional_headers: (optional) Additional headers to send with the request.
         :param request_timeout: (optional) Timeout setting for this request. If one number is provided, it will be the
             total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.
@@ -430,6 +433,8 @@ class AdminApi:
         _header_params = {
             "Accept": "application/json",
         } | get_header_metadata(__name__)
+        if user_agent is not None:
+            _header_params["user-agent"] = user_agent
         if additional_headers is not None:
             _header_params.update(additional_headers)
 
@@ -437,7 +442,7 @@ class AdminApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "200": WorkspaceAdminResponse,
+            "200": WorkspaceAdminResponse,  # noqa: F405
         }
 
         return await self.connector.call_api(
@@ -459,7 +464,7 @@ class AdminApi:
         user_id: str | None = None,
         additional_headers: dict[str, str] | None = None,
         request_timeout: float | tuple[int | float, int | float] | None = None,
-    ) -> ListUserRoleResponse:
+    ) -> ListUserRoleResponse:  # noqa: F405
         """List users
 
         List all users and their roles within a workspace. Admin endpoints allow organization admin users to access any workspace, regardless of their role or lack thereof within the workspace.
@@ -516,7 +521,7 @@ class AdminApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "200": ListUserRoleResponse,
+            "200": ListUserRoleResponse,  # noqa: F405
         }
 
         return await self.connector.call_api(
@@ -540,14 +545,15 @@ class AdminApi:
         order_by: str | None = None,
         filter_created_by: str | None = None,
         created_by: str | None = None,
-        created_at: CreatedAtFilter | None = None,
-        updated_at: UpdatedAtFilter | None = None,
+        created_at: CreatedAtFilter | None = None,  # noqa: F405
+        updated_at: UpdatedAtFilter | None = None,  # noqa: F405
         filter_name: str | None = None,
         name: str | None = None,
         deleted: bool | None = None,
+        user_agent: str | None = None,
         additional_headers: dict[str, str] | None = None,
         request_timeout: float | tuple[int | float, int | float] | None = None,
-    ) -> ListUserWorkspacesResponse:
+    ) -> ListUserWorkspacesResponse:  # noqa: F405
         """List user workspaces
 
         Returns a list of all workspaces that a specified user has a role i. Admin endpoints allow organization admin users to access any workspace, regardless of their role or lack thereof within the workspace..
@@ -581,6 +587,8 @@ class AdminApi:
             Example: `'name_example'`
         :param deleted: (optional) Include workspaces that have been deleted.
             Example: `False`
+        :param user_agent: (optional)
+            Example: `''`
         :param additional_headers: (optional) Additional headers to send with the request.
         :param request_timeout: (optional) Timeout setting for this request. If one number is provided, it will be the
             total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.
@@ -633,6 +641,8 @@ class AdminApi:
         _header_params = {
             "Accept": "application/json",
         } | get_header_metadata(__name__)
+        if user_agent is not None:
+            _header_params["user-agent"] = user_agent
         if additional_headers is not None:
             _header_params.update(additional_headers)
 
@@ -640,7 +650,7 @@ class AdminApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "200": ListUserWorkspacesResponse,
+            "200": ListUserWorkspacesResponse,  # noqa: F405
         }
 
         return await self.connector.call_api(
@@ -663,16 +673,17 @@ class AdminApi:
         order_by: str | None = None,
         filter_created_by: str | None = None,
         created_by: str | None = None,
-        created_at: CreatedAtFilter | None = None,
-        updated_at: UpdatedAtFilter | None = None,
+        created_at: CreatedAtFilter | None = None,  # noqa: F405
+        updated_at: UpdatedAtFilter | None = None,  # noqa: F405
         filter_name: str | None = None,
         name: str | None = None,
         deleted: bool | None = None,
         filter_user_id: str | None = None,
         user_id: str | None = None,
+        user_agent: str | None = None,
         additional_headers: dict[str, str] | None = None,
         request_timeout: float | tuple[int | float, int | float] | None = None,
-    ) -> ListWorkspacesResponse:
+    ) -> ListWorkspacesResponse:  # noqa: F405
         """List workspaces
 
         Get a list of all workspaces. Admin endpoints allow organization admin users to access any workspace, regardless of their role or lack thereof within the workspace.
@@ -708,6 +719,8 @@ class AdminApi:
             Example: `'filter_user_id_example'`
         :param user_id: (optional) Filter by workspaces that a user ID has access to.
             Example: `'user_id_example'`
+        :param user_agent: (optional)
+            Example: `''`
         :param additional_headers: (optional) Additional headers to send with the request.
         :param request_timeout: (optional) Timeout setting for this request. If one number is provided, it will be the
             total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.
@@ -763,6 +776,8 @@ class AdminApi:
         _header_params = {
             "Accept": "application/json",
         } | get_header_metadata(__name__)
+        if user_agent is not None:
+            _header_params["user-agent"] = user_agent
         if additional_headers is not None:
             _header_params.update(additional_headers)
 
@@ -770,7 +785,7 @@ class AdminApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "200": ListWorkspacesResponse,
+            "200": ListWorkspacesResponse,  # noqa: F405
         }
 
         return await self.connector.call_api(
@@ -787,10 +802,10 @@ class AdminApi:
     async def update_ml_enablement_admin(
         self,
         org_id: str,
-        ml_enablement_request: MlEnablementRequest,
+        ml_enablement_request: MlEnablementRequest,  # noqa: F405
         additional_headers: dict[str, str] | None = None,
         request_timeout: float | tuple[int | float, int | float] | None = None,
-    ) -> MlEnablementRequest:
+    ) -> MlEnablementRequest:  # noqa: F405
         """Update ML enablements
 
         Update ML (machine learning) enablement status for a group of given workspaces. Admin endpoints allow organization admin users to access any workspace, regardless of their role or lack thereof within the workspace.
@@ -834,7 +849,7 @@ class AdminApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "200": MlEnablementRequest,
+            "200": MlEnablementRequest,  # noqa: F405
         }
 
         return await self.connector.call_api(

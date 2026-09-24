@@ -36,7 +36,7 @@ from evo.common.connector import APIConnector
 from evo.common.data import EmptyResponse, RequestMethod
 from evo.common.utils import get_header_metadata
 
-from ..models import *
+from ..models import *  # noqa: F403
 
 __all__ = ["InstanceUsersApi"]
 
@@ -58,10 +58,10 @@ class InstanceUsersApi:
     async def add_instance_users(
         self,
         org_id: str,
-        add_instance_users_request: AddInstanceUsersRequest,
+        add_instance_users_request: AddInstanceUsersRequest,  # noqa: F405
         additional_headers: dict[str, str] | None = None,
         request_timeout: float | tuple[int | float, int | float] | None = None,
-    ) -> AddInstanceUsersResponse:
+    ) -> AddInstanceUsersResponse:  # noqa: F405
         """Add user to instance
 
         Add user to the Evo instance
@@ -105,7 +105,7 @@ class InstanceUsersApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "201": AddInstanceUsersResponse,
+            "201": AddInstanceUsersResponse,  # noqa: F405
         }
 
         return await self.connector.call_api(
@@ -122,10 +122,10 @@ class InstanceUsersApi:
     async def add_instance_users_deprecated(
         self,
         org_id: str,
-        add_instance_users_request: AddInstanceUsersRequest,
+        add_instance_users_request: AddInstanceUsersRequest,  # noqa: F405
         additional_headers: dict[str, str] | None = None,
         request_timeout: float | tuple[int | float, int | float] | None = None,
-    ) -> AddInstanceUsersResponse:
+    ) -> AddInstanceUsersResponse:  # noqa: F405
         """Add user to instance (deprecated - use /users endpoint)
 
         Add user to the Evo instance
@@ -169,7 +169,7 @@ class InstanceUsersApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "201": AddInstanceUsersResponse,
+            "201": AddInstanceUsersResponse,  # noqa: F405
         }
 
         return await self.connector.call_api(
@@ -252,7 +252,7 @@ class InstanceUsersApi:
         offset: int | None = None,
         additional_headers: dict[str, str] | None = None,
         request_timeout: float | tuple[int | float, int | float] | None = None,
-    ) -> ListInstanceUserInvitationsResponse:
+    ) -> ListInstanceUserInvitationsResponse:  # noqa: F405
         """List instance user invitations
 
         Returns a paginated list of all user invitations for the Evo instance
@@ -304,7 +304,7 @@ class InstanceUsersApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "200": ListInstanceUserInvitationsResponse,
+            "200": ListInstanceUserInvitationsResponse,  # noqa: F405
         }
 
         return await self.connector.call_api(
@@ -323,7 +323,7 @@ class InstanceUsersApi:
         org_id: str,
         additional_headers: dict[str, str] | None = None,
         request_timeout: float | tuple[int | float, int | float] | None = None,
-    ) -> ListInstanceRolesResponse:
+    ) -> ListInstanceRolesResponse:  # noqa: F405
         """List instance user roles
 
         List all roles in the Evo instance
@@ -364,7 +364,7 @@ class InstanceUsersApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "200": ListInstanceRolesResponse,
+            "200": ListInstanceRolesResponse,  # noqa: F405
         }
 
         return await self.connector.call_api(
@@ -384,7 +384,7 @@ class InstanceUsersApi:
         offset: int | None = None,
         additional_headers: dict[str, str] | None = None,
         request_timeout: float | tuple[int | float, int | float] | None = None,
-    ) -> ListInstanceUsersResponse:
+    ) -> ListInstanceUsersResponse:  # noqa: F405
         """List instance users
 
         Returns a paginated list of all users with access to the Evo instance.  Users with multiple roles will only have their most privileged role returned.
@@ -436,7 +436,7 @@ class InstanceUsersApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "200": ListInstanceUsersResponse,
+            "200": ListInstanceUsersResponse,  # noqa: F405
         }
 
         return await self.connector.call_api(
@@ -457,7 +457,7 @@ class InstanceUsersApi:
         offset: int | None = None,
         additional_headers: dict[str, str] | None = None,
         request_timeout: float | tuple[int | float, int | float] | None = None,
-    ) -> ListInstanceUsersResponse:
+    ) -> ListInstanceUsersResponse:  # noqa: F405
         """List instance users (deprecated - use /users endpoint)
 
         Returns a paginated list of all users with access to the Evo instance.  Users with multiple roles will only have their most privileged role returned.
@@ -509,7 +509,7 @@ class InstanceUsersApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "200": ListInstanceUsersResponse,
+            "200": ListInstanceUsersResponse,  # noqa: F405
         }
 
         return await self.connector.call_api(
@@ -651,10 +651,10 @@ class InstanceUsersApi:
         self,
         user_id: str,
         org_id: str,
-        update_instance_user_roles_request: UpdateInstanceUserRolesRequest,
+        update_instance_user_roles_request: UpdateInstanceUserRolesRequest,  # noqa: F405
         additional_headers: dict[str, str] | None = None,
         request_timeout: float | tuple[int | float, int | float] | None = None,
-    ) -> UpdateInstanceUserRolesResponse:
+    ) -> UpdateInstanceUserRolesResponse:  # noqa: F405
         """Update instance user roles
 
         Update the roles of a user in the Evo instance
@@ -702,7 +702,7 @@ class InstanceUsersApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "200": UpdateInstanceUserRolesResponse,
+            "200": UpdateInstanceUserRolesResponse,  # noqa: F405
         }
 
         return await self.connector.call_api(
@@ -720,10 +720,10 @@ class InstanceUsersApi:
         self,
         user_id: str,
         org_id: str,
-        update_instance_user_roles_request: UpdateInstanceUserRolesRequest,
+        update_instance_user_roles_request: UpdateInstanceUserRolesRequest,  # noqa: F405
         additional_headers: dict[str, str] | None = None,
         request_timeout: float | tuple[int | float, int | float] | None = None,
-    ) -> UpdateInstanceUserRolesResponse:
+    ) -> UpdateInstanceUserRolesResponse:  # noqa: F405
         """Update instance user roles (deprecated - use /users endpoint)
 
         Update the roles of a user in the Evo instance
@@ -771,7 +771,7 @@ class InstanceUsersApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "200": UpdateInstanceUserRolesResponse,
+            "200": UpdateInstanceUserRolesResponse,  # noqa: F405
         }
 
         return await self.connector.call_api(

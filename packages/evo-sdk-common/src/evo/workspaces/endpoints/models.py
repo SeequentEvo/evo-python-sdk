@@ -414,7 +414,7 @@ class AssignRoleRequest(RootModel[UserRole | UserRoleViaEmail]):
     root: Annotated[
         UserRole | UserRoleViaEmail,
         Field(
-            examples=[{"role": "admin", "user_id": "123e4567-e89b-12d3-a456-426614174000"}],
+            examples=[{"role": "viewer", "user_id": "123e4567-e89b-12d3-a456-426614174000"}],
             title="AssignRoleRequest",
         ),
     ]

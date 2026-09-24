@@ -36,7 +36,7 @@ from evo.common.connector import APIConnector
 from evo.common.data import EmptyResponse, RequestMethod  # noqa: F401
 from evo.common.utils import get_header_metadata
 
-from ..models import *
+from ..models import *  # noqa: F403
 
 __all__ = ["InstanceGroupsApi"]
 
@@ -62,7 +62,7 @@ class InstanceGroupsApi:
         preview_api: str | None = None,
         additional_headers: dict[str, str] | None = None,
         request_timeout: float | tuple[int | float, int | float] | None = None,
-    ) -> ListInstanceGroupResponse:
+    ) -> ListInstanceGroupResponse:  # noqa: F405
         """List instance groups
 
         Returns a list of instance groups for the Evo instance along with their members and roles
@@ -111,7 +111,7 @@ class InstanceGroupsApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "200": ListInstanceGroupResponse,
+            "200": ListInstanceGroupResponse,  # noqa: F405
         }
 
         return await self.connector.call_api(
@@ -128,12 +128,12 @@ class InstanceGroupsApi:
         self,
         org_id: str,
         group_id: str,
-        update_instance_group_members_request: UpdateInstanceGroupMembersRequest,
+        update_instance_group_members_request: UpdateInstanceGroupMembersRequest,  # noqa: F405
         api_preview: str | None = None,
         preview_api: str | None = None,
         additional_headers: dict[str, str] | None = None,
         request_timeout: float | tuple[int | float, int | float] | None = None,
-    ) -> UpdateInstanceGroupMembersResponse:
+    ) -> UpdateInstanceGroupMembersResponse:  # noqa: F405
         """Update instance group members
 
         Update the members of a group in the Evo instance
@@ -189,7 +189,7 @@ class InstanceGroupsApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "200": UpdateInstanceGroupMembersResponse,
+            "200": UpdateInstanceGroupMembersResponse,  # noqa: F405
         }
 
         return await self.connector.call_api(

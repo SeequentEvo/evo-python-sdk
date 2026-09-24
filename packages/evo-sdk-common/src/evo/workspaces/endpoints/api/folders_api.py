@@ -36,7 +36,7 @@ from evo.common.connector import APIConnector
 from evo.common.data import EmptyResponse, RequestMethod
 from evo.common.utils import get_header_metadata
 
-from ..models import *
+from ..models import *  # noqa: F403
 
 __all__ = ["FoldersApi"]
 
@@ -59,12 +59,12 @@ class FoldersApi:
         self,
         workspace_id: str,
         org_id: str,
-        folder_create_request: FolderCreateRequest,
+        folder_create_request: FolderCreateRequest,  # noqa: F405
         api_preview: str | None = None,
         preview_api: str | None = None,
         additional_headers: dict[str, str] | None = None,
         request_timeout: float | tuple[int | float, int | float] | None = None,
-    ) -> FolderResponse:
+    ) -> FolderResponse:  # noqa: F405
         """Create a folder
 
         Creates a new folder in the workspace. The folder needs to have a name and either a `parent_folder_id` or a `parent_folder_path`.
@@ -120,8 +120,8 @@ class FoldersApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "200": FolderResponse,
-            "201": FolderResponse,
+            "200": FolderResponse,  # noqa: F405
+            "201": FolderResponse,  # noqa: F405
         }
 
         return await self.connector.call_api(
@@ -222,7 +222,7 @@ class FoldersApi:
         preview_api: str | None = None,
         additional_headers: dict[str, str] | None = None,
         request_timeout: float | tuple[int | float, int | float] | None = None,
-    ) -> FolderResponse:
+    ) -> FolderResponse:  # noqa: F405
         """Get folder by ID
 
         Returns a folder by its ID.
@@ -286,7 +286,7 @@ class FoldersApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "200": FolderResponse,
+            "200": FolderResponse,  # noqa: F405
         }
 
         return await self.connector.call_api(
@@ -309,7 +309,7 @@ class FoldersApi:
         preview_api: str | None = None,
         additional_headers: dict[str, str] | None = None,
         request_timeout: float | tuple[int | float, int | float] | None = None,
-    ) -> FolderResponse:
+    ) -> FolderResponse:  # noqa: F405
         """Get folder by path.
 
         Get a folder at the provided path.
@@ -369,7 +369,7 @@ class FoldersApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "200": FolderResponse,
+            "200": FolderResponse,  # noqa: F405
         }
 
         return await self.connector.call_api(
@@ -403,7 +403,7 @@ class FoldersApi:
         preview_api: str | None = None,
         additional_headers: dict[str, str] | None = None,
         request_timeout: float | tuple[int | float, int | float] | None = None,
-    ) -> ListFoldersResponse:
+    ) -> ListFoldersResponse:  # noqa: F405
         """List folders.
 
         Get a folder at the provided path/id with its child folders.
@@ -517,7 +517,7 @@ class FoldersApi:
         }
 
         _response_types_map = {
-            "200": ListFoldersResponse,
+            "200": ListFoldersResponse,  # noqa: F405
         }
 
         return await self.connector.call_api(
@@ -541,7 +541,7 @@ class FoldersApi:
         preview_api: str | None = None,
         additional_headers: dict[str, str] | None = None,
         request_timeout: float | tuple[int | float, int | float] | None = None,
-    ) -> FolderResponse:
+    ) -> FolderResponse:  # noqa: F405
         """Restore a folder
 
         Restores a previously deleted folder.
@@ -605,9 +605,9 @@ class FoldersApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "200": FolderResponse,
-            "201": FolderResponse,
-            "303": FolderResponse,
+            "200": FolderResponse,  # noqa: F405
+            "201": FolderResponse,  # noqa: F405
+            "303": FolderResponse,  # noqa: F405
         }
 
         return await self.connector.call_api(
@@ -632,7 +632,7 @@ class FoldersApi:
         preview_api: str | None = None,
         additional_headers: dict[str, str] | None = None,
         request_timeout: float | tuple[int | float, int | float] | None = None,
-    ) -> ListFoldersSummaryResponse:
+    ) -> ListFoldersSummaryResponse:  # noqa: F405
         """Summarize folders.
 
         Get a summary of folders in this workspace.
@@ -700,7 +700,7 @@ class FoldersApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "200": ListFoldersSummaryResponse,
+            "200": ListFoldersSummaryResponse,  # noqa: F405
         }
 
         return await self.connector.call_api(
@@ -719,12 +719,12 @@ class FoldersApi:
         folder_id: str,
         workspace_id: str,
         org_id: str,
-        folder_update_request: FolderUpdateRequest,
+        folder_update_request: FolderUpdateRequest,  # noqa: F405
         api_preview: str | None = None,
         preview_api: str | None = None,
         additional_headers: dict[str, str] | None = None,
         request_timeout: float | tuple[int | float, int | float] | None = None,
-    ) -> FolderResponse:
+    ) -> FolderResponse:  # noqa: F405
         """Update a folder
 
         Updates a folder's details.
@@ -784,8 +784,8 @@ class FoldersApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "200": FolderResponse,
-            "201": FolderResponse,
+            "200": FolderResponse,  # noqa: F405
+            "201": FolderResponse,  # noqa: F405
             "204": EmptyResponse,
         }
 

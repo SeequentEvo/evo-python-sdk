@@ -36,7 +36,7 @@ from evo.common.connector import APIConnector
 from evo.common.data import EmptyResponse, RequestMethod
 from evo.common.utils import get_header_metadata
 
-from ..models import *
+from ..models import *  # noqa: F403
 
 __all__ = ["WorkspacesApi"]
 
@@ -59,10 +59,10 @@ class WorkspacesApi:
         self,
         org_id: str,
         workspace_id: str,
-        assign_role_request: AssignRoleRequest,
+        assign_role_request: AssignRoleRequest,  # noqa: F405
         additional_headers: dict[str, str] | None = None,
         request_timeout: float | tuple[int | float, int | float] | None = None,
-    ) -> UserRole:
+    ) -> UserRole:  # noqa: F405
         """Assign user role
 
         Assigns a user a role in a workspace.
@@ -110,7 +110,7 @@ class WorkspacesApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "201": UserRole,
+            "201": UserRole,  # noqa: F405
         }
 
         return await self.connector.call_api(
@@ -127,10 +127,11 @@ class WorkspacesApi:
     async def create_workspace(
         self,
         org_id: str,
-        create_workspace_request: CreateWorkspaceRequest,
+        create_workspace_request: CreateWorkspaceRequest,  # noqa: F405
+        user_agent: str | None = None,
         additional_headers: dict[str, str] | None = None,
         request_timeout: float | tuple[int | float, int | float] | None = None,
-    ) -> WorkspaceResponse:
+    ) -> WorkspaceResponse:  # noqa: F405
         """Create workspace
 
         Creates a new workspace in your organization.
@@ -140,6 +141,8 @@ class WorkspacesApi:
             Example: `'org_id_example'`
         :param create_workspace_request:
             Example: `endpoints.CreateWorkspaceRequest()`
+        :param user_agent: (optional)
+            Example: `''`
         :param additional_headers: (optional) Additional headers to send with the request.
         :param request_timeout: (optional) Timeout setting for this request. If one number is provided, it will be the
             total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.
@@ -167,6 +170,8 @@ class WorkspacesApi:
             "Content-Type": "application/json",
             "Accept": "application/json",
         } | get_header_metadata(__name__)
+        if user_agent is not None:
+            _header_params["user-agent"] = user_agent
         if additional_headers is not None:
             _header_params.update(additional_headers)
 
@@ -174,7 +179,7 @@ class WorkspacesApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "201": WorkspaceResponse,
+            "201": WorkspaceResponse,  # noqa: F405
         }
 
         return await self.connector.call_api(
@@ -323,7 +328,7 @@ class WorkspacesApi:
         org_id: str,
         additional_headers: dict[str, str] | None = None,
         request_timeout: float | tuple[int | float, int | float] | None = None,
-    ) -> UserRole:
+    ) -> UserRole:  # noqa: F405
         """Get current user role
 
         Returns your user account's role in a workspace.
@@ -368,7 +373,7 @@ class WorkspacesApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "200": UserRole,
+            "200": UserRole,  # noqa: F405
         }
 
         return await self.connector.call_api(
@@ -386,9 +391,10 @@ class WorkspacesApi:
         org_id: str,
         workspace_id: str,
         deleted: bool | None = None,
+        user_agent: str | None = None,
         additional_headers: dict[str, str] | None = None,
         request_timeout: float | tuple[int | float, int | float] | None = None,
-    ) -> AnyWorkspaceResponse:
+    ) -> AnyWorkspaceResponse:  # noqa: F405
         """Get workspace
 
         Returns a workspace by its ID, provided your user has a role to access it. To retrieve a workspace by ID regardless of your user role, see the 'Admin' equivalent API.
@@ -401,6 +407,8 @@ class WorkspacesApi:
             Example: `'workspace_id_example'`
         :param deleted: (optional) Only list workspaces that have been deleted.
             Example: `False`
+        :param user_agent: (optional)
+            Example: `''`
         :param additional_headers: (optional) Additional headers to send with the request.
         :param request_timeout: (optional) Timeout setting for this request. If one number is provided, it will be the
             total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.
@@ -433,6 +441,8 @@ class WorkspacesApi:
         _header_params = {
             "Accept": "application/json",
         } | get_header_metadata(__name__)
+        if user_agent is not None:
+            _header_params["user-agent"] = user_agent
         if additional_headers is not None:
             _header_params.update(additional_headers)
 
@@ -440,7 +450,7 @@ class WorkspacesApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "200": AnyWorkspaceResponse,
+            "200": AnyWorkspaceResponse,  # noqa: F405
         }
 
         return await self.connector.call_api(
@@ -462,7 +472,7 @@ class WorkspacesApi:
         user_id: str | None = None,
         additional_headers: dict[str, str] | None = None,
         request_timeout: float | tuple[int | float, int | float] | None = None,
-    ) -> ListUserRoleResponse:
+    ) -> ListUserRoleResponse:  # noqa: F405
         """List users
 
         Returns a list of all users with a role in a workspace.
@@ -519,7 +529,7 @@ class WorkspacesApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "200": ListUserRoleResponse,
+            "200": ListUserRoleResponse,  # noqa: F405
         }
 
         return await self.connector.call_api(
@@ -542,16 +552,17 @@ class WorkspacesApi:
         order_by: str | None = None,
         filter_created_by: str | None = None,
         created_by: str | None = None,
-        created_at: CreatedAtFilter | None = None,
-        updated_at: UpdatedAtFilter | None = None,
+        created_at: CreatedAtFilter | None = None,  # noqa: F405
+        updated_at: UpdatedAtFilter | None = None,  # noqa: F405
         filter_name: str | None = None,
         name: str | None = None,
         deleted: bool | None = None,
         filter_user_id: str | None = None,
         user_id: str | None = None,
+        user_agent: str | None = None,
         additional_headers: dict[str, str] | None = None,
         request_timeout: float | tuple[int | float, int | float] | None = None,
-    ) -> ListWorkspacesResponse:
+    ) -> ListWorkspacesResponse:  # noqa: F405
         """List workspaces
 
         Returns a paginated list of all workspaces that you have a role to access in your organization. For a list of all workspaces regardless of your user role, see the 'Admin' equivalent API.
@@ -587,6 +598,8 @@ class WorkspacesApi:
             Example: `'filter_user_id_example'`
         :param user_id: (optional) Filter by workspaces that a user ID has access to.
             Example: `'user_id_example'`
+        :param user_agent: (optional)
+            Example: `''`
         :param additional_headers: (optional) Additional headers to send with the request.
         :param request_timeout: (optional) Timeout setting for this request. If one number is provided, it will be the
             total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.
@@ -642,6 +655,8 @@ class WorkspacesApi:
         _header_params = {
             "Accept": "application/json",
         } | get_header_metadata(__name__)
+        if user_agent is not None:
+            _header_params["user-agent"] = user_agent
         if additional_headers is not None:
             _header_params.update(additional_headers)
 
@@ -649,7 +664,7 @@ class WorkspacesApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "200": ListWorkspacesResponse,
+            "200": ListWorkspacesResponse,  # noqa: F405
         }
 
         return await self.connector.call_api(
@@ -672,8 +687,8 @@ class WorkspacesApi:
         order_by: str | None = None,
         filter_created_by: str | None = None,
         created_by: str | None = None,
-        created_at: CreatedAtFilter | None = None,
-        updated_at: UpdatedAtFilter | None = None,
+        created_at: CreatedAtFilter | None = None,  # noqa: F405
+        updated_at: UpdatedAtFilter | None = None,  # noqa: F405
         filter_name: str | None = None,
         name: str | None = None,
         deleted: bool | None = None,
@@ -681,7 +696,7 @@ class WorkspacesApi:
         user_id: str | None = None,
         additional_headers: dict[str, str] | None = None,
         request_timeout: float | tuple[int | float, int | float] | None = None,
-    ) -> ListWorkspaceSummaryResponse:
+    ) -> ListWorkspaceSummaryResponse:  # noqa: F405
         """List workspaces summary
 
 
@@ -778,7 +793,7 @@ class WorkspacesApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "200": ListWorkspaceSummaryResponse,
+            "200": ListWorkspaceSummaryResponse,  # noqa: F405
         }
 
         return await self.connector.call_api(
@@ -852,7 +867,7 @@ class WorkspacesApi:
 
         _response_types_map = {
             "204": EmptyResponse,
-            "303": ErrorResponse,
+            "303": ErrorResponse,  # noqa: F405
         }
 
         return await self.connector.call_api(
@@ -870,10 +885,11 @@ class WorkspacesApi:
         self,
         org_id: str,
         workspace_id: str,
-        update_workspace_request: UpdateWorkspaceRequest,
+        update_workspace_request: UpdateWorkspaceRequest,  # noqa: F405
+        user_agent: str | None = None,
         additional_headers: dict[str, str] | None = None,
         request_timeout: float | tuple[int | float, int | float] | None = None,
-    ) -> WorkspaceResponse:
+    ) -> WorkspaceResponse:  # noqa: F405
         """Update workspace
 
         Updates a workspace.
@@ -886,6 +902,8 @@ class WorkspacesApi:
             Example: `'workspace_id_example'`
         :param update_workspace_request:
             Example: `endpoints.UpdateWorkspaceRequest()`
+        :param user_agent: (optional)
+            Example: `''`
         :param additional_headers: (optional) Additional headers to send with the request.
         :param request_timeout: (optional) Timeout setting for this request. If one number is provided, it will be the
             total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.
@@ -914,6 +932,8 @@ class WorkspacesApi:
             "Content-Type": "application/json",
             "Accept": "application/json",
         } | get_header_metadata(__name__)
+        if user_agent is not None:
+            _header_params["user-agent"] = user_agent
         if additional_headers is not None:
             _header_params.update(additional_headers)
 
@@ -921,7 +941,7 @@ class WorkspacesApi:
         _collection_formats = {}
 
         _response_types_map = {
-            "200": WorkspaceResponse,
+            "200": WorkspaceResponse,  # noqa: F405
         }
 
         return await self.connector.call_api(
