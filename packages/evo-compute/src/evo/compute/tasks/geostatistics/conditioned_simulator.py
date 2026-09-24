@@ -40,13 +40,13 @@ Example:
 
 from __future__ import annotations
 
-from typing import ClassVar, Literal, Protocol, runtime_checkable
+from typing import Any, ClassVar, Literal, Protocol, runtime_checkable
 
 import pandas as pd
 from evo.common import IContext, IFeedback
 from evo.objects import ObjectSchema
 from evo.objects.typed import BaseObject, object_from_reference
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, SerializerFunctionWrapHandler, model_serializer
 
 from ..common import (
     CreateAttribute,
@@ -99,6 +99,14 @@ class TailExtrapolationParams(BaseModel):
     upper: UpperTailParams
     lower: LowerTailParams | None = None
 
+    @model_serializer(mode="wrap")
+    def _serialize(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        result = handler(self)
+        # The service requires this key even when null; TaskRunner dumps with exclude_none=True.
+        if self.lower is None:
+            result["lower"] = None
+        return result
+
 
 class DistributionParams(BaseModel):
     """Parameters for the continuous distribution used for normal-score transformation."""
@@ -108,6 +116,14 @@ class DistributionParams(BaseModel):
 
     tail_extrapolation: TailExtrapolationParams | None = None
     """Optional tail extrapolation parameters."""
+
+    @model_serializer(mode="wrap")
+    def _serialize(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        result = handler(self)
+        # The service requires this key even when null; TaskRunner dumps with exclude_none=True.
+        if self.tail_extrapolation is None:
+            result["tail_extrapolation"] = None
+        return result
 
 
 class BlockDiscretization(BaseModel):

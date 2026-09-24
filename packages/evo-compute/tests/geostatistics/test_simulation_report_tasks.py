@@ -17,6 +17,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from evo.compute.tasks import SearchNeighborhood
 from evo.compute.tasks.common import Ellipsoid, EllipsoidRanges
 from evo.compute.tasks.common.runner import TaskRegistry
+from evo.compute.tasks.geostatistics.conditioned_simulator import TailExtrapolationParams, UpperTailParams
 from evo.compute.tasks.geostatistics.simulation_report import (
     SimReportContext,
     SimReportContextItem,
@@ -165,6 +166,17 @@ class TestSimulationReportParametersSerialization(unittest.TestCase):
     def test_distribution_with_weights(self):
         d = _dump(_params(distribution=SimulationReportDistribution(weights="declustering_weights")))
         self.assertEqual(d["distribution"]["weights"], "declustering_weights")
+
+    def test_distribution_without_tail_extrapolation_sends_null(self):
+        d = _dump(_params(distribution=SimulationReportDistribution(weights="declustering_weights")))
+        self.assertEqual(d["distribution"], {"weights": "declustering_weights", "tail_extrapolation": None})
+
+    def test_distribution_with_tail_extrapolation(self):
+        tail = TailExtrapolationParams(upper=UpperTailParams(power=0.5, max=100.0))
+        d = _dump(_params(distribution=SimulationReportDistribution(tail_extrapolation=tail)))
+        self.assertEqual(
+            d["distribution"]["tail_extrapolation"], {"upper": {"power": 0.5, "max": 100.0}, "lower": None}
+        )
 
     def test_report_context(self):
         d = _dump(
