@@ -220,6 +220,16 @@ def _object_identity(reference: str) -> str:
     return reference.split("?", 1)[0]
 
 
+def _claim_attribute(claimed: dict[str, str], attribute: str, output: str) -> None:
+    """Record that ``output`` writes to ``attribute``, raising if another output already does."""
+    if attribute in claimed:
+        raise ValueError(
+            f"{claimed[attribute]} and {output} both write to the attribute {attribute!r}. "
+            "Every kriging output needs its own attribute."
+        )
+    claimed[attribute] = output
+
+
 class KrigingDiagnostics(BaseModel):
     """Optional per-location diagnostics written alongside the kriging estimate.
 
@@ -449,10 +459,10 @@ class KrigingParameters(BaseModel):
             return params
 
         target_object = _object_identity(params.target.object)
-        for name, source in diagnostics._source_objects.items():
+        for field, source in diagnostics._source_objects.items():
             if _object_identity(source) != target_object:
                 raise ValueError(
-                    f"Diagnostic {name!r} references an attribute of a different object than the kriging "
+                    f"Diagnostic {field!r} references an attribute of a different object than the kriging "
                     f"target. Diagnostics are written onto the target object, {target_object}."
                 )
 
@@ -462,26 +472,19 @@ class KrigingParameters(BaseModel):
             ("the estimate", params.target.attribute, estimate_name)
         ]
         outputs += [
-            (f"diagnostic {name!r}", spec, diagnostics._attribute_names.get(name))
-            for name in KrigingDiagnostics.model_fields
-            if (spec := getattr(diagnostics, name)) is not None
+            (f"diagnostic {field!r}", spec, diagnostics._attribute_names.get(field))
+            for field in KrigingDiagnostics.model_fields
+            if (spec := getattr(diagnostics, field)) is not None
         ]
 
-        written_by: dict[tuple[str, str], str] = {}
+        claimed_names: dict[str, str] = {}
+        claimed_references: dict[str, str] = {}
         for label, spec, known_name in outputs:
-            if isinstance(spec, CreateAttribute):
-                keys = [("name", spec.name)]
-            elif known_name is None:
-                keys = [("reference", spec.reference)]
-            else:
-                keys = [("name", known_name), ("reference", spec.reference)]
-            for key in keys:
-                if (owner := written_by.get(key)) is not None:
-                    raise ValueError(
-                        f"{owner} and {label} both write to the attribute {key[1]!r}. "
-                        "Every kriging output needs its own attribute."
-                    )
-                written_by[key] = label
+            name = spec.name if isinstance(spec, CreateAttribute) else known_name
+            if name is not None:
+                _claim_attribute(claimed_names, name, label)
+            if isinstance(spec, UpdateAttribute):
+                _claim_attribute(claimed_references, spec.reference, label)
         return params
 
     @model_serializer(mode="wrap")

@@ -813,6 +813,21 @@ class TestKrigingDiagnosticOutputValidation(TestCase):
 
         self.assertIn(f"both write to the attribute {reference!r}", str(ctx.exception))
 
+    def test_a_typed_attribute_cannot_also_be_updated_through_its_reference(self):
+        """A hand-written reference has no name, so the clash is only visible in the reference."""
+        attr = _create_mock_source_attribute("KV", "kv-key", GRID_URL, schema_path="cell_attributes")
+        reference = "cell_attributes[?key=='kv-key']"
+
+        with self.assertRaises(ValidationError) as ctx:
+            self._params(
+                diagnostics=KrigingDiagnostics(
+                    kriging_variance=attr,
+                    kriging_efficiency=UpdateAttribute(reference=reference),
+                )
+            )
+
+        self.assertIn(f"both write to the attribute {reference!r}", str(ctx.exception))
+
     def test_an_update_and_a_create_cannot_share_a_name(self):
         """A typed attribute is updated by key, so its own name is what reveals the collision."""
         attr = _create_mock_source_attribute("KV", "kv-key", GRID_URL, schema_path="cell_attributes")
