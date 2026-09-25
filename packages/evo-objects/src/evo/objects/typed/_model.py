@@ -175,7 +175,7 @@ def _set_property_value(schema_property: BaseSchemaProperty, document: dict[str,
 class SchemaBuilder:
     """Helper class to build a schema document by applying SchemaProperty values."""
 
-    def __init__(self, schema_model_cls: type[SchemaModel], context: ModelContext) -> None:
+    def __init__(self, schema_model_cls: type[SchemaModel], context: IContext) -> None:
         self.document: dict[str, Any] = {}
         self._properties = schema_model_cls._schema_properties
         self._sub_models = schema_model_cls._sub_models

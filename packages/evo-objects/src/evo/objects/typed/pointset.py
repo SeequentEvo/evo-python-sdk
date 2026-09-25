@@ -129,7 +129,7 @@ class PointSet(BaseSpatialObject):
         :param fb: Optional feedback object to report download progress.
         :return: A DataFrame with 'x', 'y', 'z' columns representing point coordinates.
         """
-        return await self.locations._table.get_dataframe(fb=fb)
+        return await self.locations._table.to_dataframe(fb=fb)
 
     async def to_dataframe(self, *keys: str, fb: IFeedback = NoFeedback) -> pd.DataFrame:
         """Get the full dataframe for the pointset, including coordinates and attributes.
