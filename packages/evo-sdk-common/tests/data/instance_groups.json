@@ -1,0 +1,24 @@
+{
+    "groups": [
+        {
+            "id": "00000000-0000-0000-0000-00000000000b",
+            "name": "Instance Group",
+            "description": "Instance group description",
+            "ims_groups": ["00000000-0000-0000-0000-00000000000a"],
+            "members": [
+                {
+                    "id": "00000000-0000-0000-0000-000000000002",
+                    "email": "test.user@example.com",
+                    "full_name": "Test User"
+                }
+            ],
+            "roles": [
+                {
+                    "id": "00000000-0000-0000-0000-000000000001",
+                    "name": "Evo User",
+                    "description": "evo user"
+                }
+            ]
+        }
+    ]
+}

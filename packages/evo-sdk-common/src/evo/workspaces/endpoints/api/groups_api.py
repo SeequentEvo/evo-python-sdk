@@ -55,14 +55,86 @@ class GroupsApi:
     def __init__(self, connector: APIConnector):
         self.connector = connector
 
+    async def get_group_description(
+        self,
+        org_id: str,
+        group_id: str,
+        api_preview: str | None = None,
+        preview_api: str | None = None,
+        additional_headers: dict[str, str] | None = None,
+        request_timeout: float | tuple[int | float, int | float] | None = None,
+    ) -> ImsGroupDetailResponse:  # noqa: F405
+        """Get IMS group details
+
+        Returns the details of an IMS group
+
+        :param org_id:
+            Format: `uuid`
+            Example: `'org_id_example'`
+        :param group_id:
+            Format: `uuid`
+            Example: `'group_id_example'`
+        :param api_preview: (optional) Set to \"opt-in\" to be able to use this API.
+            Example: `'api_preview_example'`
+        :param preview_api: (optional) Set to \"opt-in\" to be able to use this API. This header is being deprecated. Please use the API-Preview header.
+            Example: `'preview_api_example'`
+        :param additional_headers: (optional) Additional headers to send with the request.
+        :param request_timeout: (optional) Timeout setting for this request. If one number is provided, it will be the
+            total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.
+
+        :return: Returns the result object.
+
+        :raise evo.common.exceptions.BadRequestException: If the server responds with HTTP status 400.
+        :raise evo.common.exceptions.UnauthorizedException: If the server responds with HTTP status 401.
+        :raise evo.common.exceptions.ForbiddenException: If the server responds with HTTP status 403.
+        :raise evo.common.exceptions.NotFoundException: If the server responds with HTTP status 404.
+        :raise evo.common.exceptions.BaseTypedError: If the server responds with any other HTTP status between
+            400 and 599, and the body of the response contains a descriptive `type` parameter.
+        :raise evo.common.exceptions.EvoAPIException: If the server responds with any other HTTP status between 400
+            and 599, and the body of the response does not contain a `type` parameter.
+        :raise evo.common.exceptions.UnknownResponseError: For other HTTP status codes with no corresponding response
+            type in `response_types_map`.
+        """
+        # Prepare the path parameters.
+        _path_params = {
+            "org_id": org_id,
+            "group_id": group_id,
+        }
+
+        # Prepare the header parameters.
+        _header_params = {
+            "Accept": "application/json",
+        } | get_header_metadata(__name__)
+        if api_preview is not None:
+            _header_params["API-Preview"] = api_preview
+        if preview_api is not None:
+            _header_params["Preview-API"] = preview_api
+        if additional_headers is not None:
+            _header_params.update(additional_headers)
+
+        # Define the collection formats.
+        _collection_formats = {}
+
+        _response_types_map = {
+            "200": ImsGroupDetailResponse,  # noqa: F405
+        }
+
+        return await self.connector.call_api(
+            method=RequestMethod.GET,
+            resource_path="/workspace/orgs/{org_id}/ims/groups/{group_id}",
+            path_params=_path_params,
+            header_params=_header_params,
+            collection_formats=_collection_formats,
+            response_types_map=_response_types_map,
+            request_timeout=request_timeout,
+        )
+
     async def get_ims_users(
         self,
         org_id: str,
         email: str,
-        api_preview: str | None = None,
-        preview_api: str | None = None,
         additional_headers: dict[str, str] | None = None,
-        request_timeout: int | float | tuple[int | float, int | float] | None = None,
+        request_timeout: float | tuple[int | float, int | float] | None = None,
     ) -> ListUsersResponse:  # noqa: F405
         """Get IMS users
 
@@ -73,10 +145,6 @@ class GroupsApi:
             Example: `'org_id_example'`
         :param email:
             Example: `'ilike:foo*'`
-        :param api_preview: (optional) Set to \"opt-in\" to be able to use this API.
-            Example: `'api_preview_example'`
-        :param preview_api: (optional) Set to \"opt-in\" to be able to use this API. This header is being deprecated. Please use the API-Preview header.
-            Example: `'preview_api_example'`
         :param additional_headers: (optional) Additional headers to send with the request.
         :param request_timeout: (optional) Timeout setting for this request. If one number is provided, it will be the
             total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.
@@ -108,10 +176,6 @@ class GroupsApi:
         _header_params = {
             "Accept": "application/json",
         } | get_header_metadata(__name__)
-        if api_preview is not None:
-            _header_params["API-Preview"] = api_preview
-        if preview_api is not None:
-            _header_params["Preview-API"] = preview_api
         if additional_headers is not None:
             _header_params.update(additional_headers)
 
@@ -135,23 +199,23 @@ class GroupsApi:
 
     async def list_ims_group_members(
         self,
-        group_id: str,
         org_id: str,
+        group_id: str,
         api_preview: str | None = None,
         preview_api: str | None = None,
         additional_headers: dict[str, str] | None = None,
-        request_timeout: int | float | tuple[int | float, int | float] | None = None,
+        request_timeout: float | tuple[int | float, int | float] | None = None,
     ) -> ListUsersResponse:  # noqa: F405
         """List IMS group members
 
         Returns a list of users that are members of the specified IMS group
 
-        :param group_id:
-            Format: `uuid`
-            Example: `'group_id_example'`
         :param org_id:
             Format: `uuid`
             Example: `'org_id_example'`
+        :param group_id:
+            Format: `uuid`
+            Example: `'group_id_example'`
         :param api_preview: (optional) Set to \"opt-in\" to be able to use this API.
             Example: `'api_preview_example'`
         :param preview_api: (optional) Set to \"opt-in\" to be able to use this API. This header is being deprecated. Please use the API-Preview header.
@@ -175,8 +239,8 @@ class GroupsApi:
         """
         # Prepare the path parameters.
         _path_params = {
-            "group_id": group_id,
             "org_id": org_id,
+            "group_id": group_id,
         }
 
         # Prepare the header parameters.
@@ -213,7 +277,7 @@ class GroupsApi:
         api_preview: str | None = None,
         preview_api: str | None = None,
         additional_headers: dict[str, str] | None = None,
-        request_timeout: int | float | tuple[int | float, int | float] | None = None,
+        request_timeout: float | tuple[int | float, int | float] | None = None,
     ) -> list[ImsGroupResponse]:  # noqa: F405
         """List IMS groups
 

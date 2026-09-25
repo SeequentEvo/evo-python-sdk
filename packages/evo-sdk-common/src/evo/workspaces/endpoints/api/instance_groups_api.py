@@ -61,7 +61,7 @@ class InstanceGroupsApi:
         api_preview: str | None = None,
         preview_api: str | None = None,
         additional_headers: dict[str, str] | None = None,
-        request_timeout: int | float | tuple[int | float, int | float] | None = None,
+        request_timeout: float | tuple[int | float, int | float] | None = None,
     ) -> ListInstanceGroupResponse:  # noqa: F405
         """List instance groups
 
@@ -126,24 +126,24 @@ class InstanceGroupsApi:
 
     async def update_instance_group_members(
         self,
-        group_id: str,
         org_id: str,
+        group_id: str,
         update_instance_group_members_request: UpdateInstanceGroupMembersRequest,  # noqa: F405
         api_preview: str | None = None,
         preview_api: str | None = None,
         additional_headers: dict[str, str] | None = None,
-        request_timeout: int | float | tuple[int | float, int | float] | None = None,
+        request_timeout: float | tuple[int | float, int | float] | None = None,
     ) -> UpdateInstanceGroupMembersResponse:  # noqa: F405
         """Update instance group members
 
         Update the members of a group in the Evo instance
 
-        :param group_id:
-            Format: `uuid`
-            Example: `'group_id_example'`
         :param org_id:
             Format: `uuid`
             Example: `'org_id_example'`
+        :param group_id:
+            Format: `uuid`
+            Example: `'group_id_example'`
         :param update_instance_group_members_request:
             Example: `endpoints.UpdateInstanceGroupMembersRequest()`
         :param api_preview: (optional) Set to \"opt-in\" to be able to use this API.
@@ -169,8 +169,8 @@ class InstanceGroupsApi:
         """
         # Prepare the path parameters.
         _path_params = {
-            "group_id": group_id,
             "org_id": org_id,
+            "group_id": group_id,
         }
 
         # Prepare the header parameters.

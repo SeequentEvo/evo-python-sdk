@@ -61,7 +61,7 @@ class GeneralApi:
         check_dependencies: bool | None = None,
         strict: bool | None = None,
         additional_headers: dict[str, str] | None = None,
-        request_timeout: int | float | tuple[int | float, int | float] | None = None,
+        request_timeout: float | tuple[int | float, int | float] | None = None,
     ) -> dict:
         """Health check
 
@@ -127,7 +127,7 @@ class GeneralApi:
         self,
         org_id: str,
         additional_headers: dict[str, str] | None = None,
-        request_timeout: int | float | tuple[int | float, int | float] | None = None,
+        request_timeout: float | tuple[int | float, int | float] | None = None,
     ) -> ListCoordinateSystemsResponse:  # noqa: F405
         """List coordinate systems
 
