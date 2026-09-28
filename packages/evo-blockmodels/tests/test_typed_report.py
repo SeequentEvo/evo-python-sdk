@@ -372,13 +372,26 @@ class TestReportCellSchema(TestWithConnector):
         self.assertEqual(value.percent.status, ReportCellStatus.PERCENT_CHANGE_FROM_ZERO)
 
     def test_comparison_value_legacy_schema(self) -> None:
-        """ReportComparisonValue accepts the legacy bare-number schema (percent may be null)."""
+        """ReportComparisonValue accepts the legacy bare-number schema.
+
+        In the legacy schema, `percent` was only ever `null` when `from_value` was
+        (close to) zero, so a legacy null percent is upgraded to
+        `PERCENT_CHANGE_FROM_ZERO`, not `OK`.
+        """
         value = models.ReportComparisonValue.model_validate(
             {"from_value": 0.0, "to_value": 3.0, "difference": 3.0, "percent": None}
         )
         self.assertEqual(value.from_value.value, 0.0)
         self.assertEqual(value.from_value.status, ReportCellStatus.OK)
         self.assertIsNone(value.percent.value)
+        self.assertEqual(value.percent.status, ReportCellStatus.PERCENT_CHANGE_FROM_ZERO)
+
+    def test_comparison_value_legacy_schema_non_zero_percent(self) -> None:
+        """A legacy comparison with a real (non-null) percent is upgraded to `OK`."""
+        value = models.ReportComparisonValue.model_validate(
+            {"from_value": 2.0, "to_value": 3.0, "difference": 1.0, "percent": 50.0}
+        )
+        self.assertEqual(value.percent.value, 50.0)
         self.assertEqual(value.percent.status, ReportCellStatus.OK)
 
     def test_report_cell_isinstance_reused(self) -> None:

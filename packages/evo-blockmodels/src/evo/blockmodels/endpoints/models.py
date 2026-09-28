@@ -685,6 +685,23 @@ class ReportComparisonValue(CustomBaseModel):
     percent: Annotated[ReportCell, Field(title="Percent")]
     to_value: Annotated[ReportCell, Field(title="To Value")]
 
+    @model_validator(mode="before")
+    @classmethod
+    def _upgrade_legacy_percent(cls, data: Any) -> Any:
+        """Upgrade a legacy `null` percent to `PERCENT_CHANGE_FROM_ZERO`.
+
+        In the legacy schema, `from_value`, `to_value`, and `difference` were always
+        required numbers; `percent` was the only field that could be `null`, and
+        that only happened when `from_value` was (close to) zero, making a percentage
+        change undefined. Unlike other legacy report cells, which have no way to
+        recover why a value is missing (and are therefore upgraded to `OK`), this
+        specific case has a known, recoverable reason, so it is upgraded to
+        `PERCENT_CHANGE_FROM_ZERO` here rather than left to default to `OK`.
+        """
+        if isinstance(data, dict) and "percent" in data and data["percent"] is None:
+            return {**data, "percent": {"value": None, "status": ReportCellStatus.PERCENT_CHANGE_FROM_ZERO}}
+        return data
+
 
 class ReportNegativeValuesPolicy(Enum):
     USE = "USE"
