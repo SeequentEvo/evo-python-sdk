@@ -255,12 +255,15 @@ def _unpack_cell(cell: Any) -> tuple[int | float | None, str | None]:
     """Return the ``(value, status)`` pair for a report cell.
 
     Handles both the current schema, where a cell is a ``{"value", "status"}``
-    object, and the legacy schema, where a cell was a bare number.
+    object, and the legacy schema, where a cell was a bare number. Legacy cells
+    are treated as ``"OK"``, consistent with how the Block Model Service and
+    `ReportCell` upgrade legacy values elsewhere.
     """
     if isinstance(cell, dict):
         return cell.get("value"), cell.get("status")
-    # Legacy schema: the cell was a plain number (or None).
-    return cell, None
+    # Legacy schema: the cell was a plain number (or None). No per-cell status was
+    # ever recorded, so upgrade it to "OK", matching the ReportCell upgrade behaviour.
+    return cell, ReportCellStatus.OK.value
 
 
 @dataclass(frozen=True, kw_only=True)
