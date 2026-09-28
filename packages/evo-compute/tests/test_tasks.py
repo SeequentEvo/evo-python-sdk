@@ -27,6 +27,7 @@ from evo.compute.tasks.geostatistics.kriging import (
     KrigingResult,
     KrigingResultModel,
     KrigingRunner,
+    KrigingTargetResult,
     OrdinaryKriging,
     SimpleKriging,
 )
@@ -125,7 +126,7 @@ def _mock_kriging_job():
     mock_job = AsyncMock()
     mock_job.wait_for_results.return_value = KrigingResultModel(
         message="ok",
-        target=TaskTarget(
+        target=KrigingTargetResult(
             reference="ref",
             name="t",
             description=None,
@@ -190,7 +191,9 @@ class TestTaskResultSchemaType(unittest.TestCase):
 
     def _make_result(self, schema_id: str):
         attr = TaskAttribute(reference="ref", name="attr")
-        target = TaskTarget(reference="ref", name="target", description=None, schema_id=schema_id, attribute=attr)
+        target = KrigingTargetResult(
+            reference="ref", name="target", description=None, schema_id=schema_id, attribute=attr
+        )
         return KrigingResult(
             context=...,
             model=KrigingResultModel(message="ok", target=target),

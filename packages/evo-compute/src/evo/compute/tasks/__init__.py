@@ -71,6 +71,7 @@ from .geostatistics.declustering import DeclusteringResult
 # Kriging-specific result types
 from .geostatistics.kriging import (
     BlockDiscretisation,
+    KrigingDiagnostics,
     KrigingResult,
 )
 
@@ -178,6 +179,7 @@ __all__ = [
     "EllipsoidRanges",
     "Filter",
     "FilterCondition",
+    "KrigingDiagnostics",
     "KrigingResult",
     "LocationWiseResult",
     "Rotation",

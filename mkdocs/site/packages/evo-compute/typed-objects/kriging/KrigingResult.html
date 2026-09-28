@@ -191,6 +191,32 @@
 
 
 
+<h3 id="evo.compute.tasks.geostatistics.kriging.KrigingResult.diagnostics" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">diagnostics</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">diagnostics</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">TaskAttribute</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The diagnostic attributes that were written, keyed by diagnostic name.</p>
+<p>Only the diagnostics requested through
+:attr:<code>KrigingParameters.diagnostics</code> are present.</p>
+<p>Example:
+    &gt;&gt;&gt; result = await run(manager, params, preview=True)
+    &gt;&gt;&gt; result.diagnostics["kriging_variance"].name
+    'KV'</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
 <h3 id="evo.compute.tasks.geostatistics.kriging.KrigingResult.schema" class="doc doc-heading">
             <span class="doc doc-object-name doc-attribute-name">schema</span>
 

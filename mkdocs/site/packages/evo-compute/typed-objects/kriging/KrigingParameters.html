@@ -120,6 +120,15 @@
     ...             values=["LMS1", "LMS2"],
     ...         ),
     ...     ),
+    ... )
+    &gt;&gt;&gt;
+    &gt;&gt;&gt; # With diagnostics written alongside the estimate:
+    &gt;&gt;&gt; params_with_diagnostics = KrigingParameters(
+    ...     source=pointset.attributes["grade"],
+    ...     target=block_model.attributes["kriged_grade"],
+    ...     variogram=variogram,
+    ...     search=SearchNeighborhood(...),
+    ...     diagnostics=KrigingDiagnostics(kriging_variance=True, num_samples=True),
     ... )</p>
 
 
@@ -299,6 +308,28 @@
 and the kriged value is averaged across these sub-cells. When omitted,
 point kriging is performed. Only applicable when the target is a 3D grid
 or block model.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.kriging.KrigingParameters.diagnostics" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">diagnostics</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">diagnostics</span><span class="p">:</span> <span class="n">KrigingDiagnostics</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Optional diagnostics to write onto the target object alongside the estimate.</p>
+<p>Only the diagnostics you select are computed. See :class:<code>KrigingDiagnostics</code>
+for the available outputs and the shorthands each of them accepts.</p>
 
     </div>
 

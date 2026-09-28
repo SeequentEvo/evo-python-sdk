@@ -29,6 +29,7 @@ __all__ = [
     "Source",
     "Target",
     "UpdateAttribute",
+    "attribute_spec",
 ]
 
 # All typed attribute types that compute tasks can work with.
@@ -262,6 +263,29 @@ def _source_from_attribute(attr: Source | Attribute | BlockModelAttribute) -> So
 AnySourceAttribute: TypeAlias = Annotated[Source, BeforeValidator(_source_from_attribute)]
 
 
+def attribute_spec(attr: Any) -> Any:
+    """Convert a typed attribute object to a create or update specification.
+
+    Existing attributes become an update operation referencing the attribute;
+    pending attributes become a create operation carrying the attribute name.
+    Any other value is passed through untouched so that already-constructed
+    specifications (or dicts) validate normally.
+
+    Args:
+        attr: A typed attribute object, or an already-constructed specification.
+
+    Returns:
+        A :class:`CreateAttribute` or :class:`UpdateAttribute` for typed attributes,
+        otherwise *attr* unchanged.
+    """
+    if not isinstance(attr, AnyTypedAttribute):
+        return attr
+
+    if attr.exists:
+        return UpdateAttribute(reference=_get_attribute_expression(attr))
+    return CreateAttribute(name=attr.name)
+
+
 def _validate_target_attribute(attr: Target | AnyTypedAttribute) -> Target:
     """Convert a typed attribute object to a :class:`Target`.
 
@@ -293,12 +317,7 @@ def _validate_target_attribute(attr: Target | AnyTypedAttribute) -> Target:
     # (same pattern as source_from_attribute)
     obj_url = str(attr._obj.metadata.url)
 
-    if attr.exists:
-        attr_spec = UpdateAttribute(reference=_get_attribute_expression(attr))
-    else:
-        attr_spec = CreateAttribute(name=attr.name)
-
-    return Target(object=obj_url, attribute=attr_spec)
+    return Target(object=obj_url, attribute=attribute_spec(attr))
 
 
 AnyTargetAttribute: TypeAlias = Annotated[Target, BeforeValidator(_validate_target_attribute)]

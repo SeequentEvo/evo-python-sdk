@@ -45,16 +45,17 @@ Example:
 
 from __future__ import annotations
 
-from typing import ClassVar, Literal
+from typing import Any, ClassVar, Literal
 
 from evo.common import IContext
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, SerializerFunctionWrapHandler, model_serializer
 
 from ..common import (
     GeoscienceObjectReference,
     SearchNeighborhood,
 )
 from ..common.runner import TaskRunner
+from .conditioned_simulator import TailExtrapolationParams
 
 __all__ = [
     "SimReportContext",
@@ -97,11 +98,19 @@ class SimulationReportDistribution(BaseModel):
     When provided, the report includes distribution-related validation.
     """
 
-    tail_extrapolation: None = None
-    """Reserved for future tail-extrapolation options."""
+    tail_extrapolation: TailExtrapolationParams | None = None
+    """Optional tail extrapolation parameters."""
 
     weights: str | None = None
     """Optional attribute expression for sample weights."""
+
+    @model_serializer(mode="wrap")
+    def _serialize(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        result = handler(self)
+        # The service requires this key even when null; TaskRunner dumps with exclude_none=True.
+        if self.tail_extrapolation is None:
+            result["tail_extrapolation"] = None
+        return result
 
 
 class SimReportContextItem(BaseModel):
