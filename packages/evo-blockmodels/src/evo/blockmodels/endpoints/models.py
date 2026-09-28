@@ -559,8 +559,19 @@ class ReportColumn(CustomBaseModel):
 
 
 class ReportCellStatus(Enum):
+    """Status of a single report cell, describing how its value should be interpreted.
+
+    * `OK`: the value was calculated normally and can be used as-is.
+    * `PERCENT_CHANGE_FROM_ZERO`: the percentage change is undefined because the
+      `from` value was zero. Only used in comparisons.
+    * `NO_DATA`: no data was available to calculate the value.
+    * `INVALID`: the value could not be calculated because the underlying data
+      contained an invalid value.
+    """
+
     OK = "OK"
     PERCENT_CHANGE_FROM_ZERO = "PERCENT_CHANGE_FROM_ZERO"
+    """Only used in comparisons."""
     NO_DATA = "NO_DATA"
     INVALID = "INVALID"
 
@@ -572,13 +583,13 @@ class ReportCell(CustomBaseModel):
     See `ReportCellStatus` for the possible reasons.
     """
 
-    value: Annotated[StrictInt | StrictFloat | None, Field(title="Value")]
+    value: Annotated[StrictInt | StrictFloat | None, Field(title="Value", examples=[2.7])]
     """
-    The aggregated/calculated value, or `null` when it could not be produced.
+    Value of the cell. This is `null` whenever `status` is not `OK`.
     """
     status: Annotated[ReportCellStatus, Field(examples=["OK"])] = ReportCellStatus.OK
     """
-    The reason a value is (or is not) present.
+    Status of the cell, describing how `value` should be interpreted.
     """
 
     @model_validator(mode="before")
