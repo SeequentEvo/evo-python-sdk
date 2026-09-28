@@ -117,6 +117,31 @@ class TestReportResult(TestWithConnector):
         self.assertEqual(df.iloc[0]["Domain"], "LMS1")
         self.assertEqual(df.iloc[0]["Au Grade"], 2.5)
 
+    def test_to_dataframe_legacy_include_status(self) -> None:
+        """Legacy bare-number cells are treated as status "OK" when status is requested.
+
+        This matches the Block Model Service's own upgrade behaviour, and the
+        upgrade applied by `ReportCell` when parsing legacy API responses: values
+        that never carried a status are not distinguishable from `OK` values, so
+        they are reported as `OK` rather than as an undefined/missing status.
+        """
+        result = ReportResult(
+            result_uuid=RESULT_UUID,
+            report_specification_uuid=RS_UUID,
+            block_model_uuid=BM_UUID,
+            version_id=1,
+            version_uuid=VERSION_UUID,
+            created_at=DATE,
+            categories=[{"label": "Domain", "col_id": str(CAT_COL_UUID)}],
+            columns=[{"label": "Au Grade", "unit_id": "g/t"}],
+            result_sets=[
+                {"cutoff_value": 0.5, "rows": [{"categories": ["LMS1"], "values": [2.5]}]},
+            ],
+        )
+
+        df = result.to_dataframe(include_status=True)
+        self.assertEqual(df.iloc[0]["Au Grade status"], ReportCellStatus.OK.value)
+
     def _new_schema_result(self) -> ReportResult:
         return ReportResult(
             result_uuid=RESULT_UUID,
