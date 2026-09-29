@@ -251,6 +251,85 @@ class TestBlockModelAPIClient(TestWithConnector, TestWithStorage):
             )
         self.assertEqual(expected_filename, result)
 
+    async def test_query_block_model_with_custom_separator(self) -> None:
+        """A non-default separator is forwarded to the service on the query request."""
+        bm_uuid = uuid.uuid4()
+        version_uuid = uuid.uuid4()
+        job_uuid = uuid.uuid4()
+        download_url = "http://data.com/"
+
+        query_result = QueryResult(
+            bm_uuid=bm_uuid,
+            version_id=1,
+            version_uuid=version_uuid,
+            bbox=BBOX,
+            mapping=Mapping(columns=[]),
+            columns=["Grade/ppm"],
+            job_url=BASE_URL + self.base_path + f"blockmodel/{bm_uuid}/jobs/{job_uuid}",
+        )
+        job_response = JobResponse(
+            job_status=JobStatus.COMPLETE,
+            payload=QueryDownload(download_url=download_url),
+        )
+        self.transport.set_request_handler(QueryRequestHandler(query_result, job_response))
+
+        with mock.patch("evo.common.io.download.HTTPSource", autospec=True) as mock_source:
+            mock_source.download_file = mock.AsyncMock()
+            await self.bms_client.query_block_model_to_cache(
+                bm_id=bm_uuid,
+                columns=["Grade/ppm"],
+                bbox=BBOX,
+                version_uuid=version_uuid,
+                separator="/",
+            )
+
+        post_bodies = [
+            call.kwargs["body"]
+            for call in self.transport.request.call_args_list
+            if call.kwargs.get("method") == RequestMethod.POST and isinstance(call.kwargs.get("body"), dict)
+        ]
+        self.assertEqual(1, len(post_bodies))
+        self.assertEqual("/", post_bodies[0].get("qualified_title_separator"))
+
+    async def test_query_block_model_omits_default_separator(self) -> None:
+        """The default separator is never serialized on the query request."""
+        bm_uuid = uuid.uuid4()
+        version_uuid = uuid.uuid4()
+        job_uuid = uuid.uuid4()
+        download_url = "http://data.com/"
+
+        query_result = QueryResult(
+            bm_uuid=bm_uuid,
+            version_id=1,
+            version_uuid=version_uuid,
+            bbox=BBOX,
+            mapping=Mapping(columns=[]),
+            columns=["col1"],
+            job_url=BASE_URL + self.base_path + f"blockmodel/{bm_uuid}/jobs/{job_uuid}",
+        )
+        job_response = JobResponse(
+            job_status=JobStatus.COMPLETE,
+            payload=QueryDownload(download_url=download_url),
+        )
+        self.transport.set_request_handler(QueryRequestHandler(query_result, job_response))
+
+        with mock.patch("evo.common.io.download.HTTPSource", autospec=True) as mock_source:
+            mock_source.download_file = mock.AsyncMock()
+            await self.bms_client.query_block_model_to_cache(
+                bm_id=bm_uuid,
+                columns=["col1"],
+                bbox=BBOX,
+                version_uuid=version_uuid,
+            )
+
+        post_bodies = [
+            call.kwargs["body"]
+            for call in self.transport.request.call_args_list
+            if call.kwargs.get("method") == RequestMethod.POST and isinstance(call.kwargs.get("body"), dict)
+        ]
+        self.assertEqual(1, len(post_bodies))
+        self.assertNotIn("qualified_title_separator", post_bodies[0])
+
     async def test_query_block_model_to_cache_no_cache(self) -> None:
         bm_uuid = uuid.uuid4()
         version_uuid = uuid.uuid4()
