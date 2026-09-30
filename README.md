@@ -197,6 +197,14 @@ Once you've installed UV, install pre-commit hooks. These are used to standardis
 uv run pre-commit install
 ```
 
+### Run package tests
+
+Run each SDK package's test suite in isolation on Windows, Linux, or macOS:
+
+```shell
+uv run python scripts/run_package_tests.py
+```
+
 ### Setting up and running Jupyter notebooks
 
 Notebooks can be run in your tool of choice (e.g. VS Code). To use Jupyter (the default):
