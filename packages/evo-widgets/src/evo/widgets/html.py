@@ -54,9 +54,7 @@ def build_title(text: str, links: list[tuple[str, str]] | None = None) -> str:
     :return: HTML string.
     """
     if links:
-        link_html = " | ".join(
-            [f'<a href="{escape(url)}" target="_blank">{escape(label)}</a>' for label, url in links]
-        )
+        link_html = " | ".join([f'<a href="{escape(url)}" target="_blank">{escape(label)}</a>' for label, url in links])
         return f'<div class="title"><span>{escape(text)}</span><span class="title-links">{link_html}</span></div>'
     return f'<div class="title">{escape(text)}</div>'
 
@@ -102,7 +100,9 @@ def build_table(rows: list[tuple[str, str | HtmlMarkup]]) -> str:
     return f"<table>{''.join(table_rows)}</table>"
 
 
-def build_nested_table(headers: Sequence[str], rows: Sequence[Sequence[str | int | float]], css_class: str = "") -> HtmlMarkup:
+def build_nested_table(
+    headers: Sequence[str], rows: Sequence[Sequence[str | int | float]], css_class: str = ""
+) -> HtmlMarkup:
     """Build a nested HTML table with headers and data rows.
 
     :param headers: List of header strings.
@@ -145,5 +145,12 @@ def build_object_html(
     :param extra_content: Additional content, escaped unless wrapped with :func:`markup`.
     :return: Complete HTML string with stylesheet.
     """
-    html_parts = [STYLESHEET, '<div class="evo">', build_title(title), build_table(rows), _html_text(extra_content), "</div>"]
+    html_parts = [
+        STYLESHEET,
+        '<div class="evo">',
+        build_title(title),
+        build_table(rows),
+        _html_text(extra_content),
+        "</div>",
+    ]
     return "".join(html_parts)

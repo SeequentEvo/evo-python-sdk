@@ -46,7 +46,9 @@ class TestBuildContainer(unittest.TestCase):
 
     def test_builds_container_with_custom_class(self):
         """Test building a container with custom class."""
-        self.assertEqual(build_container("content", css_class="custom"), f'{STYLESHEET}<div class="custom">content</div>')
+        self.assertEqual(
+            build_container("content", css_class="custom"), f'{STYLESHEET}<div class="custom">content</div>'
+        )
 
     def test_escapes_container_content_and_class(self):
         """Container content and class values cannot break out into markup."""
@@ -58,7 +60,10 @@ class TestBuildContainer(unittest.TestCase):
 
     def test_accepts_explicit_container_markup(self):
         """Explicitly trusted container content remains markup."""
-        self.assertEqual(build_container(markup("<strong>content</strong>")), f'{STYLESHEET}<div class="evo"><strong>content</strong></div>')
+        self.assertEqual(
+            build_container(markup("<strong>content</strong>")),
+            f'{STYLESHEET}<div class="evo"><strong>content</strong></div>',
+        )
 
 
 class TestBuildTitle(unittest.TestCase):
@@ -90,7 +95,7 @@ class TestBuildTitle(unittest.TestCase):
 
     def test_escapes_title_and_link_values(self):
         """Document-derived title and link text cannot become markup."""
-        result = build_title('<title>', [("<link>", 'https://example.com/?q="x"')])
+        result = build_title("<title>", [("<link>", 'https://example.com/?q="x"')])
         self.assertEqual(
             result,
             '<div class="title"><span>&lt;title&gt;</span><span class="title-links">'
@@ -120,7 +125,7 @@ class TestBuildTableRow(unittest.TestCase):
 
     def test_escapes_text_in_table_row_vtop(self):
         """Top-aligned rows escape untrusted labels and values."""
-        result = build_table_row_vtop('<label>', '<script>alert("x")</script>')
+        result = build_table_row_vtop("<label>", '<script>alert("x")</script>')
         self.assertEqual(
             result,
             '<tr><td class="label-vtop">&lt;label&gt;</td><td class="value">&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;</td></tr>',
@@ -128,7 +133,7 @@ class TestBuildTableRow(unittest.TestCase):
 
     def test_escapes_text_and_accepts_explicit_markup(self):
         """Text is escaped while package-created markup remains HTML."""
-        result = build_table_row('<label>', '<script>alert("x")</script>')
+        result = build_table_row("<label>", '<script>alert("x")</script>')
         self.assertEqual(
             result,
             '<tr><td class="label">&lt;label&gt;</td><td class="value">&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;</td></tr>',
