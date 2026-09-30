@@ -12,6 +12,8 @@
 import uuid
 from unittest import TestCase
 
+from parameterized import parameterized
+
 from evo.objects.typed import (
     BlockModelAttribute,
     BlockModelData,
@@ -55,6 +57,29 @@ class TestBlockModelGeometry(TestCase):
         )
 
         self.assertEqual(geom.rotation, Rotation(dip_azimuth=45.0, dip=30.0, pitch=15.0))
+
+    @parameterized.expand(
+        [
+            ("current_field_names", "n_blocks", "block_size"),
+            ("legacy_field_names", "n_parent_blocks", "parent_block_size"),
+        ]
+    )
+    def test_validate_geometry_field_name_aliases(self, _name, n_blocks_key, block_size_key):
+        """Test that geometry validates from both current and legacy block model service field names."""
+        from pydantic import TypeAdapter
+
+        geom = TypeAdapter(BlockModelGeometry).validate_python(
+            {
+                "model_type": "regular",
+                "origin": [0.0, 0.0, 0.0],
+                n_blocks_key: [120, 80, 40],
+                block_size_key: [10.0, 20.0, 30.0],
+                "rotation": {"dip_azimuth": 0.0, "dip": 0.0, "pitch": 0.0},
+            }
+        )
+
+        self.assertEqual(geom.n_blocks, Size3i(120, 80, 40))
+        self.assertEqual(geom.block_size, Size3d(10.0, 20.0, 30.0))
 
 
 class TestBlockModelAttribute(TestCase):

@@ -327,7 +327,13 @@ class HTTPSource(HTTPIOBase, ISource):
                 tmp_path = Path(tmp_file.name).resolve()
 
                 logger.debug(f"Renaming {tmp_path.name} to {dst_path.name}")
-                tmp_path.replace(dst_path)
+                try:
+                    tmp_path.replace(dst_path)
+                except PermissionError:
+                    if overwrite or not dst_path.exists():
+                        raise
+                    logger.debug(f"Using file already published by another process: {dst_path}")
+                    tmp_path.unlink()
 
             except BaseException:
                 if tmp_file is not None:

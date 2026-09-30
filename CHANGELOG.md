@@ -1,5 +1,149 @@
 # Changelog
 
+## evo-compute@0.0.5
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### Other Changes
+* Add kriging diagnostic outputs to the task SDK client by @amirabbas-jalali-bentley in https://github.com/SeequentEvo/evo-python-sdk/pull/348
+* Fix tail extrapolation payloads for conditioned simulation and simulation report by @amirabbas-jalali-bentley in https://github.com/SeequentEvo/evo-python-sdk/pull/354
+* Bump version for release by @AdamFreemanSeequent in https://github.com/SeequentEvo/evo-python-sdk/pull/355
+
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-objects@v0.6.4...evo-compute@0.0.5
+
+## evo-objects@v0.6.4
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### Other Changes
+* Loosen ObjectReference hub URL schema validation by @rohancrookbain-seequent in https://github.com/SeequentEvo/evo-python-sdk/pull/353
+
+## New Contributors
+* @rohancrookbain-seequent made their first contribution in https://github.com/SeequentEvo/evo-python-sdk/pull/353
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-objects@v0.6.3...evo-objects@v0.6.4
+
+## evo-objects@v0.6.3
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### Other Changes
+* Propagate JobError details in raised exceptions by @AndreLobatoSeequent in https://github.com/SeequentEvo/evo-python-sdk/pull/332
+* Consim example by @shivangj-10 in https://github.com/SeequentEvo/evo-python-sdk/pull/346
+* Fix evo compute quickstart notebook by @shivangj-10 in https://github.com/SeequentEvo/evo-python-sdk/pull/349
+* Downhole collection intervals by @sergiopeixoto-seequent in https://github.com/SeequentEvo/evo-python-sdk/pull/325
+* Evo objects 0.6.3 release by @AdamFreemanSeequent in https://github.com/SeequentEvo/evo-python-sdk/pull/351
+
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-blockmodels@v0.6.1...evo-objects@v0.6.3
+
+## evo-blockmodels@v0.6.1
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### evo-blockmodels
+* Blockmodel updates aug 2026 by @davidknight-seequent in https://github.com/SeequentEvo/evo-python-sdk/pull/339
+* Changes to saving parquet file to support code-playground by @AdamFreemanSeequent in https://github.com/SeequentEvo/evo-python-sdk/pull/344
+* Blockmodel support additional units by @jamie-spyker-sqnt in https://github.com/SeequentEvo/evo-python-sdk/pull/341
+
+## New Contributors
+* @jamie-spyker-sqnt made their first contribution in https://github.com/SeequentEvo/evo-python-sdk/pull/341
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-blockmodels@v0.6.0...evo-blockmodels@v0.6.1
+
+## evo-objects@v0.6.2
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### evo-objects
+* Add batch download tables by @jamesz3ngsq in https://github.com/SeequentEvo/evo-python-sdk/pull/331
+
+## New Contributors
+* @jamesz3ngsq made their first contribution in https://github.com/SeequentEvo/evo-python-sdk/pull/331
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-objects@v0.6.1...evo-objects@v0.6.2
+
+## evo-blockmodels@v0.6.0
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### evo-blockmodels
+* Update blockmodel code samples by @shivangj-10 in https://github.com/SeequentEvo/evo-python-sdk/pull/337
+* block model code sample fix by @shivangj-10 in https://github.com/SeequentEvo/evo-python-sdk/pull/338
+* Expose groups, add test coverage. by @tim-hamblin-seequent in https://github.com/SeequentEvo/evo-python-sdk/pull/329
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-blockmodels@v0.5.2...evo-blockmodels@v0.6.0
+
+## evo-sdk-common@v0.5.27
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### evo-sdk-common
+* Change CRLF to LF line endings by @daniel-kinney-seequent in https://github.com/SeequentEvo/evo-python-sdk/pull/327
+* Notebook Tweaks Aug 26 by @AdamFreemanSeequent in https://github.com/SeequentEvo/evo-python-sdk/pull/330
+* Thread update_type to allow merge column updates for block models by @AndreLobatoSeequent in https://github.com/SeequentEvo/evo-python-sdk/pull/328
+* Extend drilling-campaign example notebook to handle more interim data by @JamesPaterson-Seequent in https://github.com/SeequentEvo/evo-python-sdk/pull/335
+* Handle some race conditions in downloading data by @grantroch in https://github.com/SeequentEvo/evo-python-sdk/pull/333
+
+## New Contributors
+* @AndreLobatoSeequent made their first contribution in https://github.com/SeequentEvo/evo-python-sdk/pull/328
+* @JamesPaterson-Seequent made their first contribution in https://github.com/SeequentEvo/evo-python-sdk/pull/335
+* @grantroch made their first contribution in https://github.com/SeequentEvo/evo-python-sdk/pull/333
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-sdk-common@v0.5.26...evo-sdk-common@v0.5.27
+
+## evo-blockmodels@v0.5.2
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### evo-blockmodels
+* Notebook Tweaks Aug 26 by @AdamFreemanSeequent in https://github.com/SeequentEvo/evo-python-sdk/pull/330
+* Thread update_type to allow merge column updates for block models by @AndreLobatoSeequent in https://github.com/SeequentEvo/evo-python-sdk/pull/328
+
+## New Contributors
+* @AndreLobatoSeequent made their first contribution in https://github.com/SeequentEvo/evo-python-sdk/pull/328
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-blockmodels@v0.5.1...evo-blockmodels@v0.5.2
+
+## evo-blockmodels@v0.5.1
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### evo-blockmodels
+* Block model column tags by @chriscunningham-seequent in https://github.com/SeequentEvo/evo-python-sdk/pull/305
+* Data model update for column groups management by @chriscunningham-seequent in https://github.com/SeequentEvo/evo-python-sdk/pull/317
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-blockmodels@v0.4.2...evo-blockmodels@v0.5.1
+
+## evo-objects@v0.6.1
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### evo-objects
+* Add evo.common.crs with EpsgCode and parse_crs by @sergiopeixoto-seequent in https://github.com/SeequentEvo/evo-python-sdk/pull/323
+* Fix common package version by @GriffinBaxterSeequent in https://github.com/SeequentEvo/evo-python-sdk/pull/324
+
+## New Contributors
+* @sergiopeixoto-seequent made their first contribution in https://github.com/SeequentEvo/evo-python-sdk/pull/323
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-objects@v0.4.3...evo-objects@v0.6.1
+
+## evo-sdk-common@v0.5.26
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### evo-sdk-common
+* Couple of changes to support Python 3.14 by @shivangj-10 in https://github.com/SeequentEvo/evo-python-sdk/pull/319
+* add typed dh intervals by @geostats-BSY in https://github.com/SeequentEvo/evo-python-sdk/pull/316
+* Add evo.common.crs with EpsgCode and parse_crs by @sergiopeixoto-seequent in https://github.com/SeequentEvo/evo-python-sdk/pull/323
+* Fix common package version by @GriffinBaxterSeequent in https://github.com/SeequentEvo/evo-python-sdk/pull/324
+
+## New Contributors
+* @sergiopeixoto-seequent made their first contribution in https://github.com/SeequentEvo/evo-python-sdk/pull/323
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-sdk-common@v0.5.25...evo-sdk-common@v0.5.26
+
 ## evo-sdk@v0.2.3
 <!-- Release notes generated using configuration in .github/release.yml at main -->
 

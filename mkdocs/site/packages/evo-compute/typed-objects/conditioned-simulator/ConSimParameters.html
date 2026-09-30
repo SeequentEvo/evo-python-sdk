@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        
+        <link rel="shortcut icon" href="../../../../img/favicon.ico">
+        <title>ConSimParameters - Evo Python SDK</title>
+        <link href="../../../../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../../../../css/fontawesome.min.css" rel="stylesheet">
+        <link href="../../../../css/brands.min.css" rel="stylesheet">
+        <link href="../../../../css/solid.min.css" rel="stylesheet">
+        <link href="../../../../css/v4-font-face.min.css" rel="stylesheet">
+        <link href="../../../../css/base.css" rel="stylesheet">
+        <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" >
+        <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
+        <link href="../../../../assets/_mkdocstrings.css" rel="stylesheet">
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="../../../..">Evo Python SDK</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar-collapse" aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+
+                    <ul class="nav navbar-nav ms-md-auto">
+                            <li class="nav-item">
+                                <a rel="prev" href="ConSimMaterialCategory.html" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="ConSimResult.html" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-bs-toggle="collapse" data-bs-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-bs-level="2"><a href="#evo.compute.tasks.geostatistics.conditioned_simulator.ConSimParameters" class="nav-link">ConSimParameters</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<p><a href="https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-compute/src/evo/compute/tasks/geostatistics/conditioned_simulator.py">GitHub source</a>
+</p>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="evo.compute.tasks.geostatistics.conditioned_simulator.ConSimParameters" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">evo.compute.tasks.geostatistics.conditioned_simulator.ConSimParameters</span>
+
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>Parameters for the conditional simulation (consim) task.</p>
+<p>This is the most comprehensive geostatistics compute task, supporting
+the full conditional turning-band simulation workflow.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.conditioned_simulator.ConSimParameters.source_object" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">source_object</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">source_object</span><span class="p">:</span> <span class="n">GeoscienceObjectReference</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Reference to the pointset containing source conditioning points.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.conditioned_simulator.ConSimParameters.source_attribute" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">source_attribute</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">source_attribute</span><span class="p">:</span> <span class="nb">str</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Attribute reference for the source values.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.conditioned_simulator.ConSimParameters.target_object" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">target_object</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">target_object</span><span class="p">:</span> <span class="n">GeoscienceObjectReference</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Reference to the target 3D grid.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.conditioned_simulator.ConSimParameters.filter" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">filter</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nb">filter</span><span class="p">:</span> <span class="n">Filter</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Optional filter restricting the simulation to a subset of target-grid locations.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.conditioned_simulator.ConSimParameters.source_filter" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">source_filter</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">source_filter</span><span class="p">:</span> <span class="n">Filter</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Optional filter restricting conditioning to a subset of the source data.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.conditioned_simulator.ConSimParameters.neighborhood" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">neighborhood</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">neighborhood</span><span class="p">:</span> <span class="n">SearchNeighborhood</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Search neighborhood for conditioning.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.conditioned_simulator.ConSimParameters.variogram_model" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">variogram_model</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">variogram_model</span><span class="p">:</span> <span class="n">GeoscienceObjectReference</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Reference to the variogram model.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.conditioned_simulator.ConSimParameters.block_discretization" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">block_discretization</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">block_discretization</span><span class="p">:</span> <span class="n">BlockDiscretization</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">BlockDiscretization</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Sub-block discretization for support correction.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.conditioned_simulator.ConSimParameters.distribution" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">distribution</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">distribution</span><span class="p">:</span> <span class="n">DistributionParams</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Optional distribution parameters for normal-score transformation.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.conditioned_simulator.ConSimParameters.kriging_method" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">kriging_method</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">kriging_method</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s1">&#39;simple&#39;</span><span class="p">,</span> <span class="s1">&#39;ordinary&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;simple&#39;</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The kriging method for conditioning (default: simple).</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.conditioned_simulator.ConSimParameters.number_of_lines" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">number_of_lines</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">number_of_lines</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="mi">500</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Number of lines for turning-band simulation.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.conditioned_simulator.ConSimParameters.number_of_simulations" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">number_of_simulations</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">number_of_simulations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Number of simulations to run.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.conditioned_simulator.ConSimParameters.random_seed" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">random_seed</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">random_seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">38239342</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Random seed for simulation and tie-breaking.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.conditioned_simulator.ConSimParameters.number_of_simulations_to_save" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">number_of_simulations_to_save</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">number_of_simulations_to_save</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Number of simulations to publish to the output object.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.conditioned_simulator.ConSimParameters.loss_calculation" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">loss_calculation</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">loss_calculation</span><span class="p">:</span> <span class="n">ConSimLossCalculation</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Optional loss calculation settings.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.conditioned_simulator.ConSimParameters.location_wise_quantiles" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">location_wise_quantiles</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">location_wise_quantiles</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Optional list of quantiles to compute for each location.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.conditioned_simulator.ConSimParameters.probability_above_cutoff" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">probability_above_cutoff</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">probability_above_cutoff</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Optional list of cutoff values to compute the probability of being above, for each location.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.conditioned_simulator.ConSimParameters.mean_above_cutoff" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">mean_above_cutoff</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">mean_above_cutoff</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Optional list of cutoff values to compute the mean of values above, for each location.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.conditioned_simulator.ConSimParameters.perform_validation" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">perform_validation</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">perform_validation</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Whether to run validation and generate a validation report.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.conditioned_simulator.ConSimParameters.report_context" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">report_context</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">report_context</span><span class="p">:</span> <span class="n">ReportContext</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Optional context for the validation report.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.conditioned_simulator.ConSimParameters.report_mean_thresholds" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">report_mean_thresholds</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">report_mean_thresholds</span><span class="p">:</span> <span class="n">ReportMeanThresholds</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Optional thresholds for mean comparison in the validation report.</p>
+
+    </div>
+
+</div>
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>

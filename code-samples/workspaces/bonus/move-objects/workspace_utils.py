@@ -1,4 +1,3 @@
-from typing import Optional
 from uuid import UUID
 
 import ipywidgets as widgets
@@ -114,7 +113,7 @@ class ObjectSelectorWidget:
             self.loading_label.value = f"Loaded {len(self.all_objects)} object(s)"
 
         except Exception as e:
-            self.loading_label.value = f"Error: {str(e)}"
+            self.loading_label.value = f"Error: {e!s}"
 
         finally:
             self.refresh_btn.disabled = False
@@ -128,8 +127,7 @@ class ObjectSelectorWidget:
     def _format_object_name(self, obj):
         """Format the object name by removing .json extension."""
         name = obj.name
-        if name.endswith(".json"):
-            name = name[:-5]
+        name = name.removesuffix(".json")
         return name
 
     def _update_filtered_objects(self):
@@ -208,7 +206,7 @@ class ObjectSelectorWidget:
             return None
         return next((obj for obj in self.filtered_objects if obj.id == selected_id), None)
 
-    def get_selected_id(self) -> Optional[UUID]:
+    def get_selected_id(self) -> UUID | None:
         """Get the UUID of the currently selected object."""
         return self.object_selector.value
 
@@ -308,7 +306,7 @@ class TargetWorkspaceSelectorWidget:
                 self.loading_label.value = "No other workspaces found"
 
         except Exception as e:
-            self.loading_label.value = f"Error: {str(e)}"
+            self.loading_label.value = f"Error: {e!s}"
 
         finally:
             self.refresh_btn.disabled = False
@@ -360,7 +358,7 @@ class TargetWorkspaceSelectorWidget:
         # Auto-load workspaces on display
         await self.refresh()
 
-    def get_selected_workspace_id(self) -> Optional[UUID]:
+    def get_selected_workspace_id(self) -> UUID | None:
         """Get the UUID of the currently selected target workspace."""
         return self.workspace_selector.value
 

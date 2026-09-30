@@ -23,6 +23,7 @@ except ImportError:
     DataFrame = None  # type: ignore
 
 from .data import ObjectDataClient
+from .downhole import expand_hole_index, hole_chunks_from_ids
 from .table_formats import all_known_formats, get_known_format
 from .tables import ArrowTableFormat, BaseTableFormat, KnownTableFormat
 from .types import ArrayTableInfo, AttributeInfo, CategoryInfo, LookupTableInfo, TableInfo
@@ -43,5 +44,7 @@ __all__ = [
     "ObjectDataClient",
     "TableInfo",
     "all_known_formats",
+    "expand_hole_index",
     "get_known_format",
+    "hole_chunks_from_ids",
 ]

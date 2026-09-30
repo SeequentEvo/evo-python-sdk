@@ -603,6 +603,47 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
         )
         self.assertEqual(sample_table, actual_table)
 
+    async def test_download_tables_prepares_data_once(self) -> None:
+        """Test that downloading multiple tables prepares all data with one metadata request."""
+        object_id = UUID(int=2)
+        data_id_1 = "0000000000000000000000000000000000000000000000000000000000000001"
+        data_id_2 = "0000000000000000000000000000000000000000000000000000000000000002"
+        table_info_1 = {"data": data_id_1, "length": 1, "width": 1, "data_type": "float64"}
+        table_info_2 = {"data": data_id_2, "length": 1, "width": 1, "data_type": "float64"}
+        download_1 = mock.Mock()
+        download_1.name = data_id_1
+        download_2 = mock.Mock()
+        download_2.name = data_id_2
+        table_1 = pa.table({"value": [1.0]})
+        table_2 = pa.table({"value": [2.0]})
+
+        async def download_side_effect(_download, table_info, _fb):
+            return table_1 if table_info is table_info_1 else table_2
+
+        with (
+            mock.patch.object(self.data_client, "_prepare_data_downloads", new_callable=mock.AsyncMock) as prepare,
+            mock.patch.object(
+                self.data_client, "_download_prepared_table", new_callable=mock.AsyncMock
+            ) as download_table,
+        ):
+            prepare.return_value = {data_id_1: download_1, data_id_2: download_2}
+            download_table.side_effect = download_side_effect
+            actual_tables = await self.data_client.download_tables(
+                object_id, None, [table_info_1, table_info_1, table_info_2]
+            )
+
+        prepare.assert_awaited_once_with(object_id, None, [data_id_1, data_id_2])
+        self.assertEqual({data_id_1: table_1, data_id_2: table_2}, actual_tables)
+        self.assertEqual(2, download_table.await_count)
+
+    async def test_download_tables_with_no_table_infos(self) -> None:
+        """Test that downloading no tables does not prepare any downloads."""
+        with mock.patch.object(self.data_client, "_prepare_data_downloads", new_callable=mock.AsyncMock) as prepare:
+            actual_tables = await self.data_client.download_tables(UUID(int=2), None, [])
+
+        prepare.assert_not_awaited()
+        self.assertEqual({}, actual_tables)
+
     async def test_download_dataframe(self) -> None:
         """Test downloading tabular data using pandas."""
         get_object_response = load_test_data("get_object.json")

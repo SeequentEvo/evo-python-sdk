@@ -9,6 +9,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import asyncio
 from pathlib import Path
 from uuid import UUID
 
@@ -76,4 +77,27 @@ class TestDownload(TestWithDownloadHandler):
         self.assert_download_requests(self.url_generator.current_url)
         self.assertEqual(expected_data_file, actual_data_file)
         self.assertTrue(expected_data_file.exists())
+        self.assertEqual(TEST_DATA, expected_data_file.read_bytes())
+
+    async def test_concurrent_downloads_to_cache(self) -> None:
+        """Concurrent requests for the same cached file only download it once."""
+        download = MyDownload(
+            MyResourceMetadata(
+                environment=self.environment,
+                id=UUID(int=4322),
+                name="test_concurrent_download.csv",
+                created_at=utc_datetime(2024),
+                created_by=None,
+            ),
+            self.url_generator,
+        )
+        expected_data_file = download._get_cache_location(self.cache)
+
+        locations = await asyncio.gather(
+            download.download_to_cache(self.cache, self.transport),
+            download.download_to_cache(self.cache, self.transport),
+        )
+
+        self.assertEqual([expected_data_file, expected_data_file], locations)
+        self.assert_download_requests(self.url_generator.current_url)
         self.assertEqual(TEST_DATA, expected_data_file.read_bytes())

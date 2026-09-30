@@ -34,14 +34,23 @@ __all__ = [
 class UnitType(Enum):
     """Types of units supported by the Block Model Service."""
 
-    LENGTH = "LENGTH"
-    MASS = "MASS"
-    VOLUME = "VOLUME"
-    VALUE = "VALUE"
-    MASS_PER_VOLUME = "MASS_PER_VOLUME"
+    UNKNOWN = "UNKNOWN"  # For unit types introduced after this SDK version
     MASS_PER_MASS = "MASS_PER_MASS"
-    VOLUME_PER_VOLUME = "VOLUME_PER_VOLUME"
+    MASS_PER_VOLUME = "MASS_PER_VOLUME"
+    DIMENSIONLESS = "GENERIC_DIMENSIONLESS"
+    MASS = "MASS"
+    LENGTH = "LENGTH"
+    VOLUME = "VOLUME"
     VALUE_PER_MASS = "VALUE_PER_MASS"
+    VALUE = "VALUE"
+    CATEGORY = "CATEGORY"
+    ANGLE = "ANGLE"
+
+    @classmethod
+    def _missing_(cls, value: object) -> UnitType | None:
+        if isinstance(value, str):
+            return cls.UNKNOWN
+        return None
 
 
 @dataclass(frozen=True)
@@ -64,7 +73,7 @@ class UnitInfo:
     """Conversion factor to the reference unit for this unit type."""
 
 
-class Units:
+class Units(str, Enum):
     """Common unit IDs for block model attributes.
 
     These are the most commonly used unit IDs. For a complete list,
@@ -86,60 +95,72 @@ class Units:
         await bm_ref.add_attribute(df, "metal_content", unit=Units.KILOS_PER_CUBIC_METRE)
     """
 
-    # Length units
-    METRES = "m"
-    FEET = "ft"
-    CENTIMETRES = "cm"
+    # Mass per mass (grade) units
+    CARATS_PER_HUNDRED_TONNE = "0.01 ct/t"
+    CARATS_PER_TONNE = "ct/t"
+    GRAMS_PER_TONNE = "g/t"
+    MICROGRAMS_PER_GRAM = "ug/g"
+    MICROGRAMS_PER_KILOGRAM = "ug/kg"
+    MILLIGRAMS_PER_GRAM = "mg/g"
+    MILLIGRAMS_PER_KILOGRAM = "mg/kg"
+    PARTS_PER_BILLION = "ppb[mass]"
+    PARTS_PER_MILLION = "ppm[mass]"
+    PERCENT = "%[mass]"
+    TROY_OUNCES_PER_SHORT_TON = "oz t/ton[US]"
+
+    # Mass per volume (density) units
+    GRAMS_PER_CUBIC_CENTIMETRE = "g/cm3"
+    KILOS_PER_CUBIC_METRE = "kg/m3"
+    POUNDS_PER_CUBIC_FOOT = "lbm/ft3"
+    SHORT_TON_PER_CUBIC_FOOT = "ton[US]/ft3"
+    TONNES_PER_CUBIC_METRE = "t/m3"
+
+    # Dimensionless units
+    COUNT = "count"
+    RATIO = "ratio"
 
     # Mass units
     CARATS = "ct"
     GRAMS = "g"
-    POUNDS = "lbm"
-    TROY_OUNCES = "ozm[troy]"
-    TONNES = "t"
+    KILOGRAMS = "kg"
     KILOTONNES = "kt"
     MEGATONNES = "Mt"
-    SHORT_TONS = "ton[US]"
-    THOUSAND_SHORT_TONS = "kton[US]"
-    MILLION_SHORT_TONS = "Mton[US]"
-    KILOGRAMS = "kg"
-    THOUSAND_POUNDS = "klbm"
-    MILLIGRAMS = "mg"
     MICROGRAMS = "ug"
-    THOUSAND_CARATS = "1000 ct"
-    THOUSAND_TROY_OUNCES = "1000 ozm[troy]"
-    MILLION_TROY_OUNCES = "1000000 ozm[troy]"
+    MILLIGRAMS = "mg"
     MILLION_POUNDS = "Mlbm"
+    MILLION_SHORT_TONS = "Mton[US]"
+    MILLION_TROY_OUNCES = "1000000 ozm[troy]"
+    POUNDS = "lbm"
+    SHORT_TONS = "ton[US]"
+    THOUSAND_CARATS = "1000 ct"
+    THOUSAND_POUNDS = "klbm"
+    THOUSAND_SHORT_TONS = "kton[US]"
+    THOUSAND_TROY_OUNCES = "1000 ozm[troy]"
+    TONNES = "t"
+    TROY_OUNCES = "ozm[troy]"
 
-    # Mass per mass (grade) units
-    PERCENT = "%[mass]"
-    PARTS_PER_MILLION = "ppm[mass]"
-    GRAMS_PER_TONNE = "g/t"
-    MILLIGRAMS_PER_GRAM = "mg/g"
-    MILLIGRAMS_PER_KILOGRAM = "mg/kg"
-    MICROGRAMS_PER_GRAM = "ug/g"
-    CARATS_PER_HUNDRED_TONNE = "0.01 ct/t"
-    PARTS_PER_BILLION = "ppb[mass]"
-    TROY_OUNCES_PER_SHORT_TON = "oz t/ton[US]"
-    CARATS_PER_TONNE = "ct/t"
-    MICROGRAMS_PER_KILOGRAM = "ug/kg"
-
-    # Mass per volume (density) units
-    KILOS_PER_CUBIC_METRE = "kg/m3"
-    GRAMS_PER_CUBIC_CENTIMETRE = "g/cm3"
-    POUNDS_PER_CUBIC_FOOT = "lbm/ft3"
-    TONNES_PER_CUBIC_METRE = "t/m3"
-    SHORT_TON_PER_CUBIC_FOOT = "ton[US]/ft3"
-
-    # Value units
-    DOLLARS_PER_TONNE = "$/t"
-    DOLLARS_PER_SHORT_TON = "$/ton[US]"
-    DOLLARS = "$"
+    # Length units
+    CENTIMETRES = "cm"
+    FEET = "ft"
+    METRES = "m"
 
     # Volume units
     CUBIC_CENTIMETRES = "cm3"
-    CUBIC_METRES = "m3"
     CUBIC_FEET = "ft3"
+    CUBIC_METRES = "m3"
+
+    # Value units
+    DOLLARS = "$"
+    DOLLARS_PER_SHORT_TON = "$/ton[US]"
+    DOLLARS_PER_TONNE = "$/t"
+
+    # Category units
+    NUMERIC_CATEGORY = "numeric_category"
+
+    # Angle units
+    DEGREES = "dega"
+    RADIANS = "rad"
+    REVOLUTIONS = "rev"
 
 
 async def get_available_units(context: IContext) -> list[UnitInfo]:

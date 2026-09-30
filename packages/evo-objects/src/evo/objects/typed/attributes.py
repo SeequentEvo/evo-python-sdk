@@ -14,7 +14,7 @@ from __future__ import annotations
 import typing
 import uuid
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Annotated, Any
+from typing import TYPE_CHECKING, Annotated, Any, Protocol, runtime_checkable
 from uuid import UUID
 
 import pandas as pd
@@ -41,16 +41,25 @@ if TYPE_CHECKING:
 
 __all__ = [
     "Attribute",
+    "AttributeDescription",
     "Attributes",
     "BlockModelAttribute",
     "BlockModelAttributes",
     "BlockModelPendingAttribute",
     "PendingAttribute",
+    "Unit",
 ]
 
 
 class UnSupportedDataTypeError(Exception):
     """An unsupported data type was encountered while processing data."""
+
+
+@runtime_checkable
+class Unit(Protocol):
+    """A schema unit enum represented by its string value."""
+
+    value: str
 
 
 def _infer_attribute_type_from_series(series: pd.Series) -> str:
@@ -89,13 +98,20 @@ _attribute_table_formats = {
 class AttributeDescription:
     discipline: str = ""
     type: str = ""
-    unit: str | None = None
+    unit: str | Unit | None = None
     scale: str | None = None
     extensions: dict[str, typing.Any] | None = None
     tags: dict[str, str] | None = None
 
-    def to_schema(self):
-        result = {
+    def __post_init__(self) -> None:
+        if self.unit is None or isinstance(self.unit, str):
+            return
+        if not isinstance(self.unit, Unit) or not isinstance(self.unit.value, str):
+            raise TypeError("unit must be a str, a Unit with a string value, or None")
+        self.unit = self.unit.value
+
+    def to_schema(self) -> dict[str, Any]:
+        result: dict[str, Any] = {
             "discipline": self.discipline,
             "type": self.type,
         }
@@ -117,6 +133,7 @@ class Attribute(SchemaModel):
     _attribute_type: Annotated[str, SchemaLocation("attribute_type")]
     _key: Annotated[str | None, SchemaLocation("key")]
     _data: Annotated[str, SchemaLocation("values.data")]
+    _attribute_description: Annotated[dict[str, Any] | None, SchemaLocation("attribute_description")]
 
     @property
     def key(self) -> str:
@@ -131,6 +148,12 @@ class Attribute(SchemaModel):
     def attribute_type(self) -> str:
         """The type of this attribute."""
         return self._attribute_type
+
+    @property
+    def attribute_description(self) -> AttributeDescription | None:
+        """Optional descriptive metadata associated with this attribute."""
+        raw = self._attribute_description
+        return AttributeDescription(**raw) if raw else None
 
     @property
     def exists(self) -> bool:
@@ -241,7 +264,7 @@ class Attributes(SchemaList[Attribute]):
     attribute descriptions are attached to the DataFrame's `attrs` attribute.
 
     >>> df.attrs
-    {'attribute_description': {<column names>:  <AttributeDescription>}, ...}
+    {'attribute_descriptions': {<column names>: <AttributeDescription>}, ...}
     """
 
     _schema_path: str | None = None
@@ -320,8 +343,8 @@ class Attributes(SchemaList[Attribute]):
             if attr_desc is not None:
                 if not isinstance(attr_desc, AttributeDescription):
                     raise TypeError("attribute description must be a AttributeDescription.")
-                if attr_desc.unit is not None:
-                    attr_doc["attribute_description"] = attr_desc.to_schema()
+                if description := attr_desc.to_schema():
+                    attr_doc["attribute_description"] = description
 
             attributes_list.append(attr_doc)
 
@@ -337,7 +360,15 @@ class Attributes(SchemaList[Attribute]):
         """
         attributes = [self[key] for key in keys] if keys else list(self)
         parts = [await attribute.to_dataframe(fb=fb_part) for attribute, fb_part in iter_with_fb(attributes, fb)]
-        return pd.concat(parts, axis=1) if len(parts) > 0 else pd.DataFrame()
+        result = pd.concat(parts, axis=1) if len(parts) > 0 else pd.DataFrame()
+        descriptions = {
+            attribute.name: description
+            for attribute in attributes
+            if isinstance(attribute, Attribute) and (description := attribute.attribute_description) is not None
+        }
+        if descriptions:
+            result.attrs["attribute_descriptions"] = descriptions
+        return result
 
     async def append_attribute(self, df: pd.DataFrame, fb: IFeedback = NoFeedback):
         """Add a new attribute to the object.
@@ -601,3 +632,14 @@ class Category(SchemaModel):
         if self._context.is_data_modified(self._data):
             raise DataLoaderError("Data was modified since the object was downloaded")
         return await self._obj.download_category_dataframe(self.as_dict(), fb=fb)
+
+    async def to_indexed_dataframe(self, fb: IFeedback = NoFeedback) -> pd.DataFrame:
+        """Load the persisted category lookup as ``[key, value]`` rows.
+
+        Pandas categorical codes are dense positional values and must not be used
+        as schema lookup keys. This method is intended for joins involving an
+        index column such as ``hole_index``.
+        """
+        if self._context.is_data_modified(self._data):
+            raise DataLoaderError("Data was modified since the object was downloaded")
+        return await self._obj.download_dataframe(self.as_dict()["table"], fb=fb)

@@ -59,7 +59,7 @@ class TestTensorGrid(TestWithConnector):
         cell_data=pd.DataFrame(
             {
                 "value": np.random.rand(10 * 10 * 5),
-                "cat": pd.Categorical(np.random.choice(range(4), size=10 * 10 * 5), ["a", "b", "c", "d"]),
+                "cat": pd.Categorical(np.random.choice(["a", "b", "c", "d"], size=10 * 10 * 5)),
             }
         ),
         vertex_data=pd.DataFrame(

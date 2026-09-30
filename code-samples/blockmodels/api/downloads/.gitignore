@@ -1,0 +1,3 @@
+# Keep this generated-output directory while ignoring downloaded results.
+*
+!.gitignore

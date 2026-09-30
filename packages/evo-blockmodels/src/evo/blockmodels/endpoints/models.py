@@ -944,14 +944,23 @@ class SizeOptionsRegular(CustomBaseModel):
 
 
 class UnitType(Enum):
-    LENGTH = "LENGTH"
-    MASS = "MASS"
-    VOLUME = "VOLUME"
-    VALUE = "VALUE"
-    MASS_PER_VOLUME = "MASS_PER_VOLUME"
+    UNKNOWN = "UNKNOWN"  # For unit types introduced after this SDK version
     MASS_PER_MASS = "MASS_PER_MASS"
-    VOLUME_PER_VOLUME = "VOLUME_PER_VOLUME"
+    MASS_PER_VOLUME = "MASS_PER_VOLUME"
+    DIMENSIONLESS = "GENERIC_DIMENSIONLESS"
+    MASS = "MASS"
+    LENGTH = "LENGTH"
+    VOLUME = "VOLUME"
     VALUE_PER_MASS = "VALUE_PER_MASS"
+    VALUE = "VALUE"
+    CATEGORY = "CATEGORY"
+    ANGLE = "ANGLE"
+
+    @classmethod
+    def _missing_(cls, value: object) -> UnitType | None:
+        if isinstance(value, str):
+            return cls.UNKNOWN
+        return None
 
 
 class UpdateMetadataValues(CustomBaseModel):
@@ -1403,6 +1412,13 @@ class QueryCriteria(CustomBaseModel):
     ] = None
     """
     Format of the output file
+    """
+    qualified_title_separator: Annotated[
+        StrictStr | None,
+        Field(max_length=1, min_length=1, title="Qualified Title Separator"),
+    ] = "▸"
+    """
+    Single-character separator used to parse qualified group paths and column titles, and to render returned column headers for this request. The character must not be present in any group or column title in the relevant version. If not provided, the default separator `▸` is used.
     """
     version_uuid: Annotated[UUID | None, Field(title="Version Uuid")] = None
     """
@@ -3230,6 +3246,13 @@ class UpdateDataLite1(CustomBaseModel):
     """
     Lineage of the block model update
     """
+    qualified_title_separator: Annotated[
+        StrictStr | None,
+        Field(max_length=1, min_length=1, title="Qualified Title Separator"),
+    ] = "▸"
+    """
+    Single-character separator used to parse qualified group paths and column titles for this request.The character must not be present in any group or column title in the relevant version. If not provided, the default separator `▸` is used.
+    """
     update_type: UpdateType = UpdateType.merge
     """
 
@@ -3282,6 +3305,13 @@ class UpdateDataLite2(CustomBaseModel):
     lineage: Annotated[LineageV100 | None, Field(deprecated=True)] = None
     """
     Lineage of the block model update
+    """
+    qualified_title_separator: Annotated[
+        StrictStr | None,
+        Field(max_length=1, min_length=1, title="Qualified Title Separator"),
+    ] = "▸"
+    """
+    Single-character separator used to parse qualified group paths and column titles for this request.The character must not be present in any group or column title in the relevant version. If not provided, the default separator `▸` is used.
     """
     update_type: UpdateType = UpdateType.merge
     """
@@ -3339,7 +3369,7 @@ class UpdateDataWithVersion1(CustomBaseModel):
     """
     Lineage of the block model update
     """
-    update_type: UpdateType = "merge"
+    update_type: UpdateType = UpdateType.merge
     """
 
     Behaviour of the update, for blocks that are omitted from the update file.
@@ -3391,7 +3421,7 @@ class UpdateDataWithVersion2(CustomBaseModel):
     """
     Lineage of the block model update
     """
-    update_type: UpdateType = "merge"
+    update_type: UpdateType = UpdateType.merge
     """
 
     Behaviour of the update, for blocks that are omitted from the update file.

@@ -450,15 +450,30 @@ class SchemaList(Sequence[_M]):
             if get_origin(base) is SchemaList:
                 args = get_args(base)
                 if args:
-                    cls._item_type = args[0]
+                    item_type = args[0]
+                    if isinstance(item_type, type):
+                        cls._item_type = item_type
+                    elif "_resolve_item_type" not in cls.__dict__ or "_data_to_schema" not in cls.__dict__:
+                        raise TypeError(
+                            "SchemaList with a non-class item type must override _resolve_item_type() and _data_to_schema()"
+                        )
                     break
 
     def __getitem__(self, index: int) -> _M:
-        return self._item_type(self._context, self._document[index])
+        document = self._document[index]
+        return self._resolve_item_type(document)(self._context, document)
 
     def __iter__(self):
         for item in self._document:
-            yield self._item_type(self._context, item)
+            yield self._resolve_item_type(item)(self._context, item)
+
+    @classmethod
+    def _resolve_item_type(cls, document: dict[str, Any]) -> type[_M]:
+        """Resolve the schema model used for a document item.
+
+        Subclasses with heterogeneous document items can override this hook.
+        """
+        return cls._item_type
 
     def __len__(self) -> int:
         return len(self._document)

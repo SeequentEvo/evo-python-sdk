@@ -34,11 +34,11 @@ class _CIManager:
 
     def __init__(
         self,
-        connector: "APIConnector",
+        connector: APIConnector,
         hub_url: str,
         org_id: str,
         workspace_id: str | None = None,
-        cache: "ICache | None" = None,
+        cache: ICache | None = None,
     ) -> None:
         self._connector = connector
         self._hub_url = hub_url
@@ -46,7 +46,7 @@ class _CIManager:
         self._workspace_id = UUID(workspace_id) if workspace_id else None
         self._cache = cache
 
-    def get_connector(self) -> "APIConnector":
+    def get_connector(self) -> APIConnector:
         return self._connector
 
     def get_environment(self) -> _Environment:
@@ -59,11 +59,11 @@ class _CIManager:
     def get_org_id(self) -> UUID:
         return self._org_id
 
-    def get_cache(self) -> "ICache | None":
+    def get_cache(self) -> ICache | None:
         return self._cache
 
     @property
-    def cache(self) -> "ICache | None":
+    def cache(self) -> ICache | None:
         return self._cache
 
 

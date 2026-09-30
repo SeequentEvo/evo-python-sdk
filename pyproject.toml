@@ -50,7 +50,7 @@ extend-select = ["I", "RUF022"]
 known-first-party = ["evo"]
 
 [tool.uv]
-required-version = ">=0.9.0,<0.11.0"
+required-version = ">=0.9.0,<0.13.0"
 
 [tool.uv.sources]
 evo-sdk-common = { workspace = true }

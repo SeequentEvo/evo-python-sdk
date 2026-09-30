@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        
+        <link rel="shortcut icon" href="../../../../img/favicon.ico">
+        <title>ConditionalTurningBandsParameters - Evo Python SDK</title>
+        <link href="../../../../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../../../../css/fontawesome.min.css" rel="stylesheet">
+        <link href="../../../../css/brands.min.css" rel="stylesheet">
+        <link href="../../../../css/solid.min.css" rel="stylesheet">
+        <link href="../../../../css/v4-font-face.min.css" rel="stylesheet">
+        <link href="../../../../css/base.css" rel="stylesheet">
+        <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" >
+        <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
+        <link href="../../../../assets/_mkdocstrings.css" rel="stylesheet">
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="../../../..">Evo Python SDK</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar-collapse" aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+
+                    <ul class="nav navbar-nav ms-md-auto">
+                            <li class="nav-item">
+                                <a rel="prev" href="BlockDiscretization.html" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="ConditionalTurningBandsResult.html" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-bs-toggle="collapse" data-bs-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-bs-level="2"><a href="#evo.compute.tasks.geostatistics.conditional_turning_bands.ConditionalTurningBandsParameters" class="nav-link">ConditionalTurningBandsParameters</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<p><a href="https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-compute/src/evo/compute/tasks/geostatistics/conditional_turning_bands.py">GitHub source</a>
+</p>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="evo.compute.tasks.geostatistics.conditional_turning_bands.ConditionalTurningBandsParameters" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">evo.compute.tasks.geostatistics.conditional_turning_bands.ConditionalTurningBandsParameters</span>
+
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>Parameters for the conditional turning-band simulation task.</p>
+<p>Performs a conditional block turning-bands simulation using a pre-existing
+continuous distribution object.  The task outputs an ensemble attribute on
+the target grid, containing one column per realization.</p>
+<p>Example:
+    &gt;&gt;&gt; params = ConditionalTurningBandsParameters(
+    ...     source=pointset,
+    ...     source_attribute="locations.attributes[?name=='grade']",
+    ...     target=grid,
+    ...     distribution=distribution_object,
+    ...     variogram_model=variogram,
+    ...     neighborhood=SearchNeighborhood(
+    ...         ellipsoid=Ellipsoid(ranges=EllipsoidRanges(70, 70, 5)),
+    ...         max_samples=40,
+    ...     ),
+    ...     block_discretization=BlockDiscretization(nx=5, ny=5, nz=5),
+    ...     realizations=10,
+    ... )</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.conditional_turning_bands.ConditionalTurningBandsParameters.source" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">source</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">source</span><span class="p">:</span> <span class="n">GeoscienceObjectReference</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Reference to the pointset containing the source conditioning points.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.conditional_turning_bands.ConditionalTurningBandsParameters.source_attribute" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">source_attribute</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">source_attribute</span><span class="p">:</span> <span class="nb">str</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Attribute reference for the source values (e.g. <code>"locations.attributes[?name=='grade']"</code>).</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.conditional_turning_bands.ConditionalTurningBandsParameters.target" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">target</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">target</span><span class="p">:</span> <span class="n">GeoscienceObjectReference</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Reference to the target 3-D grid or masked grid to simulate onto.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.conditional_turning_bands.ConditionalTurningBandsParameters.filter" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">filter</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nb">filter</span><span class="p">:</span> <span class="n">Filter</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Optional filter restricting simulation to a subset of target-grid locations.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.conditional_turning_bands.ConditionalTurningBandsParameters.source_filter" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">source_filter</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">source_filter</span><span class="p">:</span> <span class="n">Filter</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Optional filter restricting conditioning to a subset of the source data.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.conditional_turning_bands.ConditionalTurningBandsParameters.neighborhood" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">neighborhood</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">neighborhood</span><span class="p">:</span> <span class="n">SearchNeighborhood</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Search neighbourhood used both for simulation and for the conditioning kriging step.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.conditional_turning_bands.ConditionalTurningBandsParameters.distribution" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">distribution</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">distribution</span><span class="p">:</span> <span class="n">GeoscienceObjectReference</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Reference to a non-parametric continuous cumulative distribution object.</p>
+<p>Typically created by the <code>continuous-distribution</code> task.  The distribution
+is used for the normal-score back-transformation of simulation results.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.conditional_turning_bands.ConditionalTurningBandsParameters.variogram_model" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">variogram_model</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">variogram_model</span><span class="p">:</span> <span class="n">GeoscienceObjectReference</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Reference to the variogram model used to model spatial covariance.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.conditional_turning_bands.ConditionalTurningBandsParameters.kriging_method" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">kriging_method</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">kriging_method</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s1">&#39;simple&#39;</span><span class="p">,</span> <span class="s1">&#39;ordinary&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;simple&#39;</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The kriging method for the conditioning step.</p>
+<ul>
+<li><code>"simple"</code> (default) — assumes a known constant mean.</li>
+<li><code>"ordinary"</code> — estimates the local mean from nearby samples.</li>
+</ul>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.conditional_turning_bands.ConditionalTurningBandsParameters.block_discretization" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">block_discretization</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">block_discretization</span><span class="p">:</span> <span class="n">BlockDiscretization</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">BlockDiscretization</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Sub-block discretisation for support correction.</p>
+<p>Each grid cell is subdivided into <code>nx * ny * nz</code> sub-cells, simulated
+individually, and then averaged to the block scale.  Defaults to
+<code>BlockDiscretization(nx=1, ny=1, nz=1)</code> (point simulation at cell centres).</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.conditional_turning_bands.ConditionalTurningBandsParameters.number_of_lines" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">number_of_lines</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">number_of_lines</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="mi">500</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Number of turning-band lines.</p>
+<p>Higher values produce more accurate results at the cost of runtime.
+Must be between 1 and 1000.  Defaults to 500.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.conditional_turning_bands.ConditionalTurningBandsParameters.realizations" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">realizations</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">realizations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Number of simulation realizations to produce.</p>
+<p>All realizations are saved to the ensemble attribute on the target object.
+Must be between 1 and 100.  Defaults to 1.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.conditional_turning_bands.ConditionalTurningBandsParameters.random_seed" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">random_seed</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">random_seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">38239342</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Random seed for reproducible simulations.</p>
+
+    </div>
+
+</div>
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>

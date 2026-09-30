@@ -91,7 +91,8 @@ class ObjectReference(str):
         inst = str.__new__(cls, value)
 
         parsed = urlparse(value)
-        if parsed.scheme != "https":
+        if not parsed.scheme:
+            # Valid hub URLs are always HTTPS, but it is sometimes useful to pass HTTP ones for testing, so these are allowed here too.
             raise ValueError("Reference must be a valid HTTPS URL")
 
         inst.hub_url = f"{parsed.scheme}://{parsed.netloc}/"
