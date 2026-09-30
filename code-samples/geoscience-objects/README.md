@@ -1,57 +1,38 @@
-# Jupyter Notebooks
+# Geoscience Object Samples
 
-The `publish-*` directories contain Jupyter notebooks with sample code for uploading geoscience objects to Evo. For example, `publish-triangular-mesh/publish-triangular-mesh.ipynb` Jupyter notebook will demonstrate how to upload a triangular mesh object.
+These tutorials demonstrate how to create, download, and work with Evo geoscience objects. The recommended workflows use the high-level typed interfaces in `evo.objects` and the `evo.widgets` extension for rich notebook output.
 
-## Recommended Starting Point
+## Start Here
 
-**New users should start with `simplified-object-interactions/`** - This example demonstrates the recommended approach for most users and geologists using the typed objects API (`PointSet`, `Regular3DGrid`, etc.) with the `evo.widgets` extension for rich HTML display. It provides a simpler, more intuitive way to upload and download geoscience objects.
+1. [Simplified Object Interactions](simplified-object-interactions/simplified-object-interactions.ipynb)
+	- Create, upload, download, and inspect typed geoscience objects such as PointSets and Regular3DGrids.
+2. [Create a Downhole Collection](simplified-object-interactions/create-downhole-collection.ipynb)
+	- Create a downhole collection using the simplified typed-object workflow.
+3. [Download a PointSet](download-pointset/download-pointset.ipynb)
+	- Download point-set data and inspect it in a notebook.
 
-**For geostatistical workflows, see `running-kriging-compute/`** - This example demonstrates a complete workflow including creating pointsets, variogram models, and visualizing them together with Plotly. It also includes WIP sections for kriging estimation using Evo Compute.
+## Geostatistical Workflows
 
-The `publish-*` examples use the lower-level `evo-schemas` approach, which offers more control but requires more boilerplate code.
+- [Run Kriging Compute](running-kriging-compute/running-kriging-compute.ipynb) creates pointsets and variogram models, visualizes them with Plotly, and introduces kriging estimation with Evo Compute.
+- [Run Conditional Simulation](running-conditional-simulation/running-conditional-simulation.ipynb) demonstrates conditional simulation workflows.
+
+## Drilling Campaigns
+
+- [Create a Drilling Campaign](drilling-campaign/create-a-drilling-campaign/sdk-examples.ipynb) creates a drilling campaign with the SDK.
+- [Download a Drilling Campaign](drilling-campaign/download-a-drilling-campaign/sdk-examples.ipynb) retrieves an existing drilling campaign.
+
+## Direct API Samples
+
+The publishing notebooks use the lower-level `evo-schemas` interfaces. Use them for direct API integrations and workflows that need greater control over request data.
+
+- [Publish a PointSet](publish-pointset/publish-pointset.ipynb)
+- [Publish Downhole Intervals](publish-downhole-intervals/publish-downhole-intervals.ipynb)
+- [Publish a Downhole Collection](publish-downhole-collection/publish-downhole-collection.ipynb)
+- [Publish Line Segments](publish-line-segments/publish-line-segments.ipynb)
+- [Publish a Regular 2D Grid](publish-regular-2d-grid/publish-regular-2d-grid.ipynb)
+- [Publish a Triangular Mesh](publish-triangular-mesh/publish-triangular-mesh.ipynb)
 
 ## Requirements
 
-* Python ^3.10
-
-## Creating a virtual environment
-To run the a Jupyter notebook we recommend first creating a Python virtual environment. 
-
-NOTE: The steps below assume you have a compatible copy of Python installed on your system.
-
-1. In the root directory of the notebook you want to work with, install `virtualenv` and initialize a virtual environment:
-```shell
-pip install virtualenv
-python -m venv my_virtual_env
-```
-
-1. Activate the virtual environment from the root directory.
-
-On Windows:
-
-```shell
-my_virtual_env\Scripts\activate
-```
-
-On macOS or Linux:
-
-```shell
-source my_virtual_env/bin/activate
-```
-
-## Install the Python dependencies
-
-Each notebook may have it's own unique set of requirements. For example, `publish-regular-2d-grid` requires the `geosoft` package which only works on Windows.
-For this reason, each notebook is bundled with it's own `requirements.txt` file.
-
-```shell
-pip install -r requirements.txt
-```
-
-## Running the Jupyter notebook
-
-1. The first cell of every notebook requires you to enter the `client ID` of your Evo app. Update the default value of `redirect_url` too, if required.
-1. Save and run the first cell and the notebook will launch your web browser and ask you to sign in with your Bentley ID. 
-1. Once you've signed in, return to the notebook and select your Evo workspace using the widget on screen.
-1. Continue working in the notebook by running the remaining cells in order.
+Each notebook directory contains its own dependency instructions. You need a [supported Python version](../README.md#before-you-start), a Seequent account with Evo access, and Evo application credentials to authenticate in the notebooks.
 
