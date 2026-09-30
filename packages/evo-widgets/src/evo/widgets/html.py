@@ -61,21 +61,23 @@ def build_title(text: str, links: list[tuple[str, str]] | None = None) -> str:
     return f'<div class="title">{escape(text)}</div>'
 
 
-def build_table_row(label: str, value: str | HtmlMarkup) -> str:
+def build_table_row(label: str, value: str | HtmlMarkup, is_last: bool = False) -> str:
     """Create a table row with label and value.
 
     :param label: Label text.
     :param value: Value text, escaped unless wrapped with :func:`markup`.
+    :param is_last: Retained for backwards compatibility; has no effect.
     :return: HTML string.
     """
     return f'<tr><td class="label">{_html_text(label)}</td><td class="value">{_html_text(value)}</td></tr>'
 
 
-def build_table_row_vtop(label: str, value: str | HtmlMarkup) -> str:
+def build_table_row_vtop(label: str, value: str | HtmlMarkup, is_last: bool = False) -> str:
     """Create a table row with label and value (label top-aligned).
 
     :param label: Label text.
     :param value: Value text, escaped unless wrapped with :func:`markup`.
+    :param is_last: Retained for backwards compatibility; has no effect.
     :return: HTML string.
     """
     return f'<tr><td class="label-vtop">{_html_text(label)}</td><td class="value">{_html_text(value)}</td></tr>'
@@ -108,7 +110,7 @@ def build_nested_table(headers: Sequence[str], rows: Sequence[Sequence[str | int
     :param css_class: Additional CSS classes to add to the table (optional).
     :return: HTML string for a nested table.
     """
-    class_attr = f' class="nested {css_class}"' if css_class else ' class="nested"'
+    class_attr = f' class="nested {escape(css_class)}"' if css_class else ' class="nested"'
 
     # Build header row
     header_cells = []
@@ -131,13 +133,17 @@ def build_nested_table(headers: Sequence[str], rows: Sequence[Sequence[str | int
     return markup(f"<table{class_attr}><tr>{''.join(header_cells)}</tr>{''.join(data_rows)}</table>")
 
 
-def build_object_html(title: str, rows: list[tuple[str, str | HtmlMarkup]], extra_content: str = "") -> str:
+def build_object_html(
+    title: str,
+    rows: list[tuple[str, str | HtmlMarkup]],
+    extra_content: str | HtmlMarkup = "",
+) -> str:
     """Build a complete object HTML representation.
 
     :param title: Object title/name.
     :param rows: List of (label, value) tuples for the main properties table.
-    :param extra_content: Additional HTML content to append after the table (optional).
+    :param extra_content: Additional content, escaped unless wrapped with :func:`markup`.
     :return: Complete HTML string with stylesheet.
     """
-    html_parts = [STYLESHEET, '<div class="evo">', build_title(title), build_table(rows), extra_content, "</div>"]
+    html_parts = [STYLESHEET, '<div class="evo">', build_title(title), build_table(rows), _html_text(extra_content), "</div>"]
     return "".join(html_parts)

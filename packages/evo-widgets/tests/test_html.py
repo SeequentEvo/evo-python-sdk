@@ -214,6 +214,14 @@ class TestBuildNestedTable(unittest.TestCase):
             '<table class="nested extra"><tr><th>Col</th></tr><tr><td>val</td></tr></table>',
         )
 
+    def test_escapes_nested_table_custom_class(self):
+        """Custom classes cannot break out of the table class attribute."""
+        result = build_nested_table(["Col"], [["val"]], css_class='extra" onclick="alert(1)')
+        self.assertEqual(
+            result,
+            '<table class="nested extra&quot; onclick=&quot;alert(1)"><tr><th>Col</th></tr><tr><td>val</td></tr></table>',
+        )
+
     def test_escapes_nested_table_leaf_values(self):
         """Nested table structure remains intact while document values are escaped."""
         result = build_nested_table(["<header>"], [["<value>", markup("<strong>bold</strong>")]])
@@ -245,7 +253,7 @@ class TestBuildObjectHtml(unittest.TestCase):
     def test_builds_object_html_with_extra_content(self):
         """Test building object HTML with extra content."""
         rows = [("Name:", "Test")]
-        result = build_object_html("Title", rows, extra_content="<div>Extra</div>")
+        result = build_object_html("Title", rows, extra_content=markup("<div>Extra</div>"))
         self.assertEqual(
             result,
             f"{STYLESHEET}"
@@ -256,6 +264,14 @@ class TestBuildObjectHtml(unittest.TestCase):
             "</table>"
             "<div>Extra</div>"
             "</div>",
+        )
+
+    def test_escapes_object_html_extra_content(self):
+        """Object extra content is text unless explicitly marked as HTML."""
+        result = build_object_html("Title", [], extra_content="<div>Extra</div>")
+        self.assertEqual(
+            result,
+            f'{STYLESHEET}<div class="evo"><div class="title">Title</div><table></table>&lt;div&gt;Extra&lt;/div&gt;</div>',
         )
 
 
