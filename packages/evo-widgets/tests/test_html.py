@@ -18,10 +18,12 @@ from evo.widgets.html import (
     build_container,
     build_nested_table,
     build_object_html,
+    build_section_divider,
     build_table,
     build_table_row,
     build_table_row_vtop,
     build_title,
+    markup,
 )
 
 
@@ -39,20 +41,24 @@ class TestBuildContainer(unittest.TestCase):
     """Tests for the build_container function."""
 
     def test_builds_container_with_default_class(self):
-        """Test building a container with default CSS class."""
-        result = build_container("content")
-        self.assertEqual(
-            result,
-            f'{STYLESHEET}<div class="evo">content</div>',
-        )
+        """Test building a container with default class."""
+        self.assertEqual(build_container("content"), f'{STYLESHEET}<div class="evo">content</div>')
 
     def test_builds_container_with_custom_class(self):
-        """Test building a container with custom CSS class."""
-        result = build_container("content", css_class="custom")
+        """Test building a container with custom class."""
+        self.assertEqual(build_container("content", css_class="custom"), f'{STYLESHEET}<div class="custom">content</div>')
+
+    def test_escapes_container_content_and_class(self):
+        """Container content and class values cannot break out into markup."""
+        result = build_container("<content>", css_class='custom" onclick="alert(1)')
         self.assertEqual(
             result,
-            f'{STYLESHEET}<div class="custom">content</div>',
+            f'{STYLESHEET}<div class="custom&quot; onclick=&quot;alert(1)">&lt;content&gt;</div>',
         )
+
+    def test_accepts_explicit_container_markup(self):
+        """Explicitly trusted container content remains markup."""
+        self.assertEqual(build_container(markup("<strong>content</strong>")), f'{STYLESHEET}<div class="evo"><strong>content</strong></div>')
 
 
 class TestBuildTitle(unittest.TestCase):
@@ -82,6 +88,16 @@ class TestBuildTitle(unittest.TestCase):
             "</div>",
         )
 
+    def test_escapes_title_and_link_values(self):
+        """Document-derived title and link text cannot become markup."""
+        result = build_title('<title>', [("<link>", 'https://example.com/?q="x"')])
+        self.assertEqual(
+            result,
+            '<div class="title"><span>&lt;title&gt;</span><span class="title-links">'
+            '<a href="https://example.com/?q=&quot;x&quot;" target="_blank">&lt;link&gt;</a>'
+            "</span></div>",
+        )
+
 
 class TestBuildTableRow(unittest.TestCase):
     """Tests for the build_table_row function."""
@@ -96,10 +112,44 @@ class TestBuildTableRow(unittest.TestCase):
 
     def test_builds_table_row_vtop(self):
         """Test building a table row with vertical-top alignment."""
-        result = build_table_row_vtop("Attributes:", "<table>...</table>")
+        result = build_table_row_vtop("Attributes:", markup("<table>...</table>"))
         self.assertEqual(
             result,
             '<tr><td class="label-vtop">Attributes:</td><td class="value"><table>...</table></td></tr>',
+        )
+
+    def test_escapes_text_in_table_row_vtop(self):
+        """Top-aligned rows escape untrusted labels and values."""
+        result = build_table_row_vtop('<label>', '<script>alert("x")</script>')
+        self.assertEqual(
+            result,
+            '<tr><td class="label-vtop">&lt;label&gt;</td><td class="value">&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;</td></tr>',
+        )
+
+    def test_escapes_text_and_accepts_explicit_markup(self):
+        """Text is escaped while package-created markup remains HTML."""
+        result = build_table_row('<label>', '<script>alert("x")</script>')
+        self.assertEqual(
+            result,
+            '<tr><td class="label">&lt;label&gt;</td><td class="value">&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;</td></tr>',
+        )
+
+
+class TestBuildSectionDivider(unittest.TestCase):
+    """Tests for the build_section_divider function."""
+
+    def test_builds_section_divider(self):
+        """Test building a section divider."""
+        self.assertEqual(
+            build_section_divider("Details"),
+            '<div class="section"><div class="section-heading">Details</div>',
+        )
+
+    def test_escapes_section_divider_title(self):
+        """Section divider titles are treated as text."""
+        self.assertEqual(
+            build_section_divider("<title>"),
+            '<div class="section"><div class="section-heading">&lt;title&gt;</div>',
         )
 
 
@@ -162,6 +212,14 @@ class TestBuildNestedTable(unittest.TestCase):
         self.assertEqual(
             result,
             '<table class="nested extra"><tr><th>Col</th></tr><tr><td>val</td></tr></table>',
+        )
+
+    def test_escapes_nested_table_leaf_values(self):
+        """Nested table structure remains intact while document values are escaped."""
+        result = build_nested_table(["<header>"], [["<value>", markup("<strong>bold</strong>")]])
+        self.assertEqual(
+            result,
+            '<table class="nested"><tr><th>&lt;header&gt;</th></tr><tr><td>&lt;value&gt;</td><td><strong>bold</strong></td></tr></table>',
         )
 
 

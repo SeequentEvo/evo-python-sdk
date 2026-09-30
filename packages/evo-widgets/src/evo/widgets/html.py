@@ -11,6 +11,8 @@
 
 """Shared HTML styles for Jupyter notebook representations across all Evo SDK packages."""
 
+from collections.abc import Sequence
+from html import escape
 from pathlib import Path
 
 # Load CSS from external file
@@ -21,14 +23,27 @@ _CSS_CONTENT = _CSS_PATH.read_text(encoding="utf-8")
 STYLESHEET = f"<style>\n{_CSS_CONTENT}</style>\n"
 
 
-def build_container(content: str, css_class: str = "evo") -> str:
+class HtmlMarkup(str):
+    """Markup deliberately produced by this package and safe to embed in HTML."""
+
+
+def markup(value: str) -> HtmlMarkup:
+    """Mark package-generated HTML for explicit insertion by the HTML builders."""
+    return HtmlMarkup(value)
+
+
+def _html_text(value: object) -> str:
+    return str(value) if isinstance(value, HtmlMarkup) else escape(str(value))
+
+
+def build_container(content: str | HtmlMarkup, css_class: str = "evo") -> str:
     """Wrap content in a styled container div.
 
-    :param content: HTML content to wrap.
+    :param content: Content to wrap, escaped unless wrapped with :func:`markup`.
     :param css_class: CSS class for the container (default: "evo").
     :return: Wrapped HTML string.
     """
-    return f'{STYLESHEET}<div class="{css_class}">{content}</div>'
+    return f'{STYLESHEET}<div class="{escape(css_class)}">{_html_text(content)}</div>'
 
 
 def build_title(text: str, links: list[tuple[str, str]] | None = None) -> str:
@@ -39,31 +54,31 @@ def build_title(text: str, links: list[tuple[str, str]] | None = None) -> str:
     :return: HTML string.
     """
     if links:
-        link_html = " | ".join([f'<a href="{url}" target="_blank">{label}</a>' for label, url in links])
-        return f'<div class="title"><span>{text}</span><span class="title-links">{link_html}</span></div>'
-    return f'<div class="title">{text}</div>'
+        link_html = " | ".join(
+            [f'<a href="{escape(url)}" target="_blank">{escape(label)}</a>' for label, url in links]
+        )
+        return f'<div class="title"><span>{escape(text)}</span><span class="title-links">{link_html}</span></div>'
+    return f'<div class="title">{escape(text)}</div>'
 
 
-def build_table_row(label: str, value: str, is_last: bool = False) -> str:
+def build_table_row(label: str, value: str | HtmlMarkup) -> str:
     """Create a table row with label and value.
 
     :param label: Label text.
-    :param value: Value text (can contain HTML).
-    :param is_last: If True, don't add bottom border.
+    :param value: Value text, escaped unless wrapped with :func:`markup`.
     :return: HTML string.
     """
-    return f'<tr><td class="label">{label}</td><td class="value">{value}</td></tr>'
+    return f'<tr><td class="label">{_html_text(label)}</td><td class="value">{_html_text(value)}</td></tr>'
 
 
-def build_table_row_vtop(label: str, value: str, is_last: bool = False) -> str:
+def build_table_row_vtop(label: str, value: str | HtmlMarkup) -> str:
     """Create a table row with label and value (label top-aligned).
 
     :param label: Label text.
-    :param value: Value text (can contain HTML).
-    :param is_last: If True, don't add bottom border.
+    :param value: Value text, escaped unless wrapped with :func:`markup`.
     :return: HTML string.
     """
-    return f'<tr><td class="label-vtop">{label}</td><td class="value">{value}</td></tr>'
+    return f'<tr><td class="label-vtop">{_html_text(label)}</td><td class="value">{_html_text(value)}</td></tr>'
 
 
 def build_section_divider(title: str) -> str:
@@ -72,10 +87,10 @@ def build_section_divider(title: str) -> str:
     :param title: Section title.
     :return: HTML string.
     """
-    return f'<div class="section"><div class="section-heading">{title}</div>'
+    return f'<div class="section"><div class="section-heading">{_html_text(title)}</div>'
 
 
-def build_table(rows: list[tuple[str, str]]) -> str:
+def build_table(rows: list[tuple[str, str | HtmlMarkup]]) -> str:
     """Build an HTML table from rows of (label, value) tuples.
 
     :param rows: List of (label, value) tuples.
@@ -85,7 +100,7 @@ def build_table(rows: list[tuple[str, str]]) -> str:
     return f"<table>{''.join(table_rows)}</table>"
 
 
-def build_nested_table(headers: list[str], rows: list[list[str]], css_class: str = "") -> str:
+def build_nested_table(headers: Sequence[str], rows: Sequence[Sequence[str | int | float]], css_class: str = "") -> HtmlMarkup:
     """Build a nested HTML table with headers and data rows.
 
     :param headers: List of header strings.
@@ -98,7 +113,7 @@ def build_nested_table(headers: list[str], rows: list[list[str]], css_class: str
     # Build header row
     header_cells = []
     for i, header in enumerate(headers):
-        header_cells.append(f"<th>{header}</th>")
+        header_cells.append(f"<th>{_html_text(header)}</th>")
 
     # Build data rows
     data_rows = []
@@ -109,14 +124,14 @@ def build_nested_table(headers: list[str], rows: list[list[str]], css_class: str
             if isinstance(cell, (int, float)):
                 formatted_cell = f"{cell:.2f}"
             else:
-                formatted_cell = str(cell)
+                formatted_cell = _html_text(cell)
             cells.append(f"<td>{formatted_cell}</td>")
         data_rows.append(f"<tr>{''.join(cells)}</tr>")
 
-    return f"<table{class_attr}><tr>{''.join(header_cells)}</tr>{''.join(data_rows)}</table>"
+    return markup(f"<table{class_attr}><tr>{''.join(header_cells)}</tr>{''.join(data_rows)}</table>")
 
 
-def build_object_html(title: str, rows: list[tuple[str, str]], extra_content: str = "") -> str:
+def build_object_html(title: str, rows: list[tuple[str, str | HtmlMarkup]], extra_content: str = "") -> str:
     """Build a complete object HTML representation.
 
     :param title: Object title/name.

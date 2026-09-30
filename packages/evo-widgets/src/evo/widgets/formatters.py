@@ -17,6 +17,7 @@ These formatters are registered with IPython when the extension is loaded.
 
 from __future__ import annotations
 
+from html import escape
 from typing import TYPE_CHECKING, Any
 
 from .html import (
@@ -25,6 +26,7 @@ from .html import (
     build_table_row,
     build_table_row_vtop,
     build_title,
+    markup,
 )
 from .urls import (
     get_blocksync_block_model_url_from_environment,
@@ -103,9 +105,9 @@ def _format_bounding_box(bbox: dict[str, Any]) -> str:
     :return: HTML string for the bounding box table.
     """
     bbox_rows = [
-        ["<strong>X:</strong>", f"{bbox.get('min_x', 0):.2f}", f"{bbox.get('max_x', 0):.2f}"],
-        ["<strong>Y:</strong>", f"{bbox.get('min_y', 0):.2f}", f"{bbox.get('max_y', 0):.2f}"],
-        ["<strong>Z:</strong>", f"{bbox.get('min_z', 0):.2f}", f"{bbox.get('max_z', 0):.2f}"],
+        [markup("<strong>X:</strong>"), f"{bbox.get('min_x', 0):.2f}", f"{bbox.get('max_x', 0):.2f}"],
+        [markup("<strong>Y:</strong>"), f"{bbox.get('min_y', 0):.2f}", f"{bbox.get('max_y', 0):.2f}"],
+        [markup("<strong>Z:</strong>"), f"{bbox.get('min_z', 0):.2f}", f"{bbox.get('max_z', 0):.2f}"],
     ]
     return build_nested_table(["", "Min", "Max"], bbox_rows)
 
@@ -577,17 +579,17 @@ def format_block_model(obj: Any) -> str:
     # Add geometry info
     geom = obj.geometry
     geom_rows = [
-        ["<strong>Origin:</strong>", f"({geom.origin.x:.2f}, {geom.origin.y:.2f}, {geom.origin.z:.2f})"],
-        ["<strong>N Blocks:</strong>", f"({geom.n_blocks.nx}, {geom.n_blocks.ny}, {geom.n_blocks.nz})"],
+        [markup("<strong>Origin:</strong>"), f"({geom.origin.x:.2f}, {geom.origin.y:.2f}, {geom.origin.z:.2f})"],
+        [markup("<strong>N Blocks:</strong>"), f"({geom.n_blocks.nx}, {geom.n_blocks.ny}, {geom.n_blocks.nz})"],
         [
-            "<strong>Block Size:</strong>",
+            markup("<strong>Block Size:</strong>"),
             f"({geom.block_size.dx:.2f}, {geom.block_size.dy:.2f}, {geom.block_size.dz:.2f})",
         ],
     ]
     if geom.rotation:
         geom_rows.append(
             [
-                "<strong>Rotation:</strong>",
+                markup("<strong>Rotation:</strong>"),
                 f"({geom.rotation.dip_azimuth:.2f}, {geom.rotation.dip:.2f}, {geom.rotation.pitch:.2f})",
             ]
         )
@@ -699,7 +701,7 @@ def _format_single_task_result_inner(result: Any, index: int | None = None) -> s
         rows = [
             ("Target:", target_name),
             ("Schema:", schema_display),
-            ("Attribute:", f'<span class="attr-highlight">{attribute_name}</span>'),
+            ("Attribute:", markup(f'<span class="attr-highlight">{escape(attribute_name)}</span>')),
         ]
     else:
         rows = []
