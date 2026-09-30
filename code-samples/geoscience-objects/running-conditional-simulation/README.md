@@ -79,7 +79,7 @@ x-fastest ordering as the grid's cells.
 
 ## Requirements
 
-- Python 3.10+
+- [Supported Python version](../../README.md#before-you-start)
 - Seequent account with Evo entitlement
 - Evo application credentials (client ID and redirect URL)
 
