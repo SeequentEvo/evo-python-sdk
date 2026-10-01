@@ -27,6 +27,7 @@ from pydantic import (
     StrictFloat,
     StrictInt,
     StrictStr,
+    model_validator,
 )
 
 from .._model_config import CustomBaseModel
@@ -557,6 +558,59 @@ class ReportColumn(CustomBaseModel):
     """
 
 
+class ReportCellStatus(Enum):
+    """Status of a single report cell, describing how its value should be interpreted.
+
+    * `OK`: the value was calculated normally and can be used as-is.
+    * `PERCENT_CHANGE_FROM_ZERO`: the percentage change is undefined because the
+      `from` value was zero. Only used in comparisons.
+    * `NO_DATA`: no data was available to calculate the value.
+    * `INVALID`: the value could not be calculated because the underlying data
+      contained an invalid value.
+    """
+
+    OK = "OK"
+    PERCENT_CHANGE_FROM_ZERO = "PERCENT_CHANGE_FROM_ZERO"
+    """Only used in comparisons."""
+    NO_DATA = "NO_DATA"
+    INVALID = "INVALID"
+
+
+class ReportCell(CustomBaseModel):
+    """A single report/comparison cell: a numeric value plus a status.
+
+    The status explains why a value may be `null` (could not be aggregated/calculated).
+    See `ReportCellStatus` for the possible reasons.
+    """
+
+    value: Annotated[StrictInt | StrictFloat | None, Field(title="Value", examples=[2.7])]
+    """
+    Value of the cell. This is `null` whenever `status` is not `OK`.
+    """
+    status: Annotated[ReportCellStatus, Field(examples=["OK"])] = ReportCellStatus.OK
+    """
+    Status of the cell, describing how `value` should be interpreted.
+    """
+
+    @model_validator(mode="before")
+    @classmethod
+    def _upgrade_legacy_cell(cls, data: Any) -> Any:
+        """Upgrade the legacy report schema, where a cell was a bare number.
+
+        Older Block Model Service deployments returned each cell as a plain
+        number (or `null` for comparison percents) instead of a `{value, status}`
+        object. Those values are upgraded here to the current schema, marking them
+        as `OK` since no per-cell status information was available. This keeps the
+        SDK compatible with both the old and new response schemas.
+        """
+        if isinstance(data, ReportCell):
+            return data
+        if isinstance(data, dict):
+            return data
+        # Legacy schema: a bare number or null in place of the cell object.
+        return {"value": data, "status": ReportCellStatus.OK}
+
+
 class ReportComparisonJobResult(CustomBaseModel):
     from_result_uuid: Annotated[
         UUID | None,
@@ -637,10 +691,27 @@ class ReportComparisonSpec(CustomBaseModel):
 
 
 class ReportComparisonValue(CustomBaseModel):
-    difference: Annotated[StrictFloat | StrictInt, Field(title="Difference")]
-    from_value: Annotated[StrictFloat | StrictInt, Field(title="From Value")]
-    percent: Annotated[StrictFloat | None, Field(title="Percent")] = None
-    to_value: Annotated[StrictFloat | StrictInt, Field(title="To Value")]
+    difference: Annotated[ReportCell, Field(title="Difference")]
+    from_value: Annotated[ReportCell, Field(title="From Value")]
+    percent: Annotated[ReportCell, Field(title="Percent")]
+    to_value: Annotated[ReportCell, Field(title="To Value")]
+
+    @model_validator(mode="before")
+    @classmethod
+    def _upgrade_legacy_percent(cls, data: Any) -> Any:
+        """Upgrade a legacy `null` percent to `PERCENT_CHANGE_FROM_ZERO`.
+
+        In the legacy schema, `from_value`, `to_value`, and `difference` were always
+        required numbers; `percent` was the only field that could be `null`, and
+        that only happened when `from_value` was (close to) zero, making a percentage
+        change undefined. Unlike other legacy report cells, which have no way to
+        recover why a value is missing (and are therefore upgraded to `OK`), this
+        specific case has a known, recoverable reason, so it is upgraded to
+        `PERCENT_CHANGE_FROM_ZERO` here rather than left to default to `OK`.
+        """
+        if isinstance(data, dict) and "percent" in data and data["percent"] is None:
+            return {**data, "percent": {"value": None, "status": ReportCellStatus.PERCENT_CHANGE_FROM_ZERO}}
+        return data
 
 
 class ReportNegativeValuesPolicy(Enum):
@@ -724,9 +795,15 @@ class ReportRow(CustomBaseModel):
     """
     List of category values. `null` indicates a total for that category column.
     """
-    values: Annotated[list[StrictInt | StrictFloat], Field(examples=[[2.7, 0.3]], title="Values")]
+    values: Annotated[
+        list[ReportCell],
+        Field(
+            examples=[[{"value": 2.7, "status": "OK"}, {"value": 0.3, "status": "OK"}]],
+            title="Values",
+        ),
+    ]
     """
-    List of values for the value columns
+    List of ReportCell objects for the value columns
     """
 
 
