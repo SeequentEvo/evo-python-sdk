@@ -1129,6 +1129,17 @@ class TestSearchNeighborhoodAlias(TestCase):
         params_dict = params.model_dump()
         self.assertIn("search", params_dict)
 
+    def test_search_limits_are_sent_in_the_neighborhood(self):
+        search = SearchNeighborhood(
+            ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=100, semi_major=100, minor=50)),
+            max_samples=20,
+            max_samples_per_octant=2,
+            max_samples_per_drillhole=3,
+        )
+        params_dict = self._make_params(search=search).model_dump(mode="json", by_alias=True, exclude_none=True)
+        self.assertEqual(params_dict["neighborhood"]["max_samples_per_octant"], 2)
+        self.assertEqual(params_dict["neighborhood"]["max_samples_per_drillhole"], 3)
+
     def test_can_construct_with_field_name_search(self):
         """Users should be able to construct KrigingParameters with search=..."""
         params = self._make_params()

@@ -223,6 +223,17 @@ class TestIDWParametersSerialization(unittest.TestCase):
         d = _dump(_params(neighborhood=search))
         self.assertEqual(d["neighborhood"]["min_samples"], 4)
 
+    def test_search_limits_in_neighborhood(self):
+        search = SearchNeighborhood(
+            ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=200, semi_major=150, minor=100)),
+            max_samples=20,
+            max_empty_quadrants=1,
+            max_drillholes_per_estimate=4,
+        )
+        d = _dump(_params(neighborhood=search))
+        self.assertEqual(d["neighborhood"]["max_empty_quadrants"], 1)
+        self.assertEqual(d["neighborhood"]["max_drillholes_per_estimate"], 4)
+
 
 # ---------------------------------------------------------------------------
 # Result handling
