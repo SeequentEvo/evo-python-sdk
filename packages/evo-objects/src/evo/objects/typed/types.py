@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from math import isfinite
 from numbers import Real
 from typing import Annotated, Any, overload
 
@@ -34,6 +35,8 @@ __all__ = [
     "Size3d",
     "Size3i",
 ]
+
+ArrayLike3 = tuple[float, float, float] | list[float] | np.ndarray
 
 
 def _dump_crs(value: EpsgCode | str | None) -> Any:
@@ -281,13 +284,13 @@ class EllipsoidRanges:
         )
 
 
-def _three_real_values(
-    values: tuple[float, float, float] | list[float] | np.ndarray, name: str, axes: str
-) -> tuple[float, float, float]:
+def _three_real_values(values: ArrayLike3, name: str, axes: str) -> tuple[float, float, float]:
     if (isinstance(values, np.ndarray) and values.ndim != 1) or len(values) != 3:
         raise ValueError(f"{name} must be a one-dimensional sequence of three values ({axes})")
     if not all(isinstance(value, Real) for value in values):
         raise TypeError(f"{name} must contain three real numbers ({axes})")
+    if not all(isfinite(value) for value in values):
+        raise ValueError(f"{name} must contain three finite real numbers ({axes})")
     return values[0], values[1], values[2]
 
 
@@ -306,8 +309,8 @@ class Ellipsoid:
 
     def __init__(
         self,
-        ranges: EllipsoidRanges | tuple[float, float, float] | list[float] | np.ndarray,
-        rotation: Rotation | tuple[float, float, float] | list[float] | np.ndarray | None = None,
+        ranges: EllipsoidRanges | ArrayLike3,
+        rotation: Rotation | ArrayLike3 | None = None,
     ):
         if isinstance(ranges, EllipsoidRanges):
             self.ranges = ranges

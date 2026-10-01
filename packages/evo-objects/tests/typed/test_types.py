@@ -277,6 +277,17 @@ class TestEllipsoid(TestCase):
 
     @parameterized.expand(
         [
+            ("nan_list", [100, np.nan, 25]),
+            ("infinity_tuple", (100, 50, np.inf)),
+            ("negative_infinity_array", np.array([-np.inf, 50, 25])),
+        ]
+    )
+    def test_nonfinite_range_values(self, _name, ranges):
+        with self.assertRaisesRegex(ValueError, "ranges must contain three finite real numbers"):
+            Ellipsoid(ranges=ranges)
+
+    @parameterized.expand(
+        [
             ("list", [45, 30, 15]),
             ("tuple", (45, 30, 15)),
             ("numpy_array", np.array([45, 30, 15])),
@@ -303,6 +314,17 @@ class TestEllipsoid(TestCase):
     def test_invalid_rotation_values(self):
         with self.assertRaisesRegex(TypeError, "three real numbers"):
             Ellipsoid(ranges=[100, 50, 25], rotation=[45, "30", 15])
+
+    @parameterized.expand(
+        [
+            ("nan_list", [45, np.nan, 15]),
+            ("infinity_tuple", (45, 30, np.inf)),
+            ("negative_infinity_array", np.array([-np.inf, 30, 15])),
+        ]
+    )
+    def test_nonfinite_rotation_values(self, _name, rotation):
+        with self.assertRaisesRegex(ValueError, "rotation must contain three finite real numbers"):
+            Ellipsoid(ranges=[100, 50, 25], rotation=rotation)
 
     def test_invalid_rotation_type(self):
         with self.assertRaises(TypeError):
