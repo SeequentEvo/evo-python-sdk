@@ -17,6 +17,8 @@ These types provide a lightweight, dependency-free representation of common
 
 from __future__ import annotations
 
+from math import isfinite
+from numbers import Integral, Real
 from typing import NamedTuple
 
 __all__ = [
@@ -24,6 +26,9 @@ __all__ = [
     "Point3",
     "Size3d",
     "Size3i",
+    "as_point3",
+    "as_size3d",
+    "as_size3i",
 ]
 
 
@@ -54,6 +59,49 @@ class Size3i(NamedTuple):
     def total_size(self) -> int:
         """The total size (number of elements) represented by this Size3i."""
         return self.nx * self.ny * self.nz
+
+
+def _three_values(value: object, name: str) -> tuple:
+    # Accept NumPy-style arrays without requiring NumPy in evo-sdk-common.
+    if hasattr(value, "ndim") and hasattr(value, "tolist"):
+        if value.ndim != 1:
+            raise ValueError(f"{name} must be a one-dimensional array of exactly three values")
+        value = value.tolist()
+    if not isinstance(value, (tuple, list)):
+        raise TypeError(f"{name} must be a three-value list, tuple, or one-dimensional array")
+    if len(value) != 3:
+        raise ValueError(f"{name} must have exactly three values")
+    return tuple(value)
+
+
+def as_point3(value: Point3 | tuple[float, float, float] | list[float]) -> Point3:
+    """Convert a list, tuple, or 1D array of finite coordinates; preserve a Point3."""
+    if isinstance(value, Point3):
+        return value
+    coordinates = _three_values(value, "origin")
+    if not all(isinstance(v, Real) and not isinstance(v, bool) and isfinite(v) for v in coordinates):
+        raise ValueError("origin must contain three finite real numbers")
+    return Point3(*coordinates)
+
+
+def as_size3i(value: Size3i | tuple[int, int, int] | list[int], *, name: str = "n_blocks") -> Size3i:
+    """Convert a list, tuple, or 1D array of positive counts; preserve a Size3i."""
+    if isinstance(value, Size3i):
+        return value
+    counts = _three_values(value, name)
+    if not all(isinstance(v, Integral) and not isinstance(v, bool) and v > 0 for v in counts):
+        raise ValueError(f"{name} must contain three positive integers")
+    return Size3i(*counts)
+
+
+def as_size3d(value: Size3d | tuple[float, float, float] | list[float], *, name: str = "block_size") -> Size3d:
+    """Convert a list, tuple, or 1D array of positive finite sizes; preserve a Size3d."""
+    if isinstance(value, Size3d):
+        return value
+    sizes = _three_values(value, name)
+    if not all(isinstance(v, Real) and not isinstance(v, bool) and isfinite(v) and v > 0 for v in sizes):
+        raise ValueError(f"{name} must contain three positive finite real numbers")
+    return Size3d(*sizes)
 
 
 class BoundingBox(NamedTuple):

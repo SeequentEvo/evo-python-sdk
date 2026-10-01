@@ -15,8 +15,10 @@ from datetime import datetime, timezone
 from typing import Iterable
 from unittest import mock
 
+import numpy as np
 import pandas as pd
 import pyarrow
+import pytest
 
 from evo.blockmodels.client import _version_from_model
 from evo.blockmodels.endpoints import models
@@ -39,6 +41,61 @@ BM_BBOX = models.BBoxXYZ(
     y_minmax=models.FloatRange(min=0, max=10),
     z_minmax=models.FloatRange(min=0, max=10),
 )
+
+
+def test_regular_block_model_data_preserves_named_geometry():
+    origin = Point3(float("nan"), 2, 3)
+    n_blocks = Size3i(0, 5, 6)
+    block_size = Size3d(0, 1, 2)
+    data = RegularBlockModelData(name="Test", origin=origin, n_blocks=n_blocks, block_size=block_size)
+    assert data.origin is origin
+    assert data.n_blocks is n_blocks
+    assert data.block_size is block_size
+
+
+@pytest.mark.parametrize(
+    ("origin", "n_blocks", "block_size"),
+    [
+        ([1, 2, 3], [4, 5, 6], [0.5, 1.5, 2.5]),
+        ((1, 2, 3), (4, 5, 6), (0.5, 1.5, 2.5)),
+        (np.array([1, 2, 3]), np.array([4, 5, 6]), np.array([0.5, 1.5, 2.5])),
+        (Point3(1, 2, 3), Size3i(4, 5, 6), Size3d(0.5, 1.5, 2.5)),
+    ],
+)
+def test_regular_block_model_data_normalizes_geometry(origin, n_blocks, block_size):
+    data = RegularBlockModelData(name="Test", origin=origin, n_blocks=n_blocks, block_size=block_size)
+    assert type(data.origin) is Point3
+    assert type(data.n_blocks) is Size3i
+    assert type(data.block_size) is Size3d
+    assert data.origin == Point3(1, 2, 3)
+    assert data.n_blocks == Size3i(4, 5, 6)
+    assert data.block_size == Size3d(0.5, 1.5, 2.5)
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "error"),
+    [
+        ("origin", [1, 2], ValueError),
+        ("origin", np.array([[1, 2, 3]]), ValueError),
+        ("origin", [[1], 2, 3], ValueError),
+        ("origin", [float("nan"), 2, 3], ValueError),
+        ("origin", "1,2,3", TypeError),
+        ("n_blocks", (1, 2), ValueError),
+        ("n_blocks", np.array([1, 2.5, 3]), ValueError),
+        ("n_blocks", [1, 0, 3], ValueError),
+        ("n_blocks", [1, 2.5, 3], ValueError),
+        ("n_blocks", [1, True, 3], ValueError),
+        ("block_size", [1, 2, 3, 4], ValueError),
+        ("block_size", np.array([1, float("inf"), 3]), ValueError),
+        ("block_size", [1, -2, 3], ValueError),
+        ("block_size", [1, float("inf"), 3], ValueError),
+    ],
+)
+def test_regular_block_model_data_rejects_invalid_geometry(field, value, error):
+    kwargs = {"name": "Test", "origin": [1, 2, 3], "n_blocks": [4, 5, 6], "block_size": [1, 2, 3]}
+    kwargs[field] = value
+    with pytest.raises(error, match=field):
+        RegularBlockModelData(**kwargs)
 
 
 def _mock_create_result(environment) -> models.BlockModelAndJobURL:

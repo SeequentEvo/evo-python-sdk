@@ -12,6 +12,7 @@
 import uuid
 from unittest import TestCase
 
+import numpy as np
 from parameterized import parameterized
 
 from evo.objects.typed import (
@@ -80,6 +81,58 @@ class TestBlockModelGeometry(TestCase):
 
         self.assertEqual(geom.n_blocks, Size3i(120, 80, 40))
         self.assertEqual(geom.block_size, Size3d(10.0, 20.0, 30.0))
+
+
+class TestRegularBlockModelData(TestCase):
+    def test_existing_named_geometry_is_preserved(self):
+        origin = Point3(float("nan"), 2, 3)
+        n_blocks = Size3i(0, 5, 6)
+        block_size = Size3d(0, 1, 2)
+        data = RegularBlockModelData(name="Test", origin=origin, n_blocks=n_blocks, block_size=block_size)
+        self.assertIs(data.origin, origin)
+        self.assertIs(data.n_blocks, n_blocks)
+        self.assertIs(data.block_size, block_size)
+
+    @parameterized.expand(
+        [
+            ("list", [1, 2, 3], [4, 5, 6], [0.5, 1.5, 2.5]),
+            ("tuple", (1, 2, 3), (4, 5, 6), (0.5, 1.5, 2.5)),
+            ("numpy", np.array([1, 2, 3]), np.array([4, 5, 6]), np.array([0.5, 1.5, 2.5])),
+            ("named", Point3(1, 2, 3), Size3i(4, 5, 6), Size3d(0.5, 1.5, 2.5)),
+        ]
+    )
+    def test_normalizes_geometry(self, _name, origin, n_blocks, block_size):
+        data = RegularBlockModelData(name="Test", origin=origin, n_blocks=n_blocks, block_size=block_size)
+        self.assertIsInstance(data.origin, Point3)
+        self.assertIsInstance(data.n_blocks, Size3i)
+        self.assertIsInstance(data.block_size, Size3d)
+        self.assertEqual(data.origin, Point3(1, 2, 3))
+        self.assertEqual(data.n_blocks, Size3i(4, 5, 6))
+        self.assertEqual(data.block_size, Size3d(0.5, 1.5, 2.5))
+
+    @parameterized.expand(
+        [
+            ("origin_length", "origin", [1, 2], ValueError),
+            ("origin_matrix", "origin", np.array([[1, 2, 3]]), ValueError),
+            ("origin_nested", "origin", [[1], 2, 3], ValueError),
+            ("origin_nan", "origin", [float("nan"), 2, 3], ValueError),
+            ("origin_string", "origin", "1,2,3", TypeError),
+            ("counts_length", "n_blocks", (1, 2), ValueError),
+            ("counts_float_array", "n_blocks", np.array([1, 2.5, 3]), ValueError),
+            ("counts_zero", "n_blocks", [1, 0, 3], ValueError),
+            ("counts_float", "n_blocks", [1, 2.5, 3], ValueError),
+            ("counts_bool", "n_blocks", [1, True, 3], ValueError),
+            ("size_length", "block_size", [1, 2, 3, 4], ValueError),
+            ("size_infinite_array", "block_size", np.array([1, float("inf"), 3]), ValueError),
+            ("size_negative", "block_size", [1, -2, 3], ValueError),
+            ("size_infinite", "block_size", [1, float("inf"), 3], ValueError),
+        ]
+    )
+    def test_rejects_invalid_geometry(self, _name, field, value, error):
+        kwargs = {"name": "Test", "origin": [1, 2, 3], "n_blocks": [4, 5, 6], "block_size": [1, 2, 3]}
+        kwargs[field] = value
+        with self.assertRaisesRegex(error, field):
+            RegularBlockModelData(**kwargs)
 
 
 class TestBlockModelAttribute(TestCase):

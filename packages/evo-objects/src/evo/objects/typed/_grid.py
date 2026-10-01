@@ -22,6 +22,7 @@ import pandas as pd
 from pydantic import AliasChoices, Field
 
 from evo.common import IFeedback
+from evo.common.typed import as_point3, as_size3d, as_size3i
 from evo.common.utils import NoFeedback
 
 from ._model import DataLocation, SchemaLocation, SchemaModel
@@ -46,12 +47,17 @@ class Base3DGridData(BaseSpatialObjectData):
     """Base class for all 3D grid data.
 
     Contains the common properties shared by all grid types: origin, size, rotation, and cell_data.
+    Origin and size accept their named types or three values in a list, tuple, or 1D array.
     """
 
-    origin: Point3
-    size: Size3i
+    origin: Point3 | tuple[float, float, float] | list[float]
+    size: Size3i | tuple[int, int, int] | list[int]
     cell_data: pd.DataFrame | None = None
     rotation: Rotation | None = None
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "origin", as_point3(self.origin))
+        object.__setattr__(self, "size", as_size3i(self.size, name="size"))
 
 
 @dataclass(kw_only=True, frozen=True)
@@ -59,10 +65,15 @@ class BaseRegular3DGridData(Base3DGridData):
     """Base class for regular 3D grid data (both masked and non-masked).
 
     Contains the common properties shared by Regular3DGridData and RegularMasked3DGridData.
-    Adds cell_size to the base grid properties.
+    Adds cell_size to the base grid properties; it accepts a Size3d or three
+    values in a list, tuple, or 1D array.
     """
 
-    cell_size: Size3d
+    cell_size: Size3d | tuple[float, float, float] | list[float]
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        object.__setattr__(self, "cell_size", as_size3d(self.cell_size, name="cell_size"))
 
     def compute_bounding_box(self) -> BoundingBox:
         return BoundingBox.from_regular_grid(self.origin, self.size, self.cell_size, self.rotation)
@@ -212,9 +223,9 @@ class RegularBlockModelData:
     Geoscience Object reference.
 
     :param name: The name of the block model.
-    :param origin: The origin point (x, y, z) of the block model.
-    :param n_blocks: The number of blocks in each dimension (nx, ny, nz).
-    :param block_size: The size of each block (dx, dy, dz).
+    :param origin: A Point3 or three finite (x, y, z) values in a list, tuple, or 1D array.
+    :param n_blocks: A Size3i or three positive integer (nx, ny, nz) counts in a list, tuple, or 1D array.
+    :param block_size: A Size3d or three positive finite (dx, dy, dz) values in a list, tuple, or 1D array.
     :param cell_data: DataFrame with block data. Must contain (x, y, z) or (i, j, k) columns.
     :param description: Optional description.
     :param coordinate_reference_system: Coordinate reference system (e.g., "EPSG:28354").
@@ -223,14 +234,19 @@ class RegularBlockModelData:
     """
 
     name: str
-    origin: Point3
-    n_blocks: Size3i
-    block_size: Size3d
+    origin: Point3 | tuple[float, float, float] | list[float]
+    n_blocks: Size3i | tuple[int, int, int] | list[int]
+    block_size: Size3d | tuple[float, float, float] | list[float]
     cell_data: pd.DataFrame | None = None
     description: str | None = None
     coordinate_reference_system: str | None = None
     size_unit_id: str | None = None
     units: dict[str, str] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "origin", as_point3(self.origin))
+        object.__setattr__(self, "n_blocks", as_size3i(self.n_blocks))
+        object.__setattr__(self, "block_size", as_size3d(self.block_size))
 
 
 @dataclass(frozen=True, kw_only=True)

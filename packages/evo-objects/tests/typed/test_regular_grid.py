@@ -70,6 +70,19 @@ class TestRegularGrid(TestWithConnector):
         rotation=Rotation(90, 0, 0),
     )
 
+    async def test_create_with_array_geometry(self):
+        data = dataclasses.replace(
+            self.example_grid,
+            origin=np.array([0, 0, 0]),
+            size=np.array([10, 10, 5]),
+            cell_size=np.array([2.5, 5, 5]),
+        )
+        with self._mock_geoscience_objects():
+            result = await Regular3DGrid.create(context=self.context, data=data)
+        self.assertEqual(result.origin, Point3(0, 0, 0))
+        self.assertEqual(result.size, Size3i(10, 10, 5))
+        self.assertEqual(result.cell_size, Size3d(2.5, 5, 5))
+
     @parameterized.expand([BaseObject, Regular3DGrid])
     async def test_create(self, class_to_call):
         with self._mock_geoscience_objects():
