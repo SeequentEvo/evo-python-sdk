@@ -61,8 +61,8 @@ class DiscoveryApi:
         user_agent: str | None = None,
         origin: str | None = None,
         additional_headers: dict[str, str] | None = None,
-        request_timeout: int | float | tuple[int | float, int | float] | None = None,
-    ) -> dict:
+        request_timeout: float | tuple[int | float, int | float] | None = None,
+    ) -> DiscoveryResponse:  # noqa: F405
         """V1 Discovery
 
 
@@ -111,7 +111,7 @@ class DiscoveryApi:
         }
 
         _response_types_map = {
-            "200": dict,
+            "200": DiscoveryResponse,  # noqa: F405
         }
 
         return await self.connector.call_api(
@@ -130,7 +130,7 @@ class DiscoveryApi:
         user_agent: str | None = None,
         origin: str | None = None,
         additional_headers: dict[str, str] | None = None,
-        request_timeout: int | float | tuple[int | float, int | float] | None = None,
+        request_timeout: float | tuple[int | float, int | float] | None = None,
     ) -> DiscoveryResponse:  # noqa: F405
         """V2 Discovery
 

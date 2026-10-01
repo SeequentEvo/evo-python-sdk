@@ -25,24 +25,38 @@ from . import parse
 from .data import (
     AddedInstanceUsers,
     BasicWorkspace,
+    ImsGroup,
+    ImsGroupDetail,
+    ImsUser,
+    InstanceGroup,
     InstanceRoleWithPermissions,
     InstanceUser,
     InstanceUserInvitation,
     InstanceUserWithEmail,
     OrderByOperatorEnum,
+    UpdatedInstanceGroupMembers,
     User,
     UserRole,
     Workspace,
     WorkspaceOrderByEnum,
     WorkspaceRole,
 )
-from .endpoints.api import AdminApi, GeneralApi, InstanceUsersApi, ThumbnailsApi, WorkspacesApi
+from .endpoints.api import (
+    AdminApi,
+    GeneralApi,
+    GroupsApi,
+    InstanceGroupsApi,
+    InstanceUsersApi,
+    ThumbnailsApi,
+    WorkspacesApi,
+)
 from .endpoints.models import (
     AddInstanceUsersRequest,
     CreateWorkspaceRequest,
     GeometryTypeEnum,
     Label,
     RoleEnum,
+    UpdateInstanceGroupMembersRequest,
     UpdateInstanceUserRolesRequest,
     UpdateWorkspaceRequest,
     UserRoleMapping,
@@ -67,6 +81,8 @@ class WorkspaceAPIClient:
         self._general_api = GeneralApi(connector)
         self._thumbnails_api = ThumbnailsApi(connector)
         self._instance_users_api = InstanceUsersApi(connector)
+        self._groups_api = GroupsApi(connector)
+        self._instance_groups_api = InstanceGroupsApi(connector)
 
     @classmethod
     def from_context(cls, context: IContext) -> WorkspaceAPIClient:
@@ -273,7 +289,7 @@ class WorkspaceAPIClient:
         response = await self._workspaces_api.get_workspace(
             org_id=str(self._org_id), workspace_id=str(workspace_id), deleted=deleted
         )
-        return parse.workspace_model(response, self._org_id, self._connector.base_url)
+        return parse.workspace_model(response.root, self._org_id, self._connector.base_url)
 
     async def delete_workspace(
         self,
@@ -340,7 +356,7 @@ class WorkspaceAPIClient:
         model = await self._workspaces_api.create_workspace(
             org_id=str(self._org_id), create_workspace_request=create_workspace_request
         )
-        return parse.workspace_model(model, self._org_id, self._connector.base_url)
+        return parse.workspace_model(model.root, self._org_id, self._connector.base_url)
 
     async def update_workspace(
         self,
@@ -391,7 +407,7 @@ class WorkspaceAPIClient:
         model = await self._workspaces_api.update_workspace(
             org_id=str(self._org_id), workspace_id=str(workspace_id), update_workspace_request=update_workspace_request
         )
-        return parse.workspace_model(model, self._org_id, self._connector.base_url)
+        return parse.workspace_model(model.root, self._org_id, self._connector.base_url)
 
     async def restore_deleted_workspace(self, workspace_id: UUID) -> None:
         """
@@ -556,6 +572,78 @@ class WorkspaceAPIClient:
             update_instance_user_roles_request=update_instance_user_roles_request,
         )
         return parse.instance_user_model(response)
+
+    async def get_ims_users(self, email: str) -> list[ImsUser]:
+        """Get IMS users matching an email address.
+
+        :param email: The email address to search for.
+        :returns: The matching IMS users.
+        """
+        response = await self._groups_api.get_ims_users(org_id=str(self._org_id), email=email)
+        return [parse.ims_user_model(user) for user in response.users or []]
+
+    async def get_group_description(self, group_id: UUID, api_preview: str | None = None) -> ImsGroupDetail:
+        """Get IMS group details.
+
+        :param group_id: The IMS group ID.
+        :param api_preview: Preview API opt-in value.
+        :returns: The IMS group details.
+        """
+        response = await self._groups_api.get_group_description(
+            org_id=str(self._org_id), group_id=str(group_id), api_preview=api_preview
+        )
+        return parse.ims_group_detail_model(response)
+
+    async def list_ims_group_members(self, group_id: UUID, api_preview: str | None = None) -> list[ImsUser]:
+        """List the users in an IMS group.
+
+        :param group_id: The IMS group ID.
+        :param api_preview: Preview API opt-in value.
+        :returns: The IMS group members.
+        """
+        response = await self._groups_api.list_ims_group_members(
+            org_id=str(self._org_id), group_id=str(group_id), api_preview=api_preview
+        )
+        return [parse.ims_user_model(user) for user in response.users or []]
+
+    async def list_ims_groups(self, api_preview: str | None = None) -> list[ImsGroup]:
+        """List IMS groups in the organization.
+
+        :param api_preview: Preview API opt-in value.
+        :returns: The IMS groups.
+        """
+        response = await self._groups_api.list_ims_groups(org_id=str(self._org_id), api_preview=api_preview)
+        return [parse.ims_group_model(group) for group in response]
+
+    async def list_instance_groups(self, api_preview: str | None = None) -> list[InstanceGroup]:
+        """List instance groups.
+
+        :param api_preview: Preview API opt-in value.
+        :returns: The instance groups.
+        """
+        response = await self._instance_groups_api.list_instance_groups(
+            org_id=str(self._org_id), api_preview=api_preview
+        )
+        return [parse.instance_group_model(group) for group in response.groups]
+
+    async def update_instance_group_members(
+        self, group_id: UUID, ims_groups: list[str], api_preview: str | None = None
+    ) -> UpdatedInstanceGroupMembers:
+        """Update the IMS groups assigned to an instance group.
+
+        :param group_id: The instance group ID.
+        :param ims_groups: The IMS group IDs to assign.
+        :param api_preview: Preview API opt-in value.
+        :returns: The updated instance group members and invitations.
+        """
+        request = UpdateInstanceGroupMembersRequest(ims_groups=ims_groups)
+        response = await self._instance_groups_api.update_instance_group_members(
+            org_id=str(self._org_id),
+            group_id=str(group_id),
+            update_instance_group_members_request=request,
+            api_preview=api_preview,
+        )
+        return parse.updated_instance_group_members_model(response)
 
     async def get_thumbnail(self, workspace_id: UUID) -> bytearray:
         """

@@ -57,24 +57,24 @@ class FoldersApi:
 
     async def create_folder(
         self,
-        org_id: str,
         workspace_id: str,
+        org_id: str,
         folder_create_request: FolderCreateRequest,  # noqa: F405
         api_preview: str | None = None,
         preview_api: str | None = None,
         additional_headers: dict[str, str] | None = None,
-        request_timeout: int | float | tuple[int | float, int | float] | None = None,
+        request_timeout: float | tuple[int | float, int | float] | None = None,
     ) -> FolderResponse:  # noqa: F405
         """Create a folder
 
-        Creates a new folder in the workspace. The folder needs to have a name and exclusively define either a `parent_folder_id` or a `parent_folder_path`.
+        Creates a new folder in the workspace. The folder needs to have a name and either a `parent_folder_id` or a `parent_folder_path`.
 
-        :param org_id:
-            Format: `uuid`
-            Example: `'org_id_example'`
         :param workspace_id:
             Format: `uuid`
             Example: `'workspace_id_example'`
+        :param org_id:
+            Format: `uuid`
+            Example: `'org_id_example'`
         :param folder_create_request:
             Example: `endpoints.FolderCreateRequest()`
         :param api_preview: (optional) Set to \"opt-in\" to be able to use this API.
@@ -100,8 +100,8 @@ class FoldersApi:
         """
         # Prepare the path parameters.
         _path_params = {
-            "org_id": org_id,
             "workspace_id": workspace_id,
+            "org_id": org_id,
         }
 
         # Prepare the header parameters.
@@ -120,12 +120,13 @@ class FoldersApi:
         _collection_formats = {}
 
         _response_types_map = {
+            "200": FolderResponse,  # noqa: F405
             "201": FolderResponse,  # noqa: F405
         }
 
         return await self.connector.call_api(
             method=RequestMethod.POST,
-            resource_path="/workspace/orgs/{org_id}/workspaces/{workspace_id}/folders",
+            resource_path="/folder/instances/{org_id}/workspaces/{workspace_id}/folders",
             path_params=_path_params,
             header_params=_header_params,
             body=folder_create_request,
@@ -134,108 +135,29 @@ class FoldersApi:
             request_timeout=request_timeout,
         )
 
-    async def create_folders_in_path(
-        self,
-        org_id: str,
-        workspace_id: str,
-        folders_path: str,
-        api_preview: str | None = None,
-        preview_api: str | None = None,
-        additional_headers: dict[str, str] | None = None,
-        request_timeout: int | float | tuple[int | float, int | float] | None = None,
-    ) -> CreatePathFoldersResponse:  # noqa: F405
-        """Ensure the existence of all folders in a path
-
-        Ensures that all folders in the specified path exist. If a folder does not exist, it will be created.
-
-        :param org_id:
-            Format: `uuid`
-            Example: `'org_id_example'`
-        :param workspace_id:
-            Format: `uuid`
-            Example: `'workspace_id_example'`
-        :param folders_path: Folders path. This parameter was automatically generated from a wildcard path.
-            Example: `'folders_path_example'`
-        :param api_preview: (optional) Set to \"opt-in\" to be able to use this API.
-            Example: `'api_preview_example'`
-        :param preview_api: (optional) Set to \"opt-in\" to be able to use this API. This header is being deprecated. Please use the API-Preview header.
-            Example: `'preview_api_example'`
-        :param additional_headers: (optional) Additional headers to send with the request.
-        :param request_timeout: (optional) Timeout setting for this request. If one number is provided, it will be the
-            total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.
-
-        :return: Returns the result object.
-
-        :raise evo.common.exceptions.BadRequestException: If the server responds with HTTP status 400.
-        :raise evo.common.exceptions.UnauthorizedException: If the server responds with HTTP status 401.
-        :raise evo.common.exceptions.ForbiddenException: If the server responds with HTTP status 403.
-        :raise evo.common.exceptions.NotFoundException: If the server responds with HTTP status 404.
-        :raise evo.common.exceptions.BaseTypedError: If the server responds with any other HTTP status between
-            400 and 599, and the body of the response contains a descriptive `type` parameter.
-        :raise evo.common.exceptions.EvoAPIException: If the server responds with any other HTTP status between 400
-            and 599, and the body of the response does not contain a `type` parameter.
-        :raise evo.common.exceptions.UnknownResponseError: For other HTTP status codes with no corresponding response
-            type in `response_types_map`.
-        """
-        # Prepare the path parameters.
-        _path_params = {
-            "org_id": org_id,
-            "workspace_id": workspace_id,
-            "folders_path": folders_path,
-        }
-
-        # Prepare the header parameters.
-        _header_params = {
-            "Accept": "application/json",
-        } | get_header_metadata(__name__)
-        if api_preview is not None:
-            _header_params["API-Preview"] = api_preview
-        if preview_api is not None:
-            _header_params["Preview-API"] = preview_api
-        if additional_headers is not None:
-            _header_params.update(additional_headers)
-
-        # Define the collection formats.
-        _collection_formats = {}
-
-        _response_types_map = {
-            "200": CreatePathFoldersResponse,  # noqa: F405
-            "201": CreatePathFoldersResponse,  # noqa: F405
-        }
-
-        return await self.connector.call_api(
-            method=RequestMethod.POST,
-            resource_path="/workspace/orgs/{org_id}/workspaces/{workspace_id}/folders/path/{folders_path}",
-            path_params=_path_params,
-            header_params=_header_params,
-            collection_formats=_collection_formats,
-            response_types_map=_response_types_map,
-            request_timeout=request_timeout,
-        )
-
     async def delete_folder(
         self,
-        org_id: str,
         folder_id: str,
         workspace_id: str,
+        org_id: str,
         api_preview: str | None = None,
         preview_api: str | None = None,
         additional_headers: dict[str, str] | None = None,
-        request_timeout: int | float | tuple[int | float, int | float] | None = None,
+        request_timeout: float | tuple[int | float, int | float] | None = None,
     ) -> EmptyResponse:
         """Delete a folder
 
         Deletes the folder with the given ID. This is not a permanent delete, folder can be restored.
 
-        :param org_id:
-            Format: `uuid`
-            Example: `'org_id_example'`
         :param folder_id:
             Format: `uuid`
             Example: `'folder_id_example'`
         :param workspace_id:
             Format: `uuid`
             Example: `'workspace_id_example'`
+        :param org_id:
+            Format: `uuid`
+            Example: `'org_id_example'`
         :param api_preview: (optional) Set to \"opt-in\" to be able to use this API.
             Example: `'api_preview_example'`
         :param preview_api: (optional) Set to \"opt-in\" to be able to use this API. This header is being deprecated. Please use the API-Preview header.
@@ -259,9 +181,9 @@ class FoldersApi:
         """
         # Prepare the path parameters.
         _path_params = {
-            "org_id": org_id,
             "folder_id": folder_id,
             "workspace_id": workspace_id,
+            "org_id": org_id,
         }
 
         # Prepare the header parameters.
@@ -282,7 +204,7 @@ class FoldersApi:
 
         return await self.connector.call_api(
             method=RequestMethod.DELETE,
-            resource_path="/workspace/orgs/{org_id}/workspaces/{workspace_id}/folders/{folder_id}",
+            resource_path="/folder/instances/{org_id}/workspaces/{workspace_id}/folders/{folder_id}",
             path_params=_path_params,
             header_params=_header_params,
             collection_formats=_collection_formats,
@@ -292,59 +214,30 @@ class FoldersApi:
 
     async def get_folder_by_id(
         self,
-        org_id: str,
         workspace_id: str,
         folder_id: str,
-        limit: int | None = None,
-        offset: int | None = None,
+        org_id: str,
         deleted: bool | None = None,
-        max_depth: int | None = None,
-        folder_name: str | None = None,
-        created_by: list[str] | None = None,
-        created_at: str | None = None,
-        updated_by: list[str] | None = None,
-        updated_at: str | None = None,
-        order_by: str | None = None,
         api_preview: str | None = None,
         preview_api: str | None = None,
         additional_headers: dict[str, str] | None = None,
-        request_timeout: int | float | tuple[int | float, int | float] | None = None,
-    ) -> GetFolderResponse:  # noqa: F405
+        request_timeout: float | tuple[int | float, int | float] | None = None,
+    ) -> FolderResponse:  # noqa: F405
         """Get folder by ID
 
-        Returns a folder by its ID. Optionally include its child folders up to a specified depth.
+        Returns a folder by its ID.
 
-        :param org_id:
-            Format: `uuid`
-            Example: `'org_id_example'`
         :param workspace_id:
             Format: `uuid`
             Example: `'workspace_id_example'`
         :param folder_id:
             Format: `uuid`
             Example: `'folder_id_example'`
-        :param limit: (optional) Max number of results per page.
-            Example: `5000`
-        :param offset: (optional) Number of results to skip before returning `limit` number of results.
-            Example: `0`
+        :param org_id:
+            Format: `uuid`
+            Example: `'org_id_example'`
         :param deleted: (optional) Only show folders that have been deleted.
             Example: `False`
-        :param max_depth: (optional) Max depth of the folder tree to return with the folder.
-            Example: `0`
-        :param folder_name: (optional) Only show folders with a matching name. This filter supports the operators `eq`, `like`, and  `ilike`. If no operator is provided, the `eq` operator is used. The `eq` operator performs an exact string match while the `like` and `ilike` operators support pattern matching (regular expressions). The only difference between `like` and `ilike` is that `ilike` searches case-insensitive. For example, you can use `like:a` to find any folder that contain the lower case 'a' or `ilike:a` to find any folder containing the letter 'A' or 'a'.
-            Example: `'folder_name'`
-        :param created_by: (optional) Only show folders created by user
-            Format: `uuid`
-            Example: `['created_by_example']`
-        :param created_at: (optional) Only show folders relative to the creation date. This filter supports operators like `gt`, `lt`, `gte`, and `lte`. For example, you can use `2023-10-01T00:00:000` for exact match or `gt:2023-10-01` for greater than. Supported formats are ISO 8601 date strings.
-            Example: `'2023-10-01T00:00:00'`
-        :param updated_by: (optional) Only show folders modified by user
-            Format: `uuid`
-            Example: `['updated_by_example']`
-        :param updated_at: (optional) Only show folders relative to the creation date. This filter supports operators like `gt`, `lt`, `gte`, and `lte`. For example, you can use `2023-10-01T00:00:000` for exact match or `gt:2023-10-01` for greater than. Supported formats are ISO 8601 date strings.
-            Example: `'2023-10-01T00:00:00'`
-        :param order_by: (optional) A comma separated list of fields to order by, where the default sort order is ascending. To specify the sort order, prefix the field name with either `asc:` or `desc:` for ascending or descending respectively. Field names can be one of the following known sort fields: `created_at`, `updated_at`, `name`
-            Example: `'order_by_example'`
         :param api_preview: (optional) Set to \"opt-in\" to be able to use this API.
             Example: `'api_preview_example'`
         :param preview_api: (optional) Set to \"opt-in\" to be able to use this API. This header is being deprecated. Please use the API-Preview header.
@@ -368,33 +261,15 @@ class FoldersApi:
         """
         # Prepare the path parameters.
         _path_params = {
-            "org_id": org_id,
             "workspace_id": workspace_id,
             "folder_id": folder_id,
+            "org_id": org_id,
         }
 
         # Prepare the query parameters.
         _query_params = {}
-        if limit is not None:
-            _query_params["limit"] = limit
-        if offset is not None:
-            _query_params["offset"] = offset
         if deleted is not None:
             _query_params["deleted"] = deleted
-        if max_depth is not None:
-            _query_params["max_depth"] = max_depth
-        if folder_name is not None:
-            _query_params["folder_name"] = folder_name
-        if created_by is not None:
-            _query_params["created_by"] = created_by
-        if created_at is not None:
-            _query_params["created_at"] = created_at
-        if updated_by is not None:
-            _query_params["updated_by"] = updated_by
-        if updated_at is not None:
-            _query_params["updated_at"] = updated_at
-        if order_by is not None:
-            _query_params["order_by"] = order_by
 
         # Prepare the header parameters.
         _header_params = {
@@ -408,18 +283,15 @@ class FoldersApi:
             _header_params.update(additional_headers)
 
         # Define the collection formats.
-        _collection_formats = {
-            "created_by": "multi",
-            "updated_by": "multi",
-        }
+        _collection_formats = {}
 
         _response_types_map = {
-            "200": GetFolderResponse,  # noqa: F405
+            "200": FolderResponse,  # noqa: F405
         }
 
         return await self.connector.call_api(
             method=RequestMethod.GET,
-            resource_path="/workspace/orgs/{org_id}/workspaces/{workspace_id}/folders/{folder_id}",
+            resource_path="/folder/instances/{org_id}/workspaces/{workspace_id}/folders/{folder_id}",
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -430,58 +302,26 @@ class FoldersApi:
 
     async def get_folder_by_path(
         self,
-        org_id: str,
         workspace_id: str,
-        folders_path: str,
-        limit: int | None = None,
-        offset: int | None = None,
+        org_id: str,
         deleted: bool | None = None,
-        max_depth: int | None = None,
-        folder_name: str | None = None,
-        created_by: list[str] | None = None,
-        created_at: str | None = None,
-        updated_by: list[str] | None = None,
-        updated_at: str | None = None,
-        order_by: str | None = None,
         api_preview: str | None = None,
         preview_api: str | None = None,
         additional_headers: dict[str, str] | None = None,
-        request_timeout: int | float | tuple[int | float, int | float] | None = None,
-    ) -> GetFolderResponse:  # noqa: F405
+        request_timeout: float | tuple[int | float, int | float] | None = None,
+    ) -> FolderResponse:  # noqa: F405
         """Get folder by path.
 
-        Get a folder at the provided path. Optionally include the child folders up to a specified depth.
+        Get a folder at the provided path.
 
-        :param org_id:
-            Format: `uuid`
-            Example: `'org_id_example'`
         :param workspace_id:
             Format: `uuid`
             Example: `'workspace_id_example'`
-        :param folders_path: Folders path. This parameter was automatically generated from a wildcard path.
-            Example: `'folders_path_example'`
-        :param limit: (optional) Max number of results per page.
-            Example: `5000`
-        :param offset: (optional) Number of results to skip before returning `limit` number of results.
-            Example: `0`
+        :param org_id:
+            Format: `uuid`
+            Example: `'org_id_example'`
         :param deleted: (optional) Only show folders that have been deleted.
             Example: `False`
-        :param max_depth: (optional) Max depth of the folder tree to return with the folder.
-            Example: `0`
-        :param folder_name: (optional) Only show folders with a matching name. This filter supports the operators `eq`, `like`, and  `ilike`. If no operator is provided, the `eq` operator is used. The `eq` operator performs an exact string match while the `like` and `ilike` operators support pattern matching (regular expressions). The only difference between `like` and `ilike` is that `ilike` searches case-insensitive. For example, you can use `like:a` to find any folder that contain the lower case 'a' or `ilike:a` to find any folder containing the letter 'A' or 'a'.
-            Example: `'folder_name'`
-        :param created_by: (optional) Only show folders created by user
-            Format: `uuid`
-            Example: `['created_by_example']`
-        :param created_at: (optional) Only show folders relative to the creation date. This filter supports operators like `gt`, `lt`, `gte`, and `lte`. For example, you can use `2023-10-01T00:00:000` for exact match or `gt:2023-10-01` for greater than. Supported formats are ISO 8601 date strings.
-            Example: `'2023-10-01T00:00:00'`
-        :param updated_by: (optional) Only show folders modified by user
-            Format: `uuid`
-            Example: `['updated_by_example']`
-        :param updated_at: (optional) Only show folders relative to the creation date. This filter supports operators like `gt`, `lt`, `gte`, and `lte`. For example, you can use `2023-10-01T00:00:000` for exact match or `gt:2023-10-01` for greater than. Supported formats are ISO 8601 date strings.
-            Example: `'2023-10-01T00:00:00'`
-        :param order_by: (optional) A comma separated list of fields to order by, where the default sort order is ascending. To specify the sort order, prefix the field name with either `asc:` or `desc:` for ascending or descending respectively. Field names can be one of the following known sort fields: `created_at`, `updated_at`, `name`
-            Example: `'order_by_example'`
         :param api_preview: (optional) Set to \"opt-in\" to be able to use this API.
             Example: `'api_preview_example'`
         :param preview_api: (optional) Set to \"opt-in\" to be able to use this API. This header is being deprecated. Please use the API-Preview header.
@@ -505,33 +345,156 @@ class FoldersApi:
         """
         # Prepare the path parameters.
         _path_params = {
-            "org_id": org_id,
             "workspace_id": workspace_id,
-            "folders_path": folders_path,
+            "org_id": org_id,
         }
 
         # Prepare the query parameters.
         _query_params = {}
+        if deleted is not None:
+            _query_params["deleted"] = deleted
+
+        # Prepare the header parameters.
+        _header_params = {
+            "Accept": "application/json",
+        } | get_header_metadata(__name__)
+        if api_preview is not None:
+            _header_params["API-Preview"] = api_preview
+        if preview_api is not None:
+            _header_params["Preview-API"] = preview_api
+        if additional_headers is not None:
+            _header_params.update(additional_headers)
+
+        # Define the collection formats.
+        _collection_formats = {}
+
+        _response_types_map = {
+            "200": FolderResponse,  # noqa: F405
+        }
+
+        return await self.connector.call_api(
+            method=RequestMethod.GET,
+            resource_path="/folder/instances/{org_id}/workspaces/{workspace_id}/folders/path{folder_path}",
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            collection_formats=_collection_formats,
+            response_types_map=_response_types_map,
+            request_timeout=request_timeout,
+        )
+
+    async def list_folders(
+        self,
+        workspace_id: str,
+        org_id: str,
+        path: str | None = None,
+        folder_id: str | None = None,
+        deleted: bool | None = None,
+        depth: int | None = None,
+        limit: int | None = None,
+        offset: int | None = None,
+        order_by: str | None = None,
+        name: list[str] | None = None,
+        created_by: list[str] | None = None,
+        modified_by: list[str] | None = None,
+        created_at: list[str] | None = None,
+        modified_at: list[str] | None = None,
+        api_preview: str | None = None,
+        preview_api: str | None = None,
+        additional_headers: dict[str, str] | None = None,
+        request_timeout: float | tuple[int | float, int | float] | None = None,
+    ) -> ListFoldersResponse:  # noqa: F405
+        """List folders.
+
+        Get a folder at the provided path/id with its child folders.
+
+        :param workspace_id:
+            Format: `uuid`
+            Example: `'workspace_id_example'`
+        :param org_id:
+            Format: `uuid`
+            Example: `'org_id_example'`
+        :param path: (optional) Path to the folder to list children of.
+            Format: `path`
+            Example: `'path_example'`
+        :param folder_id: (optional) ID of the folder to list children of.
+            Format: `uuid`
+            Example: `'folder_id_example'`
+        :param deleted: (optional) Only show folders that have been deleted.
+            Example: `False`
+        :param depth: (optional) Max depth of child folders to return. Must be > 0 when provided.
+            Example: `56`
+        :param limit: (optional) Max number of results per page.
+            Example: `100`
+        :param offset: (optional) Number of results to skip before returning `limit` number of results.
+            Example: `0`
+        :param order_by: (optional) A comma separated list of fields to order by. The default sort order is ascending; prefix a field with `asc:` or `desc:` to specify its sort order. Defaults to `asc:depth,asc:path,desc:modified_at,asc:folder_id`. Supported fields: `name` (folder name), `path` (full folder path), `modified_at` (last modification time), `created_at` (creation time), `folder_id` (folder identifier), and `depth` (distance from the parent folder).
+            Example: `'order_by_example'`
+        :param name: (optional) Only show folders with a matching name. Supports the operators `eq` for an exact match (the default when no operator is given), `like`, and `ilike` for a pattern match. Also supports the `neq` operator for an exclusion. Patterns use `*` as a wildcard, which can be escaped with a backslash to match a literal `*`.
+            Example: `['[\"reports\"]']`
+        :param created_by: (optional) Filter by folders created by specific users
+            Format: `uuid`
+            Example: `['created_by_example']`
+        :param modified_by: (optional) Filter by folders modified by specific users
+            Format: `uuid`
+            Example: `['modified_by_example']`
+        :param created_at: (optional) Filter by folder creation time. Supports the operators `gte` (on or after) and `lte` (on or before), which must be specified explicitly. Values are ISO 8601 datetimes, e.g. `2026-08-01T00:00:00Z`. A value without a timezone is assumed to be UTC. Provide two values to filter by a range.
+            Example: `['[\"gte:2026-08-01T00:00:00Z\"]']`
+        :param modified_at: (optional) Filter by folder modification time. Supports the operators `gte` (on or after) and `lte` (on or before), which must be specified explicitly. Values are ISO 8601 datetimes, e.g. `2026-08-01T00:00:00Z`. A value without a timezone is assumed to be UTC. Provide two values to filter by a range.
+            Example: `['[\"gte:2026-08-01T00:00:00Z\"]']`
+        :param api_preview: (optional) Set to \"opt-in\" to be able to use this API.
+            Example: `'api_preview_example'`
+        :param preview_api: (optional) Set to \"opt-in\" to be able to use this API. This header is being deprecated. Please use the API-Preview header.
+            Example: `'preview_api_example'`
+        :param additional_headers: (optional) Additional headers to send with the request.
+        :param request_timeout: (optional) Timeout setting for this request. If one number is provided, it will be the
+            total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.
+
+        :return: Returns the result object.
+
+        :raise evo.common.exceptions.BadRequestException: If the server responds with HTTP status 400.
+        :raise evo.common.exceptions.UnauthorizedException: If the server responds with HTTP status 401.
+        :raise evo.common.exceptions.ForbiddenException: If the server responds with HTTP status 403.
+        :raise evo.common.exceptions.NotFoundException: If the server responds with HTTP status 404.
+        :raise evo.common.exceptions.BaseTypedError: If the server responds with any other HTTP status between
+            400 and 599, and the body of the response contains a descriptive `type` parameter.
+        :raise evo.common.exceptions.EvoAPIException: If the server responds with any other HTTP status between 400
+            and 599, and the body of the response does not contain a `type` parameter.
+        :raise evo.common.exceptions.UnknownResponseError: For other HTTP status codes with no corresponding response
+            type in `response_types_map`.
+        """
+        # Prepare the path parameters.
+        _path_params = {
+            "workspace_id": workspace_id,
+            "org_id": org_id,
+        }
+
+        # Prepare the query parameters.
+        _query_params = {}
+        if path is not None:
+            _query_params["path"] = path
+        if folder_id is not None:
+            _query_params["folder_id"] = folder_id
+        if deleted is not None:
+            _query_params["deleted"] = deleted
+        if depth is not None:
+            _query_params["depth"] = depth
         if limit is not None:
             _query_params["limit"] = limit
         if offset is not None:
             _query_params["offset"] = offset
-        if deleted is not None:
-            _query_params["deleted"] = deleted
-        if max_depth is not None:
-            _query_params["max_depth"] = max_depth
-        if folder_name is not None:
-            _query_params["folder_name"] = folder_name
-        if created_by is not None:
-            _query_params["created_by"] = created_by
-        if created_at is not None:
-            _query_params["created_at"] = created_at
-        if updated_by is not None:
-            _query_params["updated_by"] = updated_by
-        if updated_at is not None:
-            _query_params["updated_at"] = updated_at
         if order_by is not None:
             _query_params["order_by"] = order_by
+        if name is not None:
+            _query_params["name"] = name
+        if created_by is not None:
+            _query_params["created_by"] = created_by
+        if modified_by is not None:
+            _query_params["modified_by"] = modified_by
+        if created_at is not None:
+            _query_params["created_at"] = created_at
+        if modified_at is not None:
+            _query_params["modified_at"] = modified_at
 
         # Prepare the header parameters.
         _header_params = {
@@ -546,17 +509,20 @@ class FoldersApi:
 
         # Define the collection formats.
         _collection_formats = {
+            "name": "multi",
             "created_by": "multi",
-            "updated_by": "multi",
+            "modified_by": "multi",
+            "created_at": "multi",
+            "modified_at": "multi",
         }
 
         _response_types_map = {
-            "200": GetFolderResponse,  # noqa: F405
+            "200": ListFoldersResponse,  # noqa: F405
         }
 
         return await self.connector.call_api(
             method=RequestMethod.GET,
-            resource_path="/workspace/orgs/{org_id}/workspaces/{workspace_id}/folders/path/{folders_path}",
+            resource_path="/folder/instances/{org_id}/workspaces/{workspace_id}/folders",
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -565,123 +531,36 @@ class FoldersApi:
             request_timeout=request_timeout,
         )
 
-    async def move_folder(
+    async def restore_folder(
         self,
-        org_id: str,
         folder_id: str,
         workspace_id: str,
-        folder_move_request: FolderMoveRequest,  # noqa: F405
-        api_preview: str | None = None,
-        preview_api: str | None = None,
-        additional_headers: dict[str, str] | None = None,
-        request_timeout: int | float | tuple[int | float, int | float] | None = None,
-    ) -> FolderResponse:  # noqa: F405
-        """Move a folder
-
-        Moves a folder to a new location.
-
-        :param org_id:
-            Format: `uuid`
-            Example: `'org_id_example'`
-        :param folder_id:
-            Format: `uuid`
-            Example: `'folder_id_example'`
-        :param workspace_id:
-            Format: `uuid`
-            Example: `'workspace_id_example'`
-        :param folder_move_request:
-            Example: `endpoints.FolderMoveRequest()`
-        :param api_preview: (optional) Set to \"opt-in\" to be able to use this API.
-            Example: `'api_preview_example'`
-        :param preview_api: (optional) Set to \"opt-in\" to be able to use this API. This header is being deprecated. Please use the API-Preview header.
-            Example: `'preview_api_example'`
-        :param additional_headers: (optional) Additional headers to send with the request.
-        :param request_timeout: (optional) Timeout setting for this request. If one number is provided, it will be the
-            total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.
-
-        :return: Returns the result object.
-
-        :raise evo.common.exceptions.BadRequestException: If the server responds with HTTP status 400.
-        :raise evo.common.exceptions.UnauthorizedException: If the server responds with HTTP status 401.
-        :raise evo.common.exceptions.ForbiddenException: If the server responds with HTTP status 403.
-        :raise evo.common.exceptions.NotFoundException: If the server responds with HTTP status 404.
-        :raise evo.common.exceptions.BaseTypedError: If the server responds with any other HTTP status between
-            400 and 599, and the body of the response contains a descriptive `type` parameter.
-        :raise evo.common.exceptions.EvoAPIException: If the server responds with any other HTTP status between 400
-            and 599, and the body of the response does not contain a `type` parameter.
-        :raise evo.common.exceptions.UnknownResponseError: For other HTTP status codes with no corresponding response
-            type in `response_types_map`.
-        """
-        # Prepare the path parameters.
-        _path_params = {
-            "org_id": org_id,
-            "folder_id": folder_id,
-            "workspace_id": workspace_id,
-        }
-
-        # Prepare the header parameters.
-        _header_params = {
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-        } | get_header_metadata(__name__)
-        if api_preview is not None:
-            _header_params["API-Preview"] = api_preview
-        if preview_api is not None:
-            _header_params["Preview-API"] = preview_api
-        if additional_headers is not None:
-            _header_params.update(additional_headers)
-
-        # Define the collection formats.
-        _collection_formats = {}
-
-        _response_types_map = {
-            "200": FolderResponse,  # noqa: F405
-        }
-
-        return await self.connector.call_api(
-            method=RequestMethod.PATCH,
-            resource_path="/workspace/orgs/{org_id}/workspaces/{workspace_id}/folders/{folder_id}",
-            path_params=_path_params,
-            header_params=_header_params,
-            body=folder_move_request,
-            collection_formats=_collection_formats,
-            response_types_map=_response_types_map,
-            request_timeout=request_timeout,
-        )
-
-    async def update_folder(
-        self,
         org_id: str,
-        folder_id: str,
-        workspace_id: str,
         deleted: bool | None = None,
         api_preview: str | None = None,
         preview_api: str | None = None,
-        folder_update_request: FolderUpdateRequest | None = None,  # noqa: F405
         additional_headers: dict[str, str] | None = None,
-        request_timeout: int | float | tuple[int | float, int | float] | None = None,
+        request_timeout: float | tuple[int | float, int | float] | None = None,
     ) -> FolderResponse:  # noqa: F405
-        """Update a folder
+        """Restore a folder
 
-        Updates a folders name.
+        Restores a previously deleted folder.
 
-        :param org_id:
-            Format: `uuid`
-            Example: `'org_id_example'`
         :param folder_id:
             Format: `uuid`
             Example: `'folder_id_example'`
         :param workspace_id:
             Format: `uuid`
             Example: `'workspace_id_example'`
-        :param deleted: (optional)
+        :param org_id:
+            Format: `uuid`
+            Example: `'org_id_example'`
+        :param deleted: (optional) Only show folders that have been deleted.
             Example: `True`
         :param api_preview: (optional) Set to \"opt-in\" to be able to use this API.
             Example: `'api_preview_example'`
         :param preview_api: (optional) Set to \"opt-in\" to be able to use this API. This header is being deprecated. Please use the API-Preview header.
             Example: `'preview_api_example'`
-        :param folder_update_request: (optional)
-            Example: `endpoints.FolderUpdateRequest()`
         :param additional_headers: (optional) Additional headers to send with the request.
         :param request_timeout: (optional) Timeout setting for this request. If one number is provided, it will be the
             total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.
@@ -701,9 +580,9 @@ class FoldersApi:
         """
         # Prepare the path parameters.
         _path_params = {
-            "org_id": org_id,
             "folder_id": folder_id,
             "workspace_id": workspace_id,
+            "org_id": org_id,
         }
 
         # Prepare the query parameters.
@@ -713,6 +592,184 @@ class FoldersApi:
 
         # Prepare the header parameters.
         _header_params = {
+            "Accept": "application/json",
+        } | get_header_metadata(__name__)
+        if api_preview is not None:
+            _header_params["API-Preview"] = api_preview
+        if preview_api is not None:
+            _header_params["Preview-API"] = preview_api
+        if additional_headers is not None:
+            _header_params.update(additional_headers)
+
+        # Define the collection formats.
+        _collection_formats = {}
+
+        _response_types_map = {
+            "200": FolderResponse,  # noqa: F405
+            "201": FolderResponse,  # noqa: F405
+            "303": FolderResponse,  # noqa: F405
+        }
+
+        return await self.connector.call_api(
+            method=RequestMethod.POST,
+            resource_path="/folder/instances/{org_id}/workspaces/{workspace_id}/folders/{folder_id}",
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            collection_formats=_collection_formats,
+            response_types_map=_response_types_map,
+            request_timeout=request_timeout,
+        )
+
+    async def summarize_folders(
+        self,
+        workspace_id: str,
+        org_id: str,
+        offset: int | None = None,
+        limit: int | None = None,
+        deleted: bool | None = None,
+        api_preview: str | None = None,
+        preview_api: str | None = None,
+        additional_headers: dict[str, str] | None = None,
+        request_timeout: float | tuple[int | float, int | float] | None = None,
+    ) -> ListFoldersSummaryResponse:  # noqa: F405
+        """Summarize folders.
+
+        Get a summary of folders in this workspace.
+
+        :param workspace_id:
+            Format: `uuid`
+            Example: `'workspace_id_example'`
+        :param org_id:
+            Format: `uuid`
+            Example: `'org_id_example'`
+        :param offset: (optional) Number of results to skip before returning `limit` number of results.
+            Example: `0`
+        :param limit: (optional) Max number of results per page.
+            Example: `100`
+        :param deleted: (optional) Only show folders that have been deleted.
+            Example: `False`
+        :param api_preview: (optional) Set to \"opt-in\" to be able to use this API.
+            Example: `'api_preview_example'`
+        :param preview_api: (optional) Set to \"opt-in\" to be able to use this API. This header is being deprecated. Please use the API-Preview header.
+            Example: `'preview_api_example'`
+        :param additional_headers: (optional) Additional headers to send with the request.
+        :param request_timeout: (optional) Timeout setting for this request. If one number is provided, it will be the
+            total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.
+
+        :return: Returns the result object.
+
+        :raise evo.common.exceptions.BadRequestException: If the server responds with HTTP status 400.
+        :raise evo.common.exceptions.UnauthorizedException: If the server responds with HTTP status 401.
+        :raise evo.common.exceptions.ForbiddenException: If the server responds with HTTP status 403.
+        :raise evo.common.exceptions.NotFoundException: If the server responds with HTTP status 404.
+        :raise evo.common.exceptions.BaseTypedError: If the server responds with any other HTTP status between
+            400 and 599, and the body of the response contains a descriptive `type` parameter.
+        :raise evo.common.exceptions.EvoAPIException: If the server responds with any other HTTP status between 400
+            and 599, and the body of the response does not contain a `type` parameter.
+        :raise evo.common.exceptions.UnknownResponseError: For other HTTP status codes with no corresponding response
+            type in `response_types_map`.
+        """
+        # Prepare the path parameters.
+        _path_params = {
+            "workspace_id": workspace_id,
+            "org_id": org_id,
+        }
+
+        # Prepare the query parameters.
+        _query_params = {}
+        if offset is not None:
+            _query_params["offset"] = offset
+        if limit is not None:
+            _query_params["limit"] = limit
+        if deleted is not None:
+            _query_params["deleted"] = deleted
+
+        # Prepare the header parameters.
+        _header_params = {
+            "Accept": "application/json",
+        } | get_header_metadata(__name__)
+        if api_preview is not None:
+            _header_params["API-Preview"] = api_preview
+        if preview_api is not None:
+            _header_params["Preview-API"] = preview_api
+        if additional_headers is not None:
+            _header_params.update(additional_headers)
+
+        # Define the collection formats.
+        _collection_formats = {}
+
+        _response_types_map = {
+            "200": ListFoldersSummaryResponse,  # noqa: F405
+        }
+
+        return await self.connector.call_api(
+            method=RequestMethod.GET,
+            resource_path="/folder/instances/{org_id}/workspaces/{workspace_id}/folders/summary",
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            collection_formats=_collection_formats,
+            response_types_map=_response_types_map,
+            request_timeout=request_timeout,
+        )
+
+    async def update_folder(
+        self,
+        folder_id: str,
+        workspace_id: str,
+        org_id: str,
+        folder_update_request: FolderUpdateRequest,  # noqa: F405
+        api_preview: str | None = None,
+        preview_api: str | None = None,
+        additional_headers: dict[str, str] | None = None,
+        request_timeout: float | tuple[int | float, int | float] | None = None,
+    ) -> FolderResponse:  # noqa: F405
+        """Update a folder
+
+        Updates a folder's details.
+
+        :param folder_id:
+            Format: `uuid`
+            Example: `'folder_id_example'`
+        :param workspace_id:
+            Format: `uuid`
+            Example: `'workspace_id_example'`
+        :param org_id:
+            Format: `uuid`
+            Example: `'org_id_example'`
+        :param folder_update_request:
+            Example: `endpoints.FolderUpdateRequest()`
+        :param api_preview: (optional) Set to \"opt-in\" to be able to use this API.
+            Example: `'api_preview_example'`
+        :param preview_api: (optional) Set to \"opt-in\" to be able to use this API. This header is being deprecated. Please use the API-Preview header.
+            Example: `'preview_api_example'`
+        :param additional_headers: (optional) Additional headers to send with the request.
+        :param request_timeout: (optional) Timeout setting for this request. If one number is provided, it will be the
+            total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.
+
+        :return: Returns the result object.
+
+        :raise evo.common.exceptions.BadRequestException: If the server responds with HTTP status 400.
+        :raise evo.common.exceptions.UnauthorizedException: If the server responds with HTTP status 401.
+        :raise evo.common.exceptions.ForbiddenException: If the server responds with HTTP status 403.
+        :raise evo.common.exceptions.NotFoundException: If the server responds with HTTP status 404.
+        :raise evo.common.exceptions.BaseTypedError: If the server responds with any other HTTP status between
+            400 and 599, and the body of the response contains a descriptive `type` parameter.
+        :raise evo.common.exceptions.EvoAPIException: If the server responds with any other HTTP status between 400
+            and 599, and the body of the response does not contain a `type` parameter.
+        :raise evo.common.exceptions.UnknownResponseError: For other HTTP status codes with no corresponding response
+            type in `response_types_map`.
+        """
+        # Prepare the path parameters.
+        _path_params = {
+            "folder_id": folder_id,
+            "workspace_id": workspace_id,
+            "org_id": org_id,
+        }
+
+        # Prepare the header parameters.
+        _header_params = {
             "Content-Type": "application/json",
             "Accept": "application/json",
         } | get_header_metadata(__name__)
@@ -728,13 +785,14 @@ class FoldersApi:
 
         _response_types_map = {
             "200": FolderResponse,  # noqa: F405
+            "201": FolderResponse,  # noqa: F405
+            "204": EmptyResponse,
         }
 
         return await self.connector.call_api(
-            method=RequestMethod.POST,
-            resource_path="/workspace/orgs/{org_id}/workspaces/{workspace_id}/folders/{folder_id}",
+            method=RequestMethod.PATCH,
+            resource_path="/folder/instances/{org_id}/workspaces/{workspace_id}/folders/{folder_id}",
             path_params=_path_params,
-            query_params=_query_params,
             header_params=_header_params,
             body=folder_update_request,
             collection_formats=_collection_formats,
