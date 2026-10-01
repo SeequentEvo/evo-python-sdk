@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from numbers import Real
 from typing import Annotated, Any, overload
 
 import numpy as np
@@ -204,11 +205,20 @@ class BoundingBox:
 
 @dataclass(frozen=True)
 class Rotation:
-    """A rotation defined by dip azimuth, dip, and pitch angles."""
+    """A rotation in degrees (consistent with Leapfrog conventions): dip azimuth [0, 360], dip [-90, 90], pitch [0, 180]."""
 
     dip_azimuth: float
     dip: float
     pitch: float
+
+    def __post_init__(self) -> None:
+        for name, value, lower, upper in (
+            ("dip_azimuth", self.dip_azimuth, 0, 360),
+            ("dip", self.dip, -90, 90),
+            ("pitch", self.pitch, 0, 180),
+        ):
+            if not isinstance(value, Real) or not lower <= value <= upper:
+                raise ValueError(f"{name} must be a finite angle between {lower} and {upper} degrees (inclusive)")
 
     def as_rotation_matrix(self) -> np.ndarray:
         """Convert the rotation to a rotation matrix.
@@ -271,16 +281,46 @@ class EllipsoidRanges:
         )
 
 
+def _three_real_values(
+    values: tuple[float, float, float] | list[float] | np.ndarray, name: str, axes: str
+) -> tuple[float, float, float]:
+    if (isinstance(values, np.ndarray) and values.ndim != 1) or len(values) != 3:
+        raise ValueError(f"{name} must be a one-dimensional sequence of three values ({axes})")
+    if not all(isinstance(value, Real) for value in values):
+        raise TypeError(f"{name} must contain three real numbers ({axes})")
+    return values[0], values[1], values[2]
+
+
 @dataclass
 class Ellipsoid:
-    """An ellipsoid defining a spatial region."""
+    """An ellipsoid defining a spatial region.
+
+    Ranges are ordered major, semi-major, minor and may be passed as an
+    EllipsoidRanges, a three-value list or tuple, or a 1D NumPy array.
+    Rotation is ordered dip azimuth, dip, pitch and accepts the same sequence
+    forms in addition to a Rotation object.
+    """
 
     ranges: EllipsoidRanges
     _rotation: Rotation | None = None
 
-    def __init__(self, ranges: EllipsoidRanges, rotation: Rotation | None = None):
-        self.ranges = ranges
-        self._rotation = rotation
+    def __init__(
+        self,
+        ranges: EllipsoidRanges | tuple[float, float, float] | list[float] | np.ndarray,
+        rotation: Rotation | tuple[float, float, float] | list[float] | np.ndarray | None = None,
+    ):
+        if isinstance(ranges, EllipsoidRanges):
+            self.ranges = ranges
+        elif isinstance(ranges, (tuple, list, np.ndarray)):
+            self.ranges = EllipsoidRanges(*_three_real_values(ranges, "ranges", "major, semi_major, minor"))
+        else:
+            raise TypeError("ranges must be an EllipsoidRanges, list, tuple, or NumPy array")
+        if rotation is None or isinstance(rotation, Rotation):
+            self._rotation = rotation
+        elif isinstance(rotation, (tuple, list, np.ndarray)):
+            self._rotation = Rotation(*_three_real_values(rotation, "rotation", "dip_azimuth, dip, pitch"))
+        else:
+            raise TypeError("rotation must be a Rotation, list, tuple, or NumPy array")
 
     @property
     def rotation(self) -> Rotation:
