@@ -1294,6 +1294,10 @@ sub-blocks with data from the parent block. Defaults to <code>False</code>.</p>
             <td>
               <div class="doc-md-description">
                 <p>A tuple containing the created block model and the version of the block model.</p>
+<p>.. note::
+    To place columns in a group, first create the model, define the groups with :meth:<code>update_groups</code>,
+    then add the columns with <code>column_groups</code> on :meth:<code>add_new_columns</code> /
+    :meth:<code>update_block_model_columns</code>. Groups cannot be referenced during creation because none exist yet.</p>
               </div>
             </td>
           </tr>
@@ -1318,7 +1322,12 @@ sub-blocks with data from the parent block. Defaults to <code>False</code>.</p>
 
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">add_new_subblocked_columns</span><span class="p">(</span>
-    <span class="n">bm_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Table</span><span class="p">,</span> <span class="n">units</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">tags</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">bm_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">Table</span><span class="p">,</span>
+    <span class="n">units</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">tags</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">column_groups</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">separator</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">_QUALIFIED_TITLE_SEPARATOR</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Version</span>
 </code></pre></div>
 
@@ -1365,7 +1374,8 @@ sub-blocks with data from the parent block. Defaults to <code>False</code>.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The data containing the new columns to add.</p>
+                <p>The data containing the new columns to add, keyed by each column's title
+(a plain title for an ungrouped column, or the qualified <code>group▸title</code> for a grouped one).</p>
               </div>
             </td>
             <td>
@@ -1403,6 +1413,44 @@ feature; the client must be constructed with <code>preview=True</code> to use th
             </td>
             <td>
                   <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>column_groups</code>
+            </td>
+            <td>
+                  <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="str">str</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A dictionary mapping a grouped column's qualified title (its key in
+<code>data</code>, e.g. <code>"Assays▸Cu"</code>) to the qualified title of the group it belongs to (e.g. <code>"Assays"</code>).
+Ungrouped columns are keyed by their plain title in <code>data</code> and omitted here. <code>data</code> must be keyed by each
+column's exact title; :func:<code>~evo.blockmodels.data.qualify_column_titles</code> can build that from
+plain-titled data.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>separator</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The single character separating a group's qualified title from a column title in
+qualified column titles (e.g. <code>Assays▸Cu</code>). Defaults to <code>▸</code>. Provide this only when the block model
+uses a non-default separator; it is then forwarded to the service for this request.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="evo.blockmodels.data.QUALIFIED_TITLE_SEPARATOR">QUALIFIED_TITLE_SEPARATOR</span></code>
             </td>
           </tr>
       </tbody>
@@ -1472,7 +1520,12 @@ feature; the client must be constructed with <code>preview=True</code> to use th
 
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">add_new_columns</span><span class="p">(</span>
-    <span class="n">bm_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Table</span><span class="p">,</span> <span class="n">units</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">tags</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">bm_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">Table</span><span class="p">,</span>
+    <span class="n">units</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">tags</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">column_groups</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">separator</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">_QUALIFIED_TITLE_SEPARATOR</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Version</span>
 </code></pre></div>
 
@@ -1519,7 +1572,8 @@ feature; the client must be constructed with <code>preview=True</code> to use th
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The data containing the new columns to add.</p>
+                <p>The data containing the new columns to add, keyed by each column's title
+(a plain title for an ungrouped column, or the qualified <code>group▸title</code> for a grouped one).</p>
               </div>
             </td>
             <td>
@@ -1557,6 +1611,44 @@ feature; the client must be constructed with <code>preview=True</code> to use th
             </td>
             <td>
                   <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>column_groups</code>
+            </td>
+            <td>
+                  <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="str">str</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A dictionary mapping a grouped column's qualified title (its key in
+<code>data</code>, e.g. <code>"Assays▸Cu"</code>) to the qualified title of the group it belongs to (e.g. <code>"Assays"</code>).
+Ungrouped columns are keyed by their plain title in <code>data</code> and omitted here. <code>data</code> must be keyed by each
+column's exact title; :func:<code>~evo.blockmodels.data.qualify_column_titles</code> can build that from
+plain-titled data.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>separator</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The single character separating a group's qualified title from a column title in
+qualified column titles (e.g. <code>Assays▸Cu</code>). Defaults to <code>▸</code>. Provide this only when the block model
+uses a non-default separator; it is then forwarded to the service for this request.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="evo.blockmodels.data.QUALIFIED_TITLE_SEPARATOR">QUALIFIED_TITLE_SEPARATOR</span></code>
             </td>
           </tr>
       </tbody>
@@ -1634,6 +1726,9 @@ feature; the client must be constructed with <code>preview=True</code> to use th
     <span class="n">units</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">tags</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">update_type</span><span class="p">:</span> <span class="n">UpdateType</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">UpdateType</span><span class="o">.</span><span class="n">replace</span><span class="p">,</span>
+    <span class="n">column_groups</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">group_missing_column_override</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">MissingColumnPolicy</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">separator</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">_QUALIFIED_TITLE_SEPARATOR</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Version</span>
 </code></pre></div>
 
@@ -1680,7 +1775,9 @@ feature; the client must be constructed with <code>preview=True</code> to use th
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The data containing the new columns to add.</p>
+                <p>The data containing the affected columns, keyed by each column's title
+(a plain title for an ungrouped column, or the qualified <code>group▸title</code> for a grouped one).
+:func:<code>~evo.blockmodels.data.qualify_column_titles</code> can build these titles from plain-titled data.</p>
               </div>
             </td>
             <td>
@@ -1696,7 +1793,8 @@ feature; the client must be constructed with <code>preview=True</code> to use th
             </td>
             <td>
               <div class="doc-md-description">
-                <p>A list of new column names to add to the block model.</p>
+                <p>A list of new columns to add, named by their title in <code>data</code> (qualified
+<code>group▸title</code> for a grouped column, plain otherwise).</p>
               </div>
             </td>
             <td>
@@ -1712,7 +1810,8 @@ feature; the client must be constructed with <code>preview=True</code> to use th
             </td>
             <td>
               <div class="doc-md-description">
-                <p>A set of column names to update in the block model.</p>
+                <p>A set of existing columns to re-upload, each identified by the title the service
+currently stores it under: its qualified title (<code>group▸title</code>) if grouped, or its plain title if not.</p>
               </div>
             </td>
             <td>
@@ -1728,7 +1827,8 @@ feature; the client must be constructed with <code>preview=True</code> to use th
             </td>
             <td>
               <div class="doc-md-description">
-                <p>A set of column names to delete from the block model.</p>
+                <p>A set of existing columns to delete, identified the same way as <code>update_columns</code>
+(qualified title if grouped, plain otherwise).</p>
               </div>
             </td>
             <td>
@@ -1766,6 +1866,64 @@ client must be constructed with <code>preview=True</code> to use them.</p>
             </td>
             <td>
                   <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>column_groups</code>
+            </td>
+            <td>
+                  <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="str">str</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A dictionary assigning <strong>new</strong> columns to groups: map a new column's qualified
+title (its key in <code>data</code>, e.g. <code>"Assays▸Cu"</code>) to the qualified title of the group it belongs to.
+To move or ungroup an <em>existing</em> column, use :meth:<code>update_column_metadata</code> instead — a group change is
+metadata-only and does not require re-uploading data.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>group_missing_column_override</code>
+            </td>
+            <td>
+                  <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="evo.blockmodels.endpoints.models.MissingColumnPolicy">MissingColumnPolicy</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Per-request override of the resolved missing-column policy for
+specific groups, keyed by the group's <strong>qualified title</strong> (e.g. <code>"Assays▸Geochem"</code>). The override is
+local to this request only and does not affect other groups in the same zone. The service currently
+only supports :attr:<code>~evo.blockmodels.data.MissingColumnPolicy.USE_PREVIOUS</code>, which keeps a group's
+omitted columns at their previous values instead of applying the group's resolved policy (e.g.
+<code>SET_NULL</code>).</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>separator</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The single character separating a group's qualified title from a column title in
+qualified column titles (e.g. <code>Assays▸Cu</code>). Defaults to <code>▸</code>. Provide this only when the block model
+uses a non-default separator; it is then forwarded to the service for this request.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="evo.blockmodels.data.QUALIFIED_TITLE_SEPARATOR">QUALIFIED_TITLE_SEPARATOR</span></code>
             </td>
           </tr>
       </tbody>
@@ -1845,6 +2003,9 @@ client must be constructed with <code>preview=True</code> to use them.</p>
     <span class="n">fill_subblocks</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">tags</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">update_type</span><span class="p">:</span> <span class="n">UpdateType</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">UpdateType</span><span class="o">.</span><span class="n">replace</span><span class="p">,</span>
+    <span class="n">column_groups</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">group_missing_column_override</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">MissingColumnPolicy</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">separator</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">_QUALIFIED_TITLE_SEPARATOR</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Version</span>
 </code></pre></div>
 
@@ -1894,7 +2055,9 @@ If <code>False</code>, the geometry of the sub-blocked model does not change, bu
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The data containing the new columns to add.</p>
+                <p>The data containing the affected columns, keyed by each column's title
+(a plain title for an ungrouped column, or the qualified <code>group▸title</code> for a grouped one).
+:func:<code>~evo.blockmodels.data.qualify_column_titles</code> can build these titles from plain-titled data.</p>
               </div>
             </td>
             <td>
@@ -1910,7 +2073,8 @@ If <code>False</code>, the geometry of the sub-blocked model does not change, bu
             </td>
             <td>
               <div class="doc-md-description">
-                <p>A list of new column names to add to the block model.</p>
+                <p>A list of new columns to add, named by their title in <code>data</code> (qualified
+<code>group▸title</code> for a grouped column, plain otherwise).</p>
               </div>
             </td>
             <td>
@@ -1926,7 +2090,8 @@ If <code>False</code>, the geometry of the sub-blocked model does not change, bu
             </td>
             <td>
               <div class="doc-md-description">
-                <p>A set of column names to update in the block model.</p>
+                <p>A set of existing columns to re-upload, each identified by the title the service
+currently stores it under: its qualified title (<code>group▸title</code>) if grouped, or its plain title if not.</p>
               </div>
             </td>
             <td>
@@ -1942,7 +2107,8 @@ If <code>False</code>, the geometry of the sub-blocked model does not change, bu
             </td>
             <td>
               <div class="doc-md-description">
-                <p>A set of column names to delete from the block model.</p>
+                <p>A set of existing columns to delete, identified the same way as <code>update_columns</code>
+(qualified title if grouped, plain otherwise).</p>
               </div>
             </td>
             <td>
@@ -2016,6 +2182,64 @@ client must be constructed with <code>preview=True</code> to use them.</p>
                   <code>None</code>
             </td>
           </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>column_groups</code>
+            </td>
+            <td>
+                  <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="str">str</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A dictionary assigning <strong>new</strong> columns to groups: map a new column's qualified
+title (its key in <code>data</code>, e.g. <code>"Assays▸Cu"</code>) to the qualified title of the group it belongs to.
+To move or ungroup an <em>existing</em> column, use :meth:<code>update_column_metadata</code> instead — a group change is
+metadata-only and does not require re-uploading data.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>group_missing_column_override</code>
+            </td>
+            <td>
+                  <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="evo.blockmodels.endpoints.models.MissingColumnPolicy">MissingColumnPolicy</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Per-request override of the resolved missing-column policy for
+specific groups, keyed by the group's <strong>qualified title</strong> (e.g. <code>"Assays▸Geochem"</code>). The override is
+local to this request only and does not affect other groups in the same zone. The service currently
+only supports :attr:<code>~evo.blockmodels.data.MissingColumnPolicy.USE_PREVIOUS</code>, which keeps a group's
+omitted columns at their previous values instead of applying the group's resolved policy (e.g.
+<code>SET_NULL</code>).</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>separator</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The single character separating a group's qualified title from a column title in
+qualified column titles (e.g. <code>Assays▸Cu</code>). Defaults to <code>▸</code>. Provide this only when the block model
+uses a non-default separator; it is then forwarded to the service for this request.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="evo.blockmodels.data.QUALIFIED_TITLE_SEPARATOR">QUALIFIED_TITLE_SEPARATOR</span></code>
+            </td>
+          </tr>
       </tbody>
     </table>
 
@@ -2049,10 +2273,15 @@ client must be constructed with <code>preview=True</code> to use them.</p>
 <ul>
 <li>A <code>str</code> sets the column's unit ID.</li>
 <li><code>None</code> clears the column's unit ID.</li>
-<li>A :class:<code>ColumnMetadataUpdate</code> sets any combination of unit ID and/or tags. Only the
+<li>A :class:<code>ColumnMetadataUpdate</code> sets any combination of unit ID, tags and/or group. Only the
   fields explicitly set on the object are sent; unset fields are left untouched. Set
-  <code>tags={}</code> to clear a column's tags, or <code>unit_id=None</code> to clear its unit.</li>
+  <code>tags={}</code> to clear a column's tags, <code>unit_id=None</code> to clear its unit, or <code>group=""</code> to
+  move the column out of any group.</li>
 </ul>
+<p>A column's group is metadata, so it can be moved (or ungrouped) here without re-uploading its
+data. Address the column by the title the service currently stores it under: its qualified title
+(<code>group▸title</code>) if it is currently grouped, or its plain title if it is not. Set
+<code>ColumnMetadataUpdate(group=...)</code> to the target group's qualified title (or <code>""</code> to ungroup).</p>
 <p>Column tags are a preview feature; the client must be constructed with <code>preview=True</code> to use them.</p>
 
 
@@ -2094,7 +2323,7 @@ client must be constructed with <code>preview=True</code> to use them.</p>
               <div class="doc-md-description">
                 <p>A dictionary mapping column titles to their metadata update.
 Example: {"Cu": "%[mass]", "Au": None,
-"Ag": ColumnMetadataUpdate(tags={"source": "assay"})}</p>
+"Assays▸Ag": ColumnMetadataUpdate(group="Geology")}</p>
               </div>
             </td>
             <td>
@@ -2137,6 +2366,165 @@ Example: {"Cu": "%[mass]", "Au": None,
             <td>
               <div class="doc-md-description">
                 <p>The new version of the block model with updated metadata.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.blockmodels.client.BlockModelAPIClient.update_groups" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">update_groups</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">update_groups</span><span class="p">(</span>
+    <span class="n">bm_id</span><span class="p">:</span> <span class="n">UUID</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">new</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">GroupDefinition</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">update</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">GroupMetadataUpdate</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">delete</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Version</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Create, update, and/or delete column groups on a block model.</p>
+<p>This method manages group definitions without requiring data upload or cache configuration. Any
+combination of <code>new</code>, <code>update</code> and <code>delete</code> can be supplied in a single call.</p>
+<p>Groups are addressed by their qualified title (a bare title for a top-level group, or segments
+joined by <code>▸</code> for a nested group). To assign a <em>new</em> column to a group, use the <code>column_groups</code>
+parameter on the column methods; to move or ungroup an <em>existing</em> column, use
+:meth:<code>update_column_metadata</code>. To resolve a written group back to its server-assigned UUID and
+resolved policy, use the helpers on the returned :class:<code>~evo.blockmodels.data.Version</code>, e.g.
+:meth:<code>~evo.blockmodels.data.Version.group_by_qualified_title</code>.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>bm_id</code>
+            </td>
+            <td>
+                  <code><span title="uuid.UUID">UUID</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The ID of the block model to update.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>new</code>
+            </td>
+            <td>
+                  <code><span title="list">list</span>[<span title="evo.blockmodels.data.GroupDefinition">GroupDefinition</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Definitions of new groups to create.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>update</code>
+            </td>
+            <td>
+                  <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="evo.blockmodels.data.GroupMetadataUpdate">GroupMetadataUpdate</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A dictionary mapping the qualified title of an existing group to the metadata update
+to apply to it. Use :class:<code>GroupMetadataUpdate</code> to rename, re-parent, change the missing-column
+policy, replace tags, or toggle the hidden flag.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>delete</code>
+            </td>
+            <td>
+                  <code><span title="list">list</span>[<span title="str">str</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Qualified titles of groups to delete.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>comment</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>An optional comment describing the changes. This is max 250 characters.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="evo.blockmodels.data.Version">Version</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The new version of the block model with the updated groups.</p>
               </div>
             </td>
           </tr>
@@ -2391,6 +2779,7 @@ Example: {"Cu": "Copper", "Au": "Gold"}</p>
     <span class="n">geometry_columns</span><span class="p">:</span> <span class="n">GeometryColumns</span> <span class="o">=</span> <span class="n">GeometryColumns</span><span class="o">.</span><span class="n">coordinates</span><span class="p">,</span>
     <span class="n">column_headers</span><span class="p">:</span> <span class="n">ColumnHeaderType</span> <span class="o">=</span> <span class="n">ColumnHeaderType</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
     <span class="n">exclude_null_rows</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">separator</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">_QUALIFIED_TITLE_SEPARATOR</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span>
 </code></pre></div>
 
@@ -2525,6 +2914,26 @@ the block model column.</p>
                   <code>True</code>
             </td>
           </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>separator</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The single character separating a group's qualified title from a column title in qualified
+column titles (e.g. <code>Assays▸Cu</code>). Defaults to <code>▸</code>. Provide this only when the block model uses a
+non-default separator; it is then used to parse any qualified titles in <code>columns</code> and to render returned
+qualified headers, and is forwarded to the service for this request. It must match the separator the model
+was written with, otherwise the query is rejected.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="evo.blockmodels.data.QUALIFIED_TITLE_SEPARATOR">QUALIFIED_TITLE_SEPARATOR</span></code>
+            </td>
+          </tr>
       </tbody>
     </table>
 
@@ -2609,6 +3018,7 @@ the block model column.</p>
     <span class="n">geometry_columns</span><span class="p">:</span> <span class="n">GeometryColumns</span> <span class="o">=</span> <span class="n">GeometryColumns</span><span class="o">.</span><span class="n">coordinates</span><span class="p">,</span>
     <span class="n">column_headers</span><span class="p">:</span> <span class="n">ColumnHeaderType</span> <span class="o">=</span> <span class="n">ColumnHeaderType</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
     <span class="n">exclude_null_rows</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">separator</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">_QUALIFIED_TITLE_SEPARATOR</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Table</span>
 </code></pre></div>
 
@@ -2741,6 +3151,26 @@ the block model column.</p>
             </td>
             <td>
                   <code>True</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>separator</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The single character separating a group's qualified title from a column title in qualified
+column titles (e.g. <code>Assays▸Cu</code>). Defaults to <code>▸</code>. Provide this only when the block model uses a
+non-default separator; it is then used to parse any qualified titles in <code>columns</code> and to render returned
+qualified headers, and is forwarded to the service for this request. It must match the separator the model
+was written with, otherwise the query is rejected.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="evo.blockmodels.data.QUALIFIED_TITLE_SEPARATOR">QUALIFIED_TITLE_SEPARATOR</span></code>
             </td>
           </tr>
       </tbody>

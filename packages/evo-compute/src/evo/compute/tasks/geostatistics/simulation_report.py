@@ -48,13 +48,14 @@ from __future__ import annotations
 from typing import Any, ClassVar, Literal
 
 from evo.common import IContext
-from pydantic import BaseModel, Field, SerializerFunctionWrapHandler, model_serializer
+from pydantic import BaseModel, Field, SerializerFunctionWrapHandler, field_validator, model_serializer
 
 from ..common import (
     GeoscienceObjectReference,
     SearchNeighborhood,
 )
 from ..common.runner import TaskRunner
+from ..common.search import _reject_sector_and_drillhole_limits
 from .conditioned_simulator import TailExtrapolationParams
 
 __all__ = [
@@ -228,6 +229,11 @@ class SimulationReportParameters(BaseModel):
 
     report_mean_thresholds: SimReportThresholds | None = None
     """Optional thresholds for mean comparison validation."""
+
+    @field_validator("neighborhood")
+    @classmethod
+    def _check_neighborhood(cls, neighborhood: SearchNeighborhood) -> SearchNeighborhood:
+        return _reject_sector_and_drillhole_limits(neighborhood)
 
 
 # =============================================================================
