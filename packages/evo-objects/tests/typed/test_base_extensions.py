@@ -26,7 +26,7 @@ from evo.objects.typed import PointSet, PointSetData, Regular3DGrid, Regular3DGr
 from evo.objects.typed.base import _BaseObject
 from evo.objects.typed.types import Point3, Size3d, Size3i
 
-from .helpers import MockClient
+from .helpers import MockClient, mock_data_client
 
 
 class TestRefreshMethodExists(TestCase):
@@ -60,8 +60,8 @@ class TestRefreshOnPointSet(TestWithConnector):
     def _mock_geoscience_objects(self):
         mock_client = MockClient(self.environment)
         with (
-            patch("evo.objects.typed.attributes.get_data_client", lambda _: mock_client),
-            patch("evo.objects.typed._data.get_data_client", lambda _: mock_client),
+            patch("evo.objects.typed.attributes.get_data_client", mock_data_client(mock_client)),
+            patch("evo.objects.typed._data.get_data_client", mock_data_client(mock_client)),
             patch("evo.objects.typed.base.create_geoscience_object", mock_client.create_geoscience_object),
             patch("evo.objects.typed.base.replace_geoscience_object", mock_client.replace_geoscience_object),
             patch("evo.objects.DownloadedObject.from_context", mock_client.from_reference),
@@ -143,8 +143,8 @@ class TestRefreshOnRegular3DGrid(TestWithConnector):
     def _mock_geoscience_objects(self):
         mock_client = MockClient(self.environment)
         with (
-            patch("evo.objects.typed.attributes.get_data_client", lambda _: mock_client),
-            patch("evo.objects.typed._data.get_data_client", lambda _: mock_client),
+            patch("evo.objects.typed.attributes.get_data_client", mock_data_client(mock_client)),
+            patch("evo.objects.typed._data.get_data_client", mock_data_client(mock_client)),
             patch("evo.objects.typed.base.create_geoscience_object", mock_client.create_geoscience_object),
             patch("evo.objects.typed.base.replace_geoscience_object", mock_client.replace_geoscience_object),
             patch("evo.objects.DownloadedObject.from_context", mock_client.from_reference),

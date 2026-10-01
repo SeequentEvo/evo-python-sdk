@@ -25,7 +25,7 @@ from evo.objects.typed import BoundingBox, PointSet, PointSetData
 from evo.objects.typed.base import BaseObject
 from evo.objects.typed.exceptions import ObjectValidationError
 
-from .helpers import MockClient
+from .helpers import MockClient, mock_data_client
 
 
 class TestPointSet(TestWithConnector):
@@ -41,8 +41,8 @@ class TestPointSet(TestWithConnector):
     def _mock_geoscience_objects(self):
         mock_client = MockClient(self.environment)
         with (
-            patch("evo.objects.typed.attributes.get_data_client", lambda _: mock_client),
-            patch("evo.objects.typed._data.get_data_client", lambda _: mock_client),
+            patch("evo.objects.typed.attributes.get_data_client", mock_data_client(mock_client)),
+            patch("evo.objects.typed._data.get_data_client", mock_data_client(mock_client)),
             patch("evo.objects.typed.base.create_geoscience_object", mock_client.create_geoscience_object),
             patch("evo.objects.typed.base.replace_geoscience_object", mock_client.replace_geoscience_object),
             patch("evo.objects.DownloadedObject.from_context", mock_client.from_reference),
@@ -142,6 +142,16 @@ class TestPointSet(TestWithConnector):
 
             actual_df = await result.locations.to_dataframe()
             pd.testing.assert_frame_equal(actual_df, self.example_pointset.locations)
+
+    async def test_coordinates(self):
+        """Test that coordinates() returns only the x, y, z columns."""
+        with self._mock_geoscience_objects():
+            obj = await PointSet.create(context=self.context, data=self.example_pointset)
+
+            actual_df = await obj.coordinates()
+
+        expected_df = self.example_pointset.locations[["x", "y", "z"]]
+        pd.testing.assert_frame_equal(actual_df, expected_df)
 
     def test_bounding_box_from_data(self):
         """Test that the bounding box is computed correctly from the data."""
