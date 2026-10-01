@@ -364,6 +364,21 @@ class TestGetBlocksyncReportUrl(unittest.TestCase):
             "https://blocksync.seequent.com/org-123/350mt/ws-456/blockmodel/bm-789/reports/report-abc?result_id=result-xyz",
         )
 
+    def test_encodes_report_result_id_query_value(self):
+        """Report result IDs cannot add query parameters."""
+        result = get_blocksync_report_url(
+            org_id="org-123",
+            hub_code="350mt",
+            workspace_id="ws-456",
+            block_model_id="bm-789",
+            report_id="report-abc",
+            result_id="result&other=value",
+        )
+        self.assertEqual(
+            result,
+            "https://blocksync.seequent.com/org-123/350mt/ws-456/blockmodel/bm-789/reports/report-abc?result_id=result%26other%3Dvalue",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
