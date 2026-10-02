@@ -30,6 +30,8 @@ class _ArrayLike1D(Protocol[_T_co]):
     @property
     def ndim(self) -> int: ...
 
+    def __len__(self) -> int: ...
+
     def tolist(self) -> list[_T_co]: ...
 
 
@@ -83,6 +85,8 @@ def _three_values(value: object, name: str) -> tuple:
     if hasattr(value, "ndim") and hasattr(value, "tolist"):
         if value.ndim != 1:
             raise ValueError(f"{name} must be a one-dimensional array of exactly three values")
+        if len(value) != 3:
+            raise ValueError(f"{name} must have exactly three values")
         value = value.tolist()
     if not isinstance(value, (tuple, list)):
         raise TypeError(f"{name} must be a three-value list, tuple, or one-dimensional array")
@@ -92,7 +96,10 @@ def _three_values(value: object, name: str) -> tuple:
 
 
 def as_point3(value: Point3 | FloatArrayLike3) -> Point3:
-    """Convert a list, tuple, or 1D array of finite coordinates; preserve a Point3."""
+    """Validate and convert a list, tuple, or 1D array of finite coordinates.
+
+    Existing Point3 instances are returned unchanged without revalidation.
+    """
     if isinstance(value, Point3):
         return value
     coordinates = _three_values(value, "origin")
@@ -102,7 +109,10 @@ def as_point3(value: Point3 | FloatArrayLike3) -> Point3:
 
 
 def as_size3i(value: Size3i | IntArrayLike3, *, name: str = "n_blocks") -> Size3i:
-    """Convert a list, tuple, or 1D array of positive counts; preserve a Size3i."""
+    """Validate and convert a list, tuple, or 1D array of positive counts.
+
+    Existing Size3i instances are returned unchanged without revalidation.
+    """
     if isinstance(value, Size3i):
         return value
     counts = _three_values(value, name)
@@ -112,7 +122,10 @@ def as_size3i(value: Size3i | IntArrayLike3, *, name: str = "n_blocks") -> Size3
 
 
 def as_size3d(value: Size3d | FloatArrayLike3, *, name: str = "block_size") -> Size3d:
-    """Convert a list, tuple, or 1D array of positive finite sizes; preserve a Size3d."""
+    """Validate and convert a list, tuple, or 1D array of positive finite sizes.
+
+    Existing Size3d instances are returned unchanged without revalidation.
+    """
     if isinstance(value, Size3d):
         return value
     sizes = _three_values(value, name)

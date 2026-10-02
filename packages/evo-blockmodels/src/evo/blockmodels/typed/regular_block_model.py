@@ -39,6 +39,9 @@ __all__ = [
 class RegularBlockModelData:
     """Data class for creating a new regular block model.
 
+    Existing Point3, Size3i, and Size3d inputs are kept as-is for compatibility;
+    new sequences are checked for the constraints below.
+
     :param name: The name of the block model.
     :param origin: A Point3 or three finite (x, y, z) values in a list, tuple, or 1D array.
     :param n_blocks: A Size3i or three positive integer (nx, ny, nz) counts in a list, tuple, or 1D array.

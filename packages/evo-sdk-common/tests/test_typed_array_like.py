@@ -20,8 +20,13 @@ class ArrayLike:
     def __init__(self, values, ndim=1):
         self.values = values
         self.ndim = ndim
+        self.converted = False
+
+    def __len__(self):
+        return len(self.values)
 
     def tolist(self):
+        self.converted = True
         return self.values
 
 
@@ -45,5 +50,7 @@ def test_array_like_requires_one_dimension(ndim):
 
 
 def test_array_like_requires_three_values():
+    value = ArrayLike([1, 2])
     with pytest.raises(ValueError, match="exactly three"):
-        as_size3d(ArrayLike([1, 2]))
+        as_size3d(value)
+    assert not value.converted
