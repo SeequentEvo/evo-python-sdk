@@ -19,7 +19,7 @@ from uuid import UUID
 import pandas as pd
 
 from evo.common import IContext, IFeedback, StaticContext
-from evo.common.typed import as_point3, as_size3d, as_size3i
+from evo.common.typed import FloatArrayLike3, IntArrayLike3, as_point3, as_size3d, as_size3i
 from evo.common.utils import NoFeedback
 
 from ..client import BlockModelAPIClient
@@ -54,9 +54,9 @@ class RegularBlockModelData:
     """
 
     name: str
-    origin: Point3 | tuple[float, float, float] | list[float]
-    n_blocks: Size3i | tuple[int, int, int] | list[int]
-    block_size: Size3d | tuple[float, float, float] | list[float]
+    origin: Point3 | FloatArrayLike3
+    n_blocks: Size3i | IntArrayLike3
+    block_size: Size3d | FloatArrayLike3
     rotations: list[tuple[RotationAxis, float]] = field(default_factory=list)
     cell_data: pd.DataFrame | None = None
     description: str | None = None

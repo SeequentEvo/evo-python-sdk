@@ -22,7 +22,7 @@ import pandas as pd
 from pydantic import AliasChoices, Field
 
 from evo.common import IFeedback
-from evo.common.typed import as_point3, as_size3d, as_size3i
+from evo.common.typed import FloatArrayLike3, IntArrayLike3, as_point3, as_size3d, as_size3i
 from evo.common.utils import NoFeedback
 
 from ._model import DataLocation, SchemaLocation, SchemaModel
@@ -50,8 +50,8 @@ class Base3DGridData(BaseSpatialObjectData):
     Origin and size accept their named types or three values in a list, tuple, or 1D array.
     """
 
-    origin: Point3 | tuple[float, float, float] | list[float]
-    size: Size3i | tuple[int, int, int] | list[int]
+    origin: Point3 | FloatArrayLike3
+    size: Size3i | IntArrayLike3
     cell_data: pd.DataFrame | None = None
     rotation: Rotation | None = None
 
@@ -69,7 +69,7 @@ class BaseRegular3DGridData(Base3DGridData):
     values in a list, tuple, or 1D array.
     """
 
-    cell_size: Size3d | tuple[float, float, float] | list[float]
+    cell_size: Size3d | FloatArrayLike3
 
     def __post_init__(self) -> None:
         super().__post_init__()
@@ -234,9 +234,9 @@ class RegularBlockModelData:
     """
 
     name: str
-    origin: Point3 | tuple[float, float, float] | list[float]
-    n_blocks: Size3i | tuple[int, int, int] | list[int]
-    block_size: Size3d | tuple[float, float, float] | list[float]
+    origin: Point3 | FloatArrayLike3
+    n_blocks: Size3i | IntArrayLike3
+    block_size: Size3d | FloatArrayLike3
     cell_data: pd.DataFrame | None = None
     description: str | None = None
     coordinate_reference_system: str | None = None

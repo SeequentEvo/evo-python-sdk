@@ -19,10 +19,27 @@ from __future__ import annotations
 
 from math import isfinite
 from numbers import Integral, Real
-from typing import NamedTuple
+from typing import NamedTuple, Protocol, TypeAlias, TypeVar
+
+_T_co = TypeVar("_T_co", covariant=True)
+
+
+class _ArrayLike1D(Protocol[_T_co]):
+    """Array-like input convertible to a Python list without importing NumPy."""
+
+    @property
+    def ndim(self) -> int: ...
+
+    def tolist(self) -> list[_T_co]: ...
+
+
+FloatArrayLike3: TypeAlias = tuple[float, float, float] | list[float] | _ArrayLike1D[float]
+IntArrayLike3: TypeAlias = tuple[int, int, int] | list[int] | _ArrayLike1D[int]
 
 __all__ = [
     "BoundingBox",
+    "FloatArrayLike3",
+    "IntArrayLike3",
     "Point3",
     "Size3d",
     "Size3i",
@@ -74,7 +91,7 @@ def _three_values(value: object, name: str) -> tuple:
     return tuple(value)
 
 
-def as_point3(value: Point3 | tuple[float, float, float] | list[float]) -> Point3:
+def as_point3(value: Point3 | FloatArrayLike3) -> Point3:
     """Convert a list, tuple, or 1D array of finite coordinates; preserve a Point3."""
     if isinstance(value, Point3):
         return value
@@ -84,7 +101,7 @@ def as_point3(value: Point3 | tuple[float, float, float] | list[float]) -> Point
     return Point3(*coordinates)
 
 
-def as_size3i(value: Size3i | tuple[int, int, int] | list[int], *, name: str = "n_blocks") -> Size3i:
+def as_size3i(value: Size3i | IntArrayLike3, *, name: str = "n_blocks") -> Size3i:
     """Convert a list, tuple, or 1D array of positive counts; preserve a Size3i."""
     if isinstance(value, Size3i):
         return value
@@ -94,7 +111,7 @@ def as_size3i(value: Size3i | tuple[int, int, int] | list[int], *, name: str = "
     return Size3i(*counts)
 
 
-def as_size3d(value: Size3d | tuple[float, float, float] | list[float], *, name: str = "block_size") -> Size3d:
+def as_size3d(value: Size3d | FloatArrayLike3, *, name: str = "block_size") -> Size3d:
     """Convert a list, tuple, or 1D array of positive finite sizes; preserve a Size3d."""
     if isinstance(value, Size3d):
         return value
