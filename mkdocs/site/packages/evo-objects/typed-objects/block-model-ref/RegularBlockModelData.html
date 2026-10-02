@@ -91,7 +91,9 @@
 
         <p>Data for creating a regular block model.</p>
 <p>This creates a new block model in the Block Model Service and a corresponding
-Geoscience Object reference.</p>
+Geoscience Object reference.
+Existing Point3, Size3i, and Size3d inputs are kept as-is for compatibility;
+new sequences are checked for the constraints below.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -126,11 +128,11 @@ Geoscience Object reference.</p>
                 <code>origin</code>
             </td>
             <td>
-                  <code><a class="autorefs autorefs-internal" title="evo.objects.typed.types.Point3" href="../types/Point3.html#evo.objects.typed.types.Point3">Point3</a></code>
+                  <code><a class="autorefs autorefs-internal" title="evo.objects.typed.types.Point3" href="../types/Point3.html#evo.objects.typed.types.Point3">Point3</a> | <span title="evo.common.typed.FloatArrayLike3">FloatArrayLike3</span></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The origin point (x, y, z) of the block model.</p>
+                <p>A Point3 or three finite (x, y, z) values in a list, tuple, or 1D array.</p>
               </div>
             </td>
             <td>
@@ -142,11 +144,11 @@ Geoscience Object reference.</p>
                 <code>n_blocks</code>
             </td>
             <td>
-                  <code><a class="autorefs autorefs-internal" title="evo.objects.typed.types.Size3i" href="../types/Size3i.html#evo.objects.typed.types.Size3i">Size3i</a></code>
+                  <code><a class="autorefs autorefs-internal" title="evo.objects.typed.types.Size3i" href="../types/Size3i.html#evo.objects.typed.types.Size3i">Size3i</a> | <span title="evo.common.typed.IntArrayLike3">IntArrayLike3</span></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The number of blocks in each dimension (nx, ny, nz).</p>
+                <p>A Size3i or three positive integer (nx, ny, nz) counts in a list, tuple, or 1D array.</p>
               </div>
             </td>
             <td>
@@ -158,11 +160,11 @@ Geoscience Object reference.</p>
                 <code>block_size</code>
             </td>
             <td>
-                  <code><a class="autorefs autorefs-internal" title="evo.objects.typed.types.Size3d" href="../types/Size3d.html#evo.objects.typed.types.Size3d">Size3d</a></code>
+                  <code><a class="autorefs autorefs-internal" title="evo.objects.typed.types.Size3d" href="../types/Size3d.html#evo.objects.typed.types.Size3d">Size3d</a> | <span title="evo.common.typed.FloatArrayLike3">FloatArrayLike3</span></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The size of each block (dx, dy, dz).</p>
+                <p>A Size3d or three positive finite (dx, dy, dz) values in a list, tuple, or 1D array.</p>
               </div>
             </td>
             <td>

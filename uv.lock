@@ -899,9 +899,9 @@ test = [
 
 [package.metadata]
 requires-dist = [
-    { name = "evo-sdk-common", editable = "packages/evo-sdk-common" },
-    { name = "evo-sdk-common", extras = ["aiohttp"], marker = "extra == 'aiohttp'", editable = "packages/evo-sdk-common" },
-    { name = "evo-sdk-common", extras = ["notebooks"], marker = "extra == 'notebooks'", editable = "packages/evo-sdk-common" },
+    { name = "evo-sdk-common", specifier = ">=0.5.28", editable = "packages/evo-sdk-common" },
+    { name = "evo-sdk-common", extras = ["aiohttp"], marker = "extra == 'aiohttp'", specifier = ">=0.5.28", editable = "packages/evo-sdk-common" },
+    { name = "evo-sdk-common", extras = ["notebooks"], marker = "extra == 'notebooks'", specifier = ">=0.5.28", editable = "packages/evo-sdk-common" },
     { name = "pandas", marker = "extra == 'utils'", specifier = ">=2.0.0" },
     { name = "pyarrow", marker = "extra == 'utils'", specifier = ">=19.0.0" },
     { name = "pydantic", specifier = ">=2,<3" },
@@ -1174,7 +1174,7 @@ test = [
 requires-dist = [
     { name = "evo-blockmodels", extras = ["utils"], marker = "extra == 'blockmodels'", editable = "packages/evo-blockmodels" },
     { name = "evo-sdk-common", extras = ["aiohttp"], marker = "extra == 'aiohttp'", editable = "packages/evo-sdk-common" },
-    { name = "evo-sdk-common", extras = ["jmespath"], editable = "packages/evo-sdk-common" },
+    { name = "evo-sdk-common", extras = ["jmespath"], specifier = ">=0.5.28", editable = "packages/evo-sdk-common" },
     { name = "evo-sdk-common", extras = ["notebooks"], marker = "extra == 'notebooks'", editable = "packages/evo-sdk-common" },
     { name = "numpy", marker = "extra == 'utils'" },
     { name = "pandas", marker = "extra == 'utils'" },
@@ -1279,7 +1279,7 @@ test = [
 
 [[package]]
 name = "evo-sdk-common"
-version = "0.5.27"
+version = "0.5.28"
 source = { editable = "packages/evo-sdk-common" }
 dependencies = [
     { name = "pure-interface" },
