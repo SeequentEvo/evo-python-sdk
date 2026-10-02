@@ -1,5 +1,15 @@
 # Changelog
 
+## evo-widgets@v0.2.2
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### evo-widgets
+* Add html escaping by @grantroch in https://github.com/SeequentEvo/evo-python-sdk/pull/359
+* Bump evo-widgets version by @GriffinBaxterSeequent in https://github.com/SeequentEvo/evo-python-sdk/pull/364
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-widgets@v0.2.1...evo-widgets@v0.2.2
+
 ## evo-compute@0.0.5
 <!-- Release notes generated using configuration in .github/release.yml at main -->
 
