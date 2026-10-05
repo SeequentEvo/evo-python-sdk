@@ -994,7 +994,7 @@ test = [
 
 [[package]]
 name = "evo-compute"
-version = "0.0.5"
+version = "0.0.6"
 source = { editable = "packages/evo-compute" }
 dependencies = [
     { name = "evo-blockmodels", extra = ["utils"] },
@@ -1279,7 +1279,7 @@ test = [
 
 [[package]]
 name = "evo-sdk-common"
-version = "0.5.27"
+version = "0.5.28"
 source = { editable = "packages/evo-sdk-common" }
 dependencies = [
     { name = "pure-interface" },
