@@ -78,7 +78,17 @@ class Size3i(NamedTuple):
     def total_size(self) -> int:
         """The total size (number of elements) represented by this Size3i."""
         return self.nx * self.ny * self.nz
-
+def _is_valid_number(value: object, kind: type[Integral] | type[Real], *, positive: bool) -> bool:
+    if not isinstance(value, kind) or isinstance(value, bool):
+        return False
+    try:
+        if not isfinite(value):
+            return False
+        if positive and not float(value) > 0:
+            return False
+    except TypeError:
+        return False
+    return True
 
 def _three_values(value: object, name: str) -> tuple:
     # Accept NumPy-style arrays without requiring NumPy in evo-sdk-common.
