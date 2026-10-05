@@ -49,7 +49,7 @@ class DataTable(SchemaModel):
         :param df: DataFrame containing the new values for this table.
         :param fb: Optional feedback object to report upload progress.
         """
-        self._document.update(await self._data_to_schema(df, self._context, fb=fb))
+        self._document.update(await self._data_to_schema(df, self._obj, fb=fb))
 
         # Mark the context as modified so loading data is not allowed
         self._context.mark_modified(self._data)
