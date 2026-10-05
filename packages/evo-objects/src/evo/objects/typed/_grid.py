@@ -227,9 +227,9 @@ class RegularBlockModelData:
     new sequences are checked for the constraints below.
 
     :param name: The name of the block model.
-    :param origin: A Point3 or three finite (x, y, z) values in a list, tuple, or 1D array.
-    :param n_blocks: A Size3i or three positive integer (nx, ny, nz) counts in a list, tuple, or 1D array.
-    :param block_size: A Size3d or three positive finite (dx, dy, dz) values in a list, tuple, or 1D array.
+    :param origin: The origin point (x, y, z) of the block model.
+    :param n_blocks: The number of blocks in each dimension (nx, ny, nz).
+    :param block_size: The size of each block (dx, dy, dz).
     :param cell_data: DataFrame with block data. Must contain (x, y, z) or (i, j, k) columns.
     :param description: Optional description.
     :param coordinate_reference_system: Coordinate reference system (e.g., "EPSG:28354").
