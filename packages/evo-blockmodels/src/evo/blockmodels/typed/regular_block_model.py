@@ -38,7 +38,6 @@ __all__ = [
 @dataclass(frozen=True, kw_only=True)
 class RegularBlockModelData:
     """Data class for creating a new regular block model.
-
     Existing Point3, Size3i, and Size3d inputs are kept as-is for compatibility;
     new sequences are checked for the constraints below.
 
