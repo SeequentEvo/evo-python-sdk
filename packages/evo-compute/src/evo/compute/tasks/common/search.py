@@ -32,7 +32,8 @@ class SearchNeighborhood(BaseModel):
     The search neighborhood is defined by an ellipsoid (spatial extent and
     orientation) and constraints on the number of samples to use.
 
-    Example:
+    Example::
+
         >>> search = SearchNeighborhood(
         ...     ellipsoid=Ellipsoid(
         ...         ranges=EllipsoidRanges(major=200.0, semi_major=150.0, minor=100.0),

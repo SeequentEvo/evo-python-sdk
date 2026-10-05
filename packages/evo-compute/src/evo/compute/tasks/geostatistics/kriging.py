@@ -15,7 +15,8 @@ Kriging compute task client.
 This module provides typed dataclass models and convenience functions for running
 the Kriging task (geostatistics/kriging).
 
-Example:
+Example::
+
     >>> from evo.compute.tasks import run, SearchNeighborhood, Ellipsoid, EllipsoidRanges
     >>> from evo.compute.tasks.geostatistics.kriging import KrigingParameters
     >>>
@@ -95,7 +96,8 @@ class SimpleKriging(BaseModel):
 
     Use when the mean of the variable is known and constant across the domain.
 
-    Example:
+    Example::
+
         >>> method = SimpleKriging(mean=100.0)
     """
 
@@ -122,7 +124,8 @@ class KrigingMethod:
 
     Provides convenient access to kriging method types.
 
-    Example:
+    Example::
+
         >>> # Use ordinary kriging (most common)
         >>> method = KrigingMethod.ORDINARY
         >>>
@@ -163,7 +166,8 @@ class BlockDiscretisation(BaseModel):
     Each dimension must be an integer between 1 and 9 (inclusive).
     The default value of 1 in every direction is equivalent to point kriging.
 
-    Example:
+    Example::
+
         >>> discretisation = BlockDiscretisation(nx=3, ny=3, nz=2)
     """
 
@@ -252,7 +256,8 @@ class KrigingDiagnostics(BaseModel):
     An existing attribute must be able to hold the diagnostic's values: boolean for ``valid``,
     integer for the ``num_*`` counts, and floating-point for the rest.
 
-    Example:
+    Example::
+
         >>> diagnostics = KrigingDiagnostics(
         ...     kriging_variance=True,  # creates "KV"
         ...     num_samples="sample_count",  # creates "sample_count"
@@ -610,7 +615,8 @@ class KrigingResult:
         Only the diagnostics requested through
         :attr:`KrigingParameters.diagnostics` are present.
 
-        Example:
+        Example::
+
             >>> result = await run(manager, params, preview=True)
             >>> result.diagnostics["kriging_variance"].name
             'KV'
@@ -643,7 +649,8 @@ class KrigingResult:
         Returns:
             The typed geoscience object (e.g., Regular3DGrid, RegularMasked3DGrid, BlockModel)
 
-        Example:
+        Example::
+
             >>> result = await run(manager, params)
             >>> target = await result.get_target_object()
             >>> target  # Pretty-prints with Portal/Viewer links
@@ -665,7 +672,8 @@ class KrigingResult:
         Returns:
             A pandas DataFrame containing the task results.
 
-        Example:
+        Example::
+
             >>> result = await run(manager, params)
             >>> df = await result.to_dataframe()
             >>> df.head()

@@ -19,7 +19,8 @@ Generates a validation report for a conditional turning-band simulation,
 including variogram reproduction statistics, summary metrics, and an
 optional interactive dashboard.
 
-Example:
+Example::
+
     >>> from evo.compute.tasks import run, SearchNeighborhood
     >>> from evo.compute.tasks.geostatistics.simulation_report import (
     ...     SimulationReportParameters,
@@ -160,7 +161,8 @@ class SimulationReportParameters(BaseModel):
     All simulation data references use flat string fields (object URLs and
     attribute expressions) rather than nested Source/Target objects.
 
-    Example:
+    Example::
+
         >>> params = SimulationReportParameters(
         ...     simulation_source=pointset_url,
         ...     source_attribute="locations.attributes[0]",

@@ -14,7 +14,8 @@
 This module provides a unified interface for running compute tasks. Tasks are
 dispatched based on their parameter types using a registry system.
 
-Example:
+Example::
+
     >>> from evo.compute.tasks import run, SearchNeighborhood, Target
     >>> from evo.compute.tasks.geostatistics.kriging import KrigingParameters
     >>>
@@ -126,7 +127,8 @@ async def run(
     Returns:
         TaskResult for a single task, or TaskResults for multiple tasks
 
-    Example (single task):
+    Example (single task)::
+
         >>> from evo.compute.tasks import run, SearchNeighborhood, Target
         >>> from evo.compute.tasks.geostatistics.kriging import KrigingParameters
         >>>
@@ -141,7 +143,8 @@ async def run(
         ... )
         >>> result = await run(manager, params, preview=True)
 
-    Example (multiple tasks):
+    Example (multiple tasks)::
+
         >>> results = await run(manager, [
         ...     KrigingParameters(...),
         ...     KrigingParameters(...),

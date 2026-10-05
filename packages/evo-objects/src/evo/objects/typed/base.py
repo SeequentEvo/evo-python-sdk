@@ -362,7 +362,8 @@ class _BaseObject(SchemaModel):
 
         :return: A new instance with refreshed data.
 
-        Example:
+        Example::
+
             >>> # After a remote operation modifies the object...
             >>> obj = await obj.refresh()
             >>> obj.attributes  # Now shows the latest attributes

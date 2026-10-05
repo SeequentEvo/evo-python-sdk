@@ -15,7 +15,8 @@ Classifies grid cells into material categories (ore/waste) based on ensemble
 simulation data and economic parameters.  Each cell is assigned the category
 that minimises the expected economic loss.
 
-Example:
+Example::
+
     >>> from evo.compute.tasks import run, Target
     >>> from evo.compute.tasks.geostatistics.loss_calculation import (
     ...     LossCalculationParameters,

@@ -70,7 +70,8 @@ class VariogramStructure:
         - Creating search ellipsoids via scaled()
         - Kriging search neighborhoods
 
-        Example:
+        Example::
+
             >>> # Get ellipsoid from variogram structure
             >>> var_ell = variogram.structures[0].to_ellipsoid()
             >>>
@@ -277,7 +278,8 @@ class VariogramData(BaseObjectData):
         - `modelling_space`: Set to "data" for original units or "normalscore" for gaussian space
         - `data_variance`: Should match the sill value for non-normalized data
 
-    Example using typed structures (recommended):
+    Example using typed structures (recommended)::
+
         >>> data = VariogramData(
         ...     name="My Variogram",
         ...     sill=1.0,
@@ -407,7 +409,8 @@ class Variogram(BaseObject):
         Returns:
             Ellipsoid configured with the structure's anisotropy ranges and rotation.
 
-        Example:
+        Example::
+
             >>> # Get ellipsoid from structure with largest range (default)
             >>> var_ell = variogram.get_ellipsoid()
             >>>
@@ -475,7 +478,8 @@ class Variogram(BaseObject):
         Returns:
             Tuple of (major_curve, semi_major_curve, minor_curve) as VariogramCurveData.
 
-        Example with Plotly:
+        Example with Plotly::
+
             >>> major, semi_maj, minor = variogram.get_principal_directions()
             >>> import plotly.graph_objects as go
             >>> fig = go.Figure()
@@ -549,7 +553,8 @@ class Variogram(BaseObject):
         Returns:
             Tuple of (distance, semivariance) as numpy arrays, suitable for plotting.
 
-        Example with Plotly:
+        Example with Plotly::
+
             >>> distance, semivariance = variogram.get_direction(azimuth=45, dip=30)
             >>> import plotly.graph_objects as go
             >>> fig = go.Figure()
@@ -557,7 +562,8 @@ class Variogram(BaseObject):
             >>> fig.update_layout(xaxis_title='Distance', yaxis_title='Semivariance')
             >>> fig.show()
 
-        Example with Matplotlib:
+        Example with Matplotlib::
+
             >>> distance, semivariance = variogram.get_direction(azimuth=0, dip=0)
             >>> import matplotlib.pyplot as plt
             >>> plt.plot(distance, semivariance)

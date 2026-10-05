@@ -15,7 +15,8 @@ Break Ties compute task client.
 This module provides typed dataclass models and convenience functions for running
 the Break Ties task (geostatistics/break-ties).
 
-Example:
+Example::
+
     >>> from evo.compute.tasks import run, SearchNeighborhood, Ellipsoid, EllipsoidRanges
     >>> from evo.compute.tasks.geostatistics.break_ties import BreakTiesParameters
     >>>
@@ -66,7 +67,8 @@ class BreakTiesParameters(BaseModel):
 
     Defines all inputs needed to run a break-ties spatial tie-breaking task.
 
-    Example:
+    Example::
+
         >>> from evo.compute.tasks import run, SearchNeighborhood, Ellipsoid, EllipsoidRanges, Target
         >>> from evo.compute.tasks.geostatistics.break_ties import BreakTiesParameters
         >>>
@@ -162,7 +164,8 @@ class BreakTiesResult:
         Returns:
             The typed geoscience object (e.g., PointSet, Regular3DGrid)
 
-        Example:
+        Example::
+
             >>> result = await run(manager, params)
             >>> target = await result.get_target_object()
         """
@@ -177,7 +180,8 @@ class BreakTiesResult:
         Returns:
             A pandas DataFrame containing the tie-broken attribute values.
 
-        Example:
+        Example::
+
             >>> result = await run(manager, params)
             >>> df = await result.to_dataframe()
             >>> df.head()
