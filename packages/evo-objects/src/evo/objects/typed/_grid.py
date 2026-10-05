@@ -223,8 +223,6 @@ class RegularBlockModelData:
 
     This creates a new block model in the Block Model Service and a corresponding
     Geoscience Object reference.
-    Existing Point3, Size3i, and Size3d inputs are kept as-is for compatibility;
-    new sequences are checked for the constraints below.
 
     :param name: The name of the block model.
     :param origin: The origin point (x, y, z) of the block model.
