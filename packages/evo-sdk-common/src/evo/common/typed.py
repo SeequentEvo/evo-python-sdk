@@ -103,11 +103,11 @@ def _is_valid_number(value: object, kind: type[Integral] | type[Real], *, positi
     if not isinstance(value, kind) or isinstance(value, bool):
         return False
     try:
-        if not isfinite(value):
+        if kind is Real and not isfinite(value):
             return False
-        if positive and not float(value) > 0:
+        if positive and value <= 0:
             return False
-    except TypeError:
+    except (TypeError, OverflowError):
         return False
     return True
 
