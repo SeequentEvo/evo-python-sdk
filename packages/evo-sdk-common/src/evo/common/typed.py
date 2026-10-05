@@ -82,7 +82,7 @@ class Size3i(NamedTuple):
 
 def _three_values(value: object, name: str) -> tuple:
     # Accept NumPy-style arrays without requiring NumPy in evo-sdk-common.
-    if hasattr(value, "ndim") and hasattr(value, "tolist"):
+    if isinstance(_ArrayLike1D):
         if value.ndim != 1:
             raise ValueError(f"{name} must be a one-dimensional array of exactly three values")
         if len(value) != 3:
