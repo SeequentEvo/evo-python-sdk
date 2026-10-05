@@ -901,7 +901,8 @@
             </td>
             <td>
               <div class="doc-md-description">
-                <p>A Retry object with a wait strategy. If None, a default Retry is created.</p>
+                <p>A Retry object with a wait strategy. If None, a default Retry is created that only retries
+transient errors (see <code>is_transient_error</code>).</p>
               </div>
             </td>
             <td>
