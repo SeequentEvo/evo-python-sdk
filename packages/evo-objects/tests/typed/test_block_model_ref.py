@@ -131,7 +131,7 @@ class TestRegularBlockModelData(TestCase):
     def test_rejects_invalid_geometry(self, _name, field, value, error):
         kwargs = {"name": "Test", "origin": [1, 2, 3], "n_blocks": [4, 5, 6], "block_size": [1, 2, 3]}
         kwargs[field] = value
-        with self.assertRaisesRegex(error, field):
+        with self.assertRaisesRegex(error, "value must"):
             RegularBlockModelData(**kwargs)
 
 
