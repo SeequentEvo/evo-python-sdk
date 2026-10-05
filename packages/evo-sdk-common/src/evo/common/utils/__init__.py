@@ -21,10 +21,20 @@ from .feedback import (
     split_feedback,
 )
 from .health_check import get_service_health, get_service_status
-from .retry import BackoffExponential, BackoffIncremental, BackoffLinear, BackoffMethod, Retry, RetryHandler
+from .retry import (
+    TRANSIENT_HTTP_STATUSES,
+    BackoffExponential,
+    BackoffIncremental,
+    BackoffLinear,
+    BackoffMethod,
+    Retry,
+    RetryHandler,
+    is_transient_error,
+)
 from .version import get_header_metadata
 
 __all__ = [
+    "TRANSIENT_HTTP_STATUSES",
     "BackoffExponential",
     "BackoffIncremental",
     "BackoffLinear",
@@ -38,6 +48,7 @@ __all__ = [
     "get_header_metadata",
     "get_service_health",
     "get_service_status",
+    "is_transient_error",
     "iter_with_fb",
     "parse_order_by",
     "reset_feedback_factory",

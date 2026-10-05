@@ -15,17 +15,49 @@ import asyncio
 import contextlib
 import logging
 from abc import ABC, abstractmethod
+from collections.abc import Callable
+from http import HTTPStatus
 
-from ..exceptions import RetryError
+from ..exceptions import EvoAPIException, RetryError, TransportError
 
 __all__ = [
+    "TRANSIENT_HTTP_STATUSES",
     "BackoffExponential",
     "BackoffIncremental",
     "BackoffLinear",
     "BackoffMethod",
     "Retry",
     "RetryHandler",
+    "is_transient_error",
 ]
+
+TRANSIENT_HTTP_STATUSES = frozenset(
+    {
+        HTTPStatus.REQUEST_TIMEOUT,
+        HTTPStatus.TOO_EARLY,
+        HTTPStatus.TOO_MANY_REQUESTS,
+        HTTPStatus.INTERNAL_SERVER_ERROR,
+        HTTPStatus.BAD_GATEWAY,
+        HTTPStatus.SERVICE_UNAVAILABLE,
+        HTTPStatus.GATEWAY_TIMEOUT,
+    }
+)
+"""HTTP statuses that indicate a temporary failure, after which an idempotent request may succeed if retried."""
+
+
+def is_transient_error(error: Exception) -> bool:
+    """Whether an error is likely temporary, so that retrying an idempotent request may succeed.
+
+    Intended for use as the ``retry_on`` predicate of a ``Retry``. Transport errors are considered transient, as are
+    API errors with a status in ``TRANSIENT_HTTP_STATUSES``. Retrying a 500 is only safe for idempotent requests.
+
+    :param error: The error raised by a failed attempt.
+
+    :return: True if the error is transient, otherwise False.
+    """
+    if isinstance(error, EvoAPIException):
+        return error.status in TRANSIENT_HTTP_STATUSES
+    return isinstance(error, TransportError)
 
 
 class BackoffMethod(ABC):
@@ -87,12 +119,22 @@ class BackoffExponential(BackoffMethod):
 
 
 class _RetryIterator:
-    def __init__(self, logger: logging.Logger, max_attempts: int, backoff_method: BackoffMethod) -> None:
+    def __init__(
+        self,
+        logger: logging.Logger,
+        max_attempts: int,
+        backoff_method: BackoffMethod,
+        retry_on: Callable[[Exception], bool] | None = None,
+    ) -> None:
         self.__logger = logger
         self.__max_attempts = max_attempts
         self.__backoff_method = backoff_method
+        self.__retry_on = retry_on
         self.__current_handler: RetryHandler | None = None
         self.__errors = []
+
+    def should_retry(self, error: Exception) -> bool:
+        return self.__retry_on is None or self.__retry_on(error)
 
     def add_error(self, error: Exception) -> None:
         self.__logger.error(error)
@@ -142,12 +184,14 @@ class RetryHandler:
     def suppress_errors(self, excs: type[BaseException] | tuple[type[BaseException, ...]] | None = None) -> None:
         """Context manager to suppress errors raised during a retry attempt.
 
+        Errors rejected by the ``retry_on`` predicate of the parent ``Retry`` are never suppressed.
+
         :param excs: The exception types to suppress, defaults to all exceptions.
         """
         try:
             yield
         except Exception as exc:
-            if excs is None or isinstance(exc, excs):
+            if (excs is None or isinstance(exc, excs)) and self.__iterator.should_retry(exc):
                 self.set_exception(exc)
             else:
                 raise
@@ -212,18 +256,23 @@ class Retry:
         logger: logging.Logger,
         max_attempts: int = 3,
         backoff_method: BackoffMethod = BackoffExponential(backoff_factor=2),
+        retry_on: Callable[[Exception], bool] | None = None,
     ) -> None:
         """Initialise a Retry object used when retrying after failures.
 
         :param logger: Logger instance for logging retry attempts.
         :param max_attempts: Maximum number of times to retry.
         :param backoff_method: Backoff method to apply.
+        :param retry_on: Optional predicate deciding whether an error is retried, e.g. ``is_transient_error``. Errors
+            it rejects are re-raised immediately by ``RetryHandler.suppress_errors()``. Defaults to retrying all
+            errors suppressed by the handler.
         """
         if max_attempts < 1:
             raise ValueError("max_attempts must be greater than 0")
         self.__logger = logger
         self.__max_attempts = max_attempts
         self.__backoff_method = backoff_method
+        self.__retry_on = retry_on
 
     def __aiter__(self) -> _RetryIterator:
-        return _RetryIterator(self.__logger, self.__max_attempts, self.__backoff_method)
+        return _RetryIterator(self.__logger, self.__max_attempts, self.__backoff_method, self.__retry_on)

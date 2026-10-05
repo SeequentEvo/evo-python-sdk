@@ -14,10 +14,11 @@ import textwrap
 from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
+from unittest import mock
 from uuid import UUID
 
 from evo.common import RequestMethod
-from evo.common.exceptions import UnknownResponseError
+from evo.common.exceptions import EvoAPIException, UnknownResponseError
 from evo.common.test_tools import ORG as TEST_ORG
 from evo.common.test_tools import MockResponse, TestWithConnector
 from evo.common.utils import get_header_metadata
@@ -366,6 +367,47 @@ class TestJobClient(TestWithConnector):
             self.task_path + f"/{self.job.id}",
             headers={"Accept": "application/json"},
         )
+
+    def _status_response(self, data_file: str) -> MockResponse:
+        return MockResponse(
+            status_code=202, headers={"Content-Type": "application/json"}, content=json.dumps(load_test_data(data_file))
+        )
+
+    @mock.patch("evo.common.utils.retry.asyncio.sleep", spec_set=True)
+    async def test_wait_for_result_retries_transient_status_errors(self, mock_sleep: mock.MagicMock) -> None:
+        """Test that a throttled status check is retried by the default retry policy."""
+        final_response = load_test_data("job-response-succeeded.json")
+        self.transport.request.side_effect = [
+            MockResponse(status_code=429, reason="Too Many Requests"),
+            MockResponse(status_code=503, reason="Service Unavailable"),
+            self._status_response("job-response-succeeded.json"),
+            MockResponse(
+                status_code=200, headers={"Content-Type": "application/json"}, content=json.dumps(final_response)
+            ),
+        ]
+
+        results = await self.job.wait_for_results(polling_interval_seconds=0.0)
+
+        self.assertEqual(final_response.get("results"), results)
+        self.assertEqual(2, mock_sleep.call_count)
+
+    @parameterized.expand([(403,), (404,)])
+    @mock.patch("evo.common.utils.retry.asyncio.sleep", spec_set=True)
+    async def test_wait_for_result_does_not_retry_non_transient_status_errors(
+        self, status: int, mock_sleep: mock.MagicMock
+    ) -> None:
+        """Test that a non-transient status check error is raised without retrying."""
+        self.transport.request.side_effect = [
+            MockResponse(status_code=status, reason="Error"),
+            self._status_response("job-response-succeeded.json"),
+        ]
+
+        with self.assertRaises(EvoAPIException) as ctx:
+            await self.job.wait_for_results(polling_interval_seconds=0.0)
+
+        self.assertEqual(status, ctx.exception.status)
+        self.assertEqual(1, self.transport.request.call_count)
+        mock_sleep.assert_not_called()
 
 
 class TestJobClientPreview(TestWithConnector):

@@ -23,7 +23,7 @@ from uuid import UUID
 from evo.common import APIConnector, HTTPResponse
 from evo.common.exceptions import UnknownResponseError
 from evo.common.interfaces import IFeedback
-from evo.common.utils import NoFeedback, Retry
+from evo.common.utils import NoFeedback, Retry, is_transient_error
 from pydantic import TypeAdapter, ValidationError
 
 from evo import logging
@@ -322,7 +322,8 @@ class JobClient(Generic[T_Result]):
         """Wait for the job to complete and return the results.
 
         :param polling_interval_seconds: The interval in seconds between status checks.
-        :param retry: A Retry object with a wait strategy. If None, a default Retry is created.
+        :param retry: A Retry object with a wait strategy. If None, a default Retry is created that only retries
+            transient errors (see ``is_transient_error``).
         :param fb: The feedback object to use.
 
         :return: The results.
@@ -332,7 +333,7 @@ class JobClient(Generic[T_Result]):
         :raises JobError: If the job failed.
         """
         if retry is None:
-            retry = Retry(logger)
+            retry = Retry(logger, retry_on=is_transient_error)
 
         latest_progress = 0.0
         latest_message = "Waiting on remote job..."
