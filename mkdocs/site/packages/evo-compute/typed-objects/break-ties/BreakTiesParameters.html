@@ -91,19 +91,20 @@
 
         <p>Parameters for the break-ties task.</p>
 <p>Defines all inputs needed to run a break-ties spatial tie-breaking task.</p>
-<p>Example:
-    &gt;&gt;&gt; from evo.compute.tasks import run, SearchNeighborhood, Ellipsoid, EllipsoidRanges, Target
-    &gt;&gt;&gt; from evo.compute.tasks.geostatistics.break_ties import BreakTiesParameters
-    &gt;&gt;&gt;
-    &gt;&gt;&gt; params = BreakTiesParameters(
-    ...     source=pointset.attributes["grade"],
-    ...     target=Target.new_attribute(pointset, "grade_tiebroken"),
-    ...     neighborhood=SearchNeighborhood(
-    ...         ellipsoid=Ellipsoid(ranges=EllipsoidRanges(200, 150, 100)),
-    ...         max_samples=20,
-    ...     ),
-    ... )
-    &gt;&gt;&gt; result = await run(manager, params)</p>
+<p>Example::</p>
+<pre><code>&gt;&gt;&gt; from evo.compute.tasks import run, SearchNeighborhood, Ellipsoid, EllipsoidRanges, Target
+&gt;&gt;&gt; from evo.compute.tasks.geostatistics.break_ties import BreakTiesParameters
+&gt;&gt;&gt;
+&gt;&gt;&gt; params = BreakTiesParameters(
+...     source=pointset.attributes["grade"],
+...     target=Target.new_attribute(pointset, "grade_tiebroken"),
+...     neighborhood=SearchNeighborhood(
+...         ellipsoid=Ellipsoid(ranges=EllipsoidRanges(200, 150, 100)),
+...         max_samples=20,
+...     ),
+... )
+&gt;&gt;&gt; result = await run(manager, params)
+</code></pre>
 
 
 

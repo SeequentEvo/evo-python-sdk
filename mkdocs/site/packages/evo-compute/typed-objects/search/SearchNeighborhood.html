@@ -94,14 +94,15 @@
 or estimation. Used by kriging, simulation, and other geostatistical tasks.</p>
 <p>The search neighborhood is defined by an ellipsoid (spatial extent and
 orientation) and constraints on the number of samples to use.</p>
-<p>Example:
-    &gt;&gt;&gt; search = SearchNeighborhood(
-    ...     ellipsoid=Ellipsoid(
-    ...         ranges=EllipsoidRanges(major=200.0, semi_major=150.0, minor=100.0),
-    ...         rotation=Rotation(dip_azimuth=45.0),
-    ...     ),
-    ...     max_samples=20,
-    ... )</p>
+<p>Example::</p>
+<pre><code>&gt;&gt;&gt; search = SearchNeighborhood(
+...     ellipsoid=Ellipsoid(
+...         ranges=EllipsoidRanges(major=200.0, semi_major=150.0, minor=100.0),
+...         rotation=Rotation(dip_azimuth=45.0),
+...     ),
+...     max_samples=20,
+... )
+</code></pre>
 
 
 
