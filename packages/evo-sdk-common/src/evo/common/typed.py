@@ -92,6 +92,14 @@ def _three_values(value: object, name: str) -> tuple:
         raise TypeError(f"{name} must be a three-value list, tuple, or one-dimensional array")
     if len(value) != 3:
         raise ValueError(f"{name} must have exactly three values")
+    cast_to = int if kind is Integral else float
+    result = []
+    for v in value:
+        if not _is_valid_number(v, kind, positive=positive):
+            description = "integers" if kind is Integral else "finite real numbers"
+            raise ValueError(f"value must contain three {'positive ' if positive else ''}{description}")
+        result.append(cast_to(v))
+    return tuple(result)
     return tuple(value)
 
 
