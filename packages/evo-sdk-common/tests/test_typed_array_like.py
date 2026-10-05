@@ -11,7 +11,7 @@
 
 import pytest
 
-from evo.common.typed import Point3, Size3d, Size3i, as_point3, as_size3d, as_size3i
+from evo.common.typed import Point3, Size3d, Size3i
 
 
 class ArrayLike:
@@ -33,24 +33,41 @@ class ArrayLike:
 @pytest.mark.parametrize(
     ("convert", "values", "expected"),
     [
-        (as_point3, [1.0, 2.0, 3.0], Point3(1.0, 2.0, 3.0)),
-        (as_size3i, [1, 2, 3], Size3i(1, 2, 3)),
-        (as_size3d, [1.0, 2.0, 3.0], Size3d(1.0, 2.0, 3.0)),
+        (Point3.from_array_like, [1, 2, 3], Point3(1.0, 2.0, 3.0)),
+        (Size3i.from_array_like, [1, 2, 3], Size3i(1, 2, 3)),
+        (Size3d.from_array_like, [1, 2, 3], Size3d(1.0, 2.0, 3.0)),
     ],
 )
 def test_array_like_inputs_without_numpy(convert, values, expected):
-    assert convert(ArrayLike(values)) == expected
+    result = convert(ArrayLike(values))
+    assert result == expected
+    assert all(type(item) is type(reference) for item, reference in zip(result, expected))
     assert convert(expected) is expected
 
 
 @pytest.mark.parametrize("ndim", [0, 2])
 def test_array_like_requires_one_dimension(ndim):
     with pytest.raises(ValueError, match="one-dimensional"):
-        as_point3(ArrayLike([1, 2, 3], ndim=ndim))
+        Point3.from_array_like(ArrayLike([1, 2, 3], ndim=ndim))
 
 
 def test_array_like_requires_three_values():
     value = ArrayLike([1, 2])
     with pytest.raises(ValueError, match="exactly three"):
-        as_size3d(value)
+        Size3d.from_array_like(value)
     assert not value.converted
+
+
+@pytest.mark.parametrize(
+    ("convert", "values"),
+    [
+        (Point3.from_array_like, [1, float("inf"), 3]),
+        (Point3.from_array_like, [1, True, 3]),
+        (Size3d.from_array_like, [1, 0, 3]),
+        (Size3i.from_array_like, [1, 2.0, 3]),
+        (Size3i.from_array_like, [1, -2, 3]),
+    ],
+)
+def test_array_like_rejects_invalid_elements(convert, values):
+    with pytest.raises(ValueError, match="value must contain three"):
+        convert(values)

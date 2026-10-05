@@ -22,7 +22,7 @@ import pandas as pd
 from pydantic import AliasChoices, Field
 
 from evo.common import IFeedback
-from evo.common.typed import FloatArrayLike3, IntArrayLike3, as_point3, as_size3d, as_size3i
+from evo.common.typed import FloatArrayLike3, IntArrayLike3
 from evo.common.utils import NoFeedback
 
 from ._model import DataLocation, SchemaLocation, SchemaModel
@@ -57,8 +57,8 @@ class Base3DGridData(BaseSpatialObjectData):
     rotation: Rotation | None = None
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "origin", as_point3(self.origin))
-        object.__setattr__(self, "size", as_size3i(self.size, name="size"))
+        object.__setattr__(self, "origin", Point3.from_array_like(self.origin))
+        object.__setattr__(self, "size", Size3i.from_array_like(self.size))
 
 
 @dataclass(kw_only=True, frozen=True)
@@ -75,7 +75,7 @@ class BaseRegular3DGridData(Base3DGridData):
 
     def __post_init__(self) -> None:
         super().__post_init__()
-        object.__setattr__(self, "cell_size", as_size3d(self.cell_size, name="cell_size"))
+        object.__setattr__(self, "cell_size", Size3d.from_array_like(self.cell_size))
 
     def compute_bounding_box(self) -> BoundingBox:
         return BoundingBox.from_regular_grid(self.origin, self.size, self.cell_size, self.rotation)
@@ -246,9 +246,9 @@ class RegularBlockModelData:
     units: dict[str, str] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "origin", as_point3(self.origin))
-        object.__setattr__(self, "n_blocks", as_size3i(self.n_blocks))
-        object.__setattr__(self, "block_size", as_size3d(self.block_size))
+        object.__setattr__(self, "origin", Point3.from_array_like(self.origin))
+        object.__setattr__(self, "n_blocks", Size3i.from_array_like(self.n_blocks))
+        object.__setattr__(self, "block_size", Size3d.from_array_like(self.block_size))
 
 
 @dataclass(frozen=True, kw_only=True)

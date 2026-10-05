@@ -96,7 +96,7 @@ def test_existing_named_geometry_is_preserved(grid_class):
     ],
 )
 def test_grid_rejects_invalid_geometry(grid_class, field, value, error):
-    with pytest.raises(error, match=field):
+    with pytest.raises(error, match="value must"):
         _create_grid(grid_class, **{field: value})
 
 
@@ -105,5 +105,5 @@ def test_grid_rejects_invalid_geometry(grid_class, field, value, error):
     "cell_size", [[1, 2], [1, 0, 3], [1, float("inf"), 3], np.array([1, 2]), np.array([1, np.inf, 3])]
 )
 def test_regular_grid_rejects_invalid_cell_size(grid_class, cell_size):
-    with pytest.raises(ValueError, match="cell_size"):
+    with pytest.raises(ValueError, match="value must"):
         _create_grid(grid_class, cell_size=cell_size)

@@ -94,7 +94,7 @@ def test_regular_block_model_data_normalizes_geometry(origin, n_blocks, block_si
 def test_regular_block_model_data_rejects_invalid_geometry(field, value, error):
     kwargs = {"name": "Test", "origin": [1, 2, 3], "n_blocks": [4, 5, 6], "block_size": [1, 2, 3]}
     kwargs[field] = value
-    with pytest.raises(error, match=field):
+    with pytest.raises(error, match="value must"):
         RegularBlockModelData(**kwargs)
 
 
