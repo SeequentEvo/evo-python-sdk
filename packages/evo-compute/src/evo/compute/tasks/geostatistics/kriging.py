@@ -368,7 +368,8 @@ class KrigingParameters(BaseModel):
 
     Defines all inputs needed to run a kriging interpolation task.
 
-    Example:
+    Example::
+
         >>> from evo.compute.tasks import run, SearchNeighborhood, Ellipsoid, EllipsoidRanges
         >>> from evo.compute.tasks.geostatistics.kriging import KrigingParameters
         >>> from evo.compute.tasks.common import Filter, FilterCondition
