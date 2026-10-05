@@ -20,11 +20,18 @@ from .data import (
     BasicWorkspace,
     BoundingBox,
     Coordinate,
+    ImsGroup,
+    ImsGroupDetail,
+    ImsUser,
+    InstanceGroup,
+    InstanceGroupInvitation,
+    InstanceGroupMember,
     InstanceRole,
     InstanceRoleWithPermissions,
     InstanceUser,
     InstanceUserInvitation,
     InstanceUserWithEmail,
+    UpdatedInstanceGroupMembers,
     User,
     UserRole,
     Workspace,
@@ -32,13 +39,21 @@ from .data import (
 )
 from .endpoints.models import (
     AddInstanceUsersResponse,
+    BaseInstanceGroupWithRolesResponse,
+    BaseInstanceUserInvitationResponse,
     BaseInstanceUserResponse,
     BaseInstanceUserWithRolesResponse,
     BasicWorkspaceResponse,
+    ImsGroupDetailResponse,
+    ImsGroupResponse,
     ListInstanceRolesResponse,
     ListInstanceUserInvitationsResponse,
+    UpdateInstanceGroupMembersResponse,
+    UserFullNameAndEmail,
     WorkspaceRoleOptionalResponse,
+    WorkspaceRoleOptionalResponseWithThumbnailLink,
     WorkspaceRoleRequiredResponse,
+    WorkspaceRoleRequiredResponseWithThumbnailLink,
 )
 from .endpoints.models import BoundingBox as PydanticBoundingBox
 from .endpoints.models import Coordinate as PydanticCoordinate
@@ -47,10 +62,17 @@ from .endpoints.models import UserRole as PydanticUserRole
 
 __all__ = [
     "bounding_box",
+    "ims_group_detail_model",
+    "ims_group_model",
+    "ims_user_model",
+    "instance_group_invitation_model",
+    "instance_group_member_model",
+    "instance_group_model",
     "instance_user_invitation_model",
     "instance_user_model",
     "instance_user_role_model",
     "instance_user_with_email_model",
+    "updated_instance_group_members_model",
     "user_model",
     "user_role_model",
     "workspace_basic_model",
@@ -75,7 +97,12 @@ def bounding_box(model: PydanticBoundingBox) -> BoundingBox:
 
 
 def workspace_model(
-    model: WorkspaceRoleOptionalResponse | WorkspaceRoleRequiredResponse, org_id: UUID, base_url: str
+    model: WorkspaceRoleOptionalResponse
+    | WorkspaceRoleRequiredResponse
+    | WorkspaceRoleOptionalResponseWithThumbnailLink
+    | WorkspaceRoleRequiredResponseWithThumbnailLink,
+    org_id: UUID,
+    base_url: str,
 ) -> Workspace:
     """
     Parse a Workspace from the generated model.
@@ -198,4 +225,58 @@ def add_instance_user_model(model: AddInstanceUsersResponse):
     return AddedInstanceUsers(
         members=[instance_user_with_email_model(user) for user in model.members],
         invitations=[instance_user_invitation_model(invitation) for invitation in model.invitations],
+    )
+
+
+def ims_user_model(model: UserFullNameAndEmail) -> ImsUser:
+    return ImsUser(email=model.email, full_name=model.full_name)
+
+
+def ims_group_model(model: ImsGroupResponse) -> ImsGroup:
+    return ImsGroup(group_id=model.id, name=model.name, is_federated_group=model.is_federated_group)
+
+
+def ims_group_detail_model(model: ImsGroupDetailResponse) -> ImsGroupDetail:
+    return ImsGroupDetail(
+        group_id=model.id,
+        name=model.name,
+        description=model.description,
+        is_federated_group=model.is_federated_group,
+    )
+
+
+def instance_group_member_model(model: BaseInstanceUserResponse) -> InstanceGroupMember:
+    return InstanceGroupMember(user_id=model.id, email=model.email, full_name=model.full_name)
+
+
+def instance_group_invitation_model(model: BaseInstanceUserInvitationResponse) -> InstanceGroupInvitation:
+    return InstanceGroupInvitation(
+        invitation_id=model.id,
+        email=model.email,
+        invited_at=model.created_date.replace(tzinfo=timezone.utc),
+        expiration_date=model.expiration_date.replace(tzinfo=timezone.utc),
+        invited_by=model.invited_by_email,
+        status=model.status,
+    )
+
+
+def instance_group_model(model: BaseInstanceGroupWithRolesResponse) -> InstanceGroup:
+    return InstanceGroup(
+        group_id=model.id,
+        name=model.name,
+        description=model.description,
+        ims_groups=model.ims_groups,
+        members=[instance_group_member_model(member) for member in model.members],
+        roles=[InstanceRole(role_id=role.id, name=role.name, description=role.description) for role in model.roles],
+    )
+
+
+def updated_instance_group_members_model(model: UpdateInstanceGroupMembersResponse) -> UpdatedInstanceGroupMembers:
+    return UpdatedInstanceGroupMembers(
+        group_id=model.id,
+        name=model.name,
+        description=model.description,
+        ims_groups=model.ims_groups,
+        members=[instance_group_member_model(member) for member in model.members],
+        invitations=[instance_group_invitation_model(invitation) for invitation in model.invitations],
     )
