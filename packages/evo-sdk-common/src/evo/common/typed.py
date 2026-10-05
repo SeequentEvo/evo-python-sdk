@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from math import isfinite
 from numbers import Integral, Real
-from typing import NamedTuple, Protocol, TypeAlias, TypeVar
+from typing import NamedTuple, Protocol, TypeAlias, TypeVar, runtime_checkable
 
 _T_co = TypeVar("_T_co", covariant=True)
 
