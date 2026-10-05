@@ -2,9 +2,6 @@ name: "Testing"
 description: "Test a uv managed python project"
 
 inputs:
-  PACKAGE:
-    required: true
-    description: "uv package to run the tests in"
   PYTHON_VERSION:
     required: true
     description: "The Python version to run the tests on"
@@ -16,7 +13,7 @@ runs:
       with:
         PYTHON_VERSION: ${{ inputs.python_version }}
 
-    - name: Pytest
+    - name: Run package tests
       shell: bash
       run: |
-        uv run --package ${{ inputs.package }} pytest packages/${{ inputs.package }}/tests/
+        uv run python scripts/run_package_tests.py

@@ -19,14 +19,6 @@ jobs:
           - windows-latest
           - ubuntu-latest
           - macos-latest
-        package:
-          - evo-sdk-common
-          - evo-blockmodels
-          - evo-colormaps
-          - evo-files
-          - evo-objects
-          - evo-compute
-          - evo-widgets
         python-version:
           - "3.10"
           - "3.11"
@@ -38,4 +30,3 @@ jobs:
       - uses: ./.github/actions/testing
         with:
           PYTHON_VERSION: ${{ matrix.python-version }}
-          PACKAGE: ${{ matrix.package}}
