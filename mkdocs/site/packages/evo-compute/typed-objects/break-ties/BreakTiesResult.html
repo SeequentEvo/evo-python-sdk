@@ -227,9 +227,10 @@
         <p>Load and return the target geoscience object.</p>
 <p>Returns:
     The typed geoscience object (e.g., PointSet, Regular3DGrid)</p>
-<p>Example:
-    &gt;&gt;&gt; result = await run(manager, params)
-    &gt;&gt;&gt; target = await result.get_target_object()</p>
+<p>Example::</p>
+<pre><code>&gt;&gt;&gt; result = await run(manager, params)
+&gt;&gt;&gt; target = await result.get_target_object()
+</code></pre>
 
 
     </div>
@@ -254,10 +255,11 @@
     columns: Optional column names to include. If omitted, returns all columns.</p>
 <p>Returns:
     A pandas DataFrame containing the tie-broken attribute values.</p>
-<p>Example:
-    &gt;&gt;&gt; result = await run(manager, params)
-    &gt;&gt;&gt; df = await result.to_dataframe()
-    &gt;&gt;&gt; df.head()</p>
+<p>Example::</p>
+<pre><code>&gt;&gt;&gt; result = await run(manager, params)
+&gt;&gt;&gt; df = await result.to_dataframe()
+&gt;&gt;&gt; df.head()
+</code></pre>
 
 
     </div>

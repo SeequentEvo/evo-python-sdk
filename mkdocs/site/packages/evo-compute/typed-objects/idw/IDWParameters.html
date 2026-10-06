@@ -92,34 +92,35 @@
         <p>Parameters for the IDW (inverse distance weighting) estimation task.</p>
 <p>Estimates values at target locations as a distance-weighted average of
 nearby samples.  The weighting exponent is controlled by <code>power</code>.</p>
-<p>Example:
-    &gt;&gt;&gt; from evo.compute.tasks.common import Filter, FilterCondition, Source, Target
-    &gt;&gt;&gt; from evo.compute.tasks.geostatistics.idw import IDWParameters
-    &gt;&gt;&gt;
-    &gt;&gt;&gt; params = IDWParameters(
-    ...     source=Source(object=pointset, attribute="locations.attributes[?name=='grade']"),
-    ...     target=Target.new_attribute(grid, "idw_grade"),
-    ...     neighborhood=SearchNeighborhood(
-    ...         ellipsoid=Ellipsoid(ranges=EllipsoidRanges(200, 150, 100)),
-    ...         max_samples=20,
-    ...     ),
-    ...     power=2.0,
-    ... )
-    &gt;&gt;&gt;
-    &gt;&gt;&gt; # With a target filter to restrict estimation to specific categories on the target:
-    &gt;&gt;&gt; params_filtered = IDWParameters(
-    ...     source=Source(object=pointset, attribute="locations.attributes[?name=='grade']"),
-    ...     target=Target.new_attribute(grid, "idw_grade"),
-    ...     neighborhood=SearchNeighborhood(...),
-    ...     power=2.0,
-    ...     target_filter=Filter(
-    ...         where=FilterCondition(
-    ...             attribute=grid.attributes["domain"],
-    ...             operator="in",
-    ...             values=["LMS1", "LMS2"],
-    ...         ),
-    ...     ),
-    ... )</p>
+<p>Example::</p>
+<pre><code>&gt;&gt;&gt; from evo.compute.tasks.common import Filter, FilterCondition, Source, Target
+&gt;&gt;&gt; from evo.compute.tasks.geostatistics.idw import IDWParameters
+&gt;&gt;&gt;
+&gt;&gt;&gt; params = IDWParameters(
+...     source=Source(object=pointset, attribute="locations.attributes[?name=='grade']"),
+...     target=Target.new_attribute(grid, "idw_grade"),
+...     neighborhood=SearchNeighborhood(
+...         ellipsoid=Ellipsoid(ranges=EllipsoidRanges(200, 150, 100)),
+...         max_samples=20,
+...     ),
+...     power=2.0,
+... )
+&gt;&gt;&gt;
+&gt;&gt;&gt; # With a target filter to restrict estimation to specific categories on the target:
+&gt;&gt;&gt; params_filtered = IDWParameters(
+...     source=Source(object=pointset, attribute="locations.attributes[?name=='grade']"),
+...     target=Target.new_attribute(grid, "idw_grade"),
+...     neighborhood=SearchNeighborhood(...),
+...     power=2.0,
+...     target_filter=Filter(
+...         where=FilterCondition(
+...             attribute=grid.attributes["domain"],
+...             operator="in",
+...             values=["LMS1", "LMS2"],
+...         ),
+...     ),
+... )
+</code></pre>
 
 
 

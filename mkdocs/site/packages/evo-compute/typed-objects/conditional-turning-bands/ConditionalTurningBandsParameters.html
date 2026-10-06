@@ -93,20 +93,21 @@
 <p>Performs a conditional block turning-bands simulation using a pre-existing
 continuous distribution object.  The task outputs an ensemble attribute on
 the target grid, containing one column per realization.</p>
-<p>Example:
-    &gt;&gt;&gt; params = ConditionalTurningBandsParameters(
-    ...     source=pointset,
-    ...     source_attribute=pointset.attributes["grade"],
-    ...     target=grid,
-    ...     distribution=distribution_object,
-    ...     variogram_model=variogram,
-    ...     neighborhood=SearchNeighborhood(
-    ...         ellipsoid=Ellipsoid(ranges=EllipsoidRanges(70, 70, 5)),
-    ...         max_samples=40,
-    ...     ),
-    ...     block_discretization=BlockDiscretization(nx=5, ny=5, nz=5),
-    ...     realizations=10,
-    ... )</p>
+<p>Example::</p>
+<pre><code>&gt;&gt;&gt; params = ConditionalTurningBandsParameters(
+...     source=pointset,
+...     source_attribute="locations.attributes[?name=='grade']",
+...     target=grid,
+...     distribution=distribution_object,
+...     variogram_model=variogram,
+...     neighborhood=SearchNeighborhood(
+...         ellipsoid=Ellipsoid(ranges=EllipsoidRanges(70, 70, 5)),
+...         max_samples=40,
+...     ),
+...     block_discretization=BlockDiscretization(nx=5, ny=5, nz=5),
+...     realizations=10,
+... )
+</code></pre>
 
 
 

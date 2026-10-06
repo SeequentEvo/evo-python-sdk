@@ -301,7 +301,8 @@ async def run_tasks(
     Raises:
         TypeError: If any parameter type doesn't have a registered runner.
 
-    Example:
+    Example::
+
         >>> results = await run_tasks(manager, [
         ...     KrigingParameters(...),
         ...     SimulationParameters(...),  # future task type
