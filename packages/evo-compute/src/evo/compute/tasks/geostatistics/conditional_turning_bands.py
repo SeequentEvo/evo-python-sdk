@@ -49,7 +49,7 @@ import pandas as pd
 from evo.common import IContext, IFeedback
 from evo.objects import ObjectSchema
 from evo.objects.typed import BaseObject, object_from_reference
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from ..common import (
     Filter,
@@ -58,6 +58,7 @@ from ..common import (
 )
 from ..common.results import TaskAttribute
 from ..common.runner import TaskRunner
+from ..common.search import _reject_sector_and_drillhole_limits
 from .conditioned_simulator import BlockDiscretization
 
 __all__ = [
@@ -158,6 +159,11 @@ class ConditionalTurningBandsParameters(BaseModel):
 
     random_seed: int = 38239342
     """Random seed for reproducible simulations."""
+
+    @field_validator("neighborhood")
+    @classmethod
+    def _check_neighborhood(cls, neighborhood: SearchNeighborhood) -> SearchNeighborhood:
+        return _reject_sector_and_drillhole_limits(neighborhood)
 
 
 # =============================================================================
