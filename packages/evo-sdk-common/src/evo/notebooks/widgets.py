@@ -13,21 +13,21 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import sys
 from collections.abc import Iterator
-from typing import Any, Generic, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Generic, TypeVar, cast
 from uuid import UUID
 
 import ipywidgets as widgets
-from aiohttp.typedefs import StrOrURL
 from IPython.display import display
 
 from evo import logging
-from evo.aio import AioTransport
 from evo.common import APIConnector, BaseAPIClient, Environment
 from evo.common.exceptions import UnauthorizedException
 from evo.common.interfaces import IAuthorizer, ICache, IContext, IFeedback, ITransport
 from evo.discovery import Hub, Organization
-from evo.oauth import AnyScopes, EvoScopes, OAuthConnector
+from evo.oauth import AccessTokenAuthorizer, AnyScopes, EvoScopes, OAuthConnector
+from evo.oauth.exceptions import OAuthError
 from evo.service_manager import ServiceManager
 from evo.workspaces import Workspace
 
@@ -40,6 +40,9 @@ from ._consts import (
 from ._helpers import FileName, build_button_widget, build_img_widget, init_cache
 from .authorizer import AuthorizationCodeAuthorizer
 from .env import DotEnv
+
+if TYPE_CHECKING:
+    from aiohttp.typedefs import StrOrURL
 
 T = TypeVar("T")
 
@@ -226,7 +229,7 @@ class ServiceManagerWidget(widgets.HBox, IContext, metaclass=_ServiceManagerWidg
         )
         env = DotEnv(cache)
 
-        self._btn = build_button_widget("Sign In")
+        self._btn = build_button_widget("Refresh Evo Services" if self._is_externally_authorized else "Sign In")
         self._btn.on_click(self._on_click)
         self._org_selector = OrgSelectorWidget(env, self._service_manager)
         self._workspace_selector = WorkspaceSelectorWidget(env, self._service_manager, self._org_selector)
@@ -291,6 +294,8 @@ class ServiceManagerWidget(widgets.HBox, IContext, metaclass=_ServiceManagerWidg
 
         :returns: The new ServiceManagerWidget.
         """
+        from evo.aio import AioTransport
+
         cache = init_cache(cache_location)
         transport = AioTransport(user_agent=client_id, proxy=proxy)
         authorizer = AuthorizationCodeAuthorizer(
@@ -305,6 +310,55 @@ class ServiceManagerWidget(widgets.HBox, IContext, metaclass=_ServiceManagerWidg
             env=DotEnv(cache),
         )
         return cls(transport, authorizer, discovery_url, cache)
+
+    @classmethod
+    def with_access_token(
+        cls,
+        access_token: str | None = None,
+        discovery_url: str = DEFAULT_DISCOVERY_URL,
+        cache_location: FileName = DEFAULT_CACHE_LOCATION,
+        transport: ITransport | None = None,
+        user_agent: str = "evo-sdk-common",
+    ) -> ServiceManagerWidget:
+        """Create a ServiceManagerWidget from an access token that was issued elsewhere.
+
+        This is intended for hosted environments, such as JupyterLite, where the page hosting the notebook has already
+        signed the user in. The token is not refreshed, so a new one must be supplied when it expires.
+
+        ```python
+        manager = await ServiceManagerWidget.with_access_token().login()
+        ```
+
+        :param access_token: The access token to authorise requests with. When omitted, the token is read from browser
+            local storage, which is only possible in a Pyodide runtime.
+        :param discovery_url: The URL of the Evo Discovery service.
+        :param cache_location: The location of the cache file.
+        :param transport: The transport to use for API requests. Defaults to the browser `fetch` transport in a Pyodide
+            runtime, and to `AioTransport` elsewhere.
+        :param user_agent: The value to provide in the `User-Agent` header.
+
+        :returns: The new ServiceManagerWidget.
+        """
+        in_pyodide = sys.platform == "emscripten"
+
+        if access_token is None:
+            if not in_pyodide:
+                raise ValueError("An access token must be provided when not running in a Pyodide runtime.")
+            from evo.pyodide import get_browser_access_token
+
+            access_token = get_browser_access_token()
+
+        if transport is None:
+            if in_pyodide:
+                from evo.pyodide import JsTransport
+
+                transport = JsTransport(user_agent=user_agent)
+            else:
+                from evo.aio import AioTransport
+
+                transport = AioTransport(user_agent=user_agent)
+
+        return cls(transport, AccessTokenAuthorizer(access_token), discovery_url, init_cache(cache_location))
 
     async def _login_with_auth_code(self, timeout_seconds: int) -> None:
         """Login using an authorization code authorizer.
@@ -339,6 +393,8 @@ class ServiceManagerWidget(widgets.HBox, IContext, metaclass=_ServiceManagerWidg
             match self._authorizer:
                 case AuthorizationCodeAuthorizer():
                     await self._login_with_auth_code(timeout_seconds)
+                case AccessTokenAuthorizer():
+                    pass  # The token was issued elsewhere, so there is nothing to do.
                 case unknown:
                     raise NotImplementedError(f"ServiceManagerWidget cannot login using {type(unknown).__name__}.")
 
@@ -350,8 +406,13 @@ class ServiceManagerWidget(widgets.HBox, IContext, metaclass=_ServiceManagerWidg
     def cache(self) -> ICache:
         return self._cache
 
+    @property
+    def _is_externally_authorized(self) -> bool:
+        """Whether credentials come from outside the widget, so it cannot initiate a sign in itself."""
+        return isinstance(self._authorizer, AccessTokenAuthorizer)
+
     def _update_btn(self, signed_in: bool) -> None:
-        if signed_in:
+        if signed_in or self._is_externally_authorized:
             self._btn.description = "Refresh Evo Services"
         else:
             self._btn.description = "Sign In"
@@ -392,7 +453,13 @@ class ServiceManagerWidget(widgets.HBox, IContext, metaclass=_ServiceManagerWidg
             with self._loading_services():
                 try:
                     await self._service_manager.refresh_organizations()
-                except UnauthorizedException:  # Expired token or user not logged in.
+                except UnauthorizedException as exc:  # Expired token or user not logged in.
+                    if isinstance(self._authorizer, AccessTokenAuthorizer):
+                        raise OAuthError(
+                            "The access token is no longer valid, and cannot be refreshed from here. Sign in again"
+                            " and create a new ServiceManagerWidget with the new token."
+                        ) from exc
+
                     # Attempt to log in again.
                     await self.login()
 

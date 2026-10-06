@@ -32,6 +32,14 @@ notebooks = [
     "python-dotenv",
     "Pillow",
 ]
+# For JupyterLite and other Pyodide runtimes, where aiohttp cannot open sockets. The `pyodide` and `js` modules are
+# provided by the runtime itself, so they are not listed here.
+pyodide = [
+    "ipykernel",
+    "ipython",
+    "ipywidgets",
+    "python-dotenv",
+]
 jmespath = [
     "jmespath>=1.0.1",
 ]
