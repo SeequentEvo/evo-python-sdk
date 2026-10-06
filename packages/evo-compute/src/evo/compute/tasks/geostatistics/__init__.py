@@ -30,7 +30,8 @@ This package groups all geostatistics-topic compute tasks:
 Task modules are imported here to trigger runner registration with the
 central :class:`~evo.compute.tasks.common.runner.TaskRegistry`.
 
-Example:
+Example::
+
     >>> from evo.compute.tasks import run, SearchNeighborhood
     >>> from evo.compute.tasks.geostatistics.kriging import KrigingParameters
     >>>

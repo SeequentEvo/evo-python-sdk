@@ -18,7 +18,8 @@ distribution object produced by the ``continuous-distribution`` task and skips
 the internal normal-score transform; this makes it faster when the distribution
 is already available.
 
-Example:
+Example::
+
     >>> from evo.compute.tasks import run, SearchNeighborhood, Ellipsoid, EllipsoidRanges
     >>> from evo.compute.tasks.geostatistics.conditioned_simulator import BlockDiscretization
     >>> from evo.compute.tasks.geostatistics.conditional_turning_bands import (
@@ -84,7 +85,8 @@ class ConditionalTurningBandsParameters(BaseModel):
     continuous distribution object.  The task outputs an ensemble attribute on
     the target grid, containing one column per realization.
 
-    Example:
+    Example::
+
         >>> params = ConditionalTurningBandsParameters(
         ...     source=pointset,
         ...     source_attribute="locations.attributes[?name=='grade']",

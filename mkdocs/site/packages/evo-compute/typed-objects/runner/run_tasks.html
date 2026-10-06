@@ -102,11 +102,12 @@ its type, allowing different task types to be run together.</p>
     List of results in the same order as the input parameters.</p>
 <p>Raises:
     TypeError: If any parameter type doesn't have a registered runner.</p>
-<p>Example:
-    &gt;&gt;&gt; results = await run_tasks(manager, [
-    ...     KrigingParameters(...),
-    ...     SimulationParameters(...),  # future task type
-    ... ], preview=True)</p>
+<p>Example::</p>
+<pre><code>&gt;&gt;&gt; results = await run_tasks(manager, [
+...     KrigingParameters(...),
+...     SimulationParameters(...),  # future task type
+... ], preview=True)
+</code></pre>
 
 
     </div>

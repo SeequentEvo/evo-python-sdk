@@ -59,7 +59,8 @@ class TaskResultList(Generic[T]):
     Supports indexing, iteration, ``len()``, and ``bool()`` just like a
     regular list.
 
-    Example:
+    Example::
+
         >>> results = await run(manager, [params1, params2], preview=True)
         >>> results        # pretty-printed table in Jupyter
         >>> results[0]     # access individual result

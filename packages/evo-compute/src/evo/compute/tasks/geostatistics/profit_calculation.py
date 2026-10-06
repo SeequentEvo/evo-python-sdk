@@ -17,7 +17,8 @@ simulation data and economic parameters, maximising expected profit.
 Uses the same parameter schema as loss-calculation but applies a different
 economic calculation.
 
-Example:
+Example::
+
     >>> from evo.compute.tasks import run, Target
     >>> from evo.compute.tasks.geostatistics.profit_calculation import (
     ...     ProfitCalculationParameters,

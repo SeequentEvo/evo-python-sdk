@@ -92,20 +92,21 @@
         <p>Parameters for the simulation-report compute task.</p>
 <p>All simulation data references use flat string fields (object URLs and
 attribute expressions) rather than nested Source/Target objects.</p>
-<p>Example:
-    &gt;&gt;&gt; params = SimulationReportParameters(
-    ...     simulation_source=pointset_url,
-    ...     source_attribute="locations.attributes[0]",
-    ...     simulation_target=grid_url,
-    ...     point_simulations="cell_attributes[0]",
-    ...     point_simulations_normal_score="cell_attributes[1]",
-    ...     block_simulations="cell_attributes[2]",
-    ...     block_simulations_normal_score="cell_attributes[3]",
-    ...     variogram_model=variogram_url,
-    ...     neighborhood=SearchNeighborhood(...),
-    ...     number_of_simulations=50,
-    ...     random_seed=38239342,
-    ... )</p>
+<p>Example::</p>
+<pre><code>&gt;&gt;&gt; params = SimulationReportParameters(
+...     simulation_source=pointset_url,
+...     source_attribute="locations.attributes[0]",
+...     simulation_target=grid_url,
+...     point_simulations="cell_attributes[0]",
+...     point_simulations_normal_score="cell_attributes[1]",
+...     block_simulations="cell_attributes[2]",
+...     block_simulations_normal_score="cell_attributes[3]",
+...     variogram_model=variogram_url,
+...     neighborhood=SearchNeighborhood(...),
+...     number_of_simulations=50,
+...     random_seed=38239342,
+... )
+</code></pre>
 
 
 

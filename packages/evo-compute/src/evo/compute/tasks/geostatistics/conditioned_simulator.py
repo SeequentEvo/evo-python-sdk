@@ -16,7 +16,8 @@ normal-score space, performs kriging + turning-band simulation on a target grid,
 and back-transforms results.  Supports optional loss calculation,
 location-wise quantile/summary statistics, and validation reporting.
 
-Example:
+Example::
+
     >>> from evo.compute.tasks import run
     >>> from evo.compute.tasks.geostatistics.conditioned_simulator import (
     ...     ConSimParameters,
