@@ -27,13 +27,13 @@ Example:
     ... )
     >>>
     >>> params = SimulationReportParameters(
-    ...     simulation_source=pointset_url,
-    ...     source_attribute="locations.attributes[0]",
-    ...     simulation_target=grid_url,
-    ...     point_simulations="cell_attributes[0]",
-    ...     point_simulations_normal_score="cell_attributes[1]",
-    ...     block_simulations="cell_attributes[2]",
-    ...     block_simulations_normal_score="cell_attributes[3]",
+    ...     simulation_source=pointset,
+    ...     source_attribute=pointset.attributes["grade"],
+    ...     simulation_target=grid,
+    ...     point_simulations=grid.attributes["point_sims"],
+    ...     point_simulations_normal_score=grid.attributes["point_sims_ns"],
+    ...     block_simulations=grid.attributes["block_sims"],
+    ...     block_simulations_normal_score=grid.attributes["block_sims_ns"],
     ...     variogram_model=variogram_url,
     ...     neighborhood=SearchNeighborhood(...),
     ...     block_discretization=SimulationReportBlockDiscretization(nx=2, ny=2, nz=2),
@@ -51,6 +51,7 @@ from evo.common import IContext
 from pydantic import BaseModel, Field, SerializerFunctionWrapHandler, field_validator, model_serializer
 
 from ..common import (
+    AttributeExpression,
     GeoscienceObjectReference,
     SearchNeighborhood,
 )
@@ -102,8 +103,8 @@ class SimulationReportDistribution(BaseModel):
     tail_extrapolation: TailExtrapolationParams | None = None
     """Optional tail extrapolation parameters."""
 
-    weights: str | None = None
-    """Optional attribute expression for sample weights."""
+    weights: AttributeExpression | None = None
+    """Optional sample weights. Accepts a typed attribute or an attribute expression."""
 
     @model_serializer(mode="wrap")
     def _serialize(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
@@ -158,18 +159,19 @@ class SimReportThresholds(BaseModel):
 class SimulationReportParameters(BaseModel):
     """Parameters for the simulation-report compute task.
 
-    All simulation data references use flat string fields (object URLs and
-    attribute expressions) rather than nested Source/Target objects.
+    Simulation data is referenced by flat object/attribute field pairs rather than
+    nested Source/Target objects. Attribute fields accept a typed attribute such as
+    ``pointset.attributes["grade"]`` or a raw attribute expression.
 
     Example:
         >>> params = SimulationReportParameters(
-        ...     simulation_source=pointset_url,
-        ...     source_attribute="locations.attributes[0]",
-        ...     simulation_target=grid_url,
-        ...     point_simulations="cell_attributes[0]",
-        ...     point_simulations_normal_score="cell_attributes[1]",
-        ...     block_simulations="cell_attributes[2]",
-        ...     block_simulations_normal_score="cell_attributes[3]",
+        ...     simulation_source=pointset,
+        ...     source_attribute=pointset.attributes["grade"],
+        ...     simulation_target=grid,
+        ...     point_simulations=grid.attributes["point_sims"],
+        ...     point_simulations_normal_score=grid.attributes["point_sims_ns"],
+        ...     block_simulations=grid.attributes["block_sims"],
+        ...     block_simulations_normal_score=grid.attributes["block_sims_ns"],
         ...     variogram_model=variogram_url,
         ...     neighborhood=SearchNeighborhood(...),
         ...     number_of_simulations=50,
@@ -180,23 +182,24 @@ class SimulationReportParameters(BaseModel):
     simulation_source: GeoscienceObjectReference
     """Reference URL to the source geoscience object (typically a pointset)."""
 
-    source_attribute: str
-    """Attribute expression on the source object (e.g. ``"locations.attributes[0]"``)."""
+    source_attribute: AttributeExpression
+    """The source values. Accepts a typed attribute such as ``pointset.attributes["grade"]``,
+    or an attribute expression such as ``"locations.attributes[0]"``."""
 
     simulation_target: GeoscienceObjectReference
     """Reference URL to the target geoscience object (typically a block model)."""
 
-    point_simulations: str
-    """Attribute expression for point simulations on the target."""
+    point_simulations: AttributeExpression
+    """Point simulations on the target. Accepts a typed attribute or an attribute expression."""
 
-    point_simulations_normal_score: str
-    """Attribute expression for point simulation normal scores on the target."""
+    point_simulations_normal_score: AttributeExpression
+    """Point simulation normal scores on the target. Accepts a typed attribute or an attribute expression."""
 
-    block_simulations: str
-    """Attribute expression for block simulations on the target."""
+    block_simulations: AttributeExpression
+    """Block simulations on the target. Accepts a typed attribute or an attribute expression."""
 
-    block_simulations_normal_score: str
-    """Attribute expression for block simulation normal scores on the target."""
+    block_simulations_normal_score: AttributeExpression
+    """Block simulation normal scores on the target. Accepts a typed attribute or an attribute expression."""
 
     variogram_model: GeoscienceObjectReference
     """Reference URL to the variogram model object."""
