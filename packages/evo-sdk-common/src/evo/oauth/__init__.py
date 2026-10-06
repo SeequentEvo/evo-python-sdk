@@ -40,8 +40,8 @@ __all__ = [
 ]
 
 
-# OAuthRedirectHandler runs a local web server, so it requires aiohttp. Resolve it on demand so that environments
-# without aiohttp (such as Pyodide) can still use the rest of this package.
+# OAuthRedirectHandler serves the redirect over a local web server, so it needs the optional aiohttp extra. Resolve
+# it on demand so the rest of this package stays usable without it.
 def __getattr__(name: str) -> Any:
     if name == "OAuthRedirectHandler":
         from .oauth_redirect_handler import OAuthRedirectHandler

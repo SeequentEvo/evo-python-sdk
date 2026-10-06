@@ -32,8 +32,8 @@ notebooks = [
     "python-dotenv",
     "Pillow",
 ]
-# For JupyterLite and other Pyodide runtimes, where aiohttp cannot open sockets. The `pyodide` and `js` modules are
-# provided by the runtime itself, so they are not listed here.
+# For JupyterLite and other Pyodide runtimes. aiohttp is omitted because sockets are non-functional under WebAssembly,
+# so requests go through the browser instead. The `pyodide` and `js` modules are provided by the runtime itself.
 pyodide = [
     "ipykernel",
     "ipython",
@@ -47,7 +47,7 @@ jmespath = [
 [dependency-groups]
 # Dev dependencies. The version is left unspecified so the latest is installed.
 test = [
-    "evo-sdk-common[aiohttp]",
+    "evo-sdk-common[aiohttp,notebooks]",
     "freezegun",
     "parameterized==0.9.0",
     "pytest",
