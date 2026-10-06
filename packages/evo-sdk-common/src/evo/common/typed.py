@@ -58,9 +58,7 @@ class Point3(NamedTuple):
 
     @classmethod
     def from_array_like(cls, value: Point3 | FloatArrayLike3) -> Point3:
-        """Validate three finite coordinates, preserving existing points."""
-        if isinstance(value, cls):
-            return value
+        """Validate three finite coordinates, including existing points."""
         return cls(*_validate_array_like(value, kind=Real, positive=False))
 
 
@@ -73,9 +71,7 @@ class Size3d(NamedTuple):
 
     @classmethod
     def from_array_like(cls, value: Size3d | FloatArrayLike3) -> Size3d:
-        """Validate three positive finite dimensions, preserving existing sizes."""
-        if isinstance(value, cls):
-            return value
+        """Validate three positive finite dimensions, including existing sizes."""
         return cls(*_validate_array_like(value, kind=Real, positive=True))
 
 
@@ -88,9 +84,7 @@ class Size3i(NamedTuple):
 
     @classmethod
     def from_array_like(cls, value: Size3i | IntArrayLike3) -> Size3i:
-        """Validate three positive integer counts, preserving existing sizes."""
-        if isinstance(value, cls):
-            return value
+        """Validate three positive integer counts, including existing sizes."""
         return cls(*_validate_array_like(value, kind=Integral, positive=True))
 
     @property
