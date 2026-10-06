@@ -38,13 +38,12 @@ __all__ = [
 @dataclass(frozen=True, kw_only=True)
 class RegularBlockModelData:
     """Data class for creating a new regular block model.
-    Existing Point3, Size3i, and Size3d inputs are kept as-is for compatibility;
-    new sequences are checked for the constraints below.
+
 
     :param name: The name of the block model.
-    :param origin: The origin point of the block model grid.
-    :param n_blocks: The number of blocks in each dimension (nx, ny, nz).
-    :param block_size: The size of each block in each dimension (dx, dy, dz).
+    :param origin: The origin point of the block model grid, as Point3 or three values.
+    :param n_blocks: The number of blocks in each dimension (nx, ny, nz), as Size3i or three values.
+    :param block_size: The size of each block in each dimension (dx, dy, dz), as Size3d or three values.
     :param rotations: List of rotations as (axis, angle) tuples. Angle is in degrees,
         positive angles indicate clockwise rotation when looking down the axis.
     :param cell_data: Optional DataFrame containing block attribute data.

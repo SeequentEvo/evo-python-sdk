@@ -43,14 +43,19 @@ BM_BBOX = models.BBoxXYZ(
 )
 
 
-def test_regular_block_model_data_preserves_named_geometry():
-    origin = Point3(float("nan"), 2, 3)
-    n_blocks = Size3i(0, 5, 6)
-    block_size = Size3d(0, 1, 2)
-    data = RegularBlockModelData(name="Test", origin=origin, n_blocks=n_blocks, block_size=block_size)
-    assert data.origin is origin
-    assert data.n_blocks is n_blocks
-    assert data.block_size is block_size
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("origin", Point3(float("nan"), 2, 3)),
+        ("n_blocks", Size3i(0, 5, 6)),
+        ("block_size", Size3d(0, 1, 2)),
+    ],
+)
+def test_regular_block_model_data_rejects_invalid_named_geometry(field, value):
+    kwargs = {"name": "Test", "origin": Point3(1, 2, 3), "n_blocks": Size3i(4, 5, 6), "block_size": Size3d(1, 1, 1)}
+    kwargs[field] = value
+    with pytest.raises(ValueError, match="value must contain three"):
+        RegularBlockModelData(**kwargs)
 
 
 @pytest.mark.parametrize(

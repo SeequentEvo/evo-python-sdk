@@ -48,7 +48,7 @@ class Base3DGridData(BaseSpatialObjectData):
 
     Contains the common properties shared by all grid types: origin, size, rotation, and cell_data.
     Origin and size accept their named types or three values in a list, tuple, or 1D array.
-    Named types are preserved as-is; new sequences are validated before conversion.
+    All inputs, including named types, are validated and normalized.
     """
 
     origin: Point3 | FloatArrayLike3
@@ -68,7 +68,7 @@ class BaseRegular3DGridData(Base3DGridData):
     Contains the common properties shared by Regular3DGridData and RegularMasked3DGridData.
     Adds cell_size to the base grid properties; it accepts a Size3d or three
     values in a list, tuple, or 1D array.
-    A supplied Size3d is preserved as-is; new sequences are validated.
+    All inputs, including Size3d instances, are validated and normalized.
     """
 
     cell_size: Size3d | FloatArrayLike3

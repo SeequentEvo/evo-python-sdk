@@ -59,22 +59,13 @@ def test_regular_grid_cell_size_normalizes(grid_class, cell_size):
 
 
 @pytest.mark.parametrize("grid_class", [Regular3DGridData, RegularMasked3DGridData, Tensor3DGridData])
-def test_existing_named_geometry_is_preserved(grid_class):
-    origin = Point3(float("nan"), 2, 3)
-    size = Size3i(0, 2, 2)
-    overrides = {"origin": origin, "size": size}
-    if grid_class is Tensor3DGridData:
-        overrides["cell_sizes_x"] = np.array([])
-    else:
-        overrides["cell_size"] = Size3d(0, 1, 1)
-        if grid_class is RegularMasked3DGridData:
-            overrides["mask"] = np.array([], dtype=bool)
-
-    data = _create_grid(grid_class, **overrides)
-    assert data.origin is origin
-    assert data.size is size
-    if grid_class is not Tensor3DGridData:
-        assert data.cell_size is overrides["cell_size"]
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [("origin", Point3(float("nan"), 2, 3)), ("size", Size3i(0, 2, 2))],
+)
+def test_grid_rejects_invalid_named_geometry(grid_class, field, value):
+    with pytest.raises(ValueError, match="value must contain three"):
+        _create_grid(grid_class, **{field: value})
 
 
 @pytest.mark.parametrize("grid_class", [Regular3DGridData, RegularMasked3DGridData, Tensor3DGridData])
@@ -102,7 +93,7 @@ def test_grid_rejects_invalid_geometry(grid_class, field, value, error):
 
 @pytest.mark.parametrize("grid_class", [Regular3DGridData, RegularMasked3DGridData])
 @pytest.mark.parametrize(
-    "cell_size", [[1, 2], [1, 0, 3], [1, float("inf"), 3], np.array([1, 2]), np.array([1, np.inf, 3])]
+    "cell_size", [[1, 2], [1, 0, 3], [1, float("inf"), 3], np.array([1, 2]), np.array([1, np.inf, 3]), Size3d(0, 1, 1)]
 )
 def test_regular_grid_rejects_invalid_cell_size(grid_class, cell_size):
     with pytest.raises(ValueError, match="value must"):

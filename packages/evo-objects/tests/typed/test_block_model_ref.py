@@ -84,14 +84,18 @@ class TestBlockModelGeometry(TestCase):
 
 
 class TestRegularBlockModelData(TestCase):
-    def test_existing_named_geometry_is_preserved(self):
-        origin = Point3(float("nan"), 2, 3)
-        n_blocks = Size3i(0, 5, 6)
-        block_size = Size3d(0, 1, 2)
-        data = RegularBlockModelData(name="Test", origin=origin, n_blocks=n_blocks, block_size=block_size)
-        self.assertIs(data.origin, origin)
-        self.assertIs(data.n_blocks, n_blocks)
-        self.assertIs(data.block_size, block_size)
+    @parameterized.expand(
+        [
+            ("origin", Point3(float("nan"), 2, 3)),
+            ("n_blocks", Size3i(0, 5, 6)),
+            ("block_size", Size3d(0, 1, 2)),
+        ]
+    )
+    def test_invalid_named_geometry_is_rejected(self, field, value):
+        kwargs = {"name": "Test", "origin": Point3(1, 2, 3), "n_blocks": Size3i(4, 5, 6), "block_size": Size3d(1, 1, 1)}
+        kwargs[field] = value
+        with self.assertRaisesRegex(ValueError, "value must contain three"):
+            RegularBlockModelData(**kwargs)
 
     @parameterized.expand(
         [
