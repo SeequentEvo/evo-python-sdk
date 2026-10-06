@@ -96,7 +96,7 @@ the target grid, containing one column per realization.</p>
 <p>Example::</p>
 <pre><code>&gt;&gt;&gt; params = ConditionalTurningBandsParameters(
 ...     source=pointset,
-...     source_attribute="locations.attributes[?name=='grade']",
+...     source_attribute=pointset.attributes["grade"],
 ...     target=grid,
 ...     distribution=distribution_object,
 ...     variogram_model=variogram,
