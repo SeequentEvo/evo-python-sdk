@@ -96,6 +96,27 @@ __all__ = [
 ]
 
 
+# IPython resolves these lazily by name, so a module move silently disables the
+# formatter; tests/test_extension.py checks each path still resolves.
+_TASK_RESULT_TYPES: tuple[tuple[str, str], ...] = (
+    ("evo.compute.tasks.geostatistics.break_ties", "BreakTiesResult"),
+    ("evo.compute.tasks.geostatistics.conditional_turning_bands", "ConditionalTurningBandsResult"),
+    ("evo.compute.tasks.geostatistics.conditioned_simulator", "ConSimResult"),
+    ("evo.compute.tasks.geostatistics.continuous_distribution", "ContinuousDistributionResult"),
+    ("evo.compute.tasks.geostatistics.declustering", "DeclusteringResult"),
+    ("evo.compute.tasks.geostatistics.idw", "IDWResult"),
+    ("evo.compute.tasks.geostatistics.knn", "KNNResult"),
+    ("evo.compute.tasks.geostatistics.kriging", "KrigingResult"),
+    ("evo.compute.tasks.geostatistics.location_wise", "LocationWiseResult"),
+    ("evo.compute.tasks.geostatistics.loss_calculation", "LossCalculationResult"),
+    ("evo.compute.tasks.geostatistics.normal_score", "NormalScoreResult"),
+    ("evo.compute.tasks.geostatistics.profit_calculation", "ProfitCalculationResult"),
+    ("evo.compute.tasks.geostatistics.simulation_report", "SimulationReportResult"),
+)
+
+_TASK_RESULT_LIST_TYPE: tuple[str, str] = ("evo.compute.tasks.common.results", "TaskResultList")
+
+
 def _register_formatters(ipython: InteractiveShell) -> None:
     """Register HTML formatters for Evo SDK types.
 
@@ -167,16 +188,11 @@ def _register_formatters(ipython: InteractiveShell) -> None:
     )
 
     # Register formatters for compute task results
+    for module_name, class_name in _TASK_RESULT_TYPES:
+        html_formatter.for_type_by_name(module_name, class_name, format_task_result_with_target)
 
     html_formatter.for_type_by_name(
-        "evo.compute.tasks.kriging",
-        "KrigingResult",
-        format_task_result_with_target,
-    )
-
-    html_formatter.for_type_by_name(
-        "evo.compute.tasks.common.results",
-        "TaskResultList",
+        *_TASK_RESULT_LIST_TYPE,
         format_task_result_list,
     )
 

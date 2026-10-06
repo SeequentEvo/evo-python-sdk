@@ -711,7 +711,7 @@ def _format_single_task_result_inner(result: Any, index: int | None = None) -> s
     html = build_title(title, links)
     message = getattr(result, "message", None)
     if message:
-        html += f'<div class="message">{message}</div>'
+        html += f'<div class="message">{escape(str(message))}</div>'
     if table_rows:
         html += f"<table>{''.join(table_rows)}</table>"
 

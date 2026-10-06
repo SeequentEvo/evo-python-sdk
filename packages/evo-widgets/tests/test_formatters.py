@@ -1130,6 +1130,15 @@ class TestFormatTaskResult(unittest.TestCase):
         # Should fall back to "Task"
         self.assertIn("Task Result", html)
 
+    def test_escapes_message_markup(self):
+        """Messages are server-supplied, so they must not be injected as raw HTML."""
+        obj = self._create_mock_task_result(message="done <img src=x onerror=alert(1)>")
+
+        html = format_task_result_with_target(obj)
+
+        self.assertNotIn("<img src=x", html)
+        self.assertIn("&lt;img src=x", html)
+
 
 class TestFormatTaskResultList(unittest.TestCase):
     """Tests for the format_task_result_list function."""
