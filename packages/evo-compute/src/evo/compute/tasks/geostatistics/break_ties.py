@@ -38,7 +38,7 @@ import pandas as pd
 from evo.common import IContext, IFeedback
 from evo.objects import ObjectSchema
 from evo.objects.typed import BaseObject, object_from_reference
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 from ..common import (
     AnySourceAttribute,
@@ -47,6 +47,7 @@ from ..common import (
 )
 from ..common.results import TaskTarget
 from ..common.runner import TaskRunner
+from ..common.search import _reject_sector_and_drillhole_limits
 
 __all__ = [
     "BreakTiesParameters",
@@ -96,6 +97,11 @@ class BreakTiesParameters(BaseModel):
 
     seed: int = 38239342
     """Seed for the random number generator."""
+
+    @field_validator("neighborhood")
+    @classmethod
+    def _check_neighborhood(cls, neighborhood: SearchNeighborhood) -> SearchNeighborhood:
+        return _reject_sector_and_drillhole_limits(neighborhood)
 
 
 # =============================================================================

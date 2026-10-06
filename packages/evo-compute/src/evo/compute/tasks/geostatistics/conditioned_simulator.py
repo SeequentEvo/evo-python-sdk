@@ -46,7 +46,7 @@ import pandas as pd
 from evo.common import IContext, IFeedback
 from evo.objects import ObjectSchema
 from evo.objects.typed import BaseObject, object_from_reference
-from pydantic import BaseModel, Field, SerializerFunctionWrapHandler, model_serializer
+from pydantic import BaseModel, Field, SerializerFunctionWrapHandler, field_validator, model_serializer
 
 from ..common import (
     CreateAttribute,
@@ -57,6 +57,7 @@ from ..common import (
 )
 from ..common.results import TaskAttribute
 from ..common.runner import TaskRunner
+from ..common.search import _reject_sector_and_drillhole_limits
 
 __all__ = [
     "BlockDiscretization",
@@ -248,6 +249,11 @@ class ConSimParameters(BaseModel):
 
     report_mean_thresholds: ReportMeanThresholds | None = None
     """Optional thresholds for mean comparison in the validation report."""
+
+    @field_validator("neighborhood")
+    @classmethod
+    def _check_neighborhood(cls, neighborhood: SearchNeighborhood) -> SearchNeighborhood:
+        return _reject_sector_and_drillhole_limits(neighborhood)
 
 
 # =============================================================================

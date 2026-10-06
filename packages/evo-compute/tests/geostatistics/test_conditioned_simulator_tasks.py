@@ -6,6 +6,8 @@
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 
+from pydantic import ValidationError
+
 from evo.compute.tasks import SearchNeighborhood
 from evo.compute.tasks.common import (
     AllOfFilter,
@@ -146,6 +148,15 @@ class TestConSimParametersSerialization(unittest.TestCase):
     def test_block_discretization_default(self):
         d = _dump(_params())
         self.assertEqual(d["block_discretization"]["nx"], 1)
+
+    def test_search_limits_are_refused(self):
+        search = SearchNeighborhood(
+            ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=300, semi_major=200, minor=100)),
+            max_samples=24,
+            max_samples_per_drillhole=3,
+        )
+        with self.assertRaisesRegex(ValidationError, "does not support max_samples_per_drillhole"):
+            _params(neighborhood=search)
 
     def test_custom_simulations(self):
         d = _dump(_params(number_of_simulations=10, number_of_simulations_to_save=3))

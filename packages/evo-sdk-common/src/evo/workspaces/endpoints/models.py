@@ -85,6 +85,21 @@ class Label(RootModel[StrictStr]):
     root: Annotated[StrictStr, Field(max_length=100, min_length=1)]
 
 
+class CreatedAtFilter(RootModel[StrictStr | list[StrictStr] | None]):
+    root: StrictStr | list[StrictStr] | None = None
+    """
+    Filter by the time workspace has created.
+    """
+
+
+class DiscoveryCentralResponse(CustomBaseModel):
+    display_name: Annotated[StrictStr, Field(title="Display Name")]
+    host: Annotated[StrictStr, Field(title="Host")]
+    id: Annotated[StrictStr, Field(title="Id")]
+    name: Annotated[StrictStr, Field(title="Name")]
+    organization_name: Annotated[StrictStr, Field(title="Organization Name")]
+
+
 class ErrorInvalidParam(CustomBaseModel):
     name: Annotated[StrictStr, Field(title="Name")]
     reason: Annotated[StrictStr, Field(title="Reason")]
@@ -101,35 +116,6 @@ class ErrorResponse(CustomBaseModel):
     type: Annotated[StrictStr, Field(title="Type")]
 
 
-class FolderCreateRequest(CustomBaseModel):
-    name: Annotated[StrictStr, Field(max_length=100, min_length=1, title="Name")]
-    """
-    The name of the folder
-    """
-    parent_folder_id: Annotated[UUID | None, Field(title="Parent Folder Id")] = None
-    """
-    The ID of the parent folder
-    """
-    parent_folder_path: Annotated[Path | None, Field(title="Parent Folder Path")] = None
-    """
-    The path of the parent folder
-    """
-
-
-class FolderMoveRequest(CustomBaseModel):
-    parent_folder_id: Annotated[UUID, Field(title="Parent Folder Id")]
-    """
-    The ID of the new parent folder
-    """
-
-
-class FolderUpdateRequest(CustomBaseModel):
-    name: Annotated[StrictStr, Field(max_length=100, min_length=1, title="Name")]
-    """
-    The new name of the folder
-    """
-
-
 class GeometryTypeEnum(Enum):
     Polygon = "Polygon"
 
@@ -138,6 +124,13 @@ class Hub(CustomBaseModel):
     code: Annotated[StrictStr, Field(title="Code")]
     display_name: Annotated[StrictStr, Field(title="Display Name")]
     url: Annotated[StrictStr, Field(title="Url")]
+
+
+class ImsGroupDetailResponse(CustomBaseModel):
+    description: Annotated[StrictStr, Field(title="Description")]
+    id: Annotated[UUID, Field(title="Id")]
+    is_federated_group: Annotated[StrictBool, Field(title="Is Federated Group")]
+    name: Annotated[StrictStr, Field(title="Name")]
 
 
 class ImsGroupResponse(CustomBaseModel):
@@ -210,7 +203,7 @@ class OrganizationSettingsResponse(CustomBaseModel):
     created_at: Annotated[AwareDatetime | None, Field(title="Created At")] = None
     created_by: Annotated[UUID | None, Field(title="Created By")] = None
     id: Annotated[UUID, Field(title="Id")]
-    settings: Annotated[OrganizationSettingsFieldResponse, Field(validate_default=True)] = {"ml_enabled": False}
+    settings: Annotated[OrganizationSettingsFieldResponse, Field(validate_default=True)] = {"ml_enabled": False}  # noqa: RUF012
     updated_at: Annotated[AwareDatetime | None, Field(title="Updated At")] = None
     updated_by: Annotated[UUID | None, Field(title="Updated By")] = None
 
@@ -276,6 +269,13 @@ class UpdateInstanceUserRolesResponse(CustomBaseModel):
     roles: Annotated[list[BaseInstanceUserRoleResponse], Field(title="Roles")]
 
 
+class UpdatedAtFilter(RootModel[StrictStr | list[StrictStr] | None]):
+    root: StrictStr | list[StrictStr] | None = None
+    """
+    Filter by the latest time workspace was updated.
+    """
+
+
 class User(CustomBaseModel):
     email: Annotated[StrictStr | None, Field(title="Email")] = None
     full_name: Annotated[StrictStr | None, Field(title="Full Name")] = None
@@ -320,6 +320,92 @@ class WorkspaceMlEnablementRequest(CustomBaseModel):
     workspace_id: Annotated[UUID, Field(title="Workspace Id")]
 
 
+class FolderCreateRequest(CustomBaseModel):
+    created_at: Annotated[AwareDatetime | None, Field(title="Created At")] = None
+    """
+    The timestamp when the folder was created
+    """
+    created_by: Annotated[UUID | None, Field(title="Created By")] = None
+    """
+    The ID of the user creating the folder
+    """
+    name: Annotated[StrictStr, Field(max_length=100, min_length=1, title="Name")]
+    """
+    The name of the folder
+    """
+    parent_folder_id: Annotated[UUID | None, Field(title="Parent Folder Id")] = None
+    """
+    The ID of the parent folder
+    """
+    parent_folder_path: Annotated[Path | None, Field(title="Parent Folder Path")] = None
+    """
+    The path of the parent folder
+    """
+    validate_only: Annotated[StrictBool | None, Field(title="Validate Only")] = False
+    """
+    If true, the request will be validated but the folder will not be created
+    """
+
+
+class FolderResponse(CustomBaseModel):
+    created_at: Annotated[AwareDatetime, Field(title="Created At")]
+    created_by: UserModel
+    deleted_at: Annotated[AwareDatetime | None, Field(title="Deleted At")] = None
+    deleted_by: UserModel | None = None
+    folder_id: Annotated[UUID, Field(title="Folder Id")]
+    modified_at: Annotated[AwareDatetime, Field(title="Modified At")]
+    modified_by: UserModel
+    name: Annotated[StrictStr, Field(title="Name")]
+    parent_ids: Annotated[list[UUID], Field(title="Parent Ids")]
+    path: Annotated[Path, Field(title="Path")]
+
+
+class FolderSummaryResponse(CustomBaseModel):
+    folder_id: Annotated[UUID, Field(title="Folder Id")]
+    path: Annotated[Path, Field(title="Path")]
+
+
+class FolderUpdateRequest(CustomBaseModel):
+    name: Annotated[StrictStr | None, Field(max_length=100, min_length=1, title="Name")] = None
+    """
+    The new name of the folder
+    """
+    parent_folder_id: Annotated[UUID | None, Field(title="Parent Folder Id")] = None
+    """
+    The ID of the new parent folder
+    """
+    parent_folder_path: Annotated[Path | None, Field(title="Parent Folder Path")] = None
+    """
+    The path of the new parent folder
+    """
+
+
+class ListFoldersResponse(CustomBaseModel):
+    count: Annotated[StrictInt, Field(title="Count")]
+    created_at: Annotated[AwareDatetime, Field(title="Created At")]
+    created_by: UserModel
+    deleted_at: Annotated[AwareDatetime | None, Field(title="Deleted At")] = None
+    deleted_by: UserModel | None = None
+    folder_id: Annotated[UUID, Field(title="Folder Id")]
+    limit: Annotated[StrictInt, Field(title="Limit")]
+    modified_at: Annotated[AwareDatetime, Field(title="Modified At")]
+    modified_by: UserModel
+    name: Annotated[StrictStr, Field(title="Name")]
+    offset: Annotated[StrictInt, Field(title="Offset")]
+    parent_ids: Annotated[list[UUID], Field(title="Parent Ids")]
+    path: Annotated[Path, Field(title="Path")]
+    results: Annotated[list[FolderResponse], Field(title="Results")]
+    total: Annotated[StrictInt, Field(title="Total")]
+
+
+class ListFoldersSummaryResponse(CustomBaseModel):
+    count: Annotated[StrictInt, Field(title="Count")]
+    limit: Annotated[StrictInt, Field(title="Limit")]
+    offset: Annotated[StrictInt, Field(title="Offset")]
+    results: Annotated[list[FolderSummaryResponse], Field(title="Results")]
+    total: Annotated[StrictInt, Field(title="Total")]
+
+
 class AddInstanceUsersRequest(CustomBaseModel):
     users: Annotated[list[UserRoleMapping], Field(title="Users")]
 
@@ -328,7 +414,7 @@ class AssignRoleRequest(RootModel[UserRole | UserRoleViaEmail]):
     root: Annotated[
         UserRole | UserRoleViaEmail,
         Field(
-            examples=[{"role": "admin", "user_id": "123e4567-e89b-12d3-a456-426614174000"}],
+            examples=[{"role": "viewer", "user_id": "123e4567-e89b-12d3-a456-426614174000"}],
             title="AssignRoleRequest",
         ),
     ]
@@ -405,24 +491,11 @@ class CreateWorkspaceRequest(CustomBaseModel):
     """
 
 
-class DiscoveryResponseContent(CustomBaseModel):
-    hubs: Annotated[list[Hub], Field(title="Hubs")]
-    organizations: Annotated[list[Organization], Field(title="Organizations")]
-    service_access: Annotated[list[ServiceAccess], Field(title="Service Access")]
-    services: Annotated[list[Service], Field(title="Services")]
-
-
-class FolderResponse(CustomBaseModel):
-    created_at: Annotated[AwareDatetime, Field(title="Created At")]
-    created_by: UserModel
-    deleted: Annotated[StrictBool, Field(title="Deleted")]
-    folder_id: Annotated[UUID, Field(title="Folder Id")]
-    name: Annotated[StrictStr, Field(title="Name")]
-    parent_folder_id: Annotated[UUID | None, Field(title="Parent Folder Id")] = None
-    path: Annotated[Path, Field(title="Path")]
-    updated_at: Annotated[AwareDatetime, Field(title="Updated At")]
-    updated_by: UserModel
-    workspace_id: Annotated[UUID, Field(title="Workspace Id")]
+class DiscoveryInstanceResponse(CustomBaseModel):
+    central: DiscoveryCentralResponse | None = None
+    display_name: Annotated[StrictStr, Field(title="Display Name")]
+    hub: Hub
+    id: Annotated[StrictStr, Field(title="Id")]
 
 
 class LicenseAccessResponseModel(CustomBaseModel):
@@ -517,13 +590,33 @@ class UserWorkspaceResponse(CustomBaseModel):
     default_coordinate_system: Annotated[StrictStr, Field(title="Default Coordinate System")] = ""
     description: Annotated[StrictStr, Field(title="Description")] = ""
     id: Annotated[UUID, Field(title="Id")]
-    labels: Annotated[list[StrictStr], Field(title="Labels")] = []
+    labels: Annotated[list[StrictStr], Field(title="Labels")] = []  # noqa: RUF012
     ml_enabled: Annotated[StrictBool, Field(title="Ml Enabled")] = False
     name: Annotated[StrictStr, Field(max_length=60, min_length=1, title="Name")]
     """
     The name of the workspace, unique within an organization and hub
     """
     self_link: Annotated[AnyUrl, Field(title="Self Link")]
+    updated_at: Annotated[AwareDatetime, Field(title="Updated At")]
+    updated_by: UserModel
+    user_role: RoleEnum
+
+
+class UserWorkspaceResponseWithThumbnailLink(CustomBaseModel):
+    bounding_box: BoundingBox | None = None
+    created_at: Annotated[AwareDatetime, Field(title="Created At")]
+    created_by: UserModel
+    default_coordinate_system: Annotated[StrictStr, Field(title="Default Coordinate System")] = ""
+    description: Annotated[StrictStr, Field(title="Description")] = ""
+    id: Annotated[UUID, Field(title="Id")]
+    labels: Annotated[list[StrictStr], Field(title="Labels")] = []  # noqa: RUF012
+    ml_enabled: Annotated[StrictBool, Field(title="Ml Enabled")] = False
+    name: Annotated[StrictStr, Field(max_length=60, min_length=1, title="Name")]
+    """
+    The name of the workspace, unique within an organization and hub
+    """
+    self_link: Annotated[AnyUrl, Field(title="Self Link")]
+    thumbnail_link: Annotated[AnyUrl | None, Field(title="Thumbnail Link")] = None
     updated_at: Annotated[AwareDatetime, Field(title="Updated At")]
     updated_by: UserModel
     user_role: RoleEnum
@@ -537,13 +630,33 @@ class WorkspaceRoleOptionalResponse(CustomBaseModel):
     default_coordinate_system: Annotated[StrictStr, Field(title="Default Coordinate System")] = ""
     description: Annotated[StrictStr, Field(title="Description")] = ""
     id: Annotated[UUID, Field(title="Id")]
-    labels: Annotated[list[StrictStr], Field(title="Labels")] = []
+    labels: Annotated[list[StrictStr], Field(title="Labels")] = []  # noqa: RUF012
     ml_enabled: Annotated[StrictBool, Field(title="Ml Enabled")] = False
     name: Annotated[StrictStr, Field(max_length=60, min_length=1, title="Name")]
     """
     The name of the workspace, unique within an organization and hub
     """
     self_link: Annotated[AnyUrl, Field(title="Self Link")]
+    updated_at: Annotated[AwareDatetime, Field(title="Updated At")]
+    updated_by: UserModel
+
+
+class WorkspaceRoleOptionalResponseWithThumbnailLink(CustomBaseModel):
+    bounding_box: BoundingBox | None = None
+    created_at: Annotated[AwareDatetime, Field(title="Created At")]
+    created_by: UserModel
+    current_user_role: RoleEnum | None = None
+    default_coordinate_system: Annotated[StrictStr, Field(title="Default Coordinate System")] = ""
+    description: Annotated[StrictStr, Field(title="Description")] = ""
+    id: Annotated[UUID, Field(title="Id")]
+    labels: Annotated[list[StrictStr], Field(title="Labels")] = []  # noqa: RUF012
+    ml_enabled: Annotated[StrictBool, Field(title="Ml Enabled")] = False
+    name: Annotated[StrictStr, Field(max_length=60, min_length=1, title="Name")]
+    """
+    The name of the workspace, unique within an organization and hub
+    """
+    self_link: Annotated[AnyUrl, Field(title="Self Link")]
+    thumbnail_link: Annotated[AnyUrl | None, Field(title="Thumbnail Link")] = None
     updated_at: Annotated[AwareDatetime, Field(title="Updated At")]
     updated_by: UserModel
 
@@ -556,7 +669,7 @@ class WorkspaceRoleRequiredResponse(CustomBaseModel):
     default_coordinate_system: Annotated[StrictStr, Field(title="Default Coordinate System")] = ""
     description: Annotated[StrictStr, Field(title="Description")] = ""
     id: Annotated[UUID, Field(title="Id")]
-    labels: Annotated[list[StrictStr], Field(title="Labels")] = []
+    labels: Annotated[list[StrictStr], Field(title="Labels")] = []  # noqa: RUF012
     ml_enabled: Annotated[StrictBool, Field(title="Ml Enabled")] = False
     name: Annotated[StrictStr, Field(max_length=60, min_length=1, title="Name")]
     """
@@ -567,43 +680,104 @@ class WorkspaceRoleRequiredResponse(CustomBaseModel):
     updated_by: UserModel
 
 
+class WorkspaceRoleRequiredResponseWithThumbnailLink(CustomBaseModel):
+    bounding_box: BoundingBox | None = None
+    created_at: Annotated[AwareDatetime, Field(title="Created At")]
+    created_by: UserModel
+    current_user_role: RoleEnum
+    default_coordinate_system: Annotated[StrictStr, Field(title="Default Coordinate System")] = ""
+    description: Annotated[StrictStr, Field(title="Description")] = ""
+    id: Annotated[UUID, Field(title="Id")]
+    labels: Annotated[list[StrictStr], Field(title="Labels")] = []  # noqa: RUF012
+    ml_enabled: Annotated[StrictBool, Field(title="Ml Enabled")] = False
+    name: Annotated[StrictStr, Field(max_length=60, min_length=1, title="Name")]
+    """
+    The name of the workspace, unique within an organization and hub
+    """
+    self_link: Annotated[AnyUrl, Field(title="Self Link")]
+    thumbnail_link: Annotated[AnyUrl | None, Field(title="Thumbnail Link")] = None
+    updated_at: Annotated[AwareDatetime, Field(title="Updated At")]
+    updated_by: UserModel
+
+
 class AddInstanceUsersResponse(CustomBaseModel):
     invitations: Annotated[list[BaseInstanceUserInvitationWithRolesResponse], Field(title="Invitations")]
     members: Annotated[list[BaseInstanceUserWithRolesResponse], Field(title="Members")]
 
 
-class ChildFolderListResponse(CustomBaseModel):
-    count: Annotated[StrictInt, Field(title="Count")]
-    folders: Annotated[list[FolderResponse], Field(title="Folders")]
-    limit: Annotated[StrictInt, Field(title="Limit")]
-    offset: Annotated[StrictInt, Field(title="Offset")]
-    total: Annotated[StrictInt, Field(title="Total")]
+class AnyWorkspaceResponse(
+    RootModel[
+        WorkspaceRoleRequiredResponse
+        | WorkspaceRoleOptionalResponse
+        | WorkspaceRoleRequiredResponseWithThumbnailLink
+        | WorkspaceRoleOptionalResponseWithThumbnailLink
+    ]
+):
+    root: Annotated[
+        WorkspaceRoleRequiredResponse
+        | WorkspaceRoleOptionalResponse
+        | WorkspaceRoleRequiredResponseWithThumbnailLink
+        | WorkspaceRoleOptionalResponseWithThumbnailLink,
+        Field(title="AnyWorkspaceResponse"),
+    ]
+    """
+    Named union of get-workspace responses (role-required or role-optional). See `WorkspaceResponse`.
+    """
 
 
-class CreatePathFoldersResponse(CustomBaseModel):
-    folders: Annotated[list[FolderResponse], Field(title="Folders")]
+class DiscoveryAccountResponse(CustomBaseModel):
+    id: Annotated[StrictStr, Field(title="Id")]
+    instances: Annotated[list[DiscoveryInstanceResponse], Field(title="Instances")]
+    name: Annotated[StrictStr, Field(title="Name")]
 
 
-class DiscoveryResponse(CustomBaseModel):
-    discovery: DiscoveryResponseContent
-
-
-class GetFolderResponse(CustomBaseModel):
-    child_folders: ChildFolderListResponse
-    folder: FolderResponse
+class DiscoveryResponseContent(CustomBaseModel):
+    accounts: Annotated[list[DiscoveryAccountResponse] | None, Field(title="Accounts")] = None
+    has_new_instances: Annotated[StrictBool, Field(title="Has New Instances")]
+    hubs: Annotated[list[Hub], Field(title="Hubs")]
+    organizations: Annotated[list[Organization], Field(title="Organizations")]
+    service_access: Annotated[list[ServiceAccess], Field(title="Service Access")]
+    services: Annotated[list[Service], Field(title="Services")]
 
 
 class ListUserWorkspacesResponse(CustomBaseModel):
     links: PaginationLinks
-    results: Annotated[list[UserWorkspaceResponse], Field(title="Results")]
+    results: Annotated[
+        list[UserWorkspaceResponse] | list[UserWorkspaceResponseWithThumbnailLink],
+        Field(title="Results"),
+    ]
 
 
 class ListWorkspacesResponse(CustomBaseModel):
     links: PaginationLinks
     results: Annotated[
-        list[WorkspaceRoleRequiredResponse] | list[WorkspaceRoleOptionalResponse],
+        list[WorkspaceRoleOptionalResponse] | list[WorkspaceRoleOptionalResponseWithThumbnailLink],
         Field(title="Results"),
     ]
+
+
+class WorkspaceAdminResponse(RootModel[WorkspaceRoleOptionalResponse | WorkspaceRoleOptionalResponseWithThumbnailLink]):
+    root: Annotated[
+        WorkspaceRoleOptionalResponse | WorkspaceRoleOptionalResponseWithThumbnailLink,
+        Field(title="WorkspaceAdminResponse"),
+    ]
+    """
+    Named union of admin-scoped get-workspace responses. See `WorkspaceResponse`.
+    """
+
+
+class WorkspaceResponse(RootModel[WorkspaceRoleRequiredResponse | WorkspaceRoleRequiredResponseWithThumbnailLink]):
+    root: Annotated[
+        WorkspaceRoleRequiredResponse | WorkspaceRoleRequiredResponseWithThumbnailLink,
+        Field(title="WorkspaceResponse"),
+    ]
+    """
+    Named union of create/update workspace responses. Shared component schema for inline anyOf references.
+    """
+
+
+class DiscoveryResponse(CustomBaseModel):
+    discovery: DiscoveryResponseContent
 
 
 CoordinateSystemCategory.model_rebuild()

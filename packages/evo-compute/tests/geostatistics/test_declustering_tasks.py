@@ -154,6 +154,17 @@ class TestDeclusteringParametersSerialization(TestCase):
         self.assertIn("ellipsoid", nbh)
         self.assertEqual(nbh["max_samples"], 20)
 
+    def test_search_limits_in_neighborhood(self):
+        search = SearchNeighborhood(
+            ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=200, semi_major=150, minor=100)),
+            max_samples=20,
+            max_samples_per_octant=2,
+            max_samples_per_drillhole=3,
+        )
+        d = self._dump(self._params(neighborhood=search))
+        self.assertEqual(d["neighborhood"]["max_samples_per_octant"], 2)
+        self.assertEqual(d["neighborhood"]["max_samples_per_drillhole"], 3)
+
     def test_default_power_is_idw(self):
         params = self._params()
         self.assertEqual(params.power, 2.0)

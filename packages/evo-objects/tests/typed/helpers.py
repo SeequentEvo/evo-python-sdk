@@ -32,6 +32,7 @@ class MockDownloadedObject(DownloadedObject):
         self._metadata.url = ObjectReference.new(
             environment=mock_client.environment,
             object_id=uuid.UUID(object_dict["uuid"]),
+            version_id=version_id,
         )
         self._metadata.version_id = version_id
         self._metadata.environment = mock_client.environment
@@ -90,8 +91,7 @@ class MockDownloadedObject(DownloadedObject):
 
     async def update(self, object_dict):
         new_version_id = str(int(self.metadata.version_id) + 1)
-        persisted = copy.deepcopy(object_dict)
-        self.mock_client.objects[persisted["uuid"]] = persisted
+        self.mock_client.store_version(object_dict, new_version_id)
         return MockDownloadedObject(self.mock_client, object_dict, new_version_id)
 
 
@@ -100,6 +100,16 @@ class MockClient:
         self.environment = environment
         self.data = {}
         self.objects = {}
+        self.object_versions = {}
+        self.latest_versions = {}
+
+    def store_version(self, object_dict: dict, version_id: str) -> None:
+        """Persist a snapshot of the object as the given version, and mark it as the latest."""
+        snapshot = copy.deepcopy(object_dict)
+        object_id = snapshot["uuid"]
+        self.objects[object_id] = snapshot
+        self.object_versions[(object_id, version_id)] = snapshot
+        self.latest_versions[object_id] = version_id
 
     def get_dataframe(self, data: dict) -> pd.DataFrame:
         return self.data[data["data"]]
@@ -133,7 +143,7 @@ class MockClient:
     ):
         object_dict = object_dict.copy()
         object_dict["uuid"] = str(uuid.uuid4())
-        self.objects[object_dict["uuid"]] = copy.deepcopy(object_dict)
+        self.store_version(object_dict, "1")
         return MockDownloadedObject(self, object_dict)
 
     async def replace_geoscience_object(
@@ -142,10 +152,12 @@ class MockClient:
         object_dict = object_dict.copy()
         assert reference.object_id is not None, "Reference must have an object ID"
         object_dict["uuid"] = str(reference.object_id)
-        self.objects[object_dict["uuid"]] = copy.deepcopy(object_dict)
+        self.store_version(object_dict, "1")
         return MockDownloadedObject(self, object_dict)
 
     async def from_reference(self, context: IContext, reference: ObjectReference):
         assert reference.object_id is not None, "Reference must have an object ID"
-        object_dict = copy.deepcopy(self.objects[str(reference.object_id)])
-        return MockDownloadedObject(self, object_dict)
+        object_id = str(reference.object_id)
+        version_id = reference.version_id or self.latest_versions[object_id]
+        object_dict = copy.deepcopy(self.object_versions[(object_id, version_id)])
+        return MockDownloadedObject(self, object_dict, version_id)

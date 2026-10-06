@@ -23,14 +23,6 @@ jobs:
           - windows-latest
           - ubuntu-latest
           - macos-latest
-        package:
-          - evo-sdk-common
-          - evo-blockmodels
-          - evo-colormaps
-          - evo-files
-          - evo-objects
-          - evo-compute
-          - evo-widgets
         python-version:
           - "3.10"
           - "3.11"
@@ -50,7 +42,7 @@ jobs:
 
       - name: Run tests against latest dependencies
         run: |
-          uv run --package ${{ matrix.package }} pytest packages/${{ matrix.package }}/tests/
+          uv run python scripts/run_package_tests.py
 
   run-notebook-tests:
     name: Notebook tests

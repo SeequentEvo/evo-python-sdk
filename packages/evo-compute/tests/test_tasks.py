@@ -16,8 +16,10 @@ import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from evo.objects.exceptions import SchemaIDFormatError
+from pydantic import ValidationError
 
-from evo.compute.tasks import run
+from evo.compute.tasks import SearchNeighborhood, run
+from evo.compute.tasks.common import Ellipsoid, EllipsoidRanges
 from evo.compute.tasks.common.results import TaskAttribute, TaskResultList, TaskTarget
 from evo.compute.tasks.common.runner import TaskRegistry, run_tasks
 from evo.compute.tasks.common.source_target import _convert_object_reference
@@ -303,6 +305,52 @@ class TestConvertObjectReference(unittest.TestCase):
         """_convert_object_reference should raise ValueError for invalid URL strings."""
         with self.assertRaises(ValueError):
             _convert_object_reference("not_a_url")
+
+
+class TestSearchNeighborhood(unittest.TestCase):
+    """Tests for the octant, quadrant and drillhole limits on SearchNeighborhood."""
+
+    LIMITS = {
+        "max_empty_octants": 4,
+        "max_samples_per_octant": 3,
+        "max_empty_quadrants": 1,
+        "max_samples_per_quadrant": 5,
+        "max_samples_per_drillhole": 2,
+        "max_drillholes_per_estimate": 6,
+    }
+
+    def _search(self, **limits) -> SearchNeighborhood:
+        return SearchNeighborhood(
+            ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=200, semi_major=150, minor=100)),
+            max_samples=24,
+            **limits,
+        )
+
+    def test_limits_are_omitted_unless_set(self):
+        self.assertEqual(set(self._search().model_dump(mode="json")), {"ellipsoid", "max_samples"})
+
+    def test_limits_are_sent_when_set(self):
+        dumped = self._search(**self.LIMITS).model_dump(mode="json")
+        self.assertEqual({name: dumped[name] for name in self.LIMITS}, self.LIMITS)
+
+    def test_zero_empty_sectors_is_sent(self):
+        dumped = self._search(max_empty_octants=0, max_empty_quadrants=0).model_dump(mode="json")
+        self.assertEqual(dumped["max_empty_octants"], 0)
+        self.assertEqual(dumped["max_empty_quadrants"], 0)
+
+    def test_limits_outside_the_service_bounds_are_refused(self):
+        for name, value in [
+            ("max_empty_octants", -1),
+            ("max_empty_octants", 9),
+            ("max_empty_quadrants", -1),
+            ("max_empty_quadrants", 5),
+            ("max_samples_per_octant", 0),
+            ("max_samples_per_quadrant", 0),
+            ("max_samples_per_drillhole", 0),
+            ("max_drillholes_per_estimate", 0),
+        ]:
+            with self.subTest(name=name, value=value), self.assertRaises(ValidationError):
+                self._search(**{name: value})
 
 
 class TestRunTasksDispatch(unittest.IsolatedAsyncioTestCase):

@@ -367,7 +367,12 @@ class _BaseObject(SchemaModel):
             >>> obj = await obj.refresh()
             >>> obj.attributes  # Now shows the latest attributes
         """
-        return await self.from_reference(self._api_context, self.metadata.url)
+        # metadata.url pins the current version_id, which would just re-download the same version.
+        latest_reference = ObjectReference.new(
+            environment=self.metadata.environment,
+            object_id=self.metadata.id,
+        )
+        return await self.from_reference(self._api_context, latest_reference)
 
     def search(self, expression: str) -> Any:
         """Search the object metadata using a JMESPath expression.
