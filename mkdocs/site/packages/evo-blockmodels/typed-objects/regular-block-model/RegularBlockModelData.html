@@ -89,9 +89,7 @@
 
 
 
-        <p>Data class for creating a new regular block model.
-Existing Point3, Size3i, and Size3d inputs are kept as-is for compatibility;
-new sequences are checked for the constraints below.</p>
+        <p>Data class for creating a new regular block model.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -130,7 +128,7 @@ new sequences are checked for the constraints below.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The origin point of the block model grid.</p>
+                <p>The origin point of the block model grid, as Point3 or three values.</p>
               </div>
             </td>
             <td>
@@ -146,7 +144,7 @@ new sequences are checked for the constraints below.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The number of blocks in each dimension (nx, ny, nz).</p>
+                <p>The number of blocks in each dimension (nx, ny, nz), as Size3i or three values.</p>
               </div>
             </td>
             <td>
@@ -162,7 +160,7 @@ new sequences are checked for the constraints below.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The size of each block in each dimension (dx, dy, dz).</p>
+                <p>The size of each block in each dimension (dx, dy, dz), as Size3d or three values.</p>
               </div>
             </td>
             <td>
