@@ -14,6 +14,8 @@
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 
+from pydantic import ValidationError
+
 from evo.compute.tasks import SearchNeighborhood
 from evo.compute.tasks.common import Ellipsoid, EllipsoidRanges
 from evo.compute.tasks.common.runner import TaskRegistry
@@ -136,6 +138,15 @@ class TestSimulationReportParametersSerialization(unittest.TestCase):
         d = _dump(_params())
         self.assertIn("ellipsoid", d["neighborhood"])
         self.assertEqual(d["neighborhood"]["max_samples"], 20)
+
+    def test_search_limits_are_refused(self):
+        search = SearchNeighborhood(
+            ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=200.0, semi_major=150.0, minor=100.0)),
+            max_samples=20,
+            max_samples_per_quadrant=4,
+        )
+        with self.assertRaisesRegex(ValidationError, "does not support max_samples_per_quadrant"):
+            _params(neighborhood=search)
 
     def test_block_discretization_defaults(self):
         d = _dump(_params())

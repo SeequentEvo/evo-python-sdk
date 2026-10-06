@@ -27,7 +27,14 @@ __all__ = [
     "BasicWorkspace",
     "BoundingBox",
     "Coordinate",
+    "ImsGroup",
+    "ImsGroupDetail",
+    "ImsUser",
+    "InstanceGroup",
+    "InstanceGroupInvitation",
+    "InstanceGroupMember",
     "OrderByOperatorEnum",
+    "UpdatedInstanceGroupMembers",
     "User",
     "UserPermission",
     "UserRole",
@@ -215,3 +222,61 @@ class InstanceRoleWithPermissions(InstanceRole):
 class AddedInstanceUsers:
     members: list[InstanceUserWithEmail]
     invitations: list[InstanceUserInvitation]
+
+
+@dataclass(frozen=True, kw_only=True)
+class ImsUser:
+    email: str
+    full_name: str
+
+
+@dataclass(frozen=True, kw_only=True)
+class ImsGroup:
+    group_id: str
+    name: str
+    is_federated_group: bool
+
+
+@dataclass(frozen=True, kw_only=True)
+class ImsGroupDetail:
+    group_id: UUID
+    name: str
+    description: str
+    is_federated_group: bool
+
+
+@dataclass(frozen=True, kw_only=True)
+class InstanceGroupMember:
+    user_id: UUID
+    email: str
+    full_name: str
+
+
+@dataclass(frozen=True, kw_only=True)
+class InstanceGroupInvitation:
+    invitation_id: UUID
+    email: str
+    invited_at: datetime
+    expiration_date: datetime
+    invited_by: str
+    status: str
+
+
+@dataclass(frozen=True, kw_only=True)
+class InstanceGroup:
+    group_id: UUID
+    name: str
+    description: str
+    ims_groups: list[str]
+    members: list[InstanceGroupMember]
+    roles: list[InstanceRole]
+
+
+@dataclass(frozen=True, kw_only=True)
+class UpdatedInstanceGroupMembers:
+    group_id: UUID
+    name: str
+    description: str
+    ims_groups: list[str]
+    members: list[InstanceGroupMember]
+    invitations: list[InstanceGroupInvitation]

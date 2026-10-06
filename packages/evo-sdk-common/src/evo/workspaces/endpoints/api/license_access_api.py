@@ -63,7 +63,7 @@ class LicenseAccessApi:
         org_id: str | None = None,
         tx_uuid: str | None = None,
         additional_headers: dict[str, str] | None = None,
-        request_timeout: int | float | tuple[int | float, int | float] | None = None,
+        request_timeout: float | tuple[int | float, int | float] | None = None,
     ) -> LicenseAccessResponseModel:  # noqa: F405
         """V2 License Access
 

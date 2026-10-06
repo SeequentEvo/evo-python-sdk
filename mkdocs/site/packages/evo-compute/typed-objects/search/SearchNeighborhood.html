@@ -94,6 +94,9 @@
 or estimation. Used by kriging, simulation, and other geostatistical tasks.</p>
 <p>The search neighborhood is defined by an ellipsoid (spatial extent and
 orientation) and constraints on the number of samples to use.</p>
+<p>Kriging, IDW, KNN and declustering can further limit the samples by octant,
+quadrant and drillhole. The other tasks do not support these limits and
+refuse a neighborhood that sets them.</p>
 <p>Example::</p>
 <pre><code>&gt;&gt;&gt; search = SearchNeighborhood(
 ...     ellipsoid=Ellipsoid(
@@ -101,6 +104,15 @@ orientation) and constraints on the number of samples to use.</p>
 ...         rotation=Rotation(dip_azimuth=45.0),
 ...     ),
 ...     max_samples=20,
+... )
+&gt;&gt;&gt;
+&gt;&gt;&gt; # Octant search, using at most 3 samples from each drillhole:
+&gt;&gt;&gt; search = SearchNeighborhood(
+...     ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=200.0, semi_major=150.0, minor=100.0)),
+...     max_samples=24,
+...     max_samples_per_octant=3,
+...     max_empty_octants=4,
+...     max_samples_per_drillhole=3,
 ... )
 </code></pre>
 
@@ -177,6 +189,128 @@ orientation) and constraints on the number of samples to use.</p>
     <div class="doc doc-contents ">
 
         <p>The minimum number of samples required. If fewer are found, the point may be skipped.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.common.search.SearchNeighborhood.max_empty_octants" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">max_empty_octants</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">max_empty_octants</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The maximum number of empty octants (sectors) allowed when searching for samples.</p>
+<p>Omit, or use 8, to disable the octant check.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.common.search.SearchNeighborhood.max_samples_per_octant" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">max_samples_per_octant</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">max_samples_per_octant</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The maximum number of samples to use from each octant.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.common.search.SearchNeighborhood.max_empty_quadrants" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">max_empty_quadrants</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">max_empty_quadrants</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The maximum number of empty quadrants (2D sectors, ignoring Z) allowed when searching for samples.</p>
+<p>Omit, or use 4, to disable the quadrant check.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.common.search.SearchNeighborhood.max_samples_per_quadrant" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">max_samples_per_quadrant</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">max_samples_per_quadrant</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The maximum number of samples to use from each quadrant (2D sectors, ignoring Z).</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.common.search.SearchNeighborhood.max_samples_per_drillhole" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">max_samples_per_drillhole</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">max_samples_per_drillhole</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The maximum number of samples to use from each drillhole. Requires a downhole intervals source object.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.common.search.SearchNeighborhood.max_drillholes_per_estimate" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">max_drillholes_per_estimate</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">max_drillholes_per_estimate</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The maximum number of drillholes used in each estimate. Requires a downhole intervals source object.</p>
 
     </div>
 

@@ -16,11 +16,20 @@ from __future__ import annotations
 from typing import Any
 
 from evo.objects.typed.types import Ellipsoid
-from pydantic import BaseModel, model_serializer
+from pydantic import BaseModel, Field, model_serializer
 
 __all__ = [
     "SearchNeighborhood",
 ]
+
+_SECTOR_AND_DRILLHOLE_LIMITS = (
+    "max_empty_octants",
+    "max_samples_per_octant",
+    "max_empty_quadrants",
+    "max_samples_per_quadrant",
+    "max_samples_per_drillhole",
+    "max_drillholes_per_estimate",
+)
 
 
 class SearchNeighborhood(BaseModel):
@@ -32,6 +41,10 @@ class SearchNeighborhood(BaseModel):
     The search neighborhood is defined by an ellipsoid (spatial extent and
     orientation) and constraints on the number of samples to use.
 
+    Kriging, IDW, KNN and declustering can further limit the samples by octant,
+    quadrant and drillhole. The other tasks do not support these limits and
+    refuse a neighborhood that sets them.
+
     Example::
 
         >>> search = SearchNeighborhood(
@@ -40,6 +53,15 @@ class SearchNeighborhood(BaseModel):
         ...         rotation=Rotation(dip_azimuth=45.0),
         ...     ),
         ...     max_samples=20,
+        ... )
+        >>>
+        >>> # Octant search, using at most 3 samples from each drillhole:
+        >>> search = SearchNeighborhood(
+        ...     ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=200.0, semi_major=150.0, minor=100.0)),
+        ...     max_samples=24,
+        ...     max_samples_per_octant=3,
+        ...     max_empty_octants=4,
+        ...     max_samples_per_drillhole=3,
         ... )
     """
 
@@ -54,12 +76,47 @@ class SearchNeighborhood(BaseModel):
     min_samples: int | None = None
     """The minimum number of samples required. If fewer are found, the point may be skipped."""
 
+    max_empty_octants: int | None = Field(None, ge=0, le=8)
+    """The maximum number of empty octants (sectors) allowed when searching for samples.
+
+    Omit, or use 8, to disable the octant check.
+    """
+
+    max_samples_per_octant: int | None = Field(None, ge=1)
+    """The maximum number of samples to use from each octant."""
+
+    max_empty_quadrants: int | None = Field(None, ge=0, le=4)
+    """The maximum number of empty quadrants (2D sectors, ignoring Z) allowed when searching for samples.
+
+    Omit, or use 4, to disable the quadrant check.
+    """
+
+    max_samples_per_quadrant: int | None = Field(None, ge=1)
+    """The maximum number of samples to use from each quadrant (2D sectors, ignoring Z)."""
+
+    max_samples_per_drillhole: int | None = Field(None, ge=1)
+    """The maximum number of samples to use from each drillhole. Requires a downhole intervals source object."""
+
+    max_drillholes_per_estimate: int | None = Field(None, ge=1)
+    """The maximum number of drillholes used in each estimate. Requires a downhole intervals source object."""
+
     @model_serializer
     def _serialize(self) -> dict[str, Any]:
         result = {
             "ellipsoid": self.ellipsoid.to_dict(),
             "max_samples": self.max_samples,
         }
-        if self.min_samples is not None:
-            result["min_samples"] = self.min_samples
+        for name in ("min_samples", *_SECTOR_AND_DRILLHOLE_LIMITS):
+            if (value := getattr(self, name)) is not None:
+                result[name] = value
         return result
+
+
+def _reject_sector_and_drillhole_limits(neighborhood: SearchNeighborhood) -> SearchNeighborhood:
+    """Refuse octant, quadrant and drillhole limits, for tasks whose service does not accept them."""
+    if limits := [name for name in _SECTOR_AND_DRILLHOLE_LIMITS if getattr(neighborhood, name) is not None]:
+        raise ValueError(
+            f"This task does not support {', '.join(limits)}. "
+            "Octant, quadrant and drillhole limits are only available for kriging, IDW, KNN and declustering."
+        )
+    return neighborhood
