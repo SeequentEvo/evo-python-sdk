@@ -9,7 +9,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import asyncio
 import json
+import sys
 import tempfile
 import unittest
 from unittest import mock
@@ -84,22 +86,103 @@ class TestWithAccessToken(_ServiceManagerWidgetTestCase):
         with self.assertRaisesRegex(ValueError, "access token must be provided"):
             ServiceManagerWidget.with_access_token(cache_location=self.cache_location)
 
-    def test_reads_the_token_from_the_browser_in_pyodide(self) -> None:
+    async def test_receives_the_token_from_the_frontend_in_pyodide(self) -> None:
+        transport = TestTransport(base_url=DISCOVERY_URL)
+
+        async def handler(*, url: str, **kwargs: object) -> MockResponse:
+            content = (
+                json.dumps(load_test_data("successful_service_discovery.json"))
+                if "discovery" in url
+                else EMPTY_WORKSPACE_LIST
+            )
+            return MockResponse(status_code=200, content=content, headers={"Content-Type": "application/json"})
+
+        transport.request.side_effect = handler
         with (
             mock.patch("evo.notebooks.widgets.sys.platform", "emscripten"),
-            mock.patch.dict(
-                "sys.modules", {"evo.pyodide": mock.MagicMock(get_browser_access_token=lambda: "browser-token")}
-            ),
+            mock.patch.object(ServiceManagerWidget, "_open_browser_token_channel", return_value="test"),
         ):
-            widget = self.build_widget()
+            widget = ServiceManagerWidget.with_access_token(
+                discovery_url=DISCOVERY_URL, cache_location=self.cache_location, transport=transport
+            )
+
+        widget._handle_frontend_msg(widget, {"type": "browser_token", "token": "browser-token"}, [])
+        await widget.login()
+        assert widget.organizations
         assert isinstance(widget._authorizer, AccessTokenAuthorizer)
+        assert await widget._authorizer.get_default_headers() == {"Authorization": "Bearer browser-token"}
+
+    async def test_chained_login_receives_browser_token_during_the_same_cell(self) -> None:
+        transport = TestTransport(base_url=DISCOVERY_URL)
+
+        async def handler(*, url: str, **kwargs: object) -> MockResponse:
+            content = (
+                json.dumps(load_test_data("successful_service_discovery.json"))
+                if "discovery" in url
+                else EMPTY_WORKSPACE_LIST
+            )
+            return MockResponse(status_code=200, content=content, headers={"Content-Type": "application/json"})
+
+        transport.request.side_effect = handler
+        channel = mock.Mock()
+        browser = mock.Mock()
+        browser.BroadcastChannel.new.return_value = channel
+        ffi = mock.Mock()
+        ffi.create_proxy.side_effect = lambda callback: mock.Mock(side_effect=callback)
+
+        with (
+            mock.patch.dict(sys.modules, {"js": browser, "pyodide": mock.Mock(), "pyodide.ffi": ffi}),
+            mock.patch("evo.notebooks.widgets.sys.platform", "emscripten"),
+        ):
+            widget = ServiceManagerWidget.with_access_token(
+                discovery_url=DISCOVERY_URL, cache_location=self.cache_location, transport=transport
+            )
+            login_task = asyncio.create_task(widget.login())
+            await asyncio.sleep(0)
+            listener = channel.addEventListener.call_args.args[1]
+            listener(mock.Mock(data=mock.Mock(to_py=lambda: {"type": "browser_token", "token": "browser-token"})))
+            await login_task
+
+        assert widget.organizations
+        assert await widget._authorizer.get_default_headers() == {"Authorization": "Bearer browser-token"}
+        channel.removeEventListener.assert_called_once()
+        channel.close.assert_called_once()
+        listener.destroy.assert_called_once()
+
+    async def test_missing_browser_token_reports_sign_in(self) -> None:
+        with (
+            mock.patch("evo.notebooks.widgets.sys.platform", "emscripten"),
+            mock.patch.object(ServiceManagerWidget, "_open_browser_token_channel", return_value="test"),
+        ):
+            widget = ServiceManagerWidget.with_access_token(
+                cache_location=self.cache_location, transport=TestTransport(base_url=DISCOVERY_URL)
+            )
+        widget._handle_frontend_msg(widget, {"type": "browser_token", "error": "Sign in first."}, [])
+        with self.assertRaisesRegex(OAuthError, "Sign in first"):
+            await widget.login()
+
+    async def test_browser_token_times_out_without_a_frontend(self) -> None:
+        with (
+            mock.patch("evo.notebooks.widgets.sys.platform", "emscripten"),
+            mock.patch.object(ServiceManagerWidget, "_open_browser_token_channel", return_value="test"),
+        ):
+            widget = ServiceManagerWidget.with_access_token(
+                cache_location=self.cache_location, transport=TestTransport(base_url=DISCOVERY_URL)
+            )
+        with self.assertRaisesRegex(OAuthError, "Timed out waiting"):
+            await widget.login(timeout_seconds=0)
+
+    def test_explicit_token_never_requests_browser_storage(self) -> None:
+        widget = self.build_widget()
+        assert not widget.browser_token_required
+        assert widget._browser_token_event is None
 
     def test_button_invites_a_refresh_rather_than_a_sign_in(self) -> None:
-        assert self.build_widget()._btn.description == "Refresh Evo Services"
+        assert self.build_widget().button_text == "Refresh Evo Services"
 
     def test_button_invites_a_sign_in_for_the_auth_code_flow(self) -> None:
         widget = ServiceManagerWidget.with_auth_code(client_id="test", cache_location=self.cache_location)
-        assert widget._btn.description == "Sign In"
+        assert widget.button_text == "Sign In"
 
     def test_does_not_persist_the_token(self) -> None:
         """Unlike the auth code flow, an externally issued token must not be written to the cache."""
@@ -146,7 +229,7 @@ class TestLoginWithAccessToken(_ServiceManagerWidgetTestCase):
     def _select_first_real_org(self):
         # The first org in the test data uses the nil UUID, which is also the selector's "unselected" sentinel.
         org = next(org for org in self.widget.organizations if org.id != UUID(int=0))
-        self.widget._org_selector.dropdown_widget.value = org.id
+        self.widget._org_selector.value = str(org.id)
         return org
 
     async def test_login_selects_an_organization_and_hub(self) -> None:

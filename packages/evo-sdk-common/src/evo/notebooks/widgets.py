@@ -16,9 +16,10 @@ import contextlib
 import sys
 from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any, Generic, TypeVar, cast
-from uuid import UUID
+from uuid import UUID, uuid4
 
-import ipywidgets as widgets
+import anywidget
+import traitlets
 from IPython.display import display
 
 from evo import logging
@@ -37,7 +38,7 @@ from ._consts import (
     DEFAULT_DISCOVERY_URL,
     DEFAULT_REDIRECT_URL,
 )
-from ._helpers import FileName, build_button_widget, build_img_widget, init_cache
+from ._helpers import FileName, asset_data_uri, init_cache, read_asset_text
 from .authorizer import AuthorizationCodeAuthorizer
 from .env import DotEnv
 
@@ -55,25 +56,34 @@ __all__ = [
     "WorkspaceSelectorWidget",
 ]
 
+_STYLESHEET = read_asset_text("widgets.css")
 
-class DropdownSelectorWidget(widgets.HBox, Generic[T]):
+
+class DropdownSelectorWidget(anywidget.AnyWidget, Generic[T]):
+    _esm = read_asset_text("selector.js")
+    _css = _STYLESHEET
+
     UNSELECTED: tuple[str, T]
+
+    label = traitlets.Unicode("").tag(sync=True)
+    # Options are serialized to strings because widget state is synchronised to the frontend as JSON.
+    options = traitlets.List(traitlets.List(traitlets.Unicode())).tag(sync=True)
+    value = traitlets.Unicode("").tag(sync=True)
+    disabled = traitlets.Bool(True).tag(sync=True)
+    loading = traitlets.Bool(False).tag(sync=True)
+    spinner = traitlets.Unicode("").tag(sync=True)
 
     def __init__(self, label: str, env: DotEnv) -> None:
         self._env = env
-        self.dropdown_widget = widgets.Dropdown(
-            options=[self.UNSELECTED],
-            description=label,
-            value=self.UNSELECTED[1],
-            layout=widgets.Layout(margin="5px 5px 5px 5px", align_self="flex-start"),
+        unselected_label, unselected_value = self.UNSELECTED
+        super().__init__(
+            label=label,
+            options=[[unselected_label, self._serialize(unselected_value)]],
+            value=self._serialize(unselected_value),
+            disabled=True,
+            spinner=asset_data_uri("loading.gif"),
         )
-        self.dropdown_widget.disabled = True
-        self.dropdown_widget.observe(self._update_selected, names="value")
-
-        self._loading_widget = build_img_widget("loading.gif")
-        self._loading_widget.layout.display = "none"
-
-        super().__init__([self.dropdown_widget, self._loading_widget])
+        self.observe(self._update_selected, names="value")
 
     def _get_options(self) -> list[tuple[str, T]]:
         raise NotImplementedError("Subclasses must implement this method.")
@@ -82,23 +92,24 @@ class DropdownSelectorWidget(widgets.HBox, Generic[T]):
 
     @contextlib.contextmanager
     def _loading(self) -> Iterator[None]:
-        self.dropdown_widget.disabled = True
-        self._loading_widget.layout.display = "flex"
+        self.disabled = True
+        self.loading = True
         try:
             yield
         finally:
-            self._loading_widget.layout.display = "none"
-            self.dropdown_widget.disabled = False
+            self.loading = False
+            self.disabled = False
 
     def _update_selected(self, _: dict) -> None:
-        self.selected = new_value = self.dropdown_widget.value
+        self.selected = new_value = self._deserialize(self.value)
         self._on_selected(new_value if new_value != self.UNSELECTED[1] else None)
 
     def refresh(self) -> None:
         logger.debug(f"Refreshing {self.__class__.__name__} options...")
-        self.dropdown_widget.disabled = True
+        self.disabled = True
         selected = self.selected
-        self.dropdown_widget.options = options = [self.UNSELECTED] + self._get_options()
+        options = [self.UNSELECTED] + self._get_options()
+        self.options = [[label, self._serialize(value)] for label, value in options]
         if len(options) == 2 and selected == self.UNSELECTED[1]:
             # Automatically select the only option if there is only one and no missing option was previously selected.
             self.selected = new_value = options[1][1]
@@ -116,7 +127,7 @@ class DropdownSelectorWidget(widgets.HBox, Generic[T]):
         self._on_selected(new_value if new_value != self.UNSELECTED[1] else None)
 
         # Disable the widget if there are no options to select.
-        self.dropdown_widget.disabled = len(options) <= 1
+        self.disabled = len(options) <= 1
 
     @classmethod
     def _serialize(cls, value: T) -> str:
@@ -134,15 +145,7 @@ class DropdownSelectorWidget(widgets.HBox, Generic[T]):
     @selected.setter
     def selected(self, value: T) -> None:
         self._env.set(f"{self.__class__.__name__}.selected", self._serialize(value))
-        self.dropdown_widget.value = value
-
-    @property
-    def disabled(self) -> bool:
-        return self.dropdown_widget.disabled
-
-    @disabled.setter
-    def disabled(self, value: bool) -> None:
-        self.dropdown_widget.disabled = value
+        self.value = self._serialize(value)
 
 
 _NULL_UUID = UUID(int=0)
@@ -183,7 +186,7 @@ class WorkspaceSelectorWidget(_UUIDSelectorWidget):
     def __init__(self, env: DotEnv, manager: ServiceManager, org_selector: OrgSelectorWidget) -> None:
         self._manager = manager
         super().__init__("Workspace", env)
-        org_selector.dropdown_widget.observe(self._on_org_selected, names="value")
+        org_selector.observe(self._on_org_selected, names="value")
 
     async def refresh_workspaces(self) -> None:
         with self._loading():
@@ -205,14 +208,34 @@ class WorkspaceSelectorWidget(_UUIDSelectorWidget):
 T_client = TypeVar("T_client", bound=BaseAPIClient)
 
 
-class _ServiceManagerWidgetMeta(type(widgets.HBox), type(IContext)):
-    """Metaclass that combines ipywidgets and pure interfaces metaclasses."""
+class _ServiceManagerWidgetMeta(type(anywidget.AnyWidget), type(IContext)):
+    """Metaclass that combines anywidget and pure interfaces metaclasses."""
 
     pass
 
 
-class ServiceManagerWidget(widgets.HBox, IContext, metaclass=_ServiceManagerWidgetMeta):
-    def __init__(self, transport: ITransport, authorizer: IAuthorizer, discovery_url: str, cache: ICache) -> None:
+class ServiceManagerWidget(anywidget.AnyWidget, IContext, metaclass=_ServiceManagerWidgetMeta):
+    _esm = read_asset_text("service_manager.js")
+    _css = _STYLESHEET
+
+    logo = traitlets.Unicode("").tag(sync=True)
+    spinner = traitlets.Unicode("").tag(sync=True)
+    button_text = traitlets.Unicode("").tag(sync=True)
+    disabled = traitlets.Bool(False).tag(sync=True)
+    loading = traitlets.Bool(False).tag(sync=True)
+    message = traitlets.Unicode("").tag(sync=True)
+    browser_token_required = traitlets.Bool(False).tag(sync=True)
+    browser_token_channel = traitlets.Unicode("").tag(sync=True)
+
+    def __init__(
+        self,
+        transport: ITransport,
+        authorizer: IAuthorizer,
+        discovery_url: str,
+        cache: ICache,
+        *,
+        browser_token: bool = False,
+    ) -> None:
         """
         :param transport: The transport to use for API requests.
         :param authorizer: The authorizer to use for API requests.
@@ -221,6 +244,14 @@ class ServiceManagerWidget(widgets.HBox, IContext, metaclass=_ServiceManagerWidg
         """
         self._authorizer = authorizer
         self._cache = cache
+        self._browser_token_event = asyncio.Event() if browser_token else None
+        self._browser_token: str | None = None
+        self._browser_token_error: str | None = None
+        self._browser_channel = None
+        self._browser_channel_listener = None
+        browser_token_channel = (
+            self._open_browser_token_channel() if browser_token and sys.platform == "emscripten" else ""
+        )
         self._service_manager = ServiceManager(
             transport=transport,
             authorizer=authorizer,
@@ -229,36 +260,39 @@ class ServiceManagerWidget(widgets.HBox, IContext, metaclass=_ServiceManagerWidg
         )
         env = DotEnv(cache)
 
-        self._btn = build_button_widget("Refresh Evo Services" if self._is_externally_authorized else "Sign In")
-        self._btn.on_click(self._on_click)
+        super().__init__(
+            logo=asset_data_uri("EvoBadgeCharcoal_FV.png"),
+            spinner=asset_data_uri("loading.gif"),
+            button_text="Refresh Evo Services" if self._is_externally_authorized else "Sign In",
+            browser_token_required=browser_token,
+            browser_token_channel=browser_token_channel,
+        )
+        self.on_msg(self._handle_frontend_msg)
+
         self._org_selector = OrgSelectorWidget(env, self._service_manager)
         self._workspace_selector = WorkspaceSelectorWidget(env, self._service_manager, self._org_selector)
 
-        self._loading_widget = build_img_widget("loading.gif")
-        self._loading_widget.layout.display = "none"
+        display(self, self._org_selector, self._workspace_selector)
 
-        self._prompt_area = widgets.Output()
-        self._prompt_area.layout.display = "none"
+    def _open_browser_token_channel(self) -> str:
+        from js import BroadcastChannel
+        from pyodide.ffi import create_proxy
 
-        col_1 = widgets.VBox(
-            [
-                widgets.HBox([build_img_widget("EvoBadgeCharcoal_FV.png"), self._btn, self._loading_widget]),
-                widgets.HBox([self._org_selector]),
-                widgets.HBox([self._workspace_selector]),
-            ]
-        )
-        col_2 = widgets.VBox([self._prompt_area])
+        channel_id = uuid4().hex
+        channel = BroadcastChannel.new(f"evo-browser-token-{channel_id}")
+        listener = create_proxy(lambda message: self._handle_frontend_msg(self, message.data.to_py(), []))
+        channel.addEventListener("message", listener)
+        self._browser_channel = channel
+        self._browser_channel_listener = listener
+        return channel_id
 
-        super().__init__(
-            [col_1, col_2],
-            layout={
-                "display": "flex",
-                "flex_flow": "row",
-                "justify_content": "space-between",
-                "align_items": "center",
-            },
-        )
-        display(self)
+    def _close_browser_token_channel(self) -> None:
+        if self._browser_channel is not None:
+            self._browser_channel.removeEventListener("message", self._browser_channel_listener)
+            self._browser_channel.close()
+            self._browser_channel_listener.destroy()
+            self._browser_channel = None
+            self._browser_channel_listener = None
 
     @classmethod
     def with_auth_code(
@@ -329,8 +363,8 @@ class ServiceManagerWidget(widgets.HBox, IContext, metaclass=_ServiceManagerWidg
         manager = await ServiceManagerWidget.with_access_token().login()
         ```
 
-        :param access_token: The access token to authorise requests with. When omitted, the token is read from browser
-            local storage, which is only possible in a Pyodide runtime.
+        :param access_token: The access token to authorise requests with. When omitted in Pyodide, the widget frontend
+            reads it from the hosting page's local storage during login.
         :param discovery_url: The URL of the Evo Discovery service.
         :param cache_location: The location of the cache file.
         :param transport: The transport to use for API requests. Defaults to the browser `fetch` transport in a Pyodide
@@ -344,9 +378,6 @@ class ServiceManagerWidget(widgets.HBox, IContext, metaclass=_ServiceManagerWidg
         if access_token is None:
             if not in_pyodide:
                 raise ValueError("An access token must be provided when not running in a Pyodide runtime.")
-            from evo.pyodide import get_browser_access_token
-
-            access_token = get_browser_access_token()
 
         if transport is None:
             if in_pyodide:
@@ -358,7 +389,35 @@ class ServiceManagerWidget(widgets.HBox, IContext, metaclass=_ServiceManagerWidg
 
                 transport = AioTransport(user_agent=user_agent)
 
-        return cls(transport, AccessTokenAuthorizer(access_token), discovery_url, init_cache(cache_location))
+        return cls(
+            transport,
+            AccessTokenAuthorizer(access_token or ""),
+            discovery_url,
+            init_cache(cache_location),
+            browser_token=access_token is None,
+        )
+
+    async def _receive_browser_token(self, timeout_seconds: int) -> None:
+        event = self._browser_token_event
+        if event is None:
+            return
+        try:
+            await asyncio.wait_for(event.wait(), timeout_seconds)
+        except TimeoutError as exc:
+            raise OAuthError(
+                "Timed out waiting for the browser access token. Display the widget and try again."
+            ) from exc
+        finally:
+            self._close_browser_token_channel()
+        if self._browser_token_error:
+            raise OAuthError(self._browser_token_error)
+        if not self._browser_token:
+            raise OAuthError("No access token received from the hosting page. Sign in first.")
+
+        self._authorizer = AccessTokenAuthorizer(self._browser_token)
+        self._service_manager._authorizer = self._authorizer
+        self._browser_token = None
+        self._browser_token_event = None
 
     async def _login_with_auth_code(self, timeout_seconds: int) -> None:
         """Login using an authorization code authorizer.
@@ -390,6 +449,7 @@ class ServiceManagerWidget(widgets.HBox, IContext, metaclass=_ServiceManagerWidg
         # Open the transport without closing it to avoid the overhead of opening it multiple times.
         await self._service_manager._transport.open()
         with self._loading():
+            await self._receive_browser_token(timeout_seconds)
             match self._authorizer:
                 case AuthorizationCodeAuthorizer():
                     await self._login_with_auth_code(timeout_seconds)
@@ -413,22 +473,28 @@ class ServiceManagerWidget(widgets.HBox, IContext, metaclass=_ServiceManagerWidg
 
     def _update_btn(self, signed_in: bool) -> None:
         if signed_in or self._is_externally_authorized:
-            self._btn.description = "Refresh Evo Services"
+            self.button_text = "Refresh Evo Services"
         else:
-            self._btn.description = "Sign In"
+            self.button_text = "Sign In"
 
-    def _on_click(self, _: widgets.Button) -> asyncio.Future:
-        return asyncio.ensure_future(self.refresh_services())
+    def _handle_frontend_msg(self, _widget: object, content: object, _buffers: list) -> asyncio.Future | None:
+        if isinstance(content, dict) and content.get("type") == "click":
+            return asyncio.ensure_future(self.refresh_services())
+        if isinstance(content, dict) and content.get("type") == "browser_token" and self._browser_token_event:
+            self._browser_token = content.get("token") if isinstance(content.get("token"), str) else None
+            self._browser_token_error = content.get("error") if isinstance(content.get("error"), str) else None
+            self._browser_token_event.set()
+        return None
 
     @contextlib.contextmanager
     def _loading(self) -> Iterator[None]:
-        self._btn.disabled = True
-        self._loading_widget.layout.display = "flex"
+        self.disabled = True
+        self.loading = True
         try:
             yield
         finally:
-            self._loading_widget.layout.display = "none"
-            self._btn.disabled = False
+            self.loading = False
+            self.disabled = False
 
     @contextlib.contextmanager
     def _loading_services(self) -> Iterator[None]:
@@ -438,15 +504,6 @@ class ServiceManagerWidget(widgets.HBox, IContext, metaclass=_ServiceManagerWidg
             yield
         finally:
             self._org_selector.refresh()
-
-    @contextlib.contextmanager
-    def _prompt(self) -> Iterator[widgets.Output]:
-        self._prompt_area.layout.display = "flex"
-        try:
-            yield self._prompt_area
-        finally:
-            self._prompt_area.layout.display = "none"
-            self._prompt_area.clear_output()
 
     async def refresh_services(self) -> None:
         with self._loading():
@@ -526,6 +583,15 @@ class ServiceManagerWidget(widgets.HBox, IContext, metaclass=_ServiceManagerWidg
         return self._service_manager.create_client(client_class, *args, **kwargs)
 
 
+class _ProgressWidget(anywidget.AnyWidget):
+    _esm = read_asset_text("feedback.js")
+    _css = _STYLESHEET
+
+    label = traitlets.Unicode("").tag(sync=True)
+    value = traitlets.Float(0.0).tag(sync=True)
+    message = traitlets.Unicode("").tag(sync=True)
+
+
 class FeedbackWidget(IFeedback):
     """Simple feedback widget for displaying progress and messages to the user."""
 
@@ -533,11 +599,7 @@ class FeedbackWidget(IFeedback):
         """
         :param label: The label for the feedback widget.
         """
-        label = widgets.Label(label)
-        self._progress = widgets.FloatProgress(value=0, min=0, max=1, style={"bar_color": "#265C7F"})
-        self._progress.layout.width = "400px"
-        self._msg = widgets.Label("", style={"font_style": "italic"})
-        self._widget = widgets.HBox([label, self._progress, self._msg])
+        self._widget = _ProgressWidget(label=label)
         self._last_message = ""
         display(self._widget)
 
@@ -549,7 +611,6 @@ class FeedbackWidget(IFeedback):
         :param progress: A float between 0 and 1 representing the progress of the operation as a percentage.
         :param message: An optional message to display to the user.
         """
-        self._progress.value = progress
-        self._progress.description = f"{progress * 100:5.1f}%"
+        self._widget.value = progress
         if message is not None:
-            self._msg.value = message
+            self._widget.message = message
