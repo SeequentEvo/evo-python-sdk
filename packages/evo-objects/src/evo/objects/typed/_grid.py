@@ -22,6 +22,7 @@ import pandas as pd
 from pydantic import AliasChoices, Field
 
 from evo.common import IFeedback
+from evo.common.typed import FloatArrayLike3, IntArrayLike3
 from evo.common.utils import NoFeedback
 
 from ._model import DataLocation, SchemaLocation, SchemaModel
@@ -46,12 +47,18 @@ class Base3DGridData(BaseSpatialObjectData):
     """Base class for all 3D grid data.
 
     Contains the common properties shared by all grid types: origin, size, rotation, and cell_data.
+    Origin and size accept their named types or three values in a list, tuple, or 1D array.
+    All inputs, including named types, are validated and normalized.
     """
 
-    origin: Point3
-    size: Size3i
+    origin: Point3 | FloatArrayLike3
+    size: Size3i | IntArrayLike3
     cell_data: pd.DataFrame | None = None
     rotation: Rotation | None = None
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "origin", Point3.from_array_like(self.origin))
+        object.__setattr__(self, "size", Size3i.from_array_like(self.size))
 
 
 @dataclass(kw_only=True, frozen=True)
@@ -59,10 +66,16 @@ class BaseRegular3DGridData(Base3DGridData):
     """Base class for regular 3D grid data (both masked and non-masked).
 
     Contains the common properties shared by Regular3DGridData and RegularMasked3DGridData.
-    Adds cell_size to the base grid properties.
+    Adds cell_size to the base grid properties; it accepts a Size3d or three
+    values in a list, tuple, or 1D array.
+    All inputs, including Size3d instances, are validated and normalized.
     """
 
-    cell_size: Size3d
+    cell_size: Size3d | FloatArrayLike3
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        object.__setattr__(self, "cell_size", Size3d.from_array_like(self.cell_size))
 
     def compute_bounding_box(self) -> BoundingBox:
         return BoundingBox.from_regular_grid(self.origin, self.size, self.cell_size, self.rotation)
@@ -223,14 +236,19 @@ class RegularBlockModelData:
     """
 
     name: str
-    origin: Point3
-    n_blocks: Size3i
-    block_size: Size3d
+    origin: Point3 | FloatArrayLike3
+    n_blocks: Size3i | IntArrayLike3
+    block_size: Size3d | FloatArrayLike3
     cell_data: pd.DataFrame | None = None
     description: str | None = None
     coordinate_reference_system: str | None = None
     size_unit_id: str | None = None
     units: dict[str, str] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "origin", Point3.from_array_like(self.origin))
+        object.__setattr__(self, "n_blocks", Size3i.from_array_like(self.n_blocks))
+        object.__setattr__(self, "block_size", Size3d.from_array_like(self.block_size))
 
 
 @dataclass(frozen=True, kw_only=True)

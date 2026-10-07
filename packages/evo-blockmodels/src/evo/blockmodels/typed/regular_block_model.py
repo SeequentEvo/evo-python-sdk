@@ -19,6 +19,7 @@ from uuid import UUID
 import pandas as pd
 
 from evo.common import IContext, IFeedback, StaticContext
+from evo.common.typed import FloatArrayLike3, IntArrayLike3
 from evo.common.utils import NoFeedback
 
 from ..client import BlockModelAPIClient
@@ -38,10 +39,11 @@ __all__ = [
 class RegularBlockModelData:
     """Data class for creating a new regular block model.
 
+
     :param name: The name of the block model.
-    :param origin: The origin point of the block model grid.
-    :param n_blocks: The number of blocks in each dimension (nx, ny, nz).
-    :param block_size: The size of each block in each dimension (dx, dy, dz).
+    :param origin: The origin point of the block model grid, as Point3 or three values.
+    :param n_blocks: The number of blocks in each dimension (nx, ny, nz), as Size3i or three values.
+    :param block_size: The size of each block in each dimension (dx, dy, dz), as Size3d or three values.
     :param rotations: List of rotations as (axis, angle) tuples. Angle is in degrees,
         positive angles indicate clockwise rotation when looking down the axis.
     :param cell_data: Optional DataFrame containing block attribute data.
@@ -53,15 +55,20 @@ class RegularBlockModelData:
     """
 
     name: str
-    origin: Point3
-    n_blocks: Size3i
-    block_size: Size3d
+    origin: Point3 | FloatArrayLike3
+    n_blocks: Size3i | IntArrayLike3
+    block_size: Size3d | FloatArrayLike3
     rotations: list[tuple[RotationAxis, float]] = field(default_factory=list)
     cell_data: pd.DataFrame | None = None
     description: str | None = None
     coordinate_reference_system: str | None = None
     size_unit_id: str | None = None
     units: dict[str, str] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "origin", Point3.from_array_like(self.origin))
+        object.__setattr__(self, "n_blocks", Size3i.from_array_like(self.n_blocks))
+        object.__setattr__(self, "block_size", Size3d.from_array_like(self.block_size))
 
 
 class RegularBlockModel(BaseTypedBlockModel):

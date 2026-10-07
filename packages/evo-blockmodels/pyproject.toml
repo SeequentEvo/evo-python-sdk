@@ -10,7 +10,7 @@ authors = [
 ]
 
 dependencies = [
-    "evo-sdk-common>=0.1.0",
+    "evo-sdk-common>=0.5.28",
     "pydantic>=2,<3",
 ]
 
@@ -22,8 +22,8 @@ Documentation = "https://developer.seequent.com/"
 
 [project.optional-dependencies]
 utils = ["pyarrow>=19.0.0", "pandas>=2.0.0"]
-aiohttp = ["evo-sdk-common[aiohttp]>=0.1.0"]
-notebooks = ["evo-sdk-common[notebooks]>=0.1.0"]
+aiohttp = ["evo-sdk-common[aiohttp]>=0.5.28"]
+notebooks = ["evo-sdk-common[notebooks]>=0.5.28"]
 
 [dependency-groups]
 # Dev dependencies. The version is left unspecified so the latest is installed.
