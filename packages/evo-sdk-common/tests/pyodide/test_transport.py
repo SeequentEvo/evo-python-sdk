@@ -9,6 +9,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import asyncio
 import json
 import unittest
 from unittest import mock
@@ -17,7 +18,7 @@ from evo.common import HTTPHeaderDict, RequestMethod
 from evo.common.exceptions import ClientValueError, TransportError
 from evo.common.interfaces import ITransport
 
-from ._stubs import FakeFetch, FakeFormData, FakeResponse, install
+from ._stubs import FakeBlob, FakeFetch, FakeFormData, FakeResponse, install
 
 install()
 
@@ -129,23 +130,46 @@ class TestJsTransport(unittest.IsolatedAsyncioTestCase):
 
         body = fetch.last_call["body"]
         assert isinstance(body, FakeFormData)
-        assert body.fields == [("file", b"bytes"), ("name", "value")]
+        assert body.fields[0][0] == "file"
+        assert isinstance(body.fields[0][1], FakeBlob)
+        assert body.fields[0][1].parts == [b"bytes"]
+        assert body.fields[1] == ("name", "value")
+        assert "Content-Type" not in fetch.last_call["headers"]
 
-    async def test_head_request_is_sent_as_get_without_body(self) -> None:
-        response = FakeResponse(status=200, body=b"0123456789")
+    async def test_head_request_uses_server_headers_without_reading_body(self) -> None:
+        response = FakeResponse(status=200, headers={"Content-Length": "10", "Accept-Ranges": "bytes"})
         fetch = self.patch_fetch(response)
 
         result = await self.transport.request(RequestMethod.HEAD, "https://example.test/file")
 
-        assert fetch.last_call["method"] == "GET"
+        assert fetch.last_call["method"] == "HEAD"
         assert result.data == b""
         assert result.headers["Content-Length"] == "10"
         assert result.headers["Accept-Ranges"] == "bytes"
+        assert not response.body_read
+
+    async def test_head_probes_a_byte_if_cors_hides_required_headers(self) -> None:
+        fetch = self.patch_fetch(FakeResponse(), FakeResponse(status=206, headers={"Content-Range": "bytes 0-0/987"}))
+
+        result = await self.transport.request(RequestMethod.HEAD, "https://example.test/file")
+
+        assert [call[1]["method"] for call in fetch.calls] == ["HEAD", "GET"]
+        assert fetch.last_call["headers"]["Range"] == "bytes=0-0"
+        assert result.headers["Content-Length"] == "987"
+        assert result.headers["Accept-Ranges"] == "bytes"
+
+    async def test_head_does_not_claim_range_support_without_evidence(self) -> None:
+        probe = FakeResponse(status=200, body=b"large file")
+        self.patch_fetch(FakeResponse(), probe)
+
+        result = await self.transport.request(RequestMethod.HEAD, "https://example.test/file")
+
+        assert "Accept-Ranges" not in result.headers
+        assert "Content-Length" not in result.headers
+        assert not probe.body_read
 
     async def test_head_request_keeps_headers_reported_by_the_server(self) -> None:
-        response = FakeResponse(
-            status=200, body=b"0123456789", headers={"Content-Length": "99", "Accept-Ranges": "none"}
-        )
+        response = FakeResponse(status=200, headers={"Content-Length": "99", "Accept-Ranges": "none"})
         self.patch_fetch(response)
 
         result = await self.transport.request(RequestMethod.HEAD, "https://example.test/file")
@@ -165,14 +189,23 @@ class TestJsTransport(unittest.IsolatedAsyncioTestCase):
         assert not response.body_read
 
     async def test_followed_task_submission_redirect_is_restored_as_303(self) -> None:
-        response = FakeResponse(status=202, url="https://example.test/tasks/1", redirected=True)
+        response = FakeResponse(
+            status=202, url="https://example.test/compute/orgs/org/topic/task/job/status", redirected=True
+        )
         self.patch_fetch(response)
 
-        result = await self.transport.request(RequestMethod.POST, "https://example.test/tasks")
+        result = await self.transport.request(RequestMethod.POST, "https://example.test/compute/orgs/org/topic/task")
 
         assert result.status == 303
         assert result.reason == "See Other"
-        assert result.headers["Location"] == "https://example.test/tasks/1"
+        assert result.headers["Location"] == "https://example.test/compute/orgs/org/topic/task/job/status"
+
+    async def test_unrelated_followed_redirect_fails_instead_of_returning_final_response(self) -> None:
+        response = FakeResponse(status=200, url="https://example.test/file", redirected=True)
+        self.patch_fetch(response)
+
+        with self.assertRaisesRegex(TransportError, "original response is unavailable"):
+            await self.transport.request(RequestMethod.PUT, "https://example.test/files/1")
 
     async def test_unredirected_202_is_left_alone(self) -> None:
         self.patch_fetch(FakeResponse(status=202, body=b"accepted"))
@@ -200,6 +233,24 @@ class TestJsTransport(unittest.IsolatedAsyncioTestCase):
 
         assert result.headers["Content-Range"] == "bytes 0-3/10"
 
+    async def test_does_not_invent_content_range_if_server_ignores_range(self) -> None:
+        self.patch_fetch(FakeResponse(status=200, body=b"full file"))
+
+        result = await self.transport.request(
+            RequestMethod.GET, "https://example.test/file", headers=HTTPHeaderDict({"Range": "bytes=0-3"})
+        )
+
+        assert "Content-Range" not in result.headers
+
+    async def test_does_not_invent_content_range_if_length_mismatches(self) -> None:
+        self.patch_fetch(FakeResponse(status=206, body=b"012345"))
+
+        result = await self.transport.request(
+            RequestMethod.GET, "https://example.test/file", headers=HTTPHeaderDict({"Range": "bytes=0-3"})
+        )
+
+        assert "Content-Range" not in result.headers
+
     async def test_ignores_malformed_range_header(self) -> None:
         self.patch_fetch(FakeResponse(status=206, body=b"0123"))
 
@@ -216,3 +267,32 @@ class TestJsTransport(unittest.IsolatedAsyncioTestCase):
             await self.transport.request(RequestMethod.GET, "https://example.test/")
 
         assert isinstance(ctx.exception.caused_by, RuntimeError)
+
+    async def test_connection_timeout_aborts_fetch(self) -> None:
+        signals = []
+
+        async def stalled_fetch(url: str, **options: object) -> FakeResponse:
+            signals.append(options["signal"])
+            await asyncio.Event().wait()
+            raise AssertionError("unreachable")
+
+        with mock.patch.object(transport_module, "pyfetch", stalled_fetch):
+            with self.assertRaises(TransportError) as ctx:
+                await self.transport.request(RequestMethod.GET, "https://example.test/", request_timeout=(0.01, 1))
+
+        assert isinstance(ctx.exception.caused_by, TimeoutError)
+        assert signals[0].aborted
+
+    async def test_total_timeout_aborts_body_read(self) -> None:
+        class StalledResponse(FakeResponse):
+            async def bytes(self) -> bytes:
+                await asyncio.Event().wait()
+                raise AssertionError("unreachable")
+
+        fetch = self.patch_fetch(StalledResponse())
+
+        with self.assertRaises(TransportError) as ctx:
+            await self.transport.request(RequestMethod.GET, "https://example.test/", request_timeout=0.01)
+
+        assert isinstance(ctx.exception.caused_by, TimeoutError)
+        assert fetch.last_call["signal"].aborted

@@ -12,16 +12,19 @@
 from __future__ import annotations
 
 try:
-    from js import FormData
+    from js import AbortController, Blob, FormData
 
+    from pyodide.ffi import to_js
     from pyodide.http import pyfetch
 except ImportError:
     raise ImportError("JsTransport cannot be used because it is not running in a Pyodide runtime.")
 
-import contextlib
+import asyncio
 import json
+import re
+from time import monotonic
 from types import TracebackType
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlsplit
 
 from evo.common import HTTPHeaderDict, HTTPResponse, RequestMethod
 from evo.common.exceptions import ClientValueError, TransportError
@@ -78,9 +81,10 @@ class JsTransport(ITransport):
         if post_params and any(form_type in content_type for form_type in _FORM_CONTENT_TYPES):
             if content_type == "application/x-www-form-urlencoded":
                 return urlencode(post_params)
+            headers.pop("Content-Type")
             form_data = FormData.new()
             for key, value in post_params:
-                form_data.append(key, value)
+                form_data.append(key, Blob.new(to_js([value])) if isinstance(value, bytes) else value)
             return form_data
 
         if body is not None and not isinstance(body, (str, bytes)):
@@ -101,48 +105,80 @@ class JsTransport(ITransport):
         if post_params is not None and body is not None:
             raise ClientValueError(msg="HTTP body and post parameters cannot be used at the same time.")
 
+        controller = AbortController.new()
+        deadline = monotonic() + request_timeout if isinstance(request_timeout, (int, float)) else None
+        connect_timeout, read_timeout = request_timeout if isinstance(request_timeout, tuple) else (None, None)
+
+        def timeout_for(stage: str) -> float | None:
+            if deadline is not None:
+                return max(0, deadline - monotonic())
+            return connect_timeout if stage == "connect" else read_timeout
+
+        async def fetch(fetch_url: str, **options: object) -> object:
+            return await asyncio.wait_for(
+                pyfetch(fetch_url, signal=controller.signal, **options), timeout=timeout_for("connect")
+            )
+
         try:
             request_headers = dict(headers or {})
             request_headers.setdefault("User-Agent", self.user_agent)
             request_body = self._build_body(request_headers, post_params or [], body)
 
-            # Browsers often strip headers from HEAD responses due to CORS, but the SDK needs Content-Length and
-            # Accept-Ranges, so issue a GET and discard the body instead.
             is_head = method == RequestMethod.HEAD
-            actual_method = "GET" if is_head else str(method)
-
-            resp = await pyfetch(
+            resp = await fetch(
                 url,
-                method=actual_method,
+                method=str(method),
                 headers=request_headers,
                 body=request_body,
                 redirect="follow",
             )
             resp_headers = HTTPHeaderDict(resp.headers)
 
-            # Fetch hides the original 303 when following a compute task submission redirect. Recreate it from the
-            # final status URL so the SDK can construct and poll the submitted job.
-            if method == RequestMethod.POST and resp.redirected and resp.status == 202:
-                resp_headers["Location"] = str(resp.url)
-                return HTTPResponse(status=303, data=b"", reason="See Other", headers=resp_headers)
+            if (
+                is_head
+                and resp.status == 200
+                and ("Content-Length" not in resp_headers or "Accept-Ranges" not in resp_headers)
+            ):
+                probe_headers = {**request_headers, "Range": "bytes=0-0"}
+                probe = await fetch(url, method="GET", headers=probe_headers, redirect="follow")
+                content_range = HTTPHeaderDict(probe.headers).get("Content-Range", "")
+                match = re.fullmatch(r"bytes 0-0/(\d+)", content_range)
+                if probe.status == 206 and match:
+                    resp_headers["Content-Length"] = match.group(1)
+                    resp_headers["Accept-Ranges"] = "bytes"
+
+            if resp.redirected:
+                request_path = urlsplit(url).path.rstrip("/")
+                status_path = urlsplit(str(resp.url)).path
+                if (
+                    method == RequestMethod.POST
+                    and resp.status == 202
+                    and re.fullmatch(r".*/compute/orgs/[^/]+/[^/]+/[^/]+", request_path)
+                    and re.fullmatch(re.escape(request_path) + r"/[^/]+/status", status_path)
+                ):
+                    resp_headers["Location"] = str(resp.url)
+                    return HTTPResponse(status=303, data=b"", reason="See Other", headers=resp_headers)
+                raise TransportError(msg="Browser fetch followed a redirect whose original response is unavailable.")
 
             # Redirect responses carry their information in the Location header and have no body to read.
             if 300 <= resp.status < 400:
                 return HTTPResponse(status=resp.status, data=b"", reason=resp.status_text, headers=resp_headers)
 
-            data = await resp.bytes()
-
             if is_head:
-                resp_headers.setdefault("Accept-Ranges", "bytes")
-                resp_headers.setdefault("Content-Length", str(len(data)))
                 return HTTPResponse(status=resp.status, data=b"", reason=resp.status_text, headers=resp_headers)
 
+            data = await asyncio.wait_for(resp.bytes(), timeout=timeout_for("read"))
             range_header = request_headers.get("Range") or request_headers.get("range")
-            if range_header and "Content-Range" not in resp_headers:
-                with contextlib.suppress(IndexError, ValueError):
-                    start, end = range_header.split("=")[1].split("-")
-                    resp_headers["Content-Range"] = f"bytes {start}-{end}/*"
+            if range_header and resp.status == 206 and "Content-Range" not in resp_headers:
+                if match := re.fullmatch(r"bytes=(\d+)-(\d+)", range_header):
+                    start, end = map(int, match.groups())
+                    if end >= start and len(data) == end - start + 1:
+                        resp_headers["Content-Range"] = f"bytes {start}-{end}/*"
 
             return HTTPResponse(status=resp.status, data=data, reason=resp.status_text, headers=resp_headers)
+        except TransportError:
+            raise
         except Exception as e:
             raise TransportError(msg="Could not complete HTTP request", caused_by=e)
+        finally:
+            controller.abort()

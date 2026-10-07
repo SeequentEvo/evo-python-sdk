@@ -29,14 +29,36 @@ class FakeFormData:
     """Stand-in for the browser `FormData` object."""
 
     def __init__(self) -> None:
-        self.fields: list[tuple[str, str | bytes]] = []
+        self.fields: list[tuple[str, str | FakeBlob]] = []
 
     @classmethod
     def new(cls) -> FakeFormData:
         return cls()
 
-    def append(self, key: str, value: str | bytes) -> None:
+    def append(self, key: str, value: str | FakeBlob) -> None:
         self.fields.append((key, value))
+
+
+class FakeBlob:
+    def __init__(self, parts: list[bytes]) -> None:
+        self.parts = parts
+
+    @classmethod
+    def new(cls, parts: list[bytes]) -> FakeBlob:
+        return cls(parts)
+
+
+class FakeAbortController:
+    def __init__(self) -> None:
+        self.signal = self
+        self.aborted = False
+
+    @classmethod
+    def new(cls) -> FakeAbortController:
+        return cls()
+
+    def abort(self) -> None:
+        self.aborted = True
 
 
 class FakeLocalStorage:
@@ -129,6 +151,8 @@ def install() -> None:
     """Register the stand-in runtime modules so that `evo.pyodide` can be imported."""
     if "js" not in sys.modules:
         js = _new_module("js")
+        js.AbortController = FakeAbortController
+        js.Blob = FakeBlob
         js.FormData = FakeFormData
         js.localStorage = FakeLocalStorage()
         sys.modules["js"] = js
@@ -136,12 +160,16 @@ def install() -> None:
     if "pyodide" not in sys.modules:
         pyodide = _new_module("pyodide")
         pyodide.__path__ = []
+        ffi = _new_module("pyodide.ffi")
+        ffi.to_js = lambda value: value
         http = _new_module("pyodide.http")
 
         async def pyfetch(*args: Any, **kwargs: Any) -> FakeResponse:
             raise AssertionError("pyfetch must be patched by the test.")
 
         http.pyfetch = pyfetch
+        pyodide.ffi = ffi
         pyodide.http = http
         sys.modules["pyodide"] = pyodide
+        sys.modules["pyodide.ffi"] = ffi
         sys.modules["pyodide.http"] = http
