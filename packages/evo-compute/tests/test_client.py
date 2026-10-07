@@ -10,6 +10,7 @@
 #  limitations under the License.
 
 import json
+import logging
 import textwrap
 from collections.abc import Iterator
 from contextlib import contextmanager
@@ -18,16 +19,16 @@ from unittest import mock
 from uuid import UUID
 
 from evo.common import RequestMethod
-from evo.common.exceptions import EvoAPIException, UnknownResponseError
+from evo.common.exceptions import EvoAPIException, NotFoundException, UnknownResponseError
 from evo.common.test_tools import ORG as TEST_ORG
 from evo.common.test_tools import MockResponse, TestWithConnector
-from evo.common.utils import get_header_metadata
+from evo.common.utils import BackoffLinear, Retry, get_header_metadata
 from parameterized import parameterized
 from pydantic import BaseModel
 
 from data import load_test_data
 from evo.compute import JobClient, JobProgress, JobStatusEnum
-from evo.compute.exceptions import JobError, JobPendingError
+from evo.compute.exceptions import JobError, JobPendingError, TransientAPIError
 
 TEST_TOPIC = "test"
 TEST_TASK = "job-client"
@@ -406,8 +407,49 @@ class TestJobClient(TestWithConnector):
             await self.job.wait_for_results(polling_interval_seconds=0.0)
 
         self.assertEqual(status, ctx.exception.status)
+        self.assertNotIsInstance(ctx.exception, TransientAPIError)
         self.assertEqual(1, self.transport.request.call_count)
         mock_sleep.assert_not_called()
+
+    @mock.patch("evo.common.utils.retry.asyncio.sleep", spec_set=True)
+    async def test_wait_for_result_with_custom_retry_does_not_retry_non_transient_status_errors(
+        self, mock_sleep: mock.MagicMock
+    ) -> None:
+        """Test that only transient errors are retried when the caller provides its own retry policy."""
+        self.transport.request.side_effect = [
+            MockResponse(status_code=429, reason="Too Many Requests"),
+            MockResponse(status_code=403, reason="Forbidden"),
+        ]
+        retry = Retry(logging.getLogger(__name__), max_attempts=5, backoff_method=BackoffLinear(1))
+
+        with self.assertRaises(EvoAPIException) as ctx:
+            await self.job.wait_for_results(polling_interval_seconds=0.0, retry=retry)
+
+        self.assertEqual(403, ctx.exception.status)
+        mock_sleep.assert_called_once_with(1)
+
+    async def test_get_status_raises_transient_api_error_with_error_details(self) -> None:
+        """Test that a transient status check error keeps the status, reason, content, and headers."""
+        content = {"type": "https://example.com/throttled", "title": "Throttled"}
+        with self.transport.set_http_response(
+            429, json.dumps(content), reason="Too Many Requests", headers={"Content-Type": "application/json"}
+        ):
+            with self.assertRaises(TransientAPIError) as ctx:
+                await self.job.get_status()
+
+        error = ctx.exception
+        self.assertEqual(429, error.status)
+        self.assertEqual("Too Many Requests", error.reason)
+        self.assertEqual(content, error.content)
+        self.assertEqual("application/json", error.headers["Content-Type"])
+        self.assertIsInstance(error.__cause__, EvoAPIException)
+        self.assertEqual(429, error.__cause__.status)
+
+    async def test_get_status_keeps_non_transient_error_type(self) -> None:
+        """Test that a non-transient status check error is raised with its original type."""
+        with self.transport.set_http_response(404, reason="Not Found"):
+            with self.assertRaises(NotFoundException):
+                await self.job.get_status()
 
 
 class TestJobClientPreview(TestWithConnector):

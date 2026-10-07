@@ -15,17 +15,9 @@ import time
 import unittest
 from unittest import mock
 
-from parameterized import parameterized
-
-from evo.common.exceptions import EvoAPIException, RetryError, TransportError
+from evo.common.exceptions import RetryError
 from evo.common.test_tools import long_test
-from evo.common.utils import (
-    BackoffExponential,
-    BackoffIncremental,
-    BackoffLinear,
-    Retry,
-    is_transient_error,
-)
+from evo.common.utils import BackoffExponential, BackoffIncremental, BackoffLinear, Retry
 
 logger = logging.getLogger(__name__)
 
@@ -193,53 +185,6 @@ class TestRetry(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(4, mock_sleep.call_count)  # 5 attempts == 4 sleeps.
         mock_sleep.assert_has_calls([mock.call(1), mock.call(2), mock.call(3), mock.call(4)])
 
-    @mock.patch("asyncio.sleep", spec_set=True)
-    async def test_retry_on_retries_accepted_errors(self, mock_sleep: mock.MagicMock) -> None:
-        retry = Retry(logger, max_attempts=5, backoff_method=BackoffIncremental(1), retry_on=lambda _: True)
-        with self.assertRaises(RetryError):
-            async for handler in retry:
-                with handler.suppress_errors():
-                    raise _TestException1("Retried exception")
-
-        self.assertEqual(4, mock_sleep.call_count)  # 5 attempts == 4 sleeps.
-
-    @mock.patch("asyncio.sleep", spec_set=True)
-    async def test_retry_on_raises_rejected_errors_immediately(self, mock_sleep: mock.MagicMock) -> None:
-        retry_on = mock.Mock(side_effect=lambda error: isinstance(error, _TestException1))
-        retry = Retry(logger, max_attempts=5, backoff_method=BackoffIncremental(1), retry_on=retry_on)
-        errors = iter([_TestException1("Retried exception"), _TestException2("Rejected exception")])
-
-        with self.assertRaises(_TestException2):
-            async for handler in retry:
-                with handler.suppress_errors():
-                    raise next(errors)
-
-        self.assertEqual(2, retry_on.call_count)
-        mock_sleep.assert_has_calls([mock.call(1)])  # Only the retried exception was followed by a sleep.
-
-    @mock.patch("asyncio.sleep", spec_set=True)
-    async def test_retry_on_applies_after_suppressed_types(self, mock_sleep: mock.MagicMock) -> None:
-        retry_on = mock.Mock(return_value=True)
-        retry = Retry(logger, max_attempts=5, backoff_method=BackoffIncremental(1), retry_on=retry_on)
-
-        with self.assertRaises(_TestException2):
-            async for handler in retry:
-                with handler.suppress_errors(_TestException1):
-                    raise _TestException2("Unexpected exception")
-
-        retry_on.assert_not_called()
-        mock_sleep.assert_not_called()
-
-    @mock.patch("asyncio.sleep", spec_set=True)
-    async def test_retry_on_success_does_not_call_predicate(self, mock_sleep: mock.MagicMock) -> None:
-        retry_on = mock.Mock(return_value=True)
-        async for handler in Retry(logger, retry_on=retry_on):
-            with handler.suppress_errors():
-                pass
-
-        retry_on.assert_not_called()
-        mock_sleep.assert_not_called()
-
     @long_test
     async def test_actual_delay(self) -> None:
         expect_end = time.perf_counter() + 1 + 2 + 3 + 4
@@ -250,19 +195,3 @@ class TestRetry(unittest.IsolatedAsyncioTestCase):
 
         actual_end = time.perf_counter()
         self.assertAlmostEqual(expect_end, actual_end, delta=0.1)
-
-
-class TestIsTransientError(unittest.TestCase):
-    @parameterized.expand([(status,) for status in (408, 425, 429, 500, 502, 503, 504)])
-    def test_transient_statuses(self, status: int) -> None:
-        self.assertTrue(is_transient_error(EvoAPIException(status, None, None, None)))
-
-    @parameterized.expand([(status,) for status in (400, 401, 403, 404, 409, 422, 501)])
-    def test_non_transient_statuses(self, status: int) -> None:
-        self.assertFalse(is_transient_error(EvoAPIException(status, None, None, None)))
-
-    def test_transport_errors_are_transient(self) -> None:
-        self.assertTrue(is_transient_error(TransportError("Connection reset")))
-
-    def test_other_errors_are_not_transient(self) -> None:
-        self.assertFalse(is_transient_error(ValueError("Bad response")))

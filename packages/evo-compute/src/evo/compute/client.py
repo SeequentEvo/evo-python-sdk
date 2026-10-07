@@ -21,9 +21,9 @@ from typing import Any, Generic, TypeVar
 from uuid import UUID
 
 from evo.common import APIConnector, HTTPResponse
-from evo.common.exceptions import UnknownResponseError
+from evo.common.exceptions import EvoAPIException, TransportError, UnknownResponseError
 from evo.common.interfaces import IFeedback
-from evo.common.utils import NoFeedback, Retry, is_transient_error
+from evo.common.utils import NoFeedback, Retry
 from pydantic import TypeAdapter, ValidationError
 
 from evo import logging
@@ -31,7 +31,7 @@ from evo import logging
 from .data import JobProgress, JobStatusEnum
 from .endpoints import JobsApi, TasksApi
 from .endpoints.models import CompletedJobResponse
-from .exceptions import JobError, JobPendingError
+from .exceptions import TRANSIENT_HTTP_STATUSES, JobError, JobPendingError, TransientAPIError
 
 logger = logging.getLogger("compute.client")
 
@@ -213,16 +213,22 @@ class JobClient(Generic[T_Result]):
         """Get the status of the job.
 
         :return: The job progress.
+
+        :raises TransientAPIError: If the status check fails with a temporary error, such as a 429 or 503.
         """
         async with self._connector:
-            response = await JobsApi(self._connector).get_job_status(
-                org_id=self._org_id,
-                topic=self._topic,
-                task=self._task,
-                job_id=self._job_id,
-                additional_headers=self._get_headers(),
-            )
-
+            try:
+                response = await JobsApi(self._connector).get_job_status(
+                    org_id=self._org_id,
+                    topic=self._topic,
+                    task=self._task,
+                    job_id=self._job_id,
+                    additional_headers=self._get_headers(),
+                )
+            except EvoAPIException as error:
+                if error.status in TRANSIENT_HTTP_STATUSES:
+                    raise TransientAPIError.from_error(error) from error
+                raise
         if response.error:
             error = JobError(
                 status=response.error.status,
@@ -322,8 +328,8 @@ class JobClient(Generic[T_Result]):
         """Wait for the job to complete and return the results.
 
         :param polling_interval_seconds: The interval in seconds between status checks.
-        :param retry: A Retry object with a wait strategy. If None, a default Retry is created that only retries
-            transient errors (see ``is_transient_error``).
+        :param retry: A Retry object with a wait strategy. If None, a default Retry is created. Only transient
+            errors (``TransientAPIError`` and ``TransportError``) are retried; other errors are raised immediately.
         :param fb: The feedback object to use.
 
         :return: The results.
@@ -333,14 +339,14 @@ class JobClient(Generic[T_Result]):
         :raises JobError: If the job failed.
         """
         if retry is None:
-            retry = Retry(logger, retry_on=is_transient_error)
+            retry = Retry(logger)
 
         latest_progress = 0.0
         latest_message = "Waiting on remote job..."
 
         while True:
             async for handler in retry:
-                with handler.suppress_errors():
+                with handler.suppress_errors((TransientAPIError, TransportError)):
                     latest = await self.get_status()
 
             if latest.status in (JobStatusEnum.succeeded, JobStatusEnum.failed, JobStatusEnum.cancelled):
