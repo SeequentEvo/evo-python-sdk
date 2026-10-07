@@ -21,7 +21,6 @@ from evo.common.interfaces import IAuthorizer
 from .connector import OAuthConnector
 from .data import AccessToken, AnyScopes, EvoScopes, Scopes
 from .exceptions import OAuthError
-from .oauth_redirect_handler import OAuthRedirectHandler
 
 __all__ = [
     "AccessTokenAuthorizer",
@@ -187,6 +186,8 @@ class AuthorizationCodeAuthorizer(_BaseAuthorizer[AccessToken]):
 
         :raises OAuthError: If the user does not authenticate within the timeout.
         """
+        from .oauth_redirect_handler import OAuthRedirectHandler
+
         async with OAuthRedirectHandler(self._connector, self._redirect_url) as handler:
             return await handler.login(scopes=self._scopes, timeout_seconds=timeout_seconds)
 

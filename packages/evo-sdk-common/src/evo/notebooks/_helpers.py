@@ -9,10 +9,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import base64
 from pathlib import Path
 from typing import TypeAlias
-
-import ipywidgets as widgets
 
 from evo.common.utils import Cache
 
@@ -20,6 +19,8 @@ from . import assets
 from ._consts import DEFAULT_CACHE_LOCATION
 
 FileName: TypeAlias = str | Path
+
+_MEDIA_TYPES = {".gif": "image/gif", ".png": "image/png"}
 
 
 def init_cache(cache_location: FileName = DEFAULT_CACHE_LOCATION) -> Cache:
@@ -37,20 +38,22 @@ def init_cache(cache_location: FileName = DEFAULT_CACHE_LOCATION) -> Cache:
     return cache
 
 
-def build_img_widget(filename: str) -> widgets.Image:
-    image = assets.get(filename).read_bytes()
-    return widgets.Image(
-        value=image,
-        format="png",
-        layout=widgets.Layout(max_height="26px", margin="3px", align_self="center"),
-    )
+def read_asset_text(filename: str) -> str:
+    """Read a bundled text asset, such as the widget ESM or stylesheet.
+
+    :param filename: The name of the file in the assets directory.
+
+    :returns: The contents of the file.
+    """
+    return assets.get(filename).read_text(encoding="utf-8")
 
 
-def build_button_widget(text: str) -> widgets.Button:
-    widget = widgets.Button(
-        description=text,
-        button_style="info",
-        layout=widgets.Layout(margin="5px 5px 5px 5px", align_self="center"),
-    )
-    widget.style.button_color = "#265C7F"
-    return widget
+def asset_data_uri(filename: str) -> str:
+    """Encode a bundled image asset as a data URI so it can be embedded directly in widget markup.
+
+    :param filename: The name of the file in the assets directory.
+
+    :returns: The data URI for the image.
+    """
+    encoded = base64.b64encode(assets.get(filename).read_bytes()).decode("ascii")
+    return f"data:{_MEDIA_TYPES[Path(filename).suffix.lower()]};base64,{encoded}"
