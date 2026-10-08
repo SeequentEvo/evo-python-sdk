@@ -13,7 +13,6 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from uuid import UUID
 
 import pandas as pd
@@ -35,9 +34,8 @@ __all__ = [
 ]
 
 
-@dataclass(frozen=True, kw_only=True)
 class RegularBlockModelData:
-    """Data class for creating a new regular block model.
+    """Data for creating a new regular block model.
 
 
     :param name: The name of the block model.
@@ -55,20 +53,42 @@ class RegularBlockModelData:
     """
 
     name: str
-    origin: Point3 | FloatArrayLike3
-    n_blocks: Size3i | IntArrayLike3
-    block_size: Size3d | FloatArrayLike3
-    rotations: list[tuple[RotationAxis, float]] = field(default_factory=list)
-    cell_data: pd.DataFrame | None = None
-    description: str | None = None
-    coordinate_reference_system: str | None = None
-    size_unit_id: str | None = None
-    units: dict[str, str] = field(default_factory=dict)
+    origin: Point3
+    n_blocks: Size3i
+    block_size: Size3d
+    rotations: list[tuple[RotationAxis, float]]
+    cell_data: pd.DataFrame | None
+    description: str | None
+    coordinate_reference_system: str | None
+    size_unit_id: str | None
+    units: dict[str, str]
 
-    def __post_init__(self) -> None:
-        object.__setattr__(self, "origin", Point3.from_array_like(self.origin))
-        object.__setattr__(self, "n_blocks", Size3i.from_array_like(self.n_blocks))
-        object.__setattr__(self, "block_size", Size3d.from_array_like(self.block_size))
+    def __init__(
+        self,
+        *,
+        name: str,
+        origin: Point3 | FloatArrayLike3,
+        n_blocks: Size3i | IntArrayLike3,
+        block_size: Size3d | FloatArrayLike3,
+        rotations: list[tuple[RotationAxis, float]] | None = None,
+        cell_data: pd.DataFrame | None = None,
+        description: str | None = None,
+        coordinate_reference_system: str | None = None,
+        size_unit_id: str | None = None,
+        units: dict[str, str] | None = None,
+    ) -> None:
+        if rotations is None:
+            rotations = []
+        self.name = name
+        self.origin = Point3.from_array_like(origin)
+        self.n_blocks = Size3i.from_array_like(n_blocks)
+        self.block_size = Size3d.from_array_like(block_size)
+        self.rotations = rotations
+        self.cell_data = cell_data
+        self.description = description
+        self.coordinate_reference_system = coordinate_reference_system
+        self.size_unit_id = size_unit_id
+        self.units = units if units is not None else {}
 
 
 class RegularBlockModel(BaseTypedBlockModel):

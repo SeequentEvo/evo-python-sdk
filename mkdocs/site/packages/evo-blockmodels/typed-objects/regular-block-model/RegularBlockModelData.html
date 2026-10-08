@@ -89,7 +89,7 @@
 
 
 
-        <p>Data class for creating a new regular block model.</p>
+        <p>Data for creating a new regular block model.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -172,7 +172,7 @@
                 <code>rotations</code>
             </td>
             <td>
-                  <code><span title="list">list</span>[<span title="tuple">tuple</span>[<span title="evo.blockmodels.endpoints.models.RotationAxis">RotationAxis</span>, <span title="float">float</span>]]</code>
+                  <code><span title="list">list</span>[<span title="tuple">tuple</span>[<span title="evo.blockmodels.endpoints.models.RotationAxis">RotationAxis</span>, <span title="float">float</span>]] | None</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -181,7 +181,7 @@ positive angles indicate clockwise rotation when looking down the axis.</p>
               </div>
             </td>
             <td>
-                  <code><span title="list">list</span>()</code>
+                  <code>None</code>
             </td>
           </tr>
           <tr class="doc-section-item">
@@ -254,7 +254,7 @@ Must include geometry columns (i, j, k) or (x, y, z) and attribute columns.</p>
                 <code>units</code>
             </td>
             <td>
-                  <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="str">str</span>]</code>
+                  <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="str">str</span>] | None</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -262,7 +262,7 @@ Must include geometry columns (i, j, k) or (x, y, z) and attribute columns.</p>
               </div>
             </td>
             <td>
-                  <code><span title="dict">dict</span>()</code>
+                  <code>None</code>
             </td>
           </tr>
       </tbody>

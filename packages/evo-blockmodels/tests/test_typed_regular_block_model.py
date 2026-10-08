@@ -69,12 +69,31 @@ def test_regular_block_model_data_rejects_invalid_named_geometry(field, value):
 )
 def test_regular_block_model_data_normalizes_geometry(origin, n_blocks, block_size):
     data = RegularBlockModelData(name="Test", origin=origin, n_blocks=n_blocks, block_size=block_size)
+    assert data.name == "Test"
     assert type(data.origin) is Point3
     assert type(data.n_blocks) is Size3i
     assert type(data.block_size) is Size3d
     assert data.origin == Point3(1, 2, 3)
     assert data.n_blocks == Size3i(4, 5, 6)
     assert data.block_size == Size3d(0.5, 1.5, 2.5)
+
+
+def test_regular_block_model_data_requires_keyword_arguments():
+    with pytest.raises(TypeError):
+        RegularBlockModelData("Test", (1, 2, 3), (4, 5, 6), (1, 1, 1))
+    with pytest.raises(TypeError):
+        RegularBlockModelData(origin=(1, 2, 3), n_blocks=(4, 5, 6), block_size=(1, 1, 1))
+
+
+def test_regular_block_model_data_defaults_are_independent():
+    first = RegularBlockModelData(name="First", origin=(1, 2, 3), n_blocks=(4, 5, 6), block_size=(1, 1, 1))
+    second = RegularBlockModelData(name="Second", origin=(1, 2, 3), n_blocks=(4, 5, 6), block_size=(1, 1, 1))
+
+    first.rotations.append((RotationAxis.x, 20))
+    first.units["grade"] = "g/t"
+
+    assert second.rotations == []
+    assert second.units == {}
 
 
 @pytest.mark.parametrize(

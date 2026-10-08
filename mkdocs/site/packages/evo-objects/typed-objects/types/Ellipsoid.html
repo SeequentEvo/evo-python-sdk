@@ -90,6 +90,13 @@
 
 
         <p>An ellipsoid defining a spatial region.</p>
+<p>Ranges are ordered major, semi-major, minor. Rotation angles are in
+degrees and ordered dip azimuth [0, 360], dip [0, 180], pitch [0, 360].
+They specify clockwise intrinsic rotations about the successive Z, X,
+and Z axes, respectively.</p>
+<p>Ranges accept an EllipsoidRanges instance or a three-value list, tuple,
+or 1D NumPy array. Rotation accepts a Rotation instance or the same
+three-value sequence forms; omitting it applies no rotation.</p>
 
 
 
