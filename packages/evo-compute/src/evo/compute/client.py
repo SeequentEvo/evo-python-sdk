@@ -23,7 +23,7 @@ from uuid import UUID
 from evo.common import APIConnector, HTTPResponse
 from evo.common.exceptions import EvoAPIException, TransportError, UnknownResponseError
 from evo.common.interfaces import IFeedback
-from evo.common.utils import NoFeedback, Retry
+from evo.common.utils import BackoffExponential, NoFeedback, Retry
 from pydantic import TypeAdapter, ValidationError
 
 from evo import logging
@@ -323,13 +323,15 @@ class JobClient(Generic[T_Result]):
             )
 
     async def wait_for_results(
-        self, polling_interval_seconds: float = 0.5, retry: Retry | None = None, fb: IFeedback = NoFeedback
+        self, polling_interval_seconds: float = 5.0, retry: Retry | None = None, fb: IFeedback = NoFeedback
     ) -> T_Result:
         """Wait for the job to complete and return the results.
 
         :param polling_interval_seconds: The interval in seconds between status checks.
-        :param retry: A Retry object with a wait strategy. If None, a default Retry is created. Only transient
-            errors (``TransientAPIError`` and ``TransportError``) are retried; other errors are raised immediately.
+        :param retry: A Retry object with a wait strategy. If None, a default Retry is created whose exponential
+            backoff is scaled by ``polling_interval_seconds``, so retries are always slower than the polling cadence.
+            Only transient errors (``TransientAPIError`` and ``TransportError``) are retried; other errors are raised
+            immediately.
         :param fb: The feedback object to use.
 
         :return: The results.
@@ -339,7 +341,7 @@ class JobClient(Generic[T_Result]):
         :raises JobError: If the job failed.
         """
         if retry is None:
-            retry = Retry(logger)
+            retry = Retry(logger, backoff_method=BackoffExponential(backoff_factor=polling_interval_seconds))
 
         latest_progress = 0.0
         latest_message = "Waiting on remote job..."

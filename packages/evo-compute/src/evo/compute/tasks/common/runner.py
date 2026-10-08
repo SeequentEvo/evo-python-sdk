@@ -217,7 +217,7 @@ class TaskRunner(ABC, Generic[TParams, TResultModel, TResult]):
         params: TParams,
         *,
         preview: bool = False,
-        polling_interval_seconds: float = 0.5,
+        polling_interval_seconds: float = 5.0,
         retry: Retry | None = None,
         fb: IFeedback = NoFeedback,
     ) -> None:

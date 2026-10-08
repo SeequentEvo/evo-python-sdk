@@ -392,6 +392,32 @@ class TestJobClient(TestWithConnector):
         self.assertEqual(final_response.get("results"), results)
         self.assertEqual(2, mock_sleep.call_count)
 
+    @parameterized.expand([(0.5,), (5.0,), (30.0,)])
+    @mock.patch("evo.compute.client.asyncio.sleep", spec_set=True)
+    async def test_wait_for_result_default_retry_backs_off_slower_than_polling_interval(
+        self, polling_interval: float, mock_sleep: mock.MagicMock
+    ) -> None:
+        """Test that default retries back off slower than the polling cadence, so throttled polls slow down."""
+        final_response = load_test_data("job-response-succeeded.json")
+        self.transport.request.side_effect = [
+            self._status_response("job-response-in-progress.json"),
+            MockResponse(status_code=429, reason="Too Many Requests"),
+            MockResponse(status_code=429, reason="Too Many Requests"),
+            self._status_response("job-response-succeeded.json"),
+            MockResponse(
+                status_code=200, headers={"Content-Type": "application/json"}, content=json.dumps(final_response)
+            ),
+        ]
+
+        await self.job.wait_for_results(polling_interval_seconds=polling_interval)
+
+        # Both the polling sleep and the retry backoff go through asyncio.sleep.
+        polling_delay, *retry_delays = [call.args[0] for call in mock_sleep.call_args_list]
+        self.assertEqual(polling_interval, polling_delay)
+        self.assertEqual(2, len(retry_delays))
+        self.assertTrue(all(delay > polling_interval for delay in retry_delays), retry_delays)
+        self.assertLess(retry_delays[0], retry_delays[1])
+
     @parameterized.expand([(403,), (404,)])
     @mock.patch("evo.common.utils.retry.asyncio.sleep", spec_set=True)
     async def test_wait_for_result_does_not_retry_non_transient_status_errors(
