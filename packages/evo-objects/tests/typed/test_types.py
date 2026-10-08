@@ -37,6 +37,40 @@ from evo.objects.typed.types import EpsgCode as TypesEpsgCode
 class TestTypes(TestCase):
     @parameterized.expand(
         [
+            ("minimum", 0, 0, 0),
+            ("interior", 0, 120, 270),
+            ("maximum", 360, 180, 360),
+        ]
+    )
+    def test_rotation_angle_boundaries(self, _name, dip_azimuth, dip, pitch):
+        rotation = Rotation(dip_azimuth, dip, pitch)
+        self.assertEqual((rotation.dip_azimuth, rotation.dip, rotation.pitch), (dip_azimuth, dip, pitch))
+
+    @parameterized.expand(
+        [
+            ("azimuth_below", -1, 0, 0, "dip_azimuth"),
+            ("azimuth_above", 361, 0, 0, "dip_azimuth"),
+            ("dip_below", 0, -1, 0, "dip"),
+            ("dip_above", 0, 181, 0, "dip"),
+            ("pitch_below", 0, 0, -1, "pitch"),
+            ("pitch_above", 0, 0, 361, "pitch"),
+            ("nan", np.nan, 0, 0, "dip_azimuth"),
+            ("infinity", 0, np.inf, 0, "dip"),
+            ("azimuth_bool", True, 0, 0, "dip_azimuth"),
+            ("dip_bool", 0, False, 0, "dip"),
+            ("pitch_bool", 0, 0, True, "pitch"),
+        ]
+    )
+    def test_invalid_rotation_angles(self, _name, dip_azimuth, dip, pitch, field):
+        with self.assertRaisesRegex(ValueError, field):
+            Rotation(dip_azimuth, dip, pitch)
+
+    def test_rotation_from_existing_instance(self):
+        rotation = Rotation(45, 30, 15)
+        self.assertEqual(Rotation.from_array_like(rotation), rotation)
+
+    @parameterized.expand(
+        [
             (0, 0, 0, [2, 5, 2.5]),
             (90, 0, 0, [5, -2, 2.5]),
             (0, 90, 0, [2, 2.5, -5]),
@@ -186,6 +220,18 @@ class TestEllipsoidRanges(TestCase):
         self.assertEqual(ranges.semi_major, 50)
         self.assertEqual(ranges.minor, 25)
 
+    @parameterized.expand(
+        [
+            ("zero", 100, 0, 25),
+            ("negative", 100, -50, 25),
+            ("nan", 100, np.nan, 25),
+            ("infinite", 100, 50, np.inf),
+        ]
+    )
+    def test_invalid_ranges(self, _name, major, semi_major, minor):
+        with self.assertRaisesRegex(ValueError, "three positive finite real numbers"):
+            EllipsoidRanges(major, semi_major, minor)
+
     def test_to_dict(self):
         """Should serialize to dictionary."""
         ranges = EllipsoidRanges(100, 50, 25)
@@ -204,6 +250,14 @@ class TestEllipsoidRanges(TestCase):
 class TestEllipsoid(TestCase):
     """Tests for the Ellipsoid class."""
 
+    def test_ranges_from_existing_instance(self):
+        ranges = EllipsoidRanges(100, 50, 25)
+        self.assertEqual(EllipsoidRanges.from_array_like(ranges), ranges)
+
+        ranges.minor = 0
+        with self.assertRaises(ValueError):
+            EllipsoidRanges.from_array_like(ranges)
+
     def test_basic_creation(self):
         """Should create ellipsoid with ranges and rotation."""
         ell = Ellipsoid(
@@ -214,6 +268,126 @@ class TestEllipsoid(TestCase):
         self.assertEqual(ell.ranges.semi_major, 50)
         self.assertEqual(ell.ranges.minor, 25)
         self.assertEqual(ell.rotation.dip_azimuth, 45)
+
+    @parameterized.expand(
+        [
+            ("list", [100, 50, 25]),
+            ("tuple", (100, 50, 25)),
+            ("numpy_array", np.array([100, 50, 25])),
+        ]
+    )
+    def test_creation_from_sequence(self, _name, ranges):
+        ell = Ellipsoid(ranges=ranges, rotation=Rotation(45, 30, 0))
+        self.assertIsInstance(ell.ranges, EllipsoidRanges)
+        self.assertEqual(ell.ranges.to_dict(), {"major": 100, "semi_major": 50, "minor": 25})
+        self.assertTrue(all(type(value) is float for value in ell.ranges.to_dict().values()))
+        self.assertEqual(ell.rotation.dip_azimuth, 45)
+        self.assertEqual(ell.to_dict()["ellipsoid_ranges"], ell.ranges.to_dict())
+        self.assertEqual(ell.scaled(2).ranges.to_dict(), {"major": 200, "semi_major": 100, "minor": 50})
+
+    @parameterized.expand(
+        [
+            ("short_list", [100, 50]),
+            ("long_tuple", (100, 50, 25, 10)),
+            ("matrix", np.array([[100, 50, 25]])),
+        ]
+    )
+    def test_invalid_sequence_shape(self, _name, ranges):
+        with self.assertRaisesRegex(ValueError, "three values"):
+            Ellipsoid(ranges=ranges)
+
+    def test_invalid_ranges_type(self):
+        with self.assertRaises(TypeError):
+            Ellipsoid(ranges="100, 50, 25")
+
+    @parameterized.expand(
+        [
+            ("nested", [[100], [50], [25]]),
+            ("bool_list", [True, 50, 25]),
+            ("bool_array", np.array([100, False, 25], dtype=object)),
+        ]
+    )
+    def test_invalid_range_values(self, _name, ranges):
+        with self.assertRaisesRegex(ValueError, "three positive finite real numbers"):
+            Ellipsoid(ranges=ranges)
+
+    @parameterized.expand(
+        [
+            ("nan_list", [100, np.nan, 25]),
+            ("infinity_tuple", (100, 50, np.inf)),
+            ("negative_infinity_array", np.array([-np.inf, 50, 25])),
+        ]
+    )
+    def test_nonfinite_range_values(self, _name, ranges):
+        with self.assertRaisesRegex(ValueError, "three positive finite real numbers"):
+            Ellipsoid(ranges=ranges)
+
+    @parameterized.expand(
+        [
+            ("zero_list", [100, 0, 25]),
+            ("negative_tuple", (100, -50, 25)),
+            ("negative_array", np.array([100, 50, -25])),
+        ]
+    )
+    def test_nonpositive_range_values(self, _name, ranges):
+        with self.assertRaisesRegex(ValueError, "three positive finite real numbers"):
+            Ellipsoid(ranges=ranges)
+
+    @parameterized.expand(
+        [
+            ("list", [45, 30, 15]),
+            ("tuple", (45, 30, 15)),
+            ("numpy_array", np.array([45, 30, 15])),
+        ]
+    )
+    def test_creation_from_rotation_sequence(self, _name, rotation):
+        ell = Ellipsoid(ranges=[100, 50, 25], rotation=rotation)
+        self.assertIsInstance(ell.rotation, Rotation)
+        self.assertEqual(ell.rotation, Rotation(45, 30, 15))
+        self.assertTrue(all(type(value) is float for value in ell.to_dict()["rotation"].values()))
+        self.assertEqual(ell.to_dict()["rotation"], {"dip_azimuth": 45, "dip": 30, "pitch": 15})
+        self.assertEqual(ell.scaled(2).rotation, ell.rotation)
+
+    @parameterized.expand(
+        [
+            ("short_list", [45, 30]),
+            ("long_tuple", (45, 30, 15, 0)),
+            ("matrix", np.array([[45, 30, 15]])),
+        ]
+    )
+    def test_invalid_rotation_shape(self, _name, rotation):
+        with self.assertRaisesRegex(ValueError, "three values"):
+            Ellipsoid(ranges=[100, 50, 25], rotation=rotation)
+
+    @parameterized.expand(
+        [
+            ("string", [45, "30", 15]),
+            ("bool_tuple", (45, False, 15)),
+            ("bool_array", np.array([45, 30, True], dtype=object)),
+        ]
+    )
+    def test_invalid_rotation_values(self, _name, rotation):
+        with self.assertRaisesRegex(ValueError, "three finite real numbers"):
+            Ellipsoid(ranges=[100, 50, 25], rotation=rotation)
+
+    @parameterized.expand(
+        [
+            ("nan_list", [45, np.nan, 15]),
+            ("infinity_tuple", (45, 30, np.inf)),
+            ("negative_infinity_array", np.array([-np.inf, 30, 15])),
+        ]
+    )
+    def test_nonfinite_rotation_values(self, _name, rotation):
+        with self.assertRaisesRegex(ValueError, "three finite real numbers"):
+            Ellipsoid(ranges=[100, 50, 25], rotation=rotation)
+
+    def test_invalid_rotation_type(self):
+        with self.assertRaises(TypeError):
+            Ellipsoid(ranges=[100, 50, 25], rotation="45, 30, 15")
+
+    def test_invalid_rotation_sequence_angle(self):
+        with self.assertRaisesRegex(ValueError, "dip_azimuth"):
+            Ellipsoid(ranges=[100, 50, 25], rotation=[361, 0, 0])
 
     def test_default_rotation(self):
         """Should use default rotation when not specified."""
