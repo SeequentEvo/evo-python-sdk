@@ -44,6 +44,8 @@ from . import geostatistics as _geostatistics_module  # noqa: F401
 from .common import (
     AllOfFilter,
     AnyOfFilter,
+    BlockDiscretisation,
+    BlockDiscretization,
     CreateAttribute,
     Ellipsoid,
     EllipsoidRanges,
@@ -71,7 +73,6 @@ from .geostatistics.declustering import DeclusteringResult
 
 # Kriging-specific result types
 from .geostatistics.kriging import (
-    BlockDiscretisation,
     KrigingDiagnostics,
     KrigingResult,
 )
@@ -175,6 +176,7 @@ __all__ = [
     "AllOfFilter",
     "AnyOfFilter",
     "BlockDiscretisation",
+    "BlockDiscretization",
     "BreakTiesResult",
     "CreateAttribute",
     "DeclusteringResult",
