@@ -23,6 +23,7 @@ from evo.widgets import (
     _register_feedback_factory,
     _unregister_feedback_factory,
 )
+from evo.widgets.formatters import _TASK_RESULT_DETAILS
 
 
 class TestFeedbackFactoryRegistration(unittest.TestCase):
@@ -85,6 +86,27 @@ class TestTaskResultFormatterRegistration(unittest.TestCase):
     def setUp(self) -> None:
         if importlib.util.find_spec("evo.compute") is None:
             self.skipTest("evo-compute is not installed")
+
+    def test_expected_task_result_details_are_registered(self) -> None:
+        expected = {
+            "BreakTiesResult": "_target_result_details",
+            "ConditionalTurningBandsResult": "_turning_bands_result_details",
+            "ConSimResult": "_conditional_simulation_result_details",
+            "ContinuousDistributionResult": "_distribution_result_details",
+            "DeclusteringResult": "_target_result_details",
+            "IDWResult": "_target_result_details",
+            "KNNResult": "_target_result_details",
+            "KrigingResult": "_target_result_details",
+            "LocationWiseResult": "_location_wise_result_details",
+            "LossCalculationResult": "_target_result_details",
+            "NormalScoreResult": "_target_result_details",
+            "ProfitCalculationResult": "_target_result_details",
+            "SimulationReportResult": "_simulation_report_result_details",
+        }
+        self.assertEqual(
+            {class_name: details.__name__ for (_, class_name), details in _TASK_RESULT_DETAILS.items()},
+            expected,
+        )
 
     def test_registered_task_result_types_resolve(self) -> None:
         """Each registered task result class must exist, or IPython silently skips the formatter."""

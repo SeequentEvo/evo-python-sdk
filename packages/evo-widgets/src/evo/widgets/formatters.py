@@ -772,7 +772,12 @@ def _format_single_task_result_inner(result: Any, index: int | None = None, deta
     result_type = getattr(result, "TASK_DISPLAY_NAME", "Task")
     title = f"#{index} ✓ {result_type} Result" if index is not None else f"✓ {result_type} Result"
     if details is None:
-        details = _TASK_RESULT_DETAILS.get((type(result).__module__, type(result).__name__), _target_result_details)
+        for result_class in type(result).__mro__:
+            details = _TASK_RESULT_DETAILS.get((result_class.__module__, result_class.__name__))
+            if details is not None:
+                break
+        else:
+            details = _target_result_details
     links, rows, message = details(result)
     html = build_title(title, links or None)
     html += f'<div class="message">{escape(str(message)) if message else "Task completed"}</div>'

@@ -42,10 +42,12 @@ from evo.widgets.html import STYLESHEET
 
 
 class HtmlFixtureTestCase(unittest.TestCase):
+    maxDiff = None
+
     def assert_html_matches_fixture(self, html: str, fixture: str) -> None:
-        self.assertTrue(html.startswith(STYLESHEET))
+        self.assertTrue(html.startswith(STYLESHEET), "HTML is missing the stylesheet")
         expected = (Path(__file__).parent / "fixtures" / f"{fixture}.html").read_text(encoding="utf-8")
-        self.assertEqual(html.removeprefix(STYLESHEET), expected.removesuffix("\n"))
+        self.assertEqual(html.removeprefix(STYLESHEET) + "\n", expected)
 
 
 class TestHelperFunctions(unittest.TestCase):
@@ -1172,7 +1174,7 @@ class TestRealTaskResults(HtmlFixtureTestCase):
         "/objects/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
     )
 
-    def make_report(self):
+    def make_report(self, result_type=None):
         from evo.compute.tasks.geostatistics.simulation_report import (
             SimReportLinks,
             SimReportValidationReport,
@@ -1181,7 +1183,7 @@ class TestRealTaskResults(HtmlFixtureTestCase):
             SimulationReportResultModel,
         )
 
-        return SimulationReportResult(
+        return (result_type or SimulationReportResult)(
             MagicMock(),
             SimulationReportResultModel(
                 validation_summary=SimReportValidationSummary(reference_mean=1.5, mean=2.5),
@@ -1212,6 +1214,26 @@ class TestRealTaskResults(HtmlFixtureTestCase):
     def test_simulation_report(self):
         html = format_task_result_with_target(self.make_report())
         self.assert_html_matches_fixture(html, "simulation_report_result")
+
+    def test_simulation_report_omits_unsafe_links(self):
+        from evo.compute.tasks.geostatistics.simulation_report import (
+            SimReportLinks,
+            SimReportValidationReport,
+            SimulationReportResult,
+            SimulationReportResultModel,
+        )
+
+        result = SimulationReportResult(
+            MagicMock(),
+            SimulationReportResultModel(
+                validation_report=SimReportValidationReport(reference="javascript:alert(1)"),
+                links=SimReportLinks(dashboard="data:text/html,<script>alert(1)</script>"),
+            ),
+        )
+
+        html = format_task_result_with_target(result)
+        self.assertNotIn("href=", html)
+        self.assertNotIn("<script>", html)
 
     def test_continuous_distribution(self):
         html = format_task_result_with_target(self.make_distribution())
@@ -1257,7 +1279,10 @@ class TestRealTaskResults(HtmlFixtureTestCase):
                     name="Simulated grid",
                     schema_id="/objects/regular-3d-grid/1.0.0/regular-3d-grid.schema.json",
                     summary_attributes=ConSimSummaryAttributes(
-                        mean=attribute, variance=attribute, min=attribute, max=attribute
+                        mean=attribute,
+                        variance=TaskAttribute(reference=self.REFERENCE, name="Simulation variance"),
+                        min=attribute,
+                        max=attribute,
                     ),
                 ),
                 validation_summary=ConSimValidationSummary(reference_mean=1.5, mean=2.5),
@@ -1364,6 +1389,17 @@ class TestRealTaskResults(HtmlFixtureTestCase):
             with self.subTest(result=type(result).__name__):
                 html = format_task_result_list(TaskResultList([result, result]))
                 self.assert_html_matches_fixture(html, fixture)
+
+    def test_result_list_preserves_subclass_details(self):
+        from evo.compute.tasks.common.results import TaskResultList
+        from evo.compute.tasks.geostatistics.simulation_report import SimulationReportResult
+
+        class DerivedReport(SimulationReportResult):
+            pass
+
+        result = self.make_report(DerivedReport)
+        html = format_task_result_list(TaskResultList([result, result]))
+        self.assert_html_matches_fixture(html, "report_result_list")
 
     def test_ipython_renders_real_results(self):
         from evo.compute.tasks.common.results import TaskResultList

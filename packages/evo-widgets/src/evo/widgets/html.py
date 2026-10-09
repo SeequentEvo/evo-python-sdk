@@ -14,6 +14,7 @@
 from collections.abc import Sequence
 from html import escape
 from pathlib import Path
+from urllib.parse import urlsplit
 
 # Load CSS from external file
 _CSS_PATH = Path(__file__).parent / "assets" / "styles.css"
@@ -53,8 +54,19 @@ def build_title(text: str, links: list[tuple[str, str]] | None = None) -> str:
     :param links: Optional list of (label, url) tuples for links next to the title.
     :return: HTML string.
     """
-    if links:
-        link_html = " | ".join([f'<a href="{escape(url)}" target="_blank">{escape(label)}</a>' for label, url in links])
+    safe_links = []
+    for label, url in links or []:
+        try:
+            parsed = urlsplit(url)
+            if parsed.scheme not in ("http", "https") or not parsed.hostname or any(ord(char) <= 32 for char in url):
+                continue
+        except ValueError:
+            continue
+        safe_links.append((label, url))
+    if safe_links:
+        link_html = " | ".join(
+            f'<a href="{escape(url)}" target="_blank">{escape(label)}</a>' for label, url in safe_links
+        )
         return f'<div class="title"><span>{escape(text)}</span><span class="title-links">{link_html}</span></div>'
     return f'<div class="title">{escape(text)}</div>'
 
