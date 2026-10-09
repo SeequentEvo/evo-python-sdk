@@ -5,6 +5,8 @@ import numpy as np
 import pandas as pd
 
 import evo.objects.typed as evo_objs
+from evo.common import IContext
+from evo.compute.tasks.geostatistics.conditioned_simulator import ConSimResult
 
 STRUCTURE_TYPES: dict[str, type[evo_objs.VariogramStructure]] = {
     "spherical": evo_objs.SphericalStructure,
@@ -128,6 +130,60 @@ def create_masked_grid_from_block_model(
         size=size,
         mask=mask,
     )
+
+
+async def simulation_summary_for_block_model(
+    context: IContext,
+    result: ConSimResult,
+    block_model: evo_objs.BlockModel,
+    *,
+    prefix: str = "Cu_sim",
+) -> pd.DataFrame:
+    """Download simulation summaries with IJK columns for a matching block model.
+
+    Read only: include mean, variance, min/max, quantiles, and cutoff products,
+    preserving the masked grid's X-fastest active-cell order. Values retain their
+    simulation units; variance has squared grade units. No realisations are copied.
+    """
+    grid = await evo_objs.object_from_reference(context, result.target_reference)
+    if not isinstance(grid, evo_objs.RegularMasked3DGrid):
+        raise ValueError("Expected a masked simulation grid")
+    geometry = block_model.geometry
+    if (
+        grid.origin != geometry.origin
+        or grid.rotation != geometry.rotation
+        or grid.size != geometry.n_blocks
+        or grid.cell_size != geometry.block_size
+        or grid.coordinate_reference_system != block_model.coordinate_reference_system
+    ):
+        raise ValueError("Simulation grid and BlockSync model geometry must match")
+
+    product_names = {
+        getattr(result.summary_attributes, statistic).name: f"{prefix}_{statistic}"
+        for statistic in ("mean", "variance", "min", "max")
+    }
+    product_names.update(
+        {attribute.name: f"{prefix}_P{100 * attribute.quantile:g}" for attribute in result.quantile_attributes}
+    )
+    product_names.update(
+        {
+            attribute.name: f"{prefix}_prob_above_{attribute.cutoff:g}"
+            for attribute in result.probability_above_cutoff_attributes
+        }
+    )
+    product_names.update(
+        {
+            attribute.name: f"{prefix}_mean_above_{attribute.cutoff:g}"
+            for attribute in result.mean_above_cutoff_attributes
+        }
+    )
+    products = await grid.to_dataframe(*product_names)
+    products = products.rename(columns=product_names).reset_index(drop=True)
+    active_cells = np.flatnonzero(await grid.cells.get_mask())
+    indices = np.column_stack(np.unravel_index(active_cells, (grid.size.nx, grid.size.ny, grid.size.nz), order="F"))
+    if len(products) != len(indices):
+        raise ValueError("Simulation product rows do not match the active mask cells")
+    return pd.concat([pd.DataFrame(indices, columns=["i", "j", "k"], dtype="uint32"), products], axis=1)
 
 
 def regular_grid_cell_coordinates(grid: evo_objs.Regular3DGrid) -> pd.DataFrame:
