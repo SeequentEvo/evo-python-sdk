@@ -28,7 +28,7 @@ Example::
     >>>
     >>> params = ConditionalTurningBandsParameters(
     ...     source=pointset,
-    ...     source_attribute="locations.attributes[?name=='grade']",
+    ...     source_attribute=pointset.attributes["grade"],
     ...     target=grid,
     ...     distribution=distribution_object,
     ...     variogram_model=variogram,
@@ -53,6 +53,7 @@ from evo.objects.typed import BaseObject, object_from_reference
 from pydantic import BaseModel, Field, field_validator
 
 from ..common import (
+    AttributeExpression,
     Filter,
     GeoscienceObjectReference,
     SearchNeighborhood,
@@ -89,7 +90,7 @@ class ConditionalTurningBandsParameters(BaseModel):
 
         >>> params = ConditionalTurningBandsParameters(
         ...     source=pointset,
-        ...     source_attribute="locations.attributes[?name=='grade']",
+        ...     source_attribute=pointset.attributes["grade"],
         ...     target=grid,
         ...     distribution=distribution_object,
         ...     variogram_model=variogram,
@@ -105,8 +106,9 @@ class ConditionalTurningBandsParameters(BaseModel):
     source: GeoscienceObjectReference
     """Reference to the pointset containing the source conditioning points."""
 
-    source_attribute: str
-    """Attribute reference for the source values (e.g. ``\"locations.attributes[?name=='grade']\"``)."""
+    source_attribute: AttributeExpression
+    """The source values. Accepts a typed attribute such as ``pointset.attributes["grade"]``,
+    or an attribute expression such as ``"locations.attributes[?name=='grade']"``."""
 
     target: GeoscienceObjectReference
     """Reference to the target 3-D grid or masked grid to simulate onto."""

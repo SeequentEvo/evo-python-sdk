@@ -90,17 +90,18 @@
 
 
         <p>Parameters for the simulation-report compute task.</p>
-<p>All simulation data references use flat string fields (object URLs and
-attribute expressions) rather than nested Source/Target objects.</p>
+<p>Simulation data is referenced by flat object/attribute field pairs rather than
+nested Source/Target objects. Attribute fields accept a typed attribute such as
+<code>pointset.attributes["grade"]</code> or a raw attribute expression.</p>
 <p>Example::</p>
 <pre><code>&gt;&gt;&gt; params = SimulationReportParameters(
-...     simulation_source=pointset_url,
-...     source_attribute="locations.attributes[0]",
-...     simulation_target=grid_url,
-...     point_simulations="cell_attributes[0]",
-...     point_simulations_normal_score="cell_attributes[1]",
-...     block_simulations="cell_attributes[2]",
-...     block_simulations_normal_score="cell_attributes[3]",
+...     simulation_source=pointset,
+...     source_attribute=pointset.attributes["grade"],
+...     simulation_target=grid,
+...     point_simulations=grid.attributes["point_sims"],
+...     point_simulations_normal_score=grid.attributes["point_sims_ns"],
+...     block_simulations=grid.attributes["block_sims"],
+...     block_simulations_normal_score=grid.attributes["block_sims_ns"],
 ...     variogram_model=variogram_url,
 ...     neighborhood=SearchNeighborhood(...),
 ...     number_of_simulations=50,
@@ -155,12 +156,13 @@ attribute expressions) rather than nested Source/Target objects.</p>
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">source_attribute</span><span class="p">:</span> <span class="nb">str</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">source_attribute</span><span class="p">:</span> <span class="n">AttributeExpression</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>Attribute expression on the source object (e.g. <code>"locations.attributes[0]"</code>).</p>
+        <p>The source values. Accepts a typed attribute such as <code>pointset.attributes["grade"]</code>,
+or an attribute expression such as <code>"locations.attributes[0]"</code>.</p>
 
     </div>
 
@@ -195,12 +197,12 @@ attribute expressions) rather than nested Source/Target objects.</p>
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">point_simulations</span><span class="p">:</span> <span class="nb">str</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">point_simulations</span><span class="p">:</span> <span class="n">AttributeExpression</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>Attribute expression for point simulations on the target.</p>
+        <p>Point simulations on the target. Accepts a typed attribute or an attribute expression.</p>
 
     </div>
 
@@ -215,12 +217,12 @@ attribute expressions) rather than nested Source/Target objects.</p>
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">point_simulations_normal_score</span><span class="p">:</span> <span class="nb">str</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">point_simulations_normal_score</span><span class="p">:</span> <span class="n">AttributeExpression</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>Attribute expression for point simulation normal scores on the target.</p>
+        <p>Point simulation normal scores on the target. Accepts a typed attribute or an attribute expression.</p>
 
     </div>
 
@@ -235,12 +237,12 @@ attribute expressions) rather than nested Source/Target objects.</p>
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">block_simulations</span><span class="p">:</span> <span class="nb">str</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">block_simulations</span><span class="p">:</span> <span class="n">AttributeExpression</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>Attribute expression for block simulations on the target.</p>
+        <p>Block simulations on the target. Accepts a typed attribute or an attribute expression.</p>
 
     </div>
 
@@ -255,12 +257,12 @@ attribute expressions) rather than nested Source/Target objects.</p>
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">block_simulations_normal_score</span><span class="p">:</span> <span class="nb">str</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">block_simulations_normal_score</span><span class="p">:</span> <span class="n">AttributeExpression</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>Attribute expression for block simulation normal scores on the target.</p>
+        <p>Block simulation normal scores on the target. Accepts a typed attribute or an attribute expression.</p>
 
     </div>
 

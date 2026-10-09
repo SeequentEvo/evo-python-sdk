@@ -14,6 +14,8 @@
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 
+from evo.objects import ObjectReference
+from evo.objects.typed.attributes import Attribute, BlockModelAttribute, PendingAttribute
 from pydantic import ValidationError
 
 from evo.compute.tasks import SearchNeighborhood
@@ -378,3 +380,50 @@ class TestConditionalTurningBandsRunnerAsync(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(kwargs["topic"], "geostatistics")
         self.assertEqual(kwargs["task"], "conditional-turning-bands")
         self.assertIsInstance(result, ConditionalTurningBandsResult)
+
+
+# ---------------------------------------------------------------------------
+
+
+def _existing_attribute(name: str, key: str, schema_path: str = "locations.attributes") -> MagicMock:
+    """A mock Attribute that satisfies ``isinstance(x, Attribute)``."""
+    attr = MagicMock(spec=Attribute)
+    attr.name = name
+    attr.key = key
+    attr.exists = True
+    attr._context = MagicMock(schema_path=schema_path)
+    attr._obj = MagicMock(metadata=MagicMock(url=ObjectReference(POINTSET_URL)))
+    return attr
+
+
+class TestSourceAttributeAcceptsTypedAttributes(unittest.TestCase):
+    def test_existing_attribute_resolves_to_key_expression(self):
+        params = _params(source_attribute=_existing_attribute("grade", "abc-key"))
+        self.assertEqual(params.source_attribute, "locations.attributes[?key=='abc-key']")
+
+    def test_pending_attribute_resolves_to_name_expression(self):
+        params = _params(source_attribute=PendingAttribute(MagicMock(), "grade"))
+        self.assertEqual(params.source_attribute, "attributes[?name=='grade']")
+
+    def test_block_model_attribute_resolves_to_name_expression(self):
+        bm_attr = BlockModelAttribute(name="grade", attribute_type="Float64")
+        params = _params(source_attribute=bm_attr)
+        self.assertEqual(params.source_attribute, "attributes[?name=='grade']")
+
+    def test_typed_attribute_survives_serialisation(self):
+        params = _params(source_attribute=_existing_attribute("grade", "abc-key"))
+        self.assertEqual(_dump(params)["source_attribute"], "locations.attributes[?key=='abc-key']")
+
+    def test_raw_expression_passes_through_unchanged(self):
+        expression = "locations.attributes[?name=='grade']"
+        params = _params(source_attribute=expression)
+        self.assertEqual(params.source_attribute, expression)
+        self.assertEqual(_dump(params)["source_attribute"], expression)
+
+    def test_index_style_expression_passes_through_unchanged(self):
+        params = _params(source_attribute="cell_attributes[0]")
+        self.assertEqual(params.source_attribute, "cell_attributes[0]")
+
+    def test_non_string_is_still_rejected(self):
+        with self.assertRaises(ValidationError):
+            _params(source_attribute=123)
