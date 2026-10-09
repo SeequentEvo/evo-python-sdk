@@ -17,8 +17,9 @@ These formatters are registered with IPython when the extension is loaded.
 
 from __future__ import annotations
 
+from functools import partial
 from html import escape
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Callable
 
 from .html import (
     STYLESHEET,
@@ -672,73 +673,143 @@ def _get_schema_display(result: Any) -> str:
     return "Unknown"
 
 
-def _format_single_task_result_inner(result: Any, index: int | None = None) -> str:
-    """Render the inner HTML for a single task result card.
-
-    Returns the title, message, and detail table *without* the outer
-    ``<div class="evo">`` wrapper or the stylesheet so it can be embedded
-    inside both :func:`format_task_result_with_target` and
-    :func:`format_task_result_list`.
-
-    :param result: A result object (e.g. ``KrigingResult``).
-    :param index: Optional 1-based index to prefix the title with (e.g. ``#1``).
-    :return: HTML fragment.
-    """
+def _target_result_details(result: Any) -> tuple[list[tuple[str, str]], list[tuple[str, Any]], str | None]:
     portal_url = _get_task_result_portal_url(result)
-    links = [("Portal", portal_url)] if portal_url else None
-
-    result_type = getattr(result, "TASK_DISPLAY_NAME", "Task")
-
-    if index is not None:
-        title = f"#{index} ✓ {result_type} Result"
-    else:
-        title = f"✓ {result_type} Result"
-
+    links = [("Portal", portal_url)] if portal_url else []
+    rows: list[tuple[str, Any]] = []
     target_name = getattr(result, "target_name", None)
     if target_name is not None:
-        schema_display = _get_schema_display(result)
-        attribute_name = getattr(result, "attribute_name", "")
-        rows = [
-            ("Target:", target_name),
-            ("Schema:", schema_display),
-            ("Attribute:", markup(f'<span class="attr-highlight">{escape(attribute_name)}</span>')),
+        rows.extend([("Target:", target_name), ("Schema:", _get_schema_display(result))])
+        attribute_name = getattr(result, "attribute_name", None)
+        if attribute_name is not None:
+            rows.append(("Attribute:", markup(f'<span class="attr-highlight">{escape(attribute_name)}</span>')))
+    return links, rows, getattr(result, "message", None)
+
+
+def _turning_bands_result_details(result: Any) -> tuple[list[tuple[str, str]], list[tuple[str, Any]], str | None]:
+    links, rows, message = _target_result_details(result)
+    if result.simulations_attribute is not None:
+        rows.append(("Simulations:", result.simulations_attribute.name))
+    return links, rows, message
+
+
+def _conditional_simulation_result_details(
+    result: Any,
+) -> tuple[list[tuple[str, str]], list[tuple[str, Any]], str | None]:
+    links, rows, message = _target_result_details(result)
+    if result.dashboard_url:
+        links.append(("Dashboard", result.dashboard_url))
+    rows.extend(
+        [
+            ("Mean attribute:", result.summary_attributes.mean.name),
+            ("Variance attribute:", result.summary_attributes.variance.name),
         ]
-    else:
-        rows = []
+    )
+    if result.validation_summary is not None:
+        rows.extend(
+            [
+                ("Reference mean:", result.validation_summary.reference_mean),
+                ("Simulated mean:", result.validation_summary.mean),
+            ]
+        )
+    return links, rows, message
 
-    table_rows = [build_table_row(label, value) for label, value in rows]
 
-    html = build_title(title, links)
-    message = getattr(result, "message", None)
-    if message:
-        html += f'<div class="message">{message}</div>'
-    if table_rows:
-        html += f"<table>{''.join(table_rows)}</table>"
+def _location_wise_result_details(result: Any) -> tuple[list[tuple[str, str]], list[tuple[str, Any]], str | None]:
+    links, rows, message = _target_result_details(result)
+    if result.attribute_names:
+        rows.append(("Attributes:", ", ".join(result.attribute_names)))
+    return links, rows, message
 
+
+def _distribution_result_details(result: Any) -> tuple[list[tuple[str, str]], list[tuple[str, Any]], str | None]:
+    try:
+        portal_url = get_portal_url_from_reference(result.distribution_reference)
+    except ValueError:
+        portal_url = None
+    links = [("Portal", portal_url)] if portal_url else []
+    rows = [("Distribution:", result.distribution_name), ("Schema:", _get_schema_display(result))]
+    return links, rows, result.message
+
+
+def _simulation_report_result_details(result: Any) -> tuple[list[tuple[str, str]], list[tuple[str, Any]], str | None]:
+    links = []
+    if result.report_reference:
+        links.append(("Report", result.report_reference))
+    if result.dashboard_url:
+        links.append(("Dashboard", result.dashboard_url))
+    rows = []
+    if result.validation_summary is not None:
+        rows = [
+            ("Reference mean:", result.validation_summary.reference_mean),
+            ("Simulated mean:", result.validation_summary.mean),
+        ]
+    return links, rows, None
+
+
+_TASK_RESULT_DETAILS: dict[tuple[str, str], Callable[..., tuple[list, list, str | None]]] = {
+    (f"evo.compute.tasks.geostatistics.{module}", class_name): details
+    for module, class_name, details in (
+        ("break_ties", "BreakTiesResult", _target_result_details),
+        ("conditional_turning_bands", "ConditionalTurningBandsResult", _turning_bands_result_details),
+        ("conditioned_simulator", "ConSimResult", _conditional_simulation_result_details),
+        ("continuous_distribution", "ContinuousDistributionResult", _distribution_result_details),
+        ("declustering", "DeclusteringResult", _target_result_details),
+        ("idw", "IDWResult", _target_result_details),
+        ("knn", "KNNResult", _target_result_details),
+        ("kriging", "KrigingResult", _target_result_details),
+        ("location_wise", "LocationWiseResult", _location_wise_result_details),
+        ("loss_calculation", "LossCalculationResult", _target_result_details),
+        ("normal_score", "NormalScoreResult", _target_result_details),
+        ("profit_calculation", "ProfitCalculationResult", _target_result_details),
+        ("simulation_report", "SimulationReportResult", _simulation_report_result_details),
+    )
+}
+
+
+def _format_single_task_result_inner(result: Any, index: int | None = None, details: Callable | None = None) -> str:
+    """Render a result fragment, including its result-specific links and rows."""
+    result_type = getattr(result, "TASK_DISPLAY_NAME", "Task")
+    title = f"#{index} ✓ {result_type} Result" if index is not None else f"✓ {result_type} Result"
+    if details is None:
+        for result_class in type(result).__mro__:
+            details = _TASK_RESULT_DETAILS.get((result_class.__module__, result_class.__name__))
+            if details is not None:
+                break
+        else:
+            details = _target_result_details
+    links, rows, message = details(result)
+    html = build_title(title, links or None)
+    html += f'<div class="message">{escape(str(message)) if message else "Task completed"}</div>'
+    if rows:
+        html += f"<table>{''.join(build_table_row(label, value) for label, value in rows)}</table>"
     return html
+
+
+def _format_task_result(result: Any, details: Callable | None = None) -> str:
+    return STYLESHEET + '<div class="evo">' + _format_single_task_result_inner(result, details=details) + "</div>"
+
+
+_TASK_RESULT_FORMATTERS = {
+    result_type: partial(_format_task_result, details=details) for result_type, details in _TASK_RESULT_DETAILS.items()
+}
 
 
 def format_task_result_with_target(result: Any) -> str:
-    """Format a KrigingResult or any other task result with a target as HTML.
+    """Format a compute task result as HTML, using its result-specific fields.
 
-    Displays the task completion status, target information, and Portal links.
+    Displays the task completion status, available details, and related links.
 
-    :param result: A KrigingResult object with message, target_name, schema,
-        attribute_name, and _target attributes.
+    :param result: A geostatistics task result.
     :return: HTML string for the task result.
     """
-    html = STYLESHEET
-    html += '<div class="evo">'
-    html += _format_single_task_result_inner(result)
-    html += "</div>"
-    return html
+    return _format_task_result(result)
 
 
 def format_task_result_list(results: Any) -> str:
     """Format a TaskResultList as styled HTML.
 
-    Renders each result as an individually-formatted card (reusing the
-    same layout as :func:`format_task_result_with_target`) wrapped in a
+    Renders each result with its own shape-specific details, wrapped in a
     single container with a summary title.
 
     :param results: A ``TaskResultList`` object with iterable result items.

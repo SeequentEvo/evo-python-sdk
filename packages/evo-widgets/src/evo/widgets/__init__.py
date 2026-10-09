@@ -34,6 +34,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .formatters import (
+    _TASK_RESULT_FORMATTERS,
     format_attributes_collection,
     format_base_object,
     format_block_model,
@@ -94,6 +95,13 @@ __all__ = [
     "serialize_object_reference",
     "unload_ipython_extension",
 ]
+
+
+# IPython resolves these lazily by name, so a module move silently disables the
+# formatter; tests/test_extension.py checks each path still resolves.
+_TASK_RESULT_TYPES: tuple[tuple[str, str], ...] = tuple(_TASK_RESULT_FORMATTERS)
+
+_TASK_RESULT_LIST_TYPE: tuple[str, str] = ("evo.compute.tasks.common.results", "TaskResultList")
 
 
 def _register_formatters(ipython: InteractiveShell) -> None:
@@ -167,16 +175,11 @@ def _register_formatters(ipython: InteractiveShell) -> None:
     )
 
     # Register formatters for compute task results
+    for (module_name, class_name), formatter in _TASK_RESULT_FORMATTERS.items():
+        html_formatter.for_type_by_name(module_name, class_name, formatter)
 
     html_formatter.for_type_by_name(
-        "evo.compute.tasks.kriging",
-        "KrigingResult",
-        format_task_result_with_target,
-    )
-
-    html_formatter.for_type_by_name(
-        "evo.compute.tasks.common.results",
-        "TaskResultList",
+        *_TASK_RESULT_LIST_TYPE,
         format_task_result_list,
     )
 

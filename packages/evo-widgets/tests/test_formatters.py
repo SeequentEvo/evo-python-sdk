@@ -11,11 +11,17 @@
 
 """Tests for evo.widgets.formatters module."""
 
+import importlib.util
 import unittest
 from datetime import datetime
+from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import MagicMock
 from uuid import UUID
 
+from IPython.core.formatters import HTMLFormatter
+
+from evo.widgets import _register_formatters
 from evo.widgets.formatters import (
     _format_bounding_box,
     _format_crs,
@@ -32,6 +38,16 @@ from evo.widgets.formatters import (
     format_task_result_with_target,
     format_variogram,
 )
+from evo.widgets.html import STYLESHEET
+
+
+class HtmlFixtureTestCase(unittest.TestCase):
+    maxDiff = None
+
+    def assert_html_matches_fixture(self, html: str, fixture: str) -> None:
+        self.assertTrue(html.startswith(STYLESHEET), "HTML is missing the stylesheet")
+        expected = (Path(__file__).parent / "fixtures" / f"{fixture}.html").read_text(encoding="utf-8")
+        self.assertEqual(html.removeprefix(STYLESHEET) + "\n", expected)
 
 
 class TestHelperFunctions(unittest.TestCase):
@@ -1013,7 +1029,7 @@ class TestFormatReportResult(unittest.TestCase):
         self.assertIn("2.5", html)
 
 
-class TestFormatTaskResult(unittest.TestCase):
+class TestFormatTaskResult(HtmlFixtureTestCase):
     """Tests for the format_task_result_with_target function."""
 
     def _create_mock_task_result(self, **kwargs):
@@ -1129,6 +1145,281 @@ class TestFormatTaskResult(unittest.TestCase):
 
         # Should fall back to "Task"
         self.assertIn("Task Result", html)
+
+    def test_escapes_message_markup(self):
+        """Messages are server-supplied, so they must not be injected as raw HTML."""
+        obj = self._create_mock_task_result(message="done <img src=x onerror=alert(1)>")
+
+        html = format_task_result_with_target(obj)
+
+        self.assertNotIn("<img src=x", html)
+        self.assertIn("&lt;img src=x", html)
+
+    def test_completion_is_independent_of_message(self):
+        for message, fixture in (
+            (None, "task_result_default_message"),
+            ("Task completed successfully", "task_result_message"),
+        ):
+            with self.subTest(message=message):
+                html = format_task_result_with_target(self._create_mock_task_result(message=message))
+                self.assert_html_matches_fixture(html, fixture)
+
+
+@unittest.skipUnless(importlib.util.find_spec("evo.compute"), "evo-compute is not installed")
+class TestRealTaskResults(HtmlFixtureTestCase):
+    REFERENCE = (
+        "https://350mt.api.seequent.com/geoscience-object"
+        "/orgs/12345678-1234-1234-1234-123456789abc"
+        "/workspaces/87654321-4321-4321-4321-abcdef123456"
+        "/objects/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+    )
+
+    def make_report(self, result_type=None):
+        from evo.compute.tasks.geostatistics.simulation_report import (
+            SimReportLinks,
+            SimReportValidationReport,
+            SimReportValidationSummary,
+            SimulationReportResult,
+            SimulationReportResultModel,
+        )
+
+        return (result_type or SimulationReportResult)(
+            MagicMock(),
+            SimulationReportResultModel(
+                validation_summary=SimReportValidationSummary(reference_mean=1.5, mean=2.5),
+                validation_report=SimReportValidationReport(reference="https://example.com/report"),
+                links=SimReportLinks(dashboard="https://example.com/dashboard"),
+            ),
+        )
+
+    def make_distribution(self):
+        from evo.compute.tasks.geostatistics.continuous_distribution import (
+            ContinuousDistributionResult,
+            ContinuousDistributionResultModel,
+            DistributionOutput,
+        )
+
+        return ContinuousDistributionResult(
+            MagicMock(),
+            ContinuousDistributionResultModel(
+                message="Done",
+                distribution=DistributionOutput(
+                    reference=self.REFERENCE,
+                    name="Grade distribution",
+                    schema_id="/objects/continuous-distribution/1.0.0/continuous-distribution.schema.json",
+                ),
+            ),
+        )
+
+    def test_simulation_report(self):
+        html = format_task_result_with_target(self.make_report())
+        self.assert_html_matches_fixture(html, "simulation_report_result")
+
+    def test_simulation_report_omits_unsafe_links(self):
+        from evo.compute.tasks.geostatistics.simulation_report import (
+            SimReportLinks,
+            SimReportValidationReport,
+            SimulationReportResult,
+            SimulationReportResultModel,
+        )
+
+        result = SimulationReportResult(
+            MagicMock(),
+            SimulationReportResultModel(
+                validation_report=SimReportValidationReport(reference="javascript:alert(1)"),
+                links=SimReportLinks(dashboard="data:text/html,<script>alert(1)</script>"),
+            ),
+        )
+
+        html = format_task_result_with_target(result)
+        self.assertNotIn("href=", html)
+        self.assertNotIn("<script>", html)
+
+    def test_continuous_distribution(self):
+        html = format_task_result_with_target(self.make_distribution())
+        self.assert_html_matches_fixture(html, "continuous_distribution_result")
+
+    def test_target_result(self):
+        from evo.compute.tasks.common.results import TaskAttribute
+        from evo.compute.tasks.geostatistics.kriging import KrigingResult, KrigingResultModel, KrigingTargetResult
+
+        result = KrigingResult(
+            MagicMock(),
+            KrigingResultModel(
+                message="Kriging completed",
+                target=KrigingTargetResult(
+                    reference=self.REFERENCE,
+                    name="Grade grid",
+                    schema_id="/objects/regular-3d-grid/1.0.0/regular-3d-grid.schema.json",
+                    attribute=TaskAttribute(reference=self.REFERENCE, name="Estimated grade"),
+                ),
+            ),
+        )
+
+        html = format_task_result_with_target(result)
+        self.assert_html_matches_fixture(html, "kriging_result")
+
+    def test_conditional_simulation(self):
+        from evo.compute.tasks.common.results import TaskAttribute
+        from evo.compute.tasks.geostatistics.conditioned_simulator import (
+            ConSimLinks,
+            ConSimResult,
+            ConSimResultModel,
+            ConSimSummaryAttributes,
+            ConSimTargetResult,
+            ConSimValidationSummary,
+        )
+
+        attribute = TaskAttribute(reference=self.REFERENCE, name="Simulation mean")
+        result = ConSimResult(
+            MagicMock(),
+            ConSimResultModel(
+                target=ConSimTargetResult(
+                    reference=self.REFERENCE,
+                    name="Simulated grid",
+                    schema_id="/objects/regular-3d-grid/1.0.0/regular-3d-grid.schema.json",
+                    summary_attributes=ConSimSummaryAttributes(
+                        mean=attribute,
+                        variance=TaskAttribute(reference=self.REFERENCE, name="Simulation variance"),
+                        min=attribute,
+                        max=attribute,
+                    ),
+                ),
+                validation_summary=ConSimValidationSummary(reference_mean=1.5, mean=2.5),
+                links=ConSimLinks(dashboard="https://example.com/conditional-dashboard"),
+            ),
+        )
+
+        html = format_task_result_with_target(result)
+        self.assert_html_matches_fixture(html, "conditional_simulation_result")
+
+    def test_turning_bands_and_location_wise(self):
+        from evo.compute.tasks.common.results import TaskAttribute
+        from evo.compute.tasks.geostatistics.conditional_turning_bands import (
+            ConditionalTurningBandsResult,
+            ConditionalTurningBandsResultModel,
+            ConditionalTurningBandsTargetResult,
+        )
+        from evo.compute.tasks.geostatistics.location_wise import (
+            LocationWiseResult,
+            LocationWiseResultModel,
+            LocationWiseTargetResult,
+        )
+
+        attribute = TaskAttribute(reference=self.REFERENCE, name="Simulations")
+        turning_bands = ConditionalTurningBandsResult(
+            MagicMock(),
+            ConditionalTurningBandsResultModel(
+                target=ConditionalTurningBandsTargetResult(
+                    reference=self.REFERENCE,
+                    name="Simulation grid",
+                    schema_id="/objects/regular-3d-grid/1.0.0/regular-3d-grid.schema.json",
+                    simulations=attribute,
+                )
+            ),
+        )
+        location_wise = LocationWiseResult(
+            MagicMock(),
+            LocationWiseResultModel(
+                message="Statistics completed",
+                target=LocationWiseTargetResult(
+                    reference=self.REFERENCE,
+                    name="Statistics grid",
+                    schema_id="/objects/regular-3d-grid/1.0.0/regular-3d-grid.schema.json",
+                    attributes=[TaskAttribute(reference=self.REFERENCE, name="Mean grade"), attribute],
+                ),
+            ),
+        )
+
+        for result, fixture in (
+            (turning_bands, "turning_bands_result"),
+            (location_wise, "location_wise_result"),
+        ):
+            with self.subTest(result=type(result).__name__):
+                html = format_task_result_with_target(result)
+                self.assert_html_matches_fixture(html, fixture)
+
+    def test_optional_report_and_simulation_fields(self):
+        from evo.compute.tasks.common.results import TaskAttribute
+        from evo.compute.tasks.geostatistics.conditioned_simulator import (
+            ConSimLinks,
+            ConSimResult,
+            ConSimResultModel,
+            ConSimSummaryAttributes,
+            ConSimTargetResult,
+        )
+        from evo.compute.tasks.geostatistics.simulation_report import (
+            SimulationReportResult,
+            SimulationReportResultModel,
+        )
+
+        report = SimulationReportResult(MagicMock(), SimulationReportResultModel())
+        report_html = format_task_result_with_target(report)
+        self.assertIn("Simulation Report Result", report_html)
+        self.assertNotIn("href=", report_html)
+        self.assertNotIn("Reference mean:", report_html)
+
+        attribute = TaskAttribute(reference=self.REFERENCE, name="Mean")
+        simulation = ConSimResult(
+            MagicMock(),
+            ConSimResultModel(
+                target=ConSimTargetResult(
+                    reference=self.REFERENCE,
+                    name="Simulation grid",
+                    schema_id="/objects/regular-3d-grid/1.0.0/regular-3d-grid.schema.json",
+                    summary_attributes=ConSimSummaryAttributes(
+                        mean=attribute, variance=attribute, min=attribute, max=attribute
+                    ),
+                ),
+                links=ConSimLinks(),
+            ),
+        )
+        simulation_html = format_task_result_with_target(simulation)
+        self.assertIn("Conditional Simulation Result", simulation_html)
+        self.assertNotIn("Dashboard", simulation_html)
+        self.assertNotIn("Reference mean:", simulation_html)
+
+    def test_result_lists(self):
+        from evo.compute.tasks.common.results import TaskResultList
+
+        for result, fixture in (
+            (self.make_report(), "report_result_list"),
+            (self.make_distribution(), "distribution_result_list"),
+        ):
+            with self.subTest(result=type(result).__name__):
+                html = format_task_result_list(TaskResultList([result, result]))
+                self.assert_html_matches_fixture(html, fixture)
+
+    def test_result_list_preserves_subclass_details(self):
+        from evo.compute.tasks.common.results import TaskResultList
+        from evo.compute.tasks.geostatistics.simulation_report import SimulationReportResult
+
+        class DerivedReport(SimulationReportResult):
+            pass
+
+        result = self.make_report(DerivedReport)
+        html = format_task_result_list(TaskResultList([result, result]))
+        self.assert_html_matches_fixture(html, "report_result_list")
+
+    def test_ipython_renders_real_results(self):
+        from evo.compute.tasks.common.results import TaskResultList
+
+        formatter = HTMLFormatter()
+        shell = SimpleNamespace(display_formatter=SimpleNamespace(formatters={"text/html": formatter}))
+        _register_formatters(shell)
+
+        self.assertIsNot(
+            formatter.lookup_by_type(type(self.make_report())),
+            formatter.lookup_by_type(type(self.make_distribution())),
+        )
+
+        for result, expected in (
+            (self.make_report(), "https://example.com/dashboard"),
+            (self.make_distribution(), "Grade distribution"),
+            (TaskResultList([self.make_report()]), "https://example.com/report"),
+        ):
+            with self.subTest(result=type(result).__name__):
+                self.assertIn(expected, formatter(result))
 
 
 class TestFormatTaskResultList(unittest.TestCase):
