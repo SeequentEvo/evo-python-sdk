@@ -122,6 +122,17 @@ class TestKNNParametersSerialization(unittest.TestCase):
         self.assertIn("ellipsoid", nbr)
         self.assertEqual(nbr["max_samples"], 20)
 
+    def test_search_limits_in_neighborhood(self):
+        search = SearchNeighborhood(
+            ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=200, semi_major=150, minor=100)),
+            max_samples=20,
+            max_empty_octants=2,
+            max_samples_per_quadrant=5,
+        )
+        d = _dump(_params(neighborhood=search))
+        self.assertEqual(d["neighborhood"]["max_empty_octants"], 2)
+        self.assertEqual(d["neighborhood"]["max_samples_per_quadrant"], 5)
+
     def test_new_attribute_target(self):
         d = _dump(_params(target=Target.new_attribute(GRID_URL, "result")))
         self.assertEqual(d["target"]["attribute"]["operation"], "create")

@@ -22,6 +22,7 @@ import pandas as pd
 
 from evo.common import Environment, StaticContext
 from evo.common.test_tools import BASE_URL, ORG, WORKSPACE_ID, TestWithConnector
+from evo.objects import ObjectReference
 from evo.objects.typed import PointSet, PointSetData, Regular3DGrid, Regular3DGridData
 from evo.objects.typed.base import _BaseObject
 from evo.objects.typed.types import Point3, Size3d, Size3i
@@ -126,6 +127,44 @@ class TestRefreshOnPointSet(TestWithConnector):
         original_df = await original.locations.to_dataframe()
         refreshed_df = await refreshed.locations.to_dataframe()
         pd.testing.assert_frame_equal(original_df, refreshed_df)
+
+    async def test_refresh_does_not_pin_current_version(self):
+        """Test that refresh() requests the latest version rather than the version already held."""
+        data = PointSetData(
+            name="Test PointSet",
+            locations=pd.DataFrame({"x": [1.0], "y": [2.0], "z": [3.0]}),
+        )
+        requested_references: list[ObjectReference] = []
+
+        with self._mock_geoscience_objects() as mock_client:
+            original = await PointSet.create(context=self.context, data=data)
+
+            async def recording_from_reference(context, reference):
+                requested_references.append(reference)
+                return await mock_client.from_reference(context, reference)
+
+            with patch("evo.objects.DownloadedObject.from_context", recording_from_reference):
+                await original.refresh()
+
+        self.assertEqual(1, len(requested_references))
+        self.assertIsNone(requested_references[0].version_id)
+        self.assertEqual(original.metadata.id, requested_references[0].object_id)
+
+    async def test_refresh_picks_up_server_side_changes(self):
+        """Test that refresh() returns data modified on the server since the object was downloaded."""
+        data = PointSetData(
+            name="Test PointSet",
+            locations=pd.DataFrame({"x": [1.0], "y": [2.0], "z": [3.0]}),
+        )
+
+        with self._mock_geoscience_objects() as mock_client:
+            original = await PointSet.create(context=self.context, data=data)
+            remote_update = {**mock_client.objects[str(original.metadata.id)], "name": "Renamed Remotely"}
+            mock_client.store_version(remote_update, "2")
+            refreshed = await original.refresh()
+
+        self.assertEqual("Renamed Remotely", refreshed.name)
+        self.assertEqual("Test PointSet", original.name)
 
 
 class TestRefreshOnRegular3DGrid(TestWithConnector):

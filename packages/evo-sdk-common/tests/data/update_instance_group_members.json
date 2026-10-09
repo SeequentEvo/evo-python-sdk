@@ -1,0 +1,23 @@
+{
+    "id": "00000000-0000-0000-0000-00000000000b",
+    "name": "Instance Group",
+    "description": "Instance group description",
+    "ims_groups": ["00000000-0000-0000-0000-00000000000a"],
+    "members": [
+        {
+            "id": "00000000-0000-0000-0000-000000000002",
+            "email": "test.user@example.com",
+            "full_name": "Test User"
+        }
+    ],
+    "invitations": [
+        {
+            "id": "00000000-0000-0000-0000-000000000003",
+            "email": "invited.user@example.com",
+            "created_date": "2026-01-01T12:00:00.000000Z",
+            "expiration_date": "2026-01-15T12:00:00.000000Z",
+            "invited_by_email": "admin.user@example.com",
+            "status": "Pending"
+        }
+    ]
+}

@@ -195,6 +195,15 @@ class TestConditionalTurningBandsParametersSerialization(unittest.TestCase):
         with self.assertRaises(ValidationError):
             _params(number_of_lines=1001)
 
+    def test_search_limits_are_refused(self):
+        search = SearchNeighborhood(
+            ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=70, semi_major=70, minor=5)),
+            max_samples=40,
+            max_empty_octants=2,
+        )
+        with self.assertRaisesRegex(ValidationError, "does not support max_empty_octants"):
+            _params(neighborhood=search)
+
     def test_no_filters_by_default(self):
         d = _dump(_params())
         self.assertNotIn("filter", d)
