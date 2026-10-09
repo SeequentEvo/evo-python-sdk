@@ -14,6 +14,7 @@
 import importlib.util
 import unittest
 from datetime import datetime
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 from uuid import UUID
@@ -37,6 +38,14 @@ from evo.widgets.formatters import (
     format_task_result_with_target,
     format_variogram,
 )
+from evo.widgets.html import STYLESHEET
+
+
+class HtmlFixtureTestCase(unittest.TestCase):
+    def assert_html_matches_fixture(self, html: str, fixture: str) -> None:
+        self.assertTrue(html.startswith(STYLESHEET))
+        expected = (Path(__file__).parent / "fixtures" / f"{fixture}.html").read_text(encoding="utf-8")
+        self.assertEqual(html.removeprefix(STYLESHEET), expected.removesuffix("\n"))
 
 
 class TestHelperFunctions(unittest.TestCase):
@@ -1018,7 +1027,7 @@ class TestFormatReportResult(unittest.TestCase):
         self.assertIn("2.5", html)
 
 
-class TestFormatTaskResult(unittest.TestCase):
+class TestFormatTaskResult(HtmlFixtureTestCase):
     """Tests for the format_task_result_with_target function."""
 
     def _create_mock_task_result(self, **kwargs):
@@ -1145,17 +1154,17 @@ class TestFormatTaskResult(unittest.TestCase):
         self.assertIn("&lt;img src=x", html)
 
     def test_completion_is_independent_of_message(self):
-        for message in (None, "Task completed successfully"):
+        for message, fixture in (
+            (None, "task_result_default_message"),
+            ("Task completed successfully", "task_result_message"),
+        ):
             with self.subTest(message=message):
                 html = format_task_result_with_target(self._create_mock_task_result(message=message))
-                self.assertIn("Kriging Result", html)
-                self.assertNotIn("Result (Completed)", html)
-                self.assertEqual(html.count('class="message"'), 1)
-                self.assertIn(message or "Task completed", html)
+                self.assert_html_matches_fixture(html, fixture)
 
 
 @unittest.skipUnless(importlib.util.find_spec("evo.compute"), "evo-compute is not installed")
-class TestRealTaskResults(unittest.TestCase):
+class TestRealTaskResults(HtmlFixtureTestCase):
     REFERENCE = (
         "https://350mt.api.seequent.com/geoscience-object"
         "/orgs/12345678-1234-1234-1234-123456789abc"
@@ -1202,21 +1211,11 @@ class TestRealTaskResults(unittest.TestCase):
 
     def test_simulation_report(self):
         html = format_task_result_with_target(self.make_report())
-        for expected in (
-            "Simulation Report",
-            '<div class="message">Task completed</div>',
-            "1.5",
-            "2.5",
-            "https://example.com/report",
-            "https://example.com/dashboard",
-        ):
-            self.assertIn(expected, html)
+        self.assert_html_matches_fixture(html, "simulation_report_result")
 
     def test_continuous_distribution(self):
         html = format_task_result_with_target(self.make_distribution())
-        for expected in ("Continuous Distribution Result", "Grade distribution", "Portal", "Done"):
-            self.assertIn(expected, html)
-        self.assertIn('<div class="message">Done</div>', html)
+        self.assert_html_matches_fixture(html, "continuous_distribution_result")
 
     def test_target_result(self):
         from evo.compute.tasks.common.results import TaskAttribute
@@ -1236,8 +1235,7 @@ class TestRealTaskResults(unittest.TestCase):
         )
 
         html = format_task_result_with_target(result)
-        for expected in ("Grade grid", "Estimated grade", "Kriging completed", "Portal"):
-            self.assertIn(expected, html)
+        self.assert_html_matches_fixture(html, "kriging_result")
 
     def test_conditional_simulation(self):
         from evo.compute.tasks.common.results import TaskAttribute
@@ -1268,8 +1266,7 @@ class TestRealTaskResults(unittest.TestCase):
         )
 
         html = format_task_result_with_target(result)
-        for expected in ("Simulated grid", "Simulation mean", "1.5", "2.5", "conditional-dashboard", "Portal"):
-            self.assertIn(expected, html)
+        self.assert_html_matches_fixture(html, "conditional_simulation_result")
 
     def test_turning_bands_and_location_wise(self):
         from evo.compute.tasks.common.results import TaskAttribute
@@ -1309,12 +1306,13 @@ class TestRealTaskResults(unittest.TestCase):
             ),
         )
 
-        for result, expected in ((turning_bands, "Simulations"), (location_wise, "Mean grade")):
+        for result, fixture in (
+            (turning_bands, "turning_bands_result"),
+            (location_wise, "location_wise_result"),
+        ):
             with self.subTest(result=type(result).__name__):
                 html = format_task_result_with_target(result)
-                self.assertIn(expected, html)
-                self.assertIn("Portal", html)
-                self.assertNotIn("Attribute:</td>", html)
+                self.assert_html_matches_fixture(html, fixture)
 
     def test_optional_report_and_simulation_fields(self):
         from evo.compute.tasks.common.results import TaskAttribute
@@ -1359,15 +1357,13 @@ class TestRealTaskResults(unittest.TestCase):
     def test_result_lists(self):
         from evo.compute.tasks.common.results import TaskResultList
 
-        for result, expected in (
-            (self.make_report(), "https://example.com/report"),
-            (self.make_distribution(), "Grade distribution"),
+        for result, fixture in (
+            (self.make_report(), "report_result_list"),
+            (self.make_distribution(), "distribution_result_list"),
         ):
             with self.subTest(result=type(result).__name__):
                 html = format_task_result_list(TaskResultList([result, result]))
-                for value in ("#1", "#2", expected):
-                    self.assertIn(value, html)
-                self.assertEqual(html.count('class="message"'), 2)
+                self.assert_html_matches_fixture(html, fixture)
 
     def test_ipython_renders_real_results(self):
         from evo.compute.tasks.common.results import TaskResultList
