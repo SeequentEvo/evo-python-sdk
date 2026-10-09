@@ -725,6 +725,29 @@
     </table>
 
 
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>TransientAPIError</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the status check fails with a temporary error, such as a 429 or 503.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
     </div>
 
 </div>
@@ -856,7 +879,7 @@
 
 </h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">wait_for_results</span><span class="p">(</span>
-    <span class="n">polling_interval_seconds</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">retry</span><span class="p">:</span> <span class="n">Retry</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">fb</span><span class="p">:</span> <span class="n">IFeedback</span> <span class="o">=</span> <span class="n">NoFeedback</span>
+    <span class="n">polling_interval_seconds</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">5.0</span><span class="p">,</span> <span class="n">retry</span><span class="p">:</span> <span class="n">Retry</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">fb</span><span class="p">:</span> <span class="n">IFeedback</span> <span class="o">=</span> <span class="n">NoFeedback</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">T_Result</span>
 </code></pre></div>
 
@@ -889,7 +912,7 @@
               </div>
             </td>
             <td>
-                  <code>0.5</code>
+                  <code>5.0</code>
             </td>
           </tr>
           <tr class="doc-section-item">
@@ -901,7 +924,10 @@
             </td>
             <td>
               <div class="doc-md-description">
-                <p>A Retry object with a wait strategy. If None, a default Retry is created.</p>
+                <p>A Retry object with a wait strategy. If None, a default Retry is created whose exponential
+backoff is scaled by <code>polling_interval_seconds</code>, so retries are always slower than the polling cadence.
+Only transient errors (<code>TransientAPIError</code> and <code>TransportError</code>) are retried; other errors are raised
+immediately.</p>
               </div>
             </td>
             <td>

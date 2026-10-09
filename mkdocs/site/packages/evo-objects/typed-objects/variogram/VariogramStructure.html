@@ -210,16 +210,17 @@
 - 3D visualization with surface_points() or wireframe_points()
 - Creating search ellipsoids via scaled()
 - Kriging search neighborhoods</p>
-<p>Example:
-    &gt;&gt;&gt; # Get ellipsoid from variogram structure
-    &gt;&gt;&gt; var_ell = variogram.structures[0].to_ellipsoid()
-    &gt;&gt;&gt;
-    &gt;&gt;&gt; # Create search ellipsoid scaled by 2x
-    &gt;&gt;&gt; search_ell = var_ell.scaled(2.0)
-    &gt;&gt;&gt;
-    &gt;&gt;&gt; # Visualize with Plotly
-    &gt;&gt;&gt; x, y, z = var_ell.surface_points(center=(100, 200, 50))
-    &gt;&gt;&gt; mesh = go.Mesh3d(x=x, y=y, z=z, alphahull=0, opacity=0.3)</p>
+<p>Example::</p>
+<pre><code>&gt;&gt;&gt; # Get ellipsoid from variogram structure
+&gt;&gt;&gt; var_ell = variogram.structures[0].to_ellipsoid()
+&gt;&gt;&gt;
+&gt;&gt;&gt; # Create search ellipsoid scaled by 2x
+&gt;&gt;&gt; search_ell = var_ell.scaled(2.0)
+&gt;&gt;&gt;
+&gt;&gt;&gt; # Visualize with Plotly
+&gt;&gt;&gt; x, y, z = var_ell.surface_points(center=(100, 200, 50))
+&gt;&gt;&gt; mesh = go.Mesh3d(x=x, y=y, z=z, alphahull=0, opacity=0.3)
+</code></pre>
 
 
     </div>

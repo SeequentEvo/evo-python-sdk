@@ -16,7 +16,8 @@ normal-score space, performs kriging + turning-band simulation on a target grid,
 and back-transforms results.  Supports optional loss calculation,
 location-wise quantile/summary statistics, and validation reporting.
 
-Example:
+Example::
+
     >>> from evo.compute.tasks import run
     >>> from evo.compute.tasks.geostatistics.conditioned_simulator import (
     ...     ConSimParameters,
@@ -25,7 +26,7 @@ Example:
     >>>
     >>> params = ConSimParameters(
     ...     source_object=pointset,
-    ...     source_attribute="locations.attributes[?name=='grade']",
+    ...     source_attribute=pointset.attributes["grade"],
     ...     target_object=grid,
     ...     variogram_model=variogram,
     ...     neighborhood=SearchNeighborhood(
@@ -49,6 +50,7 @@ from evo.objects.typed import BaseObject, object_from_reference
 from pydantic import BaseModel, Field, SerializerFunctionWrapHandler, field_validator, model_serializer
 
 from ..common import (
+    AttributeExpression,
     CreateAttribute,
     Filter,
     GeoscienceObjectReference,
@@ -112,8 +114,11 @@ class TailExtrapolationParams(BaseModel):
 class DistributionParams(BaseModel):
     """Parameters for the continuous distribution used for normal-score transformation."""
 
-    weights: str | None = None
-    """Optional weights attribute reference for weighted distribution."""
+    weights: AttributeExpression | None = None
+    """Optional weights attribute for a weighted (declustered) distribution.
+
+    Accepts a typed attribute or an attribute expression.
+    """
 
     tail_extrapolation: TailExtrapolationParams | None = None
     """Optional tail extrapolation parameters."""
@@ -190,8 +195,9 @@ class ConSimParameters(BaseModel):
     source_object: GeoscienceObjectReference
     """Reference to the pointset containing source conditioning points."""
 
-    source_attribute: str
-    """Attribute reference for the source values."""
+    source_attribute: AttributeExpression
+    """The source values. Accepts a typed attribute such as ``pointset.attributes["grade"]``,
+    or an attribute expression such as ``"locations.attributes[?name=='grade']"``."""
 
     target_object: GeoscienceObjectReference
     """Reference to the target 3D grid."""

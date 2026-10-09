@@ -12,8 +12,34 @@
 from __future__ import annotations
 
 import copy
+from http import HTTPStatus
 
-from evo.common.exceptions import BaseTypedError, EvoClientException
+from evo.common.exceptions import BaseTypedError, EvoAPIException, EvoClientException
+
+TRANSIENT_HTTP_STATUSES = frozenset(
+    {
+        HTTPStatus.REQUEST_TIMEOUT,
+        HTTPStatus.TOO_EARLY,
+        HTTPStatus.TOO_MANY_REQUESTS,
+        HTTPStatus.INTERNAL_SERVER_ERROR,
+        HTTPStatus.BAD_GATEWAY,
+        HTTPStatus.SERVICE_UNAVAILABLE,
+        HTTPStatus.GATEWAY_TIMEOUT,
+    }
+)
+"""HTTP statuses that indicate a temporary failure, after which an idempotent request may succeed if retried."""
+
+
+class TransientAPIError(EvoAPIException):
+    """Raised when a Compute API request fails with a temporary error (see ``TRANSIENT_HTTP_STATUSES``).
+
+    Retrying is only safe for idempotent requests, such as checking a job's status. The original error is
+    available as ``__cause__``.
+    """
+
+    @classmethod
+    def from_error(cls, error: EvoAPIException) -> TransientAPIError:
+        return cls(status=error.status, reason=error.reason, content=error.content, headers=error.headers)
 
 
 class JobError(BaseTypedError):

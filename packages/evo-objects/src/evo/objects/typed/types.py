@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from numbers import Real
 from typing import Annotated, Any, overload
 
 import numpy as np
@@ -20,7 +21,7 @@ import pydantic
 
 # Import basic geometry types from evo.common and re-export
 from evo.common.crs import EpsgCode, parse_crs
-from evo.common.typed import Point3, Size3d, Size3i
+from evo.common.typed import FloatArrayLike3, Point3, Size3d, Size3i, _validate_array_like
 
 __all__ = [
     "BoundingBox",
@@ -204,11 +205,25 @@ class BoundingBox:
 
 @dataclass(frozen=True)
 class Rotation:
-    """A rotation defined by dip azimuth, dip, and pitch angles."""
+    """A clockwise intrinsic ZXZ Euler rotation in degrees.
+
+    Dip azimuth [0, 360], dip [0, 180], and pitch [0, 360] rotate about
+    successive local Z, X, and Z axes, respectively. For column vectors,
+    the rotation matrix is Rz(dip azimuth) @ Rx(dip) @ Rz(pitch).
+    """
 
     dip_azimuth: float
     dip: float
     pitch: float
+
+    def __post_init__(self) -> None:
+        for name, value, lower, upper in (
+            ("dip_azimuth", self.dip_azimuth, 0, 360),
+            ("dip", self.dip, 0, 180),
+            ("pitch", self.pitch, 0, 360),
+        ):
+            if not isinstance(value, Real) or isinstance(value, bool) or not lower <= value <= upper:
+                raise ValueError(f"{name} must be a finite angle between {lower} and {upper} degrees (inclusive)")
 
     def as_rotation_matrix(self) -> np.ndarray:
         """Convert the rotation to a rotation matrix.
@@ -246,6 +261,12 @@ class Rotation:
         # Combined intrinsic rotations: dip_azimuth -> dip -> pitch
         return dip_azimuth_rotation_matrix @ dip_rotation_matrix @ pitch_rotation_matrix
 
+    @classmethod
+    def from_array_like(cls, value: Rotation | FloatArrayLike3) -> Rotation:
+        if isinstance(value, Rotation):
+            value = (value.dip_azimuth, value.dip, value.pitch)
+        return cls(*_validate_array_like(value, kind=Real, positive=False))
+
 
 @dataclass
 class EllipsoidRanges:
@@ -256,9 +277,9 @@ class EllipsoidRanges:
     minor: float
 
     def __init__(self, major: float, semi_major: float, minor: float):
-        self.major = major
-        self.semi_major = semi_major
-        self.minor = minor
+        self.major, self.semi_major, self.minor = _validate_array_like(
+            (major, semi_major, minor), kind=Real, positive=True
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return {"major": self.major, "semi_major": self.semi_major, "minor": self.minor}
@@ -270,17 +291,37 @@ class EllipsoidRanges:
             minor=self.minor * factor,
         )
 
+    @classmethod
+    def from_array_like(cls, value: EllipsoidRanges | FloatArrayLike3) -> EllipsoidRanges:
+        if isinstance(value, EllipsoidRanges):
+            value = (value.major, value.semi_major, value.minor)
+        return cls(*_validate_array_like(value, kind=Real, positive=True))
+
 
 @dataclass
 class Ellipsoid:
-    """An ellipsoid defining a spatial region."""
+    """An ellipsoid defining a spatial region.
+
+    Ranges are ordered major, semi-major, minor. Rotation angles are in
+    degrees and ordered dip azimuth [0, 360], dip [0, 180], pitch [0, 360].
+    They specify clockwise intrinsic rotations about the successive Z, X,
+    and Z axes, respectively.
+
+    Ranges accept an EllipsoidRanges instance or a three-value list, tuple,
+    or 1D NumPy array. Rotation accepts a Rotation instance or the same
+    three-value sequence forms; omitting it applies no rotation.
+    """
 
     ranges: EllipsoidRanges
     _rotation: Rotation | None = None
 
-    def __init__(self, ranges: EllipsoidRanges, rotation: Rotation | None = None):
-        self.ranges = ranges
-        self._rotation = rotation
+    def __init__(
+        self,
+        ranges: EllipsoidRanges | FloatArrayLike3,
+        rotation: Rotation | FloatArrayLike3 | None = None,
+    ):
+        self.ranges = EllipsoidRanges.from_array_like(ranges)
+        self._rotation = Rotation.from_array_like(rotation) if rotation is not None else None
 
     @property
     def rotation(self) -> Rotation:

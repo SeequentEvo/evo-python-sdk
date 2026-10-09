@@ -14,6 +14,8 @@
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 
+from evo.objects import ObjectReference
+from evo.objects.typed.attributes import Attribute, BlockModelAttribute, PendingAttribute
 from pydantic import ValidationError
 
 from evo.compute.tasks import SearchNeighborhood
@@ -342,3 +344,74 @@ class TestSimulationReportRunnerAsync(unittest.IsolatedAsyncioTestCase):
 
         _, kwargs = mock_submit.call_args
         self.assertFalse(kwargs.get("preview", True))
+
+
+# ---------------------------------------------------------------------------
+
+
+def _existing_attribute(name: str, key: str, schema_path: str = "locations.attributes") -> MagicMock:
+    """A mock Attribute that satisfies ``isinstance(x, Attribute)``."""
+    attr = MagicMock(spec=Attribute)
+    attr.name = name
+    attr.key = key
+    attr.exists = True
+    attr._context = MagicMock(schema_path=schema_path)
+    attr._obj = MagicMock(metadata=MagicMock(url=ObjectReference(POINTSET_URL)))
+    return attr
+
+
+class TestAttributeFieldsAcceptTypedAttributes(unittest.TestCase):
+    _SIMULATION_FIELDS = (
+        "point_simulations",
+        "point_simulations_normal_score",
+        "block_simulations",
+        "block_simulations_normal_score",
+    )
+
+    def test_source_attribute_resolves_to_key_expression(self):
+        params = _params(source_attribute=_existing_attribute("grade", "abc-key"))
+        self.assertEqual(params.source_attribute, "locations.attributes[?key=='abc-key']")
+
+    def test_simulation_fields_resolve_typed_attributes(self):
+        for field in self._SIMULATION_FIELDS:
+            with self.subTest(field=field):
+                bm_attr = BlockModelAttribute(name=field, attribute_type="Float64")
+                params = _params(**{field: bm_attr})
+                self.assertEqual(getattr(params, field), f"attributes[?name=='{field}']")
+
+    def test_pending_attribute_resolves_to_name_expression(self):
+        params = _params(source_attribute=PendingAttribute(MagicMock(), "grade"))
+        self.assertEqual(params.source_attribute, "attributes[?name=='grade']")
+
+    def test_typed_attribute_survives_serialisation(self):
+        params = _params(
+            source_attribute=_existing_attribute("grade", "abc-key"),
+            block_simulations=BlockModelAttribute(name="block_sims", attribute_type="Float64"),
+        )
+        dumped = _dump(params)
+        self.assertEqual(dumped["source_attribute"], "locations.attributes[?key=='abc-key']")
+        self.assertEqual(dumped["block_simulations"], "attributes[?name=='block_sims']")
+
+    def test_raw_expressions_pass_through_unchanged(self):
+        dumped = _dump(_params())
+        self.assertEqual(dumped["source_attribute"], "locations.attributes[0]")
+        for index, field in enumerate(self._SIMULATION_FIELDS):
+            with self.subTest(field=field):
+                self.assertEqual(dumped[field], f"cell_attributes[{index}]")
+
+    def test_non_string_is_still_rejected(self):
+        with self.assertRaises(ValidationError):
+            _params(source_attribute=123)
+
+
+class TestDistributionWeightsAcceptsTypedAttributes(unittest.TestCase):
+    def test_typed_attribute_resolves_to_expression(self):
+        dist = SimulationReportDistribution(weights=BlockModelAttribute(name="decluster_wt", attribute_type="Float64"))
+        self.assertEqual(dist.weights, "attributes[?name=='decluster_wt']")
+
+    def test_raw_expression_passes_through_unchanged(self):
+        expression = "locations.attributes[?name=='wt']"
+        self.assertEqual(SimulationReportDistribution(weights=expression).weights, expression)
+
+    def test_weights_defaults_to_none(self):
+        self.assertIsNone(SimulationReportDistribution().weights)

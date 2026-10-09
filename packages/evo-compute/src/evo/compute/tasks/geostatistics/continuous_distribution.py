@@ -14,7 +14,8 @@
 Creates a non-parametric continuous cumulative distribution from a set of
 source values, with optional weights and tail extrapolation.
 
-Example:
+Example::
+
     >>> from evo.compute.tasks import run
     >>> from evo.compute.tasks.geostatistics.continuous_distribution import (
     ...     ContinuousDistributionParameters,

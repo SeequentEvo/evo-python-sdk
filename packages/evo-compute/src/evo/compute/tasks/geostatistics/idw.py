@@ -16,7 +16,8 @@ accepted neighbours, where each weight is inversely proportional to the distance
 raised to ``power``.  A higher power concentrates influence on the closest
 samples; ``power=2`` is the classic IDW setting.
 
-Example:
+Example::
+
     >>> from evo.compute.tasks import run, SearchNeighborhood, Ellipsoid, EllipsoidRanges
     >>> from evo.compute.tasks.common import Source, Target
     >>> from evo.compute.tasks.geostatistics.idw import IDWParameters
@@ -71,7 +72,8 @@ class IDWParameters(BaseModel):
     Estimates values at target locations as a distance-weighted average of
     nearby samples.  The weighting exponent is controlled by ``power``.
 
-    Example:
+    Example::
+
         >>> from evo.compute.tasks.common import Filter, FilterCondition, Source, Target
         >>> from evo.compute.tasks.geostatistics.idw import IDWParameters
         >>>

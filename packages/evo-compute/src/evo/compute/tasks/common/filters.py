@@ -17,7 +17,8 @@ target object.  A filter is a tree of expressions: a single
 :class:`FilterCondition`, or a composite :class:`AllOfFilter` (AND) / :class:`AnyOfFilter`
 (OR) combining nested expressions.
 
-Example:
+Example::
+
     >>> from evo.compute.tasks.common import Filter, FilterCondition, AllOfFilter
     >>>
     >>> # Single condition: include only locations where 'domain' is LMS1 or LMS2
@@ -81,7 +82,8 @@ class FilterCondition(BaseModel):
       ``"less_than"``, ``"less_than_or_equal_to"``: numeric comparisons — pair with
       ``threshold`` (a single float).
 
-    Example:
+    Example::
+
         >>> FilterCondition(attribute=grid.attributes["domain"], operator="in", values=["LMS1"])
         >>> FilterCondition(attribute=grid.attributes["grade"], operator="greater_than", threshold=0.5)
     """

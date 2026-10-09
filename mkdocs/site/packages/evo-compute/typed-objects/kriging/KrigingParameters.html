@@ -91,45 +91,46 @@
 
         <p>Parameters for the kriging task.</p>
 <p>Defines all inputs needed to run a kriging interpolation task.</p>
-<p>Example:
-    &gt;&gt;&gt; from evo.compute.tasks import run, SearchNeighborhood, Ellipsoid, EllipsoidRanges
-    &gt;&gt;&gt; from evo.compute.tasks.geostatistics.kriging import KrigingParameters
-    &gt;&gt;&gt; from evo.compute.tasks.common import Filter, FilterCondition
-    &gt;&gt;&gt;
-    &gt;&gt;&gt; params = KrigingParameters(
-    ...     source=pointset.attributes["grade"],  # Source attribute
-    ...     target=block_model.attributes["kriged_grade"],  # Target attribute (creates if doesn't exist)
-    ...     variogram=variogram,  # Variogram model
-    ...     search=SearchNeighborhood(
-    ...         ellipsoid=Ellipsoid(ranges=EllipsoidRanges(200, 150, 100)),
-    ...         max_samples=20,
-    ...     ),
-    ...     # method defaults to ordinary kriging
-    ... )
-    &gt;&gt;&gt;
-    &gt;&gt;&gt; # With a target filter to restrict kriging to specific categories on the target:
-    &gt;&gt;&gt; params_filtered = KrigingParameters(
-    ...     source=pointset.attributes["grade"],
-    ...     target=block_model.attributes["kriged_grade"],
-    ...     variogram=variogram,
-    ...     search=SearchNeighborhood(...),
-    ...     target_filter=Filter(
-    ...         where=FilterCondition(
-    ...             attribute=block_model.attributes["domain"],
-    ...             operator="in",
-    ...             values=["LMS1", "LMS2"],
-    ...         ),
-    ...     ),
-    ... )
-    &gt;&gt;&gt;
-    &gt;&gt;&gt; # With diagnostics written alongside the estimate:
-    &gt;&gt;&gt; params_with_diagnostics = KrigingParameters(
-    ...     source=pointset.attributes["grade"],
-    ...     target=block_model.attributes["kriged_grade"],
-    ...     variogram=variogram,
-    ...     search=SearchNeighborhood(...),
-    ...     diagnostics=KrigingDiagnostics(kriging_variance=True, num_samples=True),
-    ... )</p>
+<p>Example::</p>
+<pre><code>&gt;&gt;&gt; from evo.compute.tasks import run, SearchNeighborhood, Ellipsoid, EllipsoidRanges
+&gt;&gt;&gt; from evo.compute.tasks.geostatistics.kriging import KrigingParameters
+&gt;&gt;&gt; from evo.compute.tasks.common import Filter, FilterCondition
+&gt;&gt;&gt;
+&gt;&gt;&gt; params = KrigingParameters(
+...     source=pointset.attributes["grade"],  # Source attribute
+...     target=block_model.attributes["kriged_grade"],  # Target attribute (creates if doesn't exist)
+...     variogram=variogram,  # Variogram model
+...     search=SearchNeighborhood(
+...         ellipsoid=Ellipsoid(ranges=EllipsoidRanges(200, 150, 100)),
+...         max_samples=20,
+...     ),
+...     # method defaults to ordinary kriging
+... )
+&gt;&gt;&gt;
+&gt;&gt;&gt; # With a target filter to restrict kriging to specific categories on the target:
+&gt;&gt;&gt; params_filtered = KrigingParameters(
+...     source=pointset.attributes["grade"],
+...     target=block_model.attributes["kriged_grade"],
+...     variogram=variogram,
+...     search=SearchNeighborhood(...),
+...     target_filter=Filter(
+...         where=FilterCondition(
+...             attribute=block_model.attributes["domain"],
+...             operator="in",
+...             values=["LMS1", "LMS2"],
+...         ),
+...     ),
+... )
+&gt;&gt;&gt;
+&gt;&gt;&gt; # With diagnostics written alongside the estimate:
+&gt;&gt;&gt; params_with_diagnostics = KrigingParameters(
+...     source=pointset.attributes["grade"],
+...     target=block_model.attributes["kriged_grade"],
+...     variogram=variogram,
+...     search=SearchNeighborhood(...),
+...     diagnostics=KrigingDiagnostics(kriging_variance=True, num_samples=True),
+... )
+</code></pre>
 
 
 

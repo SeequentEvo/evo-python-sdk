@@ -64,7 +64,8 @@ class Aggregation(str, Enum):
 
     Use these values for the `aggregation` parameter in `ReportColumnSpec`.
 
-    Example:
+    Example::
+
         >>> col = ReportColumnSpec(
         ...     column_name="Au",
         ...     aggregation=Aggregation.MASS_AVERAGE,
@@ -96,7 +97,8 @@ class ReportColumnSpec:
         - `Units.TONNES` - t (metal content)
         - `Units.TROY_OUNCES` - oz_tr (metal content)
 
-    Example:
+    Example::
+
         >>> from evo.blockmodels import Units
         >>> from evo.blockmodels.typed import Aggregation, ReportColumnSpec
         >>>
@@ -151,7 +153,8 @@ class MassUnits:
 
     Use these constants for the `mass_unit_id` parameter in `ReportSpecificationData`.
 
-    Example:
+    Example::
+
         >>> report_data = ReportSpecificationData(
         ...     name="My Report",
         ...     columns=[...],
@@ -203,7 +206,8 @@ class ReportSpecificationData:
     :param autorun: Whether to automatically run the report when block model is updated.
     :param run_now: Whether to run the report immediately after creation.
 
-    Example with density column:
+    Example with density column::
+
         >>> data = ReportSpecificationData(
         ...     name="Gold Resource Report",
         ...     columns=[
@@ -221,7 +225,8 @@ class ReportSpecificationData:
         ...     density_column_name="density",  # Unit comes from column
         ... )
 
-    Example with fixed density:
+    Example with fixed density::
+
         >>> data = ReportSpecificationData(
         ...     name="Gold Resource Report",
         ...     columns=[...],
