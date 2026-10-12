@@ -309,7 +309,11 @@ class ReportResult:
         By default only the numeric ``value`` is placed in the DataFrame (with
         ``None`` where a value could not be aggregated), keeping the output the
         same shape as previous SDK versions. Set ``include_status=True`` to add a
-        companion ``"{column} status"`` column exposing each cell's status.
+        companion ``"{column}:status"`` column exposing each cell's status. The
+        ``:`` separator is used because it can never appear in a column's label:
+        Block Model Service column/group titles cannot contain ``:``, and
+        qualified (grouped) titles are joined with ``▸`` instead, so the
+        companion column name can never collide with a real column.
 
         :param include_status: When True, add a status column alongside each value
             column.
@@ -334,7 +338,7 @@ class ReportResult:
                     value, status = _unpack_cell(cell)
                     row[label] = value
                     if include_status:
-                        row[f"{label} status"] = status
+                        row[f"{label}:status"] = status
                 rows.append(row)
 
         return pd.DataFrame(rows)

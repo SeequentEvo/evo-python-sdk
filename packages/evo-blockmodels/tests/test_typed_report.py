@@ -148,15 +148,15 @@ class TestReportResult(TestWithConnector):
         self.assertTrue(pd.isna(df.iloc[1]["Au Grade"]))
         self.assertTrue(pd.isna(df.iloc[2]["Au Grade"]))
         # Status is not included unless requested.
-        self.assertNotIn("Au Grade status", df.columns)
+        self.assertNotIn("Au Grade:status", df.columns)
 
     def test_to_dataframe_include_status(self) -> None:
         """include_status=True adds a companion status column per value column."""
         df = self._new_schema_result().to_dataframe(include_status=True)
-        self.assertIn("Au Grade status", df.columns)
-        self.assertEqual(df.iloc[0]["Au Grade status"], "OK")
-        self.assertEqual(df.iloc[1]["Au Grade status"], "NO_DATA")
-        self.assertEqual(df.iloc[2]["Au Grade status"], "INVALID")
+        self.assertIn("Au Grade:status", df.columns)
+        self.assertEqual(df.iloc[0]["Au Grade:status"], "OK")
+        self.assertEqual(df.iloc[1]["Au Grade:status"], "NO_DATA")
+        self.assertEqual(df.iloc[2]["Au Grade:status"], "INVALID")
 
     def test_repr(self) -> None:
         """Test string representation of report result."""
