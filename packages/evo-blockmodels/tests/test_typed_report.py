@@ -88,7 +88,7 @@ class TestReportResult(TestWithConnector):
     """Tests for ReportResult class."""
 
     def test_to_dataframe(self) -> None:
-        """Test converting a legacy (bare-number) report result to DataFrame."""
+        """Test converting a report result to DataFrame."""
         result = ReportResult(
             result_uuid=RESULT_UUID,
             report_specification_uuid=RS_UUID,
@@ -102,8 +102,8 @@ class TestReportResult(TestWithConnector):
                 {
                     "cutoff_value": 0.5,
                     "rows": [
-                        {"categories": ["LMS1"], "values": [2.5]},
-                        {"categories": ["LMS2"], "values": [3.2]},
+                        {"categories": ["LMS1"], "values": [{"value": 2.5, "status": "OK"}]},
+                        {"categories": ["LMS2"], "values": [{"value": 3.2, "status": "OK"}]},
                     ],
                 },
             ],
@@ -116,31 +116,6 @@ class TestReportResult(TestWithConnector):
         self.assertIn("Au Grade", df.columns)
         self.assertEqual(df.iloc[0]["Domain"], "LMS1")
         self.assertEqual(df.iloc[0]["Au Grade"], 2.5)
-
-    def test_to_dataframe_legacy_include_status(self) -> None:
-        """Legacy bare-number cells are treated as status "OK" when status is requested.
-
-        This matches the Block Model Service's own upgrade behaviour, and the
-        upgrade applied by `ReportCell` when parsing legacy API responses: values
-        that never carried a status are not distinguishable from `OK` values, so
-        they are reported as `OK` rather than as an undefined/missing status.
-        """
-        result = ReportResult(
-            result_uuid=RESULT_UUID,
-            report_specification_uuid=RS_UUID,
-            block_model_uuid=BM_UUID,
-            version_id=1,
-            version_uuid=VERSION_UUID,
-            created_at=DATE,
-            categories=[{"label": "Domain", "col_id": str(CAT_COL_UUID)}],
-            columns=[{"label": "Au Grade", "unit_id": "g/t"}],
-            result_sets=[
-                {"cutoff_value": 0.5, "rows": [{"categories": ["LMS1"], "values": [2.5]}]},
-            ],
-        )
-
-        df = result.to_dataframe(include_status=True)
-        self.assertEqual(df.iloc[0]["Au Grade status"], ReportCellStatus.OK.value)
 
     def _new_schema_result(self) -> ReportResult:
         return ReportResult(
@@ -326,18 +301,6 @@ class TestReportCellSchema(TestWithConnector):
         self.assertIsNone(invalid.value)
         self.assertEqual(invalid.status, ReportCellStatus.INVALID)
 
-    def test_report_cell_legacy_number(self) -> None:
-        """A bare number (legacy schema) is upgraded to a ReportCell with OK status."""
-        cell = models.ReportCell.model_validate(2.5)
-        self.assertEqual(cell.value, 2.5)
-        self.assertEqual(cell.status, ReportCellStatus.OK)
-
-    def test_report_cell_legacy_null(self) -> None:
-        """A bare null (legacy comparison percent) is upgraded to a ReportCell."""
-        cell = models.ReportCell.model_validate(None)
-        self.assertIsNone(cell.value)
-        self.assertEqual(cell.status, ReportCellStatus.OK)
-
     def test_report_row_new_schema(self) -> None:
         """ReportRow accepts a list of ReportCell objects."""
         row = models.ReportRow.model_validate(
@@ -350,12 +313,6 @@ class TestReportCellSchema(TestWithConnector):
         self.assertEqual(row.values[0].status, ReportCellStatus.OK)
         self.assertIsNone(row.values[1].value)
         self.assertEqual(row.values[1].status, ReportCellStatus.NO_DATA)
-
-    def test_report_row_legacy_schema(self) -> None:
-        """ReportRow accepts a legacy list of bare numbers and upgrades each to a ReportCell."""
-        row = models.ReportRow.model_validate({"categories": ["LMS1"], "values": [2.0, 5.2]})
-        self.assertEqual([c.value for c in row.values], [2.0, 5.2])
-        self.assertTrue(all(c.status == ReportCellStatus.OK for c in row.values))
 
     def test_comparison_value_new_schema(self) -> None:
         """ReportComparisonValue accepts ReportCell fields, including a null percent."""
@@ -370,29 +327,6 @@ class TestReportCellSchema(TestWithConnector):
         self.assertEqual(value.from_value.value, 0.0)
         self.assertIsNone(value.percent.value)
         self.assertEqual(value.percent.status, ReportCellStatus.PERCENT_CHANGE_FROM_ZERO)
-
-    def test_comparison_value_legacy_schema(self) -> None:
-        """ReportComparisonValue accepts the legacy bare-number schema.
-
-        In the legacy schema, `percent` was only ever `null` when `from_value` was
-        (close to) zero, so a legacy null percent is upgraded to
-        `PERCENT_CHANGE_FROM_ZERO`, not `OK`.
-        """
-        value = models.ReportComparisonValue.model_validate(
-            {"from_value": 0.0, "to_value": 3.0, "difference": 3.0, "percent": None}
-        )
-        self.assertEqual(value.from_value.value, 0.0)
-        self.assertEqual(value.from_value.status, ReportCellStatus.OK)
-        self.assertIsNone(value.percent.value)
-        self.assertEqual(value.percent.status, ReportCellStatus.PERCENT_CHANGE_FROM_ZERO)
-
-    def test_comparison_value_legacy_schema_non_zero_percent(self) -> None:
-        """A legacy comparison with a real (non-null) percent is upgraded to `OK`."""
-        value = models.ReportComparisonValue.model_validate(
-            {"from_value": 2.0, "to_value": 3.0, "difference": 1.0, "percent": 50.0}
-        )
-        self.assertEqual(value.percent.value, 50.0)
-        self.assertEqual(value.percent.status, ReportCellStatus.OK)
 
     def test_report_cell_isinstance_reused(self) -> None:
         """Validating an existing ReportCell instance returns an equivalent cell."""
