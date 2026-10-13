@@ -268,6 +268,18 @@ class EvoAPIException(EvoClientException):
         return error_message
 
 
+class TransientAPIError(EvoAPIException):
+    """Raised when an Evo API request fails with a temporary error (see ``TRANSIENT_HTTP_STATUSES``).
+
+    Retrying is only safe for idempotent requests, such as checking a job's status. The original error is
+    available as ``__cause__``.
+    """
+
+    @classmethod
+    def from_error(cls, error: EvoAPIException) -> TransientAPIError:
+        return cls(status=error.status, reason=error.reason, content=error.content, headers=error.headers)
+
+
 class UnknownResponseError(EvoAPIException):
     """The service sent an unknown response."""
 

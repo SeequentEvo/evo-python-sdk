@@ -19,6 +19,7 @@ from unittest import mock
 from uuid import UUID
 
 from evo.common import RequestMethod
+from evo.common import exceptions as common_exceptions
 from evo.common.exceptions import EvoAPIException, NotFoundException, UnknownResponseError
 from evo.common.test_tools import ORG as TEST_ORG
 from evo.common.test_tools import MockResponse, TestWithConnector
@@ -28,6 +29,7 @@ from pydantic import BaseModel
 
 from data import load_test_data
 from evo.compute import JobClient, JobProgress, JobStatusEnum
+from evo.compute import exceptions as compute_exceptions
 from evo.compute.exceptions import JobError, JobPendingError, TransientAPIError
 
 TEST_TOPIC = "test"
@@ -47,6 +49,10 @@ class DataclassResult:
 
 
 class TestJobClient(TestWithConnector):
+    def test_transient_exception_reexports(self) -> None:
+        self.assertIs(common_exceptions.TransientAPIError, compute_exceptions.TransientAPIError)
+        self.assertIs(common_exceptions.TRANSIENT_HTTP_STATUSES, compute_exceptions.TRANSIENT_HTTP_STATUSES)
+
     def setUp(self) -> None:
         super().setUp()
         self.job = JobClient(
