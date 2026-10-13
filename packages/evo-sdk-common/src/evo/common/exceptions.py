@@ -13,12 +13,27 @@ from __future__ import annotations
 
 import copy
 from collections.abc import Callable, Sequence
+from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias
 
 if TYPE_CHECKING:
     from typing import Self
 
     from .data import HTTPHeaderDict
+
+
+TRANSIENT_HTTP_STATUSES = frozenset(
+    {
+        HTTPStatus.REQUEST_TIMEOUT,
+        HTTPStatus.TOO_EARLY,
+        HTTPStatus.TOO_MANY_REQUESTS,
+        HTTPStatus.INTERNAL_SERVER_ERROR,
+        HTTPStatus.BAD_GATEWAY,
+        HTTPStatus.SERVICE_UNAVAILABLE,
+        HTTPStatus.GATEWAY_TIMEOUT,
+    }
+)
+"""HTTP statuses that indicate a temporary failure, after which an idempotent request may succeed if retried."""
 
 
 class EvoClientException(Exception):
