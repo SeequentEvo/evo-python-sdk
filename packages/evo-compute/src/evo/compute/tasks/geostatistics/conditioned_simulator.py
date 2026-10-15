@@ -51,6 +51,7 @@ from pydantic import BaseModel, Field, SerializerFunctionWrapHandler, field_vali
 
 from ..common import (
     AttributeExpression,
+    BlockDiscretization,
     CreateAttribute,
     Filter,
     GeoscienceObjectReference,
@@ -130,14 +131,6 @@ class DistributionParams(BaseModel):
         if self.tail_extrapolation is None:
             result["tail_extrapolation"] = None
         return result
-
-
-class BlockDiscretization(BaseModel):
-    """Sub-block discretization for support correction."""
-
-    nx: int = Field(1, ge=1, le=9)
-    ny: int = Field(1, ge=1, le=9)
-    nz: int = Field(1, ge=1, le=9)
 
 
 class ConSimMaterialCategory(BaseModel):
