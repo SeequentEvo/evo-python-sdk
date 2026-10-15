@@ -2,7 +2,7 @@
 
 from pydantic import BaseModel, Field
 
-__all__ = ["BlockDiscretisation", "BlockDiscretization"]
+__all__ = ["BlockDiscretization"]
 
 
 class BlockDiscretization(BaseModel):
@@ -15,7 +15,3 @@ class BlockDiscretization(BaseModel):
     nx: int = Field(1, ge=1, le=9)
     ny: int = Field(1, ge=1, le=9)
     nz: int = Field(1, ge=1, le=9)
-
-
-# alias for British spelling used in legacy items
-BlockDiscretisation = BlockDiscretization
