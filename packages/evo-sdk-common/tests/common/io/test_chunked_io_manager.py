@@ -22,7 +22,7 @@ from parameterized import parameterized
 
 from evo.common.exceptions import RetryError
 from evo.common.io import ChunkedIOManager, ChunkedIOTracker, ChunkMetadata
-from evo.common.io.exceptions import ChunkedIOError
+from evo.common.io.exceptions import ChunkedIOError, TransientChunkedIOError
 from evo.common.io.interfaces import IDestination, ISource
 from evo.common.utils import BackoffLinear, Retry
 
@@ -160,6 +160,26 @@ class TestChunkedIOManager(unittest.IsolatedAsyncioTestCase):
         self.manager = ChunkedIOManager(
             retry=Retry(logger, backoff_method=BackoffLinear(0)), chunk_size=self.CHUNK_SIZE, max_workers=1
         )
+
+    @mock.patch("evo.common.utils.retry.asyncio.sleep")
+    async def test_default_manager_retries_transient_error(self, sleep: mock.AsyncMock) -> None:
+        source, destination = _TestIO(self.DATA), _TestIO()
+        manager = ChunkedIOManager(chunk_size=self.FILE_SIZE, max_workers=1)
+        original = source.read_chunk
+        source.read_chunk = mock.AsyncMock(side_effect=[TransientChunkedIOError("Busy", status=503), self.DATA])
+        await manager.run(source, destination)
+        self.assertEqual(2, source.read_chunk.await_count)
+        self.assertEqual(self.DATA, destination.get_raw_content())
+        self.assertTrue(manager.is_complete())
+        sleep.assert_awaited_once()
+        source.read_chunk = original
+
+    async def test_plain_error_is_not_retried(self) -> None:
+        source, destination = _TestIO(self.DATA), _TestIO()
+        error = ChunkedIOError("Permanent")
+        with mock.patch.object(source, "read_chunk", side_effect=error), self.assertRaises(ChunkedIOError) as raised:
+            await self.manager.run(source, destination)
+        self.assertIs(error, raised.exception)
 
     async def test_run_til_complete(self) -> None:
         # Create and verify source.

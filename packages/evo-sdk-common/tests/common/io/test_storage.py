@@ -14,18 +14,23 @@ import base64
 import logging
 import random
 import unittest
+from collections import Counter
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from datetime import datetime
+from io import BytesIO
 from unittest import mock
-from urllib.parse import urlencode
+from urllib.parse import parse_qs, urlencode, urlparse
 
 from parameterized import parameterized_class
 
 from evo.common import RequestMethod
 from evo.common.connector import APIConnector
+from evo.common.exceptions import EvoAPIException, RetryError
+from evo.common.io import BytesSource, ChunkedIOManager
+from evo.common.io.exceptions import TransientChunkedIOError
 from evo.common.io.storage import BlockList, StorageBlock, StorageDestination
-from evo.common.test_tools import TestWithUploadHandler, utc_datetime
+from evo.common.test_tools import MockResponse, TestWithUploadHandler, utc_datetime
 from evo.common.utils import BackoffLinear, Retry
 
 from .common import TEST_DATA, TestIDestination
@@ -107,6 +112,63 @@ class TestBlockList(unittest.IsolatedAsyncioTestCase):
 
 class TestStorageDestination(TestIDestination, TestWithUploadHandler):
     destination: StorageDestination
+
+    @mock.patch("evo.common.utils.retry.asyncio.sleep")
+    async def test_upload_retries_identical_block_list(self, sleep: mock.AsyncMock) -> None:
+        filename = self.CACHE_DIR / "retry_commit.csv"
+        filename.write_bytes(TEST_DATA)
+        original = self.handler.request
+        commits = []
+
+        async def request(**kwargs):
+            if "comp=blocklist" in kwargs["url"]:
+                commits.append(kwargs["body"])
+                if len(commits) == 1:
+                    return MockResponse(503, content="<Error><Code>ServerBusy</Code></Error>")
+            return await original(**kwargs)
+
+        self.transport.request.side_effect = request
+        await StorageDestination.upload_file(filename, self.url_generator.get_new_url, self.transport)
+        self.assertEqual(2, len(commits))
+        self.assertEqual(commits[0], commits[1])
+        self.assertEqual(TEST_DATA, await self.handler.get_committed())
+        sleep.assert_awaited_once()
+
+    @mock.patch("evo.common.utils.retry.asyncio.sleep")
+    async def test_commit_exhaustion_preserves_exception_chain(self, sleep: mock.AsyncMock) -> None:
+        async with self.destination:
+            with self.transport.set_http_response(503), self.assertRaises(RetryError) as raised:
+                await self.destination.commit(retry=Retry(logger, max_attempts=2))
+        self.assertEqual(2, len(raised.exception.exceptions))
+        last = raised.exception.exceptions[-1]
+        self.assertIsInstance(last, TransientChunkedIOError)
+        self.assertIsInstance(last.__cause__, EvoAPIException)
+        self.assertEqual(503, last.__cause__.status)
+
+    @mock.patch("evo.common.utils.retry.asyncio.sleep")
+    async def test_put_block_503_is_retried(self, sleep: mock.AsyncMock) -> None:
+        original = self.handler.request
+        calls = Counter()
+        first_id = StorageBlock(0).id
+
+        async def request(**kwargs):
+            query = parse_qs(urlparse(kwargs["url"]).query)
+            if query.get("comp") == ["block"]:
+                block_id = query["blockid"][0]
+                calls[block_id] += 1
+                if block_id == first_id and calls[block_id] == 1:
+                    return MockResponse(503)
+            return await original(**kwargs)
+
+        self.transport.request.side_effect = request
+        retry = Retry(logger, max_attempts=2, backoff_method=BackoffLinear(0))
+        async with self.destination:
+            await ChunkedIOManager(retry=retry, chunk_size=32, max_workers=3).run(
+                BytesSource(BytesIO(TEST_DATA), len(TEST_DATA)), self.destination
+            )
+            await self.destination.commit(retry=retry)
+        self.assertGreaterEqual(calls[first_id], 2)
+        self.assertEqual(TEST_DATA, await self.handler.get_committed())
 
     def setup_destination(self) -> None:
         TestWithUploadHandler.setUp(self)

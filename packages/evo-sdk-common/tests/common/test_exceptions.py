@@ -15,8 +15,25 @@ import sys
 import traceback
 import unittest
 from collections.abc import Callable, Sequence
+from http import HTTPStatus
 
-from evo.common.exceptions import EvoExceptionGroup
+from evo.common.data import HTTPHeaderDict
+from evo.common.exceptions import TRANSIENT_HTTP_STATUSES, EvoAPIException, EvoExceptionGroup, TransientAPIError
+
+
+class TestTransientAPIError(unittest.TestCase):
+    def test_transient_statuses(self) -> None:
+        self.assertIsInstance(TRANSIENT_HTTP_STATUSES, frozenset)
+        self.assertEqual({408, 425, 429, 500, 502, 503, 504}, TRANSIENT_HTTP_STATUSES)
+        self.assertTrue(all(isinstance(status, HTTPStatus) for status in TRANSIENT_HTTP_STATUSES))
+
+    def test_from_error(self) -> None:
+        original = EvoAPIException(503, "Service Unavailable", {"detail": "Busy"}, HTTPHeaderDict(retry_after="2"))
+        error = TransientAPIError.from_error(original)
+        self.assertEqual(original.status, error.status)
+        self.assertEqual(original.reason, error.reason)
+        self.assertIs(original.content, error.content)
+        self.assertIs(original.headers, error.headers)
 
 
 class MyExc1(Exception): ...
