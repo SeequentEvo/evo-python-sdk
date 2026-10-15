@@ -57,7 +57,6 @@ from pydantic import (
 from ..common import (
     AnySourceAttribute,
     AnyTargetAttribute,
-    BlockDiscretisation,
     BlockDiscretization,
     CreateAttribute,
     Filter,
@@ -73,7 +72,6 @@ from ..common.source_target import AnyTypedAttribute
 __all__ = [
     # Kriging-specific (users import from evo.compute.tasks.kriging)
     "RECOMMENDED_DIAGNOSTIC_NAMES",
-    "BlockDiscretisation",
     "BlockDiscretization",
     "Filter",
     "KrigingDiagnostics",
@@ -386,7 +384,7 @@ class KrigingParameters(BaseModel):
         ... )
     """
 
-    model_config = {"populate_by_name": True}
+    model_config = {"populate_by_name": True, "extra": "forbid"}
 
     source: AnySourceAttribute
     """The source object and attribute containing known values."""
@@ -409,8 +407,8 @@ class KrigingParameters(BaseModel):
     target_filter: Filter | None = Field(None, exclude=True)
     """Optional filter to restrict kriging to a subset of the target object."""
 
-    block_discretisation: BlockDiscretization | None = None
-    """Optional sub-block discretisation for block kriging.
+    block_discretization: BlockDiscretization | None = None
+    """Optional sub-block discretization for block kriging.
 
     When provided, each target block is subdivided into nx × ny × nz sub-cells
     and the kriged value is averaged across these sub-cells. When omitted,
