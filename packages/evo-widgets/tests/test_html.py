@@ -103,6 +103,22 @@ class TestBuildTitle(unittest.TestCase):
             "</span></div>",
         )
 
+    def test_omits_unsafe_links(self):
+        self.assertEqual(
+            build_title(
+                "Result",
+                [
+                    ("Report", "javascript:alert(1)"),
+                    ("Dashboard", "data:text/html,hello"),
+                    ("Malformed", "https://[invalid"),
+                    ("Portal", "https://example.com/result"),
+                ],
+            ),
+            '<div class="title"><span>Result</span><span class="title-links">'
+            '<a href="https://example.com/result" target="_blank">Portal</a></span></div>',
+        )
+        self.assertEqual(build_title("Result", [("Report", "javascript:alert(1)")]), '<div class="title">Result</div>')
+
 
 class TestBuildTableRow(unittest.TestCase):
     """Tests for the build_table_row function."""
