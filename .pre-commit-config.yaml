@@ -6,6 +6,11 @@ repos:
         entry: python scripts/check_uv_lock_sources.py
         language: python
         files: (^|/)uv\.lock$
+      - id: no-hardcoded-notebook-client-ids
+        name: Reject hardcoded Evo client IDs in notebooks
+        entry: 'native-[A-Za-z0-9]{12,}'
+        language: pygrep
+        files: \.ipynb$
   - repo: https://github.com/charliermarsh/ruff-pre-commit
     rev: v0.15.16 # keep in sync with pyproject.toml
     hooks:

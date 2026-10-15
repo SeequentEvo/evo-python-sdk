@@ -57,6 +57,8 @@ from pydantic import (
 from ..common import (
     AnySourceAttribute,
     AnyTargetAttribute,
+    BlockDiscretisation,
+    BlockDiscretization,
     CreateAttribute,
     Filter,
     GeoscienceObjectReference,
@@ -72,6 +74,7 @@ __all__ = [
     # Kriging-specific (users import from evo.compute.tasks.kriging)
     "RECOMMENDED_DIAGNOSTIC_NAMES",
     "BlockDiscretisation",
+    "BlockDiscretization",
     "Filter",
     "KrigingDiagnostics",
     "KrigingDiagnosticsResult",
@@ -147,38 +150,6 @@ class KrigingMethod:
             SimpleKriging instance configured with the given mean.
         """
         return SimpleKriging(mean=mean)
-
-
-# =============================================================================
-# Block Discretisation
-# =============================================================================
-
-
-class BlockDiscretisation(BaseModel):
-    """Sub-block discretisation for block kriging.
-
-    When provided, each target block is subdivided into ``nx * ny * nz``
-    sub-cells and the kriged value is averaged across these sub-cells.
-    When omitted (``None``), point kriging is performed.
-
-    Only applicable when the target is a 3D grid or block model.
-
-    Each dimension must be an integer between 1 and 9 (inclusive).
-    The default value of 1 in every direction is equivalent to point kriging.
-
-    Example::
-
-        >>> discretisation = BlockDiscretisation(nx=3, ny=3, nz=2)
-    """
-
-    nx: int = Field(1, ge=1, le=9)
-    """Number of subdivisions in the x direction (1-9)."""
-
-    ny: int = Field(1, ge=1, le=9)
-    """Number of subdivisions in the y direction (1-9)."""
-
-    nz: int = Field(1, ge=1, le=9)
-    """Number of subdivisions in the z direction (1-9)."""
 
 
 # =============================================================================
@@ -438,7 +409,7 @@ class KrigingParameters(BaseModel):
     target_filter: Filter | None = Field(None, exclude=True)
     """Optional filter to restrict kriging to a subset of the target object."""
 
-    block_discretisation: BlockDiscretisation | None = None
+    block_discretisation: BlockDiscretization | None = None
     """Optional sub-block discretisation for block kriging.
 
     When provided, each target block is subdivided into nx × ny × nz sub-cells
