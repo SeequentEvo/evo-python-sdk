@@ -54,9 +54,7 @@ function render({ model, el }) {
     renderLoading();
     renderMessage();
 
-    const channelId = model.get("browser_token_channel");
-    const tokenChannel = channelId && typeof BroadcastChannel !== "undefined"
-        ? new BroadcastChannel(`evo-browser-token-${channelId}`) : null;
+    let tokenChannel = null;
     const sendBrowserToken = (message) => {
         if (tokenChannel) {
             tokenChannel.postMessage(message);
@@ -65,7 +63,15 @@ function render({ model, el }) {
         }
     };
 
-    if (model.get("browser_token_required")) {
+    const requestBrowserToken = () => {
+        tokenChannel?.close();
+        tokenChannel = null;
+        const channelId = model.get("browser_token_channel");
+        if (!model.get("browser_token_required") || !channelId) {
+            return;
+        }
+        tokenChannel = typeof BroadcastChannel !== "undefined"
+            ? new BroadcastChannel(`evo-browser-token-${channelId}`) : null;
         try {
             const stored = localStorage.getItem("accessToken");
             if (!stored) {
@@ -81,7 +87,10 @@ function render({ model, el }) {
                 ? "The browser access token document is invalid."
                 : error instanceof Error ? error.message : "Cannot read the browser access token." });
         }
-    }
+    };
+
+    model.on("change:browser_token_channel", requestBrowserToken);
+    requestBrowserToken();
 
     return () => {
         button.removeEventListener("click", onClick);
@@ -89,6 +98,7 @@ function render({ model, el }) {
         model.off("change:disabled", renderDisabled);
         model.off("change:loading", renderLoading);
         model.off("change:message", renderMessage);
+        model.off("change:browser_token_channel", requestBrowserToken);
         tokenChannel?.close();
     };
 }

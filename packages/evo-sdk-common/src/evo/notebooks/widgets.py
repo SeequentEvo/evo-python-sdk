@@ -364,7 +364,8 @@ class ServiceManagerWidget(anywidget.AnyWidget, IContext, metaclass=_ServiceMana
         ```
 
         :param access_token: The access token to authorise requests with. When omitted in Pyodide, the widget frontend
-            reads it from the hosting page's local storage during login.
+            reads it from the hosting page's local storage during login. If this fails, sign in on the hosting page
+            and call `login()` again on the same widget to retry.
         :param discovery_url: The URL of the Evo Discovery service.
         :param cache_location: The location of the cache file.
         :param transport: The transport to use for API requests. Defaults to the browser `fetch` transport in a Pyodide
@@ -401,23 +402,28 @@ class ServiceManagerWidget(anywidget.AnyWidget, IContext, metaclass=_ServiceMana
         event = self._browser_token_event
         if event is None:
             return
+        if not self.browser_token_channel and sys.platform == "emscripten":
+            self.browser_token_channel = self._open_browser_token_channel()
         try:
             await asyncio.wait_for(event.wait(), timeout_seconds)
+            if self._browser_token_error:
+                raise OAuthError(self._browser_token_error)
+            if not self._browser_token:
+                raise OAuthError("No access token received from the hosting page. Sign in first.")
+
+            self._authorizer = AccessTokenAuthorizer(self._browser_token)
+            self._service_manager._authorizer = self._authorizer
+            self._browser_token_event = None
         except TimeoutError as exc:
             raise OAuthError(
                 "Timed out waiting for the browser access token. Display the widget and try again."
             ) from exc
         finally:
             self._close_browser_token_channel()
-        if self._browser_token_error:
-            raise OAuthError(self._browser_token_error)
-        if not self._browser_token:
-            raise OAuthError("No access token received from the hosting page. Sign in first.")
-
-        self._authorizer = AccessTokenAuthorizer(self._browser_token)
-        self._service_manager._authorizer = self._authorizer
-        self._browser_token = None
-        self._browser_token_event = None
+            self.browser_token_channel = ""
+            event.clear()
+            self._browser_token = None
+            self._browser_token_error = None
 
     async def _login_with_auth_code(self, timeout_seconds: int) -> None:
         """Login using an authorization code authorizer.

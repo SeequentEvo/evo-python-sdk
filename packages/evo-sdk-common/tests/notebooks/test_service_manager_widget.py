@@ -172,6 +172,67 @@ class TestWithAccessToken(_ServiceManagerWidgetTestCase):
         with self.assertRaisesRegex(OAuthError, "Timed out waiting"):
             await widget.login(timeout_seconds=0)
 
+    async def test_browser_token_login_can_retry_after_failure(self) -> None:
+        for failure in ("timeout", "error", "empty", "cancel"):
+            with self.subTest(failure=failure):
+                browser = mock.Mock()
+                channels = [mock.Mock(), mock.Mock()]
+                browser.BroadcastChannel.new.side_effect = channels
+                ffi = mock.Mock()
+                ffi.create_proxy.side_effect = lambda callback: mock.Mock(side_effect=callback)
+
+                with (
+                    mock.patch.dict(sys.modules, {"js": browser, "pyodide": mock.Mock(), "pyodide.ffi": ffi}),
+                    mock.patch("evo.notebooks.widgets.sys.platform", "emscripten"),
+                ):
+                    widget = ServiceManagerWidget.with_access_token(
+                        cache_location=self.cache_location, transport=TestTransport(base_url=DISCOVERY_URL)
+                    )
+                    original_channel_id = widget.browser_token_channel
+                    first_listener = channels[0].addEventListener.call_args.args[1]
+                    if failure in ("error", "empty"):
+                        content = {"type": "browser_token"}
+                        if failure == "error":
+                            content["error"] = "Sign in first."
+                        first_listener(mock.Mock(data=mock.Mock(to_py=lambda: content)))
+                    if failure == "cancel":
+                        task = asyncio.create_task(widget.login())
+                        await asyncio.sleep(0)
+                        task.cancel()
+                        with self.assertRaises(asyncio.CancelledError):
+                            await task
+                    else:
+                        with self.assertRaises(OAuthError):
+                            await widget.login(timeout_seconds=0 if failure == "timeout" else 1)
+
+                    channels[0].close.assert_called_once()
+                    first_listener.destroy.assert_called_once()
+                    with mock.patch.object(widget, "refresh_services", new_callable=mock.AsyncMock):
+                        retry = asyncio.create_task(widget.login(timeout_seconds=1))
+                        try:
+                            await asyncio.sleep(0)
+                            assert widget.browser_token_channel != original_channel_id
+                            assert browser.BroadcastChannel.new.call_count == 2
+                            listener = channels[1].addEventListener.call_args.args[1]
+                            listener(
+                                mock.Mock(
+                                    data=mock.Mock(to_py=lambda: {"type": "browser_token", "token": "retry-token"})
+                                )
+                            )
+                            assert await retry is widget
+                        finally:
+                            if not retry.done():
+                                retry.cancel()
+                                with self.assertRaises(asyncio.CancelledError):
+                                    await retry
+
+                    assert widget._browser_token_event is None
+                    assert widget._browser_token_error is None
+                    channels[1].close.assert_called_once()
+                    listener.destroy.assert_called_once()
+                    headers = await widget._authorizer.get_default_headers()
+                    assert headers["Authorization"] == "Bearer retry-token"
+
     def test_explicit_token_never_requests_browser_storage(self) -> None:
         widget = self.build_widget()
         assert not widget.browser_token_required
