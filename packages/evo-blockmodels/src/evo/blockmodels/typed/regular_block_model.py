@@ -13,12 +13,12 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from uuid import UUID
 
 import pandas as pd
 
 from evo.common import IContext, IFeedback, StaticContext
+from evo.common.typed import FloatArrayLike3, IntArrayLike3
 from evo.common.utils import NoFeedback
 
 from ..client import BlockModelAPIClient
@@ -34,14 +34,14 @@ __all__ = [
 ]
 
 
-@dataclass(frozen=True, kw_only=True)
 class RegularBlockModelData:
-    """Data class for creating a new regular block model.
+    """Data for creating a new regular block model.
+
 
     :param name: The name of the block model.
-    :param origin: The origin point of the block model grid.
-    :param n_blocks: The number of blocks in each dimension (nx, ny, nz).
-    :param block_size: The size of each block in each dimension (dx, dy, dz).
+    :param origin: The origin point of the block model grid, as Point3 or three values.
+    :param n_blocks: The number of blocks in each dimension (nx, ny, nz), as Size3i or three values.
+    :param block_size: The size of each block in each dimension (dx, dy, dz), as Size3d or three values.
     :param rotations: List of rotations as (axis, angle) tuples. Angle is in degrees,
         positive angles indicate clockwise rotation when looking down the axis.
     :param cell_data: Optional DataFrame containing block attribute data.
@@ -56,12 +56,39 @@ class RegularBlockModelData:
     origin: Point3
     n_blocks: Size3i
     block_size: Size3d
-    rotations: list[tuple[RotationAxis, float]] = field(default_factory=list)
-    cell_data: pd.DataFrame | None = None
-    description: str | None = None
-    coordinate_reference_system: str | None = None
-    size_unit_id: str | None = None
-    units: dict[str, str] = field(default_factory=dict)
+    rotations: list[tuple[RotationAxis, float]]
+    cell_data: pd.DataFrame | None
+    description: str | None
+    coordinate_reference_system: str | None
+    size_unit_id: str | None
+    units: dict[str, str]
+
+    def __init__(
+        self,
+        *,
+        name: str,
+        origin: Point3 | FloatArrayLike3,
+        n_blocks: Size3i | IntArrayLike3,
+        block_size: Size3d | FloatArrayLike3,
+        rotations: list[tuple[RotationAxis, float]] | None = None,
+        cell_data: pd.DataFrame | None = None,
+        description: str | None = None,
+        coordinate_reference_system: str | None = None,
+        size_unit_id: str | None = None,
+        units: dict[str, str] | None = None,
+    ) -> None:
+        if rotations is None:
+            rotations = []
+        self.name = name
+        self.origin = Point3.from_array_like(origin)
+        self.n_blocks = Size3i.from_array_like(n_blocks)
+        self.block_size = Size3d.from_array_like(block_size)
+        self.rotations = rotations
+        self.cell_data = cell_data
+        self.description = description
+        self.coordinate_reference_system = coordinate_reference_system
+        self.size_unit_id = size_unit_id
+        self.units = units if units is not None else {}
 
 
 class RegularBlockModel(BaseTypedBlockModel):

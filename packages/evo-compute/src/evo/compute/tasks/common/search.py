@@ -45,7 +45,8 @@ class SearchNeighborhood(BaseModel):
     quadrant and drillhole. The other tasks do not support these limits and
     refuse a neighborhood that sets them.
 
-    Example:
+    Example::
+
         >>> search = SearchNeighborhood(
         ...     ellipsoid=Ellipsoid(
         ...         ranges=EllipsoidRanges(major=200.0, semi_major=150.0, minor=100.0),

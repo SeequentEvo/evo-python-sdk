@@ -23,7 +23,8 @@ Two transform directions are available:
 Both transforms require a pre-existing continuous distribution object.
 The ``method`` field selects the transform direction.
 
-Example:
+Example::
+
     >>> from evo.compute.tasks import run, Source, Target, CreateAttribute
     >>> from evo.compute.tasks.geostatistics.normal_score import NormalScoreParameters
     >>>
@@ -76,7 +77,8 @@ class NormalScoreParameters(BaseModel):
     Set ``method="forward"`` to transform from data space to Gaussian,
     or ``method="backward"`` to transform from Gaussian back to data space.
 
-    Example:
+    Example::
+
         >>> params = NormalScoreParameters(
         ...     method="forward",
         ...     source=Source(object=pointset_url, attribute="locations.attributes[0]"),

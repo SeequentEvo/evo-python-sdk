@@ -97,25 +97,26 @@ leapfrog-convention rotation.</p>
     When using a variogram with kriging tasks, the following fields should be set:
     - <code>modelling_space</code>: Set to "data" for original units or "normalscore" for gaussian space
     - <code>data_variance</code>: Should match the sill value for non-normalized data</p>
-<p>Example using typed structures (recommended):
-    &gt;&gt;&gt; data = VariogramData(
-    ...     name="My Variogram",
-    ...     sill=1.0,
-    ...     nugget=0.1,
-    ...     is_rotation_fixed=True,
-    ...     modelling_space="data",  # Required for kriging
-    ...     data_variance=1.0,       # Required for kriging
-    ...     structures=[
-    ...         SphericalStructure(
-    ...             contribution=0.9,
-    ...             anisotropy=Ellipsoid(
-    ...                 ranges=EllipsoidRanges(major=200, semi_major=150, minor=100),
-    ...                 rotation=Rotation(dip_azimuth=0, dip=0, pitch=0),
-    ...             ),
-    ...         ),
-    ...     ],
-    ...     attribute="grade",
-    ... )</p>
+<p>Example using typed structures (recommended)::</p>
+<pre><code>&gt;&gt;&gt; data = VariogramData(
+...     name="My Variogram",
+...     sill=1.0,
+...     nugget=0.1,
+...     is_rotation_fixed=True,
+...     modelling_space="data",  # Required for kriging
+...     data_variance=1.0,       # Required for kriging
+...     structures=[
+...         SphericalStructure(
+...             contribution=0.9,
+...             anisotropy=Ellipsoid(
+...                 ranges=EllipsoidRanges(major=200, semi_major=150, minor=100),
+...                 rotation=Rotation(dip_azimuth=0, dip=0, pitch=0),
+...             ),
+...         ),
+...     ],
+...     attribute="grade",
+... )
+</code></pre>
 
 
 

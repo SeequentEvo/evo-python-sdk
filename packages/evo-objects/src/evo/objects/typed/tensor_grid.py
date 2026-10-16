@@ -69,6 +69,7 @@ class Tensor3DGridData(Base3DGridData):
     vertex_data: pd.DataFrame | None = None
 
     def __post_init__(self):
+        super().__post_init__()
         # Validate cell size array lengths
         if self.cell_sizes_x.shape[0] != self.size.nx:
             raise ObjectValidationError(

@@ -79,7 +79,8 @@ class Units(str, Enum):
     These are the most commonly used unit IDs. For a complete list,
     use `get_available_units()` to query the Block Model Service.
 
-    Example usage:
+    Example usage::
+
         from evo.blockmodels.typed import Units
 
         # Create block model with units
@@ -169,7 +170,8 @@ async def get_available_units(context: IContext) -> list[UnitInfo]:
     :param context: The context containing environment and connector.
     :return: List of available units.
 
-    Example:
+    Example::
+
         units = await get_available_units(manager)
         for unit in units:
             print(f"{unit.unit_id}: {unit.description} ({unit.symbol})")

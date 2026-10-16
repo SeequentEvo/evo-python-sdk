@@ -17,10 +17,32 @@ These types provide a lightweight, dependency-free representation of common
 
 from __future__ import annotations
 
-from typing import NamedTuple
+from math import isfinite
+from numbers import Integral, Real
+from typing import NamedTuple, Protocol, TypeAlias, TypeVar, runtime_checkable
+
+_T_co = TypeVar("_T_co", covariant=True)
+
+
+@runtime_checkable
+class _ArrayLike1D(Protocol[_T_co]):
+    """Array-like input convertible to a Python list without importing NumPy."""
+
+    @property
+    def ndim(self) -> int: ...
+
+    def __len__(self) -> int: ...
+
+    def tolist(self) -> list[_T_co]: ...
+
+
+FloatArrayLike3: TypeAlias = tuple[float, float, float] | list[float] | _ArrayLike1D[float]
+IntArrayLike3: TypeAlias = tuple[int, int, int] | list[int] | _ArrayLike1D[int]
 
 __all__ = [
     "BoundingBox",
+    "FloatArrayLike3",
+    "IntArrayLike3",
     "Point3",
     "Size3d",
     "Size3i",
@@ -34,6 +56,11 @@ class Point3(NamedTuple):
     y: float
     z: float
 
+    @classmethod
+    def from_array_like(cls, value: Point3 | FloatArrayLike3) -> Point3:
+        """Validate three finite coordinates, including existing points."""
+        return cls(*_validate_array_like(value, kind=Real, positive=False))
+
 
 class Size3d(NamedTuple):
     """A 3D size defined by dx, dy, and dz dimensions."""
@@ -41,6 +68,11 @@ class Size3d(NamedTuple):
     dx: float
     dy: float
     dz: float
+
+    @classmethod
+    def from_array_like(cls, value: Size3d | FloatArrayLike3) -> Size3d:
+        """Validate three positive finite dimensions, including existing sizes."""
+        return cls(*_validate_array_like(value, kind=Real, positive=True))
 
 
 class Size3i(NamedTuple):
@@ -50,10 +82,50 @@ class Size3i(NamedTuple):
     ny: int
     nz: int
 
+    @classmethod
+    def from_array_like(cls, value: Size3i | IntArrayLike3) -> Size3i:
+        """Validate three positive integer counts, including existing sizes."""
+        return cls(*_validate_array_like(value, kind=Integral, positive=True))
+
     @property
     def total_size(self) -> int:
         """The total size (number of elements) represented by this Size3i."""
         return self.nx * self.ny * self.nz
+
+
+def _is_valid_number(value: object, kind: type[Integral] | type[Real], *, positive: bool) -> bool:
+    if not isinstance(value, kind) or isinstance(value, bool):
+        return False
+    try:
+        if kind is Real and not isfinite(value):
+            return False
+        if positive and value <= 0:
+            return False
+    except (TypeError, OverflowError):
+        return False
+    return True
+
+
+def _validate_array_like(value: object, *, kind: type[Integral] | type[Real], positive: bool) -> tuple:
+    # Accept NumPy-style arrays without requiring NumPy in evo-sdk-common.
+    if isinstance(value, _ArrayLike1D):
+        if value.ndim != 1:
+            raise ValueError("value must be a one-dimensional array of exactly three values")
+        if len(value) != 3:
+            raise ValueError("value must have exactly three values")
+        value = value.tolist()
+    if not isinstance(value, (tuple, list)):
+        raise TypeError("value must be a three-value list, tuple, or one-dimensional array")
+    if len(value) != 3:
+        raise ValueError("value must have exactly three values")
+    cast_to = int if kind is Integral else float
+    result = []
+    for item in value:
+        if not _is_valid_number(item, kind, positive=positive):
+            description = "integers" if kind is Integral else "finite real numbers"
+            raise ValueError(f"value must contain three {'positive ' if positive else ''}{description}")
+        result.append(cast_to(item))
+    return tuple(result)
 
 
 class BoundingBox(NamedTuple):

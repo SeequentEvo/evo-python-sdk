@@ -14,7 +14,8 @@
 This module provides a unified interface for running compute tasks. Tasks are
 dispatched based on their parameter types using a registry system.
 
-Example:
+Example::
+
     >>> from evo.compute.tasks import run, SearchNeighborhood, Target
     >>> from evo.compute.tasks.geostatistics.kriging import KrigingParameters
     >>>
@@ -43,6 +44,8 @@ from . import geostatistics as _geostatistics_module  # noqa: F401
 from .common import (
     AllOfFilter,
     AnyOfFilter,
+    BlockDiscretisation,
+    BlockDiscretization,
     CreateAttribute,
     Ellipsoid,
     EllipsoidRanges,
@@ -70,7 +73,6 @@ from .geostatistics.declustering import DeclusteringResult
 
 # Kriging-specific result types
 from .geostatistics.kriging import (
-    BlockDiscretisation,
     KrigingDiagnostics,
     KrigingResult,
 )
@@ -126,7 +128,8 @@ async def run(
     Returns:
         TaskResult for a single task, or TaskResults for multiple tasks
 
-    Example (single task):
+    Example (single task)::
+
         >>> from evo.compute.tasks import run, SearchNeighborhood, Target
         >>> from evo.compute.tasks.geostatistics.kriging import KrigingParameters
         >>>
@@ -141,7 +144,8 @@ async def run(
         ... )
         >>> result = await run(manager, params, preview=True)
 
-    Example (multiple tasks):
+    Example (multiple tasks)::
+
         >>> results = await run(manager, [
         ...     KrigingParameters(...),
         ...     KrigingParameters(...),
@@ -172,6 +176,7 @@ __all__ = [
     "AllOfFilter",
     "AnyOfFilter",
     "BlockDiscretisation",
+    "BlockDiscretization",
     "BreakTiesResult",
     "CreateAttribute",
     "DeclusteringResult",

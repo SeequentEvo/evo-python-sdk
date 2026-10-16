@@ -92,13 +92,14 @@
         <p>Parameters for the unified location-wise task.</p>
 <p>At least one operation must be specified (summary, quantiles,
 probability_above_cutoff, or mean_above_cutoff).</p>
-<p>Example:
-    &gt;&gt;&gt; params = LocationWiseParameters(
-    ...     source=Source(object=grid_url, attribute="cell_attributes[0]"),
-    ...     target=LocationWiseTarget(object=grid_url),
-    ...     summary=True,
-    ...     quantiles=[0.1, 0.5, 0.9],
-    ... )</p>
+<p>Example::</p>
+<pre><code>&gt;&gt;&gt; params = LocationWiseParameters(
+...     source=Source(object=grid_url, attribute="cell_attributes[0]"),
+...     target=LocationWiseTarget(object=grid_url),
+...     summary=True,
+...     quantiles=[0.1, 0.5, 0.9],
+... )
+</code></pre>
 
 
 

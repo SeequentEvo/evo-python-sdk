@@ -204,10 +204,11 @@
         <p>The diagnostic attributes that were written, keyed by diagnostic name.</p>
 <p>Only the diagnostics requested through
 :attr:<code>KrigingParameters.diagnostics</code> are present.</p>
-<p>Example:
-    &gt;&gt;&gt; result = await run(manager, params, preview=True)
-    &gt;&gt;&gt; result.diagnostics["kriging_variance"].name
-    'KV'</p>
+<p>Example::</p>
+<pre><code>&gt;&gt;&gt; result = await run(manager, params, preview=True)
+&gt;&gt;&gt; result.diagnostics["kriging_variance"].name
+'KV'
+</code></pre>
 
     </div>
 
@@ -257,10 +258,11 @@ raw <code>schema_id</code> string when it cannot be parsed.</p>
             from when the task was run.</p>
 <p>Returns:
     The typed geoscience object (e.g., Regular3DGrid, RegularMasked3DGrid, BlockModel)</p>
-<p>Example:
-    &gt;&gt;&gt; result = await run(manager, params)
-    &gt;&gt;&gt; target = await result.get_target_object()
-    &gt;&gt;&gt; target  # Pretty-prints with Portal/Viewer links</p>
+<p>Example::</p>
+<pre><code>&gt;&gt;&gt; result = await run(manager, params)
+&gt;&gt;&gt; target = await result.get_target_object()
+&gt;&gt;&gt; target  # Pretty-prints with Portal/Viewer links
+</code></pre>
 
 
     </div>
@@ -290,10 +292,11 @@ the target object and returns its data as a pandas DataFrame.</p>
             all columns. Use ["*"] to explicitly request all columns.</p>
 <p>Returns:
     A pandas DataFrame containing the task results.</p>
-<p>Example:
-    &gt;&gt;&gt; result = await run(manager, params)
-    &gt;&gt;&gt; df = await result.to_dataframe()
-    &gt;&gt;&gt; df.head()</p>
+<p>Example::</p>
+<pre><code>&gt;&gt;&gt; result = await run(manager, params)
+&gt;&gt;&gt; df = await result.to_dataframe()
+&gt;&gt;&gt; df.head()
+</code></pre>
 
 
     </div>

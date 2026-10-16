@@ -119,7 +119,8 @@ class Source(BaseModel):
     Used to specify where input data comes from for geostatistical operations.
     Can be initialized directly, or more commonly from a typed object's attribute.
 
-    Example:
+    Example::
+
         >>> # From a typed object attribute (preferred):
         >>> source = pointset.attributes["grade"]
         >>>
@@ -159,7 +160,8 @@ class Target(BaseModel):
 
     Used to specify where output data should be written for geostatistical operations.
 
-    Example:
+    Example::
+
         >>> # Create a new attribute on a target object:
         >>> target = Target.new_attribute(block_model, "kriged_grade")
         >>>
@@ -184,7 +186,8 @@ class Target(BaseModel):
         Returns:
             A Target instance configured to create a new attribute.
 
-        Example:
+        Example::
+
             >>> target = Target.new_attribute(block_model, "kriged_grade")
         """
         return cls(object=object, attribute=CreateAttribute(name=attribute_name))

@@ -21,7 +21,8 @@ Two estimation modes are supported via factory functions:
 - :func:`idw` — inverse-distance weighting (default ``power=2.0``)
 - :func:`knn` — nearest-neighbour (equal weights, typically ``max_samples=1``)
 
-Example — IDW declustering:
+Example — IDW declustering::
+
     >>> from evo.compute.tasks import run, SearchNeighborhood, Ellipsoid, EllipsoidRanges, Target
     >>> from evo.compute.tasks.geostatistics.declustering import idw
     >>>
@@ -36,7 +37,8 @@ Example — IDW declustering:
     ... )
     >>> result = await run(context, params)
 
-Example — KNN declustering:
+Example — KNN declustering::
+
     >>> from evo.compute.tasks.geostatistics.declustering import knn
     >>>
     >>> params = knn(
@@ -134,7 +136,8 @@ class DeclusteringParameters(BaseModel):
     - ``power=2.0`` (default) — inverse-distance weighting (IDW)
     - ``power=None`` — arithmetic-mean KNN (equal neighbour weights)
 
-    Example:
+    Example::
+
         >>> params = DeclusteringParameters(
         ...     source=pointset,
         ...     grid=regular_grid,

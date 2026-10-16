@@ -18,7 +18,8 @@ distribution object produced by the ``continuous-distribution`` task and skips
 the internal normal-score transform; this makes it faster when the distribution
 is already available.
 
-Example:
+Example::
+
     >>> from evo.compute.tasks import run, SearchNeighborhood, Ellipsoid, EllipsoidRanges
     >>> from evo.compute.tasks.geostatistics.conditioned_simulator import BlockDiscretization
     >>> from evo.compute.tasks.geostatistics.conditional_turning_bands import (
@@ -27,7 +28,7 @@ Example:
     >>>
     >>> params = ConditionalTurningBandsParameters(
     ...     source=pointset,
-    ...     source_attribute="locations.attributes[?name=='grade']",
+    ...     source_attribute=pointset.attributes["grade"],
     ...     target=grid,
     ...     distribution=distribution_object,
     ...     variogram_model=variogram,
@@ -52,6 +53,7 @@ from evo.objects.typed import BaseObject, object_from_reference
 from pydantic import BaseModel, Field, field_validator
 
 from ..common import (
+    AttributeExpression,
     Filter,
     GeoscienceObjectReference,
     SearchNeighborhood,
@@ -84,10 +86,11 @@ class ConditionalTurningBandsParameters(BaseModel):
     continuous distribution object.  The task outputs an ensemble attribute on
     the target grid, containing one column per realization.
 
-    Example:
+    Example::
+
         >>> params = ConditionalTurningBandsParameters(
         ...     source=pointset,
-        ...     source_attribute="locations.attributes[?name=='grade']",
+        ...     source_attribute=pointset.attributes["grade"],
         ...     target=grid,
         ...     distribution=distribution_object,
         ...     variogram_model=variogram,
@@ -103,8 +106,9 @@ class ConditionalTurningBandsParameters(BaseModel):
     source: GeoscienceObjectReference
     """Reference to the pointset containing the source conditioning points."""
 
-    source_attribute: str
-    """Attribute reference for the source values (e.g. ``\"locations.attributes[?name=='grade']\"``)."""
+    source_attribute: AttributeExpression
+    """The source values. Accepts a typed attribute such as ``pointset.attributes["grade"]``,
+    or an attribute expression such as ``"locations.attributes[?name=='grade']"``."""
 
     target: GeoscienceObjectReference
     """Reference to the target 3-D grid or masked grid to simulate onto."""

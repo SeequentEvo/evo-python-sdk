@@ -299,32 +299,34 @@ Do NOT use with <code>density_value</code> or <code>density_unit_id</code>.</p>
             <td>
               <div class="doc-md-description">
                 <p>Whether to run the report immediately after creation.</p>
-<p>Example with density column:
-    &gt;&gt;&gt; data = ReportSpecificationData(
-    ...     name="Gold Resource Report",
-    ...     columns=[
-    ...         ReportColumnSpec(
-    ...             column_name="Au",
-    ...             aggregation="MASS_AVERAGE",  # Use for grades
-    ...             label="Au Grade",
-    ...             output_unit_id="g/t",
-    ...         ),
-    ...     ],
-    ...     categories=[
-    ...         ReportCategorySpec(column_name="domain", label="Domain"),
-    ...     ],
-    ...     mass_unit_id=MassUnits.TONNES,
-    ...     density_column_name="density",  # Unit comes from column
-    ... )</p>
-<p>Example with fixed density:
-    &gt;&gt;&gt; data = ReportSpecificationData(
-    ...     name="Gold Resource Report",
-    ...     columns=[...],
-    ...     categories=[...],
-    ...     mass_unit_id=MassUnits.TONNES,
-    ...     density_value=2.7,  # Fixed density
-    ...     density_unit_id="t/m3",  # Required with density_value
-    ... )</p>
+<p>Example with density column::</p>
+<pre><code>&gt;&gt;&gt; data = ReportSpecificationData(
+...     name="Gold Resource Report",
+...     columns=[
+...         ReportColumnSpec(
+...             column_name="Au",
+...             aggregation="MASS_AVERAGE",  # Use for grades
+...             label="Au Grade",
+...             output_unit_id="g/t",
+...         ),
+...     ],
+...     categories=[
+...         ReportCategorySpec(column_name="domain", label="Domain"),
+...     ],
+...     mass_unit_id=MassUnits.TONNES,
+...     density_column_name="density",  # Unit comes from column
+... )
+</code></pre>
+<p>Example with fixed density::</p>
+<pre><code>&gt;&gt;&gt; data = ReportSpecificationData(
+...     name="Gold Resource Report",
+...     columns=[...],
+...     categories=[...],
+...     mass_unit_id=MassUnits.TONNES,
+...     density_value=2.7,  # Fixed density
+...     density_unit_id="t/m3",  # Required with density_value
+... )
+</code></pre>
               </div>
             </td>
             <td>

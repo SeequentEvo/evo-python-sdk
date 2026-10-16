@@ -1,5 +1,24 @@
 # Changelog
 
+## evo-sdk-common@0.5.28
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### Other Changes
+
+* Bump the uv group across 1 directory with 11 updates by @dependabot[bot] in https://github.com/SeequentEvo/evo-python-sdk/pull/343
+* Update CHANGELOG.md by @change-log-updater[bot] in https://github.com/SeequentEvo/evo-python-sdk/pull/326
+* Update CHANGELOG.md by @change-log-updater[bot] in https://github.com/SeequentEvo/evo-python-sdk/pull/357
+* Bump the uv group across 1 directory with 4 updates by @dependabot[bot] in https://github.com/SeequentEvo/evo-python-sdk/pull/356
+* Bump the uv group across 2 directories with 1 update by @dependabot[bot] in https://github.com/SeequentEvo/evo-python-sdk/pull/358
+* Bump the uv group across 2 directories with 4 updates by @dependabot[bot] in https://github.com/SeequentEvo/evo-python-sdk/pull/365
+* Update CHANGELOG.md by @change-log-updater[bot] in https://github.com/SeequentEvo/evo-python-sdk/pull/367
+* Remove API preview from IMS users endpoint by @keerynj04 in https://github.com/SeequentEvo/evo-python-sdk/pull/350
+
+## New Contributors
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-sdk-common@v0.5.27...evo-sdk-common@0.5.28
+
 ## evo-widgets@v0.2.2
 <!-- Release notes generated using configuration in .github/release.yml at main -->
 

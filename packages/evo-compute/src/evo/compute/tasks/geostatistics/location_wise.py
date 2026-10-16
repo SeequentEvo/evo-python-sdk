@@ -23,7 +23,8 @@ All operations are optional but at least one must be specified:
 - **probability_above_cutoff**: P(X > cutoff) for each cutoff (N attributes)
 - **mean_above_cutoff**: E[X | X > cutoff] for each cutoff (N attributes)
 
-Example:
+Example::
+
     >>> from evo.compute.tasks import run, Source
     >>> from evo.compute.tasks.geostatistics.location_wise import (
     ...     LocationWiseParameters,
@@ -119,7 +120,8 @@ class LocationWiseParameters(BaseModel):
     At least one operation must be specified (summary, quantiles,
     probability_above_cutoff, or mean_above_cutoff).
 
-    Example:
+    Example::
+
         >>> params = LocationWiseParameters(
         ...     source=Source(object=grid_url, attribute="cell_attributes[0]"),
         ...     target=LocationWiseTarget(object=grid_url),

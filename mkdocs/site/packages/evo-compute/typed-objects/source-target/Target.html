@@ -91,12 +91,13 @@
 
         <p>The target object and attribute to create or update with results.</p>
 <p>Used to specify where output data should be written for geostatistical operations.</p>
-<p>Example:
-    &gt;&gt;&gt; # Create a new attribute on a target object:
-    &gt;&gt;&gt; target = Target.new_attribute(block_model, "kriged_grade")
-    &gt;&gt;&gt;
-    &gt;&gt;&gt; # Or update an existing attribute:
-    &gt;&gt;&gt; target = Target(object=grid, attribute=UpdateAttribute(reference="existing_ref"))</p>
+<p>Example::</p>
+<pre><code>&gt;&gt;&gt; # Create a new attribute on a target object:
+&gt;&gt;&gt; target = Target.new_attribute(block_model, "kriged_grade")
+&gt;&gt;&gt;
+&gt;&gt;&gt; # Or update an existing attribute:
+&gt;&gt;&gt; target = Target(object=grid, attribute=UpdateAttribute(reference="existing_ref"))
+</code></pre>
 
 
 
@@ -178,8 +179,9 @@
     attribute_name: The name of the new attribute to create.</p>
 <p>Returns:
     A Target instance configured to create a new attribute.</p>
-<p>Example:
-    &gt;&gt;&gt; target = Target.new_attribute(block_model, "kriged_grade")</p>
+<p>Example::</p>
+<pre><code>&gt;&gt;&gt; target = Target.new_attribute(block_model, "kriged_grade")
+</code></pre>
 
 
     </div>

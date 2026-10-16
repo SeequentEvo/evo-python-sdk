@@ -36,6 +36,7 @@ class Regular3DGridData(BaseRegular3DGridData):
     vertex_data: pd.DataFrame | None = None
 
     def __post_init__(self):
+        super().__post_init__()
         if self.cell_data is not None and self.cell_data.shape[0] != self.size.total_size:
             raise ObjectValidationError(
                 f"The number of rows in the cell_data dataframe ({self.cell_data.shape[0]}) does not match the number of cells in the grid ({self.size.nx * self.size.ny * self.size.nz})."

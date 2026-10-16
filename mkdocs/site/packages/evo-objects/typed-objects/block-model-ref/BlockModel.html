@@ -423,9 +423,10 @@ or None to use the version referenced by this object.</p>
             <td>
               <div class="doc-md-description">
                 <p>DataFrame containing the block model data with user-friendly column names.</p>
-<p>Example:
-    &gt;&gt;&gt; df = await block_model.to_dataframe()
-    &gt;&gt;&gt; df.head()</p>
+<p>Example::</p>
+<pre><code>&gt;&gt;&gt; df = await block_model.to_dataframe()
+&gt;&gt;&gt; df.head()
+</code></pre>
               </div>
             </td>
           </tr>
@@ -471,10 +472,11 @@ to see the newly added attributes.</p>
             <td>
               <div class="doc-md-description">
                 <p>A new BlockModel instance with refreshed data.</p>
-<p>Example:
-    &gt;&gt;&gt; # After running kriging that adds attributes...
-    &gt;&gt;&gt; block_model = await block_model.refresh()
-    &gt;&gt;&gt; block_model.attributes  # Now shows the new attributes</p>
+<p>Example::</p>
+<pre><code>&gt;&gt;&gt; # After running kriging that adds attributes...
+&gt;&gt;&gt; block_model = await block_model.refresh()
+&gt;&gt;&gt; block_model.attributes  # Now shows the new attributes
+</code></pre>
               </div>
             </td>
           </tr>
@@ -978,12 +980,13 @@ units defined.</p>
             <td>
               <div class="doc-md-description">
                 <p>The updated BlockModel instance (refreshed from server).</p>
-<p>Example:
-    &gt;&gt;&gt; from evo.blockmodels import Units
-    &gt;&gt;&gt; block_model = await block_model.set_attribute_units({
-    ...     "Au": Units.GRAMS_PER_TONNE,
-    ...     "density": Units.TONNES_PER_CUBIC_METRE,
-    ... })</p>
+<p>Example::</p>
+<pre><code>&gt;&gt;&gt; from evo.blockmodels import Units
+&gt;&gt;&gt; block_model = await block_model.set_attribute_units({
+...     "Au": Units.GRAMS_PER_TONNE,
+...     "density": Units.TONNES_PER_CUBIC_METRE,
+... })
+</code></pre>
               </div>
             </td>
           </tr>
@@ -1077,17 +1080,18 @@ units defined.</p>
             <td>
               <div class="doc-md-description">
                 <p>A Report instance representing the created report.</p>
-<p>Example:
-    &gt;&gt;&gt; from evo.blockmodels.typed import ReportSpecificationData, ReportColumnSpec, ReportCategorySpec
-    &gt;&gt;&gt; report = await block_model.create_report(ReportSpecificationData(
-    ...     name="Gold Resource Report",
-    ...     columns=[ReportColumnSpec(column_name="Au", aggregation="WEIGHTED_MEAN", output_unit_id="g/t")],
-    ...     categories=[ReportCategorySpec(column_name="domain")],
-    ...     mass_unit_id="t",
-    ...     density_value=2.7,
-    ...     density_unit_id="t/m3",
-    ... ))
-    &gt;&gt;&gt; report  # Pretty-prints with BlockSync link</p>
+<p>Example::</p>
+<pre><code>&gt;&gt;&gt; from evo.blockmodels.typed import ReportSpecificationData, ReportColumnSpec, ReportCategorySpec
+&gt;&gt;&gt; report = await block_model.create_report(ReportSpecificationData(
+...     name="Gold Resource Report",
+...     columns=[ReportColumnSpec(column_name="Au", aggregation="WEIGHTED_MEAN", output_unit_id="g/t")],
+...     categories=[ReportCategorySpec(column_name="domain")],
+...     mass_unit_id="t",
+...     density_value=2.7,
+...     density_unit_id="t/m3",
+... ))
+&gt;&gt;&gt; report  # Pretty-prints with BlockSync link
+</code></pre>
               </div>
             </td>
           </tr>

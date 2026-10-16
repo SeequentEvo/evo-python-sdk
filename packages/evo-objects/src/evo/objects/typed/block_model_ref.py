@@ -192,7 +192,8 @@ class BlockModel(BaseSpatialObject):
             :param fb: Optional feedback interface for progress reporting.
             :return: DataFrame containing the block model data with user-friendly column names.
 
-            Example:
+            Example::
+
                 >>> df = await block_model.to_dataframe()
                 >>> df.head()
             """
@@ -207,7 +208,8 @@ class BlockModel(BaseSpatialObject):
 
             :return: A new BlockModel instance with refreshed data.
 
-            Example:
+            Example::
+
                 >>> # After running kriging that adds attributes...
                 >>> block_model = await block_model.refresh()
                 >>> block_model.attributes  # Now shows the new attributes
@@ -335,7 +337,8 @@ class BlockModel(BaseSpatialObject):
             :param fb: Optional feedback interface for progress reporting.
             :return: The updated BlockModel instance (refreshed from server).
 
-            Example:
+            Example::
+
                 >>> from evo.blockmodels import Units
                 >>> block_model = await block_model.set_attribute_units({
                 ...     "Au": Units.GRAMS_PER_TONNE,
@@ -361,7 +364,8 @@ class BlockModel(BaseSpatialObject):
             :param fb: Optional feedback interface for progress reporting.
             :return: A Report instance representing the created report.
 
-            Example:
+            Example::
+
                 >>> from evo.blockmodels.typed import ReportSpecificationData, ReportColumnSpec, ReportCategorySpec
                 >>> report = await block_model.create_report(ReportSpecificationData(
                 ...     name="Gold Resource Report",

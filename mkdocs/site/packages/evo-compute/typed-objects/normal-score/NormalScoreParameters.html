@@ -92,16 +92,17 @@
         <p>Parameters for the normal-score compute task.</p>
 <p>Set <code>method="forward"</code> to transform from data space to Gaussian,
 or <code>method="backward"</code> to transform from Gaussian back to data space.</p>
-<p>Example:
-    &gt;&gt;&gt; params = NormalScoreParameters(
-    ...     method="forward",
-    ...     source=Source(object=pointset_url, attribute="locations.attributes[0]"),
-    ...     target=Target(
-    ...         object=pointset_url,
-    ...         attribute=CreateAttribute(name="grade_ns"),
-    ...     ),
-    ...     distribution=distribution_url,
-    ... )</p>
+<p>Example::</p>
+<pre><code>&gt;&gt;&gt; params = NormalScoreParameters(
+...     method="forward",
+...     source=Source(object=pointset_url, attribute="locations.attributes[0]"),
+...     target=Target(
+...         object=pointset_url,
+...         attribute=CreateAttribute(name="grade_ns"),
+...     ),
+...     distribution=distribution_url,
+... )
+</code></pre>
 
 
 

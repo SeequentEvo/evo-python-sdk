@@ -43,6 +43,7 @@ class RegularMasked3DGridData(BaseRegular3DGridData):
     mask: np.ndarray
 
     def __post_init__(self):
+        super().__post_init__()
         if self.mask.shape[0] != self.size.total_size:
             raise ObjectValidationError(
                 f"The number of rows in the mask ({self.mask.shape[0]}) does not match the number of cells in the grid ({self.size.nx * self.size.ny * self.size.nz})."

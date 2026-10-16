@@ -15,7 +15,8 @@ The KNN task estimates values at target locations by computing the arithmetic
 mean of the accepted neighbours found within the search ellipsoid.  No
 variogram model is required — it is purely neighbourhood-based.
 
-Example:
+Example::
+
     >>> from evo.compute.tasks import run, SearchNeighborhood, Ellipsoid, EllipsoidRanges
     >>> from evo.compute.tasks.common import Source, Target
     >>> from evo.compute.tasks.geostatistics.knn import KNNParameters
@@ -69,7 +70,8 @@ class KNNParameters(BaseModel):
     Estimates values at target locations by computing the arithmetic mean of
     accepted neighbours found within the search ellipsoid.
 
-    Example:
+    Example::
+
         >>> from evo.compute.tasks.common import Filter, FilterCondition, Source, Target
         >>> from evo.compute.tasks.geostatistics.knn import KNNParameters
         >>>

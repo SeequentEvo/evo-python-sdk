@@ -92,32 +92,33 @@
         <p>Parameters for the KNN (K-nearest neighbour) estimation task.</p>
 <p>Estimates values at target locations by computing the arithmetic mean of
 accepted neighbours found within the search ellipsoid.</p>
-<p>Example:
-    &gt;&gt;&gt; from evo.compute.tasks.common import Filter, FilterCondition, Source, Target
-    &gt;&gt;&gt; from evo.compute.tasks.geostatistics.knn import KNNParameters
-    &gt;&gt;&gt;
-    &gt;&gt;&gt; params = KNNParameters(
-    ...     source=Source(object=pointset, attribute="locations.attributes[?name=='grade']"),
-    ...     target=Target.new_attribute(grid, "knn_grade"),
-    ...     neighborhood=SearchNeighborhood(
-    ...         ellipsoid=Ellipsoid(ranges=EllipsoidRanges(200, 150, 100)),
-    ...         max_samples=20,
-    ...     ),
-    ... )
-    &gt;&gt;&gt;
-    &gt;&gt;&gt; # With a target filter to restrict estimation to specific categories on the target:
-    &gt;&gt;&gt; params_filtered = KNNParameters(
-    ...     source=Source(object=pointset, attribute="locations.attributes[?name=='grade']"),
-    ...     target=Target.new_attribute(grid, "knn_grade"),
-    ...     neighborhood=SearchNeighborhood(...),
-    ...     target_filter=Filter(
-    ...         where=FilterCondition(
-    ...             attribute=grid.attributes["domain"],
-    ...             operator="in",
-    ...             values=["LMS1", "LMS2"],
-    ...         ),
-    ...     ),
-    ... )</p>
+<p>Example::</p>
+<pre><code>&gt;&gt;&gt; from evo.compute.tasks.common import Filter, FilterCondition, Source, Target
+&gt;&gt;&gt; from evo.compute.tasks.geostatistics.knn import KNNParameters
+&gt;&gt;&gt;
+&gt;&gt;&gt; params = KNNParameters(
+...     source=Source(object=pointset, attribute="locations.attributes[?name=='grade']"),
+...     target=Target.new_attribute(grid, "knn_grade"),
+...     neighborhood=SearchNeighborhood(
+...         ellipsoid=Ellipsoid(ranges=EllipsoidRanges(200, 150, 100)),
+...         max_samples=20,
+...     ),
+... )
+&gt;&gt;&gt;
+&gt;&gt;&gt; # With a target filter to restrict estimation to specific categories on the target:
+&gt;&gt;&gt; params_filtered = KNNParameters(
+...     source=Source(object=pointset, attribute="locations.attributes[?name=='grade']"),
+...     target=Target.new_attribute(grid, "knn_grade"),
+...     neighborhood=SearchNeighborhood(...),
+...     target_filter=Filter(
+...         where=FilterCondition(
+...             attribute=grid.attributes["domain"],
+...             operator="in",
+...             values=["LMS1", "LMS2"],
+...         ),
+...     ),
+... )
+</code></pre>
 
 
 
