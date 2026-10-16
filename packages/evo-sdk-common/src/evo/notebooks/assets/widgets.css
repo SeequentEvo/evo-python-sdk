@@ -1,0 +1,85 @@
+.evo-row {
+    display: flex;
+    flex-flow: row wrap;
+    align-items: center;
+    gap: 8px;
+    margin: 5px;
+}
+
+.evo-label {
+    font-family: var(--jp-ui-font-family, sans-serif);
+    font-size: var(--jp-ui-font-size1, 13px);
+    color: var(--jp-ui-font-color1, #212121);
+    min-width: var(--jp-widgets-label-width, 80px);
+}
+
+.evo-select {
+    font-family: var(--jp-ui-font-family, sans-serif);
+    font-size: var(--jp-ui-font-size1, 13px);
+    padding: 3px 6px;
+    min-width: var(--jp-widgets-inline-width, 300px);
+    color: var(--jp-ui-font-color1, #212121);
+    background-color: var(--jp-layout-color1, #ffffff);
+    border: 1px solid var(--jp-border-color1, #bdbdbd);
+    border-radius: 2px;
+}
+
+.evo-select:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.evo-button {
+    font-family: var(--jp-ui-font-family, sans-serif);
+    font-size: var(--jp-ui-font-size1, 13px);
+    color: #ffffff;
+    background-color: #265c7f;
+    border: none;
+    border-radius: 2px;
+    padding: 5px 12px;
+    cursor: pointer;
+}
+
+.evo-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.evo-logo {
+    max-height: 26px;
+    margin: 3px;
+}
+
+.evo-spinner {
+    max-height: 26px;
+    margin: 3px;
+}
+
+.evo-message {
+    font-family: var(--jp-ui-font-family, sans-serif);
+    font-size: var(--jp-ui-font-size1, 13px);
+    font-style: italic;
+    color: var(--jp-ui-font-color2, #616161);
+}
+
+.evo-percent {
+    font-family: var(--jp-code-font-family, monospace);
+    font-size: var(--jp-ui-font-size1, 13px);
+    color: var(--jp-ui-font-color1, #212121);
+    white-space: pre;
+}
+
+.evo-progress {
+    width: 400px;
+    height: 14px;
+    background-color: var(--jp-layout-color2, #eeeeee);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.evo-progress-bar {
+    height: 100%;
+    width: 0;
+    background-color: #265c7f;
+    transition: width 0.1s linear;
+}
