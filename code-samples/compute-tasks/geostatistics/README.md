@@ -1,6 +1,6 @@
 # Geostatistics with Evo Compute
 
-This suite of notebooks use the [Evo Python SDK](https://github.com/SeequentEvo/evo-python-sdk) to generate geoscience objects on the Seequent Evo platform and run cloud geostatistics tasks to demonstrate common workflows. The notebook ["1-populate-workspace"](1-populate-workspace.ipynb) must be run prior to any of the others to ensure necessary input data and target blockmodel is created in your Seequent Evo workspace.
+This suite of notebooks use the [Evo Python SDK](https://github.com/SeequentEvo/evo-python-sdk) to generate geoscience objects on the Seequent Evo platform and run cloud geostatistics tasks to demonstrate common workflows. The notebook [1-populate-workspace](1-populate-workspace.ipynb) must be run prior to any of the others to ensure necessary input data and target blockmodel is created in your Seequent Evo workspace.
 
 ## Notebooks
 
