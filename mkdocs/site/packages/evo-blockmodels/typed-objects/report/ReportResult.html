@@ -121,7 +121,7 @@
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">to_dataframe</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">to_dataframe</span><span class="p">(</span><span class="n">include_status</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -129,6 +129,45 @@
         <p>Convert the report result to a pandas DataFrame.</p>
 <p>Returns a DataFrame with one row per category/cut-off combination,
 containing the aggregated values for each report column.</p>
+<p>Each cell in the report is a <code>ReportCell</code> (<code>{"value": ..., "status": ...}</code>).
+By default only the numeric <code>value</code> is placed in the DataFrame (with
+<code>None</code> where a value could not be aggregated), keeping the output the
+same shape as previous SDK versions. Set <code>include_status=True</code> to add a
+companion <code>"{column} status"</code> column exposing each cell's status.</p>
+<p>Results produced by older Block Model Service deployments, where a cell was
+a bare number, are handled transparently.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>include_status</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>When True, add a status column alongside each value
+column.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
     <p><span class="doc-section-title">Returns:</span></p>
