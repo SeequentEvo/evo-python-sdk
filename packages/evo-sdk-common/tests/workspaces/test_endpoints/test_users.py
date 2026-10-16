@@ -68,6 +68,35 @@ class TestWorkspaceClientUserEndpoints(TestWithConnector):
         )
         self.assertEqual(response, UserRole(user_id=USER_ID, role=WorkspaceRole.owner))
 
+    async def test_assign_user_role_by_email(self) -> None:
+        with self.transport.set_http_response(
+            201,
+            json.dumps(
+                {
+                    "user_id": str(USER_ID),
+                    "role": "owner",
+                }
+            ),
+        ):
+            response = await self.workspace_client.assign_user_role_by_email(
+                workspace_id=TEST_WORKSPACE_A.id,
+                email="test@example.com",
+                role=WorkspaceRole.owner,
+            )
+        self.assert_request_made(
+            method=RequestMethod.POST,
+            path=f"{BASE_PATH}/workspaces/{TEST_WORKSPACE_A.id}/users",
+            headers={
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+            },
+            body={
+                "email": "test@example.com",
+                "role": "owner",
+            },
+        )
+        self.assertEqual(response, UserRole(user_id=USER_ID, role=WorkspaceRole.owner))
+
     async def test_get_current_user_role(self) -> None:
         with self.transport.set_http_response(
             200,
