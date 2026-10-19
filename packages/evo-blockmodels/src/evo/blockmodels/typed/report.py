@@ -256,17 +256,6 @@ class ReportSpecificationData:
     run_now: bool = True
 
 
-def _unpack_cell(cell: Any) -> tuple[int | float | None, str | None]:
-    """Return the ``(value, status)`` pair for a report cell.
-
-    Each cell is a `ReportCell` (`{"value": ..., "status": ...}`) dict. If a cell
-    is missing (e.g. a short ``values`` list), both are returned as ``None``.
-    """
-    if isinstance(cell, dict):
-        return cell.get("value"), cell.get("status")
-    return None, None
-
-
 @dataclass(frozen=True, kw_only=True)
 class ReportResult:
     """A result from running a report.
@@ -333,12 +322,10 @@ class ReportResult:
                     row[cat_label] = cat_values[i] if i < len(cat_values) else None
                 # Add column values
                 values = row_data.get("values", [])
-                for i, label in enumerate(column_labels):
-                    cell = values[i] if i < len(values) else None
-                    value, status = _unpack_cell(cell)
-                    row[label] = value
+                for label, cell in zip(column_labels, values, strict=True):
+                    row[label] = cell["value"]
                     if include_status:
-                        row[f"{label}:status"] = status
+                        row[f"{label}:status"] = cell["status"]
                 rows.append(row)
 
         return pd.DataFrame(rows)

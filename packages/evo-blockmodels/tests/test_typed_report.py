@@ -169,7 +169,9 @@ class TestReportResult(TestWithConnector):
             created_at=DATE,
             categories=[{"label": "Domain", "col_id": str(CAT_COL_UUID)}],
             columns=[{"label": "Au Grade", "unit_id": "g/t"}],
-            result_sets=[{"cutoff_value": None, "rows": [{"categories": ["LMS1"], "values": [2.5]}]}],
+            result_sets=[
+                {"cutoff_value": None, "rows": [{"categories": ["LMS1"], "values": [{"value": 2.5, "status": "OK"}]}]}
+            ],
         )
 
         repr_str = repr(result)
