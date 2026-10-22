@@ -60,6 +60,7 @@ from .endpoints.models import (
     UpdateInstanceUserRolesRequest,
     UpdateWorkspaceRequest,
     UserRoleMapping,
+    UserRoleViaEmail,
 )
 from .endpoints.models import BoundingBox as PydanticBoundingBox
 from .endpoints.models import UserRole as PydanticUserRole
@@ -135,6 +136,21 @@ class WorkspaceAPIClient:
         role: WorkspaceRole,
     ) -> UserRole:
         assign_role_request = PydanticUserRole(user_id=user_id, role=RoleEnum[str(role.name)])
+        response = await self._workspaces_api.assign_user_role(
+            org_id=str(self._org_id),
+            workspace_id=str(workspace_id),
+            assign_role_request=assign_role_request,
+        )
+
+        return parse.user_role_model(response)
+
+    async def assign_user_role_by_email(
+        self,
+        workspace_id: UUID,
+        email: str,
+        role: WorkspaceRole,
+    ) -> UserRole:
+        assign_role_request = UserRoleViaEmail(email=email, role=RoleEnum[str(role.name)])
         response = await self._workspaces_api.assign_user_role(
             org_id=str(self._org_id),
             workspace_id=str(workspace_id),
