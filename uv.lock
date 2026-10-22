@@ -900,7 +900,7 @@ wheels = [
 
 [[package]]
 name = "evo-blockmodels"
-version = "0.7.0"
+version = "0.8.0"
 source = { editable = "packages/evo-blockmodels" }
 dependencies = [
     { name = "evo-sdk-common" },
