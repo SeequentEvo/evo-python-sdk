@@ -150,7 +150,6 @@ class WorkspaceAPIClient:
         email: str,
         role: WorkspaceRole,
     ) -> UserRole:
-        """Assign a user a role in a workspace using their email address."""
         assign_role_request = UserRoleViaEmail(email=email, role=RoleEnum[str(role.name)])
         response = await self._workspaces_api.assign_user_role(
             org_id=str(self._org_id),
