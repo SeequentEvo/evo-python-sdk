@@ -1,5 +1,64 @@
 # Changelog
 
+## evo-objects@v0.6.5
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### Other Changes
+* Add kriging diagnostic outputs to the task SDK client by @amirabbas-jalali-bentley in https://github.com/SeequentEvo/evo-python-sdk/pull/348
+* Fix tail extrapolation payloads for conditioned simulation and simulation report by @amirabbas-jalali-bentley in https://github.com/SeequentEvo/evo-python-sdk/pull/354
+* Bump version for release by @AdamFreemanSeequent in https://github.com/SeequentEvo/evo-python-sdk/pull/355
+* Bump the uv group across 1 directory with 11 updates by @dependabot[bot] in https://github.com/SeequentEvo/evo-python-sdk/pull/343
+* Update CHANGELOG.md by @change-log-updater[bot] in https://github.com/SeequentEvo/evo-python-sdk/pull/326
+* Update CHANGELOG.md by @change-log-updater[bot] in https://github.com/SeequentEvo/evo-python-sdk/pull/357
+* Bump the uv group across 1 directory with 4 updates by @dependabot[bot] in https://github.com/SeequentEvo/evo-python-sdk/pull/356
+* Bump the uv group across 2 directories with 1 update by @dependabot[bot] in https://github.com/SeequentEvo/evo-python-sdk/pull/358
+* Add column groups support by @AndreLobatoSeequent in https://github.com/SeequentEvo/evo-python-sdk/pull/345
+* Modify README.md files to be more relevant to the examples by @grantroch in https://github.com/SeequentEvo/evo-python-sdk/pull/361
+* Add html escaping by @grantroch in https://github.com/SeequentEvo/evo-python-sdk/pull/359
+* Bump evo-widgets version by @GriffinBaxterSeequent in https://github.com/SeequentEvo/evo-python-sdk/pull/364
+* Bump the uv group across 2 directories with 4 updates by @dependabot[bot] in https://github.com/SeequentEvo/evo-python-sdk/pull/365
+* Add Python script to run all tests at once by @grantroch in https://github.com/SeequentEvo/evo-python-sdk/pull/360
+* Update CHANGELOG.md by @change-log-updater[bot] in https://github.com/SeequentEvo/evo-python-sdk/pull/367
+* Remove API preview from IMS users endpoint by @keerynj04 in https://github.com/SeequentEvo/evo-python-sdk/pull/350
+* Add octant, quadrant and drillhole limits to the search neighborhood by @amirabbas-jalali-bentley in https://github.com/SeequentEvo/evo-python-sdk/pull/362
+* Fix object.refresh by @geostats-BSY in https://github.com/SeequentEvo/evo-python-sdk/pull/371
+* Fix example formatting across SDK documentation by @amirabbas-jalali-bentley in https://github.com/SeequentEvo/evo-python-sdk/pull/368
+* Bump the uv group across 2 directories with 1 update by @dependabot[bot] in https://github.com/SeequentEvo/evo-python-sdk/pull/370
+* Update CHANGELOG.md by @change-log-updater[bot] in https://github.com/SeequentEvo/evo-python-sdk/pull/375
+* Generic inputs blockmodel definition by @geostats-BSY in https://github.com/SeequentEvo/evo-python-sdk/pull/366
+* Accept sequence inputs for ellipsoid ranges and rotation by @geostats-BSY in https://github.com/SeequentEvo/evo-python-sdk/pull/363
+* simulation accept .attributes['my attribute'] format by @geostats-BSY in https://github.com/SeequentEvo/evo-python-sdk/pull/372
+* Retry only transient errors when polling compute job status by @aminabedi-bentley in https://github.com/SeequentEvo/evo-python-sdk/pull/369
+* Geostats example notebooks by @geostats-BSY in https://github.com/SeequentEvo/evo-python-sdk/pull/376
+* Smallfix geostats examples by @geostats-BSY in https://github.com/SeequentEvo/evo-python-sdk/pull/379
+* Standardize block discretization spelling by @amirabbas-jalali-bentley in https://github.com/SeequentEvo/evo-python-sdk/pull/378
+* Bump evo-compute to 0.0.6 by @amirabbas-jalali-bentley in https://github.com/SeequentEvo/evo-python-sdk/pull/381
+* Bump the uv group across 2 directories with 1 update by @dependabot[bot] in https://github.com/SeequentEvo/evo-python-sdk/pull/382
+
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-objects@v0.6.4...evo-objects@v0.6.5
+
+## evo-compute@0.0.6
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### Other Changes
+* Add octant, quadrant and drillhole limits to the search neighborhood by @amirabbas-jalali-bentley in https://github.com/SeequentEvo/evo-python-sdk/pull/362
+* Fix object.refresh by @geostats-BSY in https://github.com/SeequentEvo/evo-python-sdk/pull/371
+* Fix example formatting across SDK documentation by @amirabbas-jalali-bentley in https://github.com/SeequentEvo/evo-python-sdk/pull/368
+* Generic inputs blockmodel definition by @geostats-BSY in https://github.com/SeequentEvo/evo-python-sdk/pull/366
+* Accept sequence inputs for ellipsoid ranges and rotation by @geostats-BSY in https://github.com/SeequentEvo/evo-python-sdk/pull/363
+* simulation accept .attributes['my attribute'] format by @geostats-BSY in https://github.com/SeequentEvo/evo-python-sdk/pull/372
+* Retry only transient errors when polling compute job status by @aminabedi-bentley in https://github.com/SeequentEvo/evo-python-sdk/pull/369
+* Geostats example notebooks by @geostats-BSY in https://github.com/SeequentEvo/evo-python-sdk/pull/376
+* Smallfix geostats examples by @geostats-BSY in https://github.com/SeequentEvo/evo-python-sdk/pull/379
+* Standardize block discretization spelling by @amirabbas-jalali-bentley in https://github.com/SeequentEvo/evo-python-sdk/pull/378
+* Bump evo-compute to 0.0.6 by @amirabbas-jalali-bentley in https://github.com/SeequentEvo/evo-python-sdk/pull/381
+
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-compute@0.0.5...evo-compute@0.0.6
+
 ## evo-sdk-common@0.5.28
 <!-- Release notes generated using configuration in .github/release.yml at main -->
 

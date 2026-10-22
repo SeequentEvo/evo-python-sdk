@@ -39,6 +39,8 @@ from ..endpoints.models import (
     CreateReportSpecification,
     ReportAggregation,
     ReportCategory,
+    ReportCell,
+    ReportCellStatus,
     ReportColumn,
     ReportingJobSpec,
     ReportSpecificationWithJobUrl,
@@ -53,6 +55,8 @@ __all__ = [
     "MassUnits",
     "Report",
     "ReportCategorySpec",
+    "ReportCell",
+    "ReportCellStatus",
     "ReportColumnSpec",
     "ReportResult",
     "ReportSpecificationData",
@@ -284,12 +288,24 @@ class ReportResult:
             result_sets=[rs.model_dump() for rs in result.result_sets],
         )
 
-    def to_dataframe(self) -> pd.DataFrame:
+    def to_dataframe(self, include_status: bool = False) -> pd.DataFrame:
         """Convert the report result to a pandas DataFrame.
 
         Returns a DataFrame with one row per category/cut-off combination,
         containing the aggregated values for each report column.
 
+        Each cell in the report is a `ReportCell` (`{"value": ..., "status": ...}`).
+        By default only the numeric ``value`` is placed in the DataFrame (with
+        ``None`` where a value could not be aggregated), keeping the output the
+        same shape as previous SDK versions. Set ``include_status=True`` to add a
+        companion ``"{column}:status"`` column exposing each cell's status. The
+        ``:`` separator is used because it can never appear in a column's label:
+        Block Model Service column/group titles cannot contain ``:``, and
+        qualified (grouped) titles are joined with ``▸`` instead, so the
+        companion column name can never collide with a real column.
+
+        :param include_status: When True, add a status column alongside each value
+            column.
         :return: DataFrame with report results.
         """
         rows = []
@@ -306,8 +322,10 @@ class ReportResult:
                     row[cat_label] = cat_values[i] if i < len(cat_values) else None
                 # Add column values
                 values = row_data.get("values", [])
-                for i, label in enumerate(column_labels):
-                    row[label] = values[i] if i < len(values) else None
+                for label, cell in zip(column_labels, values, strict=True):
+                    row[label] = cell["value"]
+                    if include_status:
+                        row[f"{label}:status"] = cell["status"]
                 rows.append(row)
 
         return pd.DataFrame(rows)
