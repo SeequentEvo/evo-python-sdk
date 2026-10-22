@@ -13,12 +13,27 @@ from __future__ import annotations
 
 import copy
 from collections.abc import Callable, Sequence
+from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias
 
 if TYPE_CHECKING:
     from typing import Self
 
     from .data import HTTPHeaderDict
+
+
+TRANSIENT_HTTP_STATUSES = frozenset(
+    {
+        HTTPStatus.REQUEST_TIMEOUT,
+        HTTPStatus.TOO_EARLY,
+        HTTPStatus.TOO_MANY_REQUESTS,
+        HTTPStatus.INTERNAL_SERVER_ERROR,
+        HTTPStatus.BAD_GATEWAY,
+        HTTPStatus.SERVICE_UNAVAILABLE,
+        HTTPStatus.GATEWAY_TIMEOUT,
+    }
+)
+"""HTTP statuses that indicate a temporary failure, after which an idempotent request may succeed if retried."""
 
 
 class EvoClientException(Exception):
@@ -251,6 +266,18 @@ class EvoAPIException(EvoClientException):
         if content := self.content:
             error_message += f"\n{content}"
         return error_message
+
+
+class TransientAPIError(EvoAPIException):
+    """Raised when an Evo API request fails with a temporary error (see ``TRANSIENT_HTTP_STATUSES``).
+
+    Retrying is only safe for idempotent requests, such as checking a job's status. The original error is
+    available as ``__cause__``.
+    """
+
+    @classmethod
+    def from_error(cls, error: EvoAPIException) -> TransientAPIError:
+        return cls(status=error.status, reason=error.reason, content=error.content, headers=error.headers)
 
 
 class UnknownResponseError(EvoAPIException):

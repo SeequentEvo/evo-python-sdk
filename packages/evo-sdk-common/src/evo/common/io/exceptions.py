@@ -16,6 +16,7 @@ __all__ = [
     "ChunkedIOException",
     "RenewalError",
     "RenewalTimeoutError",
+    "TransientChunkedIOError",
 ]
 
 
@@ -49,6 +50,17 @@ class ChunkedIOError(ChunkedIOException):
 
 class RenewalError(EvoClientException):
     """RenewalError is raised when renewing the url fails."""
+
+
+class TransientChunkedIOError(ChunkedIOError):
+    """A temporary blob request failure that can be retried."""
+
+    def __init__(self, message: str, *, status: int | None = None) -> None:
+        super().__init__(message)
+        self.status = status
+
+    async def recover(self) -> bool:
+        return True
 
 
 class RenewalTimeoutError(RenewalError):

@@ -13,13 +13,45 @@ from pathlib import Path
 from unittest import mock
 
 from evo.common.connector import APIConnector
+from evo.common.exceptions import EvoAPIException, TransportError
 from evo.common.io import HTTPSource
+from evo.common.io.exceptions import ChunkedIOError, TransientChunkedIOError
 from evo.common.test_tools import TestWithDownloadHandler
 
 from .common import TEST_DATA, AsyncIterator, TestISource, asynccontextmanager
 
 
 class TestHTTPSource(TestISource, TestWithDownloadHandler):
+    async def test_error_mapping(self) -> None:
+        async with self.source:
+            for status in (408, 425, 429, 500, 502, 503, 504, 400, 404, 409, 412):
+                with (
+                    self.subTest(status=status),
+                    self.transport.set_http_response(status, content="<Error><Code>ServerBusy</Code></Error>"),
+                ):
+                    expected = (
+                        TransientChunkedIOError if status in (408, 425, 429, 500, 502, 503, 504) else ChunkedIOError
+                    )
+                    with self.assertRaises(expected) as raised:
+                        await self.source.read_chunk(0, 1)
+                    self.assertIs(type(raised.exception), expected)
+                    self.assertIsInstance(raised.exception.__cause__, EvoAPIException)
+                    if expected is TransientChunkedIOError:
+                        self.assertEqual(status, raised.exception.status)
+                        self.assertTrue(await raised.exception.recover())
+
+    async def test_transport_failure_is_transient(self) -> None:
+        error = TransportError("Connection lost")
+        async with self.source:
+            with (
+                mock.patch.object(self.transport, "request", side_effect=error),
+                self.assertRaises(TransientChunkedIOError) as raised,
+            ):
+                await self.source.read_chunk(0, 1)
+        self.assertIs(type(raised.exception), TransientChunkedIOError)
+        self.assertIsNone(raised.exception.status)
+        self.assertIs(raised.exception.__cause__, error)
+
     def setup_source(self, test_data: bytes) -> None:
         TestWithDownloadHandler.setUp(self)
         self.setup_download_handler(test_data)

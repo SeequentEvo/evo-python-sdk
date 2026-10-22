@@ -26,12 +26,18 @@ from evo import logging
 from .._types import PathLike, resolve_path
 from ..connector import APIConnector
 from ..data import EmptyResponse, HTTPHeaderDict, HTTPResponse, RequestMethod
-from ..exceptions import ForbiddenException, UnauthorizedException
+from ..exceptions import (
+    TRANSIENT_HTTP_STATUSES,
+    EvoAPIException,
+    ForbiddenException,
+    TransportError,
+    UnauthorizedException,
+)
 from ..interfaces import IFeedback, ITransport
 from ..utils import NoFeedback, Retry
 from .bytes import BytesDestination
 from .chunked_io_manager import ChunkedIOManager
-from .exceptions import ChunkedIOError, RenewalError, RenewalTimeoutError
+from .exceptions import ChunkedIOError, RenewalError, RenewalTimeoutError, TransientChunkedIOError
 from .interfaces import ISource
 
 logger = logging.getLogger("io.http")
@@ -204,6 +210,12 @@ class HTTPIOBase:
             return await query
         except (UnauthorizedException, ForbiddenException) as e:
             raise ResourceAuthorizationError(str(e), self) from e
+        except EvoAPIException as e:
+            if e.status in TRANSIENT_HTTP_STATUSES:
+                raise TransientChunkedIOError(str(e), status=e.status) from e
+            raise ChunkedIOError(str(e)) from e
+        except TransportError as e:
+            raise TransientChunkedIOError(str(e)) from e
         except Exception as e:
             raise ChunkedIOError(str(e)) from e
 

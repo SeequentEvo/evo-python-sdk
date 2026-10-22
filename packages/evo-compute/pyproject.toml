@@ -11,7 +11,7 @@ authors = [
 dependencies = [
     "evo-blockmodels[utils]",
     "evo-objects[utils,blockmodels]",
-    "evo-sdk-common",
+    "evo-sdk-common>=0.5.29",
     "pydantic>=2",
     "typing_extensions>=4.0",
 ]
@@ -23,18 +23,18 @@ Homepage = "https://www.seequent.com/"
 Documentation = "https://developer.seequent.com/"
 
 [project.optional-dependencies]
-aiohttp = ["evo-sdk-common[aiohttp]"]
-notebooks = ["evo-sdk-common[notebooks]"]
+aiohttp = ["evo-sdk-common[aiohttp]>=0.5.29"]
+notebooks = ["evo-sdk-common[notebooks]>=0.5.29"]
 
 [dependency-groups]
 # Dev dependencies. The version is left unspecified so the latest is installed.
 test = [
-    "evo-sdk-common[aiohttp]",
+    "evo-sdk-common[aiohttp]>=0.5.29",
     "parameterized==0.9.0",
     "pytest",
 ]
 dev = [
-    "evo-sdk-common[notebooks]",
+    "evo-sdk-common[notebooks]>=0.5.29",
     "bumpver",
     "coverage[toml]",
     "ruff",
