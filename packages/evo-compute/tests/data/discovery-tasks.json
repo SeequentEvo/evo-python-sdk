@@ -1,0 +1,79 @@
+{
+  "limit": 100,
+  "offset": 0,
+  "total": 4,
+  "count": 4,
+  "results": [
+    {
+      "key": "geostatistics/declustering",
+      "topic": "geostatistics",
+      "name": "declustering",
+      "display_name": "Declustering",
+      "version": "0.3.1",
+      "description": "Compute declustering weights for a pointset.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "source": {"type": "object", "reference_to": "geoscience-object"},
+          "power": {"type": ["number", "null"], "default": null}
+        },
+        "required": ["source"]
+      },
+      "results": {
+        "type": "object",
+        "properties": {
+          "target": {"type": "object", "output": "geoscience-object"}
+        }
+      }
+    },
+    {
+      "key": "geostatistics/normal-score",
+      "topic": "geostatistics",
+      "name": "normal-score",
+      "display_name": "Normal Score",
+      "version": "0.2.0",
+      "description": "Transform values to a standard normal distribution.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "distribution": {"type": "object", "reference_to": "geoscience-object"}
+        },
+        "required": ["distribution"]
+      }
+    },
+    {
+      "key": "geostatistics/kriging",
+      "topic": "geostatistics",
+      "name": "kriging",
+      "display_name": "Kriging",
+      "version": "0.5.3",
+      "feature_flag": "geostatistics-preview",
+      "description": "Estimate a target attribute on a grid using kriging.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "source": {"type": "object", "reference_to": "geoscience-object"},
+          "target": {"type": "object", "reference_to": "geoscience-object"},
+          "variogram": {"type": "object", "reference_to": "geoscience-object"}
+        },
+        "required": ["source", "target", "variogram"]
+      }
+    },
+    {
+      "key": "converter/obj-import",
+      "topic": "converter",
+      "name": "obj-import",
+      "display_name": "OBJ Import",
+      "version": "0.1.13",
+      "feature_flag": "converter-preview",
+      "description": "Import a Wavefront OBJ file as a triangular mesh.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "file": {"type": "string", "reference_to": "file"}
+        },
+        "required": ["file"]
+      }
+    }
+  ]
+}
