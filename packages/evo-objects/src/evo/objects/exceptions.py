@@ -9,9 +9,25 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+from collections.abc import Iterator
+from contextlib import contextmanager
 from uuid import UUID
 
+from evo import logging
 from evo.common.exceptions import CustomTypedError, EvoClientException
+
+
+@contextmanager
+def _error_context(context: str) -> Iterator[None]:
+    """Keep the original exception, using notes on Python 3.11+ and logging on 3.10."""
+    try:
+        yield
+    except Exception as exc:
+        if hasattr(exc, "add_note"):
+            exc.add_note(context)
+        else:
+            logging.getLogger("object").error(context)
+        raise
 
 
 class SchemaIDFormatError(EvoClientException):

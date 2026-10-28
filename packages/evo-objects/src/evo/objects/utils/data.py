@@ -23,7 +23,7 @@ from evo.common.exceptions import StorageFileNotFoundError
 from evo.common.io.exceptions import DataExistsError
 from evo.common.utils import NoFeedback, PartialFeedback, split_feedback
 
-from ..exceptions import TableFormatError
+from ..exceptions import TableFormatError, _error_context
 from ..io import _CACHE_SCOPE, ObjectDataDownload, ObjectDataUpload
 from .table_formats import INTEGER_ARRAY_1_INT32, INTEGER_ARRAY_MD_INT32, LOOKUP_TABLE_INT32
 from .tables import KnownTableFormat
@@ -143,22 +143,24 @@ class ObjectDataClient:
         n_names = len(names)
         logger.debug(f"Found {n_names} data reference{'' if n_names == 1 else 's'}")
         n_uploaded = 0
-        async for ctx in ObjectDataUpload._create_multiple(
-            connector=self._connector,
-            environment=self._environment,
-            names=names,
-        ):
-            if fb is not NoFeedback:
-                fb_part = PartialFeedback(parent=fb, start=n_uploaded / n_names, end=(n_uploaded + 1) / n_names)
-            else:
-                fb_part = NoFeedback
+        with _error_context("While uploading referenced data"):
+            async for ctx in ObjectDataUpload._create_multiple(
+                connector=self._connector,
+                environment=self._environment,
+                names=names,
+            ):
+                if fb is not NoFeedback:
+                    fb_part = PartialFeedback(parent=fb, start=n_uploaded / n_names, end=(n_uploaded + 1) / n_names)
+                else:
+                    fb_part = NoFeedback
 
-            data_file = self.cache_location / ctx.name
-            logger.debug(f"Uploading data: {ctx.name}")
-            if not data_file.exists():
-                raise StorageFileNotFoundError(f"Object data file not found in cache: {data_file}")
-            await ctx.upload_from_path(filename=data_file, transport=self._connector.transport, fb=fb_part)
-            n_uploaded += 1
+                with _error_context(f"While uploading referenced data '{ctx.name}'"):
+                    data_file = self.cache_location / ctx.name
+                    logger.debug(f"Uploading data: {ctx.name}")
+                    if not data_file.exists():
+                        raise StorageFileNotFoundError(f"Object data file not found in cache: {data_file}")
+                    await ctx.upload_from_path(filename=data_file, transport=self._connector.transport, fb=fb_part)
+                n_uploaded += 1
 
         logger.debug(
             f"Uploaded {n_uploaded} data reference{'' if n_uploaded == 1 else 's'}, skipped {n_names - n_uploaded}"
@@ -183,9 +185,10 @@ class ObjectDataClient:
         """
         from .table_formats import get_known_format
 
-        if not isinstance(table_format, KnownTableFormat):
-            table_format = get_known_format(table, table_formats=table_format)
-        table_info = table_format.save_table(table=table, destination=self.cache_location)
+        with _error_context("While preparing an Arrow table for Evo Parquet storage"):
+            if not isinstance(table_format, KnownTableFormat):
+                table_format = get_known_format(table, table_formats=table_format)
+            table_info = table_format.save_table(table=table, destination=self.cache_location)
         return table_info
 
     async def upload_table(
@@ -210,11 +213,12 @@ class ObjectDataClient:
         """
         table_info = self.save_table(table, table_format)
         upload = ObjectDataUpload(connector=self._connector, environment=self._environment, name=table_info["data"])
-        try:
-            await upload.upload_from_cache(cache=self._cache, transport=self._connector.transport, fb=fb)
-        except DataExistsError:
-            logger.debug(f"Data not uploaded because data already exists (label: {table_info['data']})")
-            fb.progress(1)
+        with _error_context(f"While uploading table data '{table_info['data']}'"):
+            try:
+                await upload.upload_from_cache(cache=self._cache, transport=self._connector.transport, fb=fb)
+            except DataExistsError:
+                logger.debug(f"Data not uploaded because data already exists (label: {table_info['data']})")
+                fb.progress(1)
         return table_info
 
     async def upload_category_table(self, table: pa.Table, fb: IFeedback = NoFeedback) -> CategoryInfo:

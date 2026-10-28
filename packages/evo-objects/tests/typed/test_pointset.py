@@ -12,8 +12,9 @@
 from __future__ import annotations
 
 import contextlib
+import sys
 import uuid
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 import pandas as pd
 from parameterized import parameterized
@@ -82,6 +83,37 @@ class TestPointSet(TestWithConnector):
 
         attr_df = await result.locations.to_dataframe()
         pd.testing.assert_frame_equal(attr_df, self.example_pointset.locations)
+
+    @parameterized.expand(
+        [("create", "preparation"), ("create", "submission"), ("replace", "preparation"), ("replace", "submission")]
+    )
+    async def test_failure_reports_object_and_stage(self, operation: str, stage: str) -> None:
+        error = ConnectionError("Service unavailable")
+        target = f"evo.objects.typed.base.{operation}_geoscience_object"
+        with (
+            self._mock_geoscience_objects() as client,
+            patch(target, AsyncMock(side_effect=error)),
+            patch("evo.objects.exceptions.logging.getLogger") as logger,
+            self.assertRaises(ConnectionError) as cm,
+        ):
+            if stage == "preparation":
+                client.upload_dataframe = AsyncMock(side_effect=error)
+            if operation == "create":
+                await PointSet.create(self.context, self.example_pointset, path="points.json")
+            else:
+                reference = ObjectReference.new(environment=self.environment, object_id=uuid.uuid4())
+                await PointSet.replace(self.context, reference=reference, data=self.example_pointset)
+        self.assertIs(error, cm.exception)
+        context = (
+            "\n".join(getattr(error, "__notes__", []))
+            if sys.version_info >= (3, 11)
+            else logger.return_value.error.call_args.args[0]
+        )
+        self.assertIn("PointSet 'Test PointSet'", context)
+        expected = "preparing" if stage == "preparation" else ("creating" if operation == "create" else "replacing")
+        self.assertIn(f"While {expected}", context)
+        if stage == "submission" and operation == "create":
+            self.assertIn("points.json", context)
 
     @parameterized.expand([BaseObject, PointSet])
     async def test_replace(self, class_to_call):

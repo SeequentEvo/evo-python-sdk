@@ -10,6 +10,7 @@
 #  limitations under the License.
 
 import json
+import sys
 from unittest import mock
 from uuid import UUID
 
@@ -20,6 +21,7 @@ from parameterized import parameterized
 
 from data import load_test_data
 from evo.common import IFeedback, RequestMethod
+from evo.common.exceptions import BadRequestException
 from evo.common.io.exceptions import DataExistsError
 from evo.common.test_tools import TestWithConnector, TestWithStorage
 from evo.common.utils import NoFeedback, PartialFeedback, get_header_metadata
@@ -197,6 +199,63 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
             headers={"Content-Type": "application/json", "Accept": "application/json"},
             body=[{"name": data["name"]} for data in put_data_response[1:]] + [{"name": put_data_response[0]["name"]}],
         )
+
+    @parameterized.expand(["referenced", "table"])
+    async def test_upload_failure_preserves_exception_and_identifies_data(self, upload_type: str) -> None:
+        response = load_test_data("put_data_batch.json")[:1]
+        name = response[0]["name"]
+        (self.data_client.cache_location / name).touch()
+        error = ConnectionError("Storage unavailable")
+        with (
+            self.transport.set_http_response(status_code=200, content=json.dumps(response)),
+            mock.patch("evo.common.io.upload.StorageDestination", autospec=True) as destination,
+            mock.patch("evo.objects.exceptions.logging.getLogger") as logger,
+            self.assertRaises(ConnectionError) as cm,
+        ):
+            destination.upload_file.side_effect = error
+            if upload_type == "referenced":
+                await self.data_client.upload_referenced_data({"coordinates": {"data": name}})
+            else:
+                table, _ = get_sample_table_and_bytes(table_formats.FLOAT_ARRAY_2, 1)
+                with mock.patch.object(self.data_client, "save_table", return_value={"data": name}):
+                    await self.data_client.upload_table(table)
+        self.assertIs(error, cm.exception)
+        context = (
+            "\n".join(getattr(error, "__notes__", []))
+            if sys.version_info >= (3, 11)
+            else "\n".join(call.args[0] for call in logger.return_value.error.call_args_list)
+        )
+        self.assertIn("While uploading", context)
+        self.assertIn(name, context)
+
+    async def test_upload_url_failure_reports_upload_stage(self) -> None:
+        with (
+            self.transport.set_http_response(status_code=400, content='{"title": "Bad request"}'),
+            mock.patch("evo.objects.exceptions.logging.getLogger") as logger,
+            self.assertRaises(BadRequestException) as cm,
+        ):
+            await self.data_client.upload_referenced_data({"coordinates": {"data": "0" * 64}})
+        context = (
+            "\n".join(getattr(cm.exception, "__notes__", []))
+            if sys.version_info >= (3, 11)
+            else logger.return_value.error.call_args.args[0]
+        )
+        self.assertIn("While uploading referenced data", context)
+
+    def test_incompatible_table_is_reported_as_preparation_not_upload(self) -> None:
+        with (
+            mock.patch("evo.objects.exceptions.logging.getLogger") as logger,
+            self.assertRaises(TableFormatError) as cm,
+        ):
+            self.data_client.save_table(pa.table({"value": ["text"]}), table_format=table_formats.FLOAT_ARRAY_2)
+        context = (
+            "\n".join(getattr(cm.exception, "__notes__", []))
+            if sys.version_info >= (3, 11)
+            else logger.return_value.error.call_args.args[0]
+        )
+        self.assertIn("While preparing an Arrow table for Evo Parquet storage", context)
+        self.assertNotIn("While uploading", context)
+        self.transport.assert_no_requests()
 
     @parameterized.expand(
         [
