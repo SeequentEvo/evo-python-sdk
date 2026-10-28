@@ -19,6 +19,7 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock
 from uuid import UUID
 
+import pandas as pd
 from IPython.core.formatters import HTMLFormatter
 
 from evo.widgets import _register_formatters
@@ -869,7 +870,7 @@ class TestFormatBlockModelAttributes(unittest.TestCase):
         self.assertIn("density", html)
 
 
-class TestFormatReport(unittest.TestCase):
+class TestFormatReport(HtmlFixtureTestCase):
     """Tests for the format_report function."""
 
     def _create_mock_report(self, **kwargs):
@@ -977,14 +978,42 @@ class TestFormatReport(unittest.TestCase):
         self.assertIn("Last run:", html)
         self.assertIn("2025-01-15", html)
 
+    def test_escapes_report_specification_fields(self):
+        """Column and category fields from the API must not be rendered as HTML."""
+        payload = '<img src=x onerror="alert(1)">'
+        col = MagicMock()
+        col.label = payload + "label"
+        col.aggregation = payload + "agg"
+        col.output_unit_id = payload + "unit"
+        cat = MagicMock()
+        cat.label = payload + "cat"
+        cat.values = ["ore", payload + "value"]
 
-class TestFormatReportResult(unittest.TestCase):
+        html = format_report(self._create_mock_report(name=payload, columns=[col], categories=[cat]))
+
+        self.assert_html_matches_fixture(html, "report_escaped")
+
+    def test_formats_report_category_with_non_string_values(self):
+        """Non-string category values are converted with str() before joining and escaping."""
+
+        class HtmlValue:
+            def __str__(self):
+                return "<b>bold</b>"
+
+        cat = MagicMock()
+        cat.label = "Zone"
+        cat.values = [1, 2.5, None, True, HtmlValue()]
+
+        html = format_report(self._create_mock_report(categories=[cat]))
+
+        self.assert_html_matches_fixture(html, "report_non_string_category_values")
+
+
+class TestFormatReportResult(HtmlFixtureTestCase):
     """Tests for the format_report_result function."""
 
     def _create_mock_report_result(self, **kwargs):
         """Create a mock ReportResult object."""
-        import pandas as pd
-
         defaults = {
             "version_id": 1,
             "created_at": datetime(2025, 1, 15, 10, 30, 0),
@@ -1027,6 +1056,15 @@ class TestFormatReportResult(unittest.TestCase):
         self.assertIn("waste", html)
         self.assertIn("1000", html)
         self.assertIn("2.5", html)
+
+    def test_escapes_report_result_headers_and_cells(self):
+        """Report labels and category values from the API must not be rendered as HTML."""
+        payload = '<img src=x onerror="alert(1)">'
+        df = pd.DataFrame({payload + "header": [payload + "cell"], "Tonnage": [1000.0]})
+
+        html = format_report_result(self._create_mock_report_result(dataframe=df))
+
+        self.assert_html_matches_fixture(html, "report_result_escaped")
 
 
 class TestFormatTaskResult(HtmlFixtureTestCase):
