@@ -977,6 +977,23 @@ class TestFormatReport(unittest.TestCase):
         self.assertIn("Last run:", html)
         self.assertIn("2025-01-15", html)
 
+    def test_escapes_report_specification_fields(self):
+        """Column and category fields from the API must not be rendered as HTML."""
+        payload = '<img src=x onerror="alert(1)">'
+        col = MagicMock()
+        col.label = payload + "label"
+        col.aggregation = payload + "agg"
+        col.output_unit_id = payload + "unit"
+        cat = MagicMock()
+        cat.label = payload + "cat"
+        cat.values = ["ore", payload + "value"]
+
+        html = format_report(self._create_mock_report(name=payload, columns=[col], categories=[cat]))
+
+        self.assertNotIn("<img", html)
+        for suffix in ("label", "agg", "unit", "cat", "value"):
+            self.assertIn(f"&lt;img src=x onerror=&quot;alert(1)&quot;&gt;{suffix}", html)
+
 
 class TestFormatReportResult(unittest.TestCase):
     """Tests for the format_report_result function."""
@@ -1027,6 +1044,20 @@ class TestFormatReportResult(unittest.TestCase):
         self.assertIn("waste", html)
         self.assertIn("1000", html)
         self.assertIn("2.5", html)
+
+    def test_escapes_report_result_headers_and_cells(self):
+        """Report labels and category values from the API must not be rendered as HTML."""
+        import pandas as pd
+
+        payload = '<img src=x onerror="alert(1)">'
+        df = pd.DataFrame({payload + "header": [payload + "cell"], "Tonnage": [1000.0]})
+
+        html = format_report_result(self._create_mock_report_result(dataframe=df))
+
+        self.assertNotIn("<img", html)
+        self.assertIn("<th>&lt;img src=x onerror=&quot;alert(1)&quot;&gt;header</th>", html)
+        self.assertIn("<td>&lt;img src=x onerror=&quot;alert(1)&quot;&gt;cell</td>", html)
+        self.assertIn("<td>1000.0</td>", html)
 
 
 class TestFormatTaskResult(HtmlFixtureTestCase):
