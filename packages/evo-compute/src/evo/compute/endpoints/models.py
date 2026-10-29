@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 from enum import Enum
+from typing import Any
 
 from pydantic import AnyUrl, BaseModel, ConfigDict, Field, StrictInt, StrictStr
 
@@ -106,3 +107,64 @@ class CompletedJobResponse(BaseModel):
 
     error: Error | None = None
     """An error that occurred during the job."""
+
+
+# Discovery endpoint models.
+
+
+class TaskResource(BaseModel):
+    """A single compute task advertised by the discovery endpoint."""
+
+    model_config = ConfigDict(
+        extra="allow",
+    )
+
+    topic: StrictStr
+    """The topic the task belongs to (e.g. ``geostatistics``)."""
+
+    name: StrictStr
+    """The task name within the topic (e.g. ``kriging``)."""
+
+    key: StrictStr | None = None
+    """A stable identifier for the task, if provided."""
+
+    display_name: StrictStr | None = None
+    """A human-friendly name for the task."""
+
+    version: StrictStr | None = None
+    """The task version."""
+
+    feature_flag: StrictStr | None = None
+    """The api-preview feature flag gating the task, when it is a preview task."""
+
+    description: StrictStr | None = None
+    """A description of the task."""
+
+    parameters: dict[str, Any] = Field(default_factory=dict)
+    """The JSON Schema for the task's parameters (full schema when fetched with ``details=true``)."""
+
+    results: dict[str, Any] | None = None
+    """The JSON Schema for the task's results, when advertised."""
+
+
+class DiscoveryResponse(BaseModel):
+    """The paginated response from ``GET /compute/orgs/{org_id}/tasks``."""
+
+    model_config = ConfigDict(
+        extra="allow",
+    )
+
+    results: list[TaskResource] = Field(default_factory=list)
+    """The advertised tasks."""
+
+    limit: StrictInt | None = None
+    """The requested page size."""
+
+    offset: StrictInt | None = None
+    """The page offset."""
+
+    total: StrictInt | None = None
+    """The total number of tasks available."""
+
+    count: StrictInt | None = None
+    """The number of tasks returned in this page."""
