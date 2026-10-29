@@ -46,10 +46,10 @@ Example::
 
 from __future__ import annotations
 
-from typing import Any, ClassVar, Literal
+from typing import ClassVar, Literal
 
 from evo.common import IContext
-from pydantic import BaseModel, Field, SerializerFunctionWrapHandler, field_validator, model_serializer
+from pydantic import BaseModel, Field, field_validator
 
 from ..common import (
     AttributeExpression,
@@ -106,14 +106,6 @@ class SimulationReportDistribution(BaseModel):
 
     weights: AttributeExpression | None = None
     """Optional sample weights. Accepts a typed attribute or an attribute expression."""
-
-    @model_serializer(mode="wrap")
-    def _serialize(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
-        result = handler(self)
-        # The service requires this key even when null; TaskRunner dumps with exclude_none=True.
-        if self.tail_extrapolation is None:
-            result["tail_extrapolation"] = None
-        return result
 
 
 class SimReportContextItem(BaseModel):

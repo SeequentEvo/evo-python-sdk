@@ -176,20 +176,18 @@ class TestConSimParametersSerialization(unittest.TestCase):
         d = _dump(params)
         self.assertEqual(d["distribution"]["tail_extrapolation"]["upper"]["power"], 0.5)
 
-    def test_distribution_without_tail_extrapolation_sends_null(self):
+    def test_distribution_without_tail_extrapolation_omits_key(self):
         d = _dump(_params(distribution=DistributionParams(weights="declustering_weights")))
-        self.assertEqual(d["distribution"], {"weights": "declustering_weights", "tail_extrapolation": None})
+        self.assertEqual(d["distribution"], {"weights": "declustering_weights"})
 
-    def test_tail_extrapolation_without_lower_sends_null(self):
+    def test_tail_extrapolation_without_lower_omits_key(self):
         params = _params(
             distribution=DistributionParams(
                 tail_extrapolation=TailExtrapolationParams(upper=UpperTailParams(power=0.5, max=100.0)),
             ),
         )
         d = _dump(params)
-        self.assertEqual(
-            d["distribution"]["tail_extrapolation"], {"upper": {"power": 0.5, "max": 100.0}, "lower": None}
-        )
+        self.assertEqual(d["distribution"]["tail_extrapolation"], {"upper": {"power": 0.5, "max": 100.0}})
 
     def test_tail_extrapolation_with_lower(self):
         params = _params(
