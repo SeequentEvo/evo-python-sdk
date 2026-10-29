@@ -16,7 +16,52 @@ import traceback
 import unittest
 from collections.abc import Callable, Sequence
 
-from evo.common.exceptions import EvoExceptionGroup
+from evo.common.exceptions import BadRequestException, EvoExceptionGroup
+
+
+class TestInvalidObjectError(unittest.TestCase):
+    def test_validation_paths_and_full_detail_are_preserved(self) -> None:
+        content = {
+            "type": "https://seequent.com/error-codes/geoscienceobject/schemas/invalid-object",
+            "title": "The Geoscience Object Is Invalid.",
+            "detail": f"{{'values': '{'x' * 1000}'}} is not valid under any of the given schemas",
+            "json_path": "$.collections[0]",
+            "schema_path": ["properties", "collections", "items", "oneOf"],
+        }
+        error = BadRequestException(400, "Bad Request", content, None)
+        message = str(error)
+        self.assertIn("Invalid value at: $.collections[0]", message)
+        self.assertIn(f"Failed schema rule: {content['schema_path']}", message)
+        self.assertIn("is not valid under any of the given schemas", message)
+        self.assertNotIn("x" * 1000, message)
+        self.assertIn("Full message available in .detail", message)
+        self.assertEqual(content["detail"], error.detail)
+        self.assertIs(content, error.content)
+        self.assertIs(type(error), BadRequestException)
+
+    def test_missing_paths_and_detail_preview_boundaries(self) -> None:
+        for length in (499, 500, 501):
+            with self.subTest(length=length):
+                detail = "x" * length
+                content = {
+                    "type": "https://seequent.com/error-codes/geoscienceobject/schemas/invalid-object",
+                    "title": "Invalid object",
+                    "detail": detail,
+                }
+                message = str(BadRequestException(400, "Bad Request", content, None))
+                self.assertNotIn("Invalid value at:", message)
+                self.assertNotIn("Failed schema rule:", message)
+                self.assertEqual(length > 500, "[omitted]" in message)
+                if length <= 500:
+                    self.assertIn(f"Detail: {detail}", message)
+
+    def test_unrelated_bad_requests_are_unchanged(self) -> None:
+        content = {"title": "Bad request", "detail": "x" * 1000, "json_path": "$.unrelated"}
+        error = BadRequestException(400, "Bad Request", content, None)
+        self.assertEqual(
+            f"Error: (400) Bad Request\nType: about:blank\nTitle: Bad request\nDetail: {content['detail']}",
+            str(error),
+        )
 
 
 class MyExc1(Exception): ...

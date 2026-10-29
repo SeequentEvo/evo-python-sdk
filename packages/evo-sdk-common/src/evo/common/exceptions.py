@@ -298,7 +298,15 @@ class BaseTypedError(EvoAPIException):
             error_message += f" {reason}"
         error_message += f"\nType: {self.type_}"
         error_message += f"\nTitle: {self.title}"
+        invalid_object = isinstance(self.type_, str) and self.type_.endswith("/geoscienceobject/schemas/invalid-object")
+        if invalid_object:
+            if json_path := self.content.get("json_path"):
+                error_message += f"\nInvalid value at: {json_path}"
+            if schema_path := self.content.get("schema_path"):
+                error_message += f"\nFailed schema rule: {schema_path}"
         if detail := self.detail:
+            if invalid_object and isinstance(detail, str) and len(detail) > 500:
+                detail = f"{detail[:250]} ... [omitted] ... {detail[-250:]}\n(Full message available in .detail)"
             error_message += f"\nDetail: {detail}"
         return error_message
 
