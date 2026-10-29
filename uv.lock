@@ -1409,7 +1409,7 @@ test = [
 
 [[package]]
 name = "evo-widgets"
-version = "0.2.2"
+version = "0.2.3"
 source = { editable = "packages/evo-widgets" }
 dependencies = [
     { name = "evo-sdk-common" },
