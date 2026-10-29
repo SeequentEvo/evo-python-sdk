@@ -42,6 +42,8 @@ _PAGE_SIZE = 100
 class DiscoveryClient:
     """List the compute task catalogue for an organization.
 
+    Returned tasks are independent copies, so editing them does not affect the cache.
+
     :param connector: The API connector to use.
     :param org_id: The organization ID.
     :param cache_ttl_seconds: How long a fetched catalogue is cached before the next call
@@ -131,7 +133,7 @@ class DiscoveryClient:
 
         :return: Every advertised task.
         """
-        return list(await self._catalogue(force_refresh))
+        return [task.model_copy(deep=True) for task in await self._catalogue(force_refresh)]
 
     async def get_topics(self, *, force_refresh: bool = False) -> list[str]:
         """Return the sorted list of topics that have discoverable tasks.
@@ -148,7 +150,7 @@ class DiscoveryClient:
 
         :return: The tasks in the topic (empty if the topic is not advertised).
         """
-        return [task for task in await self._catalogue(force_refresh) if task.topic == topic]
+        return [task.model_copy(deep=True) for task in await self._catalogue(force_refresh) if task.topic == topic]
 
     async def get_task(self, topic: str, name: str, *, force_refresh: bool = False) -> TaskResource | None:
         """Return a single task by topic and name, or ``None`` if it is not advertised.
@@ -161,5 +163,5 @@ class DiscoveryClient:
         """
         for task in await self._catalogue(force_refresh):
             if task.topic == topic and task.name == name:
-                return task
+                return task.model_copy(deep=True)
         return None

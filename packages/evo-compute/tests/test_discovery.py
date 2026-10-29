@@ -175,6 +175,28 @@ class TestDiscoveryClient(TestWithConnector):
             second = await self.client.list_tasks()
         self.assertTrue(second)
 
+    async def test_returned_tasks_do_not_mutate_the_cache(self) -> None:
+        expected = TaskResource.model_validate(self.catalogue["results"][0])
+        with self.set_discovery_response():
+            for accessor, arguments in (
+                (self.client.list_tasks, ()),
+                (self.client.get_topic_tasks, ("geostatistics",)),
+                (self.client.get_task, ("geostatistics", "declustering")),
+            ):
+                with self.subTest(accessor=accessor.__name__):
+                    await self.client.list_tasks(force_refresh=True)
+                    returned = await accessor(*arguments)
+                    task = returned[0] if isinstance(returned, list) else returned
+                    assert task is not None
+                    task.display_name = "Changed locally"
+                    task.parameters["properties"]["source"]["type"] = "integer"
+                    task.parameters["required"].append("extra_parameter")
+                    assert task.results is not None
+                    task.results["properties"]["target"]["type"] = "string"
+                    cached = await self.client.get_task("geostatistics", "declustering")
+                    self.assertEqual(expected, cached)
+        self.transport.assert_n_requests_made(3)
+
     async def test_concurrent_cold_calls_fetch_once(self) -> None:
         """A burst of concurrent calls on a cold cache triggers a single fetch."""
         calls = 0
