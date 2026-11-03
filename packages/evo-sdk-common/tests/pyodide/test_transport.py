@@ -17,6 +17,7 @@ from unittest import mock
 from evo.common import HTTPHeaderDict, RequestMethod
 from evo.common.exceptions import ClientValueError, TransportError
 from evo.common.interfaces import ITransport
+from evo.common.io.http import HTTPSource
 
 from ._stubs import FakeBlob, FakeFetch, FakeFormData, FakeResponse, install
 
@@ -158,6 +159,28 @@ class TestJsTransport(unittest.IsolatedAsyncioTestCase):
         assert result.headers["Content-Length"] == "987"
         assert result.headers["Accept-Ranges"] == "bytes"
 
+    async def test_head_probe_preserves_partially_exposed_headers(self) -> None:
+        for headers in ({"Content-Length": "987"}, {"Accept-Ranges": "bytes"}):
+            with self.subTest(headers=headers):
+                self.patch_fetch(
+                    FakeResponse(headers=headers),
+                    FakeResponse(status=206, headers={"Content-Range": "bytes 0-0/987"}),
+                )
+
+                result = await self.transport.request(RequestMethod.HEAD, "https://example.test/file")
+
+                assert result.headers["Content-Length"] == "987"
+                assert result.headers["Accept-Ranges"] == "bytes"
+
+    async def test_http_source_accepts_size_when_head_hides_range_support(self) -> None:
+        self.patch_fetch(
+            FakeResponse(headers={"Content-Length": "987"}),
+            FakeResponse(status=206, headers={"Content-Range": "bytes 0-0/987"}),
+        )
+
+        async with HTTPSource(mock.AsyncMock(return_value="https://example.test/file"), self.transport) as source:
+            assert await source.get_size() == 987
+
     async def test_head_does_not_claim_range_support_without_evidence(self) -> None:
         probe = FakeResponse(status=200, body=b"large file")
         self.patch_fetch(FakeResponse(), probe)
@@ -189,16 +212,30 @@ class TestJsTransport(unittest.IsolatedAsyncioTestCase):
         assert not response.body_read
 
     async def test_followed_task_submission_redirect_is_restored_as_303(self) -> None:
-        response = FakeResponse(
-            status=202, url="https://example.test/compute/orgs/org/topic/task/job/status", redirected=True
+        for status in (200, 202):
+            with self.subTest(status=status):
+                response = FakeResponse(
+                    status=status, url="https://example.test/compute/orgs/org/topic/task/job/status", redirected=True
+                )
+                self.patch_fetch(response)
+
+                result = await self.transport.request(
+                    RequestMethod.POST, "https://example.test/compute/orgs/org/topic/task"
+                )
+
+                assert result.status == 303
+                assert result.reason == "See Other"
+                assert result.headers["Location"] == "https://example.test/compute/orgs/org/topic/task/job/status"
+                assert result.data == b""
+                assert not response.body_read
+
+    async def test_unsuccessful_task_submission_redirect_is_not_restored(self) -> None:
+        self.patch_fetch(
+            FakeResponse(status=500, url="https://example.test/compute/orgs/org/topic/task/job/status", redirected=True)
         )
-        self.patch_fetch(response)
 
-        result = await self.transport.request(RequestMethod.POST, "https://example.test/compute/orgs/org/topic/task")
-
-        assert result.status == 303
-        assert result.reason == "See Other"
-        assert result.headers["Location"] == "https://example.test/compute/orgs/org/topic/task/job/status"
+        with self.assertRaisesRegex(TransportError, "original response is unavailable"):
+            await self.transport.request(RequestMethod.POST, "https://example.test/compute/orgs/org/topic/task")
 
     async def test_unrelated_followed_redirect_fails_instead_of_returning_final_response(self) -> None:
         response = FakeResponse(status=200, url="https://example.test/file", redirected=True)
@@ -280,7 +317,7 @@ class TestJsTransport(unittest.IsolatedAsyncioTestCase):
             with self.assertRaises(TransportError) as ctx:
                 await self.transport.request(RequestMethod.GET, "https://example.test/", request_timeout=(0.01, 1))
 
-        assert isinstance(ctx.exception.caused_by, TimeoutError)
+        assert isinstance(ctx.exception.caused_by, asyncio.TimeoutError)
         assert signals[0].aborted
 
     async def test_total_timeout_aborts_body_read(self) -> None:
@@ -294,5 +331,5 @@ class TestJsTransport(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(TransportError) as ctx:
             await self.transport.request(RequestMethod.GET, "https://example.test/", request_timeout=0.01)
 
-        assert isinstance(ctx.exception.caused_by, TimeoutError)
+        assert isinstance(ctx.exception.caused_by, asyncio.TimeoutError)
         assert fetch.last_call["signal"].aborted

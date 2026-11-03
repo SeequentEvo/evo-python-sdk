@@ -287,6 +287,16 @@ class TestLoginWithAccessToken(_ServiceManagerWidgetTestCase):
         await self.widget.login()
         assert self.widget.organizations
 
+    async def test_explicit_token_click_refreshes_without_logging_in(self) -> None:
+        self._respond()
+        with mock.patch.object(self.widget, "login", new_callable=mock.AsyncMock) as login:
+            task = self.widget._handle_frontend_msg(self.widget, {"type": "click"}, [])
+            assert task is not None
+            await task
+
+        assert self.widget.organizations
+        login.assert_not_awaited()
+
     def _select_first_real_org(self):
         # The first org in the test data uses the nil UUID, which is also the selector's "unselected" sentinel.
         org = next(org for org in self.widget.organizations if org.id != UUID(int=0))
@@ -329,3 +339,168 @@ class TestLoginWithAccessToken(_ServiceManagerWidgetTestCase):
         self.widget._authorizer = mock.Mock()
         with self.assertRaises(NotImplementedError):
             await self.widget.login()
+
+
+class TestBrowserTokenLifecycle(_ServiceManagerWidgetTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.channels = [mock.Mock(), mock.Mock()]
+        browser = mock.Mock()
+        browser.BroadcastChannel.new.side_effect = self.channels
+        ffi = mock.Mock()
+        ffi.create_proxy.side_effect = lambda callback: mock.Mock(side_effect=callback)
+        for patcher in (
+            mock.patch.dict(sys.modules, {"js": browser, "pyodide": mock.Mock(), "pyodide.ffi": ffi}),
+            mock.patch("evo.notebooks.widgets.sys.platform", "emscripten"),
+        ):
+            patcher.start()
+            self.addCleanup(patcher.stop)
+
+        self.transport = TestTransport(base_url=DISCOVERY_URL)
+
+        async def handler(*, url: str, **kwargs: object) -> MockResponse:
+            content = (
+                json.dumps(load_test_data("successful_service_discovery.json"))
+                if "discovery" in url
+                else EMPTY_WORKSPACE_LIST
+            )
+            return MockResponse(status_code=200, content=content, headers={"Content-Type": "application/json"})
+
+        self.transport.request.side_effect = handler
+        self.widget = ServiceManagerWidget.with_access_token(
+            discovery_url=DISCOVERY_URL, cache_location=self.cache_location, transport=self.transport
+        )
+        self.addCleanup(self.widget.close)
+
+    def send_browser_message(self, content: dict[str, str], channel_index: int = 0) -> None:
+        listener = self.channels[channel_index].addEventListener.call_args.args[1]
+        listener(mock.Mock(data=mock.Mock(to_py=lambda: content)))
+
+    def assert_channel_closed(self, channel_index: int = 0) -> None:
+        channel = self.channels[channel_index]
+        listener = channel.addEventListener.call_args.args[1]
+        channel.removeEventListener.assert_called_once_with("message", listener)
+        channel.close.assert_called_once()
+        listener.destroy.assert_called_once()
+
+    async def test_click_installs_already_received_token_before_discovery(self) -> None:
+        self.send_browser_message({"type": "browser_token", "token": "browser-token"})
+
+        task = self.widget._handle_frontend_msg(self.widget, {"type": "click"}, [])
+        assert task is not None
+        await task
+
+        assert self.widget.organizations
+        expected = await AccessTokenAuthorizer("browser-token").get_default_headers()
+        for call in self.transport.request.await_args_list:
+            assert call.kwargs["headers"]["Authorization"] == expected["Authorization"]
+        discovery_calls = [call for call in self.transport.request.await_args_list if "discovery" in call.kwargs["url"]]
+        assert len(discovery_calls) == 1
+        self.assert_channel_closed()
+
+    async def test_click_waits_for_browser_token_before_discovery(self) -> None:
+        task = self.widget._handle_frontend_msg(self.widget, {"type": "click"}, [])
+        assert task is not None
+        try:
+            await asyncio.sleep(0)
+            self.transport.request.assert_not_awaited()
+            self.send_browser_message({"type": "browser_token", "token": "browser-token"})
+            await asyncio.wait_for(task, 1)
+        finally:
+            if not task.done():
+                task.cancel()
+                with self.assertRaises(asyncio.CancelledError):
+                    await task
+
+        assert self.widget.organizations
+        assert not self.widget.loading
+        assert not self.widget.disabled
+
+    async def test_click_retries_browser_token_failure(self) -> None:
+        self.send_browser_message({"type": "browser_token", "error": "Sign in first."})
+        first = self.widget._handle_frontend_msg(self.widget, {"type": "click"}, [])
+        assert first is not None
+        with self.assertRaisesRegex(OAuthError, "Sign in first"):
+            await first
+        self.transport.request.assert_not_awaited()
+        assert not self.widget.loading
+        assert not self.widget.disabled
+        self.assert_channel_closed()
+
+        retry = self.widget._handle_frontend_msg(self.widget, {"type": "click"}, [])
+        assert retry is not None
+        try:
+            await asyncio.sleep(0)
+            self.send_browser_message({"type": "browser_token", "token": "retry-token"}, channel_index=1)
+            await asyncio.wait_for(retry, 1)
+        finally:
+            if not retry.done():
+                retry.cancel()
+                with self.assertRaises(asyncio.CancelledError):
+                    await retry
+        assert self.widget.organizations
+        self.assert_channel_closed(channel_index=1)
+
+    async def test_close_releases_channel_and_rejects_reuse(self) -> None:
+        self.widget.close()
+        self.widget.close()
+
+        self.assert_channel_closed()
+        assert self.widget.comm is None
+        assert self.widget.browser_token_channel == ""
+        for operation in (self.widget.login, self.widget.refresh_services):
+            with self.subTest(operation=operation.__name__):
+                with self.assertRaisesRegex(OAuthError, "closed"):
+                    await operation()
+        self.transport.open.assert_not_awaited()
+        self.transport.request.assert_not_awaited()
+        self.transport.close.assert_not_awaited()
+
+        for content in ({"type": "click"}, {"type": "browser_token", "token": "late-token"}):
+            assert self.widget._handle_frontend_msg(self.widget, content, []) is None
+        assert self.widget._browser_token is None
+        self.channels[1].addEventListener.assert_not_called()
+
+    async def test_close_promptly_ends_pending_login(self) -> None:
+        task = asyncio.create_task(self.widget.login())
+        try:
+            await asyncio.sleep(0)
+            assert not task.done()
+            self.widget.close()
+
+            with self.assertRaisesRegex(OAuthError, "closed"):
+                await asyncio.wait_for(task, 1)
+        finally:
+            if not task.done():
+                task.cancel()
+                with self.assertRaises(asyncio.CancelledError):
+                    await task
+
+        self.assert_channel_closed()
+        self.transport.request.assert_not_awaited()
+        assert self.widget._browser_token is None
+        assert self.widget._browser_token_error is None
+        assert not self.widget.loading
+
+    async def test_close_after_login_does_not_repeat_channel_cleanup(self) -> None:
+        self.send_browser_message({"type": "browser_token", "token": "browser-token"})
+        await self.widget.login()
+
+        self.widget.close()
+        self.widget.close()
+
+        self.assert_channel_closed()
+
+    def test_close_after_partial_initialization_releases_channel(self) -> None:
+        widget = ServiceManagerWidget.__new__(ServiceManagerWidget)
+        self.addCleanup(widget.close)
+        with mock.patch("evo.notebooks.widgets.ServiceManager", side_effect=ValueError("Initialization failed")):
+            with self.assertRaisesRegex(ValueError, "Initialization failed"):
+                widget.__init__(
+                    self.transport, AccessTokenAuthorizer(""), DISCOVERY_URL, self.widget.cache, browser_token=True
+                )
+
+        widget.close()
+        widget.close()
+
+        self.assert_channel_closed(channel_index=1)

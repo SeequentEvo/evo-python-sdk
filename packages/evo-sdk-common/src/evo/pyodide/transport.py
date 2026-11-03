@@ -144,15 +144,17 @@ class JsTransport(ITransport):
                 content_range = HTTPHeaderDict(probe.headers).get("Content-Range", "")
                 match = re.fullmatch(r"bytes 0-0/(\d+)", content_range)
                 if probe.status == 206 and match:
-                    resp_headers["Content-Length"] = match.group(1)
-                    resp_headers["Accept-Ranges"] = "bytes"
+                    if "Content-Length" not in resp_headers:
+                        resp_headers["Content-Length"] = match.group(1)
+                    if "Accept-Ranges" not in resp_headers:
+                        resp_headers["Accept-Ranges"] = "bytes"
 
             if resp.redirected:
                 request_path = urlsplit(url).path.rstrip("/")
                 status_path = urlsplit(str(resp.url)).path
                 if (
                     method == RequestMethod.POST
-                    and resp.status == 202
+                    and resp.status in (200, 202)
                     and re.fullmatch(r".*/compute/orgs/[^/]+/[^/]+/[^/]+", request_path)
                     and re.fullmatch(re.escape(request_path) + r"/[^/]+/status", status_path)
                 ):

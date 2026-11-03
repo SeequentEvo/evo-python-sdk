@@ -242,6 +242,7 @@ class ServiceManagerWidget(anywidget.AnyWidget, IContext, metaclass=_ServiceMana
         :param discovery_url: The URL of the Evo Discovery service.
         :param cache: The cache to use for storing tokens and other data.
         """
+        self._widget_closed = False
         self._authorizer = authorizer
         self._cache = cache
         self._browser_token_event = asyncio.Event() if browser_token else None
@@ -287,12 +288,28 @@ class ServiceManagerWidget(anywidget.AnyWidget, IContext, metaclass=_ServiceMana
         return channel_id
 
     def _close_browser_token_channel(self) -> None:
-        if self._browser_channel is not None:
+        if getattr(self, "_browser_channel", None) is not None:
             self._browser_channel.removeEventListener("message", self._browser_channel_listener)
             self._browser_channel.close()
             self._browser_channel_listener.destroy()
             self._browser_channel = None
             self._browser_channel_listener = None
+
+    def close(self) -> None:
+        """Release browser-token resources and close the widget, ending any pending token wait."""
+        self._widget_closed = True
+        self._close_browser_token_channel()
+        self.browser_token_channel = ""
+        event = getattr(self, "_browser_token_event", None)
+        if event is not None:
+            event.set()
+        self._browser_token = None
+        self._browser_token_error = None
+        super().close()
+
+    def _check_not_closed(self) -> None:
+        if self._widget_closed:
+            raise OAuthError("This ServiceManagerWidget is closed. Create a new widget to continue.")
 
     @classmethod
     def with_auth_code(
@@ -399,6 +416,7 @@ class ServiceManagerWidget(anywidget.AnyWidget, IContext, metaclass=_ServiceMana
         )
 
     async def _receive_browser_token(self, timeout_seconds: int) -> None:
+        self._check_not_closed()
         event = self._browser_token_event
         if event is None:
             return
@@ -406,6 +424,7 @@ class ServiceManagerWidget(anywidget.AnyWidget, IContext, metaclass=_ServiceMana
             self.browser_token_channel = self._open_browser_token_channel()
         try:
             await asyncio.wait_for(event.wait(), timeout_seconds)
+            self._check_not_closed()
             if self._browser_token_error:
                 raise OAuthError(self._browser_token_error)
             if not self._browser_token:
@@ -414,7 +433,7 @@ class ServiceManagerWidget(anywidget.AnyWidget, IContext, metaclass=_ServiceMana
             self._authorizer = AccessTokenAuthorizer(self._browser_token)
             self._service_manager._authorizer = self._authorizer
             self._browser_token_event = None
-        except TimeoutError as exc:
+        except asyncio.TimeoutError as exc:
             raise OAuthError(
                 "Timed out waiting for the browser access token. Display the widget and try again."
             ) from exc
@@ -451,7 +470,9 @@ class ServiceManagerWidget(anywidget.AnyWidget, IContext, metaclass=_ServiceMana
         :param timeout_seconds: The maximum time (in seconds) to wait for the authorisation process to complete.
 
         :returns: The current instance of the ServiceManagerWidget.
+        :raises OAuthError: If the widget is closed.
         """
+        self._check_not_closed()
         # Open the transport without closing it to avoid the overhead of opening it multiple times.
         await self._service_manager._transport.open()
         with self._loading():
@@ -484,8 +505,12 @@ class ServiceManagerWidget(anywidget.AnyWidget, IContext, metaclass=_ServiceMana
             self.button_text = "Sign In"
 
     def _handle_frontend_msg(self, _widget: object, content: object, _buffers: list) -> asyncio.Future | None:
+        if self._widget_closed:
+            return None
         if isinstance(content, dict) and content.get("type") == "click":
-            return asyncio.ensure_future(self.refresh_services())
+            return asyncio.ensure_future(
+                self.login() if self._browser_token_event is not None else self.refresh_services()
+            )
         if isinstance(content, dict) and content.get("type") == "browser_token" and self._browser_token_event:
             self._browser_token = content.get("token") if isinstance(content.get("token"), str) else None
             self._browser_token_error = content.get("error") if isinstance(content.get("error"), str) else None
@@ -512,6 +537,7 @@ class ServiceManagerWidget(anywidget.AnyWidget, IContext, metaclass=_ServiceMana
             self._org_selector.refresh()
 
     async def refresh_services(self) -> None:
+        self._check_not_closed()
         with self._loading():
             with self._loading_services():
                 try:
