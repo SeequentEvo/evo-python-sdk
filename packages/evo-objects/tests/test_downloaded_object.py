@@ -44,6 +44,7 @@ from evo.objects.exceptions import ObjectModifiedError
 from evo.objects.io import _CACHE_SCOPE
 from evo.objects.parquet import TableInfo
 from evo.objects.utils import KnownTableFormat
+from evo.objects.utils.tables import _stash_pandas_metadata
 from helpers import NoImport, UnloadModule, assign_property, get_sample_table_and_bytes, write_table_to_bytes
 
 _OBJECTS_URL = f"{BASE_URL.rstrip('/')}/geoscience-object/orgs/{ORG.id}/workspaces/{WORKSPACE_ID}/objects"
@@ -483,6 +484,62 @@ class TestDownloadedObject(TestWithConnector, TestWithStorage):
         expected_dataframe = sample_table.to_pandas()
         expected_dataframe.columns = ["InvRes"]
         assert_frame_equal(expected_dataframe, actual_dataframe)
+
+    @parameterized.expand(
+        [
+            ("string_without_index", pd.Index(["value"]), False),
+            ("string_with_index", pd.Index(["value"]), None),
+            ("integer_with_index", pd.Index([1]), None),
+            ("unnamed_with_index", pd.Index([None]), None),
+            ("multiindex_with_index", pd.MultiIndex.from_tuples([("group", "value")]), None),
+        ]
+    )
+    async def test_download_dataframe_restores_stashed_pandas_metadata(self, _label, columns, preserve_index):
+        values_path = "locations.attributes[1].values"
+        source_df = pd.DataFrame({"value": pd.Series([1, -999, None], dtype="Int64")})
+        source_df.columns = columns
+        with (
+            self.assertWarnsRegex(UserWarning, "column names of mixed type")
+            if columns[0] is None
+            else contextlib.nullcontext()
+        ):
+            stashed_table = _stash_pandas_metadata(pa.Table.from_pandas(source_df, preserve_index=preserve_index))
+        self._set_property(f"{values_path}.data_type", "int64")
+        self._setup_table(values_path, stashed_table)
+
+        actual_df = await self.object.download_dataframe(
+            values_path,
+            nan_values=[-999],
+            column_names=["renamed_value"],
+        )
+        expected_df = pd.DataFrame({"renamed_value": pd.Series([1, None, None], dtype="Int64")})
+        assert_frame_equal(expected_df, actual_df)
+
+    @parameterized.expand(
+        [
+            ("integer", pd.Index([1])),
+            ("unnamed", pd.Index([None])),
+            ("multiindex", pd.MultiIndex.from_tuples([("group", "value")])),
+        ]
+    )
+    async def test_download_attribute_table_restores_renamed_pandas_metadata(self, _label, columns):
+        values_path = "locations.attributes[1].values"
+        source_df = pd.DataFrame({"value": pd.Series([1, None], dtype="Int64")})
+        source_df.columns = columns
+        self._set_property(f"{values_path}.data_type", "int64")
+        with (
+            self.assertWarnsRegex(UserWarning, "column names of mixed type")
+            if columns[0] is None
+            else contextlib.nullcontext()
+        ):
+            table = pa.Table.from_pandas(source_df)
+        self._setup_table(values_path, _stash_pandas_metadata(table))
+
+        actual_table = await self.object.download_attribute_table("locations.attributes[1]")
+
+        expected_df = pd.DataFrame({"InvRes": pd.Series([1, None], dtype="Int64")})
+        self.assertEqual(actual_table.column_names, ["InvRes"])
+        assert_frame_equal(actual_table.to_pandas(), expected_df)
 
     @parameterized.expand(
         [

@@ -42,7 +42,7 @@ def _get_schema_from_dataframe(dataframe: pd.DataFrame) -> pa.Schema:
             fields.append(field.with_type(pa.dictionary(field.type.index_type, pa.string())))
         else:
             fields.append(field)
-    return pa.schema(fields)
+    return pa.schema(fields, metadata=schema.metadata)
 
 
 def dataframe_to_pyarrow(df: pd.DataFrame) -> pa.Table:

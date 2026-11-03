@@ -46,6 +46,11 @@ class Schema(Protocol):
         """The schema's field types."""
         ...
 
+    @property
+    def metadata(self) -> dict[bytes, bytes] | None:
+        """The schema's key-value metadata, if present."""
+        ...
+
 
 class Table(Protocol):
     """Pyarrow table.
@@ -76,6 +81,10 @@ class Table(Protocol):
 
     def rename_columns(self, names: list[str]) -> "Table":
         """Return a copy of this table with its columns renamed to ``names`` (positional)."""
+        ...
+
+    def replace_schema_metadata(self, metadata: dict[bytes, bytes] | None = None) -> Table:
+        """Return a copy of this table with the specified schema metadata."""
         ...
 
 

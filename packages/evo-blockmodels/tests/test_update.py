@@ -1250,6 +1250,30 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
                 column_groups={"col2": "Assays"},  # col2 is not a new column
             )
 
+    async def test_add_new_columns_omits_pandas_metadata(self) -> None:
+        """Pandas reconstruction metadata is dropped from uploaded parquet while other metadata is kept."""
+        self.transport.set_request_handler(
+            UpdateRequestHandler(
+                update_result=UPDATE_RESULT,
+                job_response=JobResponse(job_status=JobStatus.COMPLETE, payload=UPDATED_VERSION),
+            )
+        )
+        with (
+            mock.patch("evo.common.io.upload.StorageDestination") as mock_destination,
+            mock.patch("pyarrow.parquet.write_table", wraps=pyarrow.parquet.write_table) as mock_write,
+        ):
+            mock_destination.upload_file = mock.AsyncMock()
+            data = pyarrow.table(
+                {"i": [1, 2, 3], "j": [4, 5, 6], "k": [7, 8, 9], "col1": [1, None, 3]},
+                metadata={b"pandas": b"{}", b"source": b"test"},
+            )
+            await self.bms_client.add_new_columns(BM_UUID, data)
+
+            uploaded_table = mock_write.call_args.args[0]
+            self.assertEqual(uploaded_table.schema.metadata, {b"source": b"test"})
+            self.assertTrue(uploaded_table.equals(data))
+            self.assertEqual(data.schema.metadata, {b"pandas": b"{}", b"source": b"test"})
+
     async def test_add_new_columns_with_custom_separator(self) -> None:
         """A non-default separator is forwarded and used to parse qualified column titles."""
         self.transport.set_request_handler(

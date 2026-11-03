@@ -40,6 +40,7 @@ try:
         ParquetLoader,
         TableInfo,
     )
+    from ..utils.tables import _rename_columns_preserving_metadata
 except ImportError as e:
     print(e)
     _LOADER_AVAILABLE = False
@@ -374,12 +375,12 @@ class DownloadedObject(IContext):
             async with self._with_parquet_loader(table_info, fb) as loader:
                 table = loader.load_as_table()
 
-            if column_names is None:
-                column_names = table.column_names
+            if column_names is not None:
+                table = _rename_columns_preserving_metadata(table, column_names)
 
             nan_values = self._validate_nan_values(nan_values)
             if len(nan_values) == 0:
-                return table.rename_columns(column_names)
+                return table
 
             # Replace specified nan_values with nulls
             arrays = []
@@ -389,7 +390,7 @@ class DownloadedObject(IContext):
                 null_scalar = pa.scalar(None, type=array.type)
                 nan_value_array = pa.array(nan_values, type=array.type)
                 arrays.append(pc.replace_with_mask(array, pc.is_in(array, nan_value_array), null_scalar))
-            return pa.Table.from_arrays(arrays, names=column_names)
+            return pa.Table.from_arrays(arrays, schema=table.schema)
 
         async def download_category_table(
             self,
@@ -462,9 +463,11 @@ class DownloadedObject(IContext):
                     fb=fb,
                 )
             if len(table.column_names) == 1:
-                table = table.rename_columns([attribute["name"]])
+                table = _rename_columns_preserving_metadata(table, [attribute["name"]])
             else:
-                table = table.rename_columns([f"{attribute['name']}_{i}" for i in range(len(table.column_names))])
+                table = _rename_columns_preserving_metadata(
+                    table, [f"{attribute['name']}_{i}" for i in range(len(table.column_names))]
+                )
             return table
 
         if _PD_AVAILABLE:

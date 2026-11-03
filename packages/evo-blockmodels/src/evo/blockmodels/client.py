@@ -451,8 +451,16 @@ class BlockModelAPIClient(BaseAPIClient):
         return _version_from_model(version)
 
     async def _upload_data(self, bm_id: uuid.UUID, job_id: uuid.UUID, upload_url: str, data: Table) -> Version:
-        """Upload data to a block model service, marks the upload as complete and waits for the job to complete."""
+        """Upload data to a block model service, marks the upload as complete and waits for the job to complete.
+
+        Pandas reconstruction metadata is omitted from the uploaded file so consumers rely on the Arrow schema only.
+        """
         import pyarrow.parquet
+
+        metadata = data.schema.metadata
+        if metadata and b"pandas" in metadata:
+            metadata = {key: value for key, value in metadata.items() if key != b"pandas"}
+            data = data.replace_schema_metadata(metadata or None)
 
         cache_location = get_cache_location_for_upload(self._cache, self._environment, job_id)
         pyarrow.parquet.write_table(data, cache_location)

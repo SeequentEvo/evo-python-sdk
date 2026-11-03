@@ -13,14 +13,17 @@ import hashlib
 import unittest
 import uuid
 from collections.abc import Iterator
+from contextlib import nullcontext
 from io import BytesIO
 from pathlib import Path
 from typing import BinaryIO
 from unittest import mock
 from uuid import UUID
 
+import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
+import pytest
 from parameterized import parameterized, parameterized_class
 
 from evo.common import Environment
@@ -34,6 +37,11 @@ from evo.objects.utils import (
     KnownTableFormat,
     all_known_formats,
     get_known_format,
+)
+from evo.objects.utils.tables import (
+    _rename_columns_preserving_metadata,
+    _restore_pandas_metadata,
+    _stash_pandas_metadata,
 )
 from helpers import get_sample_table
 
@@ -94,6 +102,172 @@ def _test_name_from_known_format(cls: type, num: int, params_dict: dict) -> str:
     """Create parameterized test name from DataFormat"""
     data_format = params_dict["data_format"]
     return parameterized.to_safe_name(f"{cls.__name__}_{num}_{data_format.name}")
+
+
+@pytest.mark.parametrize(
+    "dtype, values",
+    [
+        ("Int32", [1, 2147483647]),
+        ("Int64", [9007199254740993, 9223372036854775807]),
+        ("UInt64", [9007199254740993, 18446744073709551615]),
+        ("Float64", [1.25, 2.5]),
+        ("float64", [1.25, 2.5]),
+        ("boolean", [True, False]),
+    ],
+)
+@pytest.mark.parametrize("nulls", ["none", "some", "all", "empty"])
+def test_saved_parquet_omits_pandas_metadata_and_preserves_arrow_data(tmp_path, dtype, values, nulls):
+    if nulls == "some":
+        values = [values[0], None]
+    elif nulls == "all":
+        values = [None, None]
+    elif nulls == "empty":
+        values = []
+    table = pa.Table.from_pandas(pd.DataFrame({"value": pd.Series(values, dtype=dtype)}), preserve_index=False)
+    field = table.schema.field(0).with_metadata({b"description": b"measurement"})
+    table = table.set_column(0, field, table.column(0))
+    metadata = {**table.schema.metadata, b"source": b"test"}
+    table = table.replace_schema_metadata(metadata)
+
+    table_info = get_known_format(table).save_table(table, tmp_path)
+    saved = pq.read_table(tmp_path / table_info["data"])
+
+    pandas_metadata = metadata[b"pandas"]
+    assert saved.schema.metadata == {b"source": b"test", b"evo:pandas": pandas_metadata}
+    assert saved.schema.field(0).equals(field, check_metadata=True)
+    assert saved.equals(table)
+    assert saved.column(0).to_pylist() == table.column(0).to_pylist()
+    assert table.schema.metadata == metadata
+    with mock.patch.dict("sys.modules", {"pandas.core.arrays.arrow._arrow_utils": None}):
+        frame = saved.to_pandas()
+    assert frame["value"].isna().tolist() == table.column(0).is_null().to_pylist()
+    exact_frame = saved.to_pandas(types_mapper=pd.ArrowDtype)
+    assert pa.Table.from_pandas(exact_frame, preserve_index=False).equals(saved)
+
+    with pa.OSFile(str(tmp_path / table_info["data"]), "r") as file, ParquetLoader(file) as loader:
+        loaded = loader.load_as_table()
+    assert loaded.schema.metadata == metadata
+    pd.testing.assert_frame_equal(loaded.to_pandas(), table.to_pandas())
+    assert str(loaded.to_pandas()["value"].dtype) == dtype
+
+
+def test_saved_nullable_integer_parquet_does_not_require_pandas_arrow_utils(tmp_path):
+    table = pa.Table.from_pandas(pd.DataFrame({"value": pd.Series([1, None], dtype="Int64")}))
+    with mock.patch.dict("sys.modules", {"pandas.core.arrays.arrow._arrow_utils": None}):
+        table_info = get_known_format(table).save_table(table, tmp_path)
+        saved = pq.read_table(tmp_path / table_info["data"])
+        frame = saved.to_pandas()
+
+    assert b"pandas" not in (saved.schema.metadata or {})
+    assert b"evo:pandas" in saved.schema.metadata
+    assert saved.column(0).type == pa.int64()
+    assert saved.column(0).to_pylist() == [1, None]
+    assert frame["value"].iloc[0] == 1
+    assert pd.isna(frame["value"].iloc[1])
+
+    with pytest.warns(DeprecationWarning):
+        loaded = KnownTableFormat.load_table(table_info, tmp_path)
+    assert loaded.to_pandas()["value"].dtype == pd.Int64Dtype()
+
+
+def test_restore_keeps_existing_pandas_metadata():
+    table = pa.table({"value": [1]}, metadata={b"pandas": b"original", b"evo:pandas": b"stashed"})
+    restored = _restore_pandas_metadata(table)
+    assert restored.schema.metadata == {b"pandas": b"original"}
+
+
+@pytest.mark.parametrize("metadata", [None, {b"source": b"test"}])
+def test_pandas_metadata_helpers_are_noops_without_pandas_metadata(metadata):
+    table = pa.table({"value": [1]}, metadata=metadata)
+    assert _stash_pandas_metadata(table) is table
+    assert _restore_pandas_metadata(table) is table
+
+
+@pytest.mark.parametrize("metadata", [None, {b"source": b"test"}])
+def test_saved_parquet_without_pandas_metadata_keeps_existing_content_hash(tmp_path, metadata):
+    table = pa.table({"value": [1, None]}, metadata=metadata)
+    table_info = get_known_format(table).save_table(table, tmp_path)
+
+    assert table_info["data"] == _get_table_digest(table)
+    assert pq.read_table(tmp_path / table_info["data"]).equals(table, check_metadata=True)
+
+
+@pytest.mark.parametrize(
+    "columns",
+    [
+        pd.Index(["value"]),
+        pd.Index([1]),
+        pd.Index([1.5]),
+        pd.Index([None]),
+        pd.Index([1], name="attributes"),
+        pd.MultiIndex.from_tuples([("group", "value")], names=["group", "attribute"]),
+    ],
+)
+@pytest.mark.parametrize("use_existing_names", [False, True])
+def test_rename_columns_preserves_pandas_dtypes_and_arrow_metadata(columns, use_existing_names):
+    frame = pd.DataFrame(
+        {"value": pd.array([9007199254740993, None, 9223372036854775807], dtype="Int64")},
+        index=pd.RangeIndex(10, 13, name="row"),
+    )
+    frame.columns = columns
+    with pytest.warns(UserWarning, match="column names of mixed type") if columns[0] is None else nullcontext():
+        table = pa.Table.from_pandas(frame)
+    field = table.schema.field(0).with_metadata({b"description": b"measurement"})
+    table = table.set_column(0, field, table.column(0))
+    metadata = {**table.schema.metadata, b"source": b"test"}
+    table = table.replace_schema_metadata(metadata)
+    names = table.column_names if use_existing_names else ["renamed"]
+
+    renamed = _rename_columns_preserving_metadata(table, names)
+
+    expected = frame.copy()
+    expected.columns = pd.Index(names, name=None if isinstance(columns, pd.MultiIndex) else columns.name)
+    pd.testing.assert_frame_equal(renamed.to_pandas(), expected)
+    assert renamed.column_names == names
+    assert renamed.column(0).equals(table.column(0))
+    assert renamed.schema.field(0).equals(field.with_name(names[0]), check_metadata=True)
+    assert renamed.schema.metadata[b"source"] == b"test"
+    assert table.schema.metadata == metadata
+
+
+@pytest.mark.parametrize(
+    "index",
+    [
+        pd.Index([10, 20]),
+        pd.Index([10, 20], name="row"),
+        pd.MultiIndex.from_tuples([("a", 10), ("b", 20)], names=["sample", None]),
+    ],
+)
+def test_rename_columns_preserves_stored_row_index(index):
+    frame = pd.DataFrame({"value": pd.array([1, None], dtype="Int64")}, index=index)
+    table = pa.Table.from_pandas(frame)
+
+    renamed = _rename_columns_preserving_metadata(table, ["renamed", *table.column_names[1:]])
+
+    expected = frame.rename(columns={"value": "renamed"})
+    pd.testing.assert_frame_equal(renamed.to_pandas(), expected)
+
+
+@pytest.mark.parametrize(
+    "pandas_metadata",
+    [
+        b"not-json",
+        b"\xff",
+        b"[]",
+        b"null",
+        b"{}",
+        b'{"columns": "value", "index_columns": []}',
+        b'{"columns": [1], "index_columns": []}',
+        b'{"columns": [{"name": "value", "field_name": []}], "index_columns": []}',
+        b'{"columns": [], "index_columns": "value"}',
+        b'{"columns": [], "index_columns": [], "column_indexes": [1]}',
+    ],
+)
+def test_rename_columns_rejects_invalid_pandas_metadata(pandas_metadata):
+    table = pa.table({"value": [1]}, metadata={b"pandas": pandas_metadata})
+
+    with pytest.raises(TableFormatError, match="invalid pandas metadata"):
+        _rename_columns_preserving_metadata(table, ["renamed"])
 
 
 @parameterized_class(_all_known_formats_for_testing(), class_name_func=_test_name_from_known_format)

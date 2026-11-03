@@ -69,6 +69,20 @@ You can also get a list of all objects. Internally, this recursively calls the `
 
 Check out the other methods on the `ObjectAPIClient` for more details on how to upload and download objects, or get object versions.
 
+### Parquet interoperability
+
+When saving or uploading tables and DataFrames, the SDK moves pandas reconstruction metadata (the `pandas` schema
+metadata key) to an SDK-specific `evo:pandas` key in new Parquet files. Arrow column types, values, nulls, field
+metadata and other schema metadata are preserved, including exact 64-bit integers with missing values. Generic
+Parquet readers therefore use the Arrow schema alone and do not need pandas or its extension-dtype modules.
+
+The SDK's download and load helpers (`download_table()`, `download_dataframe()`, `ParquetLoader`) restore the `pandas`
+metadata, so supported pandas dtypes such as `Int64` and `boolean` round-trip exactly. Categorical data uses the
+dedicated category upload and download methods. When reading these files with other tools, the default
+Arrow-to-pandas conversion may represent nullable integers as floats; use
+`table.to_pandas(types_mapper=pd.ArrowDtype)` to keep exact values. The stored Arrow values remain exact regardless of
+the pandas representation.
+
 ### Typed downhole collections
 
 `DownholeCollection` provides a DataFrame-based API for creating and reading downhole objects. A collection can contain

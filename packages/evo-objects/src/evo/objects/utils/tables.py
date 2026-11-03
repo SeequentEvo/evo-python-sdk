@@ -12,7 +12,9 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import os
+from collections.abc import Sequence
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from types import EllipsisType
@@ -36,6 +38,88 @@ __all__ = [
 
 # Block size to limit memory use while calculating the sha256 digest of a file.
 _DIGEST_BLOCK_SIZE = 4 * 1024 * 1024
+
+# Pandas reconstruction metadata is stored under an SDK-specific key, so generic Parquet readers do not need pandas
+# extension dtypes, while the SDK can still restore the original pandas dtypes when reading the data back.
+_PANDAS_METADATA_KEY = b"pandas"
+_STORED_PANDAS_METADATA_KEY = b"evo:pandas"
+
+
+def _stash_pandas_metadata(table: pa.Table) -> pa.Table:
+    """Move pandas reconstruction metadata to the SDK-specific key, preserving all other metadata."""
+    metadata = table.schema.metadata
+    if not metadata or _PANDAS_METADATA_KEY not in metadata:
+        return table
+    stashed = {key: value for key, value in metadata.items() if key != _PANDAS_METADATA_KEY}
+    stashed[_STORED_PANDAS_METADATA_KEY] = metadata[_PANDAS_METADATA_KEY]
+    return table.replace_schema_metadata(stashed)
+
+
+def _restore_pandas_metadata(table: pa.Table) -> pa.Table:
+    """Move pandas reconstruction metadata stored by the SDK back to the key used by pyarrow."""
+    metadata = table.schema.metadata
+    if not metadata or _STORED_PANDAS_METADATA_KEY not in metadata:
+        return table
+    restored = {key: value for key, value in metadata.items() if key != _STORED_PANDAS_METADATA_KEY}
+    restored.setdefault(_PANDAS_METADATA_KEY, metadata[_STORED_PANDAS_METADATA_KEY])
+    return table.replace_schema_metadata(restored)
+
+
+def _rename_columns_preserving_metadata(table: pa.Table, column_names: Sequence[str]) -> pa.Table:
+    """Rename columns without losing Arrow metadata or pandas data dtypes.
+
+    :raises TableFormatError: If pandas metadata cannot be updated because it is invalid.
+    """
+    new_names = list(column_names)
+    old_names = table.column_names
+    renamed = table.rename_columns(new_names)
+
+    metadata = table.schema.metadata
+    if metadata and _PANDAS_METADATA_KEY in metadata:
+        try:
+            pandas_meta = json.loads(metadata[_PANDAS_METADATA_KEY].decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise TableFormatError("Cannot rename columns with invalid pandas metadata") from exc
+
+        if not isinstance(pandas_meta, dict):
+            raise TableFormatError("Cannot rename columns with invalid pandas metadata")
+        columns = pandas_meta.get("columns")
+        index_columns = pandas_meta.get("index_columns")
+        column_indexes = pandas_meta.get("column_indexes", [])
+        if (
+            not isinstance(columns, list)
+            or not isinstance(index_columns, list)
+            or not isinstance(column_indexes, list)
+            or any(not isinstance(idx_col, (str, dict)) for idx_col in index_columns)
+            or any(not isinstance(col_index, dict) for col_index in column_indexes)
+        ):
+            raise TableFormatError("Cannot rename columns with invalid pandas metadata")
+
+        rename_map = dict(zip(old_names, new_names, strict=True))
+        index_fields = {idx_col for idx_col in index_columns if isinstance(idx_col, str)}
+        for col in columns:
+            if not isinstance(col, dict) or "name" not in col:
+                raise TableFormatError("Cannot rename columns with invalid pandas metadata")
+            field_name = col.get("field_name", col["name"])
+            if not isinstance(field_name, str):
+                raise TableFormatError("Cannot rename columns with invalid pandas metadata")
+            if field_name in rename_map:
+                new_name = rename_map[field_name]
+                if field_name not in index_fields or col["name"] == field_name:
+                    col["name"] = new_name
+                col["field_name"] = new_name
+        pandas_meta["index_columns"] = [
+            rename_map.get(idx_col, idx_col) if isinstance(idx_col, str) else idx_col for idx_col in index_columns
+        ]
+
+        # Explicit string names replace the original column-index dtype and flatten any MultiIndex.
+        if len(column_indexes) == 1:
+            column_indexes[0].update(pandas_type="unicode", numpy_type="object", metadata={"encoding": "UTF-8"})
+        else:
+            pandas_meta["column_indexes"] = []
+        metadata[_PANDAS_METADATA_KEY] = json.dumps(pandas_meta).encode("utf-8")
+
+    return renamed.replace_schema_metadata(metadata)
 
 
 class _ColumnFormat:
@@ -234,6 +318,10 @@ class KnownTableFormat(BaseTableFormat):
     def _save_table_as_parquet(cls, table: pa.Table, destination: Path) -> str:
         """Save a table in parquet format.
 
+        Pandas reconstruction metadata is moved to an SDK-specific key, so other consumers use the Arrow schema
+        rather than requiring pandas extension dtypes. SDK readers restore it, so pandas dtypes round-trip.
+        Other metadata, column types, values and nulls are preserved.
+
         :param table: The table to save to parquet file.
         :param destination: A local directory to save the parquet file in.
 
@@ -243,6 +331,8 @@ class KnownTableFormat(BaseTableFormat):
         """
         if not destination.is_dir():
             raise StorageFileNotFoundError(f"'{destination}' is not a directory")
+
+        table = _stash_pandas_metadata(table)
 
         try:  # Write temporary file.
             with NamedTemporaryFile(delete=False, dir=destination) as tmp_file:
@@ -383,7 +473,7 @@ class KnownTableFormat(BaseTableFormat):
                     )
 
                 logger.debug("Parquet metadata checks succeeded")
-                return parquet_data.read()
+                return _restore_pandas_metadata(parquet_data.read())
 
         except FileNotFoundError:
             raise StorageFileNotFoundError(f"Could not find data for table with id '{parquet_file.name}'") from None

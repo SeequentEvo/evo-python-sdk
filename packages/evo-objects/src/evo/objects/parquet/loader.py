@@ -28,6 +28,7 @@ from evo.common.utils import NoFeedback
 
 from ..exceptions import SchemaValidationError, TableFormatError
 from ..utils import ArrowTableFormat, KnownTableFormat, TableInfo
+from ..utils.tables import _restore_pandas_metadata
 
 try:
     import pandas as pd
@@ -134,7 +135,7 @@ class ParquetLoader:
         if self._parquet_file is None:
             raise RuntimeError("ParquetLoader context is not active")
         else:
-            return self._parquet_file.read()
+            return _restore_pandas_metadata(self._parquet_file.read())
 
     if _PD_AVAILABLE:
         # Optional support for pandas dataframes
