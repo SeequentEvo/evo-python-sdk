@@ -44,7 +44,6 @@ from . import geostatistics as _geostatistics_module  # noqa: F401
 from .common import (
     AllOfFilter,
     AnyOfFilter,
-    BlockDiscretisation,
     BlockDiscretization,
     CreateAttribute,
     Ellipsoid,
@@ -175,7 +174,6 @@ async def run(
 __all__ = [
     "AllOfFilter",
     "AnyOfFilter",
-    "BlockDiscretisation",
     "BlockDiscretization",
     "BreakTiesResult",
     "CreateAttribute",

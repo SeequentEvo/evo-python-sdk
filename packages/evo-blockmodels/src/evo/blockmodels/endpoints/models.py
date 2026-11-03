@@ -557,6 +557,41 @@ class ReportColumn(CustomBaseModel):
     """
 
 
+class ReportCellStatus(Enum):
+    """Status of a single report cell, describing how its value should be interpreted.
+
+    * `OK`: the value was calculated normally and can be used as-is.
+    * `PERCENT_CHANGE_FROM_ZERO`: the percentage change is undefined because the
+      `from` value was zero. Only used in comparisons.
+    * `NO_DATA`: no data was available to calculate the value.
+    * `INVALID`: the value could not be calculated because the underlying data
+      contained an invalid value.
+    """
+
+    OK = "OK"
+    PERCENT_CHANGE_FROM_ZERO = "PERCENT_CHANGE_FROM_ZERO"
+    """Only used in comparisons."""
+    NO_DATA = "NO_DATA"
+    INVALID = "INVALID"
+
+
+class ReportCell(CustomBaseModel):
+    """A single report/comparison cell: a numeric value plus a status.
+
+    The status explains why a value may be `null` (could not be aggregated/calculated).
+    See `ReportCellStatus` for the possible reasons.
+    """
+
+    value: Annotated[StrictInt | StrictFloat | None, Field(title="Value", examples=[2.7])]
+    """
+    Value of the cell. This is `null` whenever `status` is not `OK`.
+    """
+    status: Annotated[ReportCellStatus, Field(examples=["OK"])] = ReportCellStatus.OK
+    """
+    Status of the cell, describing how `value` should be interpreted.
+    """
+
+
 class ReportComparisonJobResult(CustomBaseModel):
     from_result_uuid: Annotated[
         UUID | None,
@@ -637,10 +672,10 @@ class ReportComparisonSpec(CustomBaseModel):
 
 
 class ReportComparisonValue(CustomBaseModel):
-    difference: Annotated[StrictFloat | StrictInt, Field(title="Difference")]
-    from_value: Annotated[StrictFloat | StrictInt, Field(title="From Value")]
-    percent: Annotated[StrictFloat | None, Field(title="Percent")] = None
-    to_value: Annotated[StrictFloat | StrictInt, Field(title="To Value")]
+    difference: Annotated[ReportCell, Field(title="Difference")]
+    from_value: Annotated[ReportCell, Field(title="From Value")]
+    percent: Annotated[ReportCell, Field(title="Percent")]
+    to_value: Annotated[ReportCell, Field(title="To Value")]
 
 
 class ReportNegativeValuesPolicy(Enum):
@@ -724,9 +759,15 @@ class ReportRow(CustomBaseModel):
     """
     List of category values. `null` indicates a total for that category column.
     """
-    values: Annotated[list[StrictInt | StrictFloat], Field(examples=[[2.7, 0.3]], title="Values")]
+    values: Annotated[
+        list[ReportCell],
+        Field(
+            examples=[[{"value": 2.7, "status": "OK"}, {"value": 0.3, "status": "OK"}]],
+            title="Values",
+        ),
+    ]
     """
-    List of values for the value columns
+    List of ReportCell objects for the value columns
     """
 
 

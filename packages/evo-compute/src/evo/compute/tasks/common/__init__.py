@@ -13,7 +13,7 @@
 
 from evo.objects.typed.types import Ellipsoid, EllipsoidRanges, Rotation
 
-from .discretization import BlockDiscretisation, BlockDiscretization
+from .discretization import BlockDiscretization
 from .filters import AllOfFilter, AnyOfFilter, Filter, FilterCondition, FilterExpression, FilterOperator
 from .results import TaskAttribute, TaskResultList, TaskTarget
 from .runner import TaskRegistry, TaskRunner, TParams, TResult, TResultModel, run_tasks
@@ -36,7 +36,6 @@ __all__ = [
     "AnySourceAttribute",
     "AnyTargetAttribute",
     "AttributeExpression",
-    "BlockDiscretisation",
     "BlockDiscretization",
     "CreateAttribute",
     "Ellipsoid",

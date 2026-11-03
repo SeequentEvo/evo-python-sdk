@@ -11,11 +11,19 @@
 
 """Tests for the evo.widgets IPython extension feedback factory registration."""
 
+import importlib
+import importlib.util
 import unittest
 from unittest.mock import MagicMock, patch
 
 from evo.common.utils import NoFeedback, create_default_feedback, reset_feedback_factory
-from evo.widgets import _register_feedback_factory, _unregister_feedback_factory
+from evo.widgets import (
+    _TASK_RESULT_LIST_TYPE,
+    _TASK_RESULT_TYPES,
+    _register_feedback_factory,
+    _unregister_feedback_factory,
+)
+from evo.widgets.formatters import _TASK_RESULT_DETAILS
 
 
 class TestFeedbackFactoryRegistration(unittest.TestCase):
@@ -70,6 +78,52 @@ class TestFeedbackFactoryRegistration(unittest.TestCase):
         with patch.dict("sys.modules", {"evo.common.utils": None}):
             # Should not raise
             _unregister_feedback_factory()
+
+
+class TestTaskResultFormatterRegistration(unittest.TestCase):
+    """Tests that registered task result paths match the real evo-compute layout."""
+
+    def setUp(self) -> None:
+        if importlib.util.find_spec("evo.compute") is None:
+            self.skipTest("evo-compute is not installed")
+
+    def test_expected_task_result_details_are_registered(self) -> None:
+        expected = {
+            "BreakTiesResult": "_target_result_details",
+            "ConditionalTurningBandsResult": "_turning_bands_result_details",
+            "ConSimResult": "_conditional_simulation_result_details",
+            "ContinuousDistributionResult": "_distribution_result_details",
+            "DeclusteringResult": "_target_result_details",
+            "IDWResult": "_target_result_details",
+            "KNNResult": "_target_result_details",
+            "KrigingResult": "_target_result_details",
+            "LocationWiseResult": "_location_wise_result_details",
+            "LossCalculationResult": "_target_result_details",
+            "NormalScoreResult": "_target_result_details",
+            "ProfitCalculationResult": "_target_result_details",
+            "SimulationReportResult": "_simulation_report_result_details",
+        }
+        self.assertEqual(
+            {class_name: details.__name__ for (_, class_name), details in _TASK_RESULT_DETAILS.items()},
+            expected,
+        )
+
+    def test_registered_task_result_types_resolve(self) -> None:
+        """Each registered task result class must exist, or IPython silently skips the formatter."""
+        for module_name, class_name in (*_TASK_RESULT_TYPES, _TASK_RESULT_LIST_TYPE):
+            with self.subTest(module=module_name, cls=class_name):
+                module = importlib.import_module(module_name)
+                self.assertTrue(
+                    hasattr(module, class_name),
+                    f"{module_name}.{class_name} does not exist",
+                )
+
+    def test_registered_paths_match_class_modules(self) -> None:
+        """The registered module must be the one that actually defines the class."""
+        for module_name, class_name in (*_TASK_RESULT_TYPES, _TASK_RESULT_LIST_TYPE):
+            with self.subTest(module=module_name, cls=class_name):
+                cls = getattr(importlib.import_module(module_name), class_name)
+                self.assertEqual(cls.__module__, module_name)
 
 
 if __name__ == "__main__":

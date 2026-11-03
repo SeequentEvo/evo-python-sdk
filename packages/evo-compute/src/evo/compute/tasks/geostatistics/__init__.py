@@ -57,7 +57,7 @@ from .declustering import DeclusteringResult
 from .idw import IDWResult
 from .knn import KNNResult
 from .kriging import (
-    BlockDiscretisation,
+    BlockDiscretization,
     Filter,
     KrigingDiagnostics,
     KrigingResult,
@@ -65,7 +65,7 @@ from .kriging import (
 from .location_wise import LocationWiseResult
 
 __all__ = [
-    "BlockDiscretisation",
+    "BlockDiscretization",
     "BreakTiesResult",
     "ConditionalTurningBandsResult",
     "DeclusteringResult",

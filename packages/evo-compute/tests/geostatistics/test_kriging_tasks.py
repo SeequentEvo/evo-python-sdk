@@ -26,7 +26,7 @@ from pydantic import TypeAdapter, ValidationError
 
 from evo.compute.tasks import (
     AllOfFilter,
-    BlockDiscretisation,
+    BlockDiscretization,
     CreateAttribute,
     Filter,
     FilterCondition,
@@ -951,85 +951,103 @@ class TestKrigingDiagnosticsResult(TestCase):
         self.assertNotIn("Diagnostics", str(self._result(None)))
 
 
-class TestBlockDiscretisation(TestCase):
-    """Tests for BlockDiscretisation class."""
+class TestBlockDiscretization(TestCase):
+    """Tests for BlockDiscretization class."""
+
+    def test_exports_share_the_canonical_type(self):
+        from importlib import import_module
+
+        for module_name in (
+            "evo.compute.tasks",
+            "evo.compute.tasks.common",
+            "evo.compute.tasks.common.discretization",
+            "evo.compute.tasks.geostatistics",
+            "evo.compute.tasks.geostatistics.kriging",
+            "evo.compute.tasks.geostatistics.conditioned_simulator",
+            "evo.compute.tasks.geostatistics.conditional_turning_bands",
+        ):
+            with self.subTest(module=module_name):
+                module = import_module(module_name)
+                self.assertIs(module.BlockDiscretization, BlockDiscretization)
+                self.assertFalse(hasattr(module, "BlockDiscretisation"))
 
     def test_default_values(self):
-        bd = BlockDiscretisation()
+        bd = BlockDiscretization()
         self.assertEqual(bd.nx, 1)
         self.assertEqual(bd.ny, 1)
         self.assertEqual(bd.nz, 1)
 
     def test_custom_values(self):
-        bd = BlockDiscretisation(nx=3, ny=4, nz=2)
+        bd = BlockDiscretization(nx=3, ny=4, nz=2)
         self.assertEqual(bd.nx, 3)
         self.assertEqual(bd.ny, 4)
         self.assertEqual(bd.nz, 2)
 
     def test_maximum_values(self):
-        bd = BlockDiscretisation(nx=9, ny=9, nz=9)
+        bd = BlockDiscretization(nx=9, ny=9, nz=9)
         self.assertEqual(bd.nx, 9)
         self.assertEqual(bd.ny, 9)
         self.assertEqual(bd.nz, 9)
 
     def test_model_dump(self):
-        bd = BlockDiscretisation(nx=3, ny=3, nz=2)
+        bd = BlockDiscretization(nx=3, ny=3, nz=2)
         result = bd.model_dump()
         self.assertEqual(result, {"nx": 3, "ny": 3, "nz": 2})
 
     def test_model_dump_defaults(self):
-        bd = BlockDiscretisation()
+        bd = BlockDiscretization()
         result = bd.model_dump()
         self.assertEqual(result, {"nx": 1, "ny": 1, "nz": 1})
 
     def test_validation_nx_too_low(self):
         with self.assertRaises(ValidationError) as ctx:
-            BlockDiscretisation(nx=0)
+            BlockDiscretization(nx=0)
         error_str = str(ctx.exception)
         self.assertIn("nx", error_str)
 
     def test_validation_ny_too_high(self):
         with self.assertRaises(ValidationError) as ctx:
-            BlockDiscretisation(ny=10)
+            BlockDiscretization(ny=10)
         error_str = str(ctx.exception)
         self.assertIn("ny", error_str)
 
     def test_validation_nz_negative(self):
         with self.assertRaises(ValidationError) as ctx:
-            BlockDiscretisation(nz=-1)
+            BlockDiscretization(nz=-1)
         error_str = str(ctx.exception)
         self.assertIn("nz", error_str)
 
     def test_validation_non_integer_type(self):
         with self.assertRaises((TypeError, ValueError)):
-            BlockDiscretisation(nx=2.5)
+            BlockDiscretization(nx=2.5)
 
 
-class TestKrigingParametersWithBlockDiscretisation(TestCase):
-    """Tests for KrigingParameters with block_discretisation support."""
+class TestKrigingParametersWithBlockDiscretization(TestCase):
+    """Tests for KrigingParameters with block_discretization support."""
 
-    def test_kriging_params_with_block_discretisation(self):
+    def test_kriging_params_with_block_discretization(self):
         source = Source(object=POINTSET_URL, attribute="grade")
         target = Target.new_attribute(GRID_URL, "kriged_grade")
         search = SearchNeighborhood(
             ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=100, semi_major=100, minor=50)),
             max_samples=20,
         )
-        bd = BlockDiscretisation(nx=3, ny=3, nz=2)
+        bd = BlockDiscretization(nx=3, ny=3, nz=2)
 
         params = KrigingParameters(
             source=source,
             target=target,
             variogram=VARIOGRAM_URL,
             search=search,
-            block_discretisation=bd,
+            block_discretization=bd,
         )
 
-        params_dict = params.model_dump()
-        self.assertIn("block_discretisation", params_dict)
-        self.assertEqual(params_dict["block_discretisation"], {"nx": 3, "ny": 3, "nz": 2})
+        params_dict = params.model_dump(mode="json", by_alias=True, exclude_none=True)
+        self.assertIn("block_discretization", params_dict)
+        self.assertEqual(params_dict["block_discretization"], {"nx": 3, "ny": 3, "nz": 2})
+        self.assertNotIn("block_discretisation", params_dict)
 
-    def test_kriging_params_without_block_discretisation(self):
+    def test_kriging_params_without_block_discretization(self):
         source = Source(object=POINTSET_URL, attribute="grade")
         target = Target.new_attribute(GRID_URL, "kriged_grade")
         search = SearchNeighborhood(
@@ -1045,16 +1063,16 @@ class TestKrigingParametersWithBlockDiscretisation(TestCase):
         )
 
         params_dict = params.model_dump(mode="json", by_alias=True, exclude_none=True)
-        self.assertNotIn("block_discretisation", params_dict)
+        self.assertNotIn("block_discretization", params_dict)
 
-    def test_kriging_params_block_discretisation_with_filter(self):
+    def test_kriging_params_block_discretization_with_filter(self):
         source = Source(object=POINTSET_URL, attribute="grade")
         target = Target.new_attribute(GRID_URL, "kriged_grade")
         search = SearchNeighborhood(
             ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=100, semi_major=100, minor=50)),
             max_samples=20,
         )
-        bd = BlockDiscretisation(nx=2, ny=2, nz=2)
+        bd = BlockDiscretization(nx=2, ny=2, nz=2)
         target_filter = Filter(where=FilterCondition(attribute="domain_attribute", operator="in", values=["LMS1"]))
 
         params = KrigingParameters(
@@ -1062,15 +1080,28 @@ class TestKrigingParametersWithBlockDiscretisation(TestCase):
             target=target,
             variogram=VARIOGRAM_URL,
             search=search,
-            block_discretisation=bd,
+            block_discretization=bd,
             target_filter=target_filter,
         )
 
         params_dict = params.model_dump()
-        self.assertIn("block_discretisation", params_dict)
-        self.assertEqual(params_dict["block_discretisation"], {"nx": 2, "ny": 2, "nz": 2})
+        self.assertIn("block_discretization", params_dict)
+        self.assertEqual(params_dict["block_discretization"], {"nx": 2, "ny": 2, "nz": 2})
         self.assertIn("filter", params_dict["target"])
         self.assertEqual(params_dict["target"]["filter"]["where"]["values"], ["LMS1"])
+
+    def test_legacy_block_discretisation_is_rejected(self):
+        with self.assertRaisesRegex(ValidationError, "block_discretisation"):
+            KrigingParameters(
+                source=Source(object=POINTSET_URL, attribute="grade"),
+                target=Target.new_attribute(GRID_URL, "kriged_grade"),
+                variogram=VARIOGRAM_URL,
+                search=SearchNeighborhood(
+                    ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=100, semi_major=100, minor=50)),
+                    max_samples=20,
+                ),
+                **{"block_discretisation": {"nx": 2, "ny": 2, "nz": 2}},
+            )
 
 
 class TestObjectReferenceValidation(TestCase):
