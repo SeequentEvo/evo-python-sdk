@@ -200,6 +200,7 @@ Start with the [Block Model SDK tutorials](blockmodels/README.md), which provide
 - `sdk/01-create-and-query-regular-block-model.ipynb` - Create a regular block model, add columns, and query its data
 - `sdk/02-transform-existing-block-model-attribute.ipynb` - Transform an existing block model attribute and publish the result as a new attribute
 - `sdk/03-block-model-reports.ipynb` - Create resource-estimation reports from a block model
+- `sdk/04-column-groups.ipynb` - Organize block model columns into groups
 - `api/block-model-api-reference-workflows.ipynb` - Advanced direct API reference for debugging and unsupported workflows
 
 The SDK tutorials use high-level Evo interfaces with PyArrow integration. The API reference shows raw service requests, responses, and asynchronous job handling when direct control is required.

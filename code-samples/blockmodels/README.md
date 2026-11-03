@@ -10,6 +10,8 @@ The Block Model SDK tutorials are the recommended path for creating, querying, a
    - Load an existing block model, transform a numeric attribute, and publish the result as a new attribute.
 3. [03: Block Model Reports](sdk/03-block-model-reports.ipynb)
    - Create a report-ready block model and calculate grouped resource-estimation summaries.
+4. [04: Organize Block Model Columns into Groups](sdk/04-column-groups.ipynb)
+   - Create groups, add columns into them, move or ungroup columns, and combine group changes with data updates.
 
 ## Future SDK Tutorials
 
