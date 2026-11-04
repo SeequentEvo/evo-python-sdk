@@ -11,6 +11,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import contextlib
 import uuid
 from unittest.mock import patch
@@ -243,6 +244,37 @@ class TestPointSet(TestWithConnector):
             with self.assertRaises(ObjectValidationError) as cm:
                 obj.validate()
             self.assertIn("does not match expected length", str(cm.exception))
+
+    async def test_failed_attribute_update_preserves_coordinates_and_bounding_box(self):
+        with self._mock_geoscience_objects() as client:
+            obj = await PointSet.create(context=self.context, data=self.example_pointset)
+            original = obj.as_dict()
+            modified = obj._context.data_modified.copy()
+            coordinates_uploaded = asyncio.Event()
+            original_upload = client.upload_dataframe
+
+            async def upload(frame, *args, **kwargs):
+                if list(frame.columns) == ["x", "y", "z"]:
+                    result = await original_upload(frame, *args, **kwargs)
+                    coordinates_uploaded.set()
+                    return result
+                await coordinates_uploaded.wait()
+                raise RuntimeError("attribute upload failed")
+
+            frame = pd.DataFrame({"x": [10.0], "y": [-5.0], "z": [20.0], "value": [7.0]})
+            with patch.object(client, "upload_dataframe", side_effect=upload):
+                with self.assertRaisesRegex(RuntimeError, "attribute upload failed"):
+                    await asyncio.wait_for(obj.locations.from_dataframe(frame), timeout=2)
+
+            self.assertEqual(original, obj.as_dict())
+            self.assertEqual(modified, obj._context.data_modified)
+
+    async def test_table_only_mutation_updates_bounding_box(self):
+        with self._mock_geoscience_objects():
+            obj = await PointSet.create(context=self.context, data=self.example_pointset)
+            await obj.locations.from_dataframe(pd.DataFrame({"x": [10.0], "y": [-5.0], "z": [20.0]}))
+            self._assert_bounding_box_equal(obj.bounding_box, 10.0, 10.0, -5.0, -5.0, 20.0, 20.0)
+            self.assertEqual(0, len(obj.locations.attributes))
 
     async def test_json(self):
         """Test the JSON structure of the created object."""

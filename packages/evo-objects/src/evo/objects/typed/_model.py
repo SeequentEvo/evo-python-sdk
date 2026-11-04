@@ -21,6 +21,7 @@ from pydantic import TypeAdapter
 from evo import jmespath
 from evo.common import IContext
 from evo.objects import DownloadedObject
+from evo.objects.utils._concurrency import gather_uploads
 
 from ._utils import (
     assign_jmespath_value,
@@ -185,14 +186,6 @@ class SchemaBuilder:
         schema_property = self._properties[name]
         _set_property_value(schema_property, self.document, value)
 
-    async def set_sub_model_value(self, name: str, data: Any) -> None:
-        metadata = self._sub_models[name]
-        sub_document = await metadata.model_type._data_to_schema(data, context=self._context)
-        if metadata.jmespath_expr:
-            assign_jmespath_value(self.document, metadata.jmespath_expr, sub_document)
-        else:
-            self.document.update(sub_document)
-
     async def build_from_data(self, data: Any, skip_sub_models: set[str] | None = None) -> dict[str, Any]:
         """Build the schema document by applying all properties and sub-models."""
         for key, prop in self._properties.items():
@@ -202,6 +195,7 @@ class SchemaBuilder:
                 value = getattr(data, key, None)
                 self.set_property(key, value)
 
+        pending: list[tuple[str, Any]] = []
         for name, metadata in self._sub_models.items():
             if skip_sub_models and name in skip_sub_models:
                 continue
@@ -209,9 +203,28 @@ class SchemaBuilder:
                 sub_data = getattr(data, metadata.data_field, None)
             else:
                 sub_data = data
-            await self.set_sub_model_value(name, sub_data)
+            pending.append((name, sub_data))
+        await self.set_sub_model_values(pending)
 
         return self.document
+
+    async def set_sub_model_values(self, values: Sequence[tuple[str, Any]]) -> None:
+        """Convert several sub-models concurrently, then assign the results in the given order.
+
+        Sub-models are independent, so their data uploads can run in parallel.
+        """
+        sub_documents = await gather_uploads(
+            *(self._sub_models[name].model_type._data_to_schema(data, context=self._context) for name, data in values)
+        )
+        for (name, _), sub_document in zip(values, sub_documents):
+            self._assign_sub_document(name, sub_document)
+
+    def _assign_sub_document(self, name: str, sub_document: Any) -> None:
+        metadata = self._sub_models[name]
+        if metadata.jmespath_expr:
+            assign_jmespath_value(self.document, metadata.jmespath_expr, sub_document)
+        else:
+            self.document.update(sub_document)
 
 
 def _get_base_type(annotation: Any) -> tuple[Any, SchemaLocation | None, DataLocation | None]:
@@ -497,4 +510,4 @@ class SchemaList(Sequence[_M]):
             return []
         if not isinstance(data, Sequence):
             raise TypeError(f"Expected a sequence for SchemaList data, got {type(data).__name__}")
-        return [await cls._item_type._data_to_schema(item, context) for item in data]
+        return await gather_uploads(*(cls._item_type._data_to_schema(item, context) for item in data))

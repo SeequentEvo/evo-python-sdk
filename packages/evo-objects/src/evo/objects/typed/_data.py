@@ -17,8 +17,9 @@ import pandas as pd
 
 from evo.common import IFeedback
 from evo.common.interfaces import IContext
-from evo.common.utils import NoFeedback
+from evo.common.utils import NoFeedback, split_feedback
 from evo.objects.typed.attributes import Attributes
+from evo.objects.utils._concurrency import gather_uploads
 from evo.objects.utils.table_formats import KnownTableFormat
 
 from ._model import SchemaBuilder, SchemaLocation, SchemaModel
@@ -49,9 +50,11 @@ class DataTable(SchemaModel):
         :param df: DataFrame containing the new values for this table.
         :param fb: Optional feedback object to report upload progress.
         """
-        self._document.update(await self._data_to_schema(df, self._context, fb=fb))
+        self._apply_uploaded_table(df, await self._data_to_schema(df, self._obj, fb=fb))
 
-        # Mark the context as modified so loading data is not allowed
+    def _apply_uploaded_table(self, df: pd.DataFrame, document: dict[str, Any]) -> None:
+        """Commit uploaded values and any subclass-specific derived metadata."""
+        self._document.update(document)
         self._context.mark_modified(self._data)
 
     @classmethod
@@ -118,10 +121,18 @@ class DataTableAndAttributes(SchemaModel):
         """
         table_df, attr_df = self._split_dataframe(df, self._table.data_columns)
 
-        await self._table.from_dataframe(table_df, fb=fb)
         if attr_df is not None:
-            await self.attributes.set_attributes(attr_df, fb=fb)
+            # Validate local metadata before either branch starts remote work.
+            self.attributes._attribute_descriptions(attr_df)
+            table_fb, attr_fb = split_feedback(fb, [1.0, float(len(attr_df.columns))])
+            table_document, attribute_documents = await gather_uploads(
+                self._table._data_to_schema(table_df, self._obj, fb=table_fb),
+                self.attributes._prepare_attributes(attr_df, attr_fb),
+            )
+            self._table._apply_uploaded_table(table_df, table_document)
+            self.attributes._replace_uploaded_attributes(attribute_documents)
         else:
+            await self._table.from_dataframe(table_df, fb=fb)
             self.attributes.clear()
 
     def validate(self) -> None:
@@ -152,8 +163,7 @@ class DataTableAndAttributes(SchemaModel):
         table_df, attr_df = cls._split_dataframe(data, table_type.data_columns)
 
         builder = SchemaBuilder(cls, context)
-        await builder.set_sub_model_value("_table", table_df)
-        await builder.set_sub_model_value("attributes", attr_df)
+        await builder.set_sub_model_values([("_table", table_df), ("attributes", attr_df)])
 
         # As we specially handle the _table and attributes sub-models above, we skip them in the default data processing of build_from_data.
         return await builder.build_from_data(data, skip_sub_models={"_table", "attributes"})
