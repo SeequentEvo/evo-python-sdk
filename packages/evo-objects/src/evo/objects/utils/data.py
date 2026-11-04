@@ -19,12 +19,13 @@ import numpy as np
 
 from evo import logging
 from evo.common import APIConnector, Environment, ICache, IFeedback, StaticContext
-from evo.common.exceptions import StorageFileNotFoundError, error_context
-from evo.common.io.exceptions import DataExistsError
-from evo.common.utils import NoFeedback, PartialFeedback, split_feedback
+from evo.common.exceptions import EvoAPIException, StorageFileNotFoundError, TransportError, error_context
+from evo.common.io.exceptions import ChunkedIOError, DataExistsError
+from evo.common.utils import NoFeedback, PartialFeedback, Retry, split_feedback
 
 from ..exceptions import TableFormatError
 from ..io import _CACHE_SCOPE, ObjectDataDownload, ObjectDataUpload
+from ._concurrency import _MAX_CONCURRENT_UPLOADS, gather_uploads, get_upload_semaphore
 from .table_formats import INTEGER_ARRAY_1_INT32, INTEGER_ARRAY_MD_INT32, LOOKUP_TABLE_INT32
 from .tables import KnownTableFormat
 from .types import ArrayTableInfo, CategoryInfo, LookupTableInfo
@@ -48,6 +49,15 @@ logger = logging.getLogger("object.data")
 
 _DATA_ID_KEY = "data"  # The key used to identify data references in geoscience objects.
 _DEFAULT_MAX_CONCURRENCY = 4  # Decent performance improvement going from 1 to 4 but beyond that not so much
+_TRANSIENT_UPLOAD_STATUSES = frozenset({408, 429, 500, 502, 503, 504})
+
+
+def _is_transient_upload_error(error: Exception) -> bool:
+    if isinstance(error, ChunkedIOError):
+        return isinstance(error.__cause__, Exception) and _is_transient_upload_error(error.__cause__)
+    if isinstance(error, EvoAPIException):
+        return error.status in _TRANSIENT_UPLOAD_STATUSES
+    return isinstance(error, (TransportError, asyncio.TimeoutError, TimeoutError, ConnectionError))
 
 
 def _iter_refs(target: Any, _key: str | None = None) -> Iterator[str]:
@@ -109,6 +119,7 @@ class ObjectDataClient:
         self._environment = environment
         self._connector = connector
         self._cache = cache
+        self._upload_semaphore = asyncio.Semaphore(_MAX_CONCURRENT_UPLOADS)
 
     @property
     def cache_location(self) -> Path:
@@ -196,6 +207,7 @@ class ObjectDataClient:
         table: pa.Table,
         fb: IFeedback = NoFeedback,
         table_format: KnownTableFormat | Iterable[KnownTableFormat] | None = None,
+        retry: Retry | None = None,
     ) -> dict:
         """Upload pyarrow table to the geoscience object service, returning a GO model of the uploaded data.
 
@@ -205,21 +217,46 @@ class ObjectDataClient:
             If a single KnownTableFormat is provided, that format will be used.
             Otherwise, the format will be inferred from the table, either by checking against the provided formats or by
             checking against all known formats.
+        :param retry: Retry policy for transient URL or storage failures. Defaults to three attempts with
+            exponential backoff. Retries reuse the cached table; exhausted attempts raise RetryError.
 
         :return: A description of the uploaded data.
 
         :raises TableFormatError: If the provided table does not match any of the specified formats. If
             no table formats are specified, raised when the table does not match any known format.
         """
-        table_info = self.save_table(table, table_format)
-        upload = ObjectDataUpload(connector=self._connector, environment=self._environment, name=table_info["data"])
-        with error_context(f"While uploading table data '{table_info['data']}'", logger=logger):
+        if retry is None:
+            retry = Retry(logger=logger)
+        async with get_upload_semaphore() or self._upload_semaphore:
+            # Compression and hashing must not block other uploads on the event loop.
+            writer = asyncio.create_task(asyncio.to_thread(self.save_table, table, table_format))
             try:
-                await upload.upload_from_cache(cache=self._cache, transport=self._connector.transport, fb=fb)
-            except DataExistsError:
-                logger.debug(f"Data not uploaded because data already exists (label: {table_info['data']})")
-                fb.progress(1)
-        return table_info
+                table_info = await asyncio.shield(writer)
+            except asyncio.CancelledError:
+                # A running worker cannot be cancelled; finish its cache write before allowing a retry.
+                await asyncio.gather(writer, return_exceptions=True)
+                raise
+            upload = ObjectDataUpload(connector=self._connector, environment=self._environment, name=table_info["data"])
+            with error_context(f"While uploading table data '{table_info['data']}'", logger=logger):
+                async for attempt in retry:
+                    try:
+                        await upload.upload_from_cache(cache=self._cache, transport=self._connector.transport, fb=fb)
+                    except DataExistsError:
+                        logger.debug(f"Data not uploaded because data already exists (label: {table_info['data']})")
+                        fb.progress(1)
+                    except (
+                        EvoAPIException,
+                        TransportError,
+                        asyncio.TimeoutError,
+                        TimeoutError,
+                        ConnectionError,
+                        ChunkedIOError,
+                    ) as exc:
+                        if not _is_transient_upload_error(exc):
+                            raise
+                        attempt.set_exception(exc)
+                        fb.progress(0)
+            return table_info
 
     async def upload_category_table(self, table: pa.Table, fb: IFeedback = NoFeedback) -> CategoryInfo:
         """Upload a pyarrow table with category data to the geoscience object service, returning the reference to
@@ -278,8 +315,10 @@ class ObjectDataClient:
         values_fb, lookup_fb = split_feedback(fb, [v_size, t_size])
 
         value_table_format = INTEGER_ARRAY_1_INT32 if values.num_columns == 1 else INTEGER_ARRAY_MD_INT32
-        value_table = await self.upload_table(values, fb=values_fb, table_format=value_table_format)
-        lookup_table = await self.upload_table(lookup, fb=lookup_fb, table_format=LOOKUP_TABLE_INT32)
+        value_table, lookup_table = await gather_uploads(
+            self.upload_table(values, fb=values_fb, table_format=value_table_format),
+            self.upload_table(lookup, fb=lookup_fb, table_format=LOOKUP_TABLE_INT32),
+        )
         return CategoryInfo(values=cast(ArrayTableInfo, value_table), table=cast(LookupTableInfo, lookup_table))
 
     async def download_table(

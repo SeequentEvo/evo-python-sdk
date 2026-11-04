@@ -9,8 +9,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import asyncio
 import json
 import sys
+import threading
 from unittest import mock
 from uuid import UUID
 
@@ -21,12 +23,14 @@ from parameterized import parameterized
 
 from data import load_test_data
 from evo.common import IFeedback, RequestMethod
-from evo.common.exceptions import BadRequestException
-from evo.common.io.exceptions import DataExistsError
+from evo.common.exceptions import BadRequestException, EvoAPIException, RetryError, TransportError
+from evo.common.io.exceptions import ChunkedIOError, DataExistsError
 from evo.common.test_tools import TestWithConnector, TestWithStorage
-from evo.common.utils import NoFeedback, PartialFeedback, get_header_metadata
+from evo.common.utils import BackoffLinear, NoFeedback, PartialFeedback, Retry, get_header_metadata
+from evo.objects.endpoints.models import DataUploadResponseBody
 from evo.objects.exceptions import TableFormatError
 from evo.objects.utils import KnownTableFormat, ObjectDataClient, table_formats
+from evo.objects.utils._concurrency import gather_uploads
 from helpers import NoImport, UnloadModule, get_sample_table_and_bytes
 
 
@@ -200,17 +204,21 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
             body=[{"name": data["name"]} for data in put_data_response[1:]] + [{"name": put_data_response[0]["name"]}],
         )
 
-    @parameterized.expand(["referenced", "table"])
-    async def test_upload_failure_preserves_exception_and_identifies_data(self, upload_type: str) -> None:
+    @parameterized.expand(
+        [("referenced", ConnectionError), ("table", RuntimeError), ("table_transient", ConnectionError)]
+    )
+    async def test_upload_failure_preserves_exception_and_identifies_data(
+        self, upload_type: str, error_type: type[Exception]
+    ) -> None:
         response = load_test_data("put_data_batch.json")[:1]
         name = response[0]["name"]
         (self.data_client.cache_location / name).touch()
-        error = ConnectionError("Storage unavailable")
+        error = error_type("Storage unavailable")
         with (
             self.transport.set_http_response(status_code=200, content=json.dumps(response)),
             mock.patch("evo.common.io.upload.StorageDestination", autospec=True) as destination,
             mock.patch("evo.objects.utils.data.logger") as logger,
-            self.assertRaises(ConnectionError) as cm,
+            self.assertRaises(RetryError if upload_type == "table_transient" else error_type) as cm,
         ):
             destination.upload_file.side_effect = error
             if upload_type == "referenced":
@@ -218,10 +226,15 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
             else:
                 table, _ = get_sample_table_and_bytes(table_formats.FLOAT_ARRAY_2, 1)
                 with mock.patch.object(self.data_client, "save_table", return_value={"data": name}):
-                    await self.data_client.upload_table(table)
-        self.assertIs(error, cm.exception)
+                    await self.data_client.upload_table(
+                        table, retry=Retry(logger=logger, backoff_method=BackoffLinear(0))
+                    )
+        if upload_type == "table_transient":
+            self.assertEqual((error, error, error), cm.exception.exceptions)
+        else:
+            self.assertIs(error, cm.exception)
         context = (
-            "\n".join(getattr(error, "__notes__", []))
+            "\n".join(getattr(cm.exception, "__notes__", []))
             if sys.version_info >= (3, 11)
             else "\n".join(call.args[0] for call in logger.error.call_args_list)
         )
@@ -402,6 +415,286 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
             body=[{"name": mock_data_id}],
         )
         self.assertIs(mock_table_info, actual_table_info)
+
+    @parameterized.expand([("direct", False), ("nested_group", True)])
+    async def test_cancelled_upload_waits_for_parquet_writer(self, _name: str, nested_group: bool) -> None:
+        started = asyncio.Event()
+        release = threading.Event()
+        finished = threading.Event()
+        loop = asyncio.get_running_loop()
+
+        def save_table(*_args):
+            loop.call_soon_threadsafe(started.set)
+            try:
+                if not release.wait(timeout=5):
+                    raise TimeoutError("The test did not release the parquet writer")
+                return {"data": "saved-table"}
+            finally:
+                finished.set()
+
+        with (
+            mock.patch.object(self.data_client, "save_table", side_effect=save_table),
+            mock.patch("evo.objects.io.ObjectDataUpload.upload_from_cache") as upload,
+        ):
+
+            async def run():
+                operation = self.data_client.upload_table(pa.table({"value": [1.0]}))
+                if nested_group:
+                    return await gather_uploads(operation)
+                return await operation
+
+            task = asyncio.create_task(run())
+            cancelled = False
+            try:
+                await asyncio.wait_for(started.wait(), timeout=2)
+                task.cancel()
+                cancelled = True
+                await asyncio.sleep(0)
+                self.assertFalse(task.done(), "Cancellation returned while the parquet writer was still running")
+            finally:
+                release.set()
+                if not cancelled:
+                    task.cancel()
+                await asyncio.gather(task, return_exceptions=True)
+
+        self.assertTrue(task.cancelled())
+        self.assertTrue(finished.is_set())
+        upload.assert_not_awaited()
+
+    async def test_parquet_serialization_runs_off_the_event_loop(self) -> None:
+        threads = []
+        main_thread = threading.get_ident()
+
+        def save_table(*_args):
+            threads.append(threading.get_ident())
+            return {"data": "saved-table"}
+
+        with (
+            mock.patch.object(self.data_client, "save_table", side_effect=save_table),
+            mock.patch("evo.objects.io.ObjectDataUpload.upload_from_cache") as upload,
+        ):
+            result = await self.data_client.upload_table(pa.table({"value": [1.0]}))
+
+        self.assertEqual({"data": "saved-table"}, result)
+        self.assertEqual(1, len(threads))
+        self.assertNotEqual(main_thread, threads[0])
+        upload.assert_awaited_once()
+
+    async def test_parquet_writer_failure_is_propagated_without_uploading(self) -> None:
+        with (
+            mock.patch.object(self.data_client, "save_table", side_effect=RuntimeError("parquet write failed")),
+            mock.patch("evo.objects.io.ObjectDataUpload.upload_from_cache") as upload,
+        ):
+            with self.assertRaisesRegex(RuntimeError, "parquet write failed"):
+                await self.data_client.upload_table(pa.table({"value": [1.0]}))
+
+        upload.assert_not_awaited()
+
+    async def test_direct_concurrent_uploads_share_client_limit(self) -> None:
+        release = asyncio.Event()
+        limit_reached = asyncio.Event()
+        active = 0
+        peak = 0
+
+        async def upload(**_kwargs):
+            nonlocal active, peak
+            active += 1
+            peak = max(peak, active)
+            if active == 8:
+                limit_reached.set()
+            try:
+                await release.wait()
+            finally:
+                active -= 1
+
+        with (
+            mock.patch.object(self.data_client, "save_table", return_value={"data": "saved"}) as save,
+            mock.patch("evo.objects.utils.data.asyncio.to_thread", side_effect=lambda fn, *args: fn(*args)),
+            mock.patch("evo.objects.io.ObjectDataUpload.upload_from_cache", side_effect=upload),
+        ):
+            task = asyncio.gather(*(self.data_client.upload_table(mock.Mock()) for _ in range(24)))
+            try:
+                await asyncio.wait_for(limit_reached.wait(), timeout=2)
+                await asyncio.sleep(0)
+                self.assertEqual(8, save.call_count, "Queued uploads must not start Parquet serialization")
+                release.set()
+                await asyncio.wait_for(task, timeout=2)
+            finally:
+                release.set()
+                task.cancel()
+                await asyncio.gather(task, return_exceptions=True)
+        self.assertEqual(8, peak)
+        self.assertEqual(0, active)
+        self.assertEqual(24, save.call_count)
+
+    @parameterized.expand(
+        [(str(status), EvoAPIException(status, "transient", None, None)) for status in (408, 429, 500, 502, 503, 504)]
+        + [
+            ("timeout", TimeoutError()),
+            ("transport", TransportError("connection lost")),
+            ("connection", ConnectionError()),
+        ]
+    )
+    async def test_transient_upload_retry_preserves_order_and_cached_tables(self, _name, error):
+        attempts = {}
+        completed = []
+        sibling_finished = asyncio.Event()
+
+        async def upload(upload_context, **_kwargs):
+            name = upload_context.name
+            attempts[name] = attempts.get(name, 0) + 1
+            if name == "first" and attempts[name] <= 2:
+                await sibling_finished.wait()
+                raise error
+            completed.append(name)
+            sibling_finished.set()
+
+        retry = Retry(logger=mock.Mock(), backoff_method=BackoffLinear(0))
+        with (
+            mock.patch.object(self.data_client, "save_table", side_effect=lambda table, _: {"data": table}) as save,
+            mock.patch("evo.objects.io.ObjectDataUpload.upload_from_cache", new=upload),
+        ):
+            results = await asyncio.wait_for(
+                gather_uploads(
+                    self.data_client.upload_table("first", retry=retry),
+                    self.data_client.upload_table("second", retry=retry),
+                ),
+                timeout=2,
+            )
+        self.assertEqual(["first", "second"], [result["data"] for result in results])
+        self.assertEqual(["second", "first"], completed)
+        self.assertEqual({"first": 3, "second": 1}, attempts)
+        self.assertEqual(2, save.call_count)
+
+    async def test_retry_covers_actual_upload_url_acquisition(self):
+        response = load_test_data("put_data.json")
+        with (
+            self.transport.set_http_response(status_code=201, content=""),
+            mock.patch.object(self.data_client, "save_table", wraps=self.data_client.save_table) as save,
+            mock.patch(
+                "evo.objects.io.DataApi.put_data_in_workspace",
+                side_effect=[TimeoutError(), [DataUploadResponseBody(**response[0])]],
+            ) as request_url,
+        ):
+            result = await self.data_client.upload_table(
+                pa.table({"value": [1.0]}),
+                retry=Retry(logger=mock.Mock(), backoff_method=BackoffLinear(0)),
+            )
+        self.assertTrue((self.data_client.cache_location / result["data"]).is_file())
+        self.assertEqual(2, request_url.await_count)
+        save.assert_called_once()
+
+    @parameterized.expand([("chunk", "comp=block&"), ("commit", "comp=blocklist")])
+    async def test_retry_covers_wrapped_storage_transport_failure(self, _name, query):
+        response = load_test_data("put_data.json")
+        original_request = self.transport.request
+        failed = False
+
+        async def request(**kwargs):
+            nonlocal failed
+            if query in kwargs["url"] and not failed:
+                failed = True
+                raise TransportError("connection lost")
+            return await original_request(**kwargs)
+
+        with (
+            self.transport.set_http_response(status_code=201, content=""),
+            mock.patch.object(self.transport, "request", side_effect=request),
+            mock.patch.object(self.data_client, "save_table", wraps=self.data_client.save_table) as save,
+            mock.patch(
+                "evo.objects.io.DataApi.put_data_in_workspace",
+                return_value=[DataUploadResponseBody(**response[0])],
+            ) as request_url,
+        ):
+            result = await self.data_client.upload_table(
+                pa.table({"value": [1.0]}),
+                retry=Retry(logger=mock.Mock(), backoff_method=BackoffLinear(0)),
+            )
+        self.assertTrue(failed)
+        self.assertTrue((self.data_client.cache_location / result["data"]).is_file())
+        self.assertEqual(2, request_url.await_count)
+        save.assert_called_once()
+
+    @parameterized.expand([("url", False), ("storage", True)])
+    async def test_retry_exhaustion_is_bounded_and_preserves_errors(self, _name, storage):
+        cause = EvoAPIException(503, "unavailable", None, None)
+        error = ChunkedIOError("storage unavailable") if storage else cause
+        if storage:
+            error.__cause__ = cause
+        with (
+            mock.patch.object(self.data_client, "save_table", return_value={"data": "saved"}) as save,
+            mock.patch("evo.objects.io.ObjectDataUpload.upload_from_cache", side_effect=error) as upload,
+        ):
+            with self.assertRaises(RetryError) as caught:
+                await self.data_client.upload_table(
+                    mock.Mock(), retry=Retry(logger=mock.Mock(), backoff_method=BackoffLinear(0))
+                )
+        self.assertEqual((error, error, error), caught.exception.exceptions)
+        self.assertEqual(3, upload.await_count)
+        save.assert_called_once()
+
+    @parameterized.expand(
+        [
+            ("bad_request", EvoAPIException(400, "bad request", None, None)),
+            ("unauthorized", EvoAPIException(401, "unauthorized", None, None)),
+            ("forbidden", EvoAPIException(403, "forbidden", None, None)),
+            ("not_found", EvoAPIException(404, "not found", None, None)),
+            ("unclassified_chunk_error", ChunkedIOError("unknown cause")),
+            ("invalid_data", ValueError("invalid")),
+            ("cancelled", asyncio.CancelledError()),
+        ]
+    )
+    async def test_permanent_errors_and_cancellation_are_not_retried(self, _name, error):
+        with (
+            mock.patch.object(self.data_client, "save_table", return_value={"data": "saved"}),
+            mock.patch("evo.objects.io.ObjectDataUpload.upload_from_cache", side_effect=error) as upload,
+        ):
+            with self.assertRaises(type(error)) as caught:
+                await self.data_client.upload_table(mock.Mock())
+        self.assertIs(error, caught.exception)
+        upload.assert_awaited_once()
+
+    async def test_already_existing_data_after_retry_is_success(self):
+        feedback = mock.Mock(spec=IFeedback)
+        with (
+            mock.patch.object(self.data_client, "save_table", return_value={"data": "saved"}) as save,
+            mock.patch(
+                "evo.objects.io.ObjectDataUpload.upload_from_cache", side_effect=[TimeoutError(), DataExistsError()]
+            ) as upload,
+        ):
+            result = await self.data_client.upload_table(
+                mock.Mock(), fb=feedback, retry=Retry(logger=mock.Mock(), backoff_method=BackoffLinear(0))
+            )
+        self.assertEqual({"data": "saved"}, result)
+        self.assertEqual(2, upload.await_count)
+        save.assert_called_once()
+        feedback.progress.assert_called_with(1)
+
+    async def test_category_values_and_lookup_upload_concurrently(self) -> None:
+        started = []
+        all_started = asyncio.Event()
+        release = asyncio.Event()
+
+        async def upload(table, **_kwargs):
+            started.append(table.column_names)
+            if len(started) == 2:
+                all_started.set()
+            await release.wait()
+            return {"data": table.column_names[0], "length": table.num_rows}
+
+        with mock.patch.object(self.data_client, "upload_table", side_effect=upload):
+            task = asyncio.create_task(self.data_client.upload_category_table(pa.table({"category": ["sand", "clay"]})))
+            try:
+                await asyncio.wait_for(all_started.wait(), timeout=2)
+                release.set()
+                result = await asyncio.wait_for(task, timeout=2)
+            finally:
+                release.set()
+                task.cancel()
+                await asyncio.gather(task, return_exceptions=True)
+
+        self.assertEqual("category", result["values"]["data"])
+        self.assertEqual("key", result["table"]["data"])
 
     async def test_upload_dataframe_exists(self) -> None:
         """Test uploading tabular data using pandas when the table exists."""

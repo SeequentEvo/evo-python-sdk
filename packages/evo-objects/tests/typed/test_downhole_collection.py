@@ -11,11 +11,13 @@
 
 from __future__ import annotations
 
+import asyncio
 import contextlib
 import copy
 import dataclasses
 import inspect
 import math
+import tempfile
 import uuid
 import warnings
 from datetime import date
@@ -24,13 +26,16 @@ from unittest.mock import AsyncMock, patch
 import numpy as np
 import numpy.testing as npt
 import pandas as pd
+import pyarrow.parquet as pq
 from parameterized import parameterized
 
 from evo.common import Environment, StaticContext
 from evo.common.test_tools import BASE_URL, ORG, WORKSPACE_ID, TestWithConnector
-from evo.common.utils import NoFeedback
+from evo.common.utils import Cache, NoFeedback
 from evo.objects import ObjectReference
+from evo.objects.io import ObjectDataUpload
 from evo.objects.typed import BoundingBox
+from evo.objects.typed._model import SchemaBuilder
 from evo.objects.typed.attributes import AttributeDescription
 from evo.objects.typed.base import BaseObject
 from evo.objects.typed.downhole_collection import (
@@ -49,7 +54,7 @@ def _make_example_data(
     description: str | None = None,
     tags: dict[str, str] | None = None,
     attributes: pd.DataFrame | None = None,
-    collections: list[DistanceCollection] | None = None,
+    collections: list[DistanceCollection | IntervalCollection] | None = None,
 ) -> DownholeCollectionData:
     """Helper to build a simple two-hole DownholeCollectionData."""
     # Concatenated path table: hole 0 has 4 rows, hole 1 has 3 rows
@@ -224,6 +229,112 @@ class TestDownholeCollection(TestWithConnector):
         with self._mock_geoscience_objects():
             result = await DownholeCollection.create(context=self.context, data=data)
         self.assertIsInstance(result, DownholeCollection)
+
+    async def test_collection_uploads_run_concurrently_and_preserve_order(self):
+        template = _make_example_data().collections[0]
+        interval = IntervalCollection(
+            name="intervals",
+            holes=template.holes.copy(),
+            table=pd.DataFrame({"from": [0.0, 1.0, 2.0, 3.0], "to": [1.0, 2.0, 3.0, 4.0]}),
+            unit="m",
+        )
+        collections = [
+            dataclasses.replace(template, name="first"),
+            interval,
+            dataclasses.replace(template, name="last"),
+        ]
+        data = _make_example_data(collections=collections)
+        started = set()
+        all_started = asyncio.Event()
+        release = asyncio.Event()
+        build_from_data = SchemaBuilder.build_from_data
+
+        async def build(builder, payload, skip_sub_models=None):
+            if isinstance(payload, (DistanceCollection, IntervalCollection)):
+                started.add(payload.name)
+                if len(started) == len(collections):
+                    all_started.set()
+                await release.wait()
+            return await build_from_data(builder, payload, skip_sub_models=skip_sub_models)
+
+        with (
+            self._mock_geoscience_objects(),
+            patch.object(SchemaBuilder, "build_from_data", new=build),
+        ):
+            creation = asyncio.create_task(DownholeCollection.create(context=self.context, data=data))
+            try:
+                await asyncio.wait_for(all_started.wait(), timeout=2)
+                release.set()
+                result = await asyncio.wait_for(creation, timeout=2)
+            finally:
+                release.set()
+                creation.cancel()
+                await asyncio.gather(creation, return_exceptions=True)
+
+        self.assertEqual(["first", "intervals", "last"], result.collections.names())
+        self.assertEqual("m", result.collections.get("intervals").from_to.unit)
+        npt.assert_array_equal(interval.table, await result.collections.get("intervals").to_dataframe())
+        self.assertEqual(
+            list(template.table.columns),
+            list((await result.collections.get("last").to_dataframe()).columns),
+        )
+
+    async def test_nested_table_uploads_share_a_concurrency_limit(self):
+        template = _make_example_data().collections[0]
+        holes = template.holes.astype({"hole_index": "int32", "offset": "uint64", "count": "uint64"})
+        table = template.table.assign(**{f"reading_{i}": np.arange(4, dtype=float) for i in range(16)})
+        table["category"] = pd.Categorical(["sand", "clay", "sand", "silt"])
+        data = _make_example_data(
+            collections=[
+                dataclasses.replace(template, name=f"collection_{i}", holes=holes, table=table) for i in range(3)
+            ]
+        )
+        data = dataclasses.replace(
+            data, holes=data.holes.astype({"hole_index": "int32", "offset": "uint64", "count": "uint64"})
+        )
+        active = 0
+        peak = 0
+        uploaded = []
+
+        async def upload(upload, cache, transport, **kwargs):
+            nonlocal active, peak
+            self.assertTrue(
+                (cache.get_location(environment=self.environment, scope="geoscience-object") / upload.name).is_file()
+            )
+            active += 1
+            peak = max(peak, active)
+            try:
+                await asyncio.sleep(0.01)
+                uploaded.append(upload.name)
+            finally:
+                active -= 1
+
+        with tempfile.TemporaryDirectory() as directory:
+            cache = Cache(directory)
+            context = StaticContext.from_environment(
+                environment=self.environment, connector=self.connector, cache=cache
+            )
+            with patch.object(ObjectDataUpload, "upload_from_cache", upload):
+                document = await DownholeCollection._data_to_schema(data, context)
+            cache_location = cache.get_location(environment=self.environment, scope="geoscience-object")
+            for collection in document["collections"]:
+                distance = collection["distance"]
+                geometry = pq.read_table(cache_location / distance["values"]["data"])
+                npt.assert_array_equal(table["distance"], geometry.column(0).to_numpy())
+                self.assertEqual(list(table.columns[1:]), [a["name"] for a in distance["attributes"]])
+                category = distance["attributes"][-1]
+                codes = pq.read_table(cache_location / category["values"]["data"]).column(0).to_numpy()
+                lookup = pq.read_table(cache_location / category["table"]["data"]).to_pandas()
+                decoded = pd.Series(codes).map(dict(zip(lookup["key"], lookup["value"], strict=True)))
+                npt.assert_array_equal(table["category"], decoded)
+                self.assertEqual(category["values"]["length"], len(table))
+                self.assertEqual(distance["values"]["length"], len(table))
+
+        self.assertGreater(peak, 1)
+        self.assertLessEqual(peak, 8)
+        self.assertEqual(0, active)
+        self.assertGreater(len(uploaded), 50)
+        self.assertEqual([c.name for c in data.collections], [c["name"] for c in document["collections"]])
 
     async def test_mixed_collections_round_trip_and_mutation(self):
         interval = IntervalCollection(
