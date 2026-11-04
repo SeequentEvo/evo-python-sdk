@@ -124,7 +124,7 @@ class ObjectSelectorWidget:
         """Handle filter change."""
         self._update_filtered_objects()
 
-    def _format_object_name(self, obj):
+    def format_object_name(self, obj):
         """Format the object name by removing .json extension."""
         name = obj.name
         name = name.removesuffix(".json")
@@ -145,7 +145,7 @@ class ObjectSelectorWidget:
             object_options = [("Select an object...", None)]
             object_options.extend(
                 [
-                    (f"{self._format_object_name(obj)} ({obj.schema_id.sub_classification})", obj.id)
+                    (f"{self.format_object_name(obj)} ({obj.schema_id.sub_classification})", obj.id)
                     for obj in self.filtered_objects
                 ]
             )
@@ -182,7 +182,7 @@ class ObjectSelectorWidget:
         info_html = f"""
         <div style="margin-top: 10px; padding: 10px; background-color: #f0f0f0; border-radius: 5px;">
             <b>Object Details:</b><br/>
-            <b>Name:</b> {self._format_object_name(selected_obj)}<br/>
+            <b>Name:</b> {self.format_object_name(selected_obj)}<br/>
             <b>Path:</b> {selected_obj.path}<br/>
             <b>ID:</b> {selected_obj.id}<br/>
             <b>Schema:</b> {selected_obj.schema_id}<br/>
@@ -217,12 +217,7 @@ class TargetWorkspaceSelectorWidget:
     def __init__(self, manager_widget):
         self.manager_widget = manager_widget
         # Get the selected workspace ID
-        selected_id = manager_widget._workspace_selector.selected
-
-        if selected_id != manager_widget._workspace_selector.UNSELECTED[1]:
-            self.current_workspace_id = selected_id
-        else:
-            raise ValueError("No source workspace is currently selected.")
+        self.current_workspace_id = manager_widget.get_environment().workspace_id
 
         # Create widgets
         self.refresh_btn = widgets.Button(
