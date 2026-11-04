@@ -26,7 +26,7 @@ from evo.common.utils import NoFeedback, PartialFeedback, split_feedback
 from ..exceptions import TableFormatError
 from ..io import _CACHE_SCOPE, ObjectDataDownload, ObjectDataUpload
 from .table_formats import INTEGER_ARRAY_1_INT32, INTEGER_ARRAY_MD_INT32, LOOKUP_TABLE_INT32
-from .tables import KnownTableFormat
+from .tables import KnownTableFormat, _table_to_dataframe
 from .types import ArrayTableInfo, CategoryInfo, LookupTableInfo
 
 try:
@@ -80,7 +80,7 @@ def _get_schema_from_dataframe(dataframe: "pd.DataFrame") -> pa.Schema:
     :param dataframe: The pandas dataframe to get the schema from.
     :return: A pyarrow schema with any configured type conversions applied.
     """
-    schema = pa.Schema.from_pandas(dataframe)
+    schema = pa.Schema.from_pandas(dataframe, preserve_index=False)
     fields = []
     for field in schema:
         if pa.types.is_large_string(field.type):
@@ -90,6 +90,18 @@ def _get_schema_from_dataframe(dataframe: "pd.DataFrame") -> pa.Schema:
         else:
             fields.append(field)
     return pa.schema(fields)
+
+
+def _table_from_dataframe(dataframe: "pd.DataFrame") -> pa.Table:
+    """Convert a pandas dataframe to a pyarrow table for upload.
+
+    The dataframe index is not part of any Geoscience Object table format, so it is never stored.
+
+    :param dataframe: The pandas dataframe to convert.
+    :return: A pyarrow table with the normalized schema from `_get_schema_from_dataframe`.
+    """
+    schema = _get_schema_from_dataframe(dataframe)
+    return pa.Table.from_pandas(dataframe, schema, preserve_index=False)
 
 
 class ObjectDataClient:
@@ -422,8 +434,7 @@ class ObjectDataClient:
                 no table formats are specified, raised when the table does not match any known format.
             :raises StorageFileNotFoundError: If the destination does not exist or is not a directory.
             """
-            schema = _get_schema_from_dataframe(dataframe)
-            table = pa.Table.from_pandas(dataframe, schema)
+            table = _table_from_dataframe(dataframe)
             return self.save_table(table, table_format=table_format)
 
         async def upload_dataframe(
@@ -446,8 +457,7 @@ class ObjectDataClient:
             :raises TableFormatError: If the provided table does not match any of the specified formats. If
                 no table formats are specified, raised when the table does not match any known format.
             """
-            schema = _get_schema_from_dataframe(dataframe)
-            table = pa.Table.from_pandas(dataframe, schema)
+            table = _table_from_dataframe(dataframe)
             table_info = await self.upload_table(table, table_format=table_format, fb=fb)
             return table_info
 
@@ -468,8 +478,7 @@ class ObjectDataClient:
             :raises TableFormatError: If the table isn't a valid category table, or if the number of categories exceeds
                 what int32 type can represent.
             """
-            schema = _get_schema_from_dataframe(dataframe)
-            table = pa.Table.from_pandas(dataframe, schema)
+            table = _table_from_dataframe(dataframe)
             category_info = await self.upload_category_table(table, fb=fb)
             return category_info
 
@@ -495,6 +504,6 @@ class ObjectDataClient:
             """
             table = await self.download_table(object_id, version_id, table_info, fb)
             try:
-                return table.to_pandas()
+                return _table_to_dataframe(table, KnownTableFormat.from_table_info(table_info))
             except ModuleNotFoundError:
                 raise RuntimeError("Unable to download dataframe because the `pandas` package is not installed")

@@ -12,10 +12,13 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import os
+from collections.abc import Callable
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from types import EllipsisType
+from typing import TYPE_CHECKING, Any
 
 import pyarrow as pa
 import pyarrow.parquet as pq
@@ -25,6 +28,9 @@ import evo.logging
 from evo.common.exceptions import StorageFileNotFoundError
 
 from ..exceptions import SchemaValidationError, TableFormatError
+
+if TYPE_CHECKING:
+    import pandas as pd
 
 logger = evo.logging.getLogger("object.tables")
 
@@ -36,6 +42,85 @@ __all__ = [
 
 # Block size to limit memory use while calculating the sha256 digest of a file.
 _DIGEST_BLOCK_SIZE = 4 * 1024 * 1024
+
+# Arrow schema metadata key that pyarrow uses to reconstruct pandas dtypes and indexes.
+_PANDAS_METADATA_KEY = b"pandas"
+
+# Pandas dtypes used for schema column types that numpy cannot represent with nulls.
+_NULLABLE_PANDAS_DTYPES = {
+    "int32": "Int32",
+    "int64": "Int64",
+    "uint8": "UInt8",
+    "uint32": "UInt32",
+    "uint64": "UInt64",
+    "bool": "boolean",
+}
+
+
+def _strip_pandas_metadata(table: pa.Table, *, validate: bool = False) -> pa.Table:
+    """Remove pandas reconstruction metadata, so that readers rely only on the Arrow and Geoscience Object schemas.
+
+    The pandas metadata is only a hint for rebuilding pandas dtypes and indexes; the Arrow data is not changed.
+    Other schema metadata is preserved.
+
+    :param table: The table to remove pandas metadata from.
+    :param validate: Reject tables whose pandas metadata declares serialized index columns. Once the metadata is
+        removed, those columns would be indistinguishable from data columns.
+
+    :return: The table without pandas metadata.
+
+    :raises TableFormatError: If `validate` is true and the table contains serialized pandas index columns.
+    """
+    metadata = table.schema.metadata
+    if not metadata or _PANDAS_METADATA_KEY not in metadata:
+        return table
+
+    if validate:
+        try:
+            index_columns = json.loads(metadata[_PANDAS_METADATA_KEY]).get("index_columns", [])
+        except (UnicodeDecodeError, json.JSONDecodeError, AttributeError):
+            index_columns = []  # Invalid metadata is discarded below, it cannot describe stored columns.
+        stored_index_columns = [column for column in index_columns if isinstance(column, str)]
+        if stored_index_columns:
+            raise TableFormatError(
+                f"Table contains pandas index column(s) {stored_index_columns}, which are not part of any "
+                "Geoscience Object table format. Convert the dataframe with `preserve_index=False`."
+            )
+
+    remaining = {key: value for key, value in metadata.items() if key != _PANDAS_METADATA_KEY}
+    return table.replace_schema_metadata(remaining or None)
+
+
+def _pandas_types_mapper(table_format: BaseTableFormat | None = None) -> Callable[[pa.DataType], Any]:
+    """Get a pyarrow `types_mapper` that maps Geoscience Object column types to pandas dtypes.
+
+    Integer and boolean columns use pandas nullable dtypes, so they keep their type when they contain nulls,
+    rather than being converted to float or object columns depending on the data. Other types use pyarrow defaults.
+
+    :param table_format: The expected table format. If omitted, all supported column types are mapped.
+    """
+    import pandas as pd
+
+    column_formats = (
+        table_format._columns
+        if table_format is not None
+        else [_ColumnFormat(format_id) for format_id in _NULLABLE_PANDAS_DTYPES]
+    )
+    mapping = {
+        column_format.type: pd.api.types.pandas_dtype(_NULLABLE_PANDAS_DTYPES[column_format.id])
+        for column_format in column_formats
+        if column_format.id in _NULLABLE_PANDAS_DTYPES
+    }
+    return mapping.get
+
+
+def _table_to_dataframe(table: pa.Table, table_format: BaseTableFormat | None = None) -> pd.DataFrame:
+    """Convert a table to a pandas dataframe using the Geoscience Object column types, ignoring pandas metadata.
+
+    :param table: The table to convert. It is expected to have been validated against `table_format`.
+    :param table_format: The expected table format. If omitted, all supported column types are mapped.
+    """
+    return _strip_pandas_metadata(table).to_pandas(types_mapper=_pandas_types_mapper(table_format))
 
 
 class _ColumnFormat:
@@ -234,15 +319,21 @@ class KnownTableFormat(BaseTableFormat):
     def _save_table_as_parquet(cls, table: pa.Table, destination: Path) -> str:
         """Save a table in parquet format.
 
+        Pandas reconstruction metadata is not saved, so the parquet file can be read by any consumer. Readers must use
+        the Geoscience Object schema to interpret column types.
+
         :param table: The table to save to parquet file.
         :param destination: A local directory to save the parquet file in.
 
         :return: The sha256 digest of the saved parquet file, which is also the filename.
 
         :raises StorageFileNotFoundError: If the destination does not exist or is not a directory.
+        :raises TableFormatError: If the table contains serialized pandas index columns.
         """
         if not destination.is_dir():
             raise StorageFileNotFoundError(f"'{destination}' is not a directory")
+
+        table = _strip_pandas_metadata(table, validate=True)
 
         try:  # Write temporary file.
             with NamedTemporaryFile(delete=False, dir=destination) as tmp_file:
@@ -383,7 +474,7 @@ class KnownTableFormat(BaseTableFormat):
                     )
 
                 logger.debug("Parquet metadata checks succeeded")
-                return parquet_data.read()
+                return _strip_pandas_metadata(parquet_data.read())
 
         except FileNotFoundError:
             raise StorageFileNotFoundError(f"Could not find data for table with id '{parquet_file.name}'") from None
