@@ -180,16 +180,14 @@ class TestSimulationReportParametersSerialization(unittest.TestCase):
         d = _dump(_params(distribution=SimulationReportDistribution(weights="declustering_weights")))
         self.assertEqual(d["distribution"]["weights"], "declustering_weights")
 
-    def test_distribution_without_tail_extrapolation_sends_null(self):
+    def test_distribution_without_tail_extrapolation_omits_key(self):
         d = _dump(_params(distribution=SimulationReportDistribution(weights="declustering_weights")))
-        self.assertEqual(d["distribution"], {"weights": "declustering_weights", "tail_extrapolation": None})
+        self.assertEqual(d["distribution"], {"weights": "declustering_weights"})
 
     def test_distribution_with_tail_extrapolation(self):
         tail = TailExtrapolationParams(upper=UpperTailParams(power=0.5, max=100.0))
         d = _dump(_params(distribution=SimulationReportDistribution(tail_extrapolation=tail)))
-        self.assertEqual(
-            d["distribution"]["tail_extrapolation"], {"upper": {"power": 0.5, "max": 100.0}, "lower": None}
-        )
+        self.assertEqual(d["distribution"]["tail_extrapolation"], {"upper": {"power": 0.5, "max": 100.0}})
 
     def test_report_context(self):
         d = _dump(
