@@ -15,46 +15,50 @@ import sys
 import traceback
 import unittest
 from collections.abc import Callable, Sequence
+from unittest import mock
 
-from evo.common.exceptions import BadRequestException, EvoExceptionGroup
+from evo.common.exceptions import BadRequestException, EvoExceptionGroup, error_context
 
 
-class TestInvalidObjectError(unittest.TestCase):
-    def test_validation_paths_and_full_detail_are_preserved(self) -> None:
-        content = {
-            "type": "https://seequent.com/error-codes/geoscienceobject/schemas/invalid-object",
-            "title": "The Geoscience Object Is Invalid.",
-            "detail": f"{{'values': '{'x' * 1000}'}} is not valid under any of the given schemas",
-            "json_path": "$.collections[0]",
-            "schema_path": ["properties", "collections", "items", "oneOf"],
-        }
-        error = BadRequestException(400, "Bad Request", content, None)
-        message = str(error)
-        self.assertIn("Invalid value at: $.collections[0]", message)
-        self.assertIn(f"Failed schema rule: {content['schema_path']}", message)
-        self.assertIn("is not valid under any of the given schemas", message)
-        self.assertNotIn("x" * 1000, message)
-        self.assertIn("Full message available in .detail", message)
-        self.assertEqual(content["detail"], error.detail)
-        self.assertIs(content, error.content)
-        self.assertIs(type(error), BadRequestException)
+class TestErrorContext(unittest.TestCase):
+    def test_success_adds_no_context(self) -> None:
+        logger = mock.Mock()
+        with error_context("While preparing data", logger=logger):
+            pass
+        logger.error.assert_not_called()
 
-    def test_missing_paths_and_detail_preview_boundaries(self) -> None:
-        for length in (499, 500, 501):
-            with self.subTest(length=length):
-                detail = "x" * length
-                content = {
-                    "type": "https://seequent.com/error-codes/geoscienceobject/schemas/invalid-object",
-                    "title": "Invalid object",
-                    "detail": detail,
-                }
-                message = str(BadRequestException(400, "Bad Request", content, None))
-                self.assertNotIn("Invalid value at:", message)
-                self.assertNotIn("Failed schema rule:", message)
-                self.assertEqual(length > 500, "[omitted]" in message)
-                if length <= 500:
-                    self.assertIn(f"Detail: {detail}", message)
+    def test_original_exception_and_existing_notes_are_preserved(self) -> None:
+        error = ValueError("Invalid data")
+        logger = mock.Mock()
+        if sys.version_info >= (3, 11):
+            error.add_note("Existing context")
+        with self.assertRaises(ValueError) as cm:
+            with error_context("While preparing data", logger=logger):
+                raise error
+        self.assertIs(error, cm.exception)
+        if sys.version_info >= (3, 11):
+            self.assertEqual(["Existing context", "While preparing data"], error.__notes__)
+            logger.error.assert_not_called()
+        else:
+            logger.error.assert_called_once_with("While preparing data")
 
+    def test_missing_add_note_uses_the_callers_logger(self) -> None:
+        class LegacyError(Exception):
+            def __getattribute__(self, name):
+                if name == "add_note":
+                    raise AttributeError(name)
+                return super().__getattribute__(name)
+
+        error = LegacyError("Invalid data")
+        logger = mock.Mock()
+        with self.assertRaises(LegacyError) as cm:
+            with error_context("While preparing data", logger=logger):
+                raise error
+        self.assertIs(error, cm.exception)
+        logger.error.assert_called_once_with("While preparing data")
+
+
+class TestBadRequestException(unittest.TestCase):
     def test_unrelated_bad_requests_are_unchanged(self) -> None:
         content = {"title": "Bad request", "detail": "x" * 1000, "json_path": "$.unrelated"}
         error = BadRequestException(400, "Bad Request", content, None)

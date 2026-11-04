@@ -19,11 +19,11 @@ import numpy as np
 
 from evo import logging
 from evo.common import APIConnector, Environment, ICache, IFeedback, StaticContext
-from evo.common.exceptions import StorageFileNotFoundError
+from evo.common.exceptions import StorageFileNotFoundError, error_context
 from evo.common.io.exceptions import DataExistsError
 from evo.common.utils import NoFeedback, PartialFeedback, split_feedback
 
-from ..exceptions import TableFormatError, _error_context
+from ..exceptions import TableFormatError
 from ..io import _CACHE_SCOPE, ObjectDataDownload, ObjectDataUpload
 from .table_formats import INTEGER_ARRAY_1_INT32, INTEGER_ARRAY_MD_INT32, LOOKUP_TABLE_INT32
 from .tables import KnownTableFormat
@@ -143,7 +143,7 @@ class ObjectDataClient:
         n_names = len(names)
         logger.debug(f"Found {n_names} data reference{'' if n_names == 1 else 's'}")
         n_uploaded = 0
-        with _error_context("While uploading referenced data"):
+        with error_context("While uploading referenced data", logger=logger):
             async for ctx in ObjectDataUpload._create_multiple(
                 connector=self._connector,
                 environment=self._environment,
@@ -154,7 +154,7 @@ class ObjectDataClient:
                 else:
                     fb_part = NoFeedback
 
-                with _error_context(f"While uploading referenced data '{ctx.name}'"):
+                with error_context(f"While uploading referenced data '{ctx.name}'", logger=logger):
                     data_file = self.cache_location / ctx.name
                     logger.debug(f"Uploading data: {ctx.name}")
                     if not data_file.exists():
@@ -185,7 +185,7 @@ class ObjectDataClient:
         """
         from .table_formats import get_known_format
 
-        with _error_context("While preparing an Arrow table for Evo Parquet storage"):
+        with error_context("While preparing an Arrow table for Evo Parquet storage", logger=logger):
             if not isinstance(table_format, KnownTableFormat):
                 table_format = get_known_format(table, table_formats=table_format)
             table_info = table_format.save_table(table=table, destination=self.cache_location)
@@ -213,7 +213,7 @@ class ObjectDataClient:
         """
         table_info = self.save_table(table, table_format)
         upload = ObjectDataUpload(connector=self._connector, environment=self._environment, name=table_info["data"])
-        with _error_context(f"While uploading table data '{table_info['data']}'"):
+        with error_context(f"While uploading table data '{table_info['data']}'", logger=logger):
             try:
                 await upload.upload_from_cache(cache=self._cache, transport=self._connector.transport, fb=fb)
             except DataExistsError:

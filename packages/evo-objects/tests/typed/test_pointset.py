@@ -93,7 +93,7 @@ class TestPointSet(TestWithConnector):
         with (
             self._mock_geoscience_objects() as client,
             patch(target, AsyncMock(side_effect=error)),
-            patch("evo.objects.exceptions.logging.getLogger") as logger,
+            patch("evo.objects.typed.base.logger") as logger,
             self.assertRaises(ConnectionError) as cm,
         ):
             if stage == "preparation":
@@ -107,7 +107,7 @@ class TestPointSet(TestWithConnector):
         context = (
             "\n".join(getattr(error, "__notes__", []))
             if sys.version_info >= (3, 11)
-            else logger.return_value.error.call_args.args[0]
+            else logger.error.call_args.args[0]
         )
         self.assertIn("PointSet 'Test PointSet'", context)
         expected = "preparing" if stage == "preparation" else ("creating" if operation == "create" else "replacing")

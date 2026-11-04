@@ -9,25 +9,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from collections.abc import Iterator
-from contextlib import contextmanager
 from uuid import UUID
 
-from evo import logging
-from evo.common.exceptions import CustomTypedError, EvoClientException
-
-
-@contextmanager
-def _error_context(context: str) -> Iterator[None]:
-    """Keep the original exception, using notes on Python 3.11+ and logging on 3.10."""
-    try:
-        yield
-    except Exception as exc:
-        if hasattr(exc, "add_note"):
-            exc.add_note(context)
-        else:
-            logging.getLogger("object").error(context)
-        raise
+from evo.common.exceptions import BadRequestException, CustomTypedError, EvoClientException
 
 
 class SchemaIDFormatError(EvoClientException):
@@ -55,6 +39,30 @@ class TableFormatError(EvoClientException):
 
 class SchemaValidationError(EvoClientException):
     """Failed to validate data against a geoscience object schema"""
+
+
+class InvalidGeoscienceObjectError(CustomTypedError, BadRequestException):
+    """The service rejected an object that does not match its geoscience object schema."""
+
+    TYPE_ID = "/geoscienceobject/schemas/invalid-object"
+
+    def __str__(self) -> str:
+        error_message = super().__str__()
+        detail = self.detail
+        if detail:
+            error_message = error_message.removesuffix(f"\nDetail: {detail}")
+        if json_path := self.content.get("json_path"):
+            error_message += f"\nInvalid value at: {json_path}"
+        if schema_path := self.content.get("schema_path"):
+            error_message += f"\nFailed schema rule: {schema_path}"
+        if detail:
+            if len(detail) > 500:
+                detail = (
+                    f"{detail[:250]} ... [omitted] ... {detail[-250:]}\n"
+                    "(For the full detail, catch this exception as exc and run print(exc.detail).)"
+                )
+            error_message += f"\nDetail: {detail}"
+        return error_message
 
 
 class ObjectAlreadyExistsError(CustomTypedError):

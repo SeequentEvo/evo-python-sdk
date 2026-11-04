@@ -209,7 +209,7 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
         with (
             self.transport.set_http_response(status_code=200, content=json.dumps(response)),
             mock.patch("evo.common.io.upload.StorageDestination", autospec=True) as destination,
-            mock.patch("evo.objects.exceptions.logging.getLogger") as logger,
+            mock.patch("evo.objects.utils.data.logger") as logger,
             self.assertRaises(ConnectionError) as cm,
         ):
             destination.upload_file.side_effect = error
@@ -223,7 +223,7 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
         context = (
             "\n".join(getattr(error, "__notes__", []))
             if sys.version_info >= (3, 11)
-            else "\n".join(call.args[0] for call in logger.return_value.error.call_args_list)
+            else "\n".join(call.args[0] for call in logger.error.call_args_list)
         )
         self.assertIn("While uploading", context)
         self.assertIn(name, context)
@@ -231,27 +231,27 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
     async def test_upload_url_failure_reports_upload_stage(self) -> None:
         with (
             self.transport.set_http_response(status_code=400, content='{"title": "Bad request"}'),
-            mock.patch("evo.objects.exceptions.logging.getLogger") as logger,
+            mock.patch("evo.objects.utils.data.logger") as logger,
             self.assertRaises(BadRequestException) as cm,
         ):
             await self.data_client.upload_referenced_data({"coordinates": {"data": "0" * 64}})
         context = (
             "\n".join(getattr(cm.exception, "__notes__", []))
             if sys.version_info >= (3, 11)
-            else logger.return_value.error.call_args.args[0]
+            else logger.error.call_args.args[0]
         )
         self.assertIn("While uploading referenced data", context)
 
     def test_incompatible_table_is_reported_as_preparation_not_upload(self) -> None:
         with (
-            mock.patch("evo.objects.exceptions.logging.getLogger") as logger,
+            mock.patch("evo.objects.utils.data.logger") as logger,
             self.assertRaises(TableFormatError) as cm,
         ):
             self.data_client.save_table(pa.table({"value": ["text"]}), table_format=table_formats.FLOAT_ARRAY_2)
         context = (
             "\n".join(getattr(cm.exception, "__notes__", []))
             if sys.version_info >= (3, 11)
-            else logger.return_value.error.call_args.args[0]
+            else logger.error.call_args.args[0]
         )
         self.assertIn("While preparing an Arrow table for Evo Parquet storage", context)
         self.assertNotIn("While uploading", context)
