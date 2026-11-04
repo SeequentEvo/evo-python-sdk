@@ -1558,6 +1558,40 @@ class TestUpdateBlockModel(TestWithConnector, TestWithStorage):
                 column_metadata_updates={"col1": ColumnMetadataUpdate(group="Assays")},
             )
 
+    async def test_update_columns_null_group_keeps_qualified_upload_title(self) -> None:
+        """group=None leaves membership unchanged (only group="" ungroups), so qualified data is still accepted."""
+        self.transport.set_request_handler(
+            UpdateRequestHandler(
+                update_result=UPDATE_RESULT,
+                job_response=JobResponse(job_status=JobStatus.COMPLETE, payload=UPDATED_VERSION),
+            )
+        )
+        with (
+            mock.patch("evo.common.io.upload.StorageDestination") as mock_destination,
+            mock.patch("pyarrow.parquet.write_table", wraps=pyarrow.parquet.write_table) as mock_write,
+        ):
+            mock_destination.upload_file = mock.AsyncMock()
+            qualified = "Assays\u25b8Cu"
+            data = pyarrow.table({"i": [1], "j": [4], "k": [7], qualified: [1.0]})
+            await self.bms_client.update_block_model_columns(
+                BM_UUID,
+                data,
+                new_columns=[],
+                update_columns={qualified},
+                column_metadata_updates={qualified: ColumnMetadataUpdate(group=None, unit_id="%[mass]")},
+            )
+            self.assertEqual(mock_write.call_args.args[0].schema.names, ["i", "j", "k", qualified])
+
+        # Only an empty group ungroups, which requires the bare title instead.
+        with self.assertRaises(MissingColumnInTable):
+            await self.bms_client.update_block_model_columns(
+                BM_UUID,
+                data,
+                new_columns=[],
+                update_columns={qualified},
+                column_metadata_updates={qualified: ColumnMetadataUpdate(group="")},
+            )
+
     async def test_update_columns_rejects_metadata_update_of_deleted_column(self) -> None:
         data = pyarrow.table({"i": [1], "j": [4], "k": [7], "col2": [1.0]})
         with self.assertRaises(ValueError):

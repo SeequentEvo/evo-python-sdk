@@ -187,9 +187,10 @@ def _upload_title_after_move(current_title: str, update: ColumnMetadataUpdate, s
 
     The service expects the uploaded data keyed by the column's post-update qualified title: the leaf title
     (everything after the last ``separator``, which a leaf can never contain) prefixed by the destination group.
-    A column whose group is not changing keeps its current title.
+    A column whose group is not changing (``group`` omitted or ``None``) keeps its current title; only an
+    empty String ``group`` ungroups the column.
     """
-    if "group" not in update.model_fields_set:
+    if update.group is None:
         return current_title
     leaf = current_title.rsplit(separator, 1)[-1]
     return f"{update.group}{separator}{leaf}" if update.group else leaf
