@@ -24,7 +24,7 @@ from pandas.testing import assert_frame_equal
 
 from evo.objects.exceptions import TableFormatError
 from evo.objects.parquet import ParquetLoader
-from evo.objects.utils import get_known_format
+from evo.objects.utils import ArrowTableFormat, get_known_format
 from evo.objects.utils.data import _table_from_dataframe
 
 
@@ -73,8 +73,13 @@ class TestPandasMetadata(unittest.TestCase):
         return pq.read_schema(self.data_dir / table_info["data"]).metadata or {}
 
     def test_dataframe_table_has_pandas_metadata(self) -> None:
-        """Guard the premise of these tests: pyarrow always adds pandas metadata when converting a dataframe."""
-        table = _table_from_dataframe(pd.DataFrame({"value": pd.array([1, None], dtype="Int64")}))
+        """Even an explicit metadata-free schema does not prevent PyArrow from adding pandas metadata."""
+        dataframe = pd.DataFrame({"value": pd.array([1, None], dtype="Int64")})
+        table_format = ArrowTableFormat.from_pandas(dataframe)
+        self.assertIsNone(table_format.pa_schema.metadata)
+
+        table = pa.Table.from_pandas(dataframe, schema=table_format.pa_schema, preserve_index=False)
+
         self.assertIn(b"pandas", table.schema.metadata)
 
     def test_save_table_strips_pandas_metadata(self) -> None:
@@ -118,6 +123,62 @@ class TestPandasMetadata(unittest.TestCase):
             self._save(table)
         self.assertEqual([], list(self.data_dir.iterdir()))
 
+    def test_save_table_rejects_malformed_pandas_index_metadata(self) -> None:
+        for metadata in (
+            b"not json",
+            b"\xff",
+            b"null",
+            b"[]",
+            b'{"index_columns": null}',
+            b'{"index_columns": 1}',
+            b'{"index_columns": "row"}',
+            b'{"index_columns": [1]}',
+            b'{"index_columns": [{}]}',
+        ):
+            with self.subTest(metadata=metadata):
+                table = pa.table({"value": [1.0]}).replace_schema_metadata({b"pandas": metadata})
+
+                with self.assertRaisesRegex(TableFormatError, "pandas index metadata"):
+                    self._save(table)
+                self.assertEqual([], list(self.data_dir.iterdir()))
+
+    def test_save_table_rejects_serialized_indexes(self) -> None:
+        indexes = [
+            pd.Index([5, 3], name="row"),
+            pd.MultiIndex.from_tuples([(5, 1), (3, 2)], names=["hole", "row"]),
+        ]
+        for index in indexes:
+            with self.subTest(index=index):
+                dataframe = pd.DataFrame({"value": [1, 2]}, index=index)
+                table = pa.Table.from_pandas(dataframe, preserve_index=True)
+
+                with self.assertRaisesRegex(TableFormatError, "pandas index column"):
+                    self._save(table)
+                self.assertEqual([], list(self.data_dir.iterdir()))
+
+    def test_metadata_only_range_index_does_not_change_saved_file(self) -> None:
+        dataframe = pd.DataFrame({"value": [1.0, 2.0]}, index=pd.RangeIndex(5, 7, name="row"))
+        table = pa.Table.from_pandas(dataframe)
+
+        with_metadata = self._save(table)
+        without_metadata = self._save(table.replace_schema_metadata(None))
+
+        self.assertEqual(without_metadata, with_metadata)
+        self.assertNotIn(b"pandas", self._schema_metadata(with_metadata))
+
+    def test_save_preserves_field_metadata_and_nullability(self) -> None:
+        field = pa.field("value", pa.int64(), nullable=False, metadata={b"units": b"count"})
+        schema = pa.schema([field], metadata={b"pandas": b'{"index_columns": []}', b"other": b"kept"})
+        table = pa.Table.from_arrays([pa.array([2**63 - 1])], schema=schema)
+
+        table_info = self._save(table)
+        saved = pq.ParquetFile(self.data_dir / table_info["data"]).read()
+
+        self.assertTrue(
+            saved.schema.equals(schema.remove_metadata().with_metadata({b"other": b"kept"}), check_metadata=True)
+        )
+        self.assertEqual(table.to_pydict(), saved.to_pydict())
+
     def test_dataframe_index_is_not_stored(self) -> None:
         dataframe = pd.DataFrame({"value": [1.0, 2.0, 3.0]}).iloc[[2, 0]]
 
@@ -132,8 +193,18 @@ class TestPandasMetadata(unittest.TestCase):
             (pa.array([1, 2, 3], type=pa.int64()), "Int64"),
             (pa.array([1, None, 3], type=pa.int32()), "Int32"),
             (pa.array([1, 2, 3], type=pa.int32()), "Int32"),
+            (pa.array([2**63 - 1, None, -(2**63)], type=pa.int64()), "Int64"),
+            (pa.array([255, None, 0], type=pa.uint8()), "UInt8"),
+            (pa.array([2**32 - 1, None, 0], type=pa.uint32()), "UInt32"),
+            (pa.array([2**64 - 1, None, 0], type=pa.uint64()), "UInt64"),
+            (pa.array([None, None], type=pa.int64()), "Int64"),
+            (pa.array([], type=pa.int64()), "Int64"),
             (pa.array([True, None, False], type=pa.bool_()), "boolean"),
             (pa.array([1.5, None, 3.5], type=pa.float64()), "float64"),
+            (
+                pa.array([pd.Timestamp("2025-01-01", tz="UTC"), None], type=pa.timestamp("us", tz="UTC")),
+                "datetime64[us, UTC]",
+            ),
         ]
         for array, expected_dtype in cases:
             with self.subTest(type=str(array.type), nulls=array.null_count):

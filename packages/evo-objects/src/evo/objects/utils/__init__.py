@@ -25,7 +25,7 @@ except ImportError:
 from .data import ObjectDataClient
 from .downhole import expand_hole_index, hole_chunks_from_ids
 from .table_formats import all_known_formats, get_known_format
-from .tables import ArrowTableFormat, BaseTableFormat, KnownTableFormat
+from .tables import ArrowTableFormat, BaseTableFormat, ColumnFormat, KnownTableFormat
 from .types import ArrayTableInfo, AttributeInfo, CategoryInfo, LookupTableInfo, TableInfo
 
 # We _used_ to export Table and DataFrame from this package as custom protocols, but we are using the actual
@@ -39,6 +39,7 @@ __all__ = [
     "AttributeInfo",
     "BaseTableFormat",
     "CategoryInfo",
+    "ColumnFormat",
     "KnownTableFormat",
     "LookupTableInfo",
     "ObjectDataClient",

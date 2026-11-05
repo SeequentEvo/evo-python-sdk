@@ -21,7 +21,7 @@ import numpy
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from evo.objects.utils.tables import BaseTableFormat, _ColumnFormat
+from evo.objects.utils.tables import BaseTableFormat, ColumnFormat
 
 
 class NoImport:
@@ -123,16 +123,16 @@ def _generate_data(format_id: str, n_samples: int) -> Iterator:
             raise TypeError(f"Unsupported format '{unknown_format}'")
 
 
-def _change_format(current_format: _ColumnFormat) -> _ColumnFormat:
+def _change_format(current_format: ColumnFormat) -> ColumnFormat:
     match current_format.id:
         case "float64":
-            return _ColumnFormat("int64")
+            return ColumnFormat("int64")
         case "uint8" | "uint32" | "uint64" | "int32" | "int64":
-            return _ColumnFormat("float64")
+            return ColumnFormat("float64")
         case "bool" | "timestamp":
-            return _ColumnFormat("string")
+            return ColumnFormat("string")
         case "string":
-            return _ColumnFormat("bool")
+            return ColumnFormat("bool")
         case unknown_format:
             raise TypeError(f"Unsupported format '{unknown_format}'")
 
@@ -140,10 +140,10 @@ def _change_format(current_format: _ColumnFormat) -> _ColumnFormat:
 def get_sample_table(
     table_format: BaseTableFormat, n_rows: int, add_column: bool = False, change_types: bool = False
 ) -> pa.Table:
-    column_formats = [column for column in table_format._columns]
+    column_formats = list(table_format.columns)
 
     if add_column:
-        column_formats.append(_ColumnFormat(column_formats[-1].type))
+        column_formats.append(ColumnFormat(column_formats[-1].type))
 
     if change_types:
         column_formats = [_change_format(column) for column in column_formats]

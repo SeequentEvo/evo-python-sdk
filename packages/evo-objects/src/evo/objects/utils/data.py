@@ -26,7 +26,7 @@ from evo.common.utils import NoFeedback, PartialFeedback, split_feedback
 from ..exceptions import TableFormatError
 from ..io import _CACHE_SCOPE, ObjectDataDownload, ObjectDataUpload
 from .table_formats import INTEGER_ARRAY_1_INT32, INTEGER_ARRAY_MD_INT32, LOOKUP_TABLE_INT32
-from .tables import KnownTableFormat, _table_to_dataframe
+from .tables import ArrowTableFormat, KnownTableFormat, _get_schema_from_dataframe, _table_to_dataframe
 from .types import ArrayTableInfo, CategoryInfo, LookupTableInfo
 
 try:
@@ -69,39 +69,16 @@ def _iter_refs(target: Any, _key: str | None = None) -> Iterator[str]:
             yield str(value)
 
 
-def _get_schema_from_dataframe(dataframe: "pd.DataFrame") -> pa.Schema:
-    """Get a normalized pyarrow schema from a pandas dataframe.
-
-    This hook centralizes dataframe-to-Arrow schema adjustments before the
-    dataframe is converted to a table. It currently performs these conversions:
-    - large_string -> string
-    - dictionary<*, large_string> -> dictionary<*, string>
-
-    :param dataframe: The pandas dataframe to get the schema from.
-    :return: A pyarrow schema with any configured type conversions applied.
-    """
-    schema = pa.Schema.from_pandas(dataframe, preserve_index=False)
-    fields = []
-    for field in schema:
-        if pa.types.is_large_string(field.type):
-            fields.append(field.with_type(pa.string()))
-        elif pa.types.is_dictionary(field.type) and pa.types.is_large_string(field.type.value_type):
-            fields.append(field.with_type(pa.dictionary(field.type.index_type, pa.string())))
-        else:
-            fields.append(field)
-    return pa.schema(fields)
-
-
 def _table_from_dataframe(dataframe: "pd.DataFrame") -> pa.Table:
     """Convert a pandas dataframe to a pyarrow table for upload.
 
     The dataframe index is not part of any Geoscience Object table format, so it is never stored.
 
     :param dataframe: The pandas dataframe to convert.
-    :return: A pyarrow table with the normalized schema from `_get_schema_from_dataframe`.
+    :return: A pyarrow table with the normalized schema from `ArrowTableFormat.from_pandas`.
     """
-    schema = _get_schema_from_dataframe(dataframe)
-    return pa.Table.from_pandas(dataframe, schema, preserve_index=False)
+    table_format = ArrowTableFormat.from_pandas(dataframe)
+    return pa.Table.from_pandas(dataframe, schema=table_format.pa_schema, preserve_index=False)
 
 
 class ObjectDataClient:
@@ -478,7 +455,9 @@ class ObjectDataClient:
             :raises TableFormatError: If the table isn't a valid category table, or if the number of categories exceeds
                 what int32 type can represent.
             """
-            table = _table_from_dataframe(dataframe)
+            # Keep dictionary encoding until the categories are split into value and lookup tables.
+            schema = _get_schema_from_dataframe(dataframe)
+            table = pa.Table.from_pandas(dataframe, schema=schema, preserve_index=False)
             category_info = await self.upload_category_table(table, fb=fb)
             return category_info
 
