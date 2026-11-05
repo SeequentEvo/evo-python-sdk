@@ -15,11 +15,12 @@
 * @SeequentEvo/evo-python-sdk-maintainers
 
 # =============================================================================
-# AUTO-GENERATED - NO REVIEW REQUIRED
+# DOCUMENTATION - NO REVIEW REQUIRED (EXCEPT FOR CONFIG)
 # =============================================================================
 
-mkdocs/docs/packages/
-mkdocs/site/packages/
+mkdocs/
+mkdocs/mkdocs.yml                         @SeequentEvo/evo-python-sdk-maintainers
+mkdocs/gen_api_docs.py                    @SeequentEvo/evo-python-sdk-maintainers
 
 # =============================================================================
 # PACKAGE-SPECIFIC MAINTAINERS

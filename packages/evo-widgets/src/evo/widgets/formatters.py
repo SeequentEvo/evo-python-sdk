@@ -423,12 +423,12 @@ def format_report_result(obj: Any) -> str:
 
     # Build the result table with alternating row colors
     headers = list(df.columns)
-    header_html = "".join([f"<th>{h}</th>" for h in headers])
+    header_html = "".join([f"<th>{escape(str(h))}</th>" for h in headers])
 
     rows_html = []
     for i, (_, row) in enumerate(df.iterrows()):
         row_class = 'class="alt-row"' if i % 2 == 1 else ""
-        cells = "".join([f"<td>{v if v is not None and v == v else ''}</td>" for v in row])
+        cells = "".join([f"<td>{escape(str(v)) if v is not None and v == v else ''}</td>" for v in row])
         rows_html.append(f"<tr {row_class}>{cells}</tr>")
 
     subtitle = f'<div class="subtitle">Created: {obj.created_at.strftime("%Y-%m-%d %H:%M:%S")} | Rows: {len(df)}</div>'
@@ -475,7 +475,8 @@ def format_report(obj: Any) -> str:
         for i, col in enumerate(obj._specification.columns):
             row_class = 'class="alt-row"' if i % 2 == 1 else ""
             col_rows.append(
-                f"<tr {row_class}><td>{col.label}</td><td>{col.aggregation}</td><td>{col.output_unit_id}</td></tr>"
+                f"<tr {row_class}><td>{escape(str(col.label))}</td><td>{escape(str(col.aggregation))}</td>"
+                f"<td>{escape(str(col.output_unit_id))}</td></tr>"
             )
         columns_html = f"""
         <div style="margin-top: 8px;"><strong>Columns:</strong></div>
@@ -491,8 +492,8 @@ def format_report(obj: Any) -> str:
         cat_rows = []
         for i, cat in enumerate(obj._specification.categories):
             row_class = 'class="alt-row"' if i % 2 == 1 else ""
-            values_str = ", ".join(cat.values) if cat.values else "(all)"
-            cat_rows.append(f"<tr {row_class}><td>{cat.label}</td><td>{values_str}</td></tr>")
+            values_str = ", ".join(str(v) for v in cat.values) if cat.values else "(all)"
+            cat_rows.append(f"<tr {row_class}><td>{escape(str(cat.label))}</td><td>{escape(values_str)}</td></tr>")
         categories_html = f"""
         <div style="margin-top: 8px;"><strong>Categories:</strong></div>
         <table class="nested">

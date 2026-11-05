@@ -900,7 +900,7 @@ wheels = [
 
 [[package]]
 name = "evo-blockmodels"
-version = "0.8.0"
+version = "0.9.0"
 source = { editable = "packages/evo-blockmodels" }
 dependencies = [
     { name = "evo-sdk-common" },
@@ -1321,7 +1321,7 @@ test = [
 
 [[package]]
 name = "evo-sdk-common"
-version = "0.5.29"
+version = "0.5.30"
 source = { editable = "packages/evo-sdk-common" }
 dependencies = [
     { name = "pure-interface" },
@@ -1409,7 +1409,7 @@ test = [
 
 [[package]]
 name = "evo-widgets"
-version = "0.2.2"
+version = "0.2.3"
 source = { editable = "packages/evo-widgets" }
 dependencies = [
     { name = "evo-sdk-common" },
