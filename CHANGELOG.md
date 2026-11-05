@@ -1,5 +1,22 @@
 # Changelog
 
+## evo-blockmodels@v0.9.0
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### Other Changes
+* fix formatters of compute results by @geostats-BSY in https://github.com/SeequentEvo/evo-python-sdk/pull/373
+* Assign user role by email by @keerynj04 in https://github.com/SeequentEvo/evo-python-sdk/pull/380
+* Add html escape for format_report and format_report_result by @shivangj-10 in https://github.com/SeequentEvo/evo-python-sdk/pull/388
+* Add a discovery client for compute tasks by @amirabbas-jalali-bentley in https://github.com/SeequentEvo/evo-python-sdk/pull/387
+* Exclude mkdocs content from default code ownership by @GriffinBaxterSeequent in https://github.com/SeequentEvo/evo-python-sdk/pull/391
+* Update CHANGELOG.md by @change-log-updater[bot] in https://github.com/SeequentEvo/evo-python-sdk/pull/393
+* Remove explicit-null serializers for tail extrapolation by @amirabbas-jalali-bentley in https://github.com/SeequentEvo/evo-python-sdk/pull/392
+* Allow groups/metadata to be updated in data-update paths by @AndreLobatoSeequent in https://github.com/SeequentEvo/evo-python-sdk/pull/396
+
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-blockmodels@v0.8.0...evo-blockmodels@v0.9.0
+
 ## evo-widgets@v0.2.3
 <!-- Release notes generated using configuration in .github/release.yml at main -->
 
