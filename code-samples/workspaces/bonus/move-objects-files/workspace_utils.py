@@ -1,3 +1,4 @@
+from html import escape
 from uuid import UUID
 
 import ipywidgets as widgets
@@ -178,15 +179,21 @@ class ObjectSelectorWidget:
             self.info_display.value = ""
             return
 
+        object_name = escape(str(self.format_object_name(selected_obj)))
+        object_path = escape(str(selected_obj.path))
+        object_id = escape(str(selected_obj.id))
+        object_schema = escape(str(selected_obj.schema_id))
+        object_version = escape(str(selected_obj.version_id))
+
         # Build info HTML
         info_html = f"""
         <div style="margin-top: 10px; padding: 10px; background-color: #f0f0f0; border-radius: 5px;">
             <b>Object Details:</b><br/>
-            <b>Name:</b> {self.format_object_name(selected_obj)}<br/>
-            <b>Path:</b> {selected_obj.path}<br/>
-            <b>ID:</b> {selected_obj.id}<br/>
-            <b>Schema:</b> {selected_obj.schema_id}<br/>
-            <b>Version:</b> {selected_obj.version_id}<br/>
+            <b>Name:</b> {object_name}<br/>
+            <b>Path:</b> {object_path}<br/>
+            <b>ID:</b> {object_id}<br/>
+            <b>Schema:</b> {object_schema}<br/>
+            <b>Version:</b> {object_version}<br/>
             <b>Created:</b> {selected_obj.created_at.strftime("%Y-%m-%d %H:%M:%S")}<br/>
             <b>Modified:</b> {selected_obj.modified_at.strftime("%Y-%m-%d %H:%M:%S")}<br/>
         </div>
