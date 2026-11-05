@@ -11,7 +11,7 @@
 
 from uuid import UUID
 
-from evo.common.exceptions import CustomTypedError, EvoClientException
+from evo.common.exceptions import BadRequestException, CustomTypedError, EvoClientException
 
 
 class SchemaIDFormatError(EvoClientException):
@@ -39,6 +39,30 @@ class TableFormatError(EvoClientException):
 
 class SchemaValidationError(EvoClientException):
     """Failed to validate data against a geoscience object schema"""
+
+
+class InvalidGeoscienceObjectError(CustomTypedError, BadRequestException):
+    """The service rejected an object that does not match its geoscience object schema."""
+
+    TYPE_ID = "/geoscienceobject/schemas/invalid-object"
+
+    def __str__(self) -> str:
+        error_message = super().__str__()
+        detail = self.detail
+        if detail:
+            error_message = error_message.removesuffix(f"\nDetail: {detail}")
+        if json_path := self.content.get("json_path"):
+            error_message += f"\nInvalid value at: {json_path}"
+        if schema_path := self.content.get("schema_path"):
+            error_message += f"\nFailed schema rule: {schema_path}"
+        if detail:
+            if len(detail) > 500:
+                detail = (
+                    f"{detail[:250]} ... [omitted] ... {detail[-250:]}\n"
+                    "(For the full detail, catch this exception as exc and run print(exc.detail).)"
+                )
+            error_message += f"\nDetail: {detail}"
+        return error_message
 
 
 class ObjectAlreadyExistsError(CustomTypedError):
