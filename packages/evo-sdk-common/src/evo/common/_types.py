@@ -27,7 +27,7 @@ logger = logging.getLogger("types")
 PathLike: TypeAlias = str | os.PathLike | Path
 
 
-MAX_WINDOWS_PATH_LEN = 259
+MAX_WINDOWS_PATH_LEN = 32766
 FILE_NAME_TOO_LONG_ERR_NO = 63
 
 
@@ -63,6 +63,8 @@ def _check_path_length(path: Path) -> None:
 def resolve_path(path: PathLike, *, check_path_length: bool = False) -> Path:
     """Resolve the given path and check for maximum path length.
 
+    Windows paths use the extended-length form so filesystem operations do not depend on the system long-path setting.
+
     :param path: The path to resolve.
     :param check_path_length: If True, check the path length.
 
@@ -76,6 +78,15 @@ def resolve_path(path: PathLike, *, check_path_length: bool = False) -> Path:
             path = Path(path)
         except TypeError:
             raise TypeError(f"Expected a PathLike object, got {path!r}")
+
+    if os.name == "nt":
+        absolute_path = os.path.abspath(path)
+        if not absolute_path.startswith(("\\\\?\\", "\\\\.\\")):
+            if absolute_path.startswith("\\\\"):
+                absolute_path = "\\\\?\\UNC\\" + absolute_path[2:]
+            else:
+                absolute_path = "\\\\?\\" + absolute_path
+        path = Path(absolute_path)
 
     resolved = path.resolve()
     if check_path_length:

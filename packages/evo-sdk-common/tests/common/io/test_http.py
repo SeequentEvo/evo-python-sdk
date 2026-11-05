@@ -12,6 +12,7 @@
 from pathlib import Path
 from unittest import mock
 
+from evo.common._types import resolve_path
 from evo.common.connector import APIConnector
 from evo.common.io import HTTPSource
 from evo.common.test_tools import TestWithDownloadHandler
@@ -77,6 +78,17 @@ class TestHTTPSource(TestISource, TestWithDownloadHandler):
         await HTTPSource.download_file(str(test_data_file), self.url_generator.get_new_url, self.transport)
         self.assertTrue(test_data_file.exists())
         self.assertEqual(TEST_DATA, test_data_file.read_bytes())
+
+    async def test_download_file_long_path(self) -> None:
+        test_data_file = self.CACHE_DIR / ("a" * 100) / ("b" * 100) / "download.csv"
+        resolved = resolve_path(test_data_file)
+        resolved.parent.mkdir(parents=True)
+        self.assertGreater(len(str(test_data_file)), 259)
+
+        await HTTPSource.download_file(str(test_data_file), self.url_generator.get_new_url, self.transport)
+
+        self.assertEqual(TEST_DATA, resolved.read_bytes())
+        self.assertEqual([resolved], list(resolved.parent.iterdir()))
 
     async def test_download_file_uses_concurrently_published_file(self) -> None:
         """Test that a concurrent process publishing the destination is accepted."""
