@@ -105,6 +105,14 @@ Attribute descriptions for ordinary attributes round-trip through `DataFrame.att
 Collection coordinate units come only from `DistanceCollection.unit` or `IntervalCollection.unit`; unit metadata on the
 distance or `from` column is ignored.
 
+Object creation and replacement upload independent collections, geometry, and attributes concurrently, preserving
+their input order. Nested uploads share a limit of eight tables per serialization operation, including Parquet writing;
+direct concurrent table uploads share a per-client limit of eight. Transient upload failures receive up to three
+attempts with exponential backoff, reusing cached Parquet data. Permanent failures or exhausted retries cancel and wait
+for sibling work before returning. Multi-column attribute and combined table/attribute mutations upload independent
+data concurrently and update their in-memory documents only after all uploads succeed. Separately awaited
+`collections.add()` calls remain sequential.
+
 ## Contributing
 
 For instructions on contributing to the development of this library, please refer to the [evo-python-sdk documentation](https://github.com/seequentevo/evo-python-sdk).
