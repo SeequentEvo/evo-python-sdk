@@ -69,6 +69,38 @@ You can also get a list of all objects. Internally, this recursively calls the `
 
 Check out the other methods on the `ObjectAPIClient` for more details on how to upload and download objects, or get object versions.
 
+### DataFrame and Parquet schemas
+
+Arrow table and NumPy array operations do not require pandas. Client and loader DataFrame methods, and the downhole
+helper exports from `evo.objects.utils`, are available only when pandas is installed.
+
+`ArrowTableFormat.from_pandas()` infers the supported Geoscience Object column types, normalizes large strings to strings,
+and excludes the DataFrame index from its Arrow schema. Use `pa_schema` for conversion and `columns` to inspect the ordered
+`ColumnFormat` descriptors and their `id`, Arrow `type`, and `pandas_dtype` used when reading dataframes.
+
+```python
+import pandas as pd
+import pyarrow as pa
+
+from evo.objects.utils import ArrowTableFormat
+
+dataframe = pd.DataFrame({"value": pd.array([1, None, 3], dtype="Int64")})
+table_format = ArrowTableFormat.from_pandas(dataframe)
+table = pa.Table.from_pandas(dataframe, schema=table_format.pa_schema, preserve_index=False).replace_schema_metadata()
+table_info = data_client.save_table(table)
+```
+
+PyArrow adds pandas reconstruction metadata even when an explicit schema is provided, so remove it with
+`replace_schema_metadata()` as shown above. The `save_dataframe()` and `upload_dataframe()` helpers do this for you.
+Raw Arrow table save/load methods preserve caller-supplied metadata.
+Dataframe readers ignore pandas metadata and derive dtypes from the Geoscience Object schema; integer and boolean
+columns use pandas nullable dtypes. To apply the same dtypes yourself, pass
+`ArrowTableFormat.from_schema(table.schema).pandas_types_mapper()` as the `types_mapper` of
+`table.replace_schema_metadata().to_pandas()`. Removing metadata before conversion also avoids parsing malformed
+legacy pandas metadata; `ignore_metadata=True` alone does not prevent that parsing.
+For categorical DataFrames, use `upload_category_dataframe()` to retain dictionary encoding while building the value
+and lookup tables.
+
 ### Typed downhole collections
 
 `DownholeCollection` provides a DataFrame-based API for creating and reading downhole objects. A collection can contain

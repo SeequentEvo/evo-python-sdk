@@ -28,6 +28,7 @@ from evo.common.utils import NoFeedback
 
 from ..exceptions import SchemaValidationError, TableFormatError
 from ..utils import ArrowTableFormat, KnownTableFormat, TableInfo
+from ..utils.tables import table_to_dataframe
 
 try:
     import pandas as pd
@@ -140,9 +141,13 @@ class ParquetLoader:
         # Optional support for pandas dataframes
 
         def load_as_dataframe(self) -> pd.DataFrame:
-            """Load the Parquet data as a Pandas DataFrame."""
+            """Load the Parquet data as a Pandas DataFrame.
+
+            Column dtypes are derived from the Geoscience Object column types, never from pandas metadata in the file.
+            Integer and boolean columns use pandas nullable dtypes (e.g. `Int64`, `boolean`).
+            """
             table = self.load_as_table()
-            return table.to_pandas()
+            return table_to_dataframe(table)
 
     if _NP_AVAILABLE:
         # Optional support for numpy arrays
