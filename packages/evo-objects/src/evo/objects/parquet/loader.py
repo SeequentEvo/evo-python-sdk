@@ -28,7 +28,7 @@ from evo.common.utils import NoFeedback
 
 from ..exceptions import SchemaValidationError, TableFormatError
 from ..utils import ArrowTableFormat, KnownTableFormat, TableInfo
-from ..utils.tables import _strip_pandas_metadata, _table_to_dataframe
+from ..utils.tables import table_to_dataframe
 
 try:
     import pandas as pd
@@ -68,7 +68,6 @@ class ParquetLoader:
         """
         self._pa_file = pa_file
         self._parquet_file: pq.ParquetFile | None = None
-        self._expected_format: KnownTableFormat | None = None
 
     def __enter__(self) -> ParquetLoader:
         if self._parquet_file is not None:
@@ -121,7 +120,6 @@ class ParquetLoader:
             expected_format._check_format(actual_format)
         except TableFormatError as e:
             raise SchemaValidationError(str(e)) from None
-        self._expected_format = expected_format
 
         logger.debug("Checking parquet data length")
         actual_length = pa_file.metadata.num_rows
@@ -133,14 +131,11 @@ class ParquetLoader:
         logger.debug("Parquet metadata checks succeeded")
 
     def load_as_table(self) -> pa.Table:
-        """Load the Parquet data as a PyArrow Table.
-
-        Any pandas reconstruction metadata in the Parquet file is discarded.
-        """
+        """Load the Parquet data as a PyArrow Table."""
         if self._parquet_file is None:
             raise RuntimeError("ParquetLoader context is not active")
         else:
-            return _strip_pandas_metadata(self._parquet_file.read())
+            return self._parquet_file.read()
 
     if _PD_AVAILABLE:
         # Optional support for pandas dataframes
@@ -152,7 +147,7 @@ class ParquetLoader:
             Integer and boolean columns use pandas nullable dtypes (e.g. `Int64`, `boolean`).
             """
             table = self.load_as_table()
-            return _table_to_dataframe(table, self._expected_format)
+            return table_to_dataframe(table)
 
     if _NP_AVAILABLE:
         # Optional support for numpy arrays

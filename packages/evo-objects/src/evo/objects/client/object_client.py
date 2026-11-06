@@ -40,7 +40,7 @@ try:
         ParquetLoader,
         TableInfo,
     )
-    from ..utils.tables import KnownTableFormat, _table_to_dataframe
+    from ..utils.tables import table_to_dataframe
 except ImportError as e:
     print(e)
     _LOADER_AVAILABLE = False
@@ -490,9 +490,8 @@ class DownloadedObject(IContext):
                 :returns: A Pandas DataFrame containing the downloaded data. Column dtypes are derived from the
                     Geoscience Object column types; integer and boolean columns use pandas nullable dtypes.
                 """
-                table_info = self._validate_typed_dict(table_info, _TABLE_INFO_VALIDATOR)
                 table = await self.download_table(table_info, fb=fb, nan_values=nan_values, column_names=column_names)
-                return _table_to_dataframe(table, KnownTableFormat.from_table_info(table_info))
+                return table_to_dataframe(table)
 
             async def download_category_dataframe(
                 self,
@@ -515,7 +514,7 @@ class DownloadedObject(IContext):
                 table = await self.download_category_table(
                     category_info, fb=fb, nan_values=nan_values, column_names=column_names
                 )
-                return _table_to_dataframe(table)
+                return table.to_pandas()
 
             async def download_attribute_dataframe(
                 self,

@@ -505,6 +505,41 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
             await self.data_client.upload_category_table(table)
         assert "Category columns must be of type string" in str(cm.exception)
 
+    async def test_upload_category_table_normalizes_mixed_dictionary_types(self) -> None:
+        table = pa.table(
+            {
+                "ordered": pa.chunked_array(
+                    [
+                        pa.DictionaryArray.from_arrays(
+                            pa.array(indices, type=pa.int32()),
+                            pa.array(["B", "A"], type=pa.large_string()),
+                            ordered=True,
+                        )
+                        for indices in ([0, None], [1, 0])
+                    ]
+                ),
+                "unordered": pa.array(["C", "A", None, "B"], type=pa.dictionary(pa.int8(), pa.string())),
+            }
+        )
+        saved_tables: list[pa.Table] = []
+
+        def save_upload(table: pa.Table, *, table_format: KnownTableFormat, fb: IFeedback) -> dict:
+            saved_tables.append(table)
+            return self.data_client.save_table(table, table_format=table_format)
+
+        with mock.patch.object(self.data_client, "upload_table", side_effect=save_upload):
+            category_info = await self.data_client.upload_category_table(table)
+
+        values, lookup = saved_tables
+        self.assertEqual([pa.int32(), pa.int32()], values.schema.types)
+        self.assertEqual([pa.int32(), pa.string()], lookup.schema.types)
+        for name in table.column_names:
+            restored = pa.DictionaryArray.from_arrays(values[name].combine_chunks(), lookup["value"].combine_chunks())
+            self.assertEqual(table[name].to_pylist(), restored.to_pylist())
+        for table_info in (category_info["values"], category_info["table"]):
+            schema = pq.read_schema(self.data_client.cache_location / table_info["data"])
+            self.assertNotIn(b"pandas", schema.metadata or {})
+
     @parameterized.expand(
         [
             (
@@ -519,6 +554,22 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
             (
                 "ordered_category",
                 pd.DataFrame({"Category": pd.Categorical(["A", "B", "A", "C"], ordered=True)}),
+                pa.table(
+                    {"key": pa.array([0, 1, 2], type=pa.int32()), "value": pa.array(["A", "B", "C"], type=pa.string())}
+                ),
+                pa.table({"Category": pa.array([0, 1, 0, 2], type=pa.int32())}),
+                table_formats.INTEGER_ARRAY_1_INT32,
+            ),
+            (
+                "large_string_category",
+                pd.DataFrame(
+                    {
+                        "Category": pd.Categorical(
+                            ["A", "B", "A", "C"],
+                            categories=pd.Index(pd.array(["A", "B", "C"], dtype="string[pyarrow]")),
+                        )
+                    }
+                ),
                 pa.table(
                     {"key": pa.array([0, 1, 2], type=pa.int32()), "value": pa.array(["A", "B", "C"], type=pa.string())}
                 ),
@@ -577,6 +628,12 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
         self.assertEqual(category_info["table"]["table_format"], table_formats.LOOKUP_TABLE_INT32)
         self.assertEqual(category_info["values"]["table"], values_table)
         self.assertEqual(category_info["values"]["table_format"], values_table_format)
+        for table_info in (category_info["values"], category_info["table"]):
+            table = table_info["table"]
+            self.assertNotIn(b"pandas", table.schema.metadata or {})
+            saved_info = self.data_client.save_table(table, table_format=table_info["table_format"])
+            schema = pq.read_schema(self.data_client.cache_location / saved_info["data"])
+            self.assertNotIn(b"pandas", schema.metadata or {})
 
     @parameterized.expand([("unordered", False), ("ordered", True)])
     async def test_category_dataframe_retains_dictionary_encoding(self, _name: str, ordered: bool) -> None:
@@ -589,9 +646,9 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
             await self.data_client.upload_category_dataframe(dataframe)
 
         (table,), _ = upload.await_args
+        self.assertNotIn(b"pandas", table.schema.metadata or {})
         self.assertEqual(["Category"], table.column_names)
         self.assertTrue(pa.types.is_dictionary(table.column("Category").type))
-        self.assertEqual(pa.string(), table.column("Category").type.value_type)
         self.assertEqual(ordered, table.column("Category").type.ordered)
         self.assertEqual(["A", "B", None], table.column("Category").to_pylist())
 
@@ -603,6 +660,7 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
             await self.data_client.upload_dataframe(dataframe)
 
         (table,), _ = mock_upload.await_args
+        self.assertNotIn(b"pandas", table.schema.metadata or {})
         self.assertTrue(pa.types.is_string(table.schema.field("col").type))
 
     async def test_download_table(self) -> None:

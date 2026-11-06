@@ -9,22 +9,20 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-"""Parquet files must not carry pandas reconstruction metadata; pandas dtypes come from the Geoscience Object schema."""
+"""DataFrame exports omit pandas metadata; dataframe readers derive dtypes from the Geoscience Object schema."""
 
-import json
 import tempfile
 import unittest
 from pathlib import Path
-from unittest import mock
 
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 from pandas.testing import assert_frame_equal
 
-from evo.objects.exceptions import TableFormatError
+from evo.objects.exceptions import SchemaValidationError, TableFormatError
 from evo.objects.parquet import ParquetLoader
-from evo.objects.utils import ArrowTableFormat, get_known_format
+from evo.objects.utils import ArrowTableFormat, KnownTableFormat, get_known_format
 from evo.objects.utils.data import _table_from_dataframe
 
 
@@ -33,29 +31,6 @@ def _load_dataframe(table_info: dict, source: Path) -> pd.DataFrame:
         with ParquetLoader(parquet_file) as loader:
             loader.validate_with_table_info(table_info)
             return loader.load_as_dataframe()
-
-
-class _BrokenPandasExtensionArrays:
-    """Simulate a consumer whose pandas cannot rebuild extension arrays from Arrow.
-
-    pandas only calls `__from_arrow__` when told to by the pandas schema metadata, or by an explicit `types_mapper`.
-    """
-
-    def __enter__(self):
-        def broken(*_args, **_kwargs):
-            raise ModuleNotFoundError("No module named 'pandas.core.arrays.arrow._arrow_utils'")
-
-        self._patches = [
-            mock.patch.object(dtype, "__from_arrow__", broken)
-            for dtype in (pd.Int32Dtype, pd.Int64Dtype, pd.BooleanDtype, pd.StringDtype)
-        ]
-        for patch in self._patches:
-            patch.start()
-        return self
-
-    def __exit__(self, *exc_info):
-        for patch in reversed(self._patches):
-            patch.stop()
 
 
 class TestPandasMetadata(unittest.TestCase):
@@ -82,102 +57,12 @@ class TestPandasMetadata(unittest.TestCase):
 
         self.assertIn(b"pandas", table.schema.metadata)
 
-    def test_save_table_strips_pandas_metadata(self) -> None:
+    def test_saved_dataframe_has_no_pandas_metadata(self) -> None:
         table = _table_from_dataframe(pd.DataFrame({"value": pd.array([1, None, 3], dtype="Int64")}))
-        table = table.replace_schema_metadata({**table.schema.metadata, b"other": b"kept"})
 
         table_info = self._save(table)
 
-        metadata = self._schema_metadata(table_info)
-        self.assertNotIn(b"pandas", metadata)
-        self.assertEqual(b"kept", metadata[b"other"])
-
-    def test_saved_table_can_be_read_by_pandas_without_extension_array_support(self) -> None:
-        dataframe = pd.DataFrame({"value": pd.array([1, None, 3], dtype="Int64")})
-        table_info = self._save(_table_from_dataframe(dataframe))
-
-        with _BrokenPandasExtensionArrays():
-            loaded = pq.read_table(self.data_dir / table_info["data"]).to_pandas()
-
-        # Without schema information pandas falls back to float64, but no value is corrupted.
-        self.assertEqual([1.0, 3.0], loaded["value"].dropna().tolist())
-        self.assertTrue(pd.isna(loaded["value"][1]))
-
-    def test_legacy_pandas_metadata_breaks_pandas_without_extension_array_support(self) -> None:
-        """Document the failure mode that stripping the metadata prevents."""
-        dataframe = pd.DataFrame({"value": pd.array([1, None, 3], dtype="Int64")})
-        legacy_file = self.data_dir / "legacy.parquet"
-        pq.write_table(pa.Table.from_pandas(dataframe, preserve_index=False), legacy_file)
-
-        with _BrokenPandasExtensionArrays(), self.assertRaises(ModuleNotFoundError):
-            pq.read_table(legacy_file).to_pandas()
-
-    def test_save_table_rejects_pandas_index_columns(self) -> None:
-        dataframe = pd.DataFrame({"value": [1.0, 2.0]}, index=pd.Index([5, 3], name="row"))
-        table = pa.Table.from_pandas(dataframe, preserve_index=True).select(["value"])
-        # Keep the metadata pointing to an index column, which is what a table saved with its index looks like.
-        index_metadata = json.loads(pa.Table.from_pandas(dataframe, preserve_index=True).schema.metadata[b"pandas"])
-        table = table.replace_schema_metadata({b"pandas": json.dumps(index_metadata).encode()})
-
-        with self.assertRaises(TableFormatError):
-            self._save(table)
-        self.assertEqual([], list(self.data_dir.iterdir()))
-
-    def test_save_table_rejects_malformed_pandas_index_metadata(self) -> None:
-        for metadata in (
-            b"not json",
-            b"\xff",
-            b"null",
-            b"[]",
-            b'{"index_columns": null}',
-            b'{"index_columns": 1}',
-            b'{"index_columns": "row"}',
-            b'{"index_columns": [1]}',
-            b'{"index_columns": [{}]}',
-        ):
-            with self.subTest(metadata=metadata):
-                table = pa.table({"value": [1.0]}).replace_schema_metadata({b"pandas": metadata})
-
-                with self.assertRaisesRegex(TableFormatError, "pandas index metadata"):
-                    self._save(table)
-                self.assertEqual([], list(self.data_dir.iterdir()))
-
-    def test_save_table_rejects_serialized_indexes(self) -> None:
-        indexes = [
-            pd.Index([5, 3], name="row"),
-            pd.MultiIndex.from_tuples([(5, 1), (3, 2)], names=["hole", "row"]),
-        ]
-        for index in indexes:
-            with self.subTest(index=index):
-                dataframe = pd.DataFrame({"value": [1, 2]}, index=index)
-                table = pa.Table.from_pandas(dataframe, preserve_index=True)
-
-                with self.assertRaisesRegex(TableFormatError, "pandas index column"):
-                    self._save(table)
-                self.assertEqual([], list(self.data_dir.iterdir()))
-
-    def test_metadata_only_range_index_does_not_change_saved_file(self) -> None:
-        dataframe = pd.DataFrame({"value": [1.0, 2.0]}, index=pd.RangeIndex(5, 7, name="row"))
-        table = pa.Table.from_pandas(dataframe)
-
-        with_metadata = self._save(table)
-        without_metadata = self._save(table.replace_schema_metadata(None))
-
-        self.assertEqual(without_metadata, with_metadata)
-        self.assertNotIn(b"pandas", self._schema_metadata(with_metadata))
-
-    def test_save_preserves_field_metadata_and_nullability(self) -> None:
-        field = pa.field("value", pa.int64(), nullable=False, metadata={b"units": b"count"})
-        schema = pa.schema([field], metadata={b"pandas": b'{"index_columns": []}', b"other": b"kept"})
-        table = pa.Table.from_arrays([pa.array([2**63 - 1])], schema=schema)
-
-        table_info = self._save(table)
-        saved = pq.ParquetFile(self.data_dir / table_info["data"]).read()
-
-        self.assertTrue(
-            saved.schema.equals(schema.remove_metadata().with_metadata({b"other": b"kept"}), check_metadata=True)
-        )
-        self.assertEqual(table.to_pydict(), saved.to_pydict())
+        self.assertNotIn(b"pandas", self._schema_metadata(table_info))
 
     def test_dataframe_index_is_not_stored(self) -> None:
         dataframe = pd.DataFrame({"value": [1.0, 2.0, 3.0]}).iloc[[2, 0]]
@@ -185,7 +70,7 @@ class TestPandasMetadata(unittest.TestCase):
         table = _table_from_dataframe(dataframe)
 
         self.assertEqual(["value"], table.column_names)
-        self.assertEqual([], json.loads(table.schema.metadata[b"pandas"])["index_columns"])
+        self.assertIsNone(table.schema.metadata)
 
     def test_load_as_dataframe_uses_nullable_dtypes_from_schema(self) -> None:
         cases = [
@@ -227,6 +112,45 @@ class TestPandasMetadata(unittest.TestCase):
 
         pd.testing.assert_index_equal(pd.RangeIndex(3), loaded.index)
         self.assertEqual(pd.Int64Dtype(), loaded["value"].dtype)
-        with pa.OSFile(str(self.data_dir / table_info["data"]), mode="r") as parquet_file:
-            with ParquetLoader(parquet_file) as loader:
-                self.assertIsNone(loader.load_as_table().schema.metadata)
+
+    def test_load_ignores_malformed_pandas_metadata_without_changing_arrow_table(self) -> None:
+        schema = pa.schema(
+            [pa.field("value", pa.int64(), nullable=False, metadata={b"units": b"count"})],
+            metadata={b"pandas": b"not json", b"other": b"kept"},
+        )
+        table = pa.Table.from_arrays([pa.array([2**63 - 1])], schema=schema)
+        table_info = self._save(table)
+
+        with ParquetLoader(pa.OSFile(str(self.data_dir / table_info["data"]), "r")) as loader:
+            loader.validate_with_table_info(table_info)
+            assert_frame_equal(
+                pd.DataFrame({"value": pd.array([2**63 - 1], dtype="Int64")}), loader.load_as_dataframe()
+            )
+            self.assertTrue(table.equals(loader.load_as_table(), check_metadata=True))
+
+    def test_serialized_index_is_rejected_by_expected_schema(self) -> None:
+        dataframe = pd.DataFrame({"value": [1, 2]}, index=pd.Index([5, 3], name="row"))
+        table = pa.Table.from_pandas(dataframe, preserve_index=True)
+        table_info = {"data": "index.parquet", "length": 2, "width": 1, "data_type": "int64"}
+        table_format = KnownTableFormat.from_table_info(table_info)
+
+        with self.assertRaisesRegex(TableFormatError, "Column count"):
+            table_format.save_table(table, self.data_dir)
+        self.assertEqual([], list(self.data_dir.iterdir()))
+
+        pq.write_table(table, self.data_dir / table_info["data"])
+        with ParquetLoader(pa.OSFile(str(self.data_dir / table_info["data"]), "r")) as loader:
+            with self.assertRaisesRegex(SchemaValidationError, "Column count"):
+                loader.validate_with_table_info(table_info)
+
+    def test_string_and_float_columns_use_arrow_defaults_not_pandas_metadata(self) -> None:
+        for values, dtype in [(["A", None, "B"], "string[pyarrow]"), ([1.5, None, 3.5], "Float64")]:
+            with self.subTest(dtype=dtype):
+                table = pa.Table.from_pandas(pd.DataFrame({"value": pd.array(values, dtype=dtype)}))
+                if pa.types.is_large_string(table["value"].type):
+                    table = table.cast(pa.schema([("value", pa.string())], metadata=table.schema.metadata))
+                table_info = self._save(table)
+
+                loaded = _load_dataframe(table_info, self.data_dir)
+
+                assert_frame_equal(table.replace_schema_metadata().to_pandas(), loaded)

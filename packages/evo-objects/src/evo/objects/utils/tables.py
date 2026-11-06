@@ -12,13 +12,11 @@
 from __future__ import annotations
 
 import hashlib
-import json
 import os
 from collections.abc import Callable
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from types import EllipsisType
-from typing import Any
 
 import pyarrow as pa
 import pyarrow.parquet as pq
@@ -43,118 +41,26 @@ __all__ = [
     "BaseTableFormat",
     "ColumnFormat",
     "KnownTableFormat",
+    "table_to_dataframe",
 ]
 
 # Block size to limit memory use while calculating the sha256 digest of a file.
 _DIGEST_BLOCK_SIZE = 4 * 1024 * 1024
 
-# Arrow schema metadata key that pyarrow uses to reconstruct pandas dtypes and indexes.
-_PANDAS_METADATA_KEY = b"pandas"
-
-# Pandas dtypes used for schema column types that numpy cannot represent with nulls.
-_NULLABLE_PANDAS_DTYPES = {
-    "int32": "Int32",
-    "int64": "Int64",
+# Pandas dtype for every supported Geoscience Object column type. Integer and boolean columns use pandas nullable
+# dtypes, so nulls do not change the dtype. `None` keeps the pyarrow default conversion: pyarrow `types_mapper` only
+# accepts pandas extension dtypes, so numpy-backed `float64` and the pandas default string dtype cannot be named here.
+_PANDAS_DTYPES: dict[str, str | None] = {
+    "float64": None,
     "uint8": "UInt8",
     "uint32": "UInt32",
     "uint64": "UInt64",
+    "int32": "Int32",
+    "int64": "Int64",
     "bool": "boolean",
+    "string": None,
+    "timestamp": "datetime64[us, UTC]",
 }
-
-
-def _get_schema_from_dataframe(dataframe: pd.DataFrame) -> pa.Schema:
-    """Infer an Arrow schema without the dataframe index or pandas metadata, normalizing large strings.
-
-    Dictionary encoding is preserved for category uploads, including the ordering of categorical values.
-    """
-    schema = pa.Schema.from_pandas(dataframe, preserve_index=False)
-    fields = []
-    for field in schema:
-        if pa.types.is_large_string(field.type):
-            fields.append(field.with_type(pa.string()))
-        elif pa.types.is_dictionary(field.type) and pa.types.is_large_string(field.type.value_type):
-            fields.append(
-                field.with_type(pa.dictionary(field.type.index_type, pa.string(), ordered=field.type.ordered))
-            )
-        else:
-            fields.append(field)
-    return pa.schema(fields)
-
-
-def _strip_pandas_metadata(table: pa.Table, *, validate: bool = False) -> pa.Table:
-    """Remove pandas reconstruction metadata, so that readers rely only on the Arrow and Geoscience Object schemas.
-
-    The pandas metadata is only a hint for rebuilding pandas dtypes and indexes; the Arrow data is not changed.
-    Other schema metadata is preserved.
-
-    :param table: The table to remove pandas metadata from.
-    :param validate: Reject tables whose pandas metadata declares serialized index columns or cannot be validated.
-        Once the metadata is removed, index columns would be indistinguishable from data columns.
-
-    :return: The table without pandas metadata.
-
-    :raises TableFormatError: If `validate` is true and the table contains serialized pandas index columns or malformed
-        pandas index metadata.
-    """
-    metadata = table.schema.metadata
-    if not metadata or _PANDAS_METADATA_KEY not in metadata:
-        return table
-
-    if validate:
-        try:
-            pandas_metadata = json.loads(metadata[_PANDAS_METADATA_KEY])
-            if not isinstance(pandas_metadata, dict):
-                raise ValueError("Expected a metadata object")
-            index_columns = pandas_metadata.get("index_columns", [])
-            if not isinstance(index_columns, list) or any(
-                not (isinstance(column, str) or isinstance(column, dict) and column.get("kind") == "range")
-                for column in index_columns
-            ):
-                raise ValueError("Expected index column names or RangeIndex descriptors")
-        except ValueError as error:
-            raise TableFormatError(
-                "Cannot validate pandas index metadata. Recreate the table from the dataframe with "
-                "`preserve_index=False` before saving."
-            ) from error
-        stored_index_columns = [column for column in index_columns if isinstance(column, str)]
-        if stored_index_columns:
-            raise TableFormatError(
-                f"Table contains pandas index column(s) {stored_index_columns}, which are not part of any "
-                "Geoscience Object table format. Convert the dataframe with `preserve_index=False`."
-            )
-
-    remaining = {key: value for key, value in metadata.items() if key != _PANDAS_METADATA_KEY}
-    return table.replace_schema_metadata(remaining or None)
-
-
-def _pandas_types_mapper(table_format: BaseTableFormat | None = None) -> Callable[[pa.DataType], Any]:
-    """Get a pyarrow `types_mapper` that maps Geoscience Object column types to pandas dtypes.
-
-    Integer and boolean columns use pandas nullable dtypes, so they keep their type when they contain nulls,
-    rather than being converted to float or object columns depending on the data. Other types use pyarrow defaults.
-
-    :param table_format: The expected table format. If omitted, all supported column types are mapped.
-    """
-    column_formats = (
-        table_format.columns
-        if table_format is not None
-        else [ColumnFormat(format_id) for format_id in _NULLABLE_PANDAS_DTYPES]
-    )
-    mapping = {
-        column_format.type: dtype
-        for column_format in column_formats
-        if (dtype := column_format.pandas_dtype) is not None
-    }
-    return mapping.get
-
-
-def _table_to_dataframe(table: pa.Table, table_format: BaseTableFormat | None = None) -> pd.DataFrame:
-    """Convert a table to a pandas dataframe using the Geoscience Object column types, ignoring pandas metadata.
-
-    :param table: The table to convert. It is expected to have been validated against `table_format`.
-    :param table_format: The expected table format. If omitted, all supported column types are mapped.
-    """
-    return _strip_pandas_metadata(table).to_pandas(types_mapper=_pandas_types_mapper(table_format))
 
 
 class ColumnFormat:
@@ -235,14 +141,14 @@ class ColumnFormat:
         """The pandas dtype used when loading this column into a dataframe.
 
         Integer and boolean columns use pandas nullable dtypes, so nulls do not change the dtype. Returns `None` for
-        column types that use the pyarrow default conversion.
+        `float64` and `string` columns, which use the pyarrow default conversion.
 
         :raises ImportError: If pandas is not installed.
         """
-        if (dtype_name := _NULLABLE_PANDAS_DTYPES.get(self._format_id)) is None:
-            return None
         if not _PD_AVAILABLE:
             raise ModuleNotFoundError("No module named 'pandas'", name="pandas")
+        if (dtype_name := _PANDAS_DTYPES[self._format_id]) is None:
+            return None
         return pd.api.types.pandas_dtype(dtype_name)
 
 
@@ -307,7 +213,7 @@ class ArrowTableFormat(BaseTableFormat):
 
     @property
     def pa_schema(self) -> pa.Schema:
-        """The Arrow schema supplied to `from_schema` or inferred by `from_pandas`.
+        """The Arrow schema supplied to `from_schema` or inferred by `from_pandas`, without any metadata.
 
         :raises ValueError: If the format was constructed directly without a schema.
         """
@@ -319,12 +225,12 @@ class ArrowTableFormat(BaseTableFormat):
     def from_schema(cls, pa_schema: pa.Schema) -> ArrowTableFormat:
         """Generate an ArrowTableFormat instance that represents the structure of the provided table schema.
 
-        :param pa_schema: Table schema to generate a format representation for.
+        :param pa_schema: Table schema to generate a format representation for. Schema and field metadata are not kept.
 
         :return: A table format that can be used to compare against known formats.
         """
         table_format = cls(name=f"{cls.__name__}<{'/'.join(pa_schema.names)}>", columns=pa_schema.types)
-        table_format._pa_schema = pa_schema
+        table_format._pa_schema = pa.schema([field.remove_metadata() for field in pa_schema])
         return table_format
 
     @classmethod
@@ -332,14 +238,34 @@ class ArrowTableFormat(BaseTableFormat):
         """Infer a table format from a pandas dataframe using the supported Geoscience Object column types.
 
         Large strings are normalized to strings. The inferred schema excludes the dataframe index and pandas metadata.
-        PyArrow still adds pandas metadata when converting the dataframe; it is stripped when saving the Parquet file.
 
         :param dataframe: The dataframe to infer the format from.
         :return: A format whose `pa_schema` can be passed to `pyarrow.Table.from_pandas`.
         :raises TypeError: If a column type is not supported. Use `ObjectDataClient.upload_category_dataframe`
             for categorical columns, which are split into value and lookup tables separately.
         """
-        return cls.from_schema(_get_schema_from_dataframe(dataframe))
+        schema = pa.Schema.from_pandas(dataframe, preserve_index=False)
+        fields = [field.with_type(pa.string()) if pa.types.is_large_string(field.type) else field for field in schema]
+        return cls.from_schema(pa.schema(fields))
+
+    def pandas_types_mapper(self) -> Callable[[pa.DataType], pd.api.extensions.ExtensionDtype | None]:
+        """Get a pyarrow `types_mapper` that converts this format's columns to their `ColumnFormat.pandas_dtype`.
+
+        Pass the result to `table.replace_schema_metadata().to_pandas(types_mapper=...)` to ignore legacy metadata.
+
+        :raises ImportError: If pandas is not installed.
+        """
+        return {column.type: column.pandas_dtype for column in self._columns}.get
+
+
+def table_to_dataframe(table: pa.Table) -> pd.DataFrame:
+    """Convert a table to a pandas dataframe using the Geoscience Object column types, ignoring pandas metadata.
+
+    :param table: The table to convert. It is expected to have been validated against a known table format.
+    """
+    types_mapper = ArrowTableFormat.from_schema(table.schema).pandas_types_mapper()
+    # PyArrow parses pandas metadata even with ignore_metadata=True.
+    return table.replace_schema_metadata().to_pandas(types_mapper=types_mapper)
 
 
 class KnownTableFormat(BaseTableFormat):
@@ -409,21 +335,15 @@ class KnownTableFormat(BaseTableFormat):
     def _save_table_as_parquet(cls, table: pa.Table, destination: Path) -> str:
         """Save a table in parquet format.
 
-        Pandas reconstruction metadata is not saved, so the parquet file can be read by any consumer. Readers must use
-        the Geoscience Object schema to interpret column types.
-
         :param table: The table to save to parquet file.
         :param destination: A local directory to save the parquet file in.
 
         :return: The sha256 digest of the saved parquet file, which is also the filename.
 
         :raises StorageFileNotFoundError: If the destination does not exist or is not a directory.
-        :raises TableFormatError: If the table contains serialized pandas index columns or malformed pandas index metadata.
         """
         if not destination.is_dir():
             raise StorageFileNotFoundError(f"'{destination}' is not a directory")
-
-        table = _strip_pandas_metadata(table, validate=True)
 
         try:  # Write temporary file.
             with NamedTemporaryFile(delete=False, dir=destination) as tmp_file:
@@ -564,7 +484,7 @@ class KnownTableFormat(BaseTableFormat):
                     )
 
                 logger.debug("Parquet metadata checks succeeded")
-                return _strip_pandas_metadata(parquet_data.read())
+                return parquet_data.read()
 
         except FileNotFoundError:
             raise StorageFileNotFoundError(f"Could not find data for table with id '{parquet_file.name}'") from None
