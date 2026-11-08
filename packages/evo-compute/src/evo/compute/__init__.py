@@ -12,10 +12,14 @@
 from . import tasks
 from .client import JobClient
 from .data import JobProgress, JobStatusEnum
+from .discovery import DiscoveryClient
+from .endpoints.models import TaskResource
 
 __all__ = [
+    "DiscoveryClient",
     "JobClient",
     "JobProgress",
     "JobStatusEnum",
+    "TaskResource",
     "tasks",
 ]

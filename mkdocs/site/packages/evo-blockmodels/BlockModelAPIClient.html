@@ -1729,6 +1729,8 @@ uses a non-default separator; it is then forwarded to the service for this reque
     <span class="n">column_groups</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">group_missing_column_override</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">MissingColumnPolicy</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">separator</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">_QUALIFIED_TITLE_SEPARATOR</span><span class="p">,</span>
+    <span class="n">new_groups</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">GroupDefinition</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">column_metadata_updates</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ColumnMetadataUpdate</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Version</span>
 </code></pre></div>
 
@@ -1879,8 +1881,8 @@ client must be constructed with <code>preview=True</code> to use them.</p>
               <div class="doc-md-description">
                 <p>A dictionary assigning <strong>new</strong> columns to groups: map a new column's qualified
 title (its key in <code>data</code>, e.g. <code>"Assays▸Cu"</code>) to the qualified title of the group it belongs to.
-To move or ungroup an <em>existing</em> column, use :meth:<code>update_column_metadata</code> instead — a group change is
-metadata-only and does not require re-uploading data.</p>
+To move or ungroup an <em>existing</em> column, use <code>column_metadata_updates</code> (in the same update) or
+:meth:<code>update_column_metadata</code> (on its own).</p>
               </div>
             </td>
             <td>
@@ -1924,6 +1926,43 @@ uses a non-default separator; it is then forwarded to the service for this reque
             </td>
             <td>
                   <code><span title="evo.blockmodels.data.QUALIFIED_TITLE_SEPARATOR">QUALIFIED_TITLE_SEPARATOR</span></code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>new_groups</code>
+            </td>
+            <td>
+                  <code><span title="list">list</span>[<span title="evo.blockmodels.data.GroupDefinition">GroupDefinition</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Definitions of new groups to create in the same update, so a group can be created and
+populated (by new columns or by moving existing ones) atomically in a single new version.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>column_metadata_updates</code>
+            </td>
+            <td>
+                  <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="evo.blockmodels.data.ColumnMetadataUpdate">ColumnMetadataUpdate</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Metadata updates (unit, tags and/or group) for existing columns, applied in
+the same update and keyed by each column's <strong>current</strong> title. Set <code>ColumnMetadataUpdate(group=...)</code> to
+move a column into a group (or <code>""</code> to ungroup it). When a moved column's data is re-uploaded (it is in
+<code>update_columns</code>, named by its current title), key that data by its <strong>destination</strong> title, e.g.
+<code>Assays▸Cu</code> after moving <code>Cu</code> into <code>Assays</code>. A column cannot also be in <code>delete_columns</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
             </td>
           </tr>
       </tbody>
@@ -2006,6 +2045,8 @@ uses a non-default separator; it is then forwarded to the service for this reque
     <span class="n">column_groups</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">group_missing_column_override</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">MissingColumnPolicy</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">separator</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">_QUALIFIED_TITLE_SEPARATOR</span><span class="p">,</span>
+    <span class="n">new_groups</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">GroupDefinition</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">column_metadata_updates</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ColumnMetadataUpdate</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Version</span>
 </code></pre></div>
 
@@ -2193,8 +2234,8 @@ client must be constructed with <code>preview=True</code> to use them.</p>
               <div class="doc-md-description">
                 <p>A dictionary assigning <strong>new</strong> columns to groups: map a new column's qualified
 title (its key in <code>data</code>, e.g. <code>"Assays▸Cu"</code>) to the qualified title of the group it belongs to.
-To move or ungroup an <em>existing</em> column, use :meth:<code>update_column_metadata</code> instead — a group change is
-metadata-only and does not require re-uploading data.</p>
+To move or ungroup an <em>existing</em> column, use <code>column_metadata_updates</code> (in the same update) or
+:meth:<code>update_column_metadata</code> (on its own).</p>
               </div>
             </td>
             <td>
@@ -2238,6 +2279,43 @@ uses a non-default separator; it is then forwarded to the service for this reque
             </td>
             <td>
                   <code><span title="evo.blockmodels.data.QUALIFIED_TITLE_SEPARATOR">QUALIFIED_TITLE_SEPARATOR</span></code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>new_groups</code>
+            </td>
+            <td>
+                  <code><span title="list">list</span>[<span title="evo.blockmodels.data.GroupDefinition">GroupDefinition</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Definitions of new groups to create in the same update, so a group can be created and
+populated (by new columns or by moving existing ones) atomically in a single new version.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>column_metadata_updates</code>
+            </td>
+            <td>
+                  <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="evo.blockmodels.data.ColumnMetadataUpdate">ColumnMetadataUpdate</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Metadata updates (unit, tags and/or group) for existing columns, applied in
+the same update and keyed by each column's <strong>current</strong> title. Set <code>ColumnMetadataUpdate(group=...)</code> to
+move a column into a group (or <code>""</code> to ungroup it). When a moved column's data is re-uploaded (it is in
+<code>update_columns</code>, named by its current title), key that data by its <strong>destination</strong> title, e.g.
+<code>Assays▸Cu</code> after moving <code>Cu</code> into <code>Assays</code>. A column cannot also be in <code>delete_columns</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
             </td>
           </tr>
       </tbody>
@@ -2395,19 +2473,20 @@ Example: {"Cu": "%[mass]", "Au": None,
     <span class="n">new</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">GroupDefinition</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">update</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">GroupMetadataUpdate</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">delete</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">move_columns</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">comment</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Version</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>Create, update, and/or delete column groups on a block model.</p>
-<p>This method manages group definitions without requiring data upload or cache configuration. Any
-combination of <code>new</code>, <code>update</code> and <code>delete</code> can be supplied in a single call.</p>
+        <p>Create, update, and/or delete column groups, and move existing columns between groups.</p>
+<p>This method manages group definitions and group membership without requiring data upload or cache
+configuration. Any combination of <code>new</code>, <code>update</code>, <code>delete</code> and <code>move_columns</code> can be supplied
+in a single call, producing a single new version.</p>
 <p>Groups are addressed by their qualified title (a bare title for a top-level group, or segments
 joined by <code>▸</code> for a nested group). To assign a <em>new</em> column to a group, use the <code>column_groups</code>
-parameter on the column methods; to move or ungroup an <em>existing</em> column, use
-:meth:<code>update_column_metadata</code>. To resolve a written group back to its server-assigned UUID and
+parameter on the column methods; to move or ungroup an <em>existing</em> column, use <code>move_columns</code>. To resolve a written group back to its server-assigned UUID and
 resolved policy, use the helpers on the returned :class:<code>~evo.blockmodels.data.Version</code>, e.g.
 :meth:<code>~evo.blockmodels.data.Version.group_by_qualified_title</code>.</p>
 
@@ -2483,6 +2562,26 @@ policy, replace tags, or toggle the hidden flag.</p>
             <td>
               <div class="doc-md-description">
                 <p>Qualified titles of groups to delete.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>move_columns</code>
+            </td>
+            <td>
+                  <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="str">str</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A dictionary mapping an existing column's <strong>current</strong> title (qualified
+<code>group▸title</code> if it is currently grouped, plain otherwise) to the qualified title of the group to
+move it into, or <code>""</code> to ungroup it. Only the column's group changes; the target group may be one
+created in <code>new</code> in the same call. To change a column's unit or tags, use
+:meth:<code>update_column_metadata</code>.</p>
               </div>
             </td>
             <td>
