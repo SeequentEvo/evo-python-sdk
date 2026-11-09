@@ -15,8 +15,57 @@ import sys
 import traceback
 import unittest
 from collections.abc import Callable, Sequence
+from unittest import mock
 
-from evo.common.exceptions import EvoExceptionGroup
+from evo.common.exceptions import BadRequestException, EvoExceptionGroup, error_context
+
+
+class TestErrorContext(unittest.TestCase):
+    def test_success_adds_no_context(self) -> None:
+        logger = mock.Mock()
+        with error_context("While preparing data", logger=logger):
+            pass
+        logger.error.assert_not_called()
+
+    def test_original_exception_and_existing_notes_are_preserved(self) -> None:
+        error = ValueError("Invalid data")
+        logger = mock.Mock()
+        if sys.version_info >= (3, 11):
+            error.add_note("Existing context")
+        with self.assertRaises(ValueError) as cm:
+            with error_context("While preparing data", logger=logger):
+                raise error
+        self.assertIs(error, cm.exception)
+        if sys.version_info >= (3, 11):
+            self.assertEqual(["Existing context", "While preparing data"], error.__notes__)
+            logger.error.assert_not_called()
+        else:
+            logger.error.assert_called_once_with("While preparing data")
+
+    def test_missing_add_note_uses_the_callers_logger(self) -> None:
+        class LegacyError(Exception):
+            def __getattribute__(self, name):
+                if name == "add_note":
+                    raise AttributeError(name)
+                return super().__getattribute__(name)
+
+        error = LegacyError("Invalid data")
+        logger = mock.Mock()
+        with self.assertRaises(LegacyError) as cm:
+            with error_context("While preparing data", logger=logger):
+                raise error
+        self.assertIs(error, cm.exception)
+        logger.error.assert_called_once_with("While preparing data")
+
+
+class TestBadRequestException(unittest.TestCase):
+    def test_unrelated_bad_requests_are_unchanged(self) -> None:
+        content = {"title": "Bad request", "detail": "x" * 1000, "json_path": "$.unrelated"}
+        error = BadRequestException(400, "Bad Request", content, None)
+        self.assertEqual(
+            f"Error: (400) Bad Request\nType: about:blank\nTitle: Bad request\nDetail: {content['detail']}",
+            str(error),
+        )
 
 
 class MyExc1(Exception): ...
