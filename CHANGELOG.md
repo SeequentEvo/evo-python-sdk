@@ -1,5 +1,45 @@
 # Changelog
 
+## evo-objects@v0.6.6
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### Other Changes
+* Bump the version for release by @AdamFreemanSeequent in https://github.com/SeequentEvo/evo-python-sdk/pull/384
+* Bump the uv group across 2 directories with 1 update by @dependabot[bot] in https://github.com/SeequentEvo/evo-python-sdk/pull/385
+* Update CHANGELOG.md by @change-log-updater[bot] in https://github.com/SeequentEvo/evo-python-sdk/pull/383
+* Blockmodels reports new result schema by @AndreLobatoSeequent in https://github.com/SeequentEvo/evo-python-sdk/pull/352
+* fix formatters of compute results by @geostats-BSY in https://github.com/SeequentEvo/evo-python-sdk/pull/373
+* Assign user role by email by @keerynj04 in https://github.com/SeequentEvo/evo-python-sdk/pull/380
+* Add html escape for format_report and format_report_result by @shivangj-10 in https://github.com/SeequentEvo/evo-python-sdk/pull/388
+* Add a discovery client for compute tasks by @amirabbas-jalali-bentley in https://github.com/SeequentEvo/evo-python-sdk/pull/387
+* Exclude mkdocs content from default code ownership by @GriffinBaxterSeequent in https://github.com/SeequentEvo/evo-python-sdk/pull/391
+* Update CHANGELOG.md by @change-log-updater[bot] in https://github.com/SeequentEvo/evo-python-sdk/pull/393
+* Remove explicit-null serializers for tail extrapolation by @amirabbas-jalali-bentley in https://github.com/SeequentEvo/evo-python-sdk/pull/392
+* Allow groups/metadata to be updated in data-update paths by @AndreLobatoSeequent in https://github.com/SeequentEvo/evo-python-sdk/pull/396
+* Update CHANGELOG.md by @change-log-updater[bot] in https://github.com/SeequentEvo/evo-python-sdk/pull/399
+* Improve validation and pipeline error reporting by @GriffinBaxterSeequent in https://github.com/SeequentEvo/evo-python-sdk/pull/390
+
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-objects@v0.6.5...evo-objects@v0.6.6
+
+## evo-sdk-common@v0.5.31
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### Other Changes
+* Add html escape for format_report and format_report_result by @shivangj-10 in https://github.com/SeequentEvo/evo-python-sdk/pull/388
+* Add a discovery client for compute tasks by @amirabbas-jalali-bentley in https://github.com/SeequentEvo/evo-python-sdk/pull/387
+* Exclude mkdocs content from default code ownership by @GriffinBaxterSeequent in https://github.com/SeequentEvo/evo-python-sdk/pull/391
+* Update CHANGELOG.md by @change-log-updater[bot] in https://github.com/SeequentEvo/evo-python-sdk/pull/393
+* Remove explicit-null serializers for tail extrapolation by @amirabbas-jalali-bentley in https://github.com/SeequentEvo/evo-python-sdk/pull/392
+* Allow groups/metadata to be updated in data-update paths by @AndreLobatoSeequent in https://github.com/SeequentEvo/evo-python-sdk/pull/396
+* Update CHANGELOG.md by @change-log-updater[bot] in https://github.com/SeequentEvo/evo-python-sdk/pull/399
+* Improve validation and pipeline error reporting by @GriffinBaxterSeequent in https://github.com/SeequentEvo/evo-python-sdk/pull/390
+
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-sdk-common@0.5.30...evo-sdk-common@v0.5.31
+
 ## evo-blockmodels@v0.9.0
 <!-- Release notes generated using configuration in .github/release.yml at main -->
 
