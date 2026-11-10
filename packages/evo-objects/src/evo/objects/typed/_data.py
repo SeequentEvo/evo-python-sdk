@@ -19,7 +19,7 @@ from evo.common import IFeedback
 from evo.common.interfaces import IContext
 from evo.common.utils import NoFeedback, split_feedback
 from evo.objects.typed.attributes import Attributes
-from evo.objects.utils._concurrency import gather_uploads
+from evo.objects.utils._concurrency import gather_cancelling
 from evo.objects.utils.table_formats import KnownTableFormat
 
 from ._model import SchemaBuilder, SchemaLocation, SchemaModel
@@ -50,18 +50,14 @@ class DataTable(SchemaModel):
         :param df: DataFrame containing the new values for this table.
         :param fb: Optional feedback object to report upload progress.
         """
-        self.commit(df, await self.prepare(df, fb))
+        self._apply_uploaded_table(df, await self._upload(df, fb))
 
-    async def prepare(self, df: pd.DataFrame, fb: IFeedback = NoFeedback) -> dict[str, Any]:
+    async def _upload(self, df: pd.DataFrame, fb: IFeedback = NoFeedback) -> dict[str, Any]:
         """Upload replacement values without changing the table or its derived metadata."""
         return await self._data_to_schema(df, self._obj, fb=fb)
 
-    def commit(self, df: pd.DataFrame, document: dict[str, Any]) -> None:
-        """Apply a successfully prepared table, including subclass-specific derived metadata."""
-        self._apply_uploaded_table(df, document)
-
     def _apply_uploaded_table(self, df: pd.DataFrame, document: dict[str, Any]) -> None:
-        """Commit uploaded values and any subclass-specific derived metadata."""
+        """Commit uploaded values and derived metadata; override to extend table replacement behavior."""
         self._document.update(document)
         self._context.mark_modified(self._data)
 
@@ -129,19 +125,17 @@ class DataTableAndAttributes(SchemaModel):
         """
         table_df, attr_df = self._split_dataframe(df, self._table.data_columns)
 
-        if attr_df is not None:
-            table_fb, attr_fb = split_feedback(fb, [1.0, float(len(attr_df.columns))])
-            # prepare validates metadata before either branch starts remote work.
-            attribute_upload = self.attributes.prepare(attr_df, attr_fb)
-            table_document, attribute_documents = await gather_uploads(
-                self._table.prepare(table_df, table_fb),
-                attribute_upload,
-            )
-            self._table.commit(table_df, table_document)
-            self.attributes.commit(attribute_documents)
-        else:
-            await self._table.from_dataframe(table_df, fb=fb)
-            self.attributes.clear()
+        if attr_df is None:
+            attr_df = pd.DataFrame(index=table_df.index)
+        table_fb, attr_fb = split_feedback(fb, [1.0, float(len(attr_df.columns))])
+        descriptions, attribute_types = await self.attributes._validate(attr_df)
+        table_upload, attribute_upload = (
+            self._table._upload(table_df, table_fb),
+            self.attributes._upload(attr_df, descriptions, attribute_types, attr_fb),
+        )
+        table_document, attribute_documents = await gather_cancelling(table_upload, attribute_upload)
+        self._table._apply_uploaded_table(table_df, table_document)
+        self.attributes._apply(attribute_documents)
 
     def validate(self) -> None:
         """Validate that all attributes have the correct length."""

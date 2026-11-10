@@ -10,7 +10,7 @@ authors = [
 ]
 
 dependencies = [
-    "evo-sdk-common[jmespath]>=0.5.31",
+    "evo-sdk-common[jmespath]>=0.5.32",
     "pydantic>=2,<3",
 ]
 

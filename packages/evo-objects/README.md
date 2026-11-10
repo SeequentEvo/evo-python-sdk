@@ -107,10 +107,8 @@ distance or `from` column is ignored.
 
 ### Upload concurrency
 
-Typed objects upload independent tables and attributes concurrently, preserving input order and applying
-multi-column and combined table/attribute mutations only after every upload succeeds. Typed operations and direct
-`ObjectDataClient` uploads share a default concurrency of **4**, matching downloads. Use `upload_concurrency`
-to change the limit for a block, including its child tasks:
+Typed objects upload independent tables and attributes concurrently, preserving input order and applying mutations only
+after all required uploads succeed. Configure the upload limit for a block, including its child tasks:
 
 ```python
 from evo.objects.utils import upload_concurrency
@@ -119,22 +117,19 @@ with upload_concurrency(max_concurrent=8):
     dhc = await DownholeCollection.create(context, data)
 ```
 
-The limit bounds concurrent Arrow conversion, category preparation, Parquet serialization, and upload attempts,
-not total memory usage or the size of caller-owned data. Preparation runs in worker threads, and temporary Arrow
-tables are released before network uploads. Nested scopes restore the previous setting on exit.
+The default limit is **4** and is shared by uploads on the same event loop, including direct `ObjectDataClient` calls.
+Unlike uploads, `download_tables(max_concurrency=...)` applies a separate limit to each call. The upload limit covers
+preparation and transfers; a storage retry may hold a slot. Nested scopes restore the previous setting.
+HTTP connection limits are configured separately with `AioTransport(num_pools=...)`.
 
-Uploads retry transient HTTP statuses (408/429/500/502/503/504) and raw connection/timeouts up to three attempts
-with exponential backoff, reusing cached data. Exhaustion raises `RetryError` with the attempt history.
-Use the optional `retry=Retry(...)` argument on any `ObjectDataClient` table, DataFrame, or category upload method
-to customize this policy. Already-exhausted `TransportError` failures are not retried again. Storage has its own
-retry policy; exhausted storage retries are retried only when all their errors are transient, so storage request
-counts can exceed the table-attempt limit. Failed operations cancel and drain their own siblings, not independent uploads.
+Uploads retry transient failures up to three times by default; pass `retry=Retry(...)` to an `ObjectDataClient` upload
+method to customize that policy. On exhaustion, the last failure is raised and the retry history is chained as its
+cause. Storage transfers make one attempt per outer retry, preventing retry layers from multiplying requests.
+For custom interception, override `upload_dataframe` or `upload_category_dataframe` for DataFrame inputs; these methods
+do not dispatch through the table upload methods.
 
-### HTTP connections
-
-HTTP connections are configured separately: `AioTransport(num_pools=...)` sets the total connection limit
-(default **4**) across requests sharing that transport. `upload_concurrency` does not resize it. For example,
-pass a configured transport to your context using your existing authorizer, cache, and environment:
+To configure a separate HTTP connection limit, pass a configured transport to your context using your existing
+authorizer, cache, and environment:
 
 ```python
 from evo.aio import AioTransport

@@ -26,6 +26,7 @@ from parameterized import parameterized
 
 from evo.common import Environment, IFeedback, StaticContext
 from evo.common.test_tools import BASE_URL, ORG, WORKSPACE_ID, TestWithConnector
+from evo.objects import DownloadedObject
 from evo.objects.typed._data import DataTable, DataTableAndAttributes
 from evo.objects.typed._model import ModelContext, SchemaBuilder, SchemaList, SchemaLocation, SchemaModel
 from evo.objects.typed.attributes import AttributeDescription
@@ -63,14 +64,6 @@ class TestSchemaConstants(TestWithConnector):
 
         self.assertEqual(result["format_version"], "1.0.0")
         self.assertEqual(result["name"], "test")
-
-    async def test_set_sub_model_value_remains_compatible(self):
-        builder = SchemaBuilder(ExtendedLocations, self.context)
-        frame = pd.DataFrame({"x": [1.0], "y": [2.0], "z": [3.0]})
-        with patch.object(DataTable, "_data_to_schema", return_value={"data": "coordinates"}) as convert:
-            await builder.set_sub_model_value(name="_table", data=frame)
-        convert.assert_awaited_once_with(frame, context=self.context)
-        self.assertEqual({"coordinates": {"data": "coordinates"}}, builder.document)
 
     def test_union_schema_list_requires_polymorphic_overrides(self):
         class First(SchemaModel):
@@ -243,11 +236,12 @@ class TestDataTableAndAttributesMutation(IsolatedAsyncioTestCase):
             patch.object(AttributeDescription, "to_schema", autospec=True, return_value={"unit": "s"}) as describe,
         ):
             await self.model.from_dataframe(self.frame)
-        self.assertEqual(2, describe.call_count)
+        self.assertEqual(1, describe.call_count)
         self.assertEqual({"unit": "s"}, self.document["attributes"][1]["attribute_description"])
 
     async def test_invalid_attribute_metadata_prevents_table_upload(self):
-        self.frame.attrs["attribute_descriptions"] = {"first": "invalid"}
+        self.frame["second"] = [5.0]
+        self.frame.attrs["attribute_descriptions"] = {"second": "invalid"}
         client = Mock(upload_dataframe=AsyncMock())
         with (
             patch("evo.objects.typed.attributes.get_data_client", return_value=client),
@@ -256,6 +250,21 @@ class TestDataTableAndAttributesMutation(IsolatedAsyncioTestCase):
             with self.assertRaisesRegex(TypeError, "attribute description"):
                 await self.model.from_dataframe(self.frame)
         client.upload_dataframe.assert_not_awaited()
+
+    async def test_table_apply_hook_runs_with_attributes(self):
+        client = Mock(upload_dataframe=AsyncMock(return_value={"data": "new", "length": 1}))
+        with (
+            patch("evo.objects.typed.attributes.get_data_client", return_value=client),
+            patch("evo.objects.typed._data.get_data_client", return_value=client),
+            patch.object(
+                self.model._table,
+                "_apply_uploaded_table",
+                wraps=self.model._table._apply_uploaded_table,
+            ) as apply_hook,
+        ):
+            await self.model.from_dataframe(self.frame)
+
+        apply_hook.assert_called_once()
 
     @parameterized.expand([("success", False), ("failure", True)])
     async def test_table_only_update_clears_attributes_only_on_success(self, _name, fail):
@@ -287,6 +296,26 @@ class TestDataTableAndAttributesBuildFromData(TestWithConnector):
             environment=self.environment,
             connector=self.connector,
         )
+
+    async def test_data_table_uses_real_data_client_context(self):
+        obj = DownloadedObject(
+            object_=Mock(),
+            metadata=Mock(environment=self.environment),
+            urls_by_name={},
+            connector=self.connector,
+            cache=Mock(),
+        )
+        table = CoordinateTable(obj, {"data": "old", "length": 1})
+        frame = pd.DataFrame({"x": [1.0], "y": [2.0], "z": [3.0]})
+        with patch(
+            "evo.objects.utils.data.ObjectDataClient.upload_dataframe",
+            new_callable=AsyncMock,
+            return_value={"data": "new", "length": 1},
+        ) as upload:
+            await table.from_dataframe(frame)
+
+        upload.assert_awaited_once()
+        self.assertEqual("new", table._data)
 
     @contextlib.contextmanager
     def _mock_geoscience_objects(self):

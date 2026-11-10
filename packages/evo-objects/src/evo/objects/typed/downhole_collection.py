@@ -32,7 +32,7 @@ from evo.objects.typed.attributes import Attributes
 from evo.objects.typed.exceptions import ObjectValidationError
 from evo.objects.typed.spatial import BaseSpatialObject, BaseSpatialObjectData
 from evo.objects.typed.types import BoundingBox
-from evo.objects.utils._concurrency import gather_uploads
+from evo.objects.utils._concurrency import gather_cancelling
 from evo.objects.utils.table_formats import (
     DOWNHOLE_COLLECTION_LOCATION_HOLES,
     FLOAT_ARRAY_1,
@@ -354,7 +354,7 @@ class LocationHoleIdCategory(HoleIdCategory):
             raise ObjectValidationError("properties hole_id values must be unique")
         keys = _property_hole_indices(data).astype("int32")
         data_client = _attributes.get_data_client(context)
-        values, table = await gather_uploads(
+        values, table = await gather_cancelling(
             data_client.upload_dataframe(pd.DataFrame({"hole_id": keys}), table_format=INTEGER_ARRAY_1_INT32),
             data_client.upload_dataframe(
                 pd.DataFrame({"key": keys, "value": hole_ids}), table_format=LOOKUP_TABLE_INT32
@@ -489,7 +489,7 @@ class DownholeCollectionTables(_DownholeCollectionChild, SchemaList[DownholeDist
             return schema
 
         # Collections are independent, so upload them concurrently while preserving input order.
-        return await gather_uploads(*(convert(collection) for collection in data))
+        return await gather_cancelling(*(convert(collection) for collection in data))
 
     def _indices_for_name(self, name: str) -> list[int]:
         return [index for index, document in enumerate(self._document) if document.get("name") == name]

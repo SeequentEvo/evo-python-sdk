@@ -15,6 +15,7 @@ import asyncio
 from collections.abc import Callable, Coroutine, Iterator
 from contextlib import contextmanager
 from contextvars import ContextVar
+from threading import Lock
 from typing import Any, ParamSpec, TypeVar
 from weakref import ReferenceType, WeakKeyDictionary, ref
 
@@ -35,18 +36,21 @@ class _UploadScope:
 
     def __init__(self, limit: int) -> None:
         self.limit = limit
+        self._lock = Lock()
         self.semaphores: WeakKeyDictionary[asyncio.AbstractEventLoop, ReferenceType[asyncio.Semaphore]] = (
             WeakKeyDictionary()
         )
 
     def get_semaphore(self) -> asyncio.Semaphore:
         loop = asyncio.get_running_loop()
-        reference = self.semaphores.get(loop)
-        semaphore = reference() if reference is not None else None
-        if semaphore is None:
-            semaphore = asyncio.Semaphore(self.limit)
-            self.semaphores[loop] = ref(semaphore)
-        return semaphore
+        # A default scope can be inherited by tasks running on loops in separate threads.
+        with self._lock:
+            reference = self.semaphores.get(loop)
+            semaphore = reference() if reference is not None else None
+            if semaphore is None:
+                semaphore = asyncio.Semaphore(self.limit)
+                self.semaphores[loop] = ref(semaphore)
+            return semaphore
 
 
 _upload_scope: ContextVar[_UploadScope] = ContextVar(
@@ -60,7 +64,7 @@ def upload_concurrency(max_concurrent: int = _DEFAULT_MAX_CONCURRENCY) -> Iterat
 
     Applies to typed-object operations and direct ObjectDataClient uploads, including
     clients created internally. Conversion/serialization and each upload attempt acquire a slot;
-    backoff sleeps do not. Settings are inherited by child asyncio tasks, not unrelated
+    storage-level backoff may hold a slot. Settings are inherited by child asyncio tasks, not unrelated
     tasks. Each event loop has its own semaphore, so a scope can span asyncio.run calls.
     Outside an explicit scope, all clients and operations on a loop share the default limit.
 
@@ -88,21 +92,24 @@ async def run_upload_preparation(function: Callable[_P, _T], *args: _P.args, **k
         try:
             return await asyncio.shield(worker)
         except asyncio.CancelledError:
-            # Running threads cannot be cancelled; finish their cache writes before returning.
-            await asyncio.gather(worker, return_exceptions=True)
+            # Repeated cancellation must not release the slot while the thread writes.
+            while not worker.done():
+                try:
+                    await asyncio.shield(worker)
+                except asyncio.CancelledError:
+                    continue
+                except Exception:
+                    break
             raise
 
 
-async def gather_uploads(*coroutines: Coroutine[Any, Any, _T]) -> list[_T]:
+async def gather_cancelling(*coroutines: Coroutine[Any, Any, _T]) -> list[_T]:
     """Collect ordered results, cancelling and draining siblings on failure or cancellation."""
     tasks: list[asyncio.Task[_T]] = []
     try:
         for coroutine in coroutines:
             tasks.append(asyncio.create_task(coroutine))
-        # Unlike gather(), this does not cancel children before our own cleanup runs.
-        for completed in asyncio.as_completed(tasks):
-            await completed
-        return [task.result() for task in tasks]
+        return list(await asyncio.gather(*tasks))
     except BaseException as error:
         for coroutine in coroutines[len(tasks) :]:
             coroutine.close()

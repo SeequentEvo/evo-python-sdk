@@ -21,7 +21,7 @@ from pydantic import TypeAdapter
 from evo import jmespath
 from evo.common import IContext
 from evo.objects import DownloadedObject
-from evo.objects.utils._concurrency import gather_uploads
+from evo.objects.utils._concurrency import gather_cancelling
 
 from ._utils import (
     assign_jmespath_value,
@@ -208,16 +208,12 @@ class SchemaBuilder:
 
         return self.document
 
-    async def set_sub_model_value(self, name: str, data: Any) -> None:
-        """Convert and assign a single sub-model."""
-        await self.set_sub_model_values([(name, data)])
-
     async def set_sub_model_values(self, values: Sequence[tuple[str, Any]]) -> None:
         """Convert several sub-models concurrently, then assign the results in the given order.
 
         Sub-models are independent, so their data uploads can run in parallel.
         """
-        sub_documents = await gather_uploads(
+        sub_documents = await gather_cancelling(
             *(self._sub_models[name].model_type._data_to_schema(data, context=self._context) for name, data in values)
         )
         for (name, _), sub_document in zip(values, sub_documents):
@@ -514,4 +510,4 @@ class SchemaList(Sequence[_M]):
             return []
         if not isinstance(data, Sequence):
             raise TypeError(f"Expected a sequence for SchemaList data, got {type(data).__name__}")
-        return await gather_uploads(*(cls._item_type._data_to_schema(item, context) for item in data))
+        return await gather_cancelling(*(cls._item_type._data_to_schema(item, context) for item in data))

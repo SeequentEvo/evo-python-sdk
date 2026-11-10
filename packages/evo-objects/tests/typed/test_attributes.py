@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 import asyncio
+import threading
 from copy import deepcopy
 from typing import Any, cast
 from unittest import IsolatedAsyncioTestCase, TestCase
@@ -30,6 +31,7 @@ from evo.objects.typed.attributes import (
     UnSupportedDataTypeError,
     _infer_attribute_type_from_series,
 )
+from evo.objects.utils._concurrency import get_upload_semaphore, upload_concurrency
 
 
 class TestConcurrentAttributeUploads(IsolatedAsyncioTestCase):
@@ -238,6 +240,65 @@ class TestConcurrentAttributeUploads(IsolatedAsyncioTestCase):
             self.assertEqual([], self.documents)
         get_client.assert_not_called()
         self.assertEqual({"previous-change"}, self.context.data_modified)
+
+    async def test_unsupported_type_is_rejected_before_upload(self):
+        frame = pd.DataFrame({"first": [1.0], "unsupported": [1 + 2j]})
+        with patch.object(Attribute, "_upload_attribute_values") as upload:
+            with self.assertRaises(UnSupportedDataTypeError):
+                await self.attributes.set_attributes(frame)
+        upload.assert_not_awaited()
+        self.assertEqual("old-first", self.documents[0]["values"]["data"])
+
+    async def test_type_inference_runs_in_worker_with_upload_slot_held(self):
+        started = threading.Event()
+        release = threading.Event()
+        worker_threads = []
+        infer = _infer_attribute_type_from_series
+
+        def blocking_infer(series):
+            worker_threads.append(threading.get_ident())
+            started.set()
+            release.wait()
+            return infer(series)
+
+        with (
+            upload_concurrency(1),
+            patch("evo.objects.typed.attributes._infer_attribute_type_from_series", side_effect=blocking_infer),
+            patch("evo.objects.typed.attributes.get_data_client"),
+            patch.object(Attribute, "_upload_attribute_values", new_callable=AsyncMock),
+        ):
+            task = asyncio.create_task(Attributes._data_to_schema(pd.DataFrame({"new": [2.0]}), Mock()))
+            try:
+                await asyncio.wait_for(asyncio.to_thread(started.wait), timeout=2)
+                self.assertEqual(0, get_upload_semaphore()._value)
+                self.assertNotEqual(threading.get_ident(), worker_threads[0])
+            finally:
+                release.set()
+                await task
+
+    async def test_set_attributes_rejects_concurrent_document_edits(self):
+        started = asyncio.Event()
+        release = asyncio.Event()
+
+        async def upload(*_args, **_kwargs):
+            started.set()
+            await release.wait()
+
+        with patch.object(Attribute, "_upload_attribute_values", side_effect=upload):
+            task = asyncio.create_task(self.attributes.set_attributes(pd.DataFrame({"first": [2.0]})))
+            try:
+                await asyncio.wait_for(started.wait(), timeout=2)
+                self.documents[0]["external_edit"] = True
+                release.set()
+                with self.assertRaisesRegex(RuntimeError, "changed while replacement"):
+                    await task
+            finally:
+                release.set()
+                task.cancel()
+                await asyncio.gather(task, return_exceptions=True)
+
+        self.assertEqual("old-first", self.documents[0]["values"]["data"])
+        self.assertTrue(self.documents[0]["external_edit"])
 
     @parameterized.expand([("string_label", "0"), ("integer_label", 0)])
     async def test_replacement_matches_stringified_names_and_preserves_existing_type(self, _name, label):
