@@ -32,14 +32,6 @@ notebooks = [
     "python-dotenv",
     "Pillow",
 ]
-# For JupyterLite and other Pyodide runtimes. aiohttp is omitted because sockets are non-functional under WebAssembly,
-# so requests go through the browser instead. The `pyodide` and `js` modules are provided by the runtime itself.
-pyodide = [
-    "anywidget",
-    "ipykernel",
-    "ipython",
-    "python-dotenv",
-]
 jmespath = [
     "jmespath>=1.0.1",
 ]

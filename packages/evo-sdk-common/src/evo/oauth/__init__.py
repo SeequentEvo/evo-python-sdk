@@ -11,8 +11,6 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
-
 from .authorizer import (
     AccessTokenAuthorizer,
     AuthorizationCodeAuthorizer,
@@ -21,9 +19,7 @@ from .authorizer import (
 from .connector import OAuthConnector
 from .data import AccessToken, AnyScopes, EvoScopes, OAuthScopes, Scopes
 from .exceptions import OAuthError
-
-if TYPE_CHECKING:
-    from .oauth_redirect_handler import OAuthRedirectHandler
+from .oauth_redirect_handler import OAuthRedirectHandler
 
 __all__ = [
     "AccessToken",
@@ -38,13 +34,3 @@ __all__ = [
     "OAuthScopes",
     "Scopes",
 ]
-
-
-# OAuthRedirectHandler serves the redirect over a local web server, so it needs the optional aiohttp extra. Resolve
-# it on demand so the rest of this package stays usable without it.
-def __getattr__(name: str) -> Any:
-    if name == "OAuthRedirectHandler":
-        from .oauth_redirect_handler import OAuthRedirectHandler
-
-        return OAuthRedirectHandler
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

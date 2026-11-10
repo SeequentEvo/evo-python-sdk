@@ -54,52 +54,12 @@ function render({ model, el }) {
     renderLoading();
     renderMessage();
 
-    let tokenChannel = null;
-    const sendBrowserToken = (message) => {
-        if (tokenChannel) {
-            tokenChannel.postMessage(message);
-        } else {
-            model.send(message);
-        }
-    };
-
-    const requestBrowserToken = () => {
-        tokenChannel?.close();
-        tokenChannel = null;
-        const channelId = model.get("browser_token_channel");
-        if (!model.get("browser_token_required") || !channelId) {
-            return;
-        }
-        tokenChannel = typeof BroadcastChannel !== "undefined"
-            ? new BroadcastChannel(`evo-browser-token-${channelId}`) : null;
-        try {
-            const stored = localStorage.getItem("accessToken");
-            if (!stored) {
-                throw new Error("No access token found in browser local storage. Sign in first.");
-            }
-            const token = JSON.parse(stored)?.access_token;
-            if (typeof token !== "string" || !token) {
-                throw new Error("The browser access token document is invalid.");
-            }
-            sendBrowserToken({ type: "browser_token", token });
-        } catch (error) {
-            sendBrowserToken({ type: "browser_token", error: error instanceof SyntaxError
-                ? "The browser access token document is invalid."
-                : error instanceof Error ? error.message : "Cannot read the browser access token." });
-        }
-    };
-
-    model.on("change:browser_token_channel", requestBrowserToken);
-    requestBrowserToken();
-
     return () => {
         button.removeEventListener("click", onClick);
         model.off("change:button_text", renderButtonText);
         model.off("change:disabled", renderDisabled);
         model.off("change:loading", renderLoading);
         model.off("change:message", renderMessage);
-        model.off("change:browser_token_channel", requestBrowserToken);
-        tokenChannel?.close();
     };
 }
 
