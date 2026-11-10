@@ -29,7 +29,6 @@ from evo.common.exceptions import UnauthorizedException
 from evo.common.interfaces import IAuthorizer, ICache, IContext, IFeedback, ITransport
 from evo.discovery import Hub, Organization
 from evo.oauth import AnyScopes, EvoScopes, OAuthConnector
-from evo.oauth.exceptions import OAuthError
 from evo.service_manager import ServiceManager
 from evo.workspaces import Workspace
 
@@ -236,7 +235,6 @@ class ServiceManagerWidget(anywidget.AnyWidget, IContext, metaclass=_ServiceMana
         :param discovery_url: The URL of the Evo Discovery service.
         :param cache: The cache to use for storing tokens and other data.
         """
-        self._widget_closed = False
         self._authorizer = authorizer
         self._cache = cache
         self._service_manager = ServiceManager(
@@ -258,15 +256,6 @@ class ServiceManagerWidget(anywidget.AnyWidget, IContext, metaclass=_ServiceMana
         self._workspace_selector = WorkspaceSelectorWidget(env, self._service_manager, self._org_selector)
 
         display(self, self._org_selector, self._workspace_selector)
-
-    def close(self) -> None:
-        """Close the widget and prevent further use."""
-        self._widget_closed = True
-        super().close()
-
-    def _check_not_closed(self) -> None:
-        if self._widget_closed:
-            raise OAuthError("This ServiceManagerWidget is closed. Create a new widget to continue.")
 
     @classmethod
     def with_auth_code(
@@ -343,9 +332,7 @@ class ServiceManagerWidget(anywidget.AnyWidget, IContext, metaclass=_ServiceMana
         :param timeout_seconds: The maximum time (in seconds) to wait for the authorisation process to complete.
 
         :returns: The current instance of the ServiceManagerWidget.
-        :raises OAuthError: If the widget is closed.
         """
-        self._check_not_closed()
         # Open the transport without closing it to avoid the overhead of opening it multiple times.
         await self._service_manager._transport.open()
         with self._loading():
@@ -370,8 +357,6 @@ class ServiceManagerWidget(anywidget.AnyWidget, IContext, metaclass=_ServiceMana
             self.button_text = "Sign In"
 
     def _handle_frontend_msg(self, _widget: object, content: object, _buffers: list) -> asyncio.Future | None:
-        if self._widget_closed:
-            return None
         if isinstance(content, dict) and content.get("type") == "click":
             return asyncio.ensure_future(self.refresh_services())
         return None
@@ -396,7 +381,6 @@ class ServiceManagerWidget(anywidget.AnyWidget, IContext, metaclass=_ServiceMana
             self._org_selector.refresh()
 
     async def refresh_services(self) -> None:
-        self._check_not_closed()
         with self._loading():
             with self._loading_services():
                 try:

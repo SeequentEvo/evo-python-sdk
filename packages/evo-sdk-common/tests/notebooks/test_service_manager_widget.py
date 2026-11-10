@@ -17,7 +17,6 @@ from anywidget import AnyWidget
 
 from evo.common.interfaces import IContext
 from evo.notebooks import ServiceManagerWidget
-from evo.oauth.exceptions import OAuthError
 
 
 class TestServiceManagerWidget(unittest.IsolatedAsyncioTestCase):
@@ -47,14 +46,3 @@ class TestServiceManagerWidget(unittest.IsolatedAsyncioTestCase):
             await task
 
         refresh.assert_awaited_once()
-
-    async def test_close_prevents_reuse(self) -> None:
-        self.widget.close()
-        self.widget.close()
-
-        assert self.widget.comm is None
-        for operation in (self.widget.login, self.widget.refresh_services):
-            with self.subTest(operation=operation.__name__):
-                with self.assertRaisesRegex(OAuthError, "closed"):
-                    await operation()
-        assert self.widget._handle_frontend_msg(self.widget, {"type": "click"}, []) is None
