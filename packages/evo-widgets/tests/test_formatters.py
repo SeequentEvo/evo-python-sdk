@@ -106,7 +106,7 @@ class TestHelperFunctions(unittest.TestCase):
         obj.metadata.environment = MagicMock()
         obj.metadata.environment.org_id = "org-123"
         obj.metadata.environment.workspace_id = "ws-456"
-        obj.metadata.environment.hub_url = "https://test.api.seequent.com"
+        obj.metadata.environment.hub_url = "https://api.test.evo.seequent.net"
         obj.metadata.id = "12345-abcd"
 
         name, title_links, rows = _get_base_metadata(obj)
@@ -129,7 +129,7 @@ class TestHelperFunctions(unittest.TestCase):
         obj.metadata.environment = MagicMock()
         obj.metadata.environment.org_id = "org-123"
         obj.metadata.environment.workspace_id = "ws-456"
-        obj.metadata.environment.hub_url = "https://test.api.seequent.com"
+        obj.metadata.environment.hub_url = "https://api.test.evo.seequent.net"
         obj.metadata.id = "12345-abcd"
 
         extra_links = [("BlockSync", "https://blocksync.seequent.com/test")]
@@ -151,7 +151,7 @@ class TestHelperFunctions(unittest.TestCase):
         obj.metadata.environment = MagicMock()
         obj.metadata.environment.org_id = "org-123"
         obj.metadata.environment.workspace_id = "ws-456"
-        obj.metadata.environment.hub_url = "https://test.api.seequent.com"
+        obj.metadata.environment.hub_url = "https://api.test.evo.seequent.net"
         obj.metadata.id = "12345-abcd"
 
         name, title_links, rows = _get_base_metadata(obj)
@@ -179,7 +179,7 @@ class TestFormatBaseObject(unittest.TestCase):
         obj.metadata.environment = MagicMock()
         obj.metadata.environment.org_id = "org-123"
         obj.metadata.environment.workspace_id = "ws-456"
-        obj.metadata.environment.hub_url = "https://test.api.seequent.com"
+        obj.metadata.environment.hub_url = "https://api.test.evo.seequent.net"
         obj.metadata.id = "12345-abcd"
 
         html = format_base_object(obj)
@@ -211,7 +211,7 @@ class TestFormatBaseObject(unittest.TestCase):
         obj.metadata.environment = MagicMock()
         obj.metadata.environment.org_id = "org-123"
         obj.metadata.environment.workspace_id = "ws-456"
-        obj.metadata.environment.hub_url = "https://test.api.seequent.com"
+        obj.metadata.environment.hub_url = "https://api.test.evo.seequent.net"
         obj.metadata.id = "12345"
 
         html = format_base_object(obj)
@@ -234,7 +234,7 @@ class TestFormatBaseObject(unittest.TestCase):
         obj.metadata.environment = MagicMock()
         obj.metadata.environment.org_id = "org-123"
         obj.metadata.environment.workspace_id = "ws-456"
-        obj.metadata.environment.hub_url = "https://test.api.seequent.com"
+        obj.metadata.environment.hub_url = "https://api.test.evo.seequent.net"
         obj.metadata.id = "12345"
 
         html = format_base_object(obj)
@@ -256,7 +256,7 @@ class TestFormatBaseObject(unittest.TestCase):
         obj.metadata.environment = MagicMock()
         obj.metadata.environment.org_id = "org-123"
         obj.metadata.environment.workspace_id = "ws-456"
-        obj.metadata.environment.hub_url = "https://test.api.seequent.com"
+        obj.metadata.environment.hub_url = "https://api.test.evo.seequent.net"
         obj.metadata.id = "12345"
 
         html = format_base_object(obj)
@@ -284,7 +284,7 @@ class TestFormatBaseObject(unittest.TestCase):
         obj.metadata.environment = MagicMock()
         obj.metadata.environment.org_id = "org-123"
         obj.metadata.environment.workspace_id = "ws-456"
-        obj.metadata.environment.hub_url = "https://test.api.seequent.com"
+        obj.metadata.environment.hub_url = "https://api.test.evo.seequent.net"
         obj.metadata.id = "12345"
 
         html = format_base_object(obj)
@@ -324,7 +324,7 @@ class TestFormatBaseObject(unittest.TestCase):
         obj.metadata.environment = MagicMock()
         obj.metadata.environment.org_id = "org-123"
         obj.metadata.environment.workspace_id = "ws-456"
-        obj.metadata.environment.hub_url = "https://test.api.seequent.com"
+        obj.metadata.environment.hub_url = "https://api.test.evo.seequent.net"
         obj.metadata.id = "12345"
 
         html = format_base_object(obj)
@@ -446,7 +446,7 @@ class TestFormatVariogram(unittest.TestCase):
         obj.metadata.environment = MagicMock()
         obj.metadata.environment.org_id = "org-123"
         obj.metadata.environment.workspace_id = "ws-456"
-        obj.metadata.environment.hub_url = "https://test.api.seequent.com"
+        obj.metadata.environment.hub_url = "https://api.test.evo.seequent.net"
         obj.metadata.id = defaults["uuid"]
 
         return obj
@@ -729,7 +729,7 @@ class TestFormatBlockModel(unittest.TestCase):
         inner_obj.metadata.environment = MagicMock()
         inner_obj.metadata.environment.org_id = "org-123"
         inner_obj.metadata.environment.workspace_id = "ws-456"
-        inner_obj.metadata.environment.hub_url = "https://test.api.seequent.com"
+        inner_obj.metadata.environment.hub_url = "https://api.test.evo.seequent.net"
         inner_obj.metadata.id = defaults["uuid"]
         obj._obj = inner_obj
 
@@ -906,7 +906,7 @@ class TestFormatReport(HtmlFixtureTestCase):
         env = MagicMock()
         env.org_id = "org-123"
         env.workspace_id = "ws-456"
-        env.hub_url = "https://test.api.seequent.com"
+        env.hub_url = "https://api.test.evo.seequent.net"
         context.get_environment.return_value = env
         obj._context = context
 
@@ -1078,7 +1078,7 @@ class TestFormatTaskResult(HtmlFixtureTestCase):
             "schema_str": "/objects/regular-3d-grid/1.0.0/regular-3d-grid.schema.json",
             "attribute_name": "kriged_grade",
             "target_reference": (
-                "https://350mt.api.seequent.com/geoscience-object"
+                "https://api.350mt.evo.seequent.net/geoscience-object"
                 "/orgs/12345678-1234-1234-1234-123456789abc"
                 "/workspaces/87654321-4321-4321-4321-abcdef123456"
                 "/objects/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
@@ -1206,7 +1206,7 @@ class TestFormatTaskResult(HtmlFixtureTestCase):
 @unittest.skipUnless(importlib.util.find_spec("evo.compute"), "evo-compute is not installed")
 class TestRealTaskResults(HtmlFixtureTestCase):
     REFERENCE = (
-        "https://350mt.api.seequent.com/geoscience-object"
+        "https://api.350mt.evo.seequent.net/geoscience-object"
         "/orgs/12345678-1234-1234-1234-123456789abc"
         "/workspaces/87654321-4321-4321-4321-abcdef123456"
         "/objects/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
@@ -1470,7 +1470,7 @@ class TestFormatTaskResultList(unittest.TestCase):
             "attribute_name": "kriged_grade",
             "schema_str": "/objects/regular-3d-grid/1.0.0/regular-3d-grid.schema.json",
             "target_reference": (
-                "https://350mt.api.seequent.com/geoscience-object"
+                "https://api.350mt.evo.seequent.net/geoscience-object"
                 "/orgs/12345678-1234-1234-1234-123456789abc"
                 "/workspaces/87654321-4321-4321-4321-abcdef123456"
                 "/objects/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
@@ -1566,7 +1566,7 @@ class TestGetTaskResultPortalUrl(unittest.TestCase):
         result = MagicMock()
         result.target = MagicMock()
         result.target.reference = (
-            "https://350mt.api.seequent.com/geoscience-object"
+            "https://api.350mt.evo.seequent.net/geoscience-object"
             "/orgs/12345678-1234-1234-1234-123456789abc"
             "/workspaces/87654321-4321-4321-4321-abcdef123456"
             "/objects/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"

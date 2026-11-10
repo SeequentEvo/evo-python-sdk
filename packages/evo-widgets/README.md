@@ -110,11 +110,11 @@ portal_url = get_portal_url(
     org_id="org-123",
     workspace_id="ws-456",
     object_id="obj-789",
-    hub_url="https://350mt.api.seequent.com",
+    hub_url="https://api.350mt.evo.seequent.net",
 )
 
 # Generate URLs from object reference strings
-ref_url = "https://350mt.api.seequent.com/geoscience-object/orgs/org-123/workspaces/ws-456/objects/obj-789"
+ref_url = "https://api.350mt.evo.seequent.net/geoscience-object/orgs/org-123/workspaces/ws-456/objects/obj-789"
 portal_url = get_portal_url_from_reference(ref_url)
 viewer_url = get_viewer_url_from_reference(ref_url)
 
