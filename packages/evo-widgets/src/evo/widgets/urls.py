@@ -47,7 +47,7 @@ __all__ = [
 def get_evo_base_url(hub_url: str) -> str:
     """Determine the Evo base URL from an API hub URL.
 
-    :param hub_url: The hub URL (e.g., "https://350mt.api.seequent.com").
+    :param hub_url: The hub URL (e.g., "https://api.350mt.evo.seequent.net").
     :return: The Evo base URL (e.g., "https://evo.seequent.com").
     """
     return "https://evo.seequent.com"
@@ -56,7 +56,7 @@ def get_evo_base_url(hub_url: str) -> str:
 def get_blocksync_base_url(hub_url: str) -> str:
     """Determine the BlockSync base URL from an API hub URL.
 
-    :param hub_url: The hub URL (e.g., "https://350mt.api.seequent.com").
+    :param hub_url: The hub URL (e.g., "https://api.350mt.evo.seequent.net").
     :return: The BlockSync base URL (e.g., "https://blocksync.seequent.com").
     """
     return "https://blocksync.seequent.com"
@@ -128,15 +128,15 @@ def get_blocksync_report_url(
 def get_hub_code(hub_url: str) -> str:
     """Extract the hub code from a hub URL.
 
-    :param hub_url: The hub URL (e.g., "https://350mt.api.seequent.com").
+    :param hub_url: The hub URL (e.g., "https://api.350mt.evo.seequent.net").
     :return: The hub code (e.g., "350mt").
     :raises ValueError: If the hub code cannot be extracted.
     """
     parsed = urlparse(hub_url)
     hostname_parts = parsed.hostname.split(".") if parsed.hostname else []
-    if len(hostname_parts) < 1:
+    if len(hostname_parts) < 2 or hostname_parts[0] != "api":
         raise ValueError(f"Invalid URL: cannot extract hub code from hostname '{parsed.hostname}'")
-    return hostname_parts[0]
+    return hostname_parts[1]
 
 
 def get_portal_url(
