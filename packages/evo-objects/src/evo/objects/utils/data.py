@@ -25,7 +25,7 @@ from evo.common.utils import NoFeedback, PartialFeedback, Retry, split_feedback
 
 from ..exceptions import TableFormatError
 from ..io import _CACHE_SCOPE, ObjectDataDownload, ObjectDataUpload
-from ._concurrency import _MAX_CONCURRENT_UPLOADS, gather_uploads, get_upload_semaphore
+from ._concurrency import gather_uploads, get_max_concurrent_uploads, get_upload_semaphore
 from .table_formats import INTEGER_ARRAY_1_INT32, INTEGER_ARRAY_MD_INT32, LOOKUP_TABLE_INT32
 from .tables import KnownTableFormat
 from .types import ArrayTableInfo, CategoryInfo, LookupTableInfo
@@ -119,7 +119,7 @@ class ObjectDataClient:
         self._environment = environment
         self._connector = connector
         self._cache = cache
-        self._upload_semaphore = asyncio.Semaphore(_MAX_CONCURRENT_UPLOADS)
+        self._upload_semaphore = asyncio.Semaphore(get_max_concurrent_uploads())
 
     @property
     def cache_location(self) -> Path:

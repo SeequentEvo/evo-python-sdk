@@ -12,13 +12,44 @@
 """Concurrency shared by nested table-serialization operations."""
 
 import asyncio
-from collections.abc import Coroutine
+from collections.abc import Coroutine, Iterator
+from contextlib import contextmanager
 from contextvars import ContextVar
 from typing import Any, TypeVar
 
 _T = TypeVar("_T")
 _MAX_CONCURRENT_UPLOADS = 8
+_max_concurrent_uploads: ContextVar[int] = ContextVar("max_concurrent_uploads", default=_MAX_CONCURRENT_UPLOADS)
 _upload_semaphore: ContextVar[asyncio.Semaphore | None] = ContextVar("object_upload_semaphore", default=None)
+
+
+def get_max_concurrent_uploads() -> int:
+    """Return the configured limit for newly created upload semaphores."""
+    return _max_concurrent_uploads.get()
+
+
+@contextmanager
+def upload_concurrency(max_concurrent: int = _MAX_CONCURRENT_UPLOADS) -> Iterator[None]:
+    """Limit concurrent table serialization and uploads within this scope.
+
+    Applies to typed-object operations and direct ObjectDataClient uploads, including
+    clients created internally. Each slot is held from Parquet serialization through
+    upload and retries. Settings are inherited by child asyncio tasks, not unrelated tasks.
+    Clients created in this scope retain this limit for subsequent direct uploads.
+
+    :param max_concurrent: Maximum number of concurrent tables. Defaults to eight.
+    :raises ValueError: If max_concurrent is not a positive integer.
+    """
+    if isinstance(max_concurrent, bool) or not isinstance(max_concurrent, int) or max_concurrent < 1:
+        raise ValueError("max_concurrent must be a positive integer")
+    semaphore = asyncio.Semaphore(max_concurrent)
+    limit_token = _max_concurrent_uploads.set(max_concurrent)
+    semaphore_token = _upload_semaphore.set(semaphore)
+    try:
+        yield
+    finally:
+        _upload_semaphore.reset(semaphore_token)
+        _max_concurrent_uploads.reset(limit_token)
 
 
 def get_upload_semaphore() -> asyncio.Semaphore | None:
@@ -32,7 +63,7 @@ async def gather_uploads(*coroutines: Coroutine[Any, Any, _T]) -> list[_T]:
     tasks: list[asyncio.Task[_T]] = []
     try:
         if _upload_semaphore.get() is None:
-            token = _upload_semaphore.set(asyncio.Semaphore(_MAX_CONCURRENT_UPLOADS))
+            token = _upload_semaphore.set(asyncio.Semaphore(get_max_concurrent_uploads()))
         for coroutine in coroutines:
             tasks.append(asyncio.create_task(coroutine))
         # Unlike gather(), this does not cancel children before our own cleanup runs.

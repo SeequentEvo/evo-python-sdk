@@ -13,6 +13,7 @@ import asyncio
 import json
 import sys
 import threading
+from contextlib import nullcontext
 from unittest import mock
 from uuid import UUID
 
@@ -29,7 +30,7 @@ from evo.common.test_tools import TestWithConnector, TestWithStorage
 from evo.common.utils import BackoffLinear, NoFeedback, PartialFeedback, Retry, get_header_metadata
 from evo.objects.endpoints.models import DataUploadResponseBody
 from evo.objects.exceptions import TableFormatError
-from evo.objects.utils import KnownTableFormat, ObjectDataClient, table_formats
+from evo.objects.utils import KnownTableFormat, ObjectDataClient, table_formats, upload_concurrency
 from evo.objects.utils._concurrency import gather_uploads
 from helpers import NoImport, UnloadModule, get_sample_table_and_bytes
 
@@ -490,7 +491,23 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
 
         upload.assert_not_awaited()
 
-    async def test_direct_concurrent_uploads_share_client_limit(self) -> None:
+    @parameterized.expand(
+        [
+            ("default", None, False),
+            ("serial_client", 1, False),
+            ("lower_client", 3, False),
+            ("higher_client", 12, False),
+            ("existing_client_scope", 3, True),
+            ("existing_client_higher_scope", 12, True),
+        ]
+    )
+    async def test_direct_concurrent_uploads_share_client_limit(self, _name, configured_limit, scoped) -> None:
+        limit = configured_limit if configured_limit is not None else 8
+        if configured_limit is not None and not scoped:
+            with upload_concurrency(configured_limit):
+                self.data_client = ObjectDataClient(
+                    environment=self.environment, connector=self.connector, cache=self.cache
+                )
         release = asyncio.Event()
         limit_reached = asyncio.Event()
         active = 0
@@ -500,7 +517,7 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
             nonlocal active, peak
             active += 1
             peak = max(peak, active)
-            if active == 8:
+            if active == limit:
                 limit_reached.set()
             try:
                 await release.wait()
@@ -511,19 +528,20 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
             mock.patch.object(self.data_client, "save_table", return_value={"data": "saved"}) as save,
             mock.patch("evo.objects.utils.data.asyncio.to_thread", side_effect=lambda fn, *args: fn(*args)),
             mock.patch("evo.objects.io.ObjectDataUpload.upload_from_cache", side_effect=upload),
+            upload_concurrency(configured_limit) if scoped else nullcontext(),
         ):
             task = asyncio.gather(*(self.data_client.upload_table(mock.Mock()) for _ in range(24)))
             try:
                 await asyncio.wait_for(limit_reached.wait(), timeout=2)
                 await asyncio.sleep(0)
-                self.assertEqual(8, save.call_count, "Queued uploads must not start Parquet serialization")
+                self.assertEqual(limit, save.call_count, "Queued uploads must not start Parquet serialization")
                 release.set()
                 await asyncio.wait_for(task, timeout=2)
             finally:
                 release.set()
                 task.cancel()
                 await asyncio.gather(task, return_exceptions=True)
-        self.assertEqual(8, peak)
+        self.assertEqual(limit, peak)
         self.assertEqual(0, active)
         self.assertEqual(24, save.call_count)
 

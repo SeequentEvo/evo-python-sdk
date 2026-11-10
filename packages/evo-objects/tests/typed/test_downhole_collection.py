@@ -45,6 +45,7 @@ from evo.objects.typed.downhole_collection import (
     IntervalCollection,
 )
 from evo.objects.typed.exceptions import ObjectValidationError
+from evo.objects.utils import upload_concurrency
 
 from .helpers import MockClient
 
@@ -279,7 +280,9 @@ class TestDownholeCollection(TestWithConnector):
             list((await result.collections.get("last").to_dataframe()).columns),
         )
 
-    async def test_nested_table_uploads_share_a_concurrency_limit(self):
+    @parameterized.expand([("default", None), ("serial", 1), ("lower", 3), ("higher", 12)])
+    async def test_nested_table_uploads_share_a_concurrency_limit(self, _name, configured_limit):
+        limit = configured_limit if configured_limit is not None else 8
         template = _make_example_data().collections[0]
         holes = template.holes.astype({"hole_index": "int32", "offset": "uint64", "count": "uint64"})
         table = template.table.assign(**{f"reading_{i}": np.arange(4, dtype=float) for i in range(16)})
@@ -314,7 +317,10 @@ class TestDownholeCollection(TestWithConnector):
             context = StaticContext.from_environment(
                 environment=self.environment, connector=self.connector, cache=cache
             )
-            with patch.object(ObjectDataUpload, "upload_from_cache", upload):
+            with (
+                patch.object(ObjectDataUpload, "upload_from_cache", upload),
+                upload_concurrency(configured_limit) if configured_limit is not None else contextlib.nullcontext(),
+            ):
                 document = await DownholeCollection._data_to_schema(data, context)
             cache_location = cache.get_location(environment=self.environment, scope="geoscience-object")
             for collection in document["collections"]:
@@ -330,8 +336,11 @@ class TestDownholeCollection(TestWithConnector):
                 self.assertEqual(category["values"]["length"], len(table))
                 self.assertEqual(distance["values"]["length"], len(table))
 
-        self.assertGreater(peak, 1)
-        self.assertLessEqual(peak, 8)
+        if limit > 1:
+            self.assertGreater(peak, 1)
+        else:
+            self.assertEqual(1, peak)
+        self.assertLessEqual(peak, limit)
         self.assertEqual(0, active)
         self.assertGreater(len(uploaded), 50)
         self.assertEqual([c.name for c in data.collections], [c["name"] for c in document["collections"]])

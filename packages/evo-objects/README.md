@@ -113,6 +113,22 @@ for sibling work before returning. Multi-column attribute and combined table/att
 data concurrently and update their in-memory documents only after all uploads succeed. Separately awaited
 `collections.add()` calls remain sequential.
 
+To tune CPU and memory usage for table sizes and available resources, use the public
+`upload_concurrency` scope. It applies the same limit to nested typed-object operations and direct
+uploads. Each slot covers serialization through upload and retries.
+
+```python
+from evo.objects.utils import upload_concurrency
+
+with upload_concurrency(max_concurrent=4):
+    dhc = await DownholeCollection.create(context, data)
+```
+
+The default remains eight. The scope also applies to existing data clients; clients created inside it
+retain the configured per-client limit for direct uploads after leaving the scope. Settings are local
+to the current context and inherited by child asyncio tasks. Await all uploads before leaving the scope.
+Nested scopes restore the previous setting on exit, including when an operation fails.
+
 ## Contributing
 
 For instructions on contributing to the development of this library, please refer to the [evo-python-sdk documentation](https://github.com/seequentevo/evo-python-sdk).

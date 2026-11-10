@@ -22,6 +22,7 @@ try:
 except ImportError:
     DataFrame = None  # type: ignore
 
+from ._concurrency import upload_concurrency
 from .data import ObjectDataClient
 from .downhole import expand_hole_index, hole_chunks_from_ids
 from .table_formats import all_known_formats, get_known_format
@@ -47,4 +48,5 @@ __all__ = [
     "expand_hole_index",
     "get_known_format",
     "hole_chunks_from_ids",
+    "upload_concurrency",
 ]
