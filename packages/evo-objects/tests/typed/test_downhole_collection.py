@@ -46,6 +46,7 @@ from evo.objects.typed.downhole_collection import (
 )
 from evo.objects.typed.exceptions import ObjectValidationError
 from evo.objects.utils import upload_concurrency
+from evo.objects.utils.data import _iter_refs
 
 from .helpers import MockClient
 
@@ -342,7 +343,9 @@ class TestDownholeCollection(TestWithConnector):
             self.assertEqual(1, peak)
         self.assertLessEqual(peak, limit)
         self.assertEqual(0, active)
-        self.assertGreater(len(uploaded), 50)
+        references = list(_iter_refs(document))
+        self.assertGreater(len(references), 50)
+        self.assertEqual(set(references), set(uploaded))
         self.assertEqual([c.name for c in data.collections], [c["name"] for c in document["collections"]])
 
     async def test_mixed_collections_round_trip_and_mutation(self):

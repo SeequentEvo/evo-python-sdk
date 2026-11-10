@@ -428,7 +428,9 @@ class Attributes(SchemaList[Attribute]):
 
         self._replace_uploaded_attributes(await self._prepare_attributes(df, fb))
 
-    async def _prepare_attributes(self, df: pd.DataFrame, fb: IFeedback) -> list[dict[str, Any]]:
+    async def _prepare_attributes(
+        self, df: pd.DataFrame, fb: IFeedback
+    ) -> list[tuple[dict[str, Any] | None, dict[str, Any]]]:
         """Upload replacement values without changing live documents or modification tracking."""
         self._attribute_descriptions(df)
         if len(df.columns) == 0:
@@ -438,28 +440,29 @@ class Attributes(SchemaList[Attribute]):
         data_client = get_data_client(self._obj)
         column_fbs = split_feedback(fb, [1.0] * len(df.columns))
 
-        async def upload_column(col: Any, col_fb: IFeedback) -> dict[str, Any]:
+        async def upload_column(col: Any, col_fb: IFeedback) -> tuple[dict[str, Any] | None, dict[str, Any]]:
             attribute_df = df[[col]]
-            attribute = attributes_by_name.get(col)
+            attribute = attributes_by_name.get(str(col))
             if attribute is not None:
                 document = attribute.as_dict()
                 await Attribute._upload_attribute_values(
                     document, attribute_df, attribute.attribute_type, data_client, fb=col_fb
                 )
-                return document
+                return attribute._document, document
             documents: list[dict[str, Any]] = []
             await self._upload_attributes_to_list(documents, attribute_df, self._obj, fb=col_fb)
-            return documents[0]
+            return None, documents[0]
 
         return await gather_uploads(*(upload_column(col, col_fb) for col, col_fb in zip(df.columns, column_fbs)))
 
-    def _replace_uploaded_attributes(self, documents: list[dict[str, Any]]) -> None:
-        existing = {document["name"]: document for document in self._document}
-        for index, document in enumerate(documents):
-            if document["name"] in existing:
-                original = existing[document["name"]]
+    def _replace_uploaded_attributes(self, prepared: list[tuple[dict[str, Any] | None, dict[str, Any]]]) -> None:
+        documents = []
+        for original, document in prepared:
+            if original is not None:
+                original.clear()
                 original.update(document)
-                documents[index] = original
+                document = original
+            documents.append(document)
         self._document[:] = documents
         for document in documents:
             self._context.mark_modified(document["values"]["data"])

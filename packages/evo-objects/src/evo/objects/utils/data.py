@@ -14,18 +14,19 @@ from collections.abc import Iterator, Sequence
 from pathlib import Path
 from typing import Any, Iterable, cast
 from uuid import UUID
+from weakref import WeakKeyDictionary
 
 import numpy as np
 
 from evo import logging
 from evo.common import APIConnector, Environment, ICache, IFeedback, StaticContext
-from evo.common.exceptions import EvoAPIException, StorageFileNotFoundError, TransportError, error_context
+from evo.common.exceptions import EvoAPIException, RetryError, StorageFileNotFoundError, TransportError, error_context
 from evo.common.io.exceptions import ChunkedIOError, DataExistsError
 from evo.common.utils import NoFeedback, PartialFeedback, Retry, split_feedback
 
 from ..exceptions import TableFormatError
 from ..io import _CACHE_SCOPE, ObjectDataDownload, ObjectDataUpload
-from ._concurrency import gather_uploads, get_max_concurrent_uploads, get_upload_semaphore
+from ._concurrency import gather_uploads, get_upload_semaphore
 from .table_formats import INTEGER_ARRAY_1_INT32, INTEGER_ARRAY_MD_INT32, LOOKUP_TABLE_INT32
 from .tables import KnownTableFormat
 from .types import ArrayTableInfo, CategoryInfo, LookupTableInfo
@@ -50,6 +51,9 @@ logger = logging.getLogger("object.data")
 _DATA_ID_KEY = "data"  # The key used to identify data references in geoscience objects.
 _DEFAULT_MAX_CONCURRENCY = 4  # Decent performance improvement going from 1 to 4 but beyond that not so much
 _TRANSIENT_UPLOAD_STATUSES = frozenset({408, 429, 500, 502, 503, 504})
+_inflight_uploads: WeakKeyDictionary[
+    asyncio.AbstractEventLoop, dict[tuple[int, Environment, str], asyncio.Future[None]]
+] = WeakKeyDictionary()
 
 
 def _is_transient_upload_error(error: Exception) -> bool:
@@ -119,7 +123,6 @@ class ObjectDataClient:
         self._environment = environment
         self._connector = connector
         self._cache = cache
-        self._upload_semaphore = asyncio.Semaphore(get_max_concurrent_uploads())
 
     @property
     def cache_location(self) -> Path:
@@ -218,7 +221,9 @@ class ObjectDataClient:
             Otherwise, the format will be inferred from the table, either by checking against the provided formats or by
             checking against all known formats.
         :param retry: Retry policy for transient URL or storage failures. Defaults to three attempts with
-            exponential backoff. Retries reuse the cached table; exhausted attempts raise RetryError.
+            exponential backoff. Retries reuse the cached table; exhausted attempts re-raise the last original
+            exception. Concurrent uploads of identical data with the same connector and environment share one
+            upload and its retry policy.
 
         :return: A description of the uploaded data.
 
@@ -227,7 +232,8 @@ class ObjectDataClient:
         """
         if retry is None:
             retry = Retry(logger=logger)
-        async with get_upload_semaphore() or self._upload_semaphore:
+        semaphore = get_upload_semaphore()
+        async with semaphore:
             # Compression and hashing must not block other uploads on the event loop.
             writer = asyncio.create_task(asyncio.to_thread(self.save_table, table, table_format))
             try:
@@ -236,27 +242,60 @@ class ObjectDataClient:
                 # A running worker cannot be cancelled; finish its cache write before allowing a retry.
                 await asyncio.gather(writer, return_exceptions=True)
                 raise
-            upload = ObjectDataUpload(connector=self._connector, environment=self._environment, name=table_info["data"])
-            with error_context(f"While uploading table data '{table_info['data']}'", logger=logger):
-                async for attempt in retry:
-                    try:
-                        await upload.upload_from_cache(cache=self._cache, transport=self._connector.transport, fb=fb)
-                    except DataExistsError:
-                        logger.debug(f"Data not uploaded because data already exists (label: {table_info['data']})")
-                        fb.progress(1)
-                    except (
-                        EvoAPIException,
-                        TransportError,
-                        asyncio.TimeoutError,
-                        TimeoutError,
-                        ConnectionError,
-                        ChunkedIOError,
-                    ) as exc:
-                        if not _is_transient_upload_error(exc):
-                            raise
-                        attempt.set_exception(exc)
-                        fb.progress(0)
+
+        loop = asyncio.get_running_loop()
+        pending = _inflight_uploads.setdefault(loop, {})
+        key = (id(self._connector), self._environment, table_info["data"])
+        if (existing := pending.get(key)) is not None:
+            await asyncio.shield(existing)
+            fb.progress(1)
             return table_info
+
+        pending[key] = completion = loop.create_future()
+        try:
+            await self._upload_cached_table(table_info["data"], fb, retry, semaphore)
+        except asyncio.CancelledError:
+            completion.cancel()
+            raise
+        except BaseException as exc:
+            completion.set_exception(exc)
+            # The owner propagates the failure even when no duplicate is waiting.
+            completion.exception()
+            raise
+        else:
+            completion.set_result(None)
+        finally:
+            del pending[key]
+            if not pending:
+                del _inflight_uploads[loop]
+        return table_info
+
+    async def _upload_cached_table(self, name: str, fb: IFeedback, retry: Retry, semaphore: asyncio.Semaphore) -> None:
+        upload = ObjectDataUpload(connector=self._connector, environment=self._environment, name=name)
+        with error_context(f"While uploading table data '{name}'", logger=logger):
+            async for attempt in retry:
+                try:
+                    async with semaphore:
+                        await upload.upload_from_cache(cache=self._cache, transport=self._connector.transport, fb=fb)
+                except DataExistsError:
+                    logger.debug(f"Data not uploaded because data already exists (label: {name})")
+                    fb.progress(1)
+                except (
+                    EvoAPIException,
+                    TransportError,
+                    asyncio.TimeoutError,
+                    TimeoutError,
+                    ConnectionError,
+                    ChunkedIOError,
+                ) as exc:
+                    if not _is_transient_upload_error(exc):
+                        raise
+                    try:
+                        attempt.set_exception(exc)
+                    except RetryError:
+                        # Keep the original type, instance and storage cause; retry history is the context.
+                        raise exc
+                    fb.progress(0)
 
     async def upload_category_table(self, table: pa.Table, fb: IFeedback = NoFeedback) -> CategoryInfo:
         """Upload a pyarrow table with category data to the geoscience object service, returning the reference to

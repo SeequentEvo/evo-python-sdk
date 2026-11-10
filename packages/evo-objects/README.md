@@ -106,16 +106,20 @@ Collection coordinate units come only from `DistanceCollection.unit` or `Interva
 distance or `from` column is ignored.
 
 Object creation and replacement upload independent collections, geometry, and attributes concurrently, preserving
-their input order. Nested uploads share a limit of eight tables per serialization operation, including Parquet writing;
-direct concurrent table uploads share a per-client limit of eight. Transient upload failures receive up to three
-attempts with exponential backoff, reusing cached Parquet data. Permanent failures or exhausted retries cancel and wait
+their input order. All typed operations and direct table uploads share a default limit of eight active serialization
+or upload operations per event loop, including across clients. Transient upload failures receive up to three
+attempts with exponential backoff, reusing cached Parquet data. Intermediate failures are logged at WARNING; exhausted retries
+re-raise the last original exception, with retry history available through its exception context. Concurrent uploads of
+identical data using the same connector and environment share one in-flight upload and its retry policy.
+Permanent failures or exhausted retries cancel and wait
 for sibling work before returning. Multi-column attribute and combined table/attribute mutations upload independent
 data concurrently and update their in-memory documents only after all uploads succeed. Separately awaited
 `collections.add()` calls remain sequential.
 
 To tune CPU and memory usage for table sizes and available resources, use the public
 `upload_concurrency` scope. It applies the same limit to nested typed-object operations and direct
-uploads. Each slot covers serialization through upload and retries.
+uploads. Serialization and each upload attempt acquire a slot separately; backoff sleeps release the slot so other
+tables can proceed.
 
 ```python
 from evo.objects.utils import upload_concurrency
@@ -124,10 +128,10 @@ with upload_concurrency(max_concurrent=4):
     dhc = await DownholeCollection.create(context, data)
 ```
 
-The default remains eight. The scope also applies to existing data clients; clients created inside it
-retain the configured per-client limit for direct uploads after leaving the scope. Settings are local
-to the current context and inherited by child asyncio tasks. Await all uploads before leaving the scope.
-Nested scopes restore the previous setting on exit, including when an operation fails.
+The default remains eight. The scope applies to existing and newly created data clients, without changing their
+behavior outside the scope. Settings are local to the current context and inherited by child asyncio tasks, which
+retain their scope even after the parent exits it. Each scope has a separate limit; nested scopes restore the previous
+setting on exit, including when an operation fails. Clients and scopes can be reused across event loops.
 
 ## Contributing
 

@@ -239,6 +239,40 @@ class TestConcurrentAttributeUploads(IsolatedAsyncioTestCase):
         get_client.assert_not_called()
         self.assertEqual({"previous-change"}, self.context.data_modified)
 
+    @parameterized.expand([("string_label", "0"), ("integer_label", 0)])
+    async def test_replacement_matches_stringified_names_and_preserves_existing_type(self, _name, label):
+        self.documents[:] = [
+            {
+                "name": "0",
+                "key": "stable-key",
+                "attribute_type": "category",
+                "table": {"data": "old-lookup"},
+                "values": {"data": "old-values", "length": 1},
+            }
+        ]
+        original = self.documents[0]
+        attribute = self.attributes["0"]
+        client = Mock()
+        client.upload_category_dataframe = AsyncMock(
+            return_value={
+                "table": {"data": "new-lookup"},
+                "values": {"data": "new-values", "length": 1},
+            }
+        )
+        client.upload_dataframe = AsyncMock()
+        with patch("evo.objects.typed.attributes.get_data_client", return_value=client):
+            # A float column would infer scalar for a new attribute, but replacements keep their existing type.
+            await self.attributes.set_attributes(pd.DataFrame({label: [2.0]}))
+
+        self.assertIs(original, self.documents[0])
+        self.assertEqual("category", attribute.attribute_type)
+        self.assertEqual("stable-key", attribute.key)
+        self.assertEqual("new-values", attribute._data)
+        self.assertEqual({"data": "new-lookup"}, original["table"])
+        client.upload_category_dataframe.assert_awaited_once()
+        client.upload_dataframe.assert_not_awaited()
+        self.assertEqual({"previous-change", "new-values"}, self.context.data_modified)
+
 
 class TestAttributeTypeInference(TestCase):
     """Tests for attribute type inference from pandas Series."""
