@@ -50,7 +50,15 @@ class DataTable(SchemaModel):
         :param df: DataFrame containing the new values for this table.
         :param fb: Optional feedback object to report upload progress.
         """
-        self._apply_uploaded_table(df, await self._data_to_schema(df, self._obj, fb=fb))
+        self.commit(df, await self.prepare(df, fb))
+
+    async def prepare(self, df: pd.DataFrame, fb: IFeedback = NoFeedback) -> dict[str, Any]:
+        """Upload replacement values without changing the table or its derived metadata."""
+        return await self._data_to_schema(df, self._obj, fb=fb)
+
+    def commit(self, df: pd.DataFrame, document: dict[str, Any]) -> None:
+        """Apply a successfully prepared table, including subclass-specific derived metadata."""
+        self._apply_uploaded_table(df, document)
 
     def _apply_uploaded_table(self, df: pd.DataFrame, document: dict[str, Any]) -> None:
         """Commit uploaded values and any subclass-specific derived metadata."""
@@ -122,15 +130,15 @@ class DataTableAndAttributes(SchemaModel):
         table_df, attr_df = self._split_dataframe(df, self._table.data_columns)
 
         if attr_df is not None:
-            # Validate local metadata before either branch starts remote work.
-            self.attributes._attribute_descriptions(attr_df)
             table_fb, attr_fb = split_feedback(fb, [1.0, float(len(attr_df.columns))])
+            # prepare validates metadata before either branch starts remote work.
+            attribute_upload = self.attributes.prepare(attr_df, attr_fb)
             table_document, attribute_documents = await gather_uploads(
-                self._table._data_to_schema(table_df, self._obj, fb=table_fb),
-                self.attributes._prepare_attributes(attr_df, attr_fb),
+                self._table.prepare(table_df, table_fb),
+                attribute_upload,
             )
-            self._table._apply_uploaded_table(table_df, table_document)
-            self.attributes._replace_uploaded_attributes(attribute_documents)
+            self._table.commit(table_df, table_document)
+            self.attributes.commit(attribute_documents)
         else:
             await self._table.from_dataframe(table_df, fb=fb)
             self.attributes.clear()

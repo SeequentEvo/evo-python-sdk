@@ -208,6 +208,10 @@ class SchemaBuilder:
 
         return self.document
 
+    async def set_sub_model_value(self, name: str, data: Any) -> None:
+        """Convert and assign a single sub-model."""
+        await self.set_sub_model_values([(name, data)])
+
     async def set_sub_model_values(self, values: Sequence[tuple[str, Any]]) -> None:
         """Convert several sub-models concurrently, then assign the results in the given order.
 

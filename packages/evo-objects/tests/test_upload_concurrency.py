@@ -17,14 +17,28 @@ from unittest.mock import patch
 
 from parameterized import parameterized
 
-from evo.objects.utils import upload_concurrency
-from evo.objects.utils._concurrency import gather_uploads, get_max_concurrent_uploads, get_upload_semaphore
+from evo.objects.utils import ObjectDataClient, upload_concurrency
+from evo.objects.utils._concurrency import (
+    _DEFAULT_MAX_CONCURRENCY,
+    _upload_scope,
+    gather_uploads,
+    get_upload_semaphore,
+)
 
 
 class TestUploadConcurrency(IsolatedAsyncioTestCase):
+    async def test_upload_and_download_defaults_match(self):
+        self.assertEqual(4, _DEFAULT_MAX_CONCURRENCY)
+        self.assertEqual(
+            _DEFAULT_MAX_CONCURRENCY,
+            inspect.signature(ObjectDataClient.download_tables).parameters["max_concurrency"].default,
+        )
+        with upload_concurrency():
+            self.assertEqual(_DEFAULT_MAX_CONCURRENCY, _upload_scope.get().limit)
+
     @parameterized.expand([("default", None), ("serial", 1), ("lower", 3), ("higher", 12)])
     async def test_nested_groups_share_limit_preserve_order_and_reset_scope(self, _name, configured_limit):
-        limit = configured_limit if configured_limit is not None else 8
+        limit = configured_limit if configured_limit is not None else _DEFAULT_MAX_CONCURRENCY
         default = get_upload_semaphore()
         release = asyncio.Event()
         limit_reached = asyncio.Event()
@@ -81,22 +95,22 @@ class TestUploadConcurrency(IsolatedAsyncioTestCase):
         with self.assertRaisesRegex(ValueError, "max_concurrent must be a positive integer"):
             with upload_concurrency(value):
                 self.fail("Invalid configuration was accepted")
-        self.assertEqual(8, get_max_concurrent_uploads())
+        self.assertEqual(_DEFAULT_MAX_CONCURRENCY, _upload_scope.get().limit)
         self.assertIs(default, get_upload_semaphore())
 
     async def test_nested_configuration_restores_scope_after_failure(self):
         default = get_upload_semaphore()
         with upload_concurrency(3):
             outer = get_upload_semaphore()
-            self.assertEqual(3, get_max_concurrent_uploads())
+            self.assertEqual(3, _upload_scope.get().limit)
             with self.assertRaisesRegex(RuntimeError, "failed"):
                 with upload_concurrency(1):
-                    self.assertEqual(1, get_max_concurrent_uploads())
+                    self.assertEqual(1, _upload_scope.get().limit)
                     self.assertIsNot(outer, get_upload_semaphore())
                     raise RuntimeError("failed")
-            self.assertEqual(3, get_max_concurrent_uploads())
+            self.assertEqual(3, _upload_scope.get().limit)
             self.assertIs(outer, get_upload_semaphore())
-        self.assertEqual(8, get_max_concurrent_uploads())
+        self.assertEqual(_DEFAULT_MAX_CONCURRENCY, _upload_scope.get().limit)
         self.assertIs(default, get_upload_semaphore())
 
     async def test_configuration_is_isolated_between_tasks(self):
@@ -108,12 +122,12 @@ class TestUploadConcurrency(IsolatedAsyncioTestCase):
             with upload_concurrency(2):
                 ready.set()
                 await release.wait()
-                return get_max_concurrent_uploads()
+                return _upload_scope.get().limit
 
         task = asyncio.create_task(configured())
         try:
             await asyncio.wait_for(ready.wait(), timeout=2)
-            self.assertEqual(8, get_max_concurrent_uploads())
+            self.assertEqual(_DEFAULT_MAX_CONCURRENCY, _upload_scope.get().limit)
             self.assertIs(default, get_upload_semaphore())
             release.set()
             self.assertEqual(2, await asyncio.wait_for(task, timeout=2))
@@ -201,6 +215,19 @@ class TestUploadConcurrency(IsolatedAsyncioTestCase):
     async def test_empty_group_returns_empty_list(self):
         self.assertEqual([], await gather_uploads())
 
+    async def test_secondary_failures_are_logged_without_replacing_the_first(self):
+        errors = [RuntimeError("first"), ValueError("second")]
+
+        async def fail(error):
+            raise error
+
+        with self.assertLogs("evo.object.uploads", level="DEBUG") as logs:
+            with self.assertRaises(RuntimeError) as caught:
+                await gather_uploads(*(fail(error) for error in errors))
+        self.assertIs(errors[0], caught.exception)
+        self.assertEqual(1, len(logs.records))
+        self.assertIs(errors[1], logs.records[0].exc_info[1])
+
     async def test_task_creation_failure_closes_unscheduled_coroutines_and_drains_tasks(self):
         async def upload():
             await asyncio.sleep(0)
@@ -222,7 +249,7 @@ class TestUploadConcurrency(IsolatedAsyncioTestCase):
 
         self.assertTrue(all(task.done() for task in tasks))
         self.assertTrue(all(inspect.getcoroutinestate(coro) == inspect.CORO_CLOSED for coro in coroutines))
-        self.assertEqual(8, get_max_concurrent_uploads())
+        self.assertEqual(_DEFAULT_MAX_CONCURRENCY, _upload_scope.get().limit)
 
     async def test_semaphore_creation_failure_drains_all_coroutines(self):
         async def upload():
@@ -235,7 +262,7 @@ class TestUploadConcurrency(IsolatedAsyncioTestCase):
                 await gather_uploads(*coroutines)
 
         self.assertTrue(all(inspect.getcoroutinestate(coro) == inspect.CORO_CLOSED for coro in coroutines))
-        self.assertEqual(8, get_max_concurrent_uploads())
+        self.assertEqual(_DEFAULT_MAX_CONCURRENCY, _upload_scope.get().limit)
 
 
 class TestUploadConcurrencyAcrossLoops(TestCase):
@@ -254,7 +281,7 @@ class TestUploadConcurrencyAcrossLoops(TestCase):
             await asyncio.gather(*(upload() for _ in range(16)))
 
         with upload_concurrency(limit) if limit is not None else nullcontext():
-            asyncio.run(run())
-            asyncio.run(run())
+            asyncio.run(asyncio.wait_for(run(), timeout=10))
+            asyncio.run(asyncio.wait_for(run(), timeout=10))
 
         self.assertIsNot(semaphores[0], semaphores[1])

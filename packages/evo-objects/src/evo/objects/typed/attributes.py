@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import typing
 import uuid
+from collections.abc import Coroutine
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Annotated, Any, Protocol, runtime_checkable
 from uuid import UUID
@@ -38,6 +39,8 @@ from ._utils import get_data_client
 from .exceptions import DataLoaderError, ObjectValidationError
 
 if TYPE_CHECKING:
+    from evo.objects.utils import ObjectDataClient
+
     from .block_model_ref import BlockModel
 
 __all__ = [
@@ -257,6 +260,27 @@ class PendingAttribute:
         return f"PendingAttribute(name={self._name!r}, exists=False)"
 
 
+async def _build_new_attribute_document(
+    col: Any,
+    series: pd.Series,
+    description: dict[str, Any] | None,
+    data_client: ObjectDataClient,
+    fb: IFeedback,
+) -> dict[str, Any]:
+    attribute_type = _infer_attribute_type_from_series(series)
+    document: dict[str, Any] = {
+        "name": str(col),
+        "key": str(uuid.uuid4()),
+        "attribute_type": attribute_type,
+    }
+    if attribute_type == "date_time":
+        series = pd.to_datetime(series, utc=True).dt.as_unit("us")
+    await Attribute._upload_attribute_values(document, pd.DataFrame({col: series}), attribute_type, data_client, fb=fb)
+    if description is not None:
+        document["attribute_description"] = description
+    return document
+
+
 class Attributes(SchemaList[Attribute]):
     """A collection of Geoscience Object Attributes
 
@@ -296,18 +320,15 @@ class Attributes(SchemaList[Attribute]):
     ) -> list[dict[str, Any]]:
         """Convert a DataFrame to a list of attribute dictionaries for object creation.
 
-        :param df: The DataFrame with columns to convert to attributes, or None.
+        :param data: The DataFrame with columns to convert to attributes, or None.
         :param context: The context used for data upload operations.
-        :param fb: Optional feedback object to report progress.
         :return: A list of attribute dictionaries suitable for the object document.
         """
-        result: list[dict[str, Any]] = []
-        if data is not None:
-            await cls._upload_attributes_to_list(result, data, context)
-        return result
+        return await cls._upload_attributes(data, context) if data is not None else []
 
     @staticmethod
     def _attribute_descriptions(df: pd.DataFrame) -> dict[Any, dict[str, Any]]:
+        """Validate descriptions and convert them to schema dictionaries once."""
         descriptions = df.attrs.get("attribute_descriptions", {})
         result = {}
         for col in df.columns:
@@ -319,17 +340,15 @@ class Attributes(SchemaList[Attribute]):
         return result
 
     @staticmethod
-    async def _upload_attributes_to_list(
-        attributes_list: list[dict[str, Any]],
+    async def _upload_attributes(
         df: pd.DataFrame,
         context: IContext | DownloadedObject,
         fb: IFeedback = NoFeedback,
-    ) -> None:
-        """Upload DataFrame columns as attributes and append to the attributes list.
+    ) -> list[dict[str, Any]]:
+        """Upload DataFrame columns and return new attribute documents in column order.
 
         This is a static operation that doesn't require a model instance.
 
-        :param attributes_list: The list in the document to append attribute dicts to.
         :param df: The DataFrame with columns to upload as attributes.
         :param context: The context used for data upload operations.
         :param fb: Optional feedback object to report progress.
@@ -337,33 +356,15 @@ class Attributes(SchemaList[Attribute]):
         descriptions = Attributes._attribute_descriptions(df)
         if len(df.columns) == 0:
             fb.progress(1)
-            return
+            return []
         data_client = get_data_client(context)
         column_fbs = split_feedback(fb, [1.0] * len(df.columns))
 
-        async def upload_column(col: Any, col_fb: IFeedback) -> dict[str, Any]:
-            series = df[col]
-            attribute_type = _infer_attribute_type_from_series(df[col])
-
-            attr_doc: dict[str, Any] = {
-                "name": str(col),
-                "key": str(uuid.uuid4()),
-                "attribute_type": attribute_type,
-            }
-
-            if attribute_type == "date_time":
-                series = pd.to_datetime(series, utc=True).dt.as_unit("us")
-
-            col_df = pd.DataFrame({col: series})
-            await Attribute._upload_attribute_values(attr_doc, col_df, attribute_type, data_client, fb=col_fb)
-
-            if description := descriptions.get(col):
-                attr_doc["attribute_description"] = description
-            return attr_doc
-
-        # Columns are independent, so upload them concurrently while preserving column order in the result.
-        attributes_list.extend(
-            await gather_uploads(*(upload_column(col, col_fb) for col, col_fb in zip(df.columns, column_fbs)))
+        return await gather_uploads(
+            *(
+                _build_new_attribute_document(col, df[col], descriptions.get(col), data_client, col_fb)
+                for col, col_fb in zip(df.columns, column_fbs)
+            )
         )
 
     async def to_dataframe(self, *keys: str, fb: IFeedback = NoFeedback) -> pd.DataFrame:
@@ -400,12 +401,9 @@ class Attributes(SchemaList[Attribute]):
         if df.shape[1] != 1:
             raise ValueError("DataFrame must contain exactly one column to append as an attribute.")
 
-        # Use the static method to upload and append to document
-        await self._upload_attributes_to_list(self._document, df, self._obj, fb)
-
-        # Mark context as modified and create the Attribute wrapper
-        attribute = self[-1]
-        self._context.mark_modified(attribute._data)
+        documents = await self._upload_attributes(df, self._obj, fb)
+        self._document.extend(documents)
+        self._context.mark_modified(documents[0]["values"]["data"])
 
     async def append_attributes(self, df: pd.DataFrame, fb: IFeedback = NoFeedback):
         """Add new attributes to the object.
@@ -413,8 +411,7 @@ class Attributes(SchemaList[Attribute]):
         :param df: DataFrame containing the values for the new attributes.
         :param fb: Optional feedback object to report upload progress.
         """
-        documents: list[dict[str, Any]] = []
-        await self._upload_attributes_to_list(documents, df, self._obj, fb)
+        documents = await self._upload_attributes(df, self._obj, fb)
         self._document.extend(documents)
         for document in documents:
             self._context.mark_modified(document["values"]["data"])
@@ -426,13 +423,23 @@ class Attributes(SchemaList[Attribute]):
         :param fb: Optional feedback object to report upload progress.
         """
 
-        self._replace_uploaded_attributes(await self._prepare_attributes(df, fb))
+        self.commit(await self.prepare(df, fb))
+
+    def prepare(
+        self, df: pd.DataFrame, fb: IFeedback = NoFeedback
+    ) -> Coroutine[Any, Any, list[tuple[dict[str, Any] | None, dict[str, Any]]]]:
+        """Validate metadata now and return an upload coroutine, without changing live attributes.
+
+        Await the returned coroutine and pass its result to commit only after all
+        related uploads succeed.
+        """
+        descriptions = self._attribute_descriptions(df)
+        return self._prepare_attributes(df, descriptions, fb)
 
     async def _prepare_attributes(
-        self, df: pd.DataFrame, fb: IFeedback
+        self, df: pd.DataFrame, descriptions: dict[Any, dict[str, Any]], fb: IFeedback
     ) -> list[tuple[dict[str, Any] | None, dict[str, Any]]]:
         """Upload replacement values without changing live documents or modification tracking."""
-        self._attribute_descriptions(df)
         if len(df.columns) == 0:
             fb.progress(1)
             return []
@@ -441,21 +448,20 @@ class Attributes(SchemaList[Attribute]):
         column_fbs = split_feedback(fb, [1.0] * len(df.columns))
 
         async def upload_column(col: Any, col_fb: IFeedback) -> tuple[dict[str, Any] | None, dict[str, Any]]:
-            attribute_df = df[[col]]
             attribute = attributes_by_name.get(str(col))
             if attribute is not None:
                 document = attribute.as_dict()
                 await Attribute._upload_attribute_values(
-                    document, attribute_df, attribute.attribute_type, data_client, fb=col_fb
+                    document, df[[col]], attribute.attribute_type, data_client, fb=col_fb
                 )
                 return attribute._document, document
-            documents: list[dict[str, Any]] = []
-            await self._upload_attributes_to_list(documents, attribute_df, self._obj, fb=col_fb)
-            return None, documents[0]
+            document = await _build_new_attribute_document(col, df[col], descriptions.get(col), data_client, col_fb)
+            return None, document
 
         return await gather_uploads(*(upload_column(col, col_fb) for col, col_fb in zip(df.columns, column_fbs)))
 
-    def _replace_uploaded_attributes(self, prepared: list[tuple[dict[str, Any] | None, dict[str, Any]]]) -> None:
+    def commit(self, prepared: list[tuple[dict[str, Any] | None, dict[str, Any]]]) -> None:
+        """Replace live attributes with a successfully prepared batch, preserving existing wrappers."""
         documents = []
         for original, document in prepared:
             if original is not None:

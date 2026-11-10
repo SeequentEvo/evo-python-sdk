@@ -32,7 +32,7 @@ class Config:
     """The value to provide in the `User-Agent` header."""
 
     num_pools: int
-    """Number of connection pools to cache before discarding the least recently used pool."""
+    """Maximum simultaneous HTTP connections across all hosts; 0 disables the limit."""
 
     verify_ssl: bool
     """Verify SSL certificates."""
@@ -63,7 +63,7 @@ class Context:
         self, num_pools: int, verify_ssl: bool, retry_handler: Retry, proxy: StrOrURL | None, close_grace_period_ms: int
     ) -> None:
         """
-        :param num_pools: Number of connection pools to cache before discarding the least recently used pool.
+        :param num_pools: Maximum simultaneous HTTP connections across all hosts; 0 disables the limit.
         :param verify_ssl: Verify SSL certificates.
         :param retry_handler: Retry handler.
         """

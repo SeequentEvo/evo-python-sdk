@@ -105,33 +105,50 @@ Attribute descriptions for ordinary attributes round-trip through `DataFrame.att
 Collection coordinate units come only from `DistanceCollection.unit` or `IntervalCollection.unit`; unit metadata on the
 distance or `from` column is ignored.
 
-Object creation and replacement upload independent collections, geometry, and attributes concurrently, preserving
-their input order. All typed operations and direct table uploads share a default limit of eight active serialization
-or upload operations per event loop, including across clients. Transient upload failures receive up to three
-attempts with exponential backoff, reusing cached Parquet data. Intermediate failures are logged at WARNING; exhausted retries
-re-raise the last original exception, with retry history available through its exception context. Concurrent uploads of
-identical data using the same connector and environment share one in-flight upload and its retry policy.
-Permanent failures or exhausted retries cancel and wait
-for sibling work before returning. Multi-column attribute and combined table/attribute mutations upload independent
-data concurrently and update their in-memory documents only after all uploads succeed. Separately awaited
-`collections.add()` calls remain sequential.
+### Upload concurrency
 
-To tune CPU and memory usage for table sizes and available resources, use the public
-`upload_concurrency` scope. It applies the same limit to nested typed-object operations and direct
-uploads. Serialization and each upload attempt acquire a slot separately; backoff sleeps release the slot so other
-tables can proceed.
+Typed objects upload independent tables and attributes concurrently, preserving input order and applying
+multi-column and combined table/attribute mutations only after every upload succeeds. Typed operations and direct
+`ObjectDataClient` uploads share a default concurrency of **4**, matching downloads. Use `upload_concurrency`
+to change the limit for a block, including its child tasks:
 
 ```python
 from evo.objects.utils import upload_concurrency
 
-with upload_concurrency(max_concurrent=4):
+with upload_concurrency(max_concurrent=8):
     dhc = await DownholeCollection.create(context, data)
 ```
 
-The default remains eight. The scope applies to existing and newly created data clients, without changing their
-behavior outside the scope. Settings are local to the current context and inherited by child asyncio tasks, which
-retain their scope even after the parent exits it. Each scope has a separate limit; nested scopes restore the previous
-setting on exit, including when an operation fails. Clients and scopes can be reused across event loops.
+The limit bounds concurrent Arrow conversion, category preparation, Parquet serialization, and upload attempts,
+not total memory usage or the size of caller-owned data. Preparation runs in worker threads, and temporary Arrow
+tables are released before network uploads. Nested scopes restore the previous setting on exit.
+
+Uploads retry transient HTTP statuses (408/429/500/502/503/504) and raw connection/timeouts up to three attempts
+with exponential backoff, reusing cached data. Exhaustion raises `RetryError` with the attempt history.
+Use the optional `retry=Retry(...)` argument on any `ObjectDataClient` table, DataFrame, or category upload method
+to customize this policy. Already-exhausted `TransportError` failures are not retried again. Storage has its own
+retry policy; exhausted storage retries are retried only when all their errors are transient, so storage request
+counts can exceed the table-attempt limit. Failed operations cancel and drain their own siblings, not independent uploads.
+
+### HTTP connections
+
+HTTP connections are configured separately: `AioTransport(num_pools=...)` sets the total connection limit
+(default **4**) across requests sharing that transport. `upload_concurrency` does not resize it. For example,
+pass a configured transport to your context using your existing authorizer, cache, and environment:
+
+```python
+from evo.aio import AioTransport
+from evo.common import StaticContext
+
+transport = AioTransport(user_agent="my-app", num_pools=8)
+context = StaticContext(
+    transport=transport, authorizer=authorizer, cache=cache,
+    hub_url=environment.hub_url, org_id=environment.org_id, workspace_id=environment.workspace_id,
+)
+```
+
+`ServiceManager` and `ServiceManagerWidget` also accept a transport in their constructors.
+The `ServiceManagerWidget.with_auth_code(...)` convenience factory currently uses the default connection limit.
 
 ## Contributing
 
