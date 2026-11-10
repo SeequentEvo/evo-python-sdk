@@ -1,23 +1,47 @@
+/*
+ * Copyright © 2026 Bentley Systems, Incorporated
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+function createDomElement(tag, properties = {}) {
+    const element = document.createElement(tag);
+    Object.assign(element, properties);
+    return element;
+}
+
+function addListeners(model, listeners) {
+    const entries = listeners.flatMap((listenerMap) => Object.entries(listenerMap));
+    for (const [event, handler] of entries) {
+        model.on(event, handler);
+    }
+    return () => {
+        for (const [event, handler] of entries) {
+            model.off(event, handler);
+        }
+    };
+}
+
 function render({ model, el }) {
-    const root = document.createElement("div");
-    root.className = "evo-row";
+    const root = createDomElement("div", { className: "evo-row" });
 
-    const label = document.createElement("span");
-    label.className = "evo-label";
+    const label = createDomElement("span", { className: "evo-label" });
 
-    const percent = document.createElement("span");
-    percent.className = "evo-percent";
+    const percent = createDomElement("span", { className: "evo-percent" });
 
-    const progress = document.createElement("div");
-    progress.className = "evo-progress";
-    progress.role = "progressbar";
+    const progress = createDomElement("div", { className: "evo-progress", role: "progressbar" });
 
-    const bar = document.createElement("div");
-    bar.className = "evo-progress-bar";
+    const bar = createDomElement("div", { className: "evo-progress-bar" });
     progress.appendChild(bar);
 
-    const message = document.createElement("span");
-    message.className = "evo-message";
+    const message = createDomElement("span", { className: "evo-message" });
 
     root.append(label, percent, progress, message);
     el.appendChild(root);
@@ -37,18 +61,20 @@ function render({ model, el }) {
         message.textContent = model.get("message");
     };
 
-    model.on("change:label", renderLabel);
-    model.on("change:value", renderValue);
-    model.on("change:message", renderMessage);
+    const removeListeners = addListeners(model, [
+        {
+            "change:label": renderLabel,
+            "change:value": renderValue,
+            "change:message": renderMessage,
+        },
+    ]);
 
     renderLabel();
     renderValue();
     renderMessage();
 
     return () => {
-        model.off("change:label", renderLabel);
-        model.off("change:value", renderValue);
-        model.off("change:message", renderMessage);
+        removeListeners();
     };
 }
 
