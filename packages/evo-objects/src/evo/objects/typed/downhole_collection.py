@@ -32,6 +32,7 @@ from evo.objects.typed.attributes import Attributes
 from evo.objects.typed.exceptions import ObjectValidationError
 from evo.objects.typed.spatial import BaseSpatialObject, BaseSpatialObjectData
 from evo.objects.typed.types import BoundingBox
+from evo.objects.utils._concurrency import gather_cancelling
 from evo.objects.utils.table_formats import (
     DOWNHOLE_COLLECTION_LOCATION_HOLES,
     FLOAT_ARRAY_1,
@@ -353,14 +354,13 @@ class LocationHoleIdCategory(HoleIdCategory):
             raise ObjectValidationError("properties hole_id values must be unique")
         keys = _property_hole_indices(data).astype("int32")
         data_client = _attributes.get_data_client(context)
-        return {
-            "values": await data_client.upload_dataframe(
-                pd.DataFrame({"hole_id": keys}), table_format=INTEGER_ARRAY_1_INT32
-            ),
-            "table": await data_client.upload_dataframe(
+        values, table = await gather_cancelling(
+            data_client.upload_dataframe(pd.DataFrame({"hole_id": keys}), table_format=INTEGER_ARRAY_1_INT32),
+            data_client.upload_dataframe(
                 pd.DataFrame({"key": keys, "value": hole_ids}), table_format=LOOKUP_TABLE_INT32
             ),
-        }
+        )
+        return {"values": values, "table": table}
 
 
 class DownholeLocation(SchemaModel):
@@ -477,8 +477,8 @@ class DownholeCollectionTables(_DownholeCollectionChild, SchemaList[DownholeDist
     async def _data_to_schema(cls, data: Any, context: IContext) -> list[Any]:
         if data is None:
             return []
-        result = []
-        for collection in data:
+
+        async def convert(collection: DownholeCollectionEntry) -> dict[str, Any]:
             model = DownholeIntervalTable if isinstance(collection, IntervalCollection) else DownholeDistanceTable
             schema = await model._data_to_schema(collection, context)
             if collection.unit is not None:
@@ -486,8 +486,10 @@ class DownholeCollectionTables(_DownholeCollectionChild, SchemaList[DownholeDist
                     schema["from_to"]["unit"] = collection.unit
                 else:
                     schema["distance"]["unit"] = collection.unit
-            result.append(schema)
-        return result
+            return schema
+
+        # Collections are independent, so upload them concurrently while preserving input order.
+        return await gather_cancelling(*(convert(collection) for collection in data))
 
     def _indices_for_name(self, name: str) -> list[int]:
         return [index for index, document in enumerate(self._document) if document.get("name") == name]

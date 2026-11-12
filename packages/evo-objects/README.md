@@ -105,6 +105,46 @@ Attribute descriptions for ordinary attributes round-trip through `DataFrame.att
 Collection coordinate units come only from `DistanceCollection.unit` or `IntervalCollection.unit`; unit metadata on the
 distance or `from` column is ignored.
 
+### Upload concurrency
+
+Typed objects upload independent tables and attributes concurrently, preserving input order and applying mutations only
+after all required uploads succeed. Configure the upload limit for a block, including its child tasks:
+
+```python
+from evo.objects.utils import upload_concurrency
+
+with upload_concurrency(max_concurrent=8):
+    dhc = await DownholeCollection.create(context, data)
+```
+
+The default limit is **4** and is shared by uploads on the same event loop, including direct `ObjectDataClient` calls.
+Unlike uploads, `download_tables(max_concurrency=...)` applies a separate limit to each call. The upload limit covers
+preparation and transfers; a storage retry may hold a slot. Nested scopes restore the previous setting.
+HTTP connection limits are configured separately with `AioTransport(num_pools=...)`.
+
+Uploads retry transient failures up to three times by default; pass `retry=Retry(...)` to an `ObjectDataClient` upload
+method to customize that policy. On exhaustion, the last failure is raised and the retry history is chained as its
+cause. Storage transfers make one attempt per outer retry, preventing retry layers from multiplying requests.
+For custom interception, override `upload_dataframe` or `upload_category_dataframe` for DataFrame inputs; these methods
+do not dispatch through the table upload methods.
+
+To configure a separate HTTP connection limit, pass a configured transport to your context using your existing
+authorizer, cache, and environment:
+
+```python
+from evo.aio import AioTransport
+from evo.common import StaticContext
+
+transport = AioTransport(user_agent="my-app", num_pools=8)
+context = StaticContext(
+    transport=transport, authorizer=authorizer, cache=cache,
+    hub_url=environment.hub_url, org_id=environment.org_id, workspace_id=environment.workspace_id,
+)
+```
+
+`ServiceManager` and `ServiceManagerWidget` also accept a transport in their constructors.
+The `ServiceManagerWidget.with_auth_code(...)` convenience factory currently uses the default connection limit.
+
 ## Contributing
 
 For instructions on contributing to the development of this library, please refer to the [evo-python-sdk documentation](https://github.com/seequentevo/evo-python-sdk).

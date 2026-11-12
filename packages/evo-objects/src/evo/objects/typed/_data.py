@@ -17,8 +17,9 @@ import pandas as pd
 
 from evo.common import IFeedback
 from evo.common.interfaces import IContext
-from evo.common.utils import NoFeedback
+from evo.common.utils import NoFeedback, split_feedback
 from evo.objects.typed.attributes import Attributes
+from evo.objects.utils._concurrency import gather_cancelling
 from evo.objects.utils.table_formats import KnownTableFormat
 
 from ._model import SchemaBuilder, SchemaLocation, SchemaModel
@@ -49,9 +50,15 @@ class DataTable(SchemaModel):
         :param df: DataFrame containing the new values for this table.
         :param fb: Optional feedback object to report upload progress.
         """
-        self._document.update(await self._data_to_schema(df, self._context, fb=fb))
+        self._apply_uploaded_table(df, await self._upload(df, fb))
 
-        # Mark the context as modified so loading data is not allowed
+    async def _upload(self, df: pd.DataFrame, fb: IFeedback = NoFeedback) -> dict[str, Any]:
+        """Upload replacement values without changing the table or its derived metadata."""
+        return await self._data_to_schema(df, self._obj, fb=fb)
+
+    def _apply_uploaded_table(self, df: pd.DataFrame, document: dict[str, Any]) -> None:
+        """Commit uploaded values and derived metadata; override to extend table replacement behavior."""
+        self._document.update(document)
         self._context.mark_modified(self._data)
 
     @classmethod
@@ -118,11 +125,17 @@ class DataTableAndAttributes(SchemaModel):
         """
         table_df, attr_df = self._split_dataframe(df, self._table.data_columns)
 
-        await self._table.from_dataframe(table_df, fb=fb)
-        if attr_df is not None:
-            await self.attributes.set_attributes(attr_df, fb=fb)
-        else:
-            self.attributes.clear()
+        if attr_df is None:
+            attr_df = pd.DataFrame(index=table_df.index)
+        table_fb, attr_fb = split_feedback(fb, [1.0, float(len(attr_df.columns))])
+        descriptions, attribute_types = await self.attributes._validate(attr_df)
+        table_upload, attribute_upload = (
+            self._table._upload(table_df, table_fb),
+            self.attributes._upload(attr_df, descriptions, attribute_types, attr_fb),
+        )
+        table_document, attribute_documents = await gather_cancelling(table_upload, attribute_upload)
+        self._table._apply_uploaded_table(table_df, table_document)
+        self.attributes._apply(attribute_documents)
 
     def validate(self) -> None:
         """Validate that all attributes have the correct length."""
@@ -152,8 +165,7 @@ class DataTableAndAttributes(SchemaModel):
         table_df, attr_df = cls._split_dataframe(data, table_type.data_columns)
 
         builder = SchemaBuilder(cls, context)
-        await builder.set_sub_model_value("_table", table_df)
-        await builder.set_sub_model_value("attributes", attr_df)
+        await builder.set_sub_model_values([("_table", table_df), ("attributes", attr_df)])
 
         # As we specially handle the _table and attributes sub-models above, we skip them in the default data processing of build_from_data.
         return await builder.build_from_data(data, skip_sub_models={"_table", "attributes"})

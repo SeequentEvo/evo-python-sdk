@@ -95,10 +95,11 @@ class _RetryIterator:
         self.__errors = []
 
     def add_error(self, error: Exception) -> None:
-        self.__logger.error(error)
+        exhausted = self.__current_handler._number >= self.__max_attempts
+        self.__logger.log(logging.ERROR if exhausted else logging.WARNING, error)
         self.__logger.debug(f"{self.__current_handler} failed")
         self.__errors.append(error)
-        if self.__current_handler._number >= self.__max_attempts:
+        if exhausted:
             raise RetryError("Retry failed", self.__errors)
 
     async def __anext__(self) -> RetryHandler:
@@ -193,6 +194,7 @@ class Retry:
     """AsyncIterable retry implementation for handling exceptions in retryable logic.
 
     A single Retry object can be used to handle multiple requests. The only state in this class is the configuration.
+    Failed attempts are logged at WARNING while retries remain, and at ERROR when attempts are exhausted.
 
     Usage::
         retry = Retry(logger=logging.getLogger(__name__), max_attempts=3, backoff_method=BackoffLinear(1))
