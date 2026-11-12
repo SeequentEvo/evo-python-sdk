@@ -1,5 +1,18 @@
 # Changelog
 
+## evo-sdk-common@v0.5.32
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### Other Changes
+* Update CHANGELOG.md by @change-log-updater[bot] in https://github.com/SeequentEvo/evo-python-sdk/pull/400
+* hub-url-update by @shivangj-10 in https://github.com/SeequentEvo/evo-python-sdk/pull/402
+* Anywidget transition by @geostats-BSY in https://github.com/SeequentEvo/evo-python-sdk/pull/401
+* Sync up pyproject with release version by @AdamFreemanSeequent in https://github.com/SeequentEvo/evo-python-sdk/pull/403
+
+
+**Full Changelog**: https://github.com/SeequentEvo/evo-python-sdk/compare/evo-sdk-common@v0.5.31...evo-sdk-common@v0.5.32
+
 ## evo-objects@v0.6.6
 <!-- Release notes generated using configuration in .github/release.yml at main -->
 
