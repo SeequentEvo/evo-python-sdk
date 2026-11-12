@@ -10,15 +10,19 @@
 #  limitations under the License.
 
 import hashlib
+import subprocess
+import sys
 import unittest
 import uuid
 from collections.abc import Iterator
 from io import BytesIO
 from pathlib import Path
+from textwrap import dedent
 from typing import BinaryIO
 from unittest import mock
 from uuid import UUID
 
+import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 from parameterized import parameterized, parameterized_class
@@ -31,6 +35,7 @@ from evo.objects.parquet import ParquetLoader
 from evo.objects.utils import (
     ArrowTableFormat,
     BaseTableFormat,
+    ColumnFormat,
     KnownTableFormat,
     all_known_formats,
     get_known_format,
@@ -94,6 +99,264 @@ def _test_name_from_known_format(cls: type, num: int, params_dict: dict) -> str:
     """Create parameterized test name from DataFormat"""
     data_format = params_dict["data_format"]
     return parameterized.to_safe_name(f"{cls.__name__}_{num}_{data_format.name}")
+
+
+class TestOptionalPandas(unittest.TestCase):
+    @parameterized.expand([("with_pandas", False), ("without_pandas", True)])
+    def test_cold_start(self, _name: str, missing_pandas: bool) -> None:
+        script = dedent(
+            """
+            import importlib.abc
+            import sys
+            from pathlib import Path
+            from tempfile import TemporaryDirectory
+
+            missing_pandas = sys.argv[1] == "True"
+            if missing_pandas:
+                assert not any(name == "pandas" or name.startswith("pandas.") for name in sys.modules)
+
+                class NoPandasImports(importlib.abc.MetaPathFinder):
+                    def find_spec(self, fullname, path=None, target=None):
+                        if fullname == "pandas" or fullname.startswith("pandas."):
+                            raise ModuleNotFoundError("No module named 'pandas'", name="pandas")
+
+                sys.meta_path.insert(0, NoPandasImports())
+
+            import numpy as np
+            import pyarrow as pa
+
+            from evo.objects import DownloadedObject, ObjectAPIClient, utils
+            from evo.objects.parquet import ParquetLoader
+            from evo.objects.utils import ArrowTableFormat, ObjectDataClient, get_known_format
+
+            assert hasattr(ObjectAPIClient, "get_data_client")
+            assert all(hasattr(utils, name) for name in utils.__all__)
+            for name in ("expand_hole_index", "hole_chunks_from_ids"):
+                assert hasattr(utils, name) == (not missing_pandas), name
+                assert (name in utils.__all__) == (not missing_pandas), name
+
+            arrow_methods = {
+                DownloadedObject: ("download_table", "download_category_table", "download_array"),
+                ObjectDataClient: ("save_table", "upload_table", "upload_category_table", "download_table"),
+                ParquetLoader: ("load_as_table", "load_as_array"),
+            }
+            for owner, methods in arrow_methods.items():
+                for name in methods:
+                    assert hasattr(owner, name), f"{owner.__name__}.{name}"
+
+            dataframe_methods = {
+                DownloadedObject: (
+                    "download_dataframe", "download_category_dataframe", "download_attribute_dataframe"
+                ),
+                ObjectDataClient: (
+                    "save_dataframe", "upload_dataframe", "upload_category_dataframe", "download_dataframe"
+                ),
+                ParquetLoader: ("load_as_dataframe",),
+            }
+            for owner, methods in dataframe_methods.items():
+                for name in methods:
+                    assert hasattr(owner, name) == (not missing_pandas), f"{owner.__name__}.{name}"
+
+            table = pa.table({"value": pa.array([1, 2, 3], type=pa.int64())})
+            table_format = ArrowTableFormat.from_schema(table.schema)
+            assert table_format.pa_schema.equals(table.schema)
+            with TemporaryDirectory() as directory:
+                source = Path(directory)
+                table_info = get_known_format(table).save_table(table, source)
+                with ParquetLoader(pa.OSFile(str(source / table_info["data"]), "r")) as loader:
+                    loader.validate_with_table_info(table_info)
+                    assert loader.load_as_table().equals(table)
+                    np.testing.assert_array_equal(
+                        loader.load_as_array(), np.array([1, 2, 3], dtype=np.int64), strict=True
+                    )
+
+            if missing_pandas:
+                try:
+                    table_format.pandas_types_mapper()
+                except ModuleNotFoundError as error:
+                    assert error.name == "pandas"
+                else:
+                    raise AssertionError("Pandas dtype mapping must report the missing dependency")
+                assert not any(name == "pandas" or name.startswith("pandas.") for name in sys.modules)
+            """
+        )
+        # Cached pandas-dependent modules can hide import failures when only selected modules are reloaded.
+        result = subprocess.run(
+            [sys.executable, "-c", script, str(missing_pandas)],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+
+
+class TestColumnFormat(unittest.TestCase):
+    @parameterized.expand(
+        [
+            ("float64", pa.float64()),
+            ("uint8", pa.uint8()),
+            ("uint32", pa.uint32()),
+            ("uint64", pa.uint64()),
+            ("int32", pa.int32()),
+            ("int64", pa.int64()),
+            ("bool", pa.bool_()),
+            ("string", pa.string()),
+            ("timestamp", pa.timestamp("us", tz="UTC")),
+        ]
+    )
+    def test_column_types(self, format_id: str, data_type: pa.DataType) -> None:
+        for format_spec in (format_id, data_type):
+            with self.subTest(format_spec=format_spec):
+                column = ColumnFormat(format_spec)
+                self.assertEqual(format_id, column.id)
+                self.assertEqual(data_type, column.type)
+
+    def test_unsupported_column_type(self) -> None:
+        for format_spec in ("float32", pa.float32()):
+            with self.subTest(format_spec=format_spec), self.assertRaises(TypeError):
+                ColumnFormat(format_spec)
+
+    @parameterized.expand(
+        [
+            ("float64", None),
+            ("uint8", "UInt8"),
+            ("uint32", "UInt32"),
+            ("uint64", "UInt64"),
+            ("int32", "Int32"),
+            ("int64", "Int64"),
+            ("bool", "boolean"),
+            ("string", None),
+            ("timestamp", "datetime64[us, UTC]"),
+        ]
+    )
+    def test_pandas_dtype(self, format_id: str, expected_dtype: str | None) -> None:
+        column = ColumnFormat(format_id)
+        if expected_dtype is None:
+            self.assertIsNone(column.pandas_dtype)
+            return
+
+        self.assertEqual(pd.api.types.pandas_dtype(expected_dtype), column.pandas_dtype)
+        # The pandas dtype must convert back to the same Arrow type, so import and export agree.
+        dataframe = pd.DataFrame({"value": pd.array([None], dtype=column.pandas_dtype)})
+        self.assertEqual(column.type, ArrowTableFormat.from_pandas(dataframe).columns[0].type)
+
+
+class TestBaseTableFormat(unittest.TestCase):
+    def test_columns(self) -> None:
+        table_format = BaseTableFormat("mixed", [pa.int32(), "string", pa.bool_()])
+
+        self.assertIsInstance(table_format.columns, tuple)
+        self.assertTrue(all(isinstance(column, ColumnFormat) for column in table_format.columns))
+        self.assertEqual(["int32", "string", "bool"], [column.id for column in table_format.columns])
+        self.assertEqual([pa.int32(), pa.string(), pa.bool_()], [column.type for column in table_format.columns])
+
+    def test_multidimensional_columns(self) -> None:
+        table_format = BaseTableFormat("multidimensional", [pa.float64(), ...])
+
+        self.assertEqual(1, len(table_format.columns))
+        self.assertEqual(pa.float64(), table_format.columns[0].type)
+
+
+class TestArrowTableFormat(unittest.TestCase):
+    def test_from_schema(self) -> None:
+        schema = pa.schema(
+            [
+                pa.field("key", pa.int64(), nullable=False, metadata={b"field": b"kept"}),
+                pa.field("label", pa.string()),
+            ],
+            metadata={b"other": b"kept"},
+        )
+
+        table_format = ArrowTableFormat.from_schema(schema)
+
+        self.assertEqual(
+            pa.schema([pa.field("key", pa.int64(), nullable=False), pa.field("label", pa.string())]),
+            table_format.pa_schema,
+        )
+        self.assertIsNone(table_format.pa_schema.metadata)
+        self.assertIsNone(table_format.pa_schema.field("key").metadata)
+        self.assertEqual("ArrowTableFormat<key/label>", table_format.name)
+        self.assertEqual("int64/string", table_format.data_type)
+        self.assertEqual(2, table_format.width)
+        self.assertEqual(schema.types, [column.type for column in table_format.columns])
+
+    def test_pandas_types_mapper(self) -> None:
+        schema = pa.schema([("count", pa.int64()), ("flag", pa.bool_()), ("value", pa.float64())])
+
+        types_mapper = ArrowTableFormat.from_schema(schema).pandas_types_mapper()
+
+        self.assertEqual(pd.Int64Dtype(), types_mapper(pa.int64()))
+        self.assertEqual(pd.BooleanDtype(), types_mapper(pa.bool_()))
+        self.assertIsNone(types_mapper(pa.float64()))
+        self.assertIsNone(types_mapper(pa.int32()))
+
+    @parameterized.expand(
+        [
+            ("Int32", [1, None], pa.int32()),
+            ("Int64", [2**63 - 1, None], pa.int64()),
+            ("UInt8", [255, None], pa.uint8()),
+            ("UInt32", [2**32 - 1, None], pa.uint32()),
+            ("UInt64", [2**64 - 1, None], pa.uint64()),
+            ("boolean", [True, None], pa.bool_()),
+            ("float64", [1.5, None], pa.float64()),
+            ("string[python]", ["A", None], pa.string()),
+            ("string[pyarrow]", ["A", None], pa.string()),
+            ("datetime64[us, UTC]", [pd.Timestamp("2025-01-01", tz="UTC"), None], pa.timestamp("us", tz="UTC")),
+        ]
+    )
+    def test_from_pandas(self, dtype: str, values: list, expected_type: pa.DataType) -> None:
+        dataframe = pd.DataFrame({"value": pd.array(values, dtype=dtype)})
+
+        table_format = ArrowTableFormat.from_pandas(dataframe)
+        table = pa.Table.from_pandas(dataframe, schema=table_format.pa_schema, preserve_index=False)
+
+        self.assertEqual(pa.schema([("value", expected_type)]), table_format.pa_schema)
+        self.assertIsNone(table_format.pa_schema.metadata)
+        self.assertEqual(expected_type, table_format.columns[0].type)
+        self.assertEqual(expected_type, table.column("value").type)
+        self.assertEqual(1, table.column("value").null_count)
+        self.assertEqual(values[0], table.column("value")[0].as_py())
+
+    def test_from_pandas_excludes_index(self) -> None:
+        indexes = [
+            pd.RangeIndex(5, 7),
+            pd.Index([5, 3], name="row"),
+            pd.MultiIndex.from_tuples([("A", 5), ("B", 3)], names=["hole", "row"]),
+        ]
+        for index in indexes:
+            with self.subTest(index=index):
+                dataframe = pd.DataFrame({"value": [1.0, 2.0]}, index=index)
+
+                table_format = ArrowTableFormat.from_pandas(dataframe)
+                table = pa.Table.from_pandas(dataframe, schema=table_format.pa_schema, preserve_index=False)
+
+                self.assertEqual(["value"], table_format.pa_schema.names)
+                self.assertIsNone(table_format.pa_schema.metadata)
+                self.assertEqual({"value": [1.0, 2.0]}, table.to_pydict())
+
+    def test_from_pandas_rejects_unsupported_column_type(self) -> None:
+        dataframe = pd.DataFrame({"value": pd.array([1.0, 2.0], dtype="float32")})
+
+        with self.assertRaisesRegex(TypeError, "Unsupported column type"):
+            ArrowTableFormat.from_pandas(dataframe)
+
+    def test_factory_preserves_subclass(self) -> None:
+        class CustomTableFormat(ArrowTableFormat):
+            pass
+
+        table_format = CustomTableFormat.from_pandas(pd.DataFrame({"value": [1.0]}))
+
+        self.assertIsInstance(table_format, CustomTableFormat)
+        self.assertEqual("CustomTableFormat<value>", table_format.name)
+
+    def test_direct_construction_remains_supported(self) -> None:
+        table_format = ArrowTableFormat("custom", [pa.float64()])
+
+        self.assertEqual("custom", table_format.name)
+        self.assertEqual("float64", table_format.data_type)
+        self.assertEqual(1, table_format.width)
+        with self.assertRaisesRegex(ValueError, "from_schema.*from_pandas"):
+            _ = table_format.pa_schema
 
 
 @parameterized_class(_all_known_formats_for_testing(), class_name_func=_test_name_from_known_format)

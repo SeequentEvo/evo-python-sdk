@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import hashlib
 import os
+from collections.abc import Callable
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from types import EllipsisType
@@ -26,20 +27,50 @@ from evo.common.exceptions import StorageFileNotFoundError
 
 from ..exceptions import SchemaValidationError, TableFormatError
 
+try:
+    import pandas as pd
+except ImportError:
+    _PD_AVAILABLE = False
+else:
+    _PD_AVAILABLE = True
+
 logger = evo.logging.getLogger("object.tables")
 
 __all__ = [
     "ArrowTableFormat",
     "BaseTableFormat",
+    "ColumnFormat",
     "KnownTableFormat",
+    "table_to_dataframe",
 ]
 
 # Block size to limit memory use while calculating the sha256 digest of a file.
 _DIGEST_BLOCK_SIZE = 4 * 1024 * 1024
 
+# Pandas dtype for every supported Geoscience Object column type. Integer and boolean columns use pandas nullable
+# dtypes, so nulls do not change the dtype. `None` keeps the pyarrow default conversion: pyarrow `types_mapper` only
+# accepts pandas extension dtypes, so numpy-backed `float64` and the pandas default string dtype cannot be named here.
+_PANDAS_DTYPES: dict[str, str | None] = {
+    "float64": None,
+    "uint8": "UInt8",
+    "uint32": "UInt32",
+    "uint64": "UInt64",
+    "int32": "Int32",
+    "int64": "Int64",
+    "bool": "boolean",
+    "string": None,
+    "timestamp": "datetime64[us, UTC]",
+}
 
-class _ColumnFormat:
-    def __init__(self, format_spec: pa.DataType | str):
+
+class ColumnFormat:
+    """A Geoscience Object column type and its corresponding Arrow data type."""
+
+    def __init__(self, format_spec: pa.DataType | str) -> None:
+        """
+        :param format_spec: A Geoscience Object column type identifier or a supported Arrow data type.
+        :raises TypeError: If the column type is not supported.
+        """
         if isinstance(format_spec, str):
             self._type = self._get_data_type(format_spec)
             self._format_id = format_spec
@@ -97,11 +128,28 @@ class _ColumnFormat:
 
     @property
     def id(self) -> str:
+        """The Geoscience Object column type identifier."""
         return self._format_id
 
     @property
     def type(self) -> pa.DataType:
+        """The corresponding Arrow data type."""
         return self._type
+
+    @property
+    def pandas_dtype(self) -> pd.api.extensions.ExtensionDtype | None:
+        """The pandas dtype used when loading this column into a dataframe.
+
+        Integer and boolean columns use pandas nullable dtypes, so nulls do not change the dtype. Returns `None` for
+        `float64` and `string` columns, which use the pyarrow default conversion.
+
+        :raises ImportError: If pandas is not installed.
+        """
+        if not _PD_AVAILABLE:
+            raise ModuleNotFoundError("No module named 'pandas'", name="pandas")
+        if (dtype_name := _PANDAS_DTYPES[self._format_id]) is None:
+            return None
+        return pd.api.types.pandas_dtype(dtype_name)
 
 
 class BaseTableFormat:
@@ -114,7 +162,7 @@ class BaseTableFormat:
             ("...") indicates a multidimensional format.
         """
         self._name = name
-        self._columns: list[_ColumnFormat] = []
+        self._columns: list[ColumnFormat] = []
         self._multi_dimensional = False
         for column_type in columns:
             if column_type is Ellipsis:
@@ -122,7 +170,7 @@ class BaseTableFormat:
             elif self._multi_dimensional:
                 raise AssertionError("Found new type specification after Ellipsis")
             else:
-                self._columns.append(_ColumnFormat(format_spec=column_type))
+                self._columns.append(ColumnFormat(format_spec=column_type))
 
         if self._multi_dimensional and len(self._columns) != 1:
             raise AssertionError("Multidimensional formats must only have one column type")
@@ -148,6 +196,11 @@ class BaseTableFormat:
         return len(self._columns)
 
     @property
+    def columns(self) -> tuple[ColumnFormat, ...]:
+        """Column formats in order. A multidimensional format has one entry for its repeated column type."""
+        return tuple(self._columns)
+
+    @property
     def data_type(self) -> str:
         """The column data type(s) in this table format"""
         return self._data_type
@@ -156,15 +209,63 @@ class BaseTableFormat:
 class ArrowTableFormat(BaseTableFormat):
     """Specialised table format type that can be generated from a pyarrow table"""
 
+    _pa_schema: pa.Schema | None = None
+
+    @property
+    def pa_schema(self) -> pa.Schema:
+        """The Arrow schema supplied to `from_schema` or inferred by `from_pandas`, without any metadata.
+
+        :raises ValueError: If the format was constructed directly without a schema.
+        """
+        if self._pa_schema is None:
+            raise ValueError("Create the format with from_schema() or from_pandas() to access its Arrow schema")
+        return self._pa_schema
+
     @classmethod
     def from_schema(cls, pa_schema: pa.Schema) -> ArrowTableFormat:
         """Generate an ArrowTableFormat instance that represents the structure of the provided table schema.
 
-        :param pa_schema: Table schema to generate a format representation for.
+        :param pa_schema: Table schema to generate a format representation for. Schema and field metadata are not kept.
 
         :return: A table format that can be used to compare against known formats.
         """
-        return ArrowTableFormat(name=f"{cls.__name__}<{'/'.join(pa_schema.names)}>", columns=pa_schema.types)
+        table_format = cls(name=f"{cls.__name__}<{'/'.join(pa_schema.names)}>", columns=pa_schema.types)
+        table_format._pa_schema = pa.schema([field.remove_metadata() for field in pa_schema])
+        return table_format
+
+    @classmethod
+    def from_pandas(cls, dataframe: pd.DataFrame) -> ArrowTableFormat:
+        """Infer a table format from a pandas dataframe using the supported Geoscience Object column types.
+
+        Large strings are normalized to strings. The inferred schema excludes the dataframe index and pandas metadata.
+
+        :param dataframe: The dataframe to infer the format from.
+        :return: A format whose `pa_schema` can be passed to `pyarrow.Table.from_pandas`.
+        :raises TypeError: If a column type is not supported. Use `ObjectDataClient.upload_category_dataframe`
+            for categorical columns, which are split into value and lookup tables separately.
+        """
+        schema = pa.Schema.from_pandas(dataframe, preserve_index=False)
+        fields = [field.with_type(pa.string()) if pa.types.is_large_string(field.type) else field for field in schema]
+        return cls.from_schema(pa.schema(fields))
+
+    def pandas_types_mapper(self) -> Callable[[pa.DataType], pd.api.extensions.ExtensionDtype | None]:
+        """Get a pyarrow `types_mapper` that converts this format's columns to their `ColumnFormat.pandas_dtype`.
+
+        Pass the result to `table.replace_schema_metadata().to_pandas(types_mapper=...)` to ignore legacy metadata.
+
+        :raises ImportError: If pandas is not installed.
+        """
+        return {column.type: column.pandas_dtype for column in self._columns}.get
+
+
+def table_to_dataframe(table: pa.Table) -> pd.DataFrame:
+    """Convert a table to a pandas dataframe using the Geoscience Object column types, ignoring pandas metadata.
+
+    :param table: The table to convert. It is expected to have been validated against a known table format.
+    """
+    types_mapper = ArrowTableFormat.from_schema(table.schema).pandas_types_mapper()
+    # PyArrow parses pandas metadata even with ignore_metadata=True.
+    return table.replace_schema_metadata().to_pandas(types_mapper=types_mapper)
 
 
 class KnownTableFormat(BaseTableFormat):
