@@ -16,6 +16,7 @@ from pathlib import Path
 from uuid import UUID
 
 from evo.common import APIConnector, Environment, ICache
+from evo.common._types import resolve_path
 from evo.common.io import Download, Upload
 
 from .data import FileMetadata
@@ -176,7 +177,7 @@ class FileAPIDownload(Download[FileMetadata], _FileIOMixin):
             / str(self.metadata.id)
             / self.metadata.version_id
         )
-        download_dir.mkdir(parents=True, exist_ok=True)
+        resolve_path(download_dir).mkdir(parents=True, exist_ok=True)
         return download_dir / _make_name_safe(self.metadata.name)
 
     async def get_download_url(self) -> str:
