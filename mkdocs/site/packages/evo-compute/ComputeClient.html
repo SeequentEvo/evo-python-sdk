@@ -137,6 +137,41 @@ to submit it and wait for its results. <code>arun</code> does the same for names
                   <code><span title="evo.compute.discovery.DEFAULT_CACHE_TTL_SECONDS">DEFAULT_CACHE_TTL_SECONDS</span></code>
             </td>
           </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>validate</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Validate parameters against the task schema before submitting
+(required-field presence). Defaults to <code>True</code>. This is the master switch:
+<code>False</code> turns off deep validation too, whatever <code>deep_validation</code> says.</p>
+              </div>
+            </td>
+            <td>
+                  <code>True</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>deep_validation</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Additionally run full JSON Schema Draft 2020-12 validation.
+Defaults to <code>False</code>. Only consulted when <code>validate</code> is <code>True</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
       </tbody>
     </table>
 
@@ -173,7 +208,14 @@ to submit it and wait for its results. <code>arun</code> does the same for names
   </span>
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">arun</span><span class="p">(</span><span class="n">topic</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">arun</span><span class="p">(</span>
+    <span class="n">topic</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">task</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">validate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">deep_validation</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -242,6 +284,40 @@ strings. Names may be spelled as the platform publishes them or with underscores
                 <em>required</em>
             </td>
           </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>validate</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Override the client's shallow-validation setting for this call.
+The master switch: <code>False</code> skips deep validation too.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>deep_validation</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Override the client's deep-validation setting for this call.
+Only consulted when validation is enabled.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
       </tbody>
     </table>
 
@@ -290,7 +366,7 @@ strings. Names may be spelled as the platform publishes them or with underscores
           </tr>
           <tr class="doc-section-item">
             <td>
-                  <code>TypeError</code>
+                  <code>ParameterValidationError</code>
             </td>
             <td>
               <div class="doc-md-description">
