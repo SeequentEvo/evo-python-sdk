@@ -25,6 +25,22 @@ from data import load_test_data
 from evo.compute import ComputeClient, ParameterValidationError
 
 
+def _object_url(suffix: str) -> str:
+    """A structurally valid geoscience object URL, which reference resolution insists on."""
+    return (
+        "https://unittest.localhost/geoscience-object"
+        "/orgs/00000000-0000-0000-0000-000000000001"
+        "/workspaces/00000000-0000-0000-0000-000000000002"
+        f"/objects/00000000-0000-0000-0000-0000000000{suffix}"
+    )
+
+
+SOURCE_URL = _object_url("10")
+TARGET_URL = _object_url("20")
+VARIOGRAM_URL = _object_url("30")
+FILE_URL = "https://unittest.localhost/file/v2/orgs/00000000-0000-0000-0000-000000000001/files/mesh"
+
+
 def _task(topic: str, name: str, properties: dict[str, Any], required: list[str] | None = None) -> dict[str, Any]:
     """A catalogue entry for a task the shared fixture does not describe."""
     return {
@@ -48,6 +64,9 @@ class FakeContext:
 
     def get_org_id(self):
         return self._org_id
+
+    def get_cache(self):
+        return None
 
 
 class TestComputeClient(TestWithConnector):
@@ -87,20 +106,20 @@ class TestComputeClient(TestWithConnector):
     async def test_run_discovers_then_submits(self) -> None:
         """run() fetches the catalogue, then submits the resolved task."""
         with self.catalogue_response(), self.mock_job_client() as submit:
-            result = await self.client.geostatistics.declustering.run(source="obj-1")
+            result = await self.client.geostatistics.declustering.run(source=SOURCE_URL)
 
         submit.assert_awaited_once()
         kwargs = submit.await_args.kwargs
         self.assertEqual("geostatistics", kwargs["topic"])
         self.assertEqual("declustering", kwargs["task"])
-        self.assertEqual({"source": "obj-1"}, kwargs["parameters"])
+        self.assertEqual({"source": SOURCE_URL}, kwargs["parameters"])
         self.assertFalse(kwargs["preview"])
         self.assertEqual({"ok": True}, result)
 
     async def test_hyphenated_task_names_are_reachable_with_underscores(self) -> None:
         """``normal_score`` resolves to the platform's ``normal-score``."""
         with self.catalogue_response(), self.mock_job_client() as submit:
-            await self.client.geostatistics.normal_score.run(distribution="dist-1")
+            await self.client.geostatistics.normal_score.run(distribution=SOURCE_URL)
         self.assertEqual("normal-score", submit.await_args.kwargs["task"])
 
     async def test_hyphenated_topics_and_parameters_are_reachable_with_underscores(self) -> None:
@@ -165,22 +184,22 @@ class TestComputeClient(TestWithConnector):
 
     async def test_arun_takes_the_names_the_platform_publishes(self) -> None:
         with self.catalogue_response(), self.mock_job_client() as submit:
-            await self.client.arun("geostatistics", "normal-score", {"distribution": "dist-1"})
+            await self.client.arun("geostatistics", "normal-score", {"distribution": SOURCE_URL})
         self.assertEqual("normal-score", submit.await_args.kwargs["task"])
-        self.assertEqual({"distribution": "dist-1"}, submit.await_args.kwargs["parameters"])
+        self.assertEqual({"distribution": SOURCE_URL}, submit.await_args.kwargs["parameters"])
 
     async def test_catalogue_is_cached_across_runs(self) -> None:
         """The catalogue is fetched once and reused for later runs (any task/topic)."""
         with self.catalogue_response(), self.mock_job_client():
-            await self.client.geostatistics.declustering.run(source="obj-1")
-            await self.client.geostatistics.kriging.run(source="s", target="t", variogram="v")
+            await self.client.geostatistics.declustering.run(source=SOURCE_URL)
+            await self.client.geostatistics.kriging.run(source=SOURCE_URL, target=TARGET_URL, variogram=VARIOGRAM_URL)
         self.assertEqual(1, self.transport.request.call_count)
 
     async def test_catalogue_is_shared_across_topics(self) -> None:
         """One catalogue fetch serves every topic, not just the first one touched."""
         with self.catalogue_response(), self.mock_job_client() as submit:
-            await self.client.geostatistics.declustering.run(source="obj-1")
-            await self.client.converter.obj_import.run(file="mesh.obj")
+            await self.client.geostatistics.declustering.run(source=SOURCE_URL)
+            await self.client.converter.obj_import.run(file=FILE_URL)
 
         self.assertEqual(1, self.transport.request.call_count)
         self.assertEqual("converter", submit.await_args.kwargs["topic"])
@@ -194,7 +213,7 @@ class TestComputeClient(TestWithConnector):
                 self.client._discovery, "list_tasks", wraps=self.client._discovery.list_tasks
             ) as list_tasks,
         ):
-            await self.client.geostatistics.normal_score.run(distribution="dist-1")
+            await self.client.geostatistics.normal_score.run(distribution=SOURCE_URL)
         list_tasks.assert_awaited_once()
 
     # -- parameter forwarding ---------------------------------------------- #
@@ -202,7 +221,7 @@ class TestComputeClient(TestWithConnector):
     async def test_schema_defaults_are_not_forwarded(self) -> None:
         """Unset optionals are omitted so the platform applies its own defaults."""
         with self.catalogue_response(), self.mock_job_client() as submit:
-            await self.client.geostatistics.declustering.run(source="obj-1")
+            await self.client.geostatistics.declustering.run(source=SOURCE_URL)
 
         parameters = submit.await_args.kwargs["parameters"]
         self.assertNotIn("method", parameters)  # schema default "cell" must not be sent
@@ -211,28 +230,30 @@ class TestComputeClient(TestWithConnector):
     async def test_explicit_falsy_values_are_forwarded(self) -> None:
         """A supplied ``0``/``False`` is a real value, not an omission."""
         with self.catalogue_response(), self.mock_job_client() as submit:
-            await self.client.geostatistics.declustering.run(source="obj-1", power=0.0)
+            await self.client.geostatistics.declustering.run(source=SOURCE_URL, power=0.0)
 
-        self.assertEqual({"source": "obj-1", "power": 0.0}, submit.await_args.kwargs["parameters"])
+        self.assertEqual({"source": SOURCE_URL, "power": 0.0}, submit.await_args.kwargs["parameters"])
 
     async def test_explicit_none_is_forwarded(self) -> None:
         """An explicit ``None`` reaches the wire for a nullable parameter."""
         with self.catalogue_response(), self.mock_job_client() as submit:
-            await self.client.geostatistics.declustering.run(source="obj-1", power=None)
+            await self.client.geostatistics.declustering.run(source=SOURCE_URL, power=None)
 
-        self.assertEqual({"source": "obj-1", "power": None}, submit.await_args.kwargs["parameters"])
+        self.assertEqual({"source": SOURCE_URL, "power": None}, submit.await_args.kwargs["parameters"])
 
     # -- preview flag ------------------------------------------------------ #
 
     async def test_preview_is_off_by_default_even_for_feature_flagged_tasks(self) -> None:
         with self.catalogue_response(), self.mock_job_client() as submit:
-            await self.client.geostatistics.kriging.run(source="s", target="t", variogram="v")
+            await self.client.geostatistics.kriging.run(source=SOURCE_URL, target=TARGET_URL, variogram=VARIOGRAM_URL)
         self.assertFalse(submit.await_args.kwargs["preview"])
 
     async def test_preview_can_be_enabled(self) -> None:
         """The preview flag is passed to the job, not sent as a task parameter."""
         with self.catalogue_response(), self.mock_job_client() as submit:
-            await self.client.geostatistics.kriging.run(source="s", target="t", variogram="v", preview=True)
+            await self.client.geostatistics.kriging.run(
+                source=SOURCE_URL, target=TARGET_URL, variogram=VARIOGRAM_URL, preview=True
+            )
         self.assertTrue(submit.await_args.kwargs["preview"])
         self.assertNotIn("preview", submit.await_args.kwargs["parameters"])
 
@@ -257,7 +278,7 @@ class TestComputeClient(TestWithConnector):
         """An unknown keyword argument is rejected, and the error names the task."""
         with self.catalogue_response(), self.mock_job_client() as submit:
             with self.assertRaises(ParameterValidationError) as ctx:
-                await self.client.geostatistics.declustering.run(source="obj-1", bogus=1)
+                await self.client.geostatistics.declustering.run(source=SOURCE_URL, bogus=1)
 
         self.assertIn("geostatistics.declustering.run():", str(ctx.exception))
         self.assertIn("bogus", str(ctx.exception))
@@ -270,7 +291,7 @@ class TestComputeClient(TestWithConnector):
     async def test_signature_is_synthesised_after_caching(self) -> None:
         """Once a task is cached, run() advertises a schema-shaped signature."""
         with self.catalogue_response(), self.mock_job_client():
-            await self.client.geostatistics.declustering.run(source="obj-1")
+            await self.client.geostatistics.declustering.run(source=SOURCE_URL)
 
         run = self.client.geostatistics.declustering.run
         signature = inspect.signature(run)
@@ -285,12 +306,13 @@ class TestComputeClient(TestWithConnector):
     async def test_signature_annotations_follow_the_schema(self) -> None:
         """Parameter annotations are derived from each property's JSON Schema type."""
         with self.catalogue_response(), self.mock_job_client():
-            await self.client.geostatistics.declustering.run(source="obj-1")
+            await self.client.geostatistics.declustering.run(source=SOURCE_URL)
 
         parameters = inspect.signature(self.client.geostatistics.declustering.run).parameters
         self.assertEqual(Literal["cell", "polygon"], parameters["method"].annotation)  # enum
         self.assertEqual(Optional[float], parameters["power"].annotation)  # ["number", "null"]
-        self.assertEqual(dict, parameters["source"].annotation)  # object
+        self.assertEqual(str, parameters["source"].annotation)  # reference leaf
+        self.assertEqual(dict, parameters["settings"].annotation)  # object
         self.assertEqual(Any, parameters["options"].annotation)  # no declared type
         self.assertEqual(bool, parameters["preview"].annotation)
 
@@ -301,7 +323,7 @@ class TestComputeClient(TestWithConnector):
         self.assertNotIn("source", inspect.signature(run).parameters)
 
         with self.catalogue_response(), self.mock_job_client():
-            await run(source="obj-1")
+            await run(source=SOURCE_URL)
 
         self.assertIn("source", inspect.signature(run).parameters)
         self.assertIn("source", inspect.signature(task_proxy.run).parameters)
@@ -309,7 +331,7 @@ class TestComputeClient(TestWithConnector):
     async def test_dir_lists_cached_topics_and_tasks(self) -> None:
         """After a run, tab-completion surfaces the cached topics/tasks."""
         with self.catalogue_response(), self.mock_job_client():
-            await self.client.geostatistics.declustering.run(source="obj-1")
+            await self.client.geostatistics.declustering.run(source=SOURCE_URL)
 
         self.assertIn("geostatistics", dir(self.client))
         self.assertIn("converter", dir(self.client))

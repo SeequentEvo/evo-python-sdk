@@ -1,0 +1,258 @@
+{
+  "limit": 100,
+  "offset": 0,
+  "total": 2,
+  "count": 2,
+  "results": [
+    {
+      "key": "demo/estimate",
+      "topic": "demo",
+      "name": "estimate",
+      "display_name": "Estimate",
+      "version": "1.0.0",
+      "description": "A task shaped like the catalogue's real estimation tasks: nested source/target frames, a recursive filter union behind $ref, and a create-or-update attribute slot.",
+      "parameters": {
+        "type": "object",
+        "additionalProperties": false,
+        "$defs": {
+          "FilterCondition": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "type": {"const": "condition"},
+              "operator": {"type": "string", "enum": ["equal", "greater_than"]},
+              "threshold": {"type": ["number", "null"], "default": null},
+              "attribute": {
+                "type": "string",
+                "reference_to": "attribute",
+                "attribute_from": "/source/object",
+                "attribute_path": {
+                  "pointset/[>=1.2,<2]": ["locations.attributes[?attribute_type=='category']"],
+                  "block-model/[>=1.0,<2]": ["attributes[?attribute_type=='Utf8']"]
+                }
+              }
+            },
+            "required": ["type", "operator", "attribute"]
+          },
+          "AllOfFilter": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "type": {"const": "all_of"},
+              "filters": {"type": "array", "items": {"$ref": "#/$defs/FilterExpression"}}
+            },
+            "required": ["type", "filters"]
+          },
+          "FilterExpression": {
+            "discriminator": "type",
+            "oneOf": [{"$ref": "#/$defs/FilterCondition"}, {"$ref": "#/$defs/AllOfFilter"}]
+          },
+          "Filter": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "where": {"$ref": "#/$defs/FilterExpression"}
+            },
+            "required": ["where"]
+          }
+        },
+        "properties": {
+          "source": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "object": {
+                "type": "string",
+                "format": "uri",
+                "reference_to": "geoscience-object",
+                "supported_schemas": ["pointset/[>=1.2,<2]", "block-model/[>=1.0,<2]"]
+              },
+              "attribute": {
+                "type": "string",
+                "reference_to": "attribute",
+                "attribute_from": "1/object",
+                "attribute_path": {
+                  "pointset/[>=1.2,<2]": ["locations.attributes[?attribute_type=='scalar']"],
+                  "block-model/[>=1.0,<2]": ["attributes[?attribute_type=='Float64']"]
+                }
+              },
+              "filter": {
+                "type": "object",
+                "additionalProperties": false,
+                "composite": "filter",
+                "default": null,
+                "properties": {
+                  "where": {"$ref": "#/$defs/FilterExpression"}
+                }
+              }
+            },
+            "required": ["object", "attribute"]
+          },
+          "target": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "object": {
+                "type": "string",
+                "format": "uri",
+                "reference_to": "geoscience-object",
+                "supported_schemas": ["pointset/[>=1.2,<2]", "block-model/[>=1.0,<2]"]
+              },
+              "attribute": {
+                "target": "attribute",
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "operation": {"const": "create"},
+                      "name": {"type": "string"}
+                    },
+                    "required": ["operation", "name"]
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "operation": {"const": "update"},
+                      "reference": {
+                        "type": "string",
+                        "reference_to": "attribute",
+                        "attribute_from": "2/object",
+                        "attribute_path": {
+                          "pointset/[>=1.2,<2]": ["locations.attributes[?attribute_type=='scalar']"],
+                          "block-model/[>=1.0,<2]": ["attributes[?attribute_type=='Float64']"]
+                        }
+                      }
+                    },
+                    "required": ["operation", "reference"]
+                  }
+                ]
+              },
+              "filter": {
+                "default": null,
+                "composite": "filter",
+                "anyOf": [{"$ref": "#/$defs/Filter"}, {"type": "null"}]
+              }
+            },
+            "required": ["object", "attribute"]
+          },
+          "report": {
+            "type": ["string", "null"],
+            "reference_to": "file",
+            "default": null
+          },
+          "seeds": {
+            "type": "array",
+            "items": {"type": "integer"},
+            "default": null
+          },
+          "grid": {
+            "type": "object",
+            "additionalProperties": false,
+            "default": null,
+            "properties": {
+              "object": {
+                "type": "string",
+                "format": "uri",
+                "reference_to": "geoscience-object"
+              }
+            },
+            "required": ["object"]
+          },
+          "discretisation": {
+            "default": null,
+            "anyOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "nx": {"type": "integer"},
+                  "ny": {"type": "integer"},
+                  "nz": {"type": "integer"}
+                }
+              },
+              {"type": "null"}
+            ]
+          },
+          "options": {
+            "type": "object",
+            "additionalProperties": false,
+            "default": null,
+            "properties": {
+              "label": {"type": "string"},
+              "retries": {"type": "integer"}
+            }
+          }
+        },
+        "required": ["source", "target"]
+      },
+      "results": {
+        "type": "object",
+        "properties": {
+          "message": {"type": "string"},
+          "target": {
+            "type": "object",
+            "output": "geoscience-object",
+            "properties": {
+              "reference": {"type": "string", "format": "uri", "reference_to": "geoscience-object"},
+              "name": {"type": "string"},
+              "description": {"type": ["string", "null"]},
+              "schema_id": {"type": "string"},
+              "attribute": {
+                "type": "object",
+                "output": "attribute",
+                "properties": {
+                  "reference": {
+                    "type": "string",
+                    "reference_to": "attribute",
+                    "attribute_from": "2/reference",
+                    "attribute_path": {
+                      "pointset/[>=1.2,<2]": ["locations.attributes[?attribute_type=='scalar']"],
+                      "block-model/[>=1.0,<2]": ["attributes[?attribute_type=='Float64']"]
+                    }
+                  },
+                  "name": {"type": "string"}
+                }
+              }
+            }
+          },
+          "extras": {
+            "type": ["array", "null"],
+            "items": {
+              "type": "object",
+              "output": "geoscience-object",
+              "properties": {
+                "reference": {"type": "string", "format": "uri", "reference_to": "geoscience-object"},
+                "name": {"type": "string"}
+              }
+            }
+          },
+          "report": {
+            "type": ["object", "null"],
+            "output": "file",
+            "properties": {
+              "reference": {"type": "string", "reference_to": "file"},
+              "name": {"type": "string"}
+            }
+          }
+        }
+      }
+    },
+    {
+      "key": "demo/import",
+      "topic": "demo",
+      "name": "import",
+      "display_name": "Import",
+      "version": "1.0.0",
+      "description": "A task whose only input is a file reference.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "file": {"type": "string", "reference_to": "file"}
+        },
+        "required": ["file"]
+      }
+    }
+  ]
+}
