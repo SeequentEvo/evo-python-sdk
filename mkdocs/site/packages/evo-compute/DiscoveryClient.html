@@ -218,7 +218,11 @@ re-fetches it. Pass <code>force_refresh=True</code> to any accessor to re-fetch 
 
     <div class="doc doc-contents ">
 
-        <p>Create a DiscoveryClient from any real <code>evo.common.IContext</code>.</p>
+        <p>Create a client sharing its context's catalogue cache.</p>
+<p>Repeated clients share data and in-flight discovery for the same context,
+hub, organization and TTL, even if <code>get_connector</code> returns a fresh connector.
+Contexts are tracked by weak identity, so unhashable contexts work too.
+Each client keeps its own connector; the shared cache retains neither.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
