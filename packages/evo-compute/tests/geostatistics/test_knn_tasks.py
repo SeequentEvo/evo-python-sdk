@@ -14,6 +14,8 @@
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 
+from pydantic import ValidationError
+
 from evo.compute.tasks import SearchNeighborhood
 from evo.compute.tasks.common import (
     Ellipsoid,
@@ -132,6 +134,32 @@ class TestKNNParametersSerialization(unittest.TestCase):
         d = _dump(_params(neighborhood=search))
         self.assertEqual(d["neighborhood"]["max_empty_octants"], 2)
         self.assertEqual(d["neighborhood"]["max_samples_per_quadrant"], 5)
+
+    def test_sample_limit_boundaries_in_neighborhood(self):
+        ellipsoid = Ellipsoid(ranges=EllipsoidRanges(major=200, semi_major=150, minor=100))
+        d = _dump(_params(neighborhood={"ellipsoid": ellipsoid, "max_samples": 1}))
+        self.assertEqual(d["neighborhood"]["max_samples"], 1)
+        self.assertNotIn("min_samples", d["neighborhood"])
+
+        for max_samples, min_samples in [(1, 1), (20, 1), (20, 20)]:
+            with self.subTest(max_samples=max_samples, min_samples=min_samples):
+                d = _dump(
+                    _params(
+                        neighborhood={"ellipsoid": ellipsoid, "max_samples": max_samples, "min_samples": min_samples}
+                    )
+                )
+                self.assertEqual(d["neighborhood"]["max_samples"], max_samples)
+                self.assertEqual(d["neighborhood"]["min_samples"], min_samples)
+
+    def test_invalid_sample_limits_rejected(self):
+        ellipsoid = Ellipsoid(ranges=EllipsoidRanges(major=200, semi_major=150, minor=100))
+        for limits in [
+            {"max_samples": 0},
+            {"max_samples": 20, "min_samples": 0},
+            {"max_samples": 20, "min_samples": 21},
+        ]:
+            with self.subTest(**limits), self.assertRaises(ValidationError):
+                _params(neighborhood={"ellipsoid": ellipsoid, **limits})
 
     def test_new_attribute_target(self):
         d = _dump(_params(target=Target.new_attribute(GRID_URL, "result")))
