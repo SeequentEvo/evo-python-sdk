@@ -14,12 +14,21 @@ from .client import JobClient
 from .data import JobProgress, JobStatusEnum
 from .discovery import DiscoveryClient
 from .endpoints.models import TaskResource
+from .engine import ComputeClient
+from .exceptions import ParameterValidationError
+from .outputs import ResultNode, TaskResult
+from .resolution import ReferenceResolver
 
 __all__ = [
+    "ComputeClient",
     "DiscoveryClient",
     "JobClient",
     "JobProgress",
     "JobStatusEnum",
+    "ParameterValidationError",
+    "ReferenceResolver",
+    "ResultNode",
     "TaskResource",
+    "TaskResult",
     "tasks",
 ]

@@ -1,0 +1,98 @@
+{
+  "display_name": "Visualization Tiling",
+  "version": "1.0.0",
+  "feature_flag": "",
+  "description": "Generates 3D Tiles from Geoscience Object Schema (GOS) objects for visualization",
+  "parameters": {
+    "additionalProperties": false,
+    "description": "Input parameters for the visualization tiling task",
+    "properties": {
+      "bearer_token": {
+        "description": "Authorization token for GOS access",
+        "title": "Bearer Token",
+        "type": "string"
+      },
+      "crs": {
+        "description": "Coordinate reference system (e.g. 'cesium' or 'itwin')",
+        "title": "CRS",
+        "type": "string"
+      },
+      "gcp_bucket_name": {
+        "description": "GCP Cloud Storage bucket for output",
+        "title": "GCP Bucket Name",
+        "type": "string"
+      },
+      "gcp_folder_prefix": {
+        "description": "Folder prefix within the GCP bucket",
+        "title": "GCP Folder Prefix",
+        "type": "string"
+      },
+      "gcp_oauth_token": {
+        "description": "OAuth token for GCP storage access",
+        "title": "GCP OAuth Token",
+        "type": "string"
+      },
+      "gcp_oauth_token_expiry": {
+        "description": "Expiry time of the GCP OAuth token",
+        "title": "GCP OAuth Token Expiry",
+        "type": "string"
+      },
+      "object_url": {
+        "description": "URL of the GOS object to tile",
+        "title": "Object URL",
+        "type": "string"
+      },
+      "request_id": {
+        "description": "Correlation ID for tracing",
+        "title": "Request ID",
+        "type": "string"
+      },
+      "s2s-org-info": {
+        "description": "S2S org info header",
+        "title": "S2S Org Info",
+        "type": "string"
+      },
+      "s2s-user-info": {
+        "description": "S2S user info header",
+        "title": "S2S User Info",
+        "type": "string"
+      }
+    },
+    "required": [
+      "object_url",
+      "request_id",
+      "bearer_token",
+      "crs",
+      "s2s-user-info",
+      "s2s-org-info",
+      "gcp_bucket_name",
+      "gcp_folder_prefix",
+      "gcp_oauth_token",
+      "gcp_oauth_token_expiry"
+    ],
+    "title": "Tiling Parameters",
+    "type": "object"
+  },
+  "results": {
+    "additionalProperties": false,
+    "description": "Output results from the visualization tiling task",
+    "properties": {
+      "message": {
+        "description": "Human-readable result message",
+        "title": "Message",
+        "type": "string"
+      },
+      "status": {
+        "description": "Task outcome: success, failed, or error",
+        "title": "Status",
+        "type": "string"
+      }
+    },
+    "required": [
+      "message",
+      "status"
+    ],
+    "title": "Tiling Results",
+    "type": "object"
+  }
+}

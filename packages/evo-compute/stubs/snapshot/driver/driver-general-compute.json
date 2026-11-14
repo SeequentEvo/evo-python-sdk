@@ -1,0 +1,43 @@
+{
+  "display_name": "Driver general compute",
+  "version": "0.0.1",
+  "feature_flag": "driver-preview",
+  "description": "Driver general compute task",
+  "parameters": {
+    "additionalProperties": false,
+    "description": "Input parameters for the Driver General task.",
+    "properties": {
+      "_backend_url": {
+        "description": "The URL of the backend service where the task is executed.",
+        "title": "Backend URL",
+        "type": "string"
+      },
+      "worker_message_body_json": {
+        "description": "The JSON body of the message sent to the worker.",
+        "title": "Worker message body JSON",
+        "type": "string"
+      }
+    },
+    "required": [
+      "worker_message_body_json"
+    ],
+    "title": "Parameters",
+    "type": "object"
+  },
+  "results": {
+    "additionalProperties": false,
+    "description": "Results of the general compute task.",
+    "properties": {
+      "output": {
+        "description": "The result of the computation.",
+        "title": "Output",
+        "type": "string"
+      }
+    },
+    "required": [
+      "output"
+    ],
+    "title": "Results",
+    "type": "object"
+  }
+}

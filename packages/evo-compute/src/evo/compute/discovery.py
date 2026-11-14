@@ -15,11 +15,18 @@
 and result schemas for each. The catalogue is paginated by the service; this client fetches
 every page and caches the combined result with a time-to-live. The convenience accessors
 (:meth:`get_topics`, :meth:`get_topic_tasks`, :meth:`get_task`) read from that cache.
+
+A fetched catalogue is also checked against the closed annotation vocabulary the engine
+understands. An annotation this SDK has never heard of means the platform has moved on and
+the schema can only be partly interpreted, so it is reported as a warning -- never a
+failure. The unrecognised part may not even be one this call depends on, and refusing to
+run would make the SDK the blocker the moment the platform ships a new annotation.
 """
 
 from __future__ import annotations
 
 import asyncio
+import logging
 import time
 from uuid import UUID
 
@@ -27,10 +34,13 @@ from evo.common import APIConnector, IContext
 
 from .endpoints.api import DiscoveryApi
 from .endpoints.models import TaskResource
+from .validation import unknown_annotation_keys
 
 __all__ = [
     "DiscoveryClient",
 ]
+
+logger = logging.getLogger("compute.discovery")
 
 DEFAULT_CACHE_TTL_SECONDS = 300.0
 """Default time-to-live for the cached task catalogue, in seconds."""
@@ -64,6 +74,7 @@ class DiscoveryClient:
         self._mutex = asyncio.Lock()
         self._cache: list[TaskResource] = []
         self._cache_expiry: float | None = None
+        self._reported_annotations: set[str] = set()
 
     @classmethod
     def from_context(
@@ -96,6 +107,20 @@ class DiscoveryClient:
     def _cache_is_valid(self) -> bool:
         return self._cache_expiry is not None and time.monotonic() < self._cache_expiry
 
+    def peek_tasks(self) -> list[TaskResource]:
+        """Return the cached catalogue without fetching it.
+
+        This is the synchronous counterpart to :meth:`list_tasks`, for callers that can use the
+        catalogue if it is already there (tab-completion, signature help) but must not block or
+        make a request. The result is empty until the first fetch, and empty again once the
+        cache has expired.
+
+        :return: The cached tasks, or an empty list if the cache is unset or expired.
+        """
+        if not self._cache_is_valid():
+            return []
+        return [task.model_copy(deep=True) for task in self._cache]
+
     async def _fetch(self) -> None:
         """Fetch every page of the catalogue and refresh the cache."""
         tasks: list[TaskResource] = []
@@ -115,6 +140,29 @@ class DiscoveryClient:
                     break
         self._cache = tasks
         self._cache_expiry = time.monotonic() + self._cache_ttl_seconds
+        self._report_unknown_annotations(tasks)
+
+    def _report_unknown_annotations(self, tasks: list[TaskResource]) -> None:
+        """Warn once about each annotation the platform publishes and this SDK cannot read.
+
+        Reported per key rather than per task, and only the first time a key is seen, so a
+        catalogue that has moved ahead of the installed SDK costs one line rather than one
+        per task per cache expiry.
+        """
+        carriers: dict[str, list[str]] = {}
+        for task in tasks:
+            for key in unknown_annotation_keys(task.parameters) | unknown_annotation_keys(task.results):
+                if key not in self._reported_annotations:
+                    carriers.setdefault(key, []).append(f"{task.topic}.{task.name}")
+        if not carriers:
+            return
+        self._reported_annotations |= carriers.keys()
+        logger.warning(
+            "the compute catalogue uses schema annotations this SDK does not recognise: %s. "
+            "Those parts of the affected schemas cannot be interpreted, so a task may need "
+            "arguments in their wire form; upgrading evo-compute may add support for them.",
+            "; ".join(f"{key!r} on {', '.join(sorted(names))}" for key, names in sorted(carriers.items())),
+        )
 
     async def _catalogue(self, force_refresh: bool) -> list[TaskResource]:
         """Return the cached catalogue, fetching it first if it is stale or forced."""

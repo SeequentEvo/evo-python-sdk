@@ -1,0 +1,346 @@
+{
+  "display_name": "Loss calculation",
+  "version": "0.8.0",
+  "feature_flag": "geostatistics-preview",
+  "description": "Calculate loss given block model and economic parameters",
+  "parameters": {
+    "additionalProperties": false,
+    "description": "Settings for loss calculations.",
+    "properties": {
+      "material_categories": {
+        "description": "List of material categories, sorted from lowest to highest cutoff grade",
+        "items": {
+          "additionalProperties": false,
+          "description": "Definition of a material category used in grade calculations.\nEach category is defined by a cutoff grade, metal price, and label.",
+          "properties": {
+            "cutoff_grade": {
+              "default": 0,
+              "description": "The cutoff grade",
+              "examples": [
+                0.16,
+                0.5,
+                0.9
+              ],
+              "minimum": 0,
+              "title": "Cutoff Grade",
+              "type": "number"
+            },
+            "label": {
+              "default": "waste",
+              "description": "The category label",
+              "examples": [
+                "ore",
+                "waste"
+              ],
+              "title": "Label",
+              "type": "string"
+            },
+            "metal_price": {
+              "default": 0,
+              "description": "The metal price",
+              "examples": [
+                134.23,
+                245.12,
+                9876.34
+              ],
+              "title": "Metal Price",
+              "type": "number"
+            }
+          },
+          "required": [],
+          "title": "MaterialCategories",
+          "type": "object"
+        },
+        "title": "Material categories",
+        "type": "array"
+      },
+      "metal_recovery_fraction": {
+        "description": "Fraction of metal expected to be recovered during processing",
+        "maximum": 1,
+        "minimum": 0,
+        "title": "Metal recovery fraction",
+        "type": "number"
+      },
+      "mining_ore_cost": {
+        "description": "Mining cost per unit of ore material",
+        "minimum": 0,
+        "title": "Mining ore cost",
+        "type": "number"
+      },
+      "mining_waste_cost": {
+        "description": "Mining cost per unit of waste material",
+        "minimum": 0,
+        "title": "Mining waste cost",
+        "type": "number"
+      },
+      "processing_cost": {
+        "description": "Processing cost per unit of material",
+        "minimum": 0,
+        "title": "Processing cost",
+        "type": "number"
+      },
+      "source": {
+        "additionalProperties": false,
+        "description": "The source object and attribute containing known values.",
+        "properties": {
+          "attribute": {
+            "attribute_from": "1/object",
+            "attribute_path": {
+              "regular-3d-grid/[>=1.2,<2]": [
+                "cell_attributes[?attribute_type=='ensemble_continuous']"
+              ],
+              "regular-masked-3d-grid/[>=1.2,<2]": [
+                "cell_attributes[?attribute_type=='ensemble_continuous']"
+              ]
+            },
+            "description": "The original values, used to calculate grade categories.",
+            "examples": [
+              "cell_attributes[?attribute_type=='ensemble_continuous']"
+            ],
+            "reference_to": "attribute",
+            "title": "Attribute",
+            "type": "string"
+          },
+          "object": {
+            "description": "The location of a regular or masked 3D grid with known values. Should be one of Regular3DGrid_V1_2_0, Regular3DGrid_V1_3_0, RegularMasked3DGrid_V1_2_0, or RegularMasked3DGrid_V1_3_0.",
+            "examples": [
+              "https://{hub}.api.seequent.com/geoscience-object/orgs/{org_id}/workspaces/{workspace_id}/objects/path/my-grid.json"
+            ],
+            "format": "uri",
+            "reference_to": "geoscience-object",
+            "supported_schemas": [
+              "regular-3d-grid/[>=1.2,<2]",
+              "regular-masked-3d-grid/[>=1.2,<2]"
+            ],
+            "title": "Known Locations",
+            "type": "string"
+          }
+        },
+        "required": [
+          "object",
+          "attribute"
+        ],
+        "title": "Source",
+        "type": "object"
+      },
+      "target": {
+        "additionalProperties": false,
+        "description": "The target object and attribute to create or update with grade calculation results.",
+        "properties": {
+          "attribute": {
+            "description": "Name of the attribute to create or update on the target object.",
+            "examples": [
+              {
+                "name": "grade-category",
+                "operation": "create"
+              },
+              {
+                "name": "existing-grade-category",
+                "operation": "update"
+              }
+            ],
+            "oneOf": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "description": "The name of the attribute to create.",
+                    "title": "Name",
+                    "type": "string"
+                  },
+                  "operation": {
+                    "const": "create",
+                    "description": "The operation to perform on the attribute.",
+                    "title": "Operation"
+                  }
+                },
+                "required": [
+                  "operation",
+                  "name"
+                ],
+                "type": "object"
+              },
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "operation": {
+                    "const": "update",
+                    "description": "The operation to perform on the attribute.",
+                    "title": "Operation"
+                  },
+                  "reference": {
+                    "attribute_from": "2/object",
+                    "attribute_path": {
+                      "regular-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='category']"
+                      ],
+                      "regular-masked-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='category']"
+                      ]
+                    },
+                    "description": "Reference to an existing attribute to update.",
+                    "reference_to": "attribute",
+                    "title": "Reference",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "operation",
+                  "reference"
+                ],
+                "type": "object"
+              }
+            ],
+            "target": "attribute",
+            "title": "Grade Calculation Target Attribute"
+          },
+          "object": {
+            "description": "Object to evaluate onto. Can be the same as the source object. Should be one of Regular3DGrid_V1_2_0, Regular3DGrid_V1_3_0, RegularMasked3DGrid_V1_2_0, or RegularMasked3DGrid_V1_3_0.",
+            "examples": [
+              "https://{hub}.api.seequent.com/geoscience-object/orgs/{org_id}/workspaces/{workspace_id}/objects/path/my-grid.json"
+            ],
+            "format": "uri",
+            "reference_to": "geoscience-object",
+            "supported_schemas": [
+              "regular-3d-grid/[>=1.2,<2]",
+              "regular-masked-3d-grid/[>=1.2,<2]"
+            ],
+            "title": "Evaluation Target",
+            "type": "string"
+          }
+        },
+        "required": [
+          "object",
+          "attribute"
+        ],
+        "title": "Target",
+        "type": "object"
+      }
+    },
+    "required": [
+      "source",
+      "target",
+      "material_categories",
+      "processing_cost",
+      "mining_waste_cost",
+      "mining_ore_cost",
+      "metal_recovery_fraction"
+    ],
+    "title": "GradeCalculationParameters",
+    "type": "object"
+  },
+  "results": {
+    "additionalProperties": false,
+    "description": "Result of the grade calculation task.",
+    "properties": {
+      "message": {
+        "description": "Description of the result",
+        "examples": [
+          "Success",
+          "Failed"
+        ],
+        "title": "Message",
+        "type": "string"
+      },
+      "target": {
+        "additionalProperties": false,
+        "description": "The target that was created or updated.",
+        "output": "geoscience-object",
+        "properties": {
+          "attribute": {
+            "additionalProperties": false,
+            "description": "Attribute containing the material category results from the grade calculation.",
+            "output": "attribute",
+            "properties": {
+              "name": {
+                "description": "The name of the output attribute.",
+                "title": "Name",
+                "type": "string"
+              },
+              "reference": {
+                "attribute_from": "2/reference",
+                "attribute_path": {
+                  "downhole-intervals/[>=1.2,<2]": [
+                    "attributes[?attribute_type=='category']"
+                  ],
+                  "pointset/[>=1.2,<2]": [
+                    "locations.attributes[?attribute_type=='category']"
+                  ],
+                  "regular-3d-grid/[>=1.2,<2]": [
+                    "cell_attributes[?attribute_type=='category']"
+                  ],
+                  "regular-masked-3d-grid/[>=1.2,<2]": [
+                    "cell_attributes[?attribute_type=='category']"
+                  ],
+                  "tensor-3d-grid/[>=1.2,<2]": [
+                    "cell_attributes[?attribute_type=='category']"
+                  ]
+                },
+                "description": "Reference to the attribute in the geoscience object.",
+                "reference_to": "attribute",
+                "title": "Reference",
+                "type": "string"
+              }
+            },
+            "required": [
+              "reference",
+              "name"
+            ],
+            "title": "Attribute",
+            "type": "object"
+          },
+          "description": {
+            "description": "The description of the geoscience object.",
+            "title": "Description",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "description": "The name of the geoscience object.",
+            "title": "Name",
+            "type": "string"
+          },
+          "reference": {
+            "description": "Reference to a geoscience object.",
+            "format": "uri",
+            "reference_to": "geoscience-object",
+            "supported_schemas": [
+              "pointset/[>=1.2,<2]",
+              "regular-3d-grid/[>=1.2,<2]",
+              "regular-masked-3d-grid/[>=1.2,<2]",
+              "tensor-3d-grid/[>=1.2,<2]",
+              "downhole-intervals/[>=1.2,<2]"
+            ],
+            "title": "Reference",
+            "type": "string"
+          },
+          "schema_id": {
+            "description": "The ID of the Geoscience Object schema.",
+            "title": "Schema ID",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reference",
+          "name",
+          "description",
+          "schema_id",
+          "attribute"
+        ],
+        "title": "Target",
+        "type": [
+          "object",
+          "null"
+        ]
+      }
+    },
+    "required": [
+      "message",
+      "target"
+    ],
+    "title": "GradeCalculationResult",
+    "type": "object"
+  }
+}

@@ -1,0 +1,194 @@
+{
+  "display_name": "Image Import",
+  "version": "0.1.31",
+  "feature_flag": "converter-preview",
+  "description": "Import image files into Evo as Regular-2D geoscience objects.",
+  "parameters": {
+    "additionalProperties": false,
+    "description": "Parameters for the image import compute task.",
+    "properties": {
+      "cell_size": {
+        "default": null,
+        "description": "Optional grid cell size in [dx, dy] format.",
+        "items": {
+          "description": "Cell size component.",
+          "title": "Cell Size Component",
+          "type": "number"
+        },
+        "maxItems": 2,
+        "minItems": 2,
+        "title": "Cell Size",
+        "type": [
+          "array",
+          "null"
+        ]
+      },
+      "coordinate_reference_system": {
+        "default": "unspecified",
+        "description": "The coordinate reference system for the grid coordinates, specified as an EPSG code string (e.g., 'EPSG:4326'), an OGC WKT string, or 'unspecified'.",
+        "minLength": 1,
+        "title": "Coordinate Reference System",
+        "type": "string"
+      },
+      "file": {
+        "description": "Image file to import.",
+        "format": "uri",
+        "reference_to": "file",
+        "title": "Input File",
+        "type": "string"
+      },
+      "origin": {
+        "default": null,
+        "description": "Optional grid origin in [x, y, z] format.",
+        "items": {
+          "description": "Coordinate component.",
+          "title": "Coordinate",
+          "type": "number"
+        },
+        "maxItems": 3,
+        "minItems": 3,
+        "title": "Origin",
+        "type": [
+          "array",
+          "null"
+        ]
+      },
+      "target": {
+        "additionalProperties": false,
+        "description": "Target specifying where to create or update the Regular2DGrid object. Contains 'reference' (Geoscience Object API URL) and optional 'overwrite' (boolean, only valid for path references).",
+        "properties": {
+          "description": {
+            "default": null,
+            "description": "Description to put into the target object.",
+            "title": "Description",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "overwrite": {
+            "default": false,
+            "description": "Whether to overwrite the existing object.",
+            "title": "Overwrite",
+            "type": "boolean"
+          },
+          "reference": {
+            "description": "Reference to the targeted object.",
+            "format": "uri",
+            "reference_to": "geoscience-object",
+            "supported_schemas": [
+              "regular-2d-grid/[>=1.2,<2]"
+            ],
+            "title": "Reference",
+            "type": "string"
+          },
+          "tags": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Tags to put into the target object.",
+            "title": "Tags",
+            "type": "object"
+          }
+        },
+        "required": [
+          "reference"
+        ],
+        "target": "geoscience-object",
+        "title": "Target",
+        "type": "object"
+      }
+    },
+    "required": [
+      "file",
+      "target"
+    ],
+    "title": "ImageImportParameters",
+    "type": "object"
+  },
+  "results": {
+    "additionalProperties": false,
+    "description": "Results for the image import compute task.",
+    "properties": {
+      "object": {
+        "additionalProperties": false,
+        "description": "The Regular2DGrid object created from the input file.",
+        "output": "geoscience-object",
+        "properties": {
+          "description": {
+            "description": "The description of the geoscience object.",
+            "title": "Description",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "description": "The name of the geoscience object.",
+            "title": "Name",
+            "type": "string"
+          },
+          "reference": {
+            "description": "Reference to a geoscience object.",
+            "format": "uri",
+            "reference_to": "geoscience-object",
+            "supported_schemas": [
+              "regular-2d-grid/[>=1.2,<2]"
+            ],
+            "title": "Reference",
+            "type": "string"
+          },
+          "schema_id": {
+            "description": "The ID of the Geoscience Object schema.",
+            "title": "Schema ID",
+            "type": "string"
+          },
+          "values": {
+            "additionalProperties": false,
+            "description": "Continuous cell attribute containing imported image pixel values.",
+            "output": "attribute",
+            "properties": {
+              "name": {
+                "description": "The name of the output attribute.",
+                "title": "Name",
+                "type": "string"
+              },
+              "reference": {
+                "attribute_from": "2/reference",
+                "attribute_path": {
+                  "regular-2d-grid/[>=1.2,<2]": [
+                    "cell_attributes[?attribute_type=='scalar']"
+                  ]
+                },
+                "description": "Reference to the attribute in the geoscience object.",
+                "reference_to": "attribute",
+                "title": "Reference",
+                "type": "string"
+              }
+            },
+            "required": [
+              "reference",
+              "name"
+            ],
+            "title": "Values",
+            "type": "object"
+          }
+        },
+        "required": [
+          "reference",
+          "name",
+          "description",
+          "schema_id",
+          "values"
+        ],
+        "title": "Output Regular2DGrid",
+        "type": "object"
+      }
+    },
+    "required": [
+      "object"
+    ],
+    "title": "ImageImportResults",
+    "type": "object"
+  }
+}

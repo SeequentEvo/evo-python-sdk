@@ -1,0 +1,287 @@
+{
+  "display_name": "Normal Score",
+  "version": "0.8.0",
+  "feature_flag": "geostatistics-preview",
+  "description": "For more information, please read the <a href='/docs/guides/geostatistics-tasks/tasks/normal-score'>guide</a>",
+  "parameters": {
+    "additionalProperties": false,
+    "description": "Parameters for the normal-score transformation task.",
+    "properties": {
+      "distribution": {
+        "description": "A non-parametric continuous cumulative distribution that defines the source distribution for the transformation. Created by the continuous-distribution task.",
+        "format": "uri",
+        "reference_to": "geoscience-object",
+        "supported_schemas": [
+          "non-parametric-continuous-cumulative-distribution/[>=1.0,<2]"
+        ],
+        "title": "Distribution",
+        "type": "string"
+      },
+      "method": {
+        "description": "The direction of the normal-score transformation. 'forward' transforms data from the source distribution to a standard Gaussian (mean=0, std=1). 'backward' transforms data from a standard Gaussian back to the source distribution.",
+        "enum": [
+          "forward",
+          "backward"
+        ],
+        "title": "Transformation Method"
+      },
+      "source": {
+        "additionalProperties": false,
+        "description": "The source object and attribute containing the values to transform.",
+        "properties": {
+          "attribute": {
+            "attribute_from": "1/object",
+            "attribute_path": {
+              "downhole-intervals/[>=1.2,<2]": [
+                "attributes[?attribute_type=='scalar']"
+              ],
+              "pointset/[>=1.2,<2]": [
+                "locations.attributes[?attribute_type=='scalar']"
+              ],
+              "regular-3d-grid/[>=1.2,<2]": [
+                "cell_attributes[?attribute_type=='scalar']"
+              ],
+              "regular-masked-3d-grid/[>=1.2,<2]": [
+                "cell_attributes[?attribute_type=='scalar']"
+              ],
+              "tensor-3d-grid/[>=1.2,<2]": [
+                "cell_attributes[?attribute_type=='scalar']"
+              ]
+            },
+            "description": "The numeric attribute to apply the normal-score transformation to.",
+            "reference_to": "attribute",
+            "title": "Attribute",
+            "type": "string"
+          },
+          "object": {
+            "description": "Object containing the values to transform.",
+            "format": "uri",
+            "reference_to": "geoscience-object",
+            "supported_schemas": [
+              "pointset/[>=1.2,<2]",
+              "regular-3d-grid/[>=1.2,<2]",
+              "regular-masked-3d-grid/[>=1.2,<2]",
+              "tensor-3d-grid/[>=1.2,<2]",
+              "downhole-intervals/[>=1.2,<2]"
+            ],
+            "title": "Object",
+            "type": "string"
+          }
+        },
+        "required": [
+          "object",
+          "attribute"
+        ],
+        "title": "Source",
+        "type": "object"
+      },
+      "target": {
+        "additionalProperties": false,
+        "description": "The target object and attribute to write the transformed values to.",
+        "properties": {
+          "attribute": {
+            "description": "Name of the attribute to create or update on the target object.",
+            "oneOf": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "description": "The name of the attribute to create.",
+                    "title": "Name",
+                    "type": "string"
+                  },
+                  "operation": {
+                    "const": "create",
+                    "description": "The operation to perform on the attribute.",
+                    "title": "Operation"
+                  }
+                },
+                "required": [
+                  "operation",
+                  "name"
+                ],
+                "type": "object"
+              },
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "operation": {
+                    "const": "update",
+                    "description": "The operation to perform on the attribute.",
+                    "title": "Operation"
+                  },
+                  "reference": {
+                    "attribute_from": "2/object",
+                    "attribute_path": {
+                      "downhole-intervals/[>=1.2,<2]": [
+                        "attributes[?attribute_type=='scalar']"
+                      ],
+                      "pointset/[>=1.2,<2]": [
+                        "locations.attributes[?attribute_type=='scalar']"
+                      ],
+                      "regular-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ],
+                      "regular-masked-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ],
+                      "tensor-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ]
+                    },
+                    "description": "Reference to an existing attribute to update.",
+                    "reference_to": "attribute",
+                    "title": "Reference",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "operation",
+                  "reference"
+                ],
+                "type": "object"
+              }
+            ],
+            "target": "attribute",
+            "title": "Attribute"
+          },
+          "object": {
+            "description": "Object to write the transformed values to.",
+            "format": "uri",
+            "reference_to": "geoscience-object",
+            "supported_schemas": [
+              "pointset/[>=1.2,<2]",
+              "regular-3d-grid/[>=1.2,<2]",
+              "regular-masked-3d-grid/[>=1.2,<2]",
+              "tensor-3d-grid/[>=1.2,<2]",
+              "downhole-intervals/[>=1.2,<2]"
+            ],
+            "title": "Object",
+            "type": "string"
+          }
+        },
+        "required": [
+          "object",
+          "attribute"
+        ],
+        "title": "Target",
+        "type": "object"
+      }
+    },
+    "required": [
+      "method",
+      "source",
+      "distribution",
+      "target"
+    ],
+    "title": "NormalScoreParameters",
+    "type": "object"
+  },
+  "results": {
+    "additionalProperties": false,
+    "description": "Result of the normal-score transformation task.",
+    "properties": {
+      "message": {
+        "description": "A message describing what happened in the task.",
+        "title": "Message",
+        "type": "string"
+      },
+      "target": {
+        "additionalProperties": false,
+        "description": "The target object that was created or updated.",
+        "output": "geoscience-object",
+        "properties": {
+          "attribute": {
+            "additionalProperties": false,
+            "description": "Attribute containing the transformed values.",
+            "output": "attribute",
+            "properties": {
+              "name": {
+                "description": "The name of the output attribute.",
+                "title": "Name",
+                "type": "string"
+              },
+              "reference": {
+                "attribute_from": "2/reference",
+                "attribute_path": {
+                  "downhole-intervals/[>=1.2,<2]": [
+                    "attributes[?attribute_type=='scalar']"
+                  ],
+                  "pointset/[>=1.2,<2]": [
+                    "locations.attributes[?attribute_type=='scalar']"
+                  ],
+                  "regular-3d-grid/[>=1.2,<2]": [
+                    "cell_attributes[?attribute_type=='scalar']"
+                  ],
+                  "regular-masked-3d-grid/[>=1.2,<2]": [
+                    "cell_attributes[?attribute_type=='scalar']"
+                  ],
+                  "tensor-3d-grid/[>=1.2,<2]": [
+                    "cell_attributes[?attribute_type=='scalar']"
+                  ]
+                },
+                "description": "Reference to the attribute in the geoscience object.",
+                "reference_to": "attribute",
+                "title": "Reference",
+                "type": "string"
+              }
+            },
+            "required": [
+              "reference",
+              "name"
+            ],
+            "title": "Attribute",
+            "type": "object"
+          },
+          "description": {
+            "description": "The description of the geoscience object.",
+            "title": "Description",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "description": "The name of the geoscience object.",
+            "title": "Name",
+            "type": "string"
+          },
+          "reference": {
+            "description": "Reference to a geoscience object.",
+            "format": "uri",
+            "reference_to": "geoscience-object",
+            "supported_schemas": [
+              "pointset/[>=1.2,<2]",
+              "regular-3d-grid/[>=1.2,<2]",
+              "regular-masked-3d-grid/[>=1.2,<2]",
+              "tensor-3d-grid/[>=1.2,<2]",
+              "downhole-intervals/[>=1.2,<2]"
+            ],
+            "title": "Reference",
+            "type": "string"
+          },
+          "schema_id": {
+            "description": "The ID of the Geoscience Object schema.",
+            "title": "Schema ID",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reference",
+          "name",
+          "description",
+          "schema_id",
+          "attribute"
+        ],
+        "title": "Target",
+        "type": "object"
+      }
+    },
+    "required": [
+      "message",
+      "target"
+    ],
+    "title": "NormalScoreResult",
+    "type": "object"
+  }
+}

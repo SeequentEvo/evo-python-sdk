@@ -22,5 +22,18 @@ jobs:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/linting
 
+  check-stubs:
+    name: Check compute types
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/install-uv
+      - name: Check generated compute stub
+        shell: bash
+        run: make check-stubs-compute
+      - name: Check typing examples with mypy and pyright
+        shell: bash
+        run: make check-types-compute
+
   run-tests:
     uses: ./.github/workflows/run-all-tests.yaml

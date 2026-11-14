@@ -1,0 +1,262 @@
+{
+  "display_name": "Publish task",
+  "version": "0.1.57",
+  "feature_flag": "cpt-to-borehole-preview",
+  "description": "Publish a finalized downhole collection as a new geoscience object for downstream consumption.",
+  "parameters": {
+    "additionalProperties": false,
+    "description": "Parameters for the \"Publish\" task.",
+    "properties": {
+      "cluster_metadata": {
+        "default": null,
+        "description": "Name and colour for each cluster, aligned by index with the Clusters rows. Required if include_clusters is true; must be omitted otherwise.",
+        "items": {
+          "additionalProperties": false,
+          "description": "Human-assigned name and colour for a single cluster.",
+          "properties": {
+            "color": {
+              "description": "RGB colour of the cluster as three integers in the range 0-255.",
+              "items": {
+                "description": "A single RGB channel value in the range 0-255.",
+                "maximum": 255,
+                "minimum": 0,
+                "title": "Colour channel",
+                "type": "integer"
+              },
+              "maxItems": 3,
+              "minItems": 3,
+              "title": "Cluster colour",
+              "type": "array"
+            },
+            "name": {
+              "description": "Human-assigned name for the cluster.",
+              "minLength": 1,
+              "title": "Cluster name",
+              "type": "string"
+            }
+          },
+          "required": [
+            "name",
+            "color"
+          ],
+          "title": "ClusterMetadata",
+          "type": "object"
+        },
+        "title": "Cluster metadata",
+        "type": [
+          "array",
+          "null"
+        ]
+      },
+      "downhole_collection": {
+        "description": "The working clustered DownholeCollection to publish. Read-only; left unchanged.",
+        "format": "uri",
+        "reference_to": "geoscience-object",
+        "supported_schemas": [
+          "downhole-collection/[>=1.3,<2]"
+        ],
+        "title": "Input downhole collection",
+        "type": "string"
+      },
+      "exclude_collections": {
+        "description": "Data collections to drop from the published object. Defaults to none. May not exclude all data collections, or all CLUSTER_ID data tables when including clusters.",
+        "items": {
+          "description": "Data collections that may be excluded from the published downhole collection.",
+          "enum": [
+            "measured_cpt_readings",
+            "derived_cpt_readings",
+            "geology_layers"
+          ],
+          "title": "ExcludeCollection"
+        },
+        "title": "Excluded collections",
+        "type": "array"
+      },
+      "include_clusters": {
+        "description": "When true, retain populated CLUSTER_ID columns (labels and colour map); when false, remove CLUSTER_ID columns entirely from the retained tables.",
+        "title": "Include clusters",
+        "type": "boolean"
+      },
+      "target_downhole_collection": {
+        "additionalProperties": false,
+        "description": "The geoscience object where the published DownholeCollection is written as a new object.",
+        "properties": {
+          "description": {
+            "default": null,
+            "description": "Description to put into the target object.",
+            "title": "Description",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "overwrite": {
+            "default": false,
+            "description": "Whether to overwrite the existing object.",
+            "title": "Overwrite",
+            "type": "boolean"
+          },
+          "reference": {
+            "description": "Reference to the targeted object.",
+            "format": "uri",
+            "reference_to": "geoscience-object",
+            "supported_schemas": [
+              "downhole-collection/[>=1.3,<2]"
+            ],
+            "title": "Reference",
+            "type": "string"
+          },
+          "tags": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Tags to put into the target object.",
+            "title": "Tags",
+            "type": "object"
+          }
+        },
+        "required": [
+          "reference"
+        ],
+        "target": "geoscience-object",
+        "title": "Target downhole collection",
+        "type": "object"
+      }
+    },
+    "required": [
+      "downhole_collection",
+      "target_downhole_collection",
+      "include_clusters"
+    ],
+    "title": "PublishParameters",
+    "type": "object"
+  },
+  "results": {
+    "additionalProperties": false,
+    "description": "Result of the publish task.",
+    "properties": {
+      "downhole_collection": {
+        "additionalProperties": false,
+        "description": "Reference to the newly published DownholeCollection geoscience object.",
+        "output": "geoscience-object",
+        "properties": {
+          "description": {
+            "description": "The description of the geoscience object.",
+            "title": "Description",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "description": "The name of the geoscience object.",
+            "title": "Name",
+            "type": "string"
+          },
+          "reference": {
+            "description": "Reference to a geoscience object.",
+            "format": "uri",
+            "reference_to": "geoscience-object",
+            "supported_schemas": [
+              "downhole-collection/[>=1.3,<2]"
+            ],
+            "title": "Reference",
+            "type": "string"
+          },
+          "schema_id": {
+            "description": "The ID of the Geoscience Object schema.",
+            "title": "Schema ID",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reference",
+          "name",
+          "description",
+          "schema_id"
+        ],
+        "title": "Published downhole collection",
+        "type": "object"
+      },
+      "messages": {
+        "description": "List of messages generated during the publish process.",
+        "items": {
+          "additionalProperties": false,
+          "description": "A message produced by the task during execution.",
+          "properties": {
+            "code": {
+              "description": "Integer code that uniquely identifies this message type within its task. Allows consumers to handle specific messages without relying on text matching.",
+              "oneOf": [
+                {
+                  "const": 601,
+                  "description": "The finalized downhole collection was published as a new geoscience object.",
+                  "title": "DOWNHOLE_COLLECTION_PUBLISHED"
+                },
+                {
+                  "const": 602,
+                  "description": "A category colormap was created for the published downhole collection.",
+                  "title": "COLORMAP_CREATED"
+                },
+                {
+                  "const": 603,
+                  "description": "The colormap was associated with the published downhole collection's cluster attribute.",
+                  "title": "COLORMAP_ASSOCIATED"
+                },
+                {
+                  "const": 604,
+                  "description": "Colormap creation failed; the published downhole collection was still returned.",
+                  "title": "COLORMAP_CREATION_FAILED"
+                },
+                {
+                  "const": 605,
+                  "description": "Colormap association failed; the published downhole collection was still returned.",
+                  "title": "COLORMAP_ASSOCIATION_FAILED"
+                }
+              ],
+              "title": "Code",
+              "type": "integer"
+            },
+            "level": {
+              "description": "The level of the message, e.g., 'info', 'warning', 'error'.",
+              "enum": [
+                "info",
+                "warning",
+                "error"
+              ],
+              "title": "Level"
+            },
+            "message": {
+              "description": "The content of the message.",
+              "title": "Message",
+              "type": "string"
+            },
+            "object_id": {
+              "default": null,
+              "description": "Optional identifier of the object (e.g., hole ID) this message relates to. None for global task-level messages.",
+              "title": "Object ID",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "code",
+            "level",
+            "message"
+          ],
+          "title": "Message[PublishMessageCode]",
+          "type": "object"
+        },
+        "title": "Messages",
+        "type": "array"
+      }
+    },
+    "required": [
+      "downhole_collection",
+      "messages"
+    ],
+    "title": "Result",
+    "type": "object"
+  }
+}
