@@ -37,6 +37,7 @@ from pathlib import Path
 from evo.compute import ComputeClient, ParameterValidationError, _stubgen
 from evo.compute.endpoints.models import TaskResource
 from evo.compute.engine import _signature_from_schema, _wire_names
+from evo.compute.overrides import overridden_tasks
 from evo.compute.validation import validate_parameters
 
 _CHECKS_DIR = _stubgen.DEFAULT_SNAPSHOT_DIR.parent / "checks"
@@ -146,10 +147,26 @@ class TestGeneratedArtifact(unittest.TestCase):
     def test_stub_signatures_match_the_runtime_signatures(self) -> None:
         """What the stub advertises is what :func:`_signature_from_schema` will bind."""
         for task in _stubgen.load_snapshot(_stubgen.DEFAULT_SNAPSHOT_DIR):
+            if (task.topic, task.name.replace("-", "_")) in overridden_tasks():
+                continue
             with self.subTest(task=f"{task.topic}.{task.name}"):
                 stub = _stubgen._TaskRenderer(task).render()
                 declared = [parameter.split(":")[0] for parameter in stub.run_parameters]
                 self.assertEqual(list(_signature_from_schema(task).parameters), declared)
+
+    def test_an_overridden_task_imports_its_runner(self) -> None:
+        source = _stubgen.generate_stub()
+        for topic, task in overridden_tasks():
+            with self.subTest(topic=topic, task=task):
+                module, runner = _stubgen._override_runner(topic, task)
+                alias = f"_{_stubgen._camel(topic)}{_stubgen._camel(task)}"
+                self.assertIn(f"from {module} import {runner} as {alias}", source)
+                self.assertNotIn(f"class {alias}:", source)
+
+    def test_overrides_do_not_depend_on_the_snapshot(self) -> None:
+        source = _stubgen._render([_spec()], _stubgen.DEFAULT_SNAPSHOT_DIR)
+        for topic, task in overridden_tasks():
+            self.assertIn(f"    {task}: _{_stubgen._camel(topic)}{_stubgen._camel(task)}", source)
 
     def test_the_client_signatures_are_not_hand_maintained_into_drift(self) -> None:
         """The task surface is generated, but the clients' own methods are written out.
@@ -466,10 +483,10 @@ class TestNamesTheCatalogueForces(unittest.TestCase):
 
 
 class TestTaskSurface(unittest.TestCase):
-    def test_preview_defaults_to_the_feature_flag(self) -> None:
+    def test_preview_is_always_an_explicit_opt_in(self) -> None:
         self.assertIn("preview: bool = False", _stubgen._TaskRenderer(_spec()).render().run_parameters)
         gated = _spec(feature_flag="widgets-preview")
-        self.assertIn("preview: bool = True", _stubgen._TaskRenderer(gated).render().run_parameters)
+        self.assertIn("preview: bool = False", _stubgen._TaskRenderer(gated).render().run_parameters)
 
     def test_required_parameters_come_first_and_have_no_default(self) -> None:
         spec = _spec(

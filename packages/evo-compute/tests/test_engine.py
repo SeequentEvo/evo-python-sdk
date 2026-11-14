@@ -36,8 +36,6 @@ def _object_url(suffix: str) -> str:
 
 
 SOURCE_URL = _object_url("10")
-TARGET_URL = _object_url("20")
-VARIOGRAM_URL = _object_url("30")
 FILE_URL = "https://unittest.localhost/file/v2/orgs/00000000-0000-0000-0000-000000000001/files/mesh"
 
 
@@ -160,19 +158,22 @@ class TestComputeClient(TestWithConnector):
         self.assertEqual(inspect.Parameter.VAR_KEYWORD, parameters["parameters"].kind)
 
     async def test_fallback_parameters_still_reject_missing_and_unexpected_names(self) -> None:
-        """Fallback ``**parameters`` calls still check required and unknown schema keys."""
-        self.catalogue["results"] += [
-            _task("mesh-tools", "export", {"from": {"type": "string"}}, required=["from"]),
-            _task(
-                "mesh-tools",
-                "merge",
-                {"user-info": {"type": "string"}, "user_info": {"type": "string"}},
-                required=["user-info"],
-            ),
-        ]
+        """Fallback ``**parameters`` calls still check required and closed-object schema keys."""
+        export_spec = _task("mesh-tools", "export", {"from": {"type": "string"}}, required=["from"])
+        export_spec["parameters"]["additionalProperties"] = False
+        merge_spec = _task(
+            "mesh-tools",
+            "merge",
+            {"user-info": {"type": "string"}, "user_info": {"type": "string"}},
+            required=["user-info"],
+        )
+        merge_spec["parameters"]["additionalProperties"] = False
+        self.catalogue["results"] += [export_spec, merge_spec]
         with self.catalogue_response(), self.mock_job_client() as submit:
             with self.assertRaisesRegex(ParameterValidationError, r"mesh_tools\.export\.run\(\):.*'from'"):
                 await self.client.mesh_tools.export.run()
+            with self.assertRaisesRegex(ParameterValidationError, r"mesh-tools\.export\.run\(\):.*'from'"):
+                await self.client.arun("mesh-tools", "export", {}, validate=False)
             with self.assertRaisesRegex(ParameterValidationError, r"mesh_tools\.export\.run\(\):.*'bogus'"):
                 await self.client.mesh_tools.export.run(**{"from": "mesh-1", "bogus": 1})
             with self.assertRaisesRegex(ParameterValidationError, r"mesh-tools\.merge\.run\(\):.*'user-info'"):
@@ -192,7 +193,7 @@ class TestComputeClient(TestWithConnector):
         """The catalogue is fetched once and reused for later runs (any task/topic)."""
         with self.catalogue_response(), self.mock_job_client():
             await self.client.geostatistics.declustering.run(source=SOURCE_URL)
-            await self.client.geostatistics.kriging.run(source=SOURCE_URL, target=TARGET_URL, variogram=VARIOGRAM_URL)
+            await self.client.geostatistics.normal_score.run(distribution=SOURCE_URL)
         self.assertEqual(1, self.transport.request.call_count)
 
     async def test_catalogue_is_shared_across_topics(self) -> None:
@@ -245,17 +246,20 @@ class TestComputeClient(TestWithConnector):
 
     async def test_preview_is_off_by_default_even_for_feature_flagged_tasks(self) -> None:
         with self.catalogue_response(), self.mock_job_client() as submit:
-            await self.client.geostatistics.kriging.run(source=SOURCE_URL, target=TARGET_URL, variogram=VARIOGRAM_URL)
+            await self.client.converter.obj_import.run(file=FILE_URL)
         self.assertFalse(submit.await_args.kwargs["preview"])
 
-    async def test_preview_can_be_enabled(self) -> None:
-        """The preview flag is passed to the job, not sent as a task parameter."""
+    async def test_preview_can_be_overridden(self) -> None:
+        """Explicit preview settings do not become task parameters."""
         with self.catalogue_response(), self.mock_job_client() as submit:
-            await self.client.geostatistics.kriging.run(
-                source=SOURCE_URL, target=TARGET_URL, variogram=VARIOGRAM_URL, preview=True
-            )
-        self.assertTrue(submit.await_args.kwargs["preview"])
+            await self.client.converter.obj_import.run(file=FILE_URL, preview=False)
+        self.assertFalse(submit.await_args.kwargs["preview"])
         self.assertNotIn("preview", submit.await_args.kwargs["parameters"])
+
+    async def test_preview_can_be_explicitly_enabled(self) -> None:
+        with self.catalogue_response(), self.mock_job_client() as submit:
+            await self.client.converter.obj_import.run(file=FILE_URL, preview=True)
+        self.assertTrue(submit.await_args.kwargs["preview"])
 
     # -- errors ------------------------------------------------------------ #
 
@@ -275,15 +279,69 @@ class TestComputeClient(TestWithConnector):
         submit.assert_not_awaited()
 
     async def test_unexpected_parameter_raises_validation_error(self) -> None:
-        """An unknown keyword argument is rejected, and the error names the task."""
+        spec = next(task for task in self.catalogue["results"] if task["name"] == "declustering")
+        spec["parameters"]["additionalProperties"] = False
         with self.catalogue_response(), self.mock_job_client() as submit:
             with self.assertRaises(ParameterValidationError) as ctx:
                 await self.client.geostatistics.declustering.run(source=SOURCE_URL, bogus=1)
 
         self.assertIn("geostatistics.declustering.run():", str(ctx.exception))
         self.assertIn("bogus", str(ctx.exception))
-        # Binding failures populate ``errors`` too, so callers never have to parse the message.
-        self.assertEqual(["got an unexpected keyword argument 'bogus'"], ctx.exception.errors)
+        self.assertEqual(["parameters: unexpected parameter(s): 'bogus'"], ctx.exception.errors)
+        submit.assert_not_awaited()
+
+    async def test_unspecified_extra_field_policy_warns_and_preserves_values(self) -> None:
+        spec = next(task for task in self.catalogue["results"] if task["name"] == "declustering")
+        spec["parameters"].pop("additionalProperties", None)
+        extra = {"new_option": [1, None, {"enabled": True}]}
+        with (
+            self.catalogue_response(),
+            self.mock_job_client() as submit,
+            self.assertLogs("compute.validation", level="WARNING") as logs,
+        ):
+            await self.client.geostatistics.declustering.run(source=SOURCE_URL, new_parameter=extra)
+        self.assertEqual(extra, submit.await_args.kwargs["parameters"]["new_parameter"])
+        self.assertEqual(1, len(logs.output))
+        self.assertIn("to be submitted as is", logs.output[0])
+
+    async def test_explicitly_open_extra_fields_do_not_warn(self) -> None:
+        spec = next(task for task in self.catalogue["results"] if task["name"] == "declustering")
+        spec["parameters"]["additionalProperties"] = True
+        with (
+            self.catalogue_response(),
+            self.mock_job_client() as submit,
+            self.assertNoLogs("compute.validation", level="WARNING"),
+        ):
+            await self.client.geostatistics.declustering.run(source=SOURCE_URL, new_parameter=2)
+        self.assertEqual(2, submit.await_args.kwargs["parameters"]["new_parameter"])
+
+    async def test_typed_extra_fields_are_validated_without_deep_validation(self) -> None:
+        spec = next(task for task in self.catalogue["results"] if task["name"] == "declustering")
+        spec["parameters"]["additionalProperties"] = {"type": "integer", "minimum": 1}
+        with self.catalogue_response(), self.mock_job_client() as submit:
+            with self.assertRaisesRegex(ParameterValidationError, "new_count"):
+                await self.client.geostatistics.declustering.run(source=SOURCE_URL, new_count="invalid")
+            submit.assert_not_awaited()
+            await self.client.geostatistics.declustering.run(source=SOURCE_URL, new_count=2)
+        self.assertEqual(2, submit.await_args.kwargs["parameters"]["new_count"])
+
+    async def test_unsupported_optional_neighborhood_settings_are_rejected_locally(self) -> None:
+        from evo.compute import _stubgen
+        from test_payload_parity import _search
+
+        captured = next(
+            task for task in _stubgen.load_snapshot(_stubgen.DEFAULT_SNAPSHOT_DIR) if task.name == "declustering"
+        )
+        neighborhood = captured.parameters["properties"]["neighborhood"]
+        neighborhood["additionalProperties"] = False
+        neighborhood["properties"].pop("max_samples_per_octant", None)
+        spec = next(task for task in self.catalogue["results"] if task["name"] == "declustering")
+        spec["parameters"]["properties"]["neighborhood"] = neighborhood
+        with self.catalogue_response(), self.mock_job_client() as submit:
+            with self.assertRaisesRegex(ParameterValidationError, "neighborhood.*max_samples_per_octant"):
+                await self.client.geostatistics.declustering.run(
+                    source=SOURCE_URL, neighborhood=_search().model_copy(update={"max_samples_per_octant": 3})
+                )
         submit.assert_not_awaited()
 
     # -- progressive ergonomics (cache-backed, no forced discovery) -------- #

@@ -27,6 +27,7 @@ from evo.objects.typed import BaseObject, DownloadedObject
 from typing_extensions import NotRequired, TypedDict
 
 from .outputs import ResultNode, TaskResult
+from .overrides.geostatistics.kriging import KrigingOverride as _GeostatisticsKriging
 from .tasks.common.search import SearchNeighborhood
 from .tasks.common.source_target import AnyTypedAttribute
 
@@ -2256,516 +2257,6 @@ class GeostatisticsKnnResult(TaskResult):
     message: str
     """A message that says what happened in the task."""
     target: GeostatisticsKnnResultTarget
-    """The target that was created or updated."""
-
-class GeostatisticsKrigingSourceFilterCondition(TypedDict):
-    """
-    A leaf filter condition applied to one attribute of the filtered object.
-
-    Exactly one operator field must be provided.
-
-    - ``in``: Membership test. Provide string category names for
-        ``CategoryAttribute`` objects or integers for integer-coded indices.
-    - ``not_in``: Exclusion test.
-    - ``equal``, ``not_equal``: Numeric equality/inequality.
-    - ``greater_than``, ``greater_than_or_equal_to``, ``less_than``,
-        ``less_than_or_equal_to``: Numeric comparisons on numeric attributes.
-    """
-
-    attribute: AttributeInput
-    """Attribute used to filter locations."""
-    operator: Literal[
-        "in",
-        "not_in",
-        "equal",
-        "not_equal",
-        "greater_than",
-        "greater_than_or_equal_to",
-        "less_than",
-        "less_than_or_equal_to",
-    ]
-    """The filter operator. Use 'in' or 'not_in' for category/membership tests (pair with 'values'). Use 'equal', 'not_equal', 'greater_than', 'greater_than_or_equal_to', 'less_than', or 'less_than_or_equal_to' for numeric comparisons (pair with 'threshold')."""
-    threshold: NotRequired[float | None]
-    """Numeric threshold for comparison. Required when operator is 'equal', 'not_equal', 'greater_than', 'greater_than_or_equal_to', 'less_than', or 'less_than_or_equal_to'."""
-    type: NotRequired[Literal["condition"]]
-    """Identifies this as a leaf filter condition."""
-    values: NotRequired[list[str] | None]
-    """Category values to match. Required when operator is 'in' or 'not_in'. Use strings for string/category-name attributes; use integers for integer-coded attributes."""
-
-class GeostatisticsKrigingSourceAnyOfFilter(TypedDict):
-    """A composite filter that passes locations satisfying ANY child filter (OR logic)."""
-
-    filters: list[
-        GeostatisticsKrigingSourceFilterCondition
-        | GeostatisticsKrigingSourceAllOfFilter
-        | GeostatisticsKrigingSourceAnyOfFilter
-    ]
-    """At least one of these filters must be satisfied (OR logic)."""
-    type: NotRequired[Literal["any_of"]]
-    """Identifies this as an OR composite filter."""
-
-class GeostatisticsKrigingSourceAllOfFilter(TypedDict):
-    """A composite filter that passes locations satisfying ALL child filters (AND logic)."""
-
-    filters: list[
-        GeostatisticsKrigingSourceFilterCondition
-        | GeostatisticsKrigingSourceAllOfFilter
-        | GeostatisticsKrigingSourceAnyOfFilter
-    ]
-    """All of these filters must be satisfied (AND logic)."""
-    type: NotRequired[Literal["all_of"]]
-    """Identifies this as an AND composite filter."""
-
-class GeostatisticsKrigingSourceFilter(TypedDict):
-    """Optional filter to apply to the source object. This allows kriging to use only a subset of the known data, defined by filtering an attribute on the source object."""
-
-    where: (
-        GeostatisticsKrigingSourceFilterCondition
-        | GeostatisticsKrigingSourceAllOfFilter
-        | GeostatisticsKrigingSourceAnyOfFilter
-    )
-    """A filter expression defining which locations to include. Use a FilterCondition for a single predicate, AllOfFilter for AND logic, AnyOfFilter for OR logic, or nest them to build compound predicates."""
-
-class GeostatisticsKrigingSource(TypedDict):
-    """The source object and attribute containing known values."""
-
-    attribute: AttributeInput
-    """The known values, used to estimate values at unknown locations."""
-    filter: NotRequired[GeostatisticsKrigingSourceFilter | None]
-    """Optional filter to apply to the source object. This allows kriging to use only a subset of the known data, defined by filtering an attribute on the source object."""
-    object: ObjectInput
-    """Spatial locations of known values."""
-
-class GeostatisticsKrigingTargetAttributeCreate(TypedDict):
-    name: str
-    """The name of the attribute to create."""
-    operation: Literal["create"]
-    """The operation to perform on the attribute."""
-
-class GeostatisticsKrigingTargetAttributeUpdate(TypedDict):
-    operation: Literal["update"]
-    """The operation to perform on the attribute."""
-    reference: AttributeInput
-    """Reference to an existing attribute to update."""
-
-class GeostatisticsKrigingDiagnostics(TypedDict):
-    """Optional per-location diagnostic attributes to compute and write alongside the kriging result. Only diagnostics with an explicit attribute target are produced."""
-
-    aniso_mean_distance: NotRequired[
-        GeostatisticsKrigingTargetAttributeCreate | GeostatisticsKrigingTargetAttributeUpdate | AttributeInput
-    ]
-    """Attribute to create or update with the mean anisotropic (ellipsoid-space) distance from the target location to all neighbours."""
-    aniso_min_distance: NotRequired[
-        GeostatisticsKrigingTargetAttributeCreate | GeostatisticsKrigingTargetAttributeUpdate | AttributeInput
-    ]
-    """Attribute to create or update with the minimum anisotropic (ellipsoid-space) distance from the target location to any neighbour."""
-    kriging_efficiency: NotRequired[
-        GeostatisticsKrigingTargetAttributeCreate | GeostatisticsKrigingTargetAttributeUpdate | AttributeInput
-    ]
-    """Attribute to create or update with the proportion of point or intra-block variance explained by the kriging weights."""
-    kriging_mean: NotRequired[
-        GeostatisticsKrigingTargetAttributeCreate | GeostatisticsKrigingTargetAttributeUpdate | AttributeInput
-    ]
-    """Attribute to create or update with the GLS mean for ordinary kriging, or the supplied constant mean for simple kriging."""
-    kriging_variance: NotRequired[
-        GeostatisticsKrigingTargetAttributeCreate | GeostatisticsKrigingTargetAttributeUpdate | AttributeInput
-    ]
-    """Attribute to create or update with the kriging variance (estimation uncertainty)."""
-    mean_distance: NotRequired[
-        GeostatisticsKrigingTargetAttributeCreate | GeostatisticsKrigingTargetAttributeUpdate | AttributeInput
-    ]
-    """Attribute to create or update with the mean isotropic Euclidean distance from the target location to all neighbours."""
-    min_distance: NotRequired[
-        GeostatisticsKrigingTargetAttributeCreate | GeostatisticsKrigingTargetAttributeUpdate | AttributeInput
-    ]
-    """Attribute to create or update with the minimum isotropic Euclidean distance from the target location to any neighbour."""
-    num_drillholes: NotRequired[
-        GeostatisticsKrigingTargetAttributeCreate | GeostatisticsKrigingTargetAttributeUpdate | AttributeInput
-    ]
-    """Attribute to create or update with the number of distinct drillholes contributing to the estimate. Requires a DownholeIntervals source object."""
-    num_duplicates: NotRequired[
-        GeostatisticsKrigingTargetAttributeCreate | GeostatisticsKrigingTargetAttributeUpdate | AttributeInput
-    ]
-    """Attribute to create or update with the number of duplicate sample locations used in the estimate."""
-    num_equidistant: NotRequired[
-        GeostatisticsKrigingTargetAttributeCreate | GeostatisticsKrigingTargetAttributeUpdate | AttributeInput
-    ]
-    """Attribute to create or update with a hint of how many other samples could have replaced the last returned sample because they were the same distance from the target location. This is counted after searching and before clipping to the maximum number of samples."""
-    num_samples: NotRequired[
-        GeostatisticsKrigingTargetAttributeCreate | GeostatisticsKrigingTargetAttributeUpdate | AttributeInput
-    ]
-    """Attribute to create or update with the number of data samples used in the estimate."""
-    slope_of_regression: NotRequired[
-        GeostatisticsKrigingTargetAttributeCreate | GeostatisticsKrigingTargetAttributeUpdate | AttributeInput
-    ]
-    """Attribute to create or update with the slope of regression, a diagnostic for conditional bias."""
-    sum_negative_weights: NotRequired[
-        GeostatisticsKrigingTargetAttributeCreate | GeostatisticsKrigingTargetAttributeUpdate | AttributeInput
-    ]
-    """Attribute to create or update with the sum of negative kriging weights applied to data samples (zero when negative-weight removal is enabled)."""
-    sum_positive_weights: NotRequired[
-        GeostatisticsKrigingTargetAttributeCreate | GeostatisticsKrigingTargetAttributeUpdate | AttributeInput
-    ]
-    """Attribute to create or update with the sum of positive kriging weights applied to data samples."""
-    sum_weights: NotRequired[
-        GeostatisticsKrigingTargetAttributeCreate | GeostatisticsKrigingTargetAttributeUpdate | AttributeInput
-    ]
-    """Attribute to create or update with the sum of kriging weights applied to data samples."""
-    valid: NotRequired[
-        GeostatisticsKrigingTargetAttributeCreate | GeostatisticsKrigingTargetAttributeUpdate | AttributeInput
-    ]
-    """Attribute to create or update with whether each target location's neighbourhood satisfied the search constraints and produced an estimate."""
-
-class GeostatisticsKrigingAnyOfFilter(TypedDict):
-    """A composite filter that passes locations satisfying ANY child filter (OR logic)."""
-
-    filters: list[
-        GeostatisticsKrigingSourceFilterCondition | GeostatisticsKrigingAllOfFilter | GeostatisticsKrigingAnyOfFilter
-    ]
-    """At least one of these filters must be satisfied (OR logic)."""
-    type: NotRequired[Literal["any_of"]]
-    """Identifies this as an OR composite filter."""
-
-class GeostatisticsKrigingAllOfFilter(TypedDict):
-    """A composite filter that passes locations satisfying ALL child filters (AND logic)."""
-
-    filters: list[
-        GeostatisticsKrigingSourceFilterCondition | GeostatisticsKrigingAllOfFilter | GeostatisticsKrigingAnyOfFilter
-    ]
-    """All of these filters must be satisfied (AND logic)."""
-    type: NotRequired[Literal["all_of"]]
-    """Identifies this as an AND composite filter."""
-
-class GeostatisticsKrigingFilter(TypedDict):
-    """Optional filter to apply to the target object. This allows the kriging to only be applied to a subset of the target object, defined by filtering an attribute on the target object."""
-
-    where: GeostatisticsKrigingSourceFilterCondition | GeostatisticsKrigingAllOfFilter | GeostatisticsKrigingAnyOfFilter
-    """A filter expression defining which locations to include. Use a FilterCondition for a single predicate, AllOfFilter for AND logic, AnyOfFilter for OR logic, or nest them to build compound predicates."""
-
-class GeostatisticsKrigingTarget(TypedDict):
-    """The target object and attribute to create or update with kriging results."""
-
-    attribute: GeostatisticsKrigingTargetAttributeCreate | GeostatisticsKrigingTargetAttributeUpdate | AttributeInput
-    """Attribute to create or update on the target object with the kriging estimate. Use `{"operation": "create", "name": ...}` to add a new attribute, or `{"operation": "update", "reference": ...}` to overwrite an existing one."""
-    diagnostics: NotRequired[GeostatisticsKrigingDiagnostics | None]
-    """Optional per-location diagnostic attributes to compute and write alongside the kriging result. Only diagnostics with an explicit attribute target are produced."""
-    filter: NotRequired[GeostatisticsKrigingFilter | None]
-    """Optional filter to apply to the target object. This allows the kriging to only be applied to a subset of the target object, defined by filtering an attribute on the target object."""
-    object: ObjectInput
-    """Object to evaluate onto."""
-    update_mode: NotRequired[Literal["auto", "merge", "replace"]]
-    """How to treat target locations that this run did not estimate, such as locations excluded by the target filter or where the neighbourhood search found no samples. 'merge' keeps the values those locations already had, so running one domain at a time accumulates results into a single attribute. 'replace' clears them, so the attribute only ever holds the results of the latest run. 'auto' (the default) merges when a target filter is set and replaces otherwise. Merging only applies to attributes that already exist on the target object; a newly created attribute has nothing to merge with. Boolean and integer diagnostic attributes have no way to represent 'not estimated', so within the filter they are always written as produced."""
-
-class GeostatisticsKrigingSimpleKriging(TypedDict):
-    """Kriging method with a constant mean value."""
-
-    mean: float
-    """The mean value, assumed to be constant across the domain."""
-    type: Literal["simple"]
-    """The type of kriging to use."""
-
-class GeostatisticsKrigingOrdinaryKriging(TypedDict):
-    """Kriging method with a variable mean value."""
-
-    type: Literal["ordinary"]
-    """The type of kriging to use."""
-
-class GeostatisticsKrigingNeighborhoodEllipsoidEllipsoidRanges(TypedDict):
-    """The ranges of the ellipsoid"""
-
-    major: float
-    """The major axis length of the ellipsoid"""
-    minor: float
-    """The minor axis length of the ellipsoid"""
-    semi_major: float
-    """The semi major axis length of the ellipsoid"""
-
-class GeostatisticsKrigingRotation(TypedDict):
-    """The rotation of the ellipsoid"""
-
-    dip: NotRequired[float]
-    """second rotation, about the x-axis, in degrees"""
-    dip_azimuth: NotRequired[float]
-    """first rotation, about the z-axis, in degrees"""
-    pitch: NotRequired[float]
-    """third rotation, about the z-axis, in degrees"""
-
-class GeostatisticsKrigingEllipsoid(TypedDict):
-    """
-    The ellipsoid, to search for points within
-    Alias: anisotropy
-    """
-
-    ellipsoid_ranges: GeostatisticsKrigingNeighborhoodEllipsoidEllipsoidRanges
-    """The ranges of the ellipsoid"""
-    rotation: GeostatisticsKrigingRotation
-    """The rotation of the ellipsoid"""
-
-class GeostatisticsKrigingFractionalDistance(TypedDict):
-    """Outlier distance specified as a fraction of the search radius."""
-
-    distance: float
-    """The distance to the outlier limit, as a fraction of the search radius (0.0 to 1.0). For example, a value of 0.5 means the outlier boundary is at 50% of the search radius."""
-    type: Literal["fraction"]
-    """Specify the distance as a fraction of the search radius."""
-
-class GeostatisticsKrigingAbsoluteDistance(TypedDict):
-    """Outlier distance specified as an absolute value."""
-
-    distance: float
-    """The absolute distance to the outlier limit. This cannot be used yet."""
-    type: Literal["absolute"]
-    """Specify the distance as an absolute value."""
-
-class GeostatisticsKrigingOutlierRestriction(TypedDict):
-    """Outlier restrictions."""
-
-    action: Literal["clamp", "discard"]
-    """The action to take on outliers. Clamp the value, or discard the point."""
-    clamp_delta: NotRequired[float]
-    """The maximum randomly-applied delta value for clamped outlier values.Random delta values in the range [0.0...clamp_limit) are added to clamped values toavoid identical values occurring throughout the samples."""
-    distance: GeostatisticsKrigingFractionalDistance | GeostatisticsKrigingAbsoluteDistance
-    """The distance to the outlier limit."""
-    max_value_threshold: NotRequired[float]
-    """The maximum allowed value for the outlier limit. Values exceeding this threshold are either discarded or clamped."""
-
-class GeostatisticsKrigingNeighborhoodWithOutlierRestrictions(TypedDict):
-    """In Kriging, the value of each evaluation point is determined by a set of nearby points with known values. The search parameters determines which nearby points to use."""
-
-    ellipsoid: GeostatisticsKrigingEllipsoid
-    """
-    The ellipsoid, to search for points within
-    Alias: anisotropy
-    """
-    max_drillholes_per_estimate: NotRequired[int | None]
-    """The maximum number of drillholes to be used in each estimate."""
-    max_empty_octants: NotRequired[int]
-    """The maximum number of empty octants (aka sectors) allowed when searching for neighbors. Omitting this, or a value of 8, disables the octant check."""
-    max_empty_quadrants: NotRequired[int | None]
-    """The maximum number of empty quadrants (2D sectors, ignoring Z) allowed when searching for neighbors. If not specified, quadrant filtering is disabled."""
-    max_samples: int
-    """
-    The maximum number of samples to use for each evaluation point.
-    Alias: max-samples
-    """
-    max_samples_per_drillhole: NotRequired[int | None]
-    """The maximum number of samples to use from each drillhole (defined by drillhole ID)"""
-    max_samples_per_octant: NotRequired[int | None]
-    """The maximum number of samples to use from each octant."""
-    max_samples_per_quadrant: NotRequired[int | None]
-    """The maximum number of samples to use from each quadrant (2D sectors, ignoring Z)."""
-    min_samples: NotRequired[int]
-    """
-    The minimum number of samples to use for each evaluation point.
-    Alias: min-samples
-    """
-    outliers: NotRequired[GeostatisticsKrigingOutlierRestriction | None]
-    """Outlier restrictions."""
-
-class GeostatisticsKrigingBlockDiscretization(TypedDict):
-    """Sub-block discretization for block kriging. When provided, each target block is subdivided into nx * ny * nz sub-cells and the kriged value is averaged across these sub-cells. When omitted, point kriging is performed. Only applicable when the target is a 3D grid or block model."""
-
-    nx: NotRequired[int]
-    """Number of subdivisions in the x direction"""
-    ny: NotRequired[int]
-    """Number of subdivisions in the y direction"""
-    nz: NotRequired[int]
-    """Number of subdivisions in the z direction"""
-
-class GeostatisticsKrigingResultAttribute(ResultNode):
-    """Attribute containing the kriging result."""
-
-    name: str
-    """The name of the output attribute."""
-    reference: str
-    """Reference to the attribute in the geoscience object."""
-
-class GeostatisticsKrigingResultResultTargetDiagnosticsAnisoMeanDistance(ResultNode):
-    """Attribute containing the mean anisotropic (ellipsoid-space) distance from the target location to all neighbours."""
-
-    name: str
-    """The name of the output attribute."""
-    reference: str
-    """Reference to the attribute in the geoscience object."""
-
-class GeostatisticsKrigingResultResultTargetDiagnosticsAnisoMinDistance(ResultNode):
-    """Attribute containing the minimum anisotropic (ellipsoid-space) distance from the target location to any neighbour."""
-
-    name: str
-    """The name of the output attribute."""
-    reference: str
-    """Reference to the attribute in the geoscience object."""
-
-class GeostatisticsKrigingResultResultTargetDiagnosticsKrigingEfficiency(ResultNode):
-    """Attribute containing the proportion of point or intra-block variance explained by kriging weights."""
-
-    name: str
-    """The name of the output attribute."""
-    reference: str
-    """Reference to the attribute in the geoscience object."""
-
-class GeostatisticsKrigingResultResultTargetDiagnosticsKrigingMean(ResultNode):
-    """Attribute containing the GLS mean for ordinary kriging, or the supplied constant mean for simple kriging."""
-
-    name: str
-    """The name of the output attribute."""
-    reference: str
-    """Reference to the attribute in the geoscience object."""
-
-class GeostatisticsKrigingResultResultTargetDiagnosticsKrigingVariance(ResultNode):
-    """Attribute containing the kriging variance (estimation uncertainty)."""
-
-    name: str
-    """The name of the output attribute."""
-    reference: str
-    """Reference to the attribute in the geoscience object."""
-
-class GeostatisticsKrigingResultResultTargetDiagnosticsMeanDistance(ResultNode):
-    """Attribute containing the mean isotropic Euclidean distance from the target location to all neighbours."""
-
-    name: str
-    """The name of the output attribute."""
-    reference: str
-    """Reference to the attribute in the geoscience object."""
-
-class GeostatisticsKrigingResultResultTargetDiagnosticsMinDistance(ResultNode):
-    """Attribute containing the minimum isotropic Euclidean distance from the target location to any neighbour."""
-
-    name: str
-    """The name of the output attribute."""
-    reference: str
-    """Reference to the attribute in the geoscience object."""
-
-class GeostatisticsKrigingResultResultTargetDiagnosticsNumDrillholes(ResultNode):
-    """Attribute containing the number of distinct drillholes contributing to the estimate."""
-
-    name: str
-    """The name of the output attribute."""
-    reference: str
-    """Reference to the attribute in the geoscience object."""
-
-class GeostatisticsKrigingResultResultTargetDiagnosticsNumDuplicates(ResultNode):
-    """Attribute containing the number of duplicate sample locations used in the estimate."""
-
-    name: str
-    """The name of the output attribute."""
-    reference: str
-    """Reference to the attribute in the geoscience object."""
-
-class GeostatisticsKrigingResultResultTargetDiagnosticsNumEquidistant(ResultNode):
-    """Attribute containing a hint of how many other samples could have replaced the last returned sample because they were the same distance from the target location. This is counted after searching and before clipping to the maximum number of samples."""
-
-    name: str
-    """The name of the output attribute."""
-    reference: str
-    """Reference to the attribute in the geoscience object."""
-
-class GeostatisticsKrigingResultResultTargetDiagnosticsNumSamples(ResultNode):
-    """Attribute containing the number of data samples used in the estimate."""
-
-    name: str
-    """The name of the output attribute."""
-    reference: str
-    """Reference to the attribute in the geoscience object."""
-
-class GeostatisticsKrigingResultResultTargetDiagnosticsSlopeOfRegression(ResultNode):
-    """Attribute containing the diagnostic for conditional bias."""
-
-    name: str
-    """The name of the output attribute."""
-    reference: str
-    """Reference to the attribute in the geoscience object."""
-
-class GeostatisticsKrigingResultResultTargetDiagnosticsSumNegativeWeights(ResultNode):
-    """Attribute containing the sum of negative kriging weights applied to data samples (zero when negative-weight removal is enabled)."""
-
-    name: str
-    """The name of the output attribute."""
-    reference: str
-    """Reference to the attribute in the geoscience object."""
-
-class GeostatisticsKrigingResultResultTargetDiagnosticsSumPositiveWeights(ResultNode):
-    """Attribute containing the sum of positive kriging weights applied to data samples."""
-
-    name: str
-    """The name of the output attribute."""
-    reference: str
-    """Reference to the attribute in the geoscience object."""
-
-class GeostatisticsKrigingResultResultTargetDiagnosticsSumWeights(ResultNode):
-    """Attribute containing the sum of kriging weights applied to data samples."""
-
-    name: str
-    """The name of the output attribute."""
-    reference: str
-    """Reference to the attribute in the geoscience object."""
-
-class GeostatisticsKrigingResultValid(ResultNode):
-    """Attribute containing whether each target location's neighbourhood satisfied the search constraints and produced an estimate."""
-
-    name: str
-    """The name of the output attribute."""
-    reference: str
-    """Reference to the attribute in the geoscience object."""
-
-class GeostatisticsKrigingResultDiagnostics(ResultNode):
-    """Diagnostic attributes produced alongside the kriging result, when requested."""
-
-    aniso_mean_distance: GeostatisticsKrigingResultResultTargetDiagnosticsAnisoMeanDistance | None
-    """Attribute containing the mean anisotropic (ellipsoid-space) distance from the target location to all neighbours."""
-    aniso_min_distance: GeostatisticsKrigingResultResultTargetDiagnosticsAnisoMinDistance | None
-    """Attribute containing the minimum anisotropic (ellipsoid-space) distance from the target location to any neighbour."""
-    kriging_efficiency: GeostatisticsKrigingResultResultTargetDiagnosticsKrigingEfficiency | None
-    """Attribute containing the proportion of point or intra-block variance explained by kriging weights."""
-    kriging_mean: GeostatisticsKrigingResultResultTargetDiagnosticsKrigingMean | None
-    """Attribute containing the GLS mean for ordinary kriging, or the supplied constant mean for simple kriging."""
-    kriging_variance: GeostatisticsKrigingResultResultTargetDiagnosticsKrigingVariance | None
-    """Attribute containing the kriging variance (estimation uncertainty)."""
-    mean_distance: GeostatisticsKrigingResultResultTargetDiagnosticsMeanDistance | None
-    """Attribute containing the mean isotropic Euclidean distance from the target location to all neighbours."""
-    min_distance: GeostatisticsKrigingResultResultTargetDiagnosticsMinDistance | None
-    """Attribute containing the minimum isotropic Euclidean distance from the target location to any neighbour."""
-    num_drillholes: GeostatisticsKrigingResultResultTargetDiagnosticsNumDrillholes | None
-    """Attribute containing the number of distinct drillholes contributing to the estimate."""
-    num_duplicates: GeostatisticsKrigingResultResultTargetDiagnosticsNumDuplicates | None
-    """Attribute containing the number of duplicate sample locations used in the estimate."""
-    num_equidistant: GeostatisticsKrigingResultResultTargetDiagnosticsNumEquidistant | None
-    """Attribute containing a hint of how many other samples could have replaced the last returned sample because they were the same distance from the target location. This is counted after searching and before clipping to the maximum number of samples."""
-    num_samples: GeostatisticsKrigingResultResultTargetDiagnosticsNumSamples | None
-    """Attribute containing the number of data samples used in the estimate."""
-    slope_of_regression: GeostatisticsKrigingResultResultTargetDiagnosticsSlopeOfRegression | None
-    """Attribute containing the diagnostic for conditional bias."""
-    sum_negative_weights: GeostatisticsKrigingResultResultTargetDiagnosticsSumNegativeWeights | None
-    """Attribute containing the sum of negative kriging weights applied to data samples (zero when negative-weight removal is enabled)."""
-    sum_positive_weights: GeostatisticsKrigingResultResultTargetDiagnosticsSumPositiveWeights | None
-    """Attribute containing the sum of positive kriging weights applied to data samples."""
-    sum_weights: GeostatisticsKrigingResultResultTargetDiagnosticsSumWeights | None
-    """Attribute containing the sum of kriging weights applied to data samples."""
-    valid: GeostatisticsKrigingResultValid | None
-    """Attribute containing whether each target location's neighbourhood satisfied the search constraints and produced an estimate."""
-
-class GeostatisticsKrigingResultTarget(ResultNode):
-    """The target that was created or updated."""
-
-    attribute: GeostatisticsKrigingResultAttribute
-    """Attribute containing the kriging result."""
-    description: str | None
-    """The description of the geoscience object."""
-    diagnostics: GeostatisticsKrigingResultDiagnostics | None
-    """Diagnostic attributes produced alongside the kriging result, when requested."""
-    name: str
-    """The name of the geoscience object."""
-    reference: str
-    """Reference to a geoscience object."""
-    schema_id: str
-    """The ID of the Geoscience Object schema."""
-
-class GeostatisticsKrigingResult(TaskResult):
-    """Result of the kriging task."""
-
-    message: str
-    """A message that says what happened in the task."""
-    target: GeostatisticsKrigingResultTarget
     """The target that was created or updated."""
 
 class GeostatisticsLocationWiseSource(TypedDict):
@@ -5093,7 +4584,7 @@ class _ConverterDetectConverter:
         self,
         *,
         files: list[FileInput],
-        preview: bool = True,
+        preview: bool = False,
     ) -> ConverterDetectConverterResult:
         """Accepts one or more file references, inspects each file's extension, and returns which converter task(s) and geoscience object schema(s) are available for importing each file."""
         ...
@@ -5109,7 +4600,7 @@ class _ConverterDgnImport:
         epsg_code: int | None = ...,
         include_fills: bool = ...,
         include_text_anchors: bool = ...,
-        preview: bool = True,
+        preview: bool = False,
     ) -> ConverterDgnImportResult:
         """Import DGN files into Evo as line segments, with fallback to triangle mesh or pointset."""
         ...
@@ -5123,7 +4614,7 @@ class _ConverterErsImport:
         file: FileInput,
         file_data: FileInput,
         target: ConverterErsImportTarget,
-        preview: bool = True,
+        preview: bool = False,
     ) -> ConverterErsImportResult:
         """Import ER Mapper Raster (.ers) files into Evo as Regular-2D geoscience objects."""
         ...
@@ -5137,7 +4628,7 @@ class _ConverterGeosoftGridImport:
         file: FileInput,
         target: ConverterGeosoftGridImportTarget,
         file_gi: FileInput | None = ...,
-        preview: bool = True,
+        preview: bool = False,
     ) -> ConverterGeosoftGridImportResult:
         """Import Geosoft Grid (.grd/.grd.gi) files into Evo as Regular-2D geoscience objects."""
         ...
@@ -5150,7 +4641,7 @@ class _ConverterGeosoftSurfaceImport:
         *,
         file: FileInput,
         target: ConverterGeosoftSurfaceImportTarget,
-        preview: bool = True,
+        preview: bool = False,
     ) -> ConverterGeosoftSurfaceImportResult:
         """Import Geosoft Surface (.geosoft_surface) files into Evo as GeologicalModelMeshes geoscience objects."""
         ...
@@ -5163,7 +4654,7 @@ class _ConverterGeosoftVoxelImport:
         *,
         file: FileInput,
         target: ConverterGeosoftVoxelImportTarget,
-        preview: bool = True,
+        preview: bool = False,
     ) -> ConverterGeosoftVoxelImportResult:
         """Import Geosoft Voxel (.geosoft_voxel) files into Evo as either Regular-3D or Tensor-3D geoscience objects."""
         ...
@@ -5179,7 +4670,7 @@ class _ConverterImageImport:
         cell_size: list[float] | None = ...,
         coordinate_reference_system: str = ...,
         origin: list[float] | None = ...,
-        preview: bool = True,
+        preview: bool = False,
     ) -> ConverterImageImportResult:
         """Import image files into Evo as Regular-2D geoscience objects."""
         ...
@@ -5193,7 +4684,7 @@ class _ConverterObjImport:
         file: FileInput,
         target: ConverterObjImportTarget,
         coordinate_reference_system: str | None = ...,
-        preview: bool = True,
+        preview: bool = False,
     ) -> ConverterObjImportResult:
         """Import OBJ (Wavefront) files into Evo as Triangle Mesh geoscience objects. Supports triangles, quads (auto-triangulated), and multiple objects within a single file."""
         ...
@@ -5213,7 +4704,7 @@ class _ConverterShpImport:
         file_sbn: FileInput | None = ...,
         file_sbx: FileInput | None = ...,
         file_xml: FileInput | None = ...,
-        preview: bool = True,
+        preview: bool = False,
     ) -> ConverterShpImportResult:
         """Task to import SHP files into Evo as Triangle Mesh geoscience objects."""
         ...
@@ -5228,7 +4719,7 @@ class _ConverterUbcImport:
         file_mod: FileInput,
         target: ConverterUbcImportTarget,
         coordinate_reference_system: str = ...,
-        preview: bool = True,
+        preview: bool = False,
     ) -> ConverterUbcImportResult:
         """Task to import UBC Grids into Evo as Tensor-3D geoscience objects."""
         ...
@@ -5240,7 +4731,7 @@ class _ConverterVtkImport:
         self,
         *,
         files: list[FileInput],
-        preview: bool = True,
+        preview: bool = False,
     ) -> ConverterVtkImportResult:
         """VTK Import compute task"""
         ...
@@ -5257,7 +4748,7 @@ class _ConverterXyzImport:
         x_index: int | None = ...,
         y_index: int | None = ...,
         z_index: int | None = ...,
-        preview: bool = True,
+        preview: bool = False,
     ) -> ConverterXyzImportResult:
         """Task to import XYZ files into Evo as Pointset geoscience objects."""
         ...
@@ -5270,7 +4761,7 @@ class _CptToBoreholeCptReader:
         *,
         cpt_file: FileInput,
         target_downhole_collection: CptToBoreholeCptReaderTargetDownholeCollection,
-        preview: bool = True,
+        preview: bool = False,
     ) -> CptToBoreholeCptReaderResult:
         """CPT reader task"""
         ...
@@ -5286,7 +4777,7 @@ class _CptToBoreholeCreateClusters:
         hole_ids: list[str] | None = ...,
         number_of_clusters: int | None = ...,
         uncluster: bool = ...,
-        preview: bool = True,
+        preview: bool = False,
     ) -> CptToBoreholeCreateClustersResult:
         """Create clusters of related soil regions based on the stratification performed by the stratify task."""
         ...
@@ -5302,7 +4793,7 @@ class _CptToBoreholePublish:
         include_clusters: bool,
         cluster_metadata: list[CptToBoreholePublishClusterMetadata] | None = ...,
         exclude_collections: list[Literal["measured_cpt_readings", "derived_cpt_readings", "geology_layers"]] = ...,
-        preview: bool = True,
+        preview: bool = False,
     ) -> CptToBoreholePublishResult:
         """Publish a finalized downhole collection as a new geoscience object for downstream consumption."""
         ...
@@ -5317,7 +4808,7 @@ class _CptToBoreholeStratify:
         target_downhole_collection: CptToBoreholeStratifyTargetDownholeCollection,
         cpt_parameters: list[CptToBoreholeStratifyPerHoleParameters] | None = ...,
         execution_mode: Literal["inline", "fan_out", "auto"] = ...,
-        preview: bool = True,
+        preview: bool = False,
     ) -> CptToBoreholeStratifyResult:
         """Classifies and stratifies CPT data into geological layers based on predefined criteria and algorithms, facilitating geotechnical analysis and modeling."""
         ...
@@ -5330,7 +4821,7 @@ class _DriverDriverGeneralCompute:
         *,
         worker_message_body_json: str,
         _backend_url: str = ...,
-        preview: bool = True,
+        preview: bool = False,
     ) -> DriverDriverGeneralComputeResult:
         """Driver general compute task"""
         ...
@@ -5346,7 +4837,7 @@ class _GeophysicsGravityTerrainCorrection:
         correction_radius: float,
         terrain_layer: GeophysicsGravityTerrainCorrectionTerrainLayer,
         water_layer: GeophysicsGravityTerrainCorrectionWaterLayer | None = ...,
-        preview: bool = True,
+        preview: bool = False,
     ) -> GeophysicsGravityTerrainCorrectionResult:
         """Gravity terrain correction compute task for geophysical surveys"""
         ...
@@ -5360,7 +4851,7 @@ class _GeophysicsRegular2dGridToTrimesh:
         source: GeophysicsRegular2dGridToTrimeshSourceInput | AnyTypedAttribute,
         target: GeophysicsRegular2dGridToTrimeshTarget,
         settings: GeophysicsRegular2dGridToTrimeshSettings = ...,
-        preview: bool = True,
+        preview: bool = False,
     ) -> GeophysicsRegular2dGridToTrimeshResult:
         """Convert a regular 2D grid to a triangle mesh using a cell-centered or vertex-centered scalar attribute as Z values. Supports optional NaN filtering."""
         ...
@@ -5375,7 +4866,7 @@ class _GeostatisticsBreakTies:
         target: GeostatisticsBreakTiesTarget | AnyTypedAttribute,
         neighborhood: GeostatisticsBreakTiesBreakTiesSearch | SearchNeighborhood,
         seed: int = ...,
-        preview: bool = True,
+        preview: bool = False,
     ) -> GeostatisticsBreakTiesResult:
         """For more information, please read the <a href='/docs/guides/geostatistics-tasks/tasks/break-ties'>guide</a>"""
         ...
@@ -5399,7 +4890,7 @@ class _GeostatisticsConditionalTurningBands:
         random_seed: int = ...,
         realizations: int = ...,
         source_filter: GeostatisticsConditionalTurningBandsSourceFilter | None = ...,
-        preview: bool = True,
+        preview: bool = False,
     ) -> GeostatisticsConditionalTurningBandsResult:
         """Runs the turning band simulator using an existing continuous distribution. For more information, please read the <a href='/docs/guides/geostatistics-tasks/tasks/conditional-turning-bands'>guide</a>"""
         ...
@@ -5446,7 +4937,7 @@ class _GeostatisticsContinuousDistribution:
         target: GeostatisticsContinuousDistributionTarget,
         tail_extrapolation: GeostatisticsContinuousDistributionTailExtrapolation | None = ...,
         weights: GeostatisticsContinuousDistributionWeights | None | AnyTypedAttribute = ...,
-        preview: bool = True,
+        preview: bool = False,
     ) -> GeostatisticsContinuousDistributionResult:
         """For more information, please read the <a href='/docs/guides/geostatistics-tasks/tasks/continuous-distribution'>guide</a>"""
         ...
@@ -5462,7 +4953,7 @@ class _GeostatisticsDeclustering:
         target: GeostatisticsDeclusteringTarget | AnyTypedAttribute,
         neighborhood: GeostatisticsDeclusteringExtendedNeighborhood | SearchNeighborhood,
         power: float | None = ...,
-        preview: bool = True,
+        preview: bool = False,
     ) -> GeostatisticsDeclusteringResult:
         """Computes grid-based declustering weights by measuring each sample's influence on evaluation locations. Supports both KNN (arithmetic mean) and IDW (inverse-distance weighted) modes via an optional power parameter."""
         ...
@@ -5480,7 +4971,7 @@ class _GeostatisticsExperimentalVariogram:
             | GeostatisticsExperimentalVariogramDownholeVariogram
         ],
         target: GeostatisticsExperimentalVariogramTarget,
-        preview: bool = True,
+        preview: bool = False,
     ) -> GeostatisticsExperimentalVariogramResult:
         """Computes one or more experimental (sample) variograms from a points or downhole intervals source object and writes them to a new experimental variogram object. A single call can mix omnidirectional, directional (azimuth/dip tolerance cone with optional bandwidth/bandheight) and downhole variograms, each with its own lag definition."""
         ...
@@ -5495,7 +4986,7 @@ class _GeostatisticsIdw:
         target: GeostatisticsIdwTarget | AnyTypedAttribute,
         neighborhood: GeostatisticsIdwExtendedNeighborhood | SearchNeighborhood,
         power: float,
-        preview: bool = True,
+        preview: bool = False,
     ) -> GeostatisticsIdwResult:
         """Inverse distance weighting estimation using weighted average of nearby sample values, where weights are inversely proportional to distance raised to a specified power."""
         ...
@@ -5509,26 +5000,9 @@ class _GeostatisticsKnn:
         source: GeostatisticsKnnSource | AnyTypedAttribute,
         target: GeostatisticsKnnTarget | AnyTypedAttribute,
         neighborhood: GeostatisticsKnnExtendedNeighborhood | SearchNeighborhood,
-        preview: bool = True,
+        preview: bool = False,
     ) -> GeostatisticsKnnResult:
         """Nearest neighbor estimation using arithmetic mean of nearby sample values."""
-        ...
-
-class _GeostatisticsKriging:
-    """For more information, please read the <a href='/docs/guides/geostatistics-tasks/tasks/kriging'>guide</a>"""
-
-    async def run(
-        self,
-        *,
-        source: GeostatisticsKrigingSource | AnyTypedAttribute,
-        target: GeostatisticsKrigingTarget | AnyTypedAttribute,
-        kriging_method: GeostatisticsKrigingSimpleKriging | GeostatisticsKrigingOrdinaryKriging,
-        variogram: ObjectInput,
-        neighborhood: GeostatisticsKrigingNeighborhoodWithOutlierRestrictions | SearchNeighborhood,
-        block_discretisation: GeostatisticsKrigingBlockDiscretization | None = ...,
-        preview: bool = True,
-    ) -> GeostatisticsKrigingResult:
-        """For more information, please read the <a href='/docs/guides/geostatistics-tasks/tasks/kriging'>guide</a>"""
         ...
 
 class _GeostatisticsLocationWise:
@@ -5543,7 +5017,7 @@ class _GeostatisticsLocationWise:
         probability_above_cutoff: GeostatisticsLocationWiseProbabilityAboveCutoff | None = ...,
         quantiles: list[float] | None = ...,
         summary: bool | None = ...,
-        preview: bool = True,
+        preview: bool = False,
     ) -> GeostatisticsLocationWiseResult:
         """For more information, please read the <a href='/docs/guides/geostatistics-tasks/tasks/location-wise'>guide</a>"""
         ...
@@ -5561,7 +5035,7 @@ class _GeostatisticsLossCalculation:
         mining_waste_cost: float,
         mining_ore_cost: float,
         metal_recovery_fraction: float,
-        preview: bool = True,
+        preview: bool = False,
     ) -> GeostatisticsLossCalculationResult:
         """Calculate loss given block model and economic parameters"""
         ...
@@ -5576,7 +5050,7 @@ class _GeostatisticsNormalScore:
         source: GeostatisticsNormalScoreSource | AnyTypedAttribute,
         distribution: ObjectInput,
         target: GeostatisticsNormalScoreTarget | AnyTypedAttribute,
-        preview: bool = True,
+        preview: bool = False,
     ) -> GeostatisticsNormalScoreResult:
         """For more information, please read the <a href='/docs/guides/geostatistics-tasks/tasks/normal-score'>guide</a>"""
         ...
@@ -5594,7 +5068,7 @@ class _GeostatisticsProfitCalculation:
         mining_waste_cost: float,
         mining_ore_cost: float,
         metal_recovery_fraction: float,
-        preview: bool = True,
+        preview: bool = False,
     ) -> GeostatisticsProfitCalculationResult:
         """Calculate profit given block model and economic parameters"""
         ...
@@ -5623,7 +5097,7 @@ class _GeostatisticsSimulationReport:
         random_seed: int = ...,
         report_context: GeostatisticsSimulationReportReportContext | None = ...,
         report_mean_thresholds: GeostatisticsSimulationReportReportMeanThresholds | None = ...,
-        preview: bool = True,
+        preview: bool = False,
     ) -> GeostatisticsSimulationReportResult:
         """For more information, please read the <a href='/docs/guides/geostatistics-tasks/tasks/simulation-report'>guide</a>"""
         ...
@@ -5641,7 +5115,7 @@ class _GeotechAddToIntersectedGeometry:
         max_point: GeotechAddToIntersectedGeometryPoint3D = ...,
         min_point: GeotechAddToIntersectedGeometryPoint3D2 = ...,
         rotation_angle: float = ...,
-        preview: bool = True,
+        preview: bool = False,
     ) -> GeotechAddToIntersectedGeometryResult:
         """Adds one or more triangle mesh objects to an existing intersected Geological Model Meshes object."""
         ...
@@ -5654,7 +5128,7 @@ class _GeotechCalculateMeshQualityHistogram:
         *,
         source: ObjectInput,
         bin_width: float = ...,
-        preview: bool = True,
+        preview: bool = False,
     ) -> GeotechCalculateMeshQualityHistogramResult:
         """Calculates a normalized inverse condition number histogram for triangles in a Triangle Mesh or Geological Model Meshes object."""
         ...
@@ -5666,7 +5140,7 @@ class _GeotechCheckTriangleOrientation:
         self,
         *,
         source: ObjectInput,
-        preview: bool = True,
+        preview: bool = False,
     ) -> GeotechCheckTriangleOrientationResult:
         """Identifies triangles with inconsistent normal orientation relative to their neighbors in a Triangle Mesh or Geological Model Meshes object."""
         ...
@@ -5680,7 +5154,7 @@ class _GeotechCopyGeologicalModelMeshes:
         source: ObjectInput,
         target: GeotechCopyGeologicalModelMeshesTarget,
         remove_external_volumes: bool = ...,
-        preview: bool = True,
+        preview: bool = False,
     ) -> GeotechCopyGeologicalModelMeshesResult:
         """Copies an existing set of geological model meshes, optionally removing external volumes from the result."""
         ...
@@ -5695,7 +5169,7 @@ class _GeotechCreateCrossSection:
         target: GeotechCreateCrossSectionTarget,
         section_origin: GeotechCreateCrossSectionPoint3D,
         section_dip_azimuth_degrees: float,
-        preview: bool = True,
+        preview: bool = False,
     ) -> GeotechCreateCrossSectionResult:
         """Intersects parametric volumes in a 3D Design Geometry with a vertical plane defined by a section origin and dip azimuth, producing a 2D Design Geometry with polyline boundaries."""
         ...
@@ -5708,7 +5182,7 @@ class _GeotechCreateGeologicalModelMeshes:
         *,
         source: ObjectInput,
         target: GeotechCreateGeologicalModelMeshesTarget,
-        preview: bool = True,
+        preview: bool = False,
     ) -> GeotechCreateGeologicalModelMeshesResult:
         """Decomposes an intersected mesh or existing GMM into per-volume geological model meshes, optionally removing the top (external) volume."""
         ...
@@ -5722,7 +5196,7 @@ class _GeotechDetectDegenerateTriangles:
         source: ObjectInput,
         cap_min_angle_degrees: float = ...,
         needle_threshold_ratio: float = ...,
-        preview: bool = True,
+        preview: bool = False,
     ) -> GeotechDetectDegenerateTrianglesResult:
         """Identifies needle and cap triangles in a Triangle Mesh or Geological Model Meshes object."""
         ...
@@ -5734,7 +5208,7 @@ class _GeotechDetectDuplicatePoints:
         self,
         *,
         source: ObjectInput,
-        preview: bool = True,
+        preview: bool = False,
     ) -> GeotechDetectDuplicatePointsResult:
         """Identifies exact duplicate vertices in a Triangle Mesh or Geological Model Meshes object."""
         ...
@@ -5746,7 +5220,7 @@ class _GeotechDetectDuplicateTriangles:
         self,
         *,
         source: ObjectInput,
-        preview: bool = True,
+        preview: bool = False,
     ) -> GeotechDetectDuplicateTrianglesResult:
         """Identifies duplicate triangles (same vertex indices regardless of order) in a Triangle Mesh or Geological Model Meshes object."""
         ...
@@ -5759,7 +5233,7 @@ class _GeotechDetectFins:
         *,
         source: ObjectInput,
         max_area_ratio: float = ...,
-        preview: bool = True,
+        preview: bool = False,
     ) -> GeotechDetectFinsResult:
         """Identifies fin-like connected components without closed boundaries in a Triangle Mesh or Geological Model Meshes object."""
         ...
@@ -5772,7 +5246,7 @@ class _GeotechDetectHoles:
         *,
         source: ObjectInput,
         hole_size_ratio_tolerance: float = ...,
-        preview: bool = True,
+        preview: bool = False,
     ) -> GeotechDetectHolesResult:
         """Identifies holes in a Triangle Mesh or Geological Model Meshes object based on boundary edge analysis."""
         ...
@@ -5784,7 +5258,7 @@ class _GeotechDetectNonManifoldEdges:
         self,
         *,
         source: ObjectInput,
-        preview: bool = True,
+        preview: bool = False,
     ) -> GeotechDetectNonManifoldEdgesResult:
         """Identifies edges shared by more than two triangles in a Triangle Mesh or Geological Model Meshes object."""
         ...
@@ -5796,7 +5270,7 @@ class _GeotechDetectNonManifoldVertices:
         self,
         *,
         source: ObjectInput,
-        preview: bool = True,
+        preview: bool = False,
     ) -> GeotechDetectNonManifoldVerticesResult:
         """Identifies vertices with non-manifold topology in a Triangle Mesh or Geological Model Meshes object."""
         ...
@@ -5810,7 +5284,7 @@ class _GeotechDetectNonPartitioningSurfaces:
         source: ObjectInput,
         hole_size_ratio_tolerance: float = ...,
         max_area_ratio: float = ...,
-        preview: bool = True,
+        preview: bool = False,
     ) -> GeotechDetectNonPartitioningSurfacesResult:
         """Identifies non-partitioning surfaces that are neither fins nor surfaces with holes in a Triangle Mesh or Geological Model Meshes object."""
         ...
@@ -5823,7 +5297,7 @@ class _GeotechDetectSelfIntersections:
         *,
         source: ObjectInput,
         tolerance: float = ...,
-        preview: bool = True,
+        preview: bool = False,
     ) -> GeotechDetectSelfIntersectionsResult:
         """Identifies self-intersecting triangles in a Triangle Mesh or Geological Model Meshes object."""
         ...
@@ -5838,7 +5312,7 @@ class _GeotechFillHoles:
         target: GeotechFillHolesTarget,
         edges: list[list[int]],
         fill_mode_selection: Literal["Fill", "FillAndRefine", "FillRefineAndFair"],
-        preview: bool = True,
+        preview: bool = False,
     ) -> GeotechFillHolesResult:
         """Fills holes in the triangle mesh of a GMM object using specified edge identifiers and a configurable fill mode strategy."""
         ...
@@ -5852,7 +5326,7 @@ class _GeotechFixSelfIntersections:
         source: ObjectInput,
         target: GeotechFixSelfIntersectionsTarget,
         intersect_settings: GeotechFixSelfIntersectionsIntersectSettings,
-        preview: bool = True,
+        preview: bool = False,
     ) -> GeotechFixSelfIntersectionsResult:
         """Fixes self-intersections in the triangle mesh of a GMM object using configurable intersection detection settings."""
         ...
@@ -5868,7 +5342,7 @@ class _GeotechInitAggregateGeomGmm:
         max_point: GeotechInitAggregateGeomGmmPoint3D2,
         coordinate_reference_system: str | None = ...,
         rotation_angle: float = ...,
-        preview: bool = True,
+        preview: bool = False,
     ) -> GeotechInitAggregateGeomGmmResult:
         """Creates a rotated bounding box as a Geological Model Meshes object, used as the initial intersected geometry when creating a model."""
         ...
@@ -5884,7 +5358,7 @@ class _GeotechLocalRemesh:
         seed_triangle_indices: list[int],
         radius: float = ...,
         remesh_settings: GeotechLocalRemeshRemeshSettings = ...,
-        preview: bool = True,
+        preview: bool = False,
     ) -> GeotechLocalRemeshResult:
         """Locally remeshes the region around selected seed triangles in a Geological Model Meshes object using configurable remeshing parameters and radius-based region growth."""
         ...
@@ -5906,7 +5380,7 @@ class _GeotechMakeGmmIntoIntersectedGeometry:
         min_point: GeotechMakeGmmIntoIntersectedGeometryPoint3D2 = ...,
         remesh_settings: GeotechMakeGmmIntoIntersectedGeometryRemeshSettings = ...,
         rotation_angle: float = ...,
-        preview: bool = True,
+        preview: bool = False,
     ) -> GeotechMakeGmmIntoIntersectedGeometryResult:
         """Clips a Geological Model Meshes object and processes it to create an intersected geometry mesh."""
         ...
@@ -5923,7 +5397,7 @@ class _GeotechMakeIntoModelInput:
         min_point: GeotechMakeIntoModelInputMinPoint = ...,
         rotation_angle: float = ...,
         tolerance: float = ...,
-        preview: bool = True,
+        preview: bool = False,
     ) -> GeotechMakeIntoModelInputResult:
         """Clips a triangle mesh loosely to the specified bounds, merges duplicate points, and translates the result so it can be used as model input."""
         ...
@@ -5937,7 +5411,7 @@ class _GeotechMarkVolumesForRemoval:
         source: ObjectInput,
         target: GeotechMarkVolumesForRemovalTarget,
         settings: GeotechMarkVolumesForRemovalSettings,
-        preview: bool = True,
+        preview: bool = False,
     ) -> GeotechMarkVolumesForRemovalResult:
         """Marks specified volumes in a Geological Model Meshes for removal by setting their material to external, or clears the marking."""
         ...
@@ -6041,7 +5515,7 @@ class _GeotechParameterizeVolumes:
         ],
         include_hard_edges: bool = ...,
         max_repair_iterations: int = ...,
-        preview: bool = True,
+        preview: bool = False,
     ) -> GeotechParameterizeVolumesResult:
         """Parameterizes closed volumes from Triangle Mesh or Geological Model Meshes inputs and writes the result as a Design Geometry object."""
         ...
@@ -6065,7 +5539,7 @@ class _GeotechRemesh:
         shape_quality_weight: float = ...,
         strain_tolerance: float = ...,
         target_h: float = ...,
-        preview: bool = True,
+        preview: bool = False,
     ) -> GeotechRemeshResult:
         """Remeshes the full Geological Model Meshes object using configurable remeshing parameters to improve triangle quality while preserving the model structure."""
         ...
@@ -6079,7 +5553,7 @@ class _GeotechRemoveTriangles:
         source: ObjectInput,
         target: GeotechRemoveTrianglesTarget,
         triangle_indices: list[int],
-        preview: bool = True,
+        preview: bool = False,
     ) -> GeotechRemoveTrianglesResult:
         """Removes the selected triangle indices from a Geological Model Meshes object and uploads the updated mesh as a new object."""
         ...
@@ -6096,7 +5570,7 @@ class _GeotechSubsumeEmbeddedVolumeInGmm:
         target_selection: GeotechSubsumeEmbeddedVolumeInGmmExplicitTargetSelection
         | GeotechSubsumeEmbeddedVolumeInGmmLargestNeighbouringVolumeTargetSelection
         | GeotechSubsumeEmbeddedVolumeInGmmLargestNeighbouringContactAreaTargetSelection,
-        preview: bool = True,
+        preview: bool = False,
     ) -> GeotechSubsumeEmbeddedVolumeInGmmResult:
         """Merges a specified source embedded volume into a target volume in a GMM, either by explicit index or by automatic selection strategy."""
         ...
@@ -6108,7 +5582,7 @@ class _GeotechValidateGmmAsIntersectedGeometry:
         self,
         *,
         source: ObjectInput,
-        preview: bool = True,
+        preview: bool = False,
     ) -> GeotechValidateGmmAsIntersectedGeometryResult:
         """Checks whether a Geological Model Meshes object is valid as intersected geometry and returns human-readable descriptions of any issues found."""
         ...
@@ -6712,7 +6186,7 @@ class _IsosurfacingCategory:
         category: str,
         target: IsosurfacingCategoryTarget,
         settings: IsosurfacingCategoryCategorySettings = ...,
-        preview: bool = True,
+        preview: bool = False,
     ) -> IsosurfacingCategoryResult:
         """Generate closed volume meshes or boundary surfaces from category attributes on 3D grids. Supports single-category extraction."""
         ...
@@ -6727,7 +6201,7 @@ class _IsosurfacingNumeric:
         threshold: float,
         target: IsosurfacingNumericTarget,
         settings: IsosurfacingNumericNumericSettings = ...,
-        preview: bool = True,
+        preview: bool = False,
     ) -> IsosurfacingNumericResult:
         """Generate an isosurface at a specified threshold value from numeric attributes on 3D grids. Supports regular, tensor, masked, block model, and unstructured hexahedral and tetrahedral grids."""
         ...
@@ -6743,7 +6217,7 @@ class _UtilitiesCompress:
         archive_format: Literal["zip", "zip-stored", "tar", "tar.gz", "tar.bz2", "tar.xz"] = ...,
         compression_level: int | None = ...,
         output_name: str = ...,
-        preview: bool = True,
+        preview: bool = False,
     ) -> UtilitiesCompressResult:
         """Downloads a set of files referenced by File API URLs, bundles them into a single archive (ZIP or TAR with gzip/bzip2/xz compression), uploads the archive back to the File API, and returns a downloadable reference to it."""
         ...
@@ -6956,7 +6430,7 @@ class ComputeClient:
         validate: bool | None = ...,
         deep_validation: bool | None = ...,
         check_schemas: bool | None = ...,
-    ) -> TaskResult:
+    ) -> Any:
         """Run any task by name, including one this stub does not know about."""
         ...
     def __dir__(self) -> list[str]: ...

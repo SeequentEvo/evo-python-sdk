@@ -15,17 +15,13 @@ Run ``pyright stubs/checks/usage_ok.py`` (or ``mypy``) from ``packages/evo-compu
 let ``tests/test_stubgen.py`` do it when the checker is installed.
 """
 
-from typing import TYPE_CHECKING
-
 from evo.common import IContext
 from evo.objects.typed import Attribute, BaseObject, PendingAttribute
 from typing_extensions import assert_type
 
 from evo.compute import ComputeClient
 from evo.compute.tasks.common import Ellipsoid, EllipsoidRanges, Rotation, SearchNeighborhood
-
-if TYPE_CHECKING:
-    from evo.compute.engine import GeostatisticsKrigingResult
+from evo.compute.tasks.geostatistics.kriging import KrigingMethod, KrigingResult
 
 
 def _model_neighborhood() -> SearchNeighborhood:
@@ -149,8 +145,8 @@ async def typed_attribute_source(context: IContext, grade: Attribute, kriged: Pe
             ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=100.0, semi_major=100.0, minor=50.0)),
             max_samples=20,
         ),
-        kriging_method={"type": "ordinary"},
+        kriging_method=KrigingMethod.ORDINARY,
     )
-    assert_type(result, GeostatisticsKrigingResult)
-    print(result.target.attribute.name)
-    await result.target.load()
+    assert_type(result, KrigingResult)
+    print(result.target_name, result.attribute_name)
+    await result.get_target_object()

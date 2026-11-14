@@ -320,7 +320,7 @@ class PayloadParityTestCase(IsolatedAsyncioTestCase):
         )
         with catalogue, _capture_submit("evo.compute.engine") as submit:
             with self.assertRaises(_SubmitCaptured):
-                await getattr(self.client.geostatistics, runner_cls.task.replace("-", "_")).run(**parameters)
+                await self.client._run_generic("geostatistics", runner_cls.task, parameters)
         return submit.await_args.kwargs["parameters"]
 
     async def payload_difference(self, runner_cls, **inputs: Any) -> list[str]:

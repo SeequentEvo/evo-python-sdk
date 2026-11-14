@@ -473,9 +473,9 @@ class TestNonReferenceValues(ResolutionTestCase):
             resolved = await self.resolve(source={"object": POINTSET_URL, "attribute": "grade"}, report=None)
         self.assertIsNone(resolved["report"])
 
-    async def test_an_undeclared_parameter_is_left_for_the_platform_to_judge(self) -> None:
-        resolved = await self.resolver.resolve(self.spec, {"mystery": {"a": 1}})
-        self.assertEqual({"a": 1}, resolved["mystery"])
+    async def test_a_closed_object_rejects_undeclared_parameters(self) -> None:
+        with self.assertRaisesRegex(ParameterValidationError, "mystery"):
+            await self.resolver.resolve(self.spec, {"mystery": {"a": 1}})
 
     async def test_a_typed_model_in_an_optional_slot_is_dumped(self) -> None:
         """An ``X | None`` slot has no ``properties`` of its own, but a model there is still ours."""

@@ -38,6 +38,33 @@ To get up and running quickly with the Evo Compute Task SDK, start by configurin
 
 For some interactive Jupyter notebook examples, see the [examples folder](docs/examples).
 
+### Running tasks through the generic engine
+
+Authenticate and load inputs through the existing async SDK APIs, then use a client on
+the same event loop:
+
+```python
+from evo.compute import ComputeClient
+
+client = ComputeClient(manager)
+result = await client.geostatistics.kriging.run(
+    source=samples.attributes["grade"],
+    target=target_model.attributes["kriged_grade"],
+    variogram=variogram,
+    neighborhood=search,
+    preview=True,
+)
+dataframe = await result.to_dataframe()
+```
+
+Kriging opts into a handwritten runner with additional checks and native `KrigingResult`.
+Its arguments use the same names as other estimation tasks: `neighborhood` and
+`kriging_method`. Other tasks use the schema-driven generic surface.
+`client.arun(topic, task, parameters)` uses the same runner, argument names and result type
+as the task's `run(...)` method, including for tasks absent from the snapshot.
+Preview is off by default on every path; pass `preview=True` to opt in.
+The existing lowercase task modules and `await tasks.run(manager, parameters)` API are unchanged.
+
 ### Static typing for the generic engine
 
 `ComputeClient` resolves `client.<topic>.<task>.run(...)` from the live task catalogue, so
@@ -45,6 +72,13 @@ there is no hand-written code for a type checker to read. A generated type stub 
 editors completion, signature help and parameter checking for every task in a checked-in
 catalogue snapshot, while execution stays fully generic. See
 [stubs/README.md](stubs/README.md) for how to regenerate it and refresh the snapshot.
+
+For compatible neighborhood schemas, generated client signatures accept the
+existing `SearchNeighborhood` model alongside schema-shaped dictionaries. Its native
+`Ellipsoid`, ranges and rotation objects keep their existing serialization; the type hints
+describe behavior the resolver already supports. Matching is based on serialized field
+structure, not a task or schema name. Unrelated models and malformed dictionaries are still
+rejected by the type checkers.
 
 ## Contributing
 

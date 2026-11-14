@@ -36,6 +36,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import inspect
 import json
 import keyword
 import re
@@ -47,6 +48,7 @@ from typing import Any
 
 from .endpoints.models import TaskResource
 from .engine import _normalise, _wire_names
+from .overrides import load_override, overridden_tasks
 
 __all__ = [
     "capture_snapshot",
@@ -480,7 +482,7 @@ class _TaskRenderer:
             annotation = self._annotation(properties.get(name, {}), schema, (name,))
             default = "" if name in required else " = ..."
             lines.append(f"{published[name]}: {annotation}{default}")
-        lines.append(f"preview: bool = {bool(self.spec.feature_flag)!r}")
+        lines.append("preview: bool = False")
         return lines
 
     def _return_type(self) -> str:
@@ -640,7 +642,7 @@ def _render_client(topics: list[str]) -> list[str]:
         "        validate: bool | None = ...,",
         "        deep_validation: bool | None = ...,",
         "        check_schemas: bool | None = ...,",
-        "    ) -> TaskResult:",
+        "    ) -> Any:",
         _docstring(
             "Run any task by name, including one this stub does not know about.",
             "        ",
@@ -654,8 +656,17 @@ def _render_client(topics: list[str]) -> list[str]:
     return lines
 
 
+def _override_runner(topic: str, task: str) -> tuple[str, str]:
+    module = load_override(topic, task)
+    assert module is not None, "only called for a task an override claims"
+    annotation = inspect.signature(module.bind).return_annotation
+    return module.__name__.removeprefix("evo.compute"), getattr(annotation, "__name__", annotation)
+
+
 def _render(tasks: list[TaskResource], snapshot_dir: Path) -> str:
+    overridden = overridden_tasks()
     stubs: list[_TaskStub] = []
+    override_imports: list[str] = []
     members: dict[str, list[tuple[str, str]]] = {}
 
     def remember(topic: str, attribute: str, class_name: str) -> None:
@@ -663,9 +674,17 @@ def _render(tasks: list[TaskResource], snapshot_dir: Path) -> str:
 
     for task in sorted(tasks, key=lambda task: (task.topic, task.name)):
         attribute = _normalise(task.name)
+        if (_normalise(task.topic), attribute) in overridden:
+            continue
         awaited = _TaskRenderer(task).render()
         stubs.append(awaited)
         remember(task.topic, attribute, awaited.class_name)
+
+    for topic, task_name in overridden:
+        class_name = f"_{_camel(topic)}{_camel(task_name)}"
+        module_path, runner_name = _override_runner(topic, task_name)
+        override_imports.append(f"from {module_path} import {runner_name} as {class_name}")
+        remember(topic, task_name, class_name)
 
     blocks: list[str] = []
     for stub in stubs:
@@ -744,6 +763,7 @@ def _render(tasks: list[TaskResource], snapshot_dir: Path) -> str:
                     if "AnyTypedAttribute" in declared
                     else []
                 ),
+                *override_imports,
             ]
         ),
     ]

@@ -17,11 +17,15 @@ so mistakes surface locally with actionable messages instead of as opaque platfo
 errors:
 
 * **Shallow** (always on): required-field presence on the resolved payload. Signature
-  binding in :mod:`evo.compute.engine` already rejects unknown/missing keyword
+  binding in :mod:`evo.compute.engine` already rejects missing required keyword
   arguments; this adds the schema-driven guard that a required field wasn't supplied
   as ``None`` unless its schema permits null.
-* **Deep** (opt-in): full JSON Schema Draft 2020-12 validation, including ``$ref`` /
+* **Deep** (opt-in): JSON Schema Draft 2020-12 constraints on known fields, including ``$ref`` /
   ``$defs`` resolution and discriminated unions, via :mod:`jsonschema`.
+
+Extra fields follow each object's ``additionalProperties`` rule. Closed objects reject
+them, schema-valued rules validate them, and explicitly open objects accept them silently.
+When the rule is absent, reference resolution warns before forwarding them unchanged.
 
 Reference leaves (properties carrying a ``reference_to`` annotation) are relaxed, because
 the concrete object/attribute/file shape the schema declares is produced by the
@@ -38,6 +42,8 @@ the platform introduces a schema annotation the engine does not know how to hand
 
 from __future__ import annotations
 
+import logging
+import re
 from collections.abc import Iterator
 from typing import Any
 
@@ -51,6 +57,8 @@ __all__ = [
     "unknown_annotation_keys",
     "validate_parameters",
 ]
+
+logger = logging.getLogger("compute.validation")
 
 
 KNOWN_SCHEMA_ANNOTATIONS: frozenset[str] = frozenset(
@@ -383,8 +391,61 @@ def _validate_required(spec: TaskResource, parameters: dict[str, Any], label: st
         )
 
 
+def _warn_unknown_fields(
+    node: dict[str, Any],
+    value: dict[str, Any],
+    path: list[str],
+    label: str,
+    *,
+    root: dict[str, Any] | None = None,
+) -> None:
+    """Check extra fields and warn only when the schema leaves their policy unspecified."""
+    properties = node.get("properties")
+    additional = node.get("additionalProperties")
+    patterns = node.get("patternProperties", {}) or {}
+    unknown = sorted(
+        (
+            name
+            for name in value
+            if name not in (properties or {}) and not any(re.search(pattern, str(name)) for pattern in patterns)
+        ),
+        key=str,
+    )
+    if not unknown or additional is True:
+        return
+    location = ".".join(str(part) for part in path) or "parameters"
+    if additional is False:
+        message = f"{location}: unexpected parameter(s): {', '.join(repr(name) for name in unknown)}"
+        raise ParameterValidationError(f"{label}.run(): {message}", task=label, errors=[message])
+    if isinstance(additional, dict):
+        schema = _relax_reference_leaves(node if root is None else root)
+        validator = Draft202012Validator(schema).evolve(
+            schema={"type": "object", "additionalProperties": _relax_reference_leaves(additional)}
+        )
+        errors = sorted(
+            validator.iter_errors({name: value[name] for name in unknown}),
+            key=lambda error: [str(part) for part in error.absolute_path],
+        )
+        if errors:
+            prefix = f"{location}." if path else ""
+            messages = [f"{prefix}{_describe(error)}" for error in errors]
+            raise ParameterValidationError(
+                f"{label}.run(): parameters do not match the task schema:\n  - " + "\n  - ".join(messages),
+                task=label,
+                errors=messages,
+            )
+        return
+    logger.warning(
+        "%s: the task catalogue does not describe these fields at %s: %s. "
+        "Their values are to be submitted as is. Check the field names and supply values ready for the service.",
+        label,
+        location,
+        ", ".join(repr(name) for name in unknown),
+    )
+
+
 def _validate_deep(spec: TaskResource, parameters: dict[str, Any], label: str) -> None:
-    """Deep check: validate the payload against the task schema (reference leaves relaxed)."""
+    """Check the published constraints, relaxing only reference input shapes."""
     schema = _relax_reference_leaves(spec.parameters or {})
     validator = Draft202012Validator(schema)
     # Rendered parts keep the key uniformly typed: raw paths mix str and int and won't sort.
@@ -410,7 +471,7 @@ def validate_parameters(
 
     :param spec: The discovered task, carrying its ``parameters`` JSON Schema.
     :param parameters: The resolved payload about to be submitted.
-    :param deep: When ``True``, also run full JSON Schema Draft 2020-12 validation.
+    :param deep: When ``True``, check the full JSON Schema Draft 2020-12 constraints.
     :param task_label: A ``topic.task`` label for error messages; derived from ``spec``
         when omitted.
 

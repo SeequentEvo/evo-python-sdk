@@ -69,6 +69,7 @@ from .tasks.common.source_target import (
     _source_from_attribute,
     _validate_target_attribute,
 )
+from .validation import _warn_unknown_fields
 
 __all__ = [
     "ReferenceResolver",
@@ -160,9 +161,13 @@ class ReferenceResolver:
             check_schemas=check_schemas,
         )
         properties = schema.get("properties", {}) or {}
+        additional = schema.get("additionalProperties")
+        if additional is False:
+            _warn_unknown_fields(schema, parameters, [], walk.label, root=schema)
         for name, value in parameters.items():
-            node = _deref(properties.get(name, {}), schema)
+            node = _deref(properties.get(name, additional if isinstance(additional, dict) else {}), schema)
             walk.resolved[name] = await self._resolve_node(node, value, [name], walk)
+        _warn_unknown_fields(schema, walk.resolved, [], walk.label, root=schema)
         return walk.resolved
 
     # -- the walk ---------------------------------------------------------- #
@@ -172,6 +177,8 @@ class ReferenceResolver:
         if value is None:
             return None
         node = _deref(node, walk.schema)
+        if not node:
+            return value
 
         # A tagged union describes several shapes; only the tagged branch's annotations apply.
         if (discriminator := _discriminator_of(node)) is not None:
@@ -195,7 +202,11 @@ class ReferenceResolver:
         if not isinstance(value, (dict, AnyTypedAttribute)) and hasattr(value, "model_dump"):
             value = value.model_dump(mode="json", by_alias=True)
 
-        if properties := node.get("properties"):
+        properties = node.get("properties", {}) or {}
+        additional = node.get("additionalProperties")
+        if additional is False and isinstance(value, dict):
+            _warn_unknown_fields(node, value, path, walk.label, root=walk.schema)
+        if properties or isinstance(additional, dict):
             if (frame := self._frame_from_attribute(properties, value, path, walk)) is not None:
                 # Carry on into the walk below rather than returning: the frame's object leaf
                 # has to face ``supported_schemas`` like any other.
@@ -209,9 +220,15 @@ class ReferenceResolver:
                 resolved: dict[str, Any] = {}
                 _graft(walk.resolved, path, resolved)
                 for key, child in value.items():
-                    child_node = _deref(properties.get(key, {}), walk.schema)
+                    child_node = _deref(
+                        properties.get(key, additional if isinstance(additional, dict) else {}), walk.schema
+                    )
                     resolved[key] = await self._resolve_node(child_node, child, [*path, key], walk)
+                _warn_unknown_fields(node, resolved, path, walk.label, root=walk.schema)
                 return resolved
+
+        if isinstance(value, dict):
+            _warn_unknown_fields(node, value, path, walk.label, root=walk.schema)
 
         if node.get("type") == "array" and isinstance(value, list):
             items = _deref(node.get("items", {}), walk.schema)

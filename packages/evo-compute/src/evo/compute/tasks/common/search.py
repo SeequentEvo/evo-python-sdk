@@ -16,7 +16,7 @@ from __future__ import annotations
 from typing import Any
 
 from evo.objects.typed.types import Ellipsoid
-from pydantic import BaseModel, Field, model_serializer
+from pydantic import BaseModel, Field, ValidatorFunctionWrapHandler, field_validator, model_serializer
 
 __all__ = [
     "SearchNeighborhood",
@@ -99,6 +99,20 @@ class SearchNeighborhood(BaseModel):
 
     max_drillholes_per_estimate: int | None = Field(default=None, ge=1)
     """The maximum number of drillholes used in each estimate. Requires a downhole intervals source object."""
+
+    @field_validator("ellipsoid", mode="wrap")
+    @classmethod
+    def _ellipsoid_from_wire(cls, value: Any, handler: ValidatorFunctionWrapHandler) -> Ellipsoid:
+        if not isinstance(value, dict) or "ellipsoid_ranges" not in value:
+            return handler(value)
+        if "ranges" in value:
+            raise ValueError("Supply either ranges or ellipsoid_ranges, not both")
+        fields = dict(value)
+        fields["ranges"] = fields.pop("ellipsoid_ranges")
+        if "rotation" in fields:
+            fields["_rotation"] = fields.pop("rotation")
+        ellipsoid = handler(fields)
+        return Ellipsoid(ranges=ellipsoid.ranges, rotation=ellipsoid.rotation)
 
     @model_serializer
     def _serialize(self) -> dict[str, Any]:
