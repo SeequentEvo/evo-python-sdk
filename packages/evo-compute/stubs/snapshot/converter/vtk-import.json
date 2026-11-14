@@ -1,0 +1,90 @@
+{
+  "display_name": "VTK Import",
+  "version": "0.1.31",
+  "feature_flag": "converter-preview",
+  "description": "VTK Import compute task",
+  "parameters": {
+    "additionalProperties": false,
+    "description": "Parameters for the VTK import compute task",
+    "properties": {
+      "files": {
+        "description": "List of files to convert",
+        "items": {
+          "description": "VTK File to convert.",
+          "format": "uri",
+          "reference_to": "file",
+          "title": "Input File",
+          "type": "string"
+        },
+        "title": "Input Files",
+        "type": "array"
+      }
+    },
+    "required": [
+      "files"
+    ],
+    "title": "VTKImportParameters",
+    "type": "object"
+  },
+  "results": {
+    "additionalProperties": false,
+    "description": "Results for the VTK import compute task",
+    "properties": {
+      "objects": {
+        "description": "List of Geoscience objects that was extracted from the input files.",
+        "items": {
+          "additionalProperties": false,
+          "description": "A Geoscience Object that was extracted from the input files",
+          "output": "geoscience-object",
+          "properties": {
+            "description": {
+              "description": "The description of the geoscience object.",
+              "title": "Description",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "name": {
+              "description": "The name of the geoscience object.",
+              "title": "Name",
+              "type": "string"
+            },
+            "reference": {
+              "description": "Reference to a geoscience object.",
+              "format": "uri",
+              "reference_to": "geoscience-object",
+              "supported_schemas": [
+                "regular-3d-grid/[>=1.2,<2]",
+                "regular-masked-3d-grid/[>=1.2,<2]",
+                "tensor-3d-grid/[>=1.2,<2]"
+              ],
+              "title": "Reference",
+              "type": "string"
+            },
+            "schema_id": {
+              "description": "The ID of the Geoscience Object schema.",
+              "title": "Schema ID",
+              "type": "string"
+            }
+          },
+          "required": [
+            "reference",
+            "name",
+            "description",
+            "schema_id"
+          ],
+          "title": "Output Geoscience Object",
+          "type": "object"
+        },
+        "title": "Output Geoscience Objects",
+        "type": "array"
+      }
+    },
+    "required": [
+      "objects"
+    ],
+    "title": "VTKImportResults",
+    "type": "object"
+  }
+}

@@ -1,0 +1,101 @@
+{
+  "display_name": "Validate GMM As Intersected Geometry",
+  "version": "0.0.1",
+  "feature_flag": "",
+  "description": "Validates a Geological Model Meshes object to check if it is a valid representation of an intersected geometry. Returns a list of validation issues (errors). An empty list means the object is valid.",
+  "parameters": {
+    "additionalProperties": false,
+    "description": "Parameters for this task.",
+    "properties": {
+      "action": {
+        "const": "validate-gmm-as-intersected-geometry",
+        "description": "The action to perform",
+        "title": "Action"
+      },
+      "gooseContext": {
+        "additionalProperties": false,
+        "description": "Context information for the Goose API",
+        "properties": {
+          "apiToken": {
+            "description": "Authentication token for the API",
+            "title": "API Token",
+            "type": "string"
+          },
+          "host": {
+            "description": "The hostname for the API",
+            "title": "Host",
+            "type": "string"
+          },
+          "hubUrl": {
+            "description": "Hub URL currently being used",
+            "title": "Hub URL",
+            "type": "string"
+          },
+          "workspaceId": {
+            "description": "The workspace identifier",
+            "format": "uuid",
+            "title": "Workspace ID",
+            "type": "string"
+          }
+        },
+        "required": [
+          "host",
+          "apiToken",
+          "workspaceId"
+        ],
+        "title": "Goose Context",
+        "type": "object"
+      },
+      "inputObjects": {
+        "description": "The Geological Model Meshes object to validate.",
+        "items": {
+          "description": "A Geological Model Meshes object to validate.",
+          "format": "uri",
+          "reference_to": "geoscience-object",
+          "supported_schemas": [
+            "geological-model-meshes/[>=2.0,<3]"
+          ],
+          "title": "Input Object",
+          "type": "string"
+        },
+        "maxItems": 1,
+        "minItems": 1,
+        "title": "Input Objects",
+        "type": "array"
+      },
+      "sessionId": {
+        "description": "The session identifier",
+        "title": "Session ID",
+        "type": "string"
+      }
+    },
+    "required": [
+      "gooseContext",
+      "action",
+      "inputObjects"
+    ],
+    "title": "Parameters",
+    "type": "object"
+  },
+  "results": {
+    "additionalProperties": false,
+    "description": "Validation results containing issues found.",
+    "properties": {
+      "issues": {
+        "description": "A list of validation issues (errors) found. An empty list means the object is valid as an intersected geometry.",
+        "items": {
+          "description": "A description of a validation issue found in the Geological Model Meshes object.",
+          "title": "Validation Issue",
+          "type": "string"
+        },
+        "title": "Validation Issues",
+        "type": "array"
+      }
+    },
+    "required": [
+      "issues"
+    ],
+    "title": "Results",
+    "type": "object"
+  }
+}

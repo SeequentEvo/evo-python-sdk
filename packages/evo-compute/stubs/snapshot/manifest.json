@@ -1,0 +1,496 @@
+{
+  "source": "GET /compute/orgs/{org_id}/tasks?details=true",
+  "captured_at": "2026-10-15",
+  "tasks": [
+    {
+      "topic": "converter",
+      "name": "detect-converter",
+      "version": "0.1.31"
+    },
+    {
+      "topic": "converter",
+      "name": "dgn-import",
+      "version": "0.1.31"
+    },
+    {
+      "topic": "converter",
+      "name": "ers-import",
+      "version": "0.1.31"
+    },
+    {
+      "topic": "converter",
+      "name": "geosoft-grid-import",
+      "version": "0.1.31"
+    },
+    {
+      "topic": "converter",
+      "name": "geosoft-surface-import",
+      "version": "0.1.31"
+    },
+    {
+      "topic": "converter",
+      "name": "geosoft-voxel-import",
+      "version": "0.1.31"
+    },
+    {
+      "topic": "converter",
+      "name": "image-import",
+      "version": "0.1.31"
+    },
+    {
+      "topic": "converter",
+      "name": "obj-import",
+      "version": "0.1.31"
+    },
+    {
+      "topic": "converter",
+      "name": "shp-import",
+      "version": "0.1.31"
+    },
+    {
+      "topic": "converter",
+      "name": "ubc-import",
+      "version": "0.1.31"
+    },
+    {
+      "topic": "converter",
+      "name": "vtk-import",
+      "version": "0.1.31"
+    },
+    {
+      "topic": "converter",
+      "name": "xyz-import",
+      "version": "0.1.31"
+    },
+    {
+      "topic": "cpt-to-borehole",
+      "name": "cpt-reader",
+      "version": "0.1.57"
+    },
+    {
+      "topic": "cpt-to-borehole",
+      "name": "create-clusters",
+      "version": "0.1.57"
+    },
+    {
+      "topic": "cpt-to-borehole",
+      "name": "publish",
+      "version": "0.1.57"
+    },
+    {
+      "topic": "cpt-to-borehole",
+      "name": "stratify",
+      "version": "0.1.57"
+    },
+    {
+      "topic": "driver",
+      "name": "driver-general-compute",
+      "version": "0.0.1"
+    },
+    {
+      "topic": "geophysics",
+      "name": "gravity-terrain-correction",
+      "version": "2.2.6"
+    },
+    {
+      "topic": "geophysics",
+      "name": "regular-2d-grid-to-trimesh",
+      "version": "2.2.6"
+    },
+    {
+      "topic": "geostatistics",
+      "name": "break-ties",
+      "version": "0.8.0"
+    },
+    {
+      "topic": "geostatistics",
+      "name": "conditional-turning-bands",
+      "version": "0.8.0"
+    },
+    {
+      "topic": "geostatistics",
+      "name": "consim",
+      "version": "0.8.0"
+    },
+    {
+      "topic": "geostatistics",
+      "name": "continuous-distribution",
+      "version": "0.8.0"
+    },
+    {
+      "topic": "geostatistics",
+      "name": "declustering",
+      "version": "0.8.0"
+    },
+    {
+      "topic": "geostatistics",
+      "name": "experimental-variogram",
+      "version": "0.8.0"
+    },
+    {
+      "topic": "geostatistics",
+      "name": "idw",
+      "version": "0.8.0"
+    },
+    {
+      "topic": "geostatistics",
+      "name": "knn",
+      "version": "0.8.0"
+    },
+    {
+      "topic": "geostatistics",
+      "name": "kriging",
+      "version": "0.8.0"
+    },
+    {
+      "topic": "geostatistics",
+      "name": "location-wise",
+      "version": "0.8.0"
+    },
+    {
+      "topic": "geostatistics",
+      "name": "loss-calculation",
+      "version": "0.8.0"
+    },
+    {
+      "topic": "geostatistics",
+      "name": "normal-score",
+      "version": "0.8.0"
+    },
+    {
+      "topic": "geostatistics",
+      "name": "profit-calculation",
+      "version": "0.8.0"
+    },
+    {
+      "topic": "geostatistics",
+      "name": "simulation-report",
+      "version": "0.8.0"
+    },
+    {
+      "topic": "geotech",
+      "name": "add-to-intersected-geometry",
+      "version": "1.5.16"
+    },
+    {
+      "topic": "geotech",
+      "name": "calculate-mesh-quality-histogram",
+      "version": "1.5.16"
+    },
+    {
+      "topic": "geotech",
+      "name": "check-triangle-orientation",
+      "version": "1.5.16"
+    },
+    {
+      "topic": "geotech",
+      "name": "copy-geological-model-meshes",
+      "version": "1.5.16"
+    },
+    {
+      "topic": "geotech",
+      "name": "create-cross-section",
+      "version": "1.5.16"
+    },
+    {
+      "topic": "geotech",
+      "name": "create-geological-model-meshes",
+      "version": "1.5.16"
+    },
+    {
+      "topic": "geotech",
+      "name": "detect-degenerate-triangles",
+      "version": "1.5.16"
+    },
+    {
+      "topic": "geotech",
+      "name": "detect-duplicate-points",
+      "version": "1.5.16"
+    },
+    {
+      "topic": "geotech",
+      "name": "detect-duplicate-triangles",
+      "version": "1.5.16"
+    },
+    {
+      "topic": "geotech",
+      "name": "detect-fins",
+      "version": "1.5.16"
+    },
+    {
+      "topic": "geotech",
+      "name": "detect-holes",
+      "version": "1.5.16"
+    },
+    {
+      "topic": "geotech",
+      "name": "detect-non-manifold-edges",
+      "version": "1.5.16"
+    },
+    {
+      "topic": "geotech",
+      "name": "detect-non-manifold-vertices",
+      "version": "1.5.16"
+    },
+    {
+      "topic": "geotech",
+      "name": "detect-non-partitioning-surfaces",
+      "version": "1.5.16"
+    },
+    {
+      "topic": "geotech",
+      "name": "detect-self-intersections",
+      "version": "1.5.16"
+    },
+    {
+      "topic": "geotech",
+      "name": "fill-holes",
+      "version": "1.5.16"
+    },
+    {
+      "topic": "geotech",
+      "name": "fix-self-intersections",
+      "version": "1.5.16"
+    },
+    {
+      "topic": "geotech",
+      "name": "init-aggregate-geom-gmm",
+      "version": "1.5.16"
+    },
+    {
+      "topic": "geotech",
+      "name": "local-remesh",
+      "version": "1.5.16"
+    },
+    {
+      "topic": "geotech",
+      "name": "make-gmm-into-intersected-geometry",
+      "version": "1.5.16"
+    },
+    {
+      "topic": "geotech",
+      "name": "make-into-model-input",
+      "version": "1.5.16"
+    },
+    {
+      "topic": "geotech",
+      "name": "mark-volumes-for-removal",
+      "version": "1.5.16"
+    },
+    {
+      "topic": "geotech",
+      "name": "parameterize-volumes",
+      "version": "1.5.16"
+    },
+    {
+      "topic": "geotech",
+      "name": "remesh",
+      "version": "1.5.16"
+    },
+    {
+      "topic": "geotech",
+      "name": "remove-triangles",
+      "version": "1.5.16"
+    },
+    {
+      "topic": "geotech",
+      "name": "subsume-embedded-volume-in-gmm",
+      "version": "1.5.16"
+    },
+    {
+      "topic": "geotech",
+      "name": "validate-gmm-as-intersected-geometry",
+      "version": "1.5.16"
+    },
+    {
+      "topic": "gtm",
+      "name": "add-to-intersected-geometry",
+      "version": "0.0.1"
+    },
+    {
+      "topic": "gtm",
+      "name": "clip",
+      "version": "0.0.1"
+    },
+    {
+      "topic": "gtm",
+      "name": "create-cross-section",
+      "version": "0.0.1"
+    },
+    {
+      "topic": "gtm",
+      "name": "create-geological-model-meshes",
+      "version": "0.0.1"
+    },
+    {
+      "topic": "gtm",
+      "name": "detect-degenerate-tris",
+      "version": "0.0.1"
+    },
+    {
+      "topic": "gtm",
+      "name": "detect-duplicate-points",
+      "version": "0.0.1"
+    },
+    {
+      "topic": "gtm",
+      "name": "detect-duplicate-tris",
+      "version": "0.0.1"
+    },
+    {
+      "topic": "gtm",
+      "name": "detect-fins",
+      "version": "0.0.1"
+    },
+    {
+      "topic": "gtm",
+      "name": "detect-holes",
+      "version": "0.0.1"
+    },
+    {
+      "topic": "gtm",
+      "name": "detect-inconsistently-oriented-tris",
+      "version": "0.0.1"
+    },
+    {
+      "topic": "gtm",
+      "name": "detect-non-manifold-edges",
+      "version": "0.0.1"
+    },
+    {
+      "topic": "gtm",
+      "name": "detect-non-manifold-vertices",
+      "version": "0.0.1"
+    },
+    {
+      "topic": "gtm",
+      "name": "detect-redundant-surfaces",
+      "version": "0.0.1"
+    },
+    {
+      "topic": "gtm",
+      "name": "detect-self-intersections",
+      "version": "0.0.1"
+    },
+    {
+      "topic": "gtm",
+      "name": "fill-holes",
+      "version": "0.0.1"
+    },
+    {
+      "topic": "gtm",
+      "name": "fix-self-intersections",
+      "version": "0.0.1"
+    },
+    {
+      "topic": "gtm",
+      "name": "init-aggregate-geom",
+      "version": "0.0.1"
+    },
+    {
+      "topic": "gtm",
+      "name": "intersect",
+      "version": "0.0.1"
+    },
+    {
+      "topic": "gtm",
+      "name": "local-remesh",
+      "version": "0.0.1"
+    },
+    {
+      "topic": "gtm",
+      "name": "make-gmm-into-intersected-geometry",
+      "version": "0.0.1"
+    },
+    {
+      "topic": "gtm",
+      "name": "make-into-model-input",
+      "version": "0.0.1"
+    },
+    {
+      "topic": "gtm",
+      "name": "merge-points",
+      "version": "0.0.1"
+    },
+    {
+      "topic": "gtm",
+      "name": "orient-tris",
+      "version": "0.0.1"
+    },
+    {
+      "topic": "gtm",
+      "name": "parameterize-volumes",
+      "version": "0.0.1"
+    },
+    {
+      "topic": "gtm",
+      "name": "remesh",
+      "version": "0.0.1"
+    },
+    {
+      "topic": "gtm",
+      "name": "remove-degenerate-tris",
+      "version": "0.0.1"
+    },
+    {
+      "topic": "gtm",
+      "name": "remove-tris",
+      "version": "0.0.1"
+    },
+    {
+      "topic": "gtm",
+      "name": "remove-unused-points",
+      "version": "0.0.1"
+    },
+    {
+      "topic": "gtm",
+      "name": "rotate",
+      "version": "0.0.1"
+    },
+    {
+      "topic": "gtm",
+      "name": "split-components",
+      "version": "0.0.1"
+    },
+    {
+      "topic": "gtm",
+      "name": "subsume-embedded-volume-in-gmm",
+      "version": "0.0.1"
+    },
+    {
+      "topic": "gtm",
+      "name": "translate",
+      "version": "0.0.1"
+    },
+    {
+      "topic": "gtm",
+      "name": "upload-mesh-data",
+      "version": "0.0.1"
+    },
+    {
+      "topic": "gtm",
+      "name": "validate-gmm-as-intersected-geometry",
+      "version": "0.0.1"
+    },
+    {
+      "topic": "isosurfacing",
+      "name": "category",
+      "version": "0.1.4"
+    },
+    {
+      "topic": "isosurfacing",
+      "name": "numeric",
+      "version": "0.1.4"
+    },
+    {
+      "topic": "utilities",
+      "name": "compress",
+      "version": "1.0.3"
+    },
+    {
+      "topic": "vis-service",
+      "name": "tiling",
+      "version": "1.0.0"
+    }
+  ]
+}

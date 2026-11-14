@@ -1,0 +1,59 @@
+{
+  "display_name": "Check Triangle Orientation",
+  "version": "1.5.16",
+  "feature_flag": "geotech-preview",
+  "description": "Identifies triangles with inconsistent normal orientation relative to their neighbors in a Triangle Mesh or Geological Model Meshes object.",
+  "parameters": {
+    "additionalProperties": false,
+    "description": "Parameters for check-triangle-orientation.",
+    "properties": {
+      "source": {
+        "description": "The mesh to check for inconsistently oriented triangles. Supports Triangle Mesh and Geological Model Meshes.",
+        "format": "uri",
+        "reference_to": "geoscience-object",
+        "supported_schemas": [
+          "triangle-mesh/[>=2.0,<3]",
+          "geological-model-meshes/[>=2.0,<3]"
+        ],
+        "title": "Input Mesh",
+        "type": "string"
+      }
+    },
+    "required": [
+      "source"
+    ],
+    "title": "CheckTriangleOrientationParameters",
+    "type": "object"
+  },
+  "results": {
+    "additionalProperties": false,
+    "description": "Results of check-triangle-orientation.",
+    "properties": {
+      "message": {
+        "description": "Description of the result of the operation.",
+        "examples": [
+          "Found 0 inconsistently oriented triangle(s)."
+        ],
+        "title": "Message",
+        "type": "string"
+      },
+      "triangles": {
+        "description": "Indices of triangles with inconsistent orientation relative to their neighbors.",
+        "items": {
+          "description": "Index of a triangle in the mesh.",
+          "minimum": 0,
+          "title": "Triangle Index",
+          "type": "integer"
+        },
+        "title": "Inconsistently Oriented Triangles",
+        "type": "array"
+      }
+    },
+    "required": [
+      "triangles",
+      "message"
+    ],
+    "title": "CheckTriangleOrientationResults",
+    "type": "object"
+  }
+}
