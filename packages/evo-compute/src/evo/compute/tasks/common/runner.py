@@ -14,7 +14,8 @@
 This module provides a class-based system for defining and running compute tasks.
 Each task type is defined by subclassing :class:`TaskRunner` with specific parameter
 and result types. Subclasses are automatically registered so that the unified
-``run()`` function can dispatch to the correct runner based on the parameter type.
+``run()`` function can select the task and native result adapter based on the
+parameter type. Unified execution uses the generic engine and its job lifecycle.
 
 Defining a new task runner is as simple as:
 
@@ -53,8 +54,6 @@ from evo.common import IContext
 from evo.common.interfaces import IFeedback
 from evo.common.utils import NoFeedback, Retry, split_feedback
 from pydantic import BaseModel
-
-from evo.compute.client import JobClient
 
 __all__ = [
     "TParams",
@@ -233,26 +232,24 @@ class TaskRunner(ABC, Generic[TParams, TResultModel, TResult]):
 
     async def __call__(self) -> TResult:
         """Submit the task, wait for completion, and return the typed result."""
-        connector = self._context.get_connector()
-        org_id = self._context.get_org_id()
+        from ...engine import ComputeClient
 
-        job = await JobClient.submit(
-            connector=connector,
-            org_id=org_id,
-            topic=self.topic,
-            task=self.task,
-            parameters=self._params.model_dump(mode="json", by_alias=True, exclude_none=True),
-            result_type=self.result_model_type,
-            preview=self._preview,
+        client = ComputeClient(self._context)
+        payload = self._params.model_dump(mode="json", by_alias=True, exclude_none=True)
+        job = await client.asubmit(
+            self.topic,
+            self.task,
+            {**payload, "preview": self._preview},
         )
-
-        result = await job.wait_for_results(
+        result = await job.results(
             polling_interval_seconds=self._polling_interval_seconds,
             retry=self._retry,
             fb=self._fb,
         )
 
-        return await self._get_result(result)
+        if isinstance(result, self.result_type):
+            return result
+        return await self._get_result(self.result_model_type.model_validate(result))
 
     def __await__(self) -> Generator[Any, None, TResult]:
         """Make the runner directly awaitable: ``result = await Runner(ctx, params)``."""
@@ -283,10 +280,10 @@ async def run_tasks(
     fb: IFeedback = NoFeedback,
     preview: bool = False,
 ) -> list[TResult]:
-    """Run multiple tasks concurrently, dispatching based on parameter types.
+    """Run multiple tasks through the generic engine, preserving native results.
 
-    This function looks up the appropriate runner for each parameter based on
-    its type, allowing different task types to be run together.
+    Registered runners supply task identities and native result conversion.
+    The engine handles discovery, validation, resolution and job submission.
 
     Args:
         context: The context providing connector and org_id.

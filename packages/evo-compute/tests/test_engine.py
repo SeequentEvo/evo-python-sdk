@@ -67,7 +67,7 @@ class FakeContext:
         return None
 
 
-class TestComputeClient(TestWithConnector):
+class ComputeClientTestCase(TestWithConnector):
     def setUp(self) -> None:
         super().setUp()
         self.context = FakeContext(self.connector, TEST_ORG.id)
@@ -94,6 +94,8 @@ class TestComputeClient(TestWithConnector):
             mock_job_client.submit = submit
             yield submit
 
+
+class TestComputeClient(ComputeClientTestCase):
     # -- namespace / discovery timing -------------------------------------- #
 
     def test_attribute_access_does_not_trigger_discovery(self) -> None:
@@ -359,7 +361,8 @@ class TestComputeClient(TestWithConnector):
         self.assertIs(inspect.Parameter.empty, signature.parameters["source"].default)
         self.assertIsNone(signature.parameters["power"].default)
         self.assertFalse(signature.parameters["preview"].default)
-        self.assertEqual("Compute declustering weights for a pointset.", run.__doc__)
+        self.assertIn("Compute declustering weights for a pointset.", run.__doc__ or "")
+        self.assertIn("ComputeClient(context, fb=...)", run.__doc__ or "")
 
     async def test_signature_annotations_follow_the_schema(self) -> None:
         """Parameter annotations are derived from each property's JSON Schema type."""

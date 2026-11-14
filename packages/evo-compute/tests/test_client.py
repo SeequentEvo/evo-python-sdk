@@ -99,6 +99,14 @@ class TestJobClient(TestWithConnector):
         job = JobClient.from_url(self.connector, self.job_url)
         self.assert_jobs_equal(self.job, job)
 
+    def test_org_id(self) -> None:
+        self.assertEqual(TEST_ORG.id, self.job.org_id)
+
+    def test_from_url_rejects_invalid_status_paths(self) -> None:
+        for url in (self.job_url.removesuffix("/status"), self.job_url + "/extra", self.connector.base_url):
+            with self.subTest(url=url), self.assertRaisesRegex(ValueError, "Invalid compute job status URL"):
+                JobClient.from_url(self.connector, url)
+
     async def test_submit(self) -> None:
         """Test that a job can be submitted."""
         with self.transport.set_http_response(status_code=303, headers={"Location": self.job_url}):

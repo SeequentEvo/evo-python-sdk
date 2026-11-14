@@ -116,8 +116,11 @@ class SearchNeighborhood(BaseModel):
 
     @model_serializer
     def _serialize(self) -> dict[str, Any]:
+        ellipsoid = self.ellipsoid.to_dict()
+        # Default rotations use integer zeros; keep wire round-trips numerically stable.
+        ellipsoid["rotation"] = {name: float(value) for name, value in ellipsoid["rotation"].items()}
         result = {
-            "ellipsoid": self.ellipsoid.to_dict(),
+            "ellipsoid": ellipsoid,
             "max_samples": self.max_samples,
         }
         for name in ("min_samples", *_SECTOR_AND_DRILLHOLE_LIMITS):

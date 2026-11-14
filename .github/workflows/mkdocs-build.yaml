@@ -35,6 +35,9 @@ jobs:
         run: |
           uv run mkdocs build --config-file mkdocs/mkdocs.yml --site-dir site
 
+      - name: Include new generated pages in the documentation diff
+        run: git add --intent-to-add mkdocs
+
       - name: Check for changes
         id: changes
         run: |

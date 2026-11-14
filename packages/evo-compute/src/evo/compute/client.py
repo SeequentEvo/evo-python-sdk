@@ -112,6 +112,11 @@ class JobClient(Generic[T_Result]):
         return self._job_id
 
     @property
+    def org_id(self) -> UUID:
+        """The organization that owns the job."""
+        return self._org_id
+
+    @property
     def topic(self) -> str:
         """The topic of the task."""
         return self._topic
@@ -154,14 +159,16 @@ class JobClient(Generic[T_Result]):
         if not url.startswith(connector.base_url):
             raise ValueError("The job URL does not match the connector base URL.")
 
-        if match := RE_STATUS_URL.fullmatch(url.removeprefix(connector.base_url)):
-            path_params = match.groupdict()
-            for key in path_params:
-                if key.endswith("_id"):
-                    try:
-                        path_params[key] = UUID(path_params[key])
-                    except ValueError:
-                        raise ValueError(f"Invalid {key.removesuffix('_id')} ID in URL: {url}") from None
+        match = RE_STATUS_URL.fullmatch(url.removeprefix(connector.base_url))
+        if match is None:
+            raise ValueError(f"Invalid compute job status URL: {url}")
+        path_params = match.groupdict()
+        for key in path_params:
+            if key.endswith("_id"):
+                try:
+                    path_params[key] = UUID(path_params[key])
+                except ValueError:
+                    raise ValueError(f"Invalid {key.removesuffix('_id')} ID in URL: {url}") from None
 
         return JobClient(connector=connector, **path_params, result_type=result_type, preview=preview)
 
