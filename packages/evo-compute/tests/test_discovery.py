@@ -12,18 +12,21 @@
 from __future__ import annotations
 
 import asyncio
+import gc
 import json
+import weakref
 from collections.abc import Iterator
 from contextlib import contextmanager
 from unittest import mock
+from uuid import UUID
 
-from evo.common import RequestMethod
+from evo.common import APIConnector, NoAuth, RequestMethod, StaticContext
 from evo.common.test_tools import ORG as TEST_ORG
 from evo.common.test_tools import MockResponse, TestWithConnector
 from evo.common.utils import get_header_metadata
 
 from data import load_test_data
-from evo.compute import DiscoveryClient, TaskResource
+from evo.compute import DiscoveryClient, TaskResource, discovery
 from evo.compute.discovery import DEFAULT_CACHE_TTL_SECONDS
 from evo.compute.endpoints.api import DiscoveryApi
 from evo.compute.endpoints.models import DiscoveryResponse
@@ -197,6 +200,124 @@ class TestDiscoveryClient(TestWithConnector):
                     self.assertEqual(expected, cached)
         self.transport.assert_n_requests_made(3)
 
+    async def test_recreated_clients_share_concurrent_discovery(self) -> None:
+        context = FakeContext(self.connector, TEST_ORG.id)
+        first = DiscoveryClient.from_context(context)
+        second = DiscoveryClient.from_context(context)
+        with self.set_discovery_response():
+            results = await asyncio.gather(first.list_tasks(), second.list_tasks())
+        self.assertEqual(results[0], results[1])
+        self.transport.assert_n_requests_made(1)
+
+    async def test_shared_cache_keeps_ttl_and_force_refresh(self) -> None:
+        context = FakeContext(self.connector, TEST_ORG.id)
+        with self.set_discovery_response():
+            await DiscoveryClient.from_context(context).list_tasks()
+            self.clock.advance(DEFAULT_CACHE_TTL_SECONDS - 1)
+            await DiscoveryClient.from_context(context).list_tasks()
+            self.transport.assert_n_requests_made(1)
+            self.clock.advance(2)
+            await DiscoveryClient.from_context(context).list_tasks()
+            self.transport.assert_n_requests_made(2)
+            await DiscoveryClient.from_context(context).list_tasks(force_refresh=True)
+        self.transport.assert_n_requests_made(3)
+
+    async def test_shared_cache_supports_contexts_that_create_new_connectors(self) -> None:
+        context = StaticContext(
+            transport=self.transport,
+            authorizer=NoAuth,
+            hub_url=self.connector.base_url,
+            org_id=TEST_ORG.id,
+        )
+        first = DiscoveryClient.from_context(context)
+        second = DiscoveryClient.from_context(context)
+        self.assertIsNot(first._connector, second._connector)
+        with self.set_discovery_response():
+            await first.list_tasks()
+            await second.list_tasks()
+        self.transport.assert_n_requests_made(1)
+
+    async def test_shared_cache_is_scoped_by_context_hub_org_and_ttl(self) -> None:
+        context = FakeContext(self.connector, TEST_ORG.id)
+        with self.set_discovery_response():
+            await DiscoveryClient.from_context(context).list_tasks()
+            await DiscoveryClient.from_context(FakeContext(self.connector, TEST_ORG.id)).list_tasks()
+            await DiscoveryClient.from_context(context, cache_ttl_seconds=1).list_tasks()
+            context._org_id = UUID(int=4567)
+            await DiscoveryClient.from_context(context).list_tasks()
+            context._connector = APIConnector("https://another-hub.test", self.transport)
+            await DiscoveryClient.from_context(context).list_tasks()
+        self.transport.assert_n_requests_made(5)
+
+    async def test_shared_cache_uses_identity_for_unhashable_contexts(self) -> None:
+        class UnhashableContext(FakeContext):
+            __hash__ = None
+
+            def __eq__(self, other):
+                return isinstance(other, UnhashableContext)
+
+        first = UnhashableContext(self.connector, TEST_ORG.id)
+        second = UnhashableContext(self.connector, TEST_ORG.id)
+        with self.set_discovery_response():
+            await DiscoveryClient.from_context(first).list_tasks()
+            await DiscoveryClient.from_context(first).list_tasks()
+            await DiscoveryClient.from_context(second).list_tasks()
+        self.transport.assert_n_requests_made(2)
+
+    async def test_shared_cache_does_not_keep_context_or_connector_alive(self) -> None:
+        connector = APIConnector(self.connector.base_url, self.transport)
+        context = FakeContext(connector, TEST_ORG.id)
+        context_ref, connector_ref = weakref.ref(context), weakref.ref(connector)
+        identity = id(context)
+        with self.set_discovery_response():
+            await DiscoveryClient.from_context(context).list_tasks()
+        del context, connector
+        gc.collect()
+        self.assertIsNone(context_ref())
+        self.assertIsNone(connector_ref())
+        self.assertNotIn(identity, discovery._context_catalogues)
+
+    def test_shared_cache_lock_supports_new_event_loops(self) -> None:
+        cache = discovery._CatalogueCache()
+
+        async def contend() -> None:
+            lock = cache.lock()
+
+            async def wait() -> None:
+                async with lock:
+                    pass
+
+            async with lock:
+                waiter = asyncio.create_task(wait())
+                await asyncio.sleep(0)
+            await waiter
+
+        asyncio.run(contend())
+        asyncio.run(contend())
+
+    async def test_peek_tasks_serves_the_cache_without_fetching(self) -> None:
+        """``peek_tasks`` never makes a request, and goes empty again once the TTL expires."""
+        self.assertEqual([], self.client.peek_tasks())
+        self.transport.assert_n_requests_made(0)
+
+        with self.set_discovery_response():
+            await self.client.list_tasks()
+        self.assertEqual(len(self.catalogue["results"]), len(self.client.peek_tasks()))
+        self.transport.assert_n_requests_made(1)
+
+        self.clock.advance(DEFAULT_CACHE_TTL_SECONDS + 1)
+        self.assertEqual([], self.client.peek_tasks())
+        self.transport.assert_n_requests_made(1)
+
+    async def test_peeked_tasks_do_not_mutate_the_cache(self) -> None:
+        expected = TaskResource.model_validate(self.catalogue["results"][0])
+        with self.set_discovery_response():
+            await self.client.list_tasks()
+        peeked = self.client.peek_tasks()
+        peeked[0].parameters["required"].append("extra_parameter")
+        peeked.clear()
+        self.assertEqual(expected, self.client.peek_tasks()[0])
+
     async def test_concurrent_cold_calls_fetch_once(self) -> None:
         """A burst of concurrent calls on a cold cache triggers a single fetch."""
         calls = 0
@@ -252,3 +373,43 @@ class TestDiscoveryClient(TestWithConnector):
         with self.set_discovery_response():
             tasks = await client.list_tasks()
         self.assertTrue(tasks)
+
+    # -- annotations this SDK does not know -------------------------------- #
+
+    def catalogue_with_annotation(self, key: str) -> dict:
+        """The bundled catalogue with ``key`` planted on the first task's source parameter."""
+        catalogue = json.loads(json.dumps(self.catalogue))
+        catalogue["results"][0]["parameters"]["properties"]["source"][key] = "something-new"
+        return catalogue
+
+    async def test_an_unrecognised_annotation_is_warned_about_not_raised(self) -> None:
+        """The platform moving ahead of the SDK must not stop a caller from running a task."""
+        with self.set_discovery_response(self.catalogue_with_annotation("invented_here")):
+            with self.assertLogs("compute.discovery", level="WARNING") as logged:
+                tasks = await self.client.list_tasks()
+        self.assertEqual(len(self.catalogue["results"]), len(tasks))
+        self.assertIn("'invented_here'", logged.output[0])
+        self.assertIn(f"{tasks[0].topic}.{tasks[0].name}", logged.output[0])
+
+    async def test_a_catalogue_the_sdk_fully_understands_says_nothing(self) -> None:
+        with self.set_discovery_response():
+            with mock.patch.object(discovery.logger, "warning") as warning:
+                await self.client.list_tasks()
+        warning.assert_not_called()
+
+    async def test_the_same_annotation_is_not_reported_again_on_a_refetch(self) -> None:
+        """One line per unknown key, not one per cache expiry."""
+        with self.set_discovery_response(self.catalogue_with_annotation("invented_here")):
+            with mock.patch.object(discovery.logger, "warning") as warning:
+                await self.client.list_tasks()
+                self.clock.advance(DEFAULT_CACHE_TTL_SECONDS + 1)
+                await self.client.list_tasks()
+        warning.assert_called_once()
+
+    async def test_a_result_schema_annotation_is_caught_too(self) -> None:
+        catalogue = json.loads(json.dumps(self.catalogue))
+        catalogue["results"][0]["results"] = {"type": "object", "invented_here": True}
+        with self.set_discovery_response(catalogue):
+            with self.assertLogs("compute.discovery", level="WARNING") as logged:
+                await self.client.list_tasks()
+        self.assertIn("'invented_here'", logged.output[0])

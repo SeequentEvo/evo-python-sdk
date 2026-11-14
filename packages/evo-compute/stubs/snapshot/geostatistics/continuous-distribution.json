@@ -1,0 +1,294 @@
+{
+  "display_name": "Continuous distribution",
+  "version": "0.8.0",
+  "feature_flag": "geostatistics-preview",
+  "description": "For more information, please read the <a href='/docs/guides/geostatistics-tasks/tasks/continuous-distribution'>guide</a>",
+  "parameters": {
+    "additionalProperties": false,
+    "description": "Parameters for the continuous distribution task.",
+    "properties": {
+      "source": {
+        "additionalProperties": false,
+        "description": "Source data to create the distribution from.",
+        "properties": {
+          "attribute": {
+            "attribute_from": "1/object",
+            "attribute_path": {
+              "downhole-intervals/[>=1.2,<2]": [
+                "attributes[?attribute_type=='scalar']"
+              ],
+              "pointset/[>=1.2,<2]": [
+                "locations.attributes[?attribute_type=='scalar']"
+              ],
+              "regular-3d-grid/[>=1.2,<2]": [
+                "cell_attributes[?attribute_type=='scalar']"
+              ],
+              "regular-masked-3d-grid/[>=1.2,<2]": [
+                "cell_attributes[?attribute_type=='scalar']"
+              ],
+              "tensor-3d-grid/[>=1.2,<2]": [
+                "cell_attributes[?attribute_type=='scalar']"
+              ]
+            },
+            "description": "The attribute containing the values to create a distribution from.",
+            "reference_to": "attribute",
+            "title": "Attribute",
+            "type": "string"
+          },
+          "object": {
+            "description": "Object containing the data to create a distribution from.",
+            "format": "uri",
+            "reference_to": "geoscience-object",
+            "supported_schemas": [
+              "pointset/[>=1.2,<2]",
+              "regular-3d-grid/[>=1.2,<2]",
+              "regular-masked-3d-grid/[>=1.2,<2]",
+              "tensor-3d-grid/[>=1.2,<2]",
+              "downhole-intervals/[>=1.2,<2]"
+            ],
+            "title": "Object",
+            "type": "string"
+          }
+        },
+        "required": [
+          "object",
+          "attribute"
+        ],
+        "title": "Source",
+        "type": "object"
+      },
+      "tail_extrapolation": {
+        "additionalProperties": false,
+        "default": null,
+        "description": "Optional tail extrapolation parameters for extending the distribution beyond the data range.",
+        "properties": {
+          "lower": {
+            "additionalProperties": false,
+            "default": null,
+            "description": "Power model for lower tail extrapolation. The min value must be less than the minimum value in the data.",
+            "properties": {
+              "min": {
+                "description": "Minimum extent of tail, must be less than the minimum value in the data.",
+                "title": "Minimum",
+                "type": "number"
+              },
+              "power": {
+                "description": "Denominator of the exponent for the power model (between 0 exclusive and 1 inclusive).",
+                "exclusiveMinimum": 0,
+                "maximum": 1,
+                "title": "Power",
+                "type": "number"
+              }
+            },
+            "required": [
+              "power",
+              "min"
+            ],
+            "title": "Lower tail extrapolation",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "upper": {
+            "additionalProperties": false,
+            "description": "Power model for extrapolating the upper tail of the distribution.",
+            "properties": {
+              "max": {
+                "description": "Maximum extent of tail, must be greater than the maximum value in the data.",
+                "title": "Maximum",
+                "type": "number"
+              },
+              "power": {
+                "description": "Denominator of the exponent for the power model (between 0 exclusive and 1 inclusive).",
+                "exclusiveMinimum": 0,
+                "maximum": 1,
+                "title": "Power",
+                "type": "number"
+              }
+            },
+            "required": [
+              "power",
+              "max"
+            ],
+            "title": "Upper tail extrapolation",
+            "type": "object"
+          }
+        },
+        "required": [
+          "upper"
+        ],
+        "title": "Tail extrapolation",
+        "type": [
+          "object",
+          "null"
+        ]
+      },
+      "target": {
+        "additionalProperties": false,
+        "description": "Target specifying where to create the continuous distribution object.",
+        "properties": {
+          "description": {
+            "default": null,
+            "description": "Description to put into the target object.",
+            "title": "Description",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "overwrite": {
+            "default": false,
+            "description": "Whether to overwrite the existing object.",
+            "title": "Overwrite",
+            "type": "boolean"
+          },
+          "reference": {
+            "description": "Reference to the targeted object.",
+            "format": "uri",
+            "reference_to": "geoscience-object",
+            "supported_schemas": [
+              "non-parametric-continuous-cumulative-distribution/[>=1.0,<2]"
+            ],
+            "title": "Reference",
+            "type": "string"
+          },
+          "tags": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Tags to put into the target object.",
+            "title": "Tags",
+            "type": "object"
+          }
+        },
+        "required": [
+          "reference"
+        ],
+        "target": "geoscience-object",
+        "title": "Target",
+        "type": "object"
+      },
+      "weights": {
+        "additionalProperties": false,
+        "default": null,
+        "description": "Optional weights for creating a weighted (declustered) distribution.",
+        "properties": {
+          "attribute": {
+            "attribute_from": "1/object",
+            "attribute_path": {
+              "downhole-intervals/[>=1.2,<2]": [
+                "attributes[?attribute_type=='scalar']"
+              ],
+              "pointset/[>=1.2,<2]": [
+                "locations.attributes[?attribute_type=='scalar']"
+              ],
+              "regular-3d-grid/[>=1.2,<2]": [
+                "cell_attributes[?attribute_type=='scalar']"
+              ],
+              "regular-masked-3d-grid/[>=1.2,<2]": [
+                "cell_attributes[?attribute_type=='scalar']"
+              ],
+              "tensor-3d-grid/[>=1.2,<2]": [
+                "cell_attributes[?attribute_type=='scalar']"
+              ]
+            },
+            "description": "The attribute containing the weights values.",
+            "reference_to": "attribute",
+            "title": "Attribute",
+            "type": "string"
+          },
+          "object": {
+            "description": "Object containing the weights data.",
+            "format": "uri",
+            "reference_to": "geoscience-object",
+            "supported_schemas": [
+              "pointset/[>=1.2,<2]",
+              "regular-3d-grid/[>=1.2,<2]",
+              "regular-masked-3d-grid/[>=1.2,<2]",
+              "tensor-3d-grid/[>=1.2,<2]",
+              "downhole-intervals/[>=1.2,<2]"
+            ],
+            "title": "Object",
+            "type": "string"
+          }
+        },
+        "required": [
+          "object",
+          "attribute"
+        ],
+        "title": "Weights",
+        "type": [
+          "object",
+          "null"
+        ]
+      }
+    },
+    "required": [
+      "source",
+      "target"
+    ],
+    "title": "ContinuousDistributionTaskParameters",
+    "type": "object"
+  },
+  "results": {
+    "additionalProperties": false,
+    "description": "Result of the continuous distribution task.",
+    "properties": {
+      "distribution": {
+        "additionalProperties": false,
+        "description": "Reference to the created continuous distribution object.",
+        "output": "geoscience-object",
+        "properties": {
+          "description": {
+            "description": "The description of the geoscience object.",
+            "title": "Description",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "description": "The name of the geoscience object.",
+            "title": "Name",
+            "type": "string"
+          },
+          "reference": {
+            "description": "Reference to a geoscience object.",
+            "format": "uri",
+            "reference_to": "geoscience-object",
+            "supported_schemas": [
+              "non-parametric-continuous-cumulative-distribution/[>=1.0,<2]"
+            ],
+            "title": "Reference",
+            "type": "string"
+          },
+          "schema_id": {
+            "description": "The ID of the Geoscience Object schema.",
+            "title": "Schema ID",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reference",
+          "name",
+          "description",
+          "schema_id"
+        ],
+        "title": "Distribution",
+        "type": "object"
+      },
+      "message": {
+        "description": "A message describing the result of the task.",
+        "title": "Message",
+        "type": "string"
+      }
+    },
+    "required": [
+      "message",
+      "distribution"
+    ],
+    "title": "ContinuousDistributionResult",
+    "type": "object"
+  }
+}

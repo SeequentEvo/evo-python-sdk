@@ -15,28 +15,62 @@
 and result schemas for each. The catalogue is paginated by the service; this client fetches
 every page and caches the combined result with a time-to-live. The convenience accessors
 (:meth:`get_topics`, :meth:`get_topic_tasks`, :meth:`get_task`) read from that cache.
+
+A fetched catalogue is also checked against the closed annotation vocabulary the engine
+understands. An annotation this SDK has never heard of means the platform has moved on and
+the schema can only be partly interpreted, so it is reported as a warning -- never a
+failure. The unrecognised part may not even be one this call depends on, and refusing to
+run would make the SDK the blocker the moment the platform ships a new annotation.
 """
 
 from __future__ import annotations
 
 import asyncio
+import logging
 import time
+import weakref
+from dataclasses import dataclass, field
 from uuid import UUID
 
 from evo.common import APIConnector, IContext
 
 from .endpoints.api import DiscoveryApi
 from .endpoints.models import TaskResource
+from .validation import unknown_annotation_keys
 
 __all__ = [
     "DiscoveryClient",
 ]
+
+logger = logging.getLogger("compute.discovery")
 
 DEFAULT_CACHE_TTL_SECONDS = 300.0
 """Default time-to-live for the cached task catalogue, in seconds."""
 
 _PAGE_SIZE = 100
 """Number of tasks requested per page when fetching the catalogue."""
+
+
+@dataclass
+class _CatalogueCache:
+    tasks: list[TaskResource] = field(default_factory=list)
+    expiry: float | None = None
+    reported_annotations: set[str] = field(default_factory=set)
+    mutex: asyncio.Lock | None = None
+    loop: weakref.ReferenceType[asyncio.AbstractEventLoop] | None = None
+
+    def lock(self) -> asyncio.Lock:
+        loop = asyncio.get_running_loop()
+        if self.mutex is None or self.loop is None or self.loop() is not loop:
+            self.mutex = asyncio.Lock()
+            self.loop = weakref.ref(loop)
+        return self.mutex
+
+
+# Cache data must not retain a context or connector after its owner is released.
+_context_catalogues: dict[
+    int, tuple[weakref.ReferenceType[IContext], dict[tuple[str, UUID, float], _CatalogueCache]]
+] = {}
 
 
 class DiscoveryClient:
@@ -61,9 +95,7 @@ class DiscoveryClient:
         self._org_id = org_id
         self._cache_ttl_seconds = cache_ttl_seconds
         self._discovery_api = DiscoveryApi(connector)
-        self._mutex = asyncio.Lock()
-        self._cache: list[TaskResource] = []
-        self._cache_expiry: float | None = None
+        self._cache = _CatalogueCache()
 
     @classmethod
     def from_context(
@@ -72,18 +104,37 @@ class DiscoveryClient:
         *,
         cache_ttl_seconds: float = DEFAULT_CACHE_TTL_SECONDS,
     ) -> DiscoveryClient:
-        """Create a DiscoveryClient from any real ``evo.common.IContext``.
+        """Create a client sharing its context's catalogue cache.
+
+        Repeated clients share data and in-flight discovery for the same context,
+        hub, organization and TTL, even if ``get_connector`` returns a fresh connector.
+        Contexts are tracked by weak identity, so unhashable contexts work too.
+        Each client keeps its own connector; the shared cache retains neither.
 
         :param context: The context to create the client from (provides the connector and org id).
         :param cache_ttl_seconds: The catalogue cache time-to-live, in seconds.
 
         :return: A DiscoveryClient instance.
         """
-        return cls(
+        client = cls(
             context.get_connector(),
             context.get_org_id(),
             cache_ttl_seconds=cache_ttl_seconds,
         )
+        identity = id(context)
+        entry = _context_catalogues.get(identity)
+        if entry is None or entry[0]() is not context:
+
+            def discard(reference: weakref.ReferenceType[IContext]) -> None:
+                current = _context_catalogues.get(identity)
+                if current is not None and current[0] is reference:
+                    del _context_catalogues[identity]
+
+            entry = (weakref.ref(context, discard), {})
+            _context_catalogues[identity] = entry
+        scope = (client._connector.base_url, client._org_id, cache_ttl_seconds)
+        client._cache = entry[1].setdefault(scope, client._cache)
+        return client
 
     @property
     def org_id(self) -> UUID:
@@ -94,7 +145,21 @@ class DiscoveryClient:
         return f"DiscoveryClient(org_id={self._org_id!r})"
 
     def _cache_is_valid(self) -> bool:
-        return self._cache_expiry is not None and time.monotonic() < self._cache_expiry
+        return self._cache.expiry is not None and time.monotonic() < self._cache.expiry
+
+    def peek_tasks(self) -> list[TaskResource]:
+        """Return the cached catalogue without fetching it.
+
+        This is the synchronous counterpart to :meth:`list_tasks`, for callers that can use the
+        catalogue if it is already there (tab-completion, signature help) but must not block or
+        make a request. The result is empty until the first fetch, and empty again once the
+        cache has expired.
+
+        :return: The cached tasks, or an empty list if the cache is unset or expired.
+        """
+        if not self._cache_is_valid():
+            return []
+        return [task.model_copy(deep=True) for task in self._cache.tasks]
 
     async def _fetch(self) -> None:
         """Fetch every page of the catalogue and refresh the cache."""
@@ -113,15 +178,38 @@ class DiscoveryClient:
                 # Stop on an empty page, an unreported total, or once the reported total is reached.
                 if not page.results or page.total is None or offset >= page.total:
                     break
-        self._cache = tasks
-        self._cache_expiry = time.monotonic() + self._cache_ttl_seconds
+        self._cache.tasks = tasks
+        self._cache.expiry = time.monotonic() + self._cache_ttl_seconds
+        self._report_unknown_annotations(tasks)
+
+    def _report_unknown_annotations(self, tasks: list[TaskResource]) -> None:
+        """Warn once about each annotation the platform publishes and this SDK cannot read.
+
+        Reported per key rather than per task, and only the first time a key is seen, so a
+        catalogue that has moved ahead of the installed SDK costs one line rather than one
+        per task per cache expiry.
+        """
+        carriers: dict[str, list[str]] = {}
+        for task in tasks:
+            for key in unknown_annotation_keys(task.parameters) | unknown_annotation_keys(task.results):
+                if key not in self._cache.reported_annotations:
+                    carriers.setdefault(key, []).append(f"{task.topic}.{task.name}")
+        if not carriers:
+            return
+        self._cache.reported_annotations |= carriers.keys()
+        logger.warning(
+            "the compute catalogue uses schema annotations this SDK does not recognise: %s. "
+            "Those parts of the affected schemas cannot be interpreted, so a task may need "
+            "arguments in their wire form; upgrading evo-compute may add support for them.",
+            "; ".join(f"{key!r} on {', '.join(sorted(names))}" for key, names in sorted(carriers.items())),
+        )
 
     async def _catalogue(self, force_refresh: bool) -> list[TaskResource]:
         """Return the cached catalogue, fetching it first if it is stale or forced."""
-        async with self._mutex:
+        async with self._cache.lock():
             if force_refresh or not self._cache_is_valid():
                 await self._fetch()
-            return self._cache
+            return self._cache.tasks
 
     async def list_tasks(self, *, force_refresh: bool = False) -> list[TaskResource]:
         """Return the full catalogue of discoverable tasks.

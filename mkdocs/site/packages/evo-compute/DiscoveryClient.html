@@ -34,7 +34,7 @@
 
                     <ul class="nav navbar-nav ms-md-auto">
                             <li class="nav-item">
-                                <a rel="prev" href="index.html" class="nav-link">
+                                <a rel="prev" href="ComputeClient.html" class="nav-link">
                                     <i class="fa fa-arrow-left"></i> Previous
                                 </a>
                             </li>
@@ -218,7 +218,11 @@ re-fetches it. Pass <code>force_refresh=True</code> to any accessor to re-fetch 
 
     <div class="doc doc-contents ">
 
-        <p>Create a DiscoveryClient from any real <code>evo.common.IContext</code>.</p>
+        <p>Create a client sharing its context's catalogue cache.</p>
+<p>Repeated clients share data and in-flight discovery for the same context,
+hub, organization and TTL, even if <code>get_connector</code> returns a fresh connector.
+Contexts are tracked by weak identity, so unhashable contexts work too.
+Each client keeps its own connector; the shared cache retains neither.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -284,6 +288,53 @@ re-fetches it. Pass <code>force_refresh=True</code> to any accessor to re-fetch 
             <td>
               <div class="doc-md-description">
                 <p>A DiscoveryClient instance.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.compute.discovery.DiscoveryClient.peek_tasks" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">peek_tasks</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">peek_tasks</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">TaskResource</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the cached catalogue without fetching it.</p>
+<p>This is the synchronous counterpart to :meth:<code>list_tasks</code>, for callers that can use the
+catalogue if it is already there (tab-completion, signature help) but must not block or
+make a request. The result is empty until the first fetch, and empty again once the
+cache has expired.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="list">list</span>[<span title="evo.compute.endpoints.models.TaskResource">TaskResource</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The cached tasks, or an empty list if the cache is unset or expired.</p>
               </div>
             </td>
           </tr>

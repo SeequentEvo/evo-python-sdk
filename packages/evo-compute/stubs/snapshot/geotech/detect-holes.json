@@ -1,0 +1,77 @@
+{
+  "display_name": "Detect Holes",
+  "version": "1.5.16",
+  "feature_flag": "geotech-preview",
+  "description": "Identifies holes in a Triangle Mesh or Geological Model Meshes object based on boundary edge analysis.",
+  "parameters": {
+    "additionalProperties": false,
+    "description": "Parameters for detect-holes.",
+    "properties": {
+      "hole_size_ratio_tolerance": {
+        "default": 0.05,
+        "description": "A boundary line is considered a hole if the ratio of the hole bounding box diagonal to the mesh bounding box diagonal is smaller than this tolerance.",
+        "exclusiveMinimum": 0,
+        "maximum": 1,
+        "title": "Hole Size Ratio Tolerance",
+        "type": "number"
+      },
+      "source": {
+        "description": "The mesh to check for holes. Supports Triangle Mesh and Geological Model Meshes.",
+        "format": "uri",
+        "reference_to": "geoscience-object",
+        "supported_schemas": [
+          "triangle-mesh/[>=2.0,<3]",
+          "geological-model-meshes/[>=2.0,<3]"
+        ],
+        "title": "Input Mesh",
+        "type": "string"
+      }
+    },
+    "required": [
+      "source"
+    ],
+    "title": "DetectHolesParameters",
+    "type": "object"
+  },
+  "results": {
+    "additionalProperties": false,
+    "description": "Results of detect-holes.",
+    "properties": {
+      "holes": {
+        "description": "Each hole is a list of boundary edges, where each edge is a pair of vertex indices.",
+        "items": {
+          "description": "A list of boundary edges forming a hole.",
+          "items": {
+            "description": "A pair of vertex indices identifying a boundary edge.",
+            "items": {
+              "description": "Index of a vertex in the mesh.",
+              "minimum": 0,
+              "title": "Vertex Index",
+              "type": "integer"
+            },
+            "title": "Edge",
+            "type": "array"
+          },
+          "title": "Hole",
+          "type": "array"
+        },
+        "title": "Holes",
+        "type": "array"
+      },
+      "message": {
+        "description": "Description of the result of the operation.",
+        "examples": [
+          "Found 0 hole(s)."
+        ],
+        "title": "Message",
+        "type": "string"
+      }
+    },
+    "required": [
+      "holes",
+      "message"
+    ],
+    "title": "DetectHolesResults",
+    "type": "object"
+  }
+}

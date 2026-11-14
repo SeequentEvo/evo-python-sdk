@@ -1,0 +1,71 @@
+{
+  "display_name": "Detect Fins",
+  "version": "1.5.16",
+  "feature_flag": "geotech-preview",
+  "description": "Identifies fin-like connected components without closed boundaries in a Triangle Mesh or Geological Model Meshes object.",
+  "parameters": {
+    "additionalProperties": false,
+    "description": "Parameters for detect-fins.",
+    "properties": {
+      "max_area_ratio": {
+        "default": 1,
+        "description": "Components with surface area larger than the largest component times this ratio are ignored.",
+        "exclusiveMinimum": 0,
+        "title": "Max Area Ratio",
+        "type": "number"
+      },
+      "source": {
+        "description": "The mesh to check for fins. Supports Triangle Mesh and Geological Model Meshes.",
+        "format": "uri",
+        "reference_to": "geoscience-object",
+        "supported_schemas": [
+          "triangle-mesh/[>=2.0,<3]",
+          "geological-model-meshes/[>=2.0,<3]"
+        ],
+        "title": "Input Mesh",
+        "type": "string"
+      }
+    },
+    "required": [
+      "source"
+    ],
+    "title": "DetectFinsParameters",
+    "type": "object"
+  },
+  "results": {
+    "additionalProperties": false,
+    "description": "Results of detect-fins.",
+    "properties": {
+      "fins": {
+        "description": "Each fin is a list of triangle indices forming a connected component without a closed boundary.",
+        "items": {
+          "description": "A list of triangle indices forming a fin component.",
+          "items": {
+            "description": "Index of a triangle in the mesh.",
+            "minimum": 0,
+            "title": "Triangle Index",
+            "type": "integer"
+          },
+          "title": "Fin",
+          "type": "array"
+        },
+        "title": "Fins",
+        "type": "array"
+      },
+      "message": {
+        "description": "Description of the result of the operation.",
+        "examples": [
+          "Found 0 fin(s)."
+        ],
+        "title": "Message",
+        "type": "string"
+      }
+    },
+    "required": [
+      "fins",
+      "message"
+    ],
+    "title": "DetectFinsResults",
+    "type": "object"
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "display_name": "Validate GMM as Intersected Geometry",
+  "version": "1.5.16",
+  "feature_flag": "geotech-preview",
+  "description": "Checks whether a Geological Model Meshes object is valid as intersected geometry and returns human-readable descriptions of any issues found.",
+  "parameters": {
+    "additionalProperties": false,
+    "description": "Parameters for validate-gmm-as-intersected-geometry.",
+    "properties": {
+      "source": {
+        "description": "The Geological Model Meshes object to validate as intersected geometry.",
+        "format": "uri",
+        "reference_to": "geoscience-object",
+        "supported_schemas": [
+          "geological-model-meshes/[>=2.0,<3]"
+        ],
+        "title": "Geological Model Meshes",
+        "type": "string"
+      }
+    },
+    "required": [
+      "source"
+    ],
+    "title": "ValidateGmmAsIntersectedGeometryParameters",
+    "type": "object"
+  },
+  "results": {
+    "additionalProperties": false,
+    "description": "Results of validate-gmm-as-intersected-geometry.",
+    "properties": {
+      "issues": {
+        "description": "Descriptions of validation issues found. Empty if the geometry is valid.",
+        "examples": [
+          []
+        ],
+        "items": {
+          "description": "A human-readable description of a validation issue.",
+          "title": "Issue",
+          "type": "string"
+        },
+        "title": "Issues",
+        "type": "array"
+      },
+      "message": {
+        "description": "Description of the result of the operation.",
+        "examples": [
+          "GMM is valid as intersected geometry."
+        ],
+        "title": "Message",
+        "type": "string"
+      }
+    },
+    "required": [
+      "issues",
+      "message"
+    ],
+    "title": "ValidateGmmAsIntersectedGeometryResults",
+    "type": "object"
+  }
+}

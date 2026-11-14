@@ -1,0 +1,258 @@
+{
+  "display_name": "Parameterize Volumes",
+  "version": "1.5.16",
+  "feature_flag": "geotech-preview",
+  "description": "Parameterizes closed volumes from Triangle Mesh or Geological Model Meshes inputs and writes the result as a Design Geometry object.",
+  "parameters": {
+    "additionalProperties": false,
+    "description": "Parameters for parameterize-volumes.",
+    "properties": {
+      "distance_unit": {
+        "description": "Distance unit for the created design geometry.",
+        "enum": [
+          "m",
+          "angstrom",
+          "chain",
+          "chain[BnA]",
+          "chain[BnB]",
+          "chain[Cla]",
+          "chain[Ind37]",
+          "chain[Se]",
+          "chain[SeT]",
+          "chain[US]",
+          "fathom",
+          "ft",
+          "ft[BnA]",
+          "ft[BnB]",
+          "ft[Br36]",
+          "ft[Br65]",
+          "ft[Cla]",
+          "ft[GC]",
+          "ft[Ind]",
+          "ft[Ind37]",
+          "ft[Ind62]",
+          "ft[Ind75]",
+          "ft[Se]",
+          "ft[SeT]",
+          "ft[US]",
+          "fur[US]",
+          "in",
+          "in[US]",
+          "link",
+          "link[BnA]",
+          "link[BnB]",
+          "link[Cla]",
+          "link[Se]",
+          "link[SeT]",
+          "link[US]",
+          "m[Ger]",
+          "mi",
+          "mi[naut]",
+          "mi[nautUK]",
+          "mi[US]",
+          "mil",
+          "rod[US]",
+          "yd",
+          "yd[BnA]",
+          "yd[BnB]",
+          "yd[Cla]",
+          "yd[Ind]",
+          "yd[Ind37]",
+          "yd[Ind62]",
+          "yd[Ind75]",
+          "yd[Se]",
+          "yd[SeT]",
+          "yd[US]",
+          "m3/m2",
+          "0.1 ft",
+          "0.1 ft[US]",
+          "0.1 in",
+          "0.1 yd",
+          "1/16 in",
+          "1/2 ft",
+          "1/32 in",
+          "1/64 in",
+          "10 ft",
+          "10 in",
+          "10 km",
+          "100 ft",
+          "100 km",
+          "1000 ft",
+          "30 ft",
+          "30 m",
+          "1E6 bbl/acre",
+          "bbl/acre",
+          "ft3/ft2",
+          "cm",
+          "dam",
+          "dm",
+          "Em",
+          "fm",
+          "Gm",
+          "hm",
+          "km",
+          "Mm",
+          "mm",
+          "nm",
+          "pm",
+          "Tm",
+          "um"
+        ],
+        "title": "UnitLength_V1_0_1_UnitCategories"
+      },
+      "include_hard_edges": {
+        "default": false,
+        "description": "Whether to include hard edges, defined as edges where adjacent faces exceed the hard-edge angle threshold.",
+        "title": "Include Hard Edges",
+        "type": "boolean"
+      },
+      "max_repair_iterations": {
+        "default": 20,
+        "description": "Maximum number of parameterization repair iterations. Set to 0 to skip repair attempts.",
+        "minimum": 0,
+        "title": "Max Repair Iterations",
+        "type": "integer"
+      },
+      "source": {
+        "description": "The input mesh to parameterize. Supports Triangle Mesh and Geological Model Meshes schema version 2+.",
+        "format": "uri",
+        "reference_to": "geoscience-object",
+        "supported_schemas": [
+          "triangle-mesh/[>=2.0,<3]",
+          "geological-model-meshes/[>=2.0,<3]"
+        ],
+        "title": "Input Mesh",
+        "type": "string"
+      },
+      "target": {
+        "additionalProperties": false,
+        "description": "Target specifying where to create the Design Geometry result. Provide an object with a reference field containing a path-based geoscience object URL and an overwrite field containing a boolean value.",
+        "examples": [
+          {
+            "overwrite": false,
+            "reference": "https://example.api.seequent.com/geoscience-object/orgs/00000000-0000-0000-0000-000000000000/workspaces/11111111-1111-1111-1111-111111111111/objects/path/results/output.json"
+          }
+        ],
+        "properties": {
+          "description": {
+            "default": null,
+            "description": "Description to put into the target object.",
+            "title": "Description",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "overwrite": {
+            "default": false,
+            "description": "Whether to overwrite the existing object.",
+            "title": "Overwrite",
+            "type": "boolean"
+          },
+          "reference": {
+            "description": "Reference to the targeted object.",
+            "format": "uri",
+            "reference_to": "geoscience-object",
+            "supported_schemas": [
+              "design-geometry/[>=1.0,<2]"
+            ],
+            "title": "Reference",
+            "type": "string"
+          },
+          "tags": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Tags to put into the target object.",
+            "title": "Tags",
+            "type": "object"
+          }
+        },
+        "required": [
+          "reference"
+        ],
+        "target": "geoscience-object",
+        "title": "Target",
+        "type": "object"
+      }
+    },
+    "required": [
+      "source",
+      "target",
+      "distance_unit"
+    ],
+    "title": "ParameterizeVolumesParameters",
+    "type": "object"
+  },
+  "results": {
+    "additionalProperties": false,
+    "description": "Results for parameterize-volumes.",
+    "properties": {
+      "message": {
+        "description": "Summary of the task outcome.",
+        "examples": [
+          "Successfully created parameterized design geometry."
+        ],
+        "title": "Message",
+        "type": "string"
+      },
+      "object": {
+        "additionalProperties": false,
+        "description": "The parameterized design geometry output.",
+        "examples": [
+          {
+            "description": "The parameterized design geometry output.",
+            "name": "output.json",
+            "reference": "https://example.api.seequent.com/geoscience-object/orgs/00000000-0000-0000-0000-000000000000/workspaces/11111111-1111-1111-1111-111111111111/objects/path/results/output.json",
+            "schema_id": "design-geometry/1.1.0"
+          }
+        ],
+        "output": "geoscience-object",
+        "properties": {
+          "description": {
+            "description": "The description of the geoscience object.",
+            "title": "Description",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "description": "The name of the geoscience object.",
+            "title": "Name",
+            "type": "string"
+          },
+          "reference": {
+            "description": "Reference to a geoscience object.",
+            "format": "uri",
+            "reference_to": "geoscience-object",
+            "supported_schemas": [
+              "design-geometry/[>=1.0,<2]"
+            ],
+            "title": "Reference",
+            "type": "string"
+          },
+          "schema_id": {
+            "description": "The ID of the Geoscience Object schema.",
+            "title": "Schema ID",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reference",
+          "name",
+          "description",
+          "schema_id"
+        ],
+        "title": "Design Geometry",
+        "type": "object"
+      }
+    },
+    "required": [
+      "object",
+      "message"
+    ],
+    "title": "ParameterizeVolumesResults",
+    "type": "object"
+  }
+}

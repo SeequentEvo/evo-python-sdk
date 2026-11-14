@@ -16,7 +16,7 @@ from __future__ import annotations
 from typing import Any
 
 from evo.objects.typed.types import Ellipsoid
-from pydantic import BaseModel, Field, model_serializer
+from pydantic import BaseModel, Field, ValidatorFunctionWrapHandler, field_validator, model_serializer
 
 __all__ = [
     "SearchNeighborhood",
@@ -76,34 +76,51 @@ class SearchNeighborhood(BaseModel):
     min_samples: int | None = None
     """The minimum number of samples required. If fewer are found, the point may be skipped."""
 
-    max_empty_octants: int | None = Field(None, ge=0, le=8)
+    max_empty_octants: int | None = Field(default=None, ge=0, le=8)
     """The maximum number of empty octants (sectors) allowed when searching for samples.
 
     Omit, or use 8, to disable the octant check.
     """
 
-    max_samples_per_octant: int | None = Field(None, ge=1)
+    max_samples_per_octant: int | None = Field(default=None, ge=1)
     """The maximum number of samples to use from each octant."""
 
-    max_empty_quadrants: int | None = Field(None, ge=0, le=4)
+    max_empty_quadrants: int | None = Field(default=None, ge=0, le=4)
     """The maximum number of empty quadrants (2D sectors, ignoring Z) allowed when searching for samples.
 
     Omit, or use 4, to disable the quadrant check.
     """
 
-    max_samples_per_quadrant: int | None = Field(None, ge=1)
+    max_samples_per_quadrant: int | None = Field(default=None, ge=1)
     """The maximum number of samples to use from each quadrant (2D sectors, ignoring Z)."""
 
-    max_samples_per_drillhole: int | None = Field(None, ge=1)
+    max_samples_per_drillhole: int | None = Field(default=None, ge=1)
     """The maximum number of samples to use from each drillhole. Requires a downhole intervals source object."""
 
-    max_drillholes_per_estimate: int | None = Field(None, ge=1)
+    max_drillholes_per_estimate: int | None = Field(default=None, ge=1)
     """The maximum number of drillholes used in each estimate. Requires a downhole intervals source object."""
+
+    @field_validator("ellipsoid", mode="wrap")
+    @classmethod
+    def _ellipsoid_from_wire(cls, value: Any, handler: ValidatorFunctionWrapHandler) -> Ellipsoid:
+        if not isinstance(value, dict) or "ellipsoid_ranges" not in value:
+            return handler(value)
+        if "ranges" in value:
+            raise ValueError("Supply either ranges or ellipsoid_ranges, not both")
+        fields = dict(value)
+        fields["ranges"] = fields.pop("ellipsoid_ranges")
+        if "rotation" in fields:
+            fields["_rotation"] = fields.pop("rotation")
+        ellipsoid = handler(fields)
+        return Ellipsoid(ranges=ellipsoid.ranges, rotation=ellipsoid.rotation)
 
     @model_serializer
     def _serialize(self) -> dict[str, Any]:
+        ellipsoid = self.ellipsoid.to_dict()
+        # Default rotations use integer zeros; keep wire round-trips numerically stable.
+        ellipsoid["rotation"] = {name: float(value) for name, value in ellipsoid["rotation"].items()}
         result = {
-            "ellipsoid": self.ellipsoid.to_dict(),
+            "ellipsoid": ellipsoid,
             "max_samples": self.max_samples,
         }
         for name in ("min_samples", *_SECTOR_AND_DRILLHOLE_LIMITS):

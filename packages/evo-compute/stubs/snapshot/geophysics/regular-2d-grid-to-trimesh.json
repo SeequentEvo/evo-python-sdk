@@ -1,0 +1,246 @@
+{
+  "display_name": "Regular 2D Grid to Triangle Mesh Converter",
+  "version": "2.2.6",
+  "feature_flag": "geophysics-preview",
+  "description": "Convert a regular 2D grid to a triangle mesh using a cell-centered or vertex-centered scalar attribute as Z values. Supports optional NaN filtering.",
+  "parameters": {
+    "additionalProperties": false,
+    "description": "Parameters for the regular-2d-grid-to-trimesh task.",
+    "properties": {
+      "settings": {
+        "additionalProperties": false,
+        "description": "Optional settings for mesh generation",
+        "properties": {
+          "drop_nan_patches": {
+            "default": true,
+            "description": "Exclude triangles that touch NaN attribute values",
+            "title": "Drop Nan Patches",
+            "type": "boolean"
+          },
+          "flip_triangles": {
+            "default": false,
+            "description": "Reverse triangle winding order (flip normals)",
+            "title": "Flip Triangles",
+            "type": "boolean"
+          },
+          "triMeshVersion": {
+            "default": "2.2",
+            "description": "Triangle mesh schema version for output payload. Use 2.1 for Oasis Montaj compatibility or 2.2 for latest schema.",
+            "enum": [
+              "2.1",
+              "2.2"
+            ],
+            "title": "Trimeshversion"
+          },
+          "use_centroids": {
+            "default": false,
+            "description": "Add a centroid vertex to each quad and split into 4 triangles instead of 2, producing a smoother surface at the cost of twice as many triangles",
+            "title": "Use Centroids",
+            "type": "boolean"
+          }
+        },
+        "required": [],
+        "title": "Settings",
+        "type": "object"
+      },
+      "source": {
+        "additionalProperties": false,
+        "description": "Source grid and attribute",
+        "properties": {
+          "attribute": {
+            "attribute_from": "1/object",
+            "attribute_path": {
+              "regular-2d-grid/[>=1.2,<2]": [
+                "cell_attributes[?attribute_type=='scalar']"
+              ]
+            },
+            "description": "Scalar attribute to use as Z values for the triangle mesh",
+            "reference_to": "attribute",
+            "title": "Attribute",
+            "type": "string"
+          },
+          "object": {
+            "description": "Input regular 2D grid containing the scalar attribute to use as Z values",
+            "format": "uri",
+            "reference_to": "geoscience-object",
+            "supported_schemas": [
+              "regular-2d-grid/[>=1.2,<2]"
+            ],
+            "title": "Object",
+            "type": "string"
+          }
+        },
+        "required": [
+          "object",
+          "attribute"
+        ],
+        "title": "SourceInput",
+        "type": "object"
+      },
+      "target": {
+        "additionalProperties": false,
+        "description": "Where to create the output Triangle Mesh object",
+        "properties": {
+          "description": {
+            "default": null,
+            "description": "Description to put into the target object.",
+            "title": "Description",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "overwrite": {
+            "default": false,
+            "description": "Whether to overwrite the existing object.",
+            "title": "Overwrite",
+            "type": "boolean"
+          },
+          "reference": {
+            "description": "Reference to the targeted object.",
+            "format": "uri",
+            "reference_to": "geoscience-object",
+            "supported_schemas": [
+              "triangle-mesh/[>=2.0,<3]"
+            ],
+            "title": "Reference",
+            "type": "string"
+          },
+          "tags": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Tags to put into the target object.",
+            "title": "Tags",
+            "type": "object"
+          }
+        },
+        "required": [
+          "reference"
+        ],
+        "target": "geoscience-object",
+        "title": "Target",
+        "type": "object"
+      }
+    },
+    "required": [
+      "source",
+      "target"
+    ],
+    "title": "Regular2DGridTriMeshParameters",
+    "type": "object"
+  },
+  "results": {
+    "additionalProperties": false,
+    "description": "Results of the regular-2d-grid-to-trimesh task.",
+    "properties": {
+      "has_nan": {
+        "description": "True if the source attribute contains NaN values.",
+        "title": "Has Nan",
+        "type": "boolean"
+      },
+      "is_rotated": {
+        "default": false,
+        "description": "True if the source grid has a non-identity rotation.",
+        "title": "Is Rotated",
+        "type": "boolean"
+      },
+      "nan_count": {
+        "default": 0,
+        "description": "Number of NaN values in the source attribute.",
+        "title": "Nan Count",
+        "type": "integer"
+      },
+      "output": {
+        "additionalProperties": false,
+        "description": "Reference to the created Triangle Mesh object.",
+        "output": "geoscience-object",
+        "properties": {
+          "description": {
+            "description": "The description of the geoscience object.",
+            "title": "Description",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "description": "The name of the geoscience object.",
+            "title": "Name",
+            "type": "string"
+          },
+          "reference": {
+            "description": "Reference to a geoscience object.",
+            "format": "uri",
+            "reference_to": "geoscience-object",
+            "supported_schemas": [
+              "triangle-mesh/[>=2.0,<3]"
+            ],
+            "title": "Reference",
+            "type": "string"
+          },
+          "schema_id": {
+            "description": "The ID of the Geoscience Object schema.",
+            "title": "Schema ID",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reference",
+          "name",
+          "description",
+          "schema_id"
+        ],
+        "title": "Output Triangle Mesh",
+        "type": [
+          "object",
+          "null"
+        ]
+      },
+      "summary": {
+        "additionalProperties": false,
+        "description": "Summary statistics for the generated triangle mesh.",
+        "properties": {
+          "has_non_manifold_edges": {
+            "description": "Always false \u2014 splitting a regular grid into triangles cannot produce edges shared by more than 2 triangles",
+            "title": "Has Non Manifold Edges",
+            "type": "boolean"
+          },
+          "has_unused_vertices": {
+            "description": "Whether the mesh has orphan vertices not referenced by any triangle",
+            "title": "Has Unused Vertices",
+            "type": "boolean"
+          },
+          "num_triangles": {
+            "description": "Number of triangles in the generated mesh",
+            "title": "Num Triangles",
+            "type": "integer"
+          },
+          "num_vertices": {
+            "description": "Number of vertices in the mesh vertex array",
+            "title": "Num Vertices",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "num_triangles",
+          "num_vertices",
+          "has_unused_vertices",
+          "has_non_manifold_edges"
+        ],
+        "title": "Summary",
+        "type": [
+          "object",
+          "null"
+        ]
+      }
+    },
+    "required": [
+      "output",
+      "summary",
+      "has_nan"
+    ],
+    "title": "Regular2DGridTriMeshResults",
+    "type": "object"
+  }
+}

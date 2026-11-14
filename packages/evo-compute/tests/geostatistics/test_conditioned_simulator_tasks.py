@@ -42,6 +42,7 @@ from evo.compute.tasks.geostatistics.conditioned_simulator import (
     UpperTailParams,
     ValidationReportContextItem,
 )
+from test_payload_parity import runner_catalogue
 
 # ---------------------------------------------------------------------------
 _BASE = "https://hub.test.evo.bentley.com"
@@ -372,13 +373,16 @@ class TestConSimRunnerAsync(unittest.IsolatedAsyncioTestCase):
         ctx = self._make_context()
         params = _params()
         job = AsyncMock()
-        job.wait_for_results.return_value = _make_result_model()
+        job.wait_for_results.return_value = _make_result_model().model_dump(mode="json")
 
-        with patch(
-            "evo.compute.tasks.common.runner.JobClient.submit",
-            new_callable=AsyncMock,
-            return_value=job,
-        ) as mock_submit:
+        with (
+            runner_catalogue(ConSimRunner),
+            patch(
+                "evo.compute.engine.JobClient.submit",
+                new_callable=AsyncMock,
+                return_value=job,
+            ) as mock_submit,
+        ):
             result = await ConSimRunner(ctx, params)
 
         mock_submit.assert_called_once()
