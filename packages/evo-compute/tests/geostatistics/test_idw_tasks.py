@@ -234,6 +234,32 @@ class TestIDWParametersSerialization(unittest.TestCase):
         self.assertEqual(d["neighborhood"]["max_empty_quadrants"], 1)
         self.assertEqual(d["neighborhood"]["max_drillholes_per_estimate"], 4)
 
+    def test_sample_limit_boundaries_in_neighborhood(self):
+        ellipsoid = Ellipsoid(ranges=EllipsoidRanges(major=200, semi_major=150, minor=100))
+        d = _dump(_params(neighborhood={"ellipsoid": ellipsoid, "max_samples": 1}))
+        self.assertEqual(d["neighborhood"]["max_samples"], 1)
+        self.assertNotIn("min_samples", d["neighborhood"])
+
+        for max_samples, min_samples in [(1, 1), (20, 1), (20, 20)]:
+            with self.subTest(max_samples=max_samples, min_samples=min_samples):
+                d = _dump(
+                    _params(
+                        neighborhood={"ellipsoid": ellipsoid, "max_samples": max_samples, "min_samples": min_samples}
+                    )
+                )
+                self.assertEqual(d["neighborhood"]["max_samples"], max_samples)
+                self.assertEqual(d["neighborhood"]["min_samples"], min_samples)
+
+    def test_invalid_sample_limits_rejected(self):
+        ellipsoid = Ellipsoid(ranges=EllipsoidRanges(major=200, semi_major=150, minor=100))
+        for limits in [
+            {"max_samples": 0},
+            {"max_samples": 20, "min_samples": 0},
+            {"max_samples": 20, "min_samples": 21},
+        ]:
+            with self.subTest(**limits), self.assertRaises(ValidationError):
+                _params(neighborhood={"ellipsoid": ellipsoid, **limits})
+
 
 # ---------------------------------------------------------------------------
 # Result handling

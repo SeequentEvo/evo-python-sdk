@@ -16,7 +16,7 @@ from __future__ import annotations
 from typing import Any
 
 from evo.objects.typed.types import Ellipsoid
-from pydantic import BaseModel, Field, model_serializer
+from pydantic import BaseModel, Field, model_serializer, model_validator
 
 __all__ = [
     "SearchNeighborhood",
@@ -70,11 +70,14 @@ class SearchNeighborhood(BaseModel):
     ellipsoid: Ellipsoid
     """The ellipsoid defining the spatial extent to search for samples."""
 
-    max_samples: int
+    max_samples: int = Field(ge=1)
     """The maximum number of samples to use for each evaluation point."""
 
-    min_samples: int | None = None
-    """The minimum number of samples required. If fewer are found, the point may be skipped."""
+    min_samples: int | None = Field(None, ge=1)
+    """The minimum number of samples required, between 1 and ``max_samples``.
+
+    If fewer are found, the point may be skipped.
+    """
 
     max_empty_octants: int | None = Field(None, ge=0, le=8)
     """The maximum number of empty octants (sectors) allowed when searching for samples.
@@ -99,6 +102,14 @@ class SearchNeighborhood(BaseModel):
 
     max_drillholes_per_estimate: int | None = Field(None, ge=1)
     """The maximum number of drillholes used in each estimate. Requires a downhole intervals source object."""
+
+    @model_validator(mode="after")
+    def _check_sample_limits(self) -> SearchNeighborhood:
+        if self.min_samples is not None and self.min_samples > self.max_samples:
+            raise ValueError(
+                f"min_samples must be between 1 and max_samples ({self.max_samples}), got {self.min_samples}."
+            )
+        return self
 
     @model_serializer
     def _serialize(self) -> dict[str, Any]:

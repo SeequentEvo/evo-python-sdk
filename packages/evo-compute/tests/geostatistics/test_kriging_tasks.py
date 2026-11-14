@@ -1189,3 +1189,35 @@ class TestSearchNeighborhoodAlias(TestCase):
             neighborhood=search,
         )
         self.assertIsNotNone(params.search)
+
+    def test_sample_limit_boundaries_in_neighborhood(self):
+        ellipsoid = Ellipsoid(ranges=EllipsoidRanges(major=100, semi_major=100, minor=50))
+        default_min = self._make_params(search={"ellipsoid": ellipsoid, "max_samples": 1}).model_dump(
+            mode="json", by_alias=True, exclude_none=True
+        )
+        self.assertEqual(default_min["neighborhood"]["max_samples"], 1)
+        self.assertNotIn("min_samples", default_min["neighborhood"])
+
+        for max_samples, min_samples in [(1, 1), (20, 1), (20, 20)]:
+            with self.subTest(max_samples=max_samples, min_samples=min_samples):
+                dumped = self._make_params(
+                    search={"ellipsoid": ellipsoid, "max_samples": max_samples, "min_samples": min_samples}
+                ).model_dump(mode="json", by_alias=True, exclude_none=True)
+                self.assertEqual(dumped["neighborhood"]["max_samples"], max_samples)
+                self.assertEqual(dumped["neighborhood"]["min_samples"], min_samples)
+
+    def test_invalid_sample_limits_rejected(self):
+        ellipsoid = Ellipsoid(ranges=EllipsoidRanges(major=100, semi_major=100, minor=50))
+        for field_name in ("search", "neighborhood"):
+            for limits in [
+                {"max_samples": 0},
+                {"max_samples": 20, "min_samples": 0},
+                {"max_samples": 20, "min_samples": 21},
+            ]:
+                with self.subTest(field=field_name, **limits), self.assertRaises(ValidationError):
+                    KrigingParameters(
+                        source=Source(object=POINTSET_URL, attribute="grade"),
+                        target=Target.new_attribute(GRID_URL, "kriged_grade"),
+                        variogram=VARIOGRAM_URL,
+                        **{field_name: {"ellipsoid": ellipsoid, **limits}},
+                    )
