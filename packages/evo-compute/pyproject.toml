@@ -12,6 +12,7 @@ dependencies = [
     "evo-blockmodels[utils]",
     "evo-objects[utils,blockmodels]",
     "evo-sdk-common",
+    "jsonschema>=4.18",
     "pydantic>=2",
     "typing_extensions>=4.0",
 ]
@@ -30,8 +31,16 @@ notebooks = ["evo-sdk-common[notebooks]"]
 # Dev dependencies. The version is left unspecified so the latest is installed.
 test = [
     "evo-sdk-common[aiohttp]",
+    # tests/test_stubgen.py runs a real checker over the generated stub; without one
+    # installed those tests skip and the stub's static guarantees go unverified.
+    "mypy",
     "parameterized==0.9.0",
     "pytest",
+    "pyright",
+    # The stub generator formats its output with ruff rather than imitating it, so
+    # generation -- and `test_stub_is_up_to_date` -- needs it. Pinned to match the root
+    # pyproject and .pre-commit-config.yaml, since formatting must be reproducible.
+    "ruff==0.15.16",
 ]
 dev = [
     "evo-sdk-common[notebooks]",
@@ -40,6 +49,10 @@ dev = [
     "ruff",
     {include-group = "test"},
 ]
+
+[tool.pytest.ini_options]
+# The parity suites share one harness module, so `tests` has to be importable under any import mode.
+pythonpath = ["tests"]
 
 [tool.ruff]
 src = ["src", "tests"]

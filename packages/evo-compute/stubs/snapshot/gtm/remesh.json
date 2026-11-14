@@ -1,0 +1,204 @@
+{
+  "display_name": "Remesh",
+  "version": "0.0.1",
+  "feature_flag": "",
+  "description": "[TODO: Add description] Performs Remesh operation on geotechnical objects.",
+  "parameters": {
+    "additionalProperties": false,
+    "description": "Parameters for this task.",
+    "properties": {
+      "action": {
+        "const": "remesh",
+        "description": "The action to perform",
+        "title": "Action"
+      },
+      "gooseContext": {
+        "additionalProperties": false,
+        "description": "Context information for the Goose API",
+        "properties": {
+          "apiToken": {
+            "description": "Authentication token for the API",
+            "title": "API Token",
+            "type": "string"
+          },
+          "host": {
+            "description": "The hostname for the API",
+            "title": "Host",
+            "type": "string"
+          },
+          "hubUrl": {
+            "description": "Hub URL currently being used",
+            "title": "Hub URL",
+            "type": "string"
+          },
+          "workspaceId": {
+            "description": "The workspace identifier",
+            "format": "uuid",
+            "title": "Workspace ID",
+            "type": "string"
+          }
+        },
+        "required": [
+          "host",
+          "apiToken",
+          "workspaceId"
+        ],
+        "title": "Goose Context",
+        "type": "object"
+      },
+      "initialCleanup": {
+        "description": "[TODO: Add description for initialCleanup]",
+        "title": "Initial Cleanup",
+        "type": "boolean"
+      },
+      "inputObjects": {
+        "description": "The geoscience objects to process.",
+        "items": {
+          "description": "A geoscience object to process.",
+          "format": "uri",
+          "reference_to": "geoscience-object",
+          "supported_schemas": [
+            "triangle-mesh/[>=2.0,<3]",
+            "geological-model-meshes/[>=2.1,<3]"
+          ],
+          "title": "Input Object",
+          "type": "string"
+        },
+        "minItems": 1,
+        "title": "Input Objects",
+        "type": "array"
+      },
+      "isClosed": {
+        "description": "[TODO: Add description for isClosed]",
+        "title": "Is Closed",
+        "type": "boolean"
+      },
+      "lineProximityDetection": {
+        "description": "[TODO: Add description for lineProximityDetection]",
+        "title": "Line Proximity Detection",
+        "type": "boolean"
+      },
+      "maxChordalError": {
+        "description": "[TODO: Add description for maxChordalError]",
+        "title": "Max Chordal Error",
+        "type": "number"
+      },
+      "optimize": {
+        "description": "[TODO: Add description for optimize]",
+        "title": "Optimize",
+        "type": "boolean"
+      },
+      "patchAngleTolerance": {
+        "description": "[TODO: Add description for patchAngleTolerance]",
+        "minimum": 0,
+        "title": "Patch Angle Tolerance",
+        "type": "number"
+      },
+      "regularizeMode": {
+        "description": "[TODO: Add description for regularizeMode]",
+        "title": "Regularize Mode",
+        "type": "boolean"
+      },
+      "sessionId": {
+        "description": "The session identifier",
+        "title": "Session ID",
+        "type": "string"
+      },
+      "shapeQualityWeight": {
+        "description": "[TODO: Add description for shapeQualityWeight]",
+        "maximum": 1,
+        "minimum": 0,
+        "title": "Shape Quality Weight",
+        "type": "number"
+      },
+      "strainTolerance": {
+        "description": "[TODO: Add description for strainTolerance]",
+        "title": "Strain Tolerance",
+        "type": "number"
+      },
+      "targetH": {
+        "description": "[TODO: Add description for targetH]",
+        "minimum": 0,
+        "title": "Target H",
+        "type": "number"
+      }
+    },
+    "required": [
+      "gooseContext",
+      "action",
+      "inputObjects",
+      "patchAngleTolerance",
+      "maxChordalError",
+      "isClosed",
+      "initialCleanup",
+      "lineProximityDetection",
+      "optimize",
+      "shapeQualityWeight",
+      "targetH",
+      "regularizeMode"
+    ],
+    "title": "Parameters",
+    "type": "object"
+  },
+  "results": {
+    "additionalProperties": false,
+    "description": "Results of the task.",
+    "properties": {
+      "created": {
+        "description": "Array of created object references",
+        "items": {
+          "description": "Reference to a geoscience object",
+          "format": "uri",
+          "reference_to": "geoscience-object",
+          "supported_schemas": [
+            "triangle-mesh/[>=2.0,<3]",
+            "geological-model-meshes/[>=2.1,<3]"
+          ],
+          "title": "Object Reference",
+          "type": "string"
+        },
+        "title": "Created Objects",
+        "type": "array"
+      },
+      "deleted": {
+        "description": "Array of deleted object references",
+        "items": {
+          "description": "Reference to a geoscience object",
+          "format": "uri",
+          "reference_to": "geoscience-object",
+          "supported_schemas": [
+            "triangle-mesh/[>=2.0,<3]",
+            "geological-model-meshes/[>=2.1,<3]"
+          ],
+          "title": "Object Reference",
+          "type": "string"
+        },
+        "title": "Deleted Objects",
+        "type": "array"
+      },
+      "modified": {
+        "description": "Array of modified object references",
+        "items": {
+          "description": "Reference to a geoscience object",
+          "format": "uri",
+          "reference_to": "geoscience-object",
+          "supported_schemas": [
+            "triangle-mesh/[>=2.0,<3]",
+            "geological-model-meshes/[>=2.1,<3]"
+          ],
+          "title": "Object Reference",
+          "type": "string"
+        },
+        "title": "Modified Objects",
+        "type": "array"
+      }
+    },
+    "required": [
+      "modified",
+      "created",
+      "deleted"
+    ],
+    "title": "Results",
+    "type": "object"
+  }
+}

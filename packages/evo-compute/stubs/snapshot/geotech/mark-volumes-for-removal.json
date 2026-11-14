@@ -1,0 +1,189 @@
+{
+  "display_name": "Mark Volumes For Removal",
+  "version": "1.5.16",
+  "feature_flag": "geotech-preview",
+  "description": "Marks specified volumes in a Geological Model Meshes for removal by setting their material to external, or clears the marking.",
+  "parameters": {
+    "additionalProperties": false,
+    "description": "Parameters for mark-volumes-for-removal.",
+    "properties": {
+      "settings": {
+        "additionalProperties": false,
+        "description": "Settings for marking volumes for removal.",
+        "examples": [
+          {
+            "should_remove": true,
+            "volume_indices": [
+              1,
+              2,
+              3
+            ]
+          }
+        ],
+        "properties": {
+          "should_remove": {
+            "default": true,
+            "description": "When true, mark the specified volumes for removal. When false, clear the removal marking.",
+            "title": "Should Remove",
+            "type": "boolean"
+          },
+          "volume_indices": {
+            "description": "Indices of volumes to mark or unmark for removal.",
+            "items": {
+              "description": "Index of a volume in the GMM.",
+              "minimum": 0,
+              "title": "Volume Index",
+              "type": "integer"
+            },
+            "title": "Volume Indices",
+            "type": "array"
+          }
+        },
+        "required": [
+          "volume_indices"
+        ],
+        "title": "Settings",
+        "type": "object"
+      },
+      "source": {
+        "description": "The source Geological Model Meshes object.",
+        "format": "uri",
+        "reference_to": "geoscience-object",
+        "supported_schemas": [
+          "geological-model-meshes/[>=2.0,<3]"
+        ],
+        "title": "Geological Model Meshes",
+        "type": "string"
+      },
+      "target": {
+        "additionalProperties": false,
+        "description": "Target specifying where to create the new Geological Model Meshes object. Provide an object with a reference field containing a path-based geoscience object URL and an overwrite field containing a boolean value. Only path-based object references can be used for creating a new object.",
+        "examples": [
+          {
+            "overwrite": false,
+            "reference": "https://example.api.seequent.com/geoscience-object/orgs/00000000-0000-0000-0000-000000000000/workspaces/11111111-1111-1111-1111-111111111111/objects/path/results/output.json"
+          }
+        ],
+        "properties": {
+          "description": {
+            "default": null,
+            "description": "Description to put into the target object.",
+            "title": "Description",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "overwrite": {
+            "default": false,
+            "description": "Whether to overwrite the existing object.",
+            "title": "Overwrite",
+            "type": "boolean"
+          },
+          "reference": {
+            "description": "Reference to the targeted object.",
+            "format": "uri",
+            "reference_to": "geoscience-object",
+            "supported_schemas": [
+              "geological-model-meshes/[>=2.0,<3]"
+            ],
+            "title": "Reference",
+            "type": "string"
+          },
+          "tags": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Tags to put into the target object.",
+            "title": "Tags",
+            "type": "object"
+          }
+        },
+        "required": [
+          "reference"
+        ],
+        "target": "geoscience-object",
+        "title": "Target",
+        "type": "object"
+      }
+    },
+    "required": [
+      "source",
+      "target",
+      "settings"
+    ],
+    "title": "MarkVolumesForRemovalParameters",
+    "type": "object"
+  },
+  "results": {
+    "additionalProperties": false,
+    "description": "Results of mark-volumes-for-removal.",
+    "properties": {
+      "message": {
+        "description": "Description of the result of the operation.",
+        "examples": [
+          "Successfully marked volumes for removal."
+        ],
+        "title": "Message",
+        "type": "string"
+      },
+      "object": {
+        "additionalProperties": false,
+        "description": "The new Geological Model Meshes object with volumes marked for removal.",
+        "examples": [
+          {
+            "description": "Geological model meshes",
+            "name": "output.json",
+            "reference": "https://example.api.seequent.com/geoscience-object/orgs/00000000-0000-0000-0000-000000000000/workspaces/11111111-1111-1111-1111-111111111111/objects/path/results/output.json",
+            "schema_id": "geological-model-meshes/2.0.0"
+          }
+        ],
+        "output": "geoscience-object",
+        "properties": {
+          "description": {
+            "description": "The description of the geoscience object.",
+            "title": "Description",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "description": "The name of the geoscience object.",
+            "title": "Name",
+            "type": "string"
+          },
+          "reference": {
+            "description": "Reference to a geoscience object.",
+            "format": "uri",
+            "reference_to": "geoscience-object",
+            "supported_schemas": [
+              "geological-model-meshes/[>=2.0,<3]"
+            ],
+            "title": "Reference",
+            "type": "string"
+          },
+          "schema_id": {
+            "description": "The ID of the Geoscience Object schema.",
+            "title": "Schema ID",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reference",
+          "name",
+          "description",
+          "schema_id"
+        ],
+        "title": "Geological Model Meshes",
+        "type": "object"
+      }
+    },
+    "required": [
+      "object",
+      "message"
+    ],
+    "title": "MarkVolumesForRemovalResults",
+    "type": "object"
+  }
+}

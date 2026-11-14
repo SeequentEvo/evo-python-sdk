@@ -1,0 +1,116 @@
+{
+  "display_name": "Detect Converter",
+  "version": "0.1.31",
+  "feature_flag": "converter-preview",
+  "description": "Accepts one or more file references, inspects each file's extension, and returns which converter task(s) and geoscience object schema(s) are available for importing each file.",
+  "parameters": {
+    "additionalProperties": false,
+    "description": "Parameters for the detect-converter task.",
+    "properties": {
+      "files": {
+        "description": "One or more Evo file references to analyse.",
+        "items": {
+          "description": "An Evo file reference to analyse.",
+          "format": "uri",
+          "reference_to": "file",
+          "title": "Input File",
+          "type": "string"
+        },
+        "minItems": 1,
+        "title": "Input Files",
+        "type": "array"
+      }
+    },
+    "required": [
+      "files"
+    ],
+    "title": "Parameters",
+    "type": "object"
+  },
+  "results": {
+    "additionalProperties": false,
+    "description": "Results for the detect-converter task.",
+    "properties": {
+      "files": {
+        "description": "One result per input file, in the same order.",
+        "items": {
+          "additionalProperties": false,
+          "description": "Result for a single file, indicating which converters can handle it.",
+          "properties": {
+            "converters": {
+              "description": "The converter task(s) that can handle this file.",
+              "items": {
+                "additionalProperties": false,
+                "description": "A converter task that can handle a particular file extension.",
+                "properties": {
+                  "converter_task": {
+                    "description": "The compute task URL for the converter (e.g. 'https://example.com/compute/orgs/{org_id}/converter/obj-import').",
+                    "title": "Converter Task",
+                    "type": "string"
+                  },
+                  "description": {
+                    "description": "A human-readable description of what the converter task does.",
+                    "title": "Description",
+                    "type": "string"
+                  },
+                  "schema": {
+                    "description": "The geoscience object schema the converter produces (e.g. 'triangle-mesh').",
+                    "title": "Schema",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "converter_task",
+                  "description",
+                  "schema"
+                ],
+                "title": "ConverterOption",
+                "type": "object"
+              },
+              "title": "Converters",
+              "type": "array"
+            },
+            "extension": {
+              "description": "The lowercased file extension including the leading dot, or empty string.",
+              "title": "Extension",
+              "type": "string"
+            },
+            "file_ref": {
+              "description": "The file reference URL including version.",
+              "format": "uri",
+              "reference_to": "file",
+              "title": "File Ref",
+              "type": "string"
+            },
+            "filename": {
+              "description": "The filename from file metadata.",
+              "title": "Filename",
+              "type": "string"
+            },
+            "supported": {
+              "description": "Whether at least one converter exists for this file extension.",
+              "title": "Supported",
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "file_ref",
+            "filename",
+            "extension",
+            "supported",
+            "converters"
+          ],
+          "title": "FileConverterInfo",
+          "type": "object"
+        },
+        "title": "Files",
+        "type": "array"
+      }
+    },
+    "required": [
+      "files"
+    ],
+    "title": "Results",
+    "type": "object"
+  }
+}

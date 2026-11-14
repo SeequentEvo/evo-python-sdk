@@ -1,0 +1,64 @@
+{
+  "display_name": "Detect Non-Manifold Edges",
+  "version": "1.5.16",
+  "feature_flag": "geotech-preview",
+  "description": "Identifies edges shared by more than two triangles in a Triangle Mesh or Geological Model Meshes object.",
+  "parameters": {
+    "additionalProperties": false,
+    "description": "Parameters for detect-non-manifold-edges.",
+    "properties": {
+      "source": {
+        "description": "The mesh to check for non-manifold edges. Supports Triangle Mesh and Geological Model Meshes.",
+        "format": "uri",
+        "reference_to": "geoscience-object",
+        "supported_schemas": [
+          "triangle-mesh/[>=2.0,<3]",
+          "geological-model-meshes/[>=2.0,<3]"
+        ],
+        "title": "Input Mesh",
+        "type": "string"
+      }
+    },
+    "required": [
+      "source"
+    ],
+    "title": "DetectNonManifoldEdgesParameters",
+    "type": "object"
+  },
+  "results": {
+    "additionalProperties": false,
+    "description": "Results of detect-non-manifold-edges.",
+    "properties": {
+      "edges": {
+        "description": "Non-manifold edges, each as a pair of vertex indices.",
+        "items": {
+          "description": "A pair of vertex indices identifying a non-manifold edge.",
+          "items": {
+            "description": "Index of a vertex in the mesh.",
+            "minimum": 0,
+            "title": "Vertex Index",
+            "type": "integer"
+          },
+          "title": "Edge",
+          "type": "array"
+        },
+        "title": "Non-Manifold Edges",
+        "type": "array"
+      },
+      "message": {
+        "description": "Description of the result of the operation.",
+        "examples": [
+          "Found 0 non-manifold edge(s)."
+        ],
+        "title": "Message",
+        "type": "string"
+      }
+    },
+    "required": [
+      "edges",
+      "message"
+    ],
+    "title": "DetectNonManifoldEdgesResults",
+    "type": "object"
+  }
+}
