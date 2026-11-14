@@ -12,6 +12,7 @@ dependencies = [
     "evo-blockmodels[utils]",
     "evo-objects[utils,blockmodels]",
     "evo-sdk-common",
+    "jsonschema>=4.18",
     "pydantic>=2",
     "typing_extensions>=4.0",
 ]
@@ -40,6 +41,10 @@ dev = [
     "ruff",
     {include-group = "test"},
 ]
+
+[tool.pytest.ini_options]
+# The parity suites share one harness module, so `tests` has to be importable under any import mode.
+pythonpath = ["tests"]
 
 [tool.ruff]
 src = ["src", "tests"]

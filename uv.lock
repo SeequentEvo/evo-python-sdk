@@ -1056,6 +1056,7 @@ dependencies = [
     { name = "evo-blockmodels", extra = ["utils"] },
     { name = "evo-objects", extra = ["blockmodels", "utils"] },
     { name = "evo-sdk-common" },
+    { name = "jsonschema" },
     { name = "pydantic" },
     { name = "typing-extensions" },
 ]
@@ -1090,6 +1091,7 @@ requires-dist = [
     { name = "evo-sdk-common", editable = "packages/evo-sdk-common" },
     { name = "evo-sdk-common", extras = ["aiohttp"], marker = "extra == 'aiohttp'", editable = "packages/evo-sdk-common" },
     { name = "evo-sdk-common", extras = ["notebooks"], marker = "extra == 'notebooks'", editable = "packages/evo-sdk-common" },
+    { name = "jsonschema", specifier = ">=4.18" },
     { name = "pydantic", specifier = ">=2" },
     { name = "typing-extensions", specifier = ">=4.0" },
 ]
@@ -1335,7 +1337,7 @@ test = [
 
 [[package]]
 name = "evo-sdk-common"
-version = "0.5.31"
+version = "0.5.32"
 source = { editable = "packages/evo-sdk-common" }
 dependencies = [
     { name = "pure-interface" },
