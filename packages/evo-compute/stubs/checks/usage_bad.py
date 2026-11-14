@@ -20,6 +20,7 @@ from evo.common import IContext
 from pydantic import BaseModel
 
 from evo.compute import ComputeClient
+from evo.compute.tasks.common import Ellipsoid, EllipsoidRanges, SearchNeighborhood, Source, Target
 
 EXPECTED_ERRORS = [
     "neighborhood",  # required parameter omitted
@@ -28,6 +29,8 @@ EXPECTED_ERRORS = [
     "method",  # value outside the schema's enum
     "upper_case",  # result attribute used as something other than the type it declares
     "NotANeighborhood",
+    "target",
+    "attribute_name",
 ]
 
 
@@ -59,6 +62,37 @@ async def malformed_neighborhood_dictionary(context: IContext) -> None:
             "max_samples": "invalid",
         },
     )
+
+
+async def unrelated_neighborhood_model_submit(context: IContext) -> None:
+    client = ComputeClient(context)
+    await client.geostatistics.declustering.submit(
+        source="https://example.com/objects/samples",
+        grid="https://example.com/objects/grid",
+        target={"object": "https://example.com/objects/target", "attribute": "weights"},
+        neighborhood=NotANeighborhood(value="invalid"),
+    )
+
+
+async def unawaited_job_results(context: IContext) -> None:
+    client = ComputeClient(context)
+    job = await client.geology.some_task.submit(anything=1)
+    result = job.results()
+    print(result.target)
+
+
+async def misused_native_submission(context: IContext) -> None:
+    job = await ComputeClient(context).geostatistics.kriging.submit(
+        source=Source(object="https://example.com/objects/source", attribute="grade"),
+        target=Target.new_attribute("https://example.com/objects/target", "estimate"),
+        variogram="https://example.com/objects/variogram",
+        neighborhood=SearchNeighborhood(ellipsoid=Ellipsoid(ranges=EllipsoidRanges(200, 150, 100)), max_samples=20),
+    )
+    pending_result = job.results()
+    print(pending_result.attribute_name)
+    result = await job.results()
+    attribute_name: int = result.attribute_name
+    print(attribute_name)
 
 
 async def missing_required_parameter(context: IContext) -> None:

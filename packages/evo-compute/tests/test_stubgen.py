@@ -80,12 +80,44 @@ class TestGeneratedArtifact(unittest.TestCase):
     def test_generation_is_deterministic(self) -> None:
         self.assertEqual(_stubgen.generate_stub(), _stubgen.generate_stub())
 
+    def test_every_generated_run_says_where_feedback_goes(self) -> None:
+        runs = [
+            (node.name, method)
+            for node in ast.parse(_stubgen.generate_stub()).body
+            if isinstance(node, ast.ClassDef)
+            for method in node.body
+            if isinstance(method, ast.AsyncFunctionDef) and method.name == "run"
+        ]
+        self.assertTrue(runs)
+        for name, run in runs:
+            with self.subTest(task=name):
+                self.assertTrue((ast.get_docstring(run) or "").endswith(_stubgen._RUN_FEEDBACK_NOTE))
+
     def test_only_async_client_is_generated(self) -> None:
         source = _stubgen.generate_stub()
         self.assertNotIn("SyncComputeClient", source)
+        self.assertNotIn("SyncTaskJob", source)
         self.assertNotIn("SyncTaskResult", source)
         self.assertNotIn("_task_handles", source)
         ast.parse(source)
+
+    def test_submit_matches_run_for_every_generic_task(self) -> None:
+        tree = ast.parse(_stubgen.generate_stub())
+        classes = {node.name: node for node in tree.body if isinstance(node, ast.ClassDef)}
+        claimed = set(overridden_tasks())
+        checked = 0
+        for task in _stubgen.load_snapshot(_stubgen.DEFAULT_SNAPSHOT_DIR):
+            if (task.topic, task.name.replace("-", "_")) in claimed:
+                continue
+            with self.subTest(task=f"{task.topic}.{task.name}"):
+                stub = _stubgen._TaskRenderer(task).render()
+                methods = {
+                    node.name: node for node in classes[stub.class_name].body if isinstance(node, ast.AsyncFunctionDef)
+                }
+                self.assertEqual(ast.dump(methods["run"].args), ast.dump(methods["submit"].args))
+                self.assertEqual(f"TaskJob[{stub.return_type}]", ast.unparse(methods["submit"].returns))
+                checked += 1
+        self.assertGreater(checked, 0)
 
     def test_generation_and_check_work_without_a_utf8_locale(self) -> None:
         script = "\n".join(
@@ -175,7 +207,7 @@ class TestGeneratedArtifact(unittest.TestCase):
         describing the class it stands for -- which is how ``check_schemas`` went missing.
         """
         rendered = "\n".join(_stubgen._render_client([]))
-        for method in (ComputeClient.__init__, ComputeClient.arun):
+        for method in (ComputeClient.__init__, ComputeClient.arun, ComputeClient.asubmit):
             with self.subTest(method=method.__name__):
                 expected = [name for name in inspect.signature(method).parameters if name != "self"]
                 block = rendered.split(f"def {method.__name__}(")[1].split(") ->")[0]
@@ -823,7 +855,9 @@ class TestTypeCheckers(unittest.TestCase):
         for node in tree.body:
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name in {
                 "unrelated_neighborhood_model_async",
+                "unrelated_neighborhood_model_submit",
                 "malformed_neighborhood_dictionary",
+                "unawaited_job_results",
             }:
                 with self.subTest(rejected_input=node.name):
                     self.assertTrue(

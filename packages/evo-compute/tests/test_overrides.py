@@ -38,8 +38,9 @@ from contextlib import contextmanager
 from types import SimpleNamespace
 from typing import Any
 from unittest import mock
+from uuid import UUID
 
-from evo.compute import ComputeClient, ParameterValidationError, TaskResource, _stubgen
+from evo.compute import ComputeClient, JobClient, ParameterValidationError, TaskJob, TaskResource, _stubgen
 from evo.compute.discovery import DiscoveryClient
 from evo.compute.engine import _TaskProxy
 from evo.compute.overrides import load_override
@@ -174,6 +175,12 @@ class TestTheSeam(OverrideTestCase):
     def test_the_override_remains_async_without_a_blocking_wrapper(self) -> None:
         self.assertTrue(inspect.iscoroutinefunction(self.client.geostatistics.kriging.run))
 
+    def test_the_override_publishes_typed_async_submission(self) -> None:
+        self.assertTrue(inspect.iscoroutinefunction(self.client.geostatistics.kriging.submit))
+        run = inspect.signature(self.client.geostatistics.kriging.run)
+        submit = inspect.signature(self.client.geostatistics.kriging.submit)
+        self.assertEqual(run.parameters, submit.parameters)
+
     def test_every_other_task_stays_generic(self) -> None:
         """An override is one task opting out, not a change to how tasks are reached."""
         self.assertIsInstance(self.client.geostatistics.declustering, _TaskProxy)
@@ -213,6 +220,81 @@ class TestTheSeam(OverrideTestCase):
                     "geostatistics",
                     "kriging",
                     self.inputs(neighborhood=_search(min_samples=99)),
+                )
+        submit.assert_not_awaited()
+
+    async def test_asubmit_cannot_bypass_the_override_checks(self) -> None:
+        with self.catalogue, _capture_submit("evo.compute.engine") as submit:
+            with self.assertRaisesRegex(ParameterValidationError, r"kriging\.submit\(\)"):
+                await self.client.asubmit("geostatistics", "kriging", self.inputs(neighborhood=_search(min_samples=99)))
+        submit.assert_not_awaited()
+
+    async def test_run_and_submit_keep_the_same_native_result_and_payload(self) -> None:
+        with self.completed_job(TASK_RESULT) as submit:
+            from_run = await self.client.geostatistics.kriging.run(**self.inputs())
+            run_payload = submit.await_args.kwargs["parameters"]
+        for named in (False, True):
+            with self.subTest(named=named), self.completed_job(TASK_RESULT) as submit:
+                if named:
+                    job = await self.client.asubmit("geostatistics", "kriging", self.inputs())
+                else:
+                    job = await self.client.geostatistics.kriging.submit(**self.inputs())
+                self.assertIsInstance(job, TaskJob)
+                submit.return_value.wait_for_results.assert_not_awaited()
+                from_submit = await job.results()
+                self.assertIsInstance(from_submit, KrigingResult)
+                self.assertEqual(from_run.target_name, from_submit.target_name)
+                self.assertEqual(from_run.attribute_name, from_submit.attribute_name)
+                self.assertTrue(inspect.iscoroutinefunction(from_submit.to_dataframe))
+                self.assertTrue(inspect.iscoroutinefunction(from_submit.get_target_object))
+                self.assertEqual(run_payload, submit.await_args.kwargs["parameters"])
+                self.assertIs(self.context, from_submit._context)
+
+    async def test_restored_kriging_job_keeps_native_result_conversion(self) -> None:
+        self.context._connector.base_url = "https://unittest.localhost/"
+        job_id = UUID(int=1234)
+        url = (
+            f"{self.context._connector.base_url}compute/orgs/{self.context._org_id}/"
+            f"geostatistics/kriging/{job_id}/status"
+        )
+        with (
+            self.catalogue,
+            mock.patch.object(JobClient, "wait_for_results", mock.AsyncMock(return_value=TASK_RESULT)),
+        ):
+            job = await TaskJob.from_url(self.context, url)
+            result = await job.results()
+        self.assertEqual(job_id, job.id)
+        self.assertIsInstance(result, KrigingResult)
+        self.assertEqual("kriged_grade", result.attribute_name)
+
+    async def test_discretization_uses_the_spelling_in_the_live_catalogue(self) -> None:
+        for spelling in ("block_discretization", "block_discretisation"):
+            spec = kriging_catalogue()[0]
+            properties = spec.parameters["properties"]
+            properties[spelling] = properties.pop("block_discretization")
+            with (
+                self.subTest(spelling=spelling),
+                mock.patch.object(DiscoveryClient, "list_tasks", mock.AsyncMock(return_value=[spec])) as discover,
+                _capture_submit("evo.compute.engine") as submit,
+            ):
+                with self.assertRaises(_SubmitCaptured):
+                    await self.client.geostatistics.kriging.submit(
+                        **self.inputs(block_discretization=BlockDiscretization(nx=2, ny=3, nz=4))
+                    )
+            payload = submit.await_args.kwargs["parameters"]
+            self.assertEqual({"nx": 2, "ny": 3, "nz": 4}, payload[spelling])
+            discover.assert_awaited_once()
+
+    async def test_discretization_cannot_be_supplied_under_both_spellings(self) -> None:
+        with self.catalogue, _capture_submit("evo.compute.engine") as submit:
+            with self.assertRaisesRegex(ParameterValidationError, "supplied both"):
+                await self.client.asubmit(
+                    "geostatistics",
+                    "kriging",
+                    self.inputs(
+                        block_discretization=BlockDiscretization(nx=2, ny=2, nz=2),
+                        block_discretisation={"nx": 3, "ny": 3, "nz": 3},
+                    ),
                 )
         submit.assert_not_awaited()
 
@@ -368,6 +450,8 @@ class TestFoldedInputsFollowTheExtraFieldRules(OverrideTestCase):
         "unspecified": (None, "warned"),
     }
 
+    ENTRY_POINTS = {"run": "run", "submit": "submit", "arun": "run", "asubmit": "submit"}
+
     def setUp(self) -> None:
         super().setUp()
         self.client = ComputeClient(self.context, check_schemas=False)
@@ -390,15 +474,15 @@ class TestFoldedInputsFollowTheExtraFieldRules(OverrideTestCase):
         }
 
     async def call(self, entry_point: str, inputs: dict[str, Any]) -> None:
-        if entry_point == "run":
-            await self.client.geostatistics.kriging.run(**inputs)
+        if entry_point in ("run", "submit"):
+            await getattr(self.client.geostatistics.kriging, entry_point)(**inputs)
         else:
-            await self.client.arun("geostatistics", "kriging", inputs)
+            await getattr(self.client, entry_point)("geostatistics", "kriging", inputs)
 
     async def test_an_extra_field_in_a_folded_input_follows_its_objects_rule(self) -> None:
         for name, (node, overrides) in self.folded_inputs().items():
             for rule_name, (rule, outcome) in self.RULES.items():
-                for entry_point in ("run", "arun"):
+                for entry_point, operation in self.ENTRY_POINTS.items():
                     with self.subTest(input=name, rule=rule_name, entry_point=entry_point):
                         catalogue = mock.AsyncMock(return_value=published_catalogue(node, rule))
                         with mock.patch.object(DiscoveryClient, "list_tasks", catalogue):
@@ -415,6 +499,10 @@ class TestFoldedInputsFollowTheExtraFieldRules(OverrideTestCase):
                                     with logs as captured, self.assertRaises(_SubmitCaptured):
                                         await self.call(entry_point, self.inputs(**overrides))
                         if outcome == "rejected":
+                            self.assertTrue(
+                                str(caught.exception).startswith(f"geostatistics.kriging.{operation}(): "),
+                                caught.exception,
+                            )
                             self.assertTrue(
                                 any(node in error and "extra" in error for error in caught.exception.errors),
                                 caught.exception.errors,

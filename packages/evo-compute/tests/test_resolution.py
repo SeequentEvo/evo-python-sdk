@@ -212,6 +212,16 @@ class TestSupportedSchemas(ResolutionTestCase):
         self.assertEqual(POINTSET_URL, resolved["source"]["object"])
         self.assertIn("supported_schemas", logs.output[0])
 
+    async def test_messages_name_the_operation_that_was_called(self) -> None:
+        source = {"object": POINTSET_URL, "attribute": "grade"}
+        with self.objects_service(unavailable=True):
+            with self.assertLogs("compute.resolution", level="WARNING") as logs:
+                await self.resolver.resolve(self.spec, {"source": source}, operation="submit")
+        self.assertIn("demo.estimate.submit(): source.object", logs.output[0])
+        with self.assertRaises(ParameterValidationError) as caught:
+            await self.resolver.resolve(self.spec, {"source": {**source, "object": 12345}}, operation="submit")
+        self.assertTrue(str(caught.exception).startswith("demo.estimate.submit(): source.object: "), caught.exception)
+
     async def test_the_check_is_skipped_when_validation_is_off(self) -> None:
         unsupported = ObjectSchema("objects", "triangle-mesh", SchemaVersion(2, 1, 0))
         with self.objects_service() as loader:

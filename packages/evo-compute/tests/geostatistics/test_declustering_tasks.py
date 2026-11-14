@@ -38,6 +38,7 @@ from evo.compute.tasks.geostatistics.declustering import (
     idw,
     knn,
 )
+from test_payload_parity import runner_catalogue
 
 # ---------------------------------------------------------------------------
 # Test helpers
@@ -322,7 +323,7 @@ def _mock_declustering_context():
 
 def _mock_declustering_job():
     mock_job = AsyncMock()
-    mock_job.wait_for_results.return_value = _make_result_model()
+    mock_job.wait_for_results.return_value = _make_result_model().model_dump(mode="json")
     return mock_job
 
 
@@ -336,10 +337,13 @@ class TestDeclusteringRunnerExecution(IsolatedAsyncioTestCase):
             neighborhood=_search(),
         )
 
-        with patch(
-            "evo.compute.tasks.common.runner.JobClient.submit",
-            new_callable=AsyncMock,
-            return_value=_mock_declustering_job(),
+        with (
+            runner_catalogue(DeclusteringRunner),
+            patch(
+                "evo.compute.engine.JobClient.submit",
+                new_callable=AsyncMock,
+                return_value=_mock_declustering_job(),
+            ),
         ):
             result = await DeclusteringRunner(mock_context, params)
 
@@ -356,11 +360,14 @@ class TestDeclusteringRunnerExecution(IsolatedAsyncioTestCase):
             power=None,
         )
 
-        with patch(
-            "evo.compute.tasks.common.runner.JobClient.submit",
-            new_callable=AsyncMock,
-            return_value=_mock_declustering_job(),
-        ) as mock_submit:
+        with (
+            runner_catalogue(DeclusteringRunner),
+            patch(
+                "evo.compute.engine.JobClient.submit",
+                new_callable=AsyncMock,
+                return_value=_mock_declustering_job(),
+            ) as mock_submit,
+        ):
             await DeclusteringRunner(mock_context, params)
 
         mock_submit.assert_called_once()

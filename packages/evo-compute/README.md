@@ -59,11 +59,91 @@ dataframe = await result.to_dataframe()
 
 Kriging opts into a handwritten runner with additional checks and native `KrigingResult`.
 Its arguments use the same names as other estimation tasks: `neighborhood` and
-`kriging_method`. Other tasks use the schema-driven generic surface.
+`kriging_method`, with `block_discretization` for optional sub-block settings.
+The engine adapts the latter to older catalogues that publish `block_discretisation`.
+Other tasks use the schema-driven generic surface.
 `client.arun(topic, task, parameters)` uses the same runner, argument names and result type
 as the task's `run(...)` method, including for tasks absent from the snapshot.
 Preview is off by default on every path; pass `preview=True` to opt in.
 The existing lowercase task modules and `await tasks.run(manager, parameters)` API are unchanged.
+
+Existing parameter models also use the generic engine through `tasks.run`:
+
+```python
+from evo.compute import tasks
+
+results = await tasks.run(
+    manager, [kriging_parameters, idw_parameters, knn_parameters], preview=True
+)
+```
+
+The models keep their existing serialization, including defaults, filters and diagnostics.
+The engine shares discovery across direct calls and repeated batches in the same context
+until the catalogue cache expires, and submits batch jobs concurrently. Registered
+runners convert their results back to the native SDK classes. A single input still returns
+its native result, and a list still returns an ordered `TaskResultList` with notebook
+formatting and aggregate progress. Preview remains an explicit opt-in on this facade.
+These calls now require access to the task catalogue as well as job submission. They also
+check the parameters against the task schema and, where the task lists supported object
+schemas, load the metadata of each referenced object that is not already loaded to confirm
+its schema. That adds requests and can reject inputs an older runner would have submitted.
+This facade always runs those checks; to skip the object checks while keeping parameter
+validation, call the task through `ComputeClient(context, check_schemas=False)`.
+Direct `TaskRunner` usage follows the same engine path, checks and result conversion.
+
+The [estimation engine notebook](docs/examples/estimation_engine.ipynb) follows the
+existing estimation workflow, showing both the unchanged `tasks.run(...)` call and
+explicit async job submission with the same parameter models, result queries and plots.
+
+### Submitting and managing jobs
+
+Tasks expose async `submit(...)` to return the accepted job without waiting:
+
+```python
+job = await client.geostatistics.declustering.submit(
+    source=samples,
+    grid=grid,
+    target=weights,
+    neighborhood=search,
+    preview=True,
+)
+progress = await job.status()
+result = await job.results()
+dataframe = await result.target.attribute.to_dataframe()
+```
+
+`TaskJob` preserves the job's `id`, `url`, `topic` and `task`. Use `await job.cancel()`
+to request cancellation, and `await job.status()` to observe it. `job.results()` accepts
+feedback, polling interval and retry overrides; feedback set with `ComputeClient(manager,
+fb=feedback)` is inherited by each job. Callbacks run on the caller's async event loop.
+
+`run(...)` still waits for results using the same preparation and hydration path. The
+Kriging override also provides typed submission: `await client.geostatistics.kriging.submit(...)`
+takes the same arguments as `run`, and `await job.results()` returns `KrigingResult` with
+its dataframe and object helpers. Named calls through `client.asubmit(topic, task, parameters)`
+use the same override checks and native result conversion, not a bypass.
+
+Progress feedback belongs on `ComputeClient(..., fb=feedback)` or on
+`await job.results(fb=feedback)`, not among the task's parameters. This keeps local
+wait controls separate from service inputs and avoids reserving a task keyword.
+Client feedback defaults to `NoFeedback`; the existing `tasks.run(..., fb=feedback)`
+batch interface retains its aggregate notebook progress.
+
+Save `job.url` to reopen the job later:
+
+```python
+from evo.compute import TaskJob
+
+job = await TaskJob.from_url(manager, saved_job_url, preview=True)
+result = await job.results()
+```
+
+Restoration checks the hub and organization, reads the task's current result schema,
+and restores native conversion for custom tasks such as Kriging. Preview is not stored
+in the URL, so opt in again only for preview jobs. A URL cannot determine the result
+type statically; use the typed task's `submit` method when static result hints matter.
+Custom adapters can use `job.map(async_converter)` to convert results without changing
+the underlying job, status, cancellation or wait options.
 
 ### Static typing for the generic engine
 

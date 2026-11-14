@@ -47,7 +47,7 @@ from pathlib import Path
 from typing import Any
 
 from .endpoints.models import TaskResource
-from .engine import _normalise, _wire_names
+from .engine import _RUN_FEEDBACK_NOTE, _normalise, _wire_names
 from .overrides import load_override, overridden_tasks
 
 __all__ = [
@@ -573,7 +573,7 @@ def _header(snapshot_dir: Path) -> list[str]:
         "#",
         "# The runtime is always live, so tasks published after the snapshot still run --",
         "# they are simply not statically known until the snapshot is refreshed. Use",
-        "# `ComputeClient.arun(topic, task, parameters)` to reach them.",
+        "# `ComputeClient.arun(topic, task, parameters)` or `asubmit(...)` to reach them.",
     ]
 
 
@@ -594,7 +594,10 @@ def _render_fallbacks() -> list[str]:
                     "    ",
                 ),
                 "",
-                "    async def run(self, **parameters: Any) -> TaskResult: ...",
+                "    async def run(self, **parameters: Any) -> TaskResult:",
+                _docstring(_RUN_FEEDBACK_NOTE, "        "),
+                "        ...",
+                "    async def submit(self, **parameters: Any) -> TaskJob[TaskResult]: ...",
             ]
         ),
         "\n".join(
@@ -630,6 +633,7 @@ def _render_client(topics: list[str]) -> list[str]:
         "        validate: bool = ...,",
         "        deep_validation: bool = ...,",
         "        check_schemas: bool | None = ...,",
+        "        fb: IFeedback = ...,",
         "    ) -> None: ...",
         "    @property",
         "    def context(self) -> IContext: ...",
@@ -644,9 +648,23 @@ def _render_client(topics: list[str]) -> list[str]:
         "        check_schemas: bool | None = ...,",
         "    ) -> Any:",
         _docstring(
-            "Run any task by name, including one this stub does not know about.",
+            "Run any task by name, including one this stub does not know about.\n\n"
+            "Feedback comes from the client; for one call, use :meth:`asubmit` and pass ``fb`` to\n"
+            "``job.results``.",
             "        ",
         ),
+        "        ...",
+        "    async def asubmit(",
+        "        self,",
+        "        topic: str,",
+        "        task: str,",
+        "        parameters: dict[str, Any],",
+        "        *,",
+        "        validate: bool | None = ...,",
+        "        deep_validation: bool | None = ...,",
+        "        check_schemas: bool | None = ...,",
+        "    ) -> TaskJob[Any]:",
+        _docstring("Submit any task by name without waiting for its results.", "        "),
         "        ...",
         "    def __dir__(self) -> list[str]: ...",
         "    def __repr__(self) -> str: ...",
@@ -695,19 +713,21 @@ def _render(tasks: list[TaskResource], snapshot_dir: Path) -> str:
         if stub.description:
             lines.append(_docstring(stub.description, "    "))
             lines.append("")
-        lines.append("    async def run(")
-        lines.append("        self,")
-        if stub.run_parameters != ["**parameters: Any"]:
-            lines.append("        *,")
-        lines.extend(f"        {parameter}," for parameter in stub.run_parameters)
-        if stub.description:
-            # Repeated on the method as well as the class: editors read the class docstring
-            # when hovering the task, and the method docstring in signature help.
-            lines.append(f"    ) -> {stub.return_type}:")
-            lines.append(_docstring(stub.description, "        "))
-            lines.append("        ...")
-        else:
-            lines.append(f"    ) -> {stub.return_type}: ...")
+        for operation, return_type in (("run", stub.return_type), ("submit", f"TaskJob[{stub.return_type}]")):
+            lines.append(f"    async def {operation}(")
+            lines.append("        self,")
+            if stub.run_parameters != ["**parameters: Any"]:
+                lines.append("        *,")
+            lines.extend(f"        {parameter}," for parameter in stub.run_parameters)
+            # The description is repeated on the method as well as the class: editors read the
+            # class docstring when hovering the task, and the method docstring in signature help.
+            note = _RUN_FEEDBACK_NOTE if operation == "run" else ""
+            if docstring := "\n\n".join(part for part in (stub.description, note) if part):
+                lines.append(f"    ) -> {return_type}:")
+                lines.append(_docstring(docstring, "        "))
+                lines.append("        ...")
+            else:
+                lines.append(f"    ) -> {return_type}: ...")
         blocks.append("\n".join(lines))
 
     blocks.extend(_render_fallbacks())
@@ -746,12 +766,14 @@ def _render(tasks: list[TaskResource], snapshot_dir: Path) -> str:
         *(["from uuid import UUID"] if "ObjectInput" in used else []),
         "",
         "from evo.common import IContext",
+        "from evo.common.interfaces import IFeedback",
         *(["from evo.objects import ObjectMetadata, ObjectReference"] if "ObjectInput" in used else []),
         *(["from evo.objects.typed import BaseObject, DownloadedObject"] if "ObjectInput" in used else []),
         *([f"from typing_extensions import {', '.join(extensions)}"] if extensions else []),
         "",
         *sorted(
             [
+                "from .jobs import TaskJob",
                 *([f"from .outputs import {', '.join(outputs)}"] if outputs else []),
                 *(
                     ["from .tasks.common.search import SearchNeighborhood"]

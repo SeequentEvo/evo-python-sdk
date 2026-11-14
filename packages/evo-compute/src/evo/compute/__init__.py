@@ -16,6 +16,7 @@ from .discovery import DiscoveryClient
 from .endpoints.models import TaskResource
 from .engine import ComputeClient
 from .exceptions import ParameterValidationError
+from .jobs import TaskJob
 from .outputs import ResultNode, TaskResult
 from .resolution import ReferenceResolver
 
@@ -28,6 +29,7 @@ __all__ = [
     "ParameterValidationError",
     "ReferenceResolver",
     "ResultNode",
+    "TaskJob",
     "TaskResource",
     "TaskResult",
     "tasks",

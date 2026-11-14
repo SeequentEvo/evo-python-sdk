@@ -38,6 +38,7 @@ from evo.compute.tasks.geostatistics.break_ties import (
     BreakTiesResultModel,
     BreakTiesRunner,
 )
+from test_payload_parity import runner_catalogue
 
 # ---------------------------------------------------------------------------
 # Test helpers
@@ -292,7 +293,7 @@ class TestBreakTiesRunnerAsync(IsolatedAsyncioTestCase):
 
     def _make_job(self):
         job = AsyncMock()
-        job.wait_for_results.return_value = _make_result_model()
+        job.wait_for_results.return_value = _make_result_model().model_dump(mode="json")
         return job
 
     async def test_runner_submits_with_correct_topic_and_task(self):
@@ -303,11 +304,12 @@ class TestBreakTiesRunnerAsync(IsolatedAsyncioTestCase):
             neighborhood=_search(),
         )
 
-        with patch(
-            "evo.compute.tasks.common.runner.JobClient.submit",
-            new_callable=AsyncMock,
-            return_value=self._make_job(),
-        ) as mock_submit:
+        with (
+            runner_catalogue(BreakTiesRunner),
+            patch(
+                "evo.compute.engine.JobClient.submit", new_callable=AsyncMock, return_value=self._make_job()
+            ) as mock_submit,
+        ):
             result = await BreakTiesRunner(context, params)
 
         mock_submit.assert_called_once()
@@ -324,11 +326,12 @@ class TestBreakTiesRunnerAsync(IsolatedAsyncioTestCase):
             neighborhood=_search(),
         )
 
-        with patch(
-            "evo.compute.tasks.common.runner.JobClient.submit",
-            new_callable=AsyncMock,
-            return_value=self._make_job(),
-        ) as mock_submit:
+        with (
+            runner_catalogue(BreakTiesRunner),
+            patch(
+                "evo.compute.engine.JobClient.submit", new_callable=AsyncMock, return_value=self._make_job()
+            ) as mock_submit,
+        ):
             await BreakTiesRunner(context, params, preview=True)
 
         _, kwargs = mock_submit.call_args
@@ -342,11 +345,12 @@ class TestBreakTiesRunnerAsync(IsolatedAsyncioTestCase):
             neighborhood=_search(),
         )
 
-        with patch(
-            "evo.compute.tasks.common.runner.JobClient.submit",
-            new_callable=AsyncMock,
-            return_value=self._make_job(),
-        ) as mock_submit:
+        with (
+            runner_catalogue(BreakTiesRunner),
+            patch(
+                "evo.compute.engine.JobClient.submit", new_callable=AsyncMock, return_value=self._make_job()
+            ) as mock_submit,
+        ):
             await BreakTiesRunner(context, params)
 
         _, kwargs = mock_submit.call_args
