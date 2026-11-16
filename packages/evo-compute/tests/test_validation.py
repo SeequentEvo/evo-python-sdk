@@ -407,6 +407,15 @@ class TestValidateParameters(unittest.TestCase):
 class TestEngineValidation(TestWithConnector):
     """Engine-level tests for the validation toggles (shallow default, deep opt-in)."""
 
+    # Reference resolution runs between the two validation passes, so the engine-level
+    # tests have to name an object the way a caller really would.
+    SOURCE_URL = (
+        "https://unittest.localhost/geoscience-object"
+        "/orgs/00000000-0000-0000-0000-000000000001"
+        "/workspaces/00000000-0000-0000-0000-000000000002"
+        "/objects/00000000-0000-0000-0000-000000000010"
+    )
+
     def setUp(self) -> None:
         super().setUp()
         self.context = FakeContext(self.connector, TEST_ORG.id)
@@ -434,14 +443,14 @@ class TestEngineValidation(TestWithConnector):
         """By default an enum violation slips through (deep off) and the job is submitted."""
         client = ComputeClient(self.context)
         with self.catalogue_response(), self.mock_job_client() as submit:
-            await client.demo.widget.run(source="obj-1", mode="turbo")
+            await client.demo.widget.run(source=self.SOURCE_URL, mode="turbo")
         submit.assert_awaited_once()
 
     async def test_deep_validation_rejects_bad_enum(self) -> None:
         client = ComputeClient(self.context, deep_validation=True)
         with self.catalogue_response(), self.mock_job_client() as submit:
             with self.assertRaises(ParameterValidationError) as ctx:
-                await client.demo.widget.run(source="obj-1", mode="turbo")
+                await client.demo.widget.run(source=self.SOURCE_URL, mode="turbo")
         self.assertIn("mode", str(ctx.exception))
         submit.assert_not_awaited()
 
@@ -449,7 +458,7 @@ class TestEngineValidation(TestWithConnector):
         client = ComputeClient(self.context, deep_validation=True)
         with self.catalogue_response(), self.mock_job_client() as submit:
             with self.assertRaises(ParameterValidationError):
-                await client.demo.widget.run(source="obj-1", mode="fast", iterations=0)
+                await client.demo.widget.run(source=self.SOURCE_URL, mode="fast", iterations=0)
         submit.assert_not_awaited()
 
     async def test_deep_validation_rejects_explicit_none_for_a_non_nullable_field(self) -> None:
@@ -457,7 +466,7 @@ class TestEngineValidation(TestWithConnector):
         client = ComputeClient(self.context, deep_validation=True)
         with self.catalogue_response(), self.mock_job_client() as submit:
             with self.assertRaises(ParameterValidationError) as ctx:
-                await client.demo.widget.run(source="obj-1", mode="fast", iterations=None)
+                await client.demo.widget.run(source=self.SOURCE_URL, mode="fast", iterations=None)
         self.assertIn("iterations", str(ctx.exception))
         submit.assert_not_awaited()
 
@@ -465,21 +474,21 @@ class TestEngineValidation(TestWithConnector):
         """Deep validation passes when the required reference is supplied as a string."""
         client = ComputeClient(self.context, deep_validation=True)
         with self.catalogue_response(), self.mock_job_client() as submit:
-            await client.demo.widget.run(source="obj-1", mode="fast")
+            await client.demo.widget.run(source=self.SOURCE_URL, mode="fast")
         submit.assert_awaited_once()
 
     async def test_deep_validation_can_be_forced_per_call(self) -> None:
         client = ComputeClient(self.context)  # deep off at the client level
         with self.catalogue_response(), self.mock_job_client() as submit:
             with self.assertRaises(ParameterValidationError):
-                await client.arun("demo", "widget", {"source": "obj-1", "mode": "turbo"}, deep_validation=True)
+                await client.arun("demo", "widget", {"source": self.SOURCE_URL, "mode": "turbo"}, deep_validation=True)
         submit.assert_not_awaited()
 
     async def test_validation_can_be_disabled_per_call(self) -> None:
         """With validation off, a required field set to ``None`` goes out for the platform to reject."""
         client = ComputeClient(self.context)
         with self.catalogue_response(), self.mock_job_client() as submit:
-            await client.arun("demo", "widget", {"source": "obj-1", "mode": None}, validate=False)
+            await client.arun("demo", "widget", {"source": self.SOURCE_URL, "mode": None}, validate=False)
         submit.assert_awaited_once()
         self.assertIsNone(submit.await_args.kwargs["parameters"]["mode"])
 
@@ -487,27 +496,31 @@ class TestEngineValidation(TestWithConnector):
         client = ComputeClient(self.context)
         with self.catalogue_response(), self.mock_job_client() as submit:
             with self.assertRaises(ParameterValidationError):
-                await client.arun("demo", "widget", {"source": "obj-1", "mode": None})
+                await client.arun("demo", "widget", {"source": self.SOURCE_URL, "mode": None})
         submit.assert_not_awaited()
 
     async def test_validate_off_at_the_client_disables_deep_validation_too(self) -> None:
         """``validate`` is the master switch, so ``deep_validation=True`` under it does nothing."""
         client = ComputeClient(self.context, validate=False, deep_validation=True)
         with self.catalogue_response(), self.mock_job_client() as submit:
-            await client.demo.widget.run(source="obj-1", mode="turbo")
+            await client.demo.widget.run(source=self.SOURCE_URL, mode="turbo")
         submit.assert_awaited_once()
 
     async def test_validate_off_per_call_disables_deep_validation_too(self) -> None:
         client = ComputeClient(self.context, deep_validation=True)
         with self.catalogue_response(), self.mock_job_client() as submit:
-            await client.arun("demo", "widget", {"source": "obj-1", "mode": "turbo"}, validate=False)
+            await client.arun("demo", "widget", {"source": self.SOURCE_URL, "mode": "turbo"}, validate=False)
         submit.assert_awaited_once()
 
     async def test_validate_off_per_call_overrides_deep_validation_on_per_call(self) -> None:
         client = ComputeClient(self.context)
         with self.catalogue_response(), self.mock_job_client() as submit:
             await client.arun(
-                "demo", "widget", {"source": "obj-1", "mode": "turbo"}, validate=False, deep_validation=True
+                "demo",
+                "widget",
+                {"source": self.SOURCE_URL, "mode": "turbo"},
+                validate=False,
+                deep_validation=True,
             )
         submit.assert_awaited_once()
 

@@ -207,6 +207,12 @@ def _iter_schema_nodes(node: Any) -> Iterator[dict[str, Any]]:
 def unknown_annotation_keys(schema: dict[str, Any] | None) -> set[str]:
     """Return schema keys that are neither standard JSON Schema nor a known annotation.
 
+    Two callers, for two audiences. :class:`~evo.compute.discovery.DiscoveryClient` calls it
+    on every fetched catalogue and *warns*, so a caller on an SDK that predates an annotation
+    the platform now publishes learns that the schema is only partly interpreted rather than
+    being blocked by it. The conformance test calls it on bundled schemas and *fails*, so the
+    same drift stops a release rather than reaching users as a warning.
+
     :param schema: A task ``parameters`` or ``results`` JSON Schema (or ``None``).
 
     :return: The set of unrecognised annotation keys; empty when the schema only uses

@@ -19,11 +19,15 @@ and submit the job::
     client = ComputeClient(context)
     result = await client.geostatistics.kriging.run(source=..., target=..., ...)
 
+A call is checked, resolved, checked again and submitted: required parameters first
+(before anything reaches the network), then :mod:`~evo.compute.resolution` turns the
+caller's objects and attributes into the references the schema declares, then optional
+deep validation runs on that resolved payload -- the form the platform actually receives.
+What comes back is hydrated against the task's ``results`` schema by
+:mod:`~evo.compute.outputs`, so the objects a task wrote can be loaded straight back.
+
 Topic, task and parameter names are the platform's names with hyphens replaced by
 underscores, so ``normal-score`` is reached as ``client.geostatistics.normal_score``.
-Parameters are sent in the form the task's schema declares, and only the ones the
-caller passes: unset optional parameters are left to the platform's defaults.
-
 The catalogue is fetched the first time a task is ``run(...)``. It is then held by the
 underlying :class:`~evo.compute.discovery.DiscoveryClient`, so repeated runs are served
 from there until its cache expires.
@@ -42,6 +46,8 @@ from .client import JobClient
 from .discovery import DEFAULT_CACHE_TTL_SECONDS, DiscoveryClient
 from .endpoints.models import TaskResource
 from .exceptions import ParameterValidationError
+from .outputs import TaskResult
+from .resolution import ReferenceResolver
 from .validation import validate_parameters
 
 __all__ = [
@@ -129,7 +135,7 @@ def _signature_from_schema(spec: TaskResource) -> inspect.Signature:
     parameters.append(inspect.Parameter("preview", inspect.Parameter.KEYWORD_ONLY, default=False, annotation=bool))
     if properties and not names:
         parameters.append(inspect.Parameter("parameters", inspect.Parameter.VAR_KEYWORD, annotation=Any))
-    return inspect.Signature(parameters, return_annotation=dict)
+    return inspect.Signature(parameters, return_annotation=TaskResult)
 
 
 def _check_fallback_parameters(spec: TaskResource, parameters: dict[str, Any], label: str) -> None:
@@ -154,11 +160,21 @@ class ComputeClient:
 
     :param context: An authenticated Evo context.
     :param cache_ttl_seconds: How long a discovered task catalogue is cached.
-    :param validate: Validate parameters against the task schema before submitting
-        (required-field presence). Defaults to ``True``. This is the master switch:
-        ``False`` turns off deep validation too, whatever ``deep_validation`` says.
+    :param validate: Check the parameters against the task's JSON Schema before submitting
+        (required-field presence, and, under ``deep_validation``, the whole payload).
+        Defaults to ``True``. ``False`` turns off deep validation too, whatever
+        ``deep_validation`` says. It does *not* make the call unchecked: the parameters are
+        still bound to the signature synthesised from the schema, so an unknown or missing
+        required argument is still rejected. That is how the payload is built, not a
+        validation pass, and there is no useful call to make without it.
     :param deep_validation: Additionally run full JSON Schema Draft 2020-12 validation.
         Defaults to ``False``. Only consulted when ``validate`` is ``True``.
+    :param check_schemas: Check that each referenced geoscience object is of a schema the
+        task declares support for. Defaults to following ``validate``. Independent of it
+        because the cost and the question differ: schema validation is local and free,
+        while this loads each referenced object's metadata. Pass ``False`` to keep
+        validation but skip the requests, or ``True`` alongside ``validate=False`` to keep
+        the guard that catches an object the task cannot read.
     """
 
     def __init__(
@@ -168,12 +184,16 @@ class ComputeClient:
         cache_ttl_seconds: float = DEFAULT_CACHE_TTL_SECONDS,
         validate: bool = True,
         deep_validation: bool = False,
+        check_schemas: bool | None = None,
     ) -> None:
+        self._context = context
         self._org_id: UUID = context.get_org_id()
         self._connector: APIConnector = context.get_connector()
         self._discovery = DiscoveryClient(self._connector, self._org_id, cache_ttl_seconds=cache_ttl_seconds)
+        self._resolver = ReferenceResolver(context)
         self._validate = validate
         self._deep_validation = deep_validation
+        self._check_schemas = check_schemas
 
     # -- dynamic namespace ------------------------------------------------- #
 
@@ -210,24 +230,25 @@ class ComputeClient:
         *,
         validate: bool | None = None,
         deep_validation: bool | None = None,
-    ) -> dict:
-        """Run a task by name and wait for its results.
-
-        The same as ``await client.<topic>.<task>.run(**parameters)``, for names held as
-        strings. Names may be spelled as the platform publishes them or with underscores.
+        check_schemas: bool | None = None,
+    ) -> TaskResult:
+        """Discover the task (cached), resolve and validate the parameters, submit, and hydrate the results.
 
         :param topic: The task topic.
         :param task: The task name.
         :param parameters: The task parameters, plus ``preview=True`` to run a preview task.
-        :param validate: Override the client's shallow-validation setting for this call.
-            The master switch: ``False`` skips deep validation too.
+        :param validate: Override the client's schema-validation setting for this call.
+            ``False`` skips deep validation too, but never the signature binding that
+            builds the payload.
         :param deep_validation: Override the client's deep-validation setting for this call.
             Only consulted when validation is enabled.
+        :param check_schemas: Override the client's supported-schema setting for this call.
+            Falls back to ``validate`` when neither is set.
 
-        :return: The results of the finished job.
+        :return: The hydrated results of the finished job.
 
         :raises AttributeError: If the topic does not advertise the task.
-        :raises ParameterValidationError: If the parameters do not match the task's schema.
+        :raises ParameterValidationError: If the parameters or referenced objects fail validation.
         """
         spec = await self._resolve_spec(topic, task)
         label = f"{topic}.{_normalise(task)}"
@@ -253,9 +274,18 @@ class ComputeClient:
             validate = self._validate
         if deep_validation is None:
             deep_validation = self._deep_validation
-        # ``validate`` is the master switch; deep validation only runs underneath it.
+        if check_schemas is None:
+            check_schemas = self._check_schemas if self._check_schemas is not None else validate
+        # ``validate`` masters the schema checks; ``check_schemas`` stands on its own.
         if validate:
-            validate_parameters(spec, wire_parameters, deep=deep_validation, task_label=label)
+            # Required fields first: a missing parameter is worth reporting before resolution
+            # spends a request loading the objects the other parameters name.
+            validate_parameters(spec, wire_parameters, task_label=label)
+        wire_parameters = await self._resolver.resolve(
+            spec, wire_parameters, check_schemas=check_schemas, task_label=label
+        )
+        if validate and deep_validation:
+            validate_parameters(spec, wire_parameters, deep=True, task_label=label)
 
         job: JobClient[dict] = await JobClient.submit(
             connector=self._connector,
@@ -266,7 +296,7 @@ class ComputeClient:
             result_type=dict,
             preview=preview,
         )
-        return await job.wait_for_results()
+        return TaskResult(await job.wait_for_results(), spec.results, self._context)
 
     async def _resolve_spec(self, topic: str, task: str) -> TaskResource:
         """Return the discovery spec for ``topic``/``task``, whether spelled with hyphens or underscores.
@@ -338,7 +368,7 @@ def _make_run(client: ComputeClient, topic: str, task: str):
     discovery is never triggered by attribute access alone.
     """
 
-    async def run(**parameters: Any) -> dict:
+    async def run(**parameters: Any) -> TaskResult:
         try:
             return await client.arun(topic, task, parameters)
         finally:

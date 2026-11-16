@@ -14,9 +14,10 @@
       "parameters": {
         "type": "object",
         "properties": {
-          "source": {"type": "object", "reference_to": "geoscience-object"},
+          "source": {"type": "string", "format": "uri", "reference_to": "geoscience-object"},
           "power": {"type": ["number", "null"], "default": null},
           "method": {"type": "string", "enum": ["cell", "polygon"], "default": "cell"},
+          "settings": {"type": "object"},
           "options": {"default": null}
         },
         "required": ["source"]
@@ -24,7 +25,24 @@
       "results": {
         "type": "object",
         "properties": {
-          "target": {"type": "object", "output": "geoscience-object"}
+          "message": {"type": "string"},
+          "target": {
+            "type": "object",
+            "output": "geoscience-object",
+            "properties": {
+              "reference": {"type": "string", "format": "uri", "reference_to": "geoscience-object"},
+              "name": {"type": "string"},
+              "schema_id": {"type": "string"},
+              "attribute": {
+                "type": "object",
+                "output": "attribute",
+                "properties": {
+                  "reference": {"type": "string", "reference_to": "attribute"},
+                  "name": {"type": "string"}
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -38,7 +56,7 @@
       "parameters": {
         "type": "object",
         "properties": {
-          "distribution": {"type": "object", "reference_to": "geoscience-object"}
+          "distribution": {"type": "string", "format": "uri", "reference_to": "geoscience-object"}
         },
         "required": ["distribution"]
       }
@@ -54,9 +72,9 @@
       "parameters": {
         "type": "object",
         "properties": {
-          "source": {"type": "object", "reference_to": "geoscience-object"},
-          "target": {"type": "object", "reference_to": "geoscience-object"},
-          "variogram": {"type": "object", "reference_to": "geoscience-object"}
+          "source": {"type": "string", "format": "uri", "reference_to": "geoscience-object"},
+          "target": {"type": "string", "format": "uri", "reference_to": "geoscience-object"},
+          "variogram": {"type": "string", "format": "uri", "reference_to": "geoscience-object"}
         },
         "required": ["source", "target", "variogram"]
       }
