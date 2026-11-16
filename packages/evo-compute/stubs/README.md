@@ -106,6 +106,11 @@ exactly what was taken and from where, and
 `tests/test_schema_conformance.py::test_the_snapshot_still_describes_tasks_the_catalogue_advertises`
 reports drift against a live catalogue when run with credentials.
 
+**Custom runners supply their own types.** An overridden task imports its runner class
+instead of generating a second signature. Attribute-based calls and `arun(...)` both use
+that runner's argument names, checks and native result. Overrides are found in the package,
+so they remain available even if the catalogue snapshot does not mention them.
+
 **Results are `TaskResult` / `ResultNode` subclasses, not `TypedDict`s.** The engine hydrates
 what the platform sends into nodes that are still dictionaries but additionally load what
 their references point at. Generating the result tree as classes is what makes
@@ -145,7 +150,7 @@ The stub is one half of a contract the engine enforces at run time from the same
 | Mistake | Caught statically by | Caught at run time by |
 |---|---|---|
 | unknown topic or task | *nothing — by design* | discovery lookup in `arun` |
-| unknown parameter | the stub's `run(...)` signature | signature binding at the top level; JSON Schema rules under deep validation |
+| unknown parameter | the stub's `run(...)` signature | the object's `additionalProperties` rule |
 | missing required parameter | the stub's `run(...)` signature | signature binding, then `validate_parameters` |
 | wrong scalar type, bad enum member, missing nested field | the stub's `TypedDict`s and `Literal`s | `validate_parameters(..., deep=True)` |
 | a reference nothing could resolve | the stub's `ObjectInput` / `AttributeInput` unions | `ReferenceResolver`, then `validate_parameters(..., deep=True)` |
@@ -155,6 +160,19 @@ Deep validation is opt-in — `ComputeClient(context, deep_validation=True)`, or
 pass. `tests/test_stubgen.py::TestDeepValidationAgreement` asserts the two halves agree:
 the payload from `usage_ok.py` passes deep validation, and its known-value and reference
 mistakes are rejected at run time too.
+
+Extra fields follow the rule published for each object:
+
+- `additionalProperties: false` rejects extra fields locally.
+- A schema in `additionalProperties` validates each extra value, even without deep validation.
+- `additionalProperties: true` accepts extra fields without a warning.
+- An omitted rule forwards extra fields with a warning that their values will be submitted as is.
+
+These rules also apply to optional settings on SDK models, such as neighborhood octant
+and drillhole limits. Unknown values must already be ready for the service; the engine
+cannot resolve references without a schema. Deep validation retains closed-object and
+`unevaluatedProperties` constraints instead of relaxing them. Preview is always an
+explicit opt-in, including for tasks with a feature flag.
 
 ## Verified with
 
