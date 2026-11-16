@@ -76,28 +76,28 @@ class SearchNeighborhood(BaseModel):
     min_samples: int | None = None
     """The minimum number of samples required. If fewer are found, the point may be skipped."""
 
-    max_empty_octants: int | None = Field(None, ge=0, le=8)
+    max_empty_octants: int | None = Field(default=None, ge=0, le=8)
     """The maximum number of empty octants (sectors) allowed when searching for samples.
 
     Omit, or use 8, to disable the octant check.
     """
 
-    max_samples_per_octant: int | None = Field(None, ge=1)
+    max_samples_per_octant: int | None = Field(default=None, ge=1)
     """The maximum number of samples to use from each octant."""
 
-    max_empty_quadrants: int | None = Field(None, ge=0, le=4)
+    max_empty_quadrants: int | None = Field(default=None, ge=0, le=4)
     """The maximum number of empty quadrants (2D sectors, ignoring Z) allowed when searching for samples.
 
     Omit, or use 4, to disable the quadrant check.
     """
 
-    max_samples_per_quadrant: int | None = Field(None, ge=1)
+    max_samples_per_quadrant: int | None = Field(default=None, ge=1)
     """The maximum number of samples to use from each quadrant (2D sectors, ignoring Z)."""
 
-    max_samples_per_drillhole: int | None = Field(None, ge=1)
+    max_samples_per_drillhole: int | None = Field(default=None, ge=1)
     """The maximum number of samples to use from each drillhole. Requires a downhole intervals source object."""
 
-    max_drillholes_per_estimate: int | None = Field(None, ge=1)
+    max_drillholes_per_estimate: int | None = Field(default=None, ge=1)
     """The maximum number of drillholes used in each estimate. Requires a downhole intervals source object."""
 
     @model_serializer

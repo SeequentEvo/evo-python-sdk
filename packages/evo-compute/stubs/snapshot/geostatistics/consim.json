@@ -1,0 +1,1849 @@
+{
+  "display_name": "conditioned_simulator",
+  "version": "0.8.0",
+  "feature_flag": "",
+  "description": "For more information, please read the <a href='/docs/guides/geostatistics-tasks/tasks/conditional-simulation-workflow'>guide</a>",
+  "parameters": {
+    "$defs": {
+      "AllOfFilter": {
+        "additionalProperties": false,
+        "description": "A composite filter that passes locations satisfying ALL child filters (AND logic).",
+        "properties": {
+          "filters": {
+            "description": "All of these filters must be satisfied (AND logic).",
+            "items": {
+              "description": "A filter condition or composite filter combining multiple conditions.",
+              "discriminator": "type",
+              "oneOf": [
+                {
+                  "additionalProperties": false,
+                  "description": "A leaf filter condition applied to one attribute of the filtered object.\n\nExactly one operator field must be provided.\n\n- ``in``: Membership test. Provide string category names for\n    ``CategoryAttribute`` objects or integers for integer-coded indices.\n- ``not_in``: Exclusion test.\n- ``equal``, ``not_equal``: Numeric equality/inequality.\n- ``greater_than``, ``greater_than_or_equal_to``, ``less_than``,\n    ``less_than_or_equal_to``: Numeric comparisons on numeric attributes.",
+                  "properties": {
+                    "attribute": {
+                      "attribute_from": "/target_object",
+                      "attribute_path": {
+                        "regular-3d-grid/[>=1.2,<2]": [
+                          "cell_attributes[?attribute_type=='category']",
+                          "cell_attributes[?attribute_type=='scalar']"
+                        ],
+                        "regular-masked-3d-grid/[>=1.2,<2]": [
+                          "cell_attributes[?attribute_type=='category']",
+                          "cell_attributes[?attribute_type=='scalar']"
+                        ]
+                      },
+                      "description": "Attribute used to filter locations.",
+                      "reference_to": "attribute",
+                      "title": "Attribute",
+                      "type": "string"
+                    },
+                    "operator": {
+                      "description": "The filter operator. Use 'in' or 'not_in' for category/membership tests (pair with 'values'). Use 'equal', 'not_equal', 'greater_than', 'greater_than_or_equal_to', 'less_than', or 'less_than_or_equal_to' for numeric comparisons (pair with 'threshold').",
+                      "enum": [
+                        "in",
+                        "not_in",
+                        "equal",
+                        "not_equal",
+                        "greater_than",
+                        "greater_than_or_equal_to",
+                        "less_than",
+                        "less_than_or_equal_to"
+                      ],
+                      "title": "Operator"
+                    },
+                    "threshold": {
+                      "default": null,
+                      "description": "Numeric threshold for comparison. Required when operator is 'equal', 'not_equal', 'greater_than', 'greater_than_or_equal_to', 'less_than', or 'less_than_or_equal_to'.",
+                      "title": "Threshold",
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "type": {
+                      "const": "condition",
+                      "description": "Identifies this as a leaf filter condition.",
+                      "title": "Type"
+                    },
+                    "values": {
+                      "default": null,
+                      "description": "Category values to match. Required when operator is 'in' or 'not_in'. Use strings for string/category-name attributes; use integers for integer-coded attributes.",
+                      "items": {
+                        "description": "String category name or integer category key to match.",
+                        "title": "Filter Value",
+                        "type": "string"
+                      },
+                      "title": "Values",
+                      "type": [
+                        "array",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "operator",
+                    "attribute"
+                  ],
+                  "title": "FilterCondition",
+                  "type": "object"
+                },
+                {
+                  "$ref": "#/$defs/AllOfFilter"
+                },
+                {
+                  "$ref": "#/$defs/AnyOfFilter"
+                }
+              ],
+              "title": "Filter Expression"
+            },
+            "title": "Filters",
+            "type": "array"
+          },
+          "type": {
+            "const": "all_of",
+            "description": "Identifies this as an AND composite filter.",
+            "title": "Type"
+          }
+        },
+        "required": [
+          "filters"
+        ],
+        "title": "AllOfFilter",
+        "type": "object"
+      },
+      "AnyOfFilter": {
+        "additionalProperties": false,
+        "description": "A composite filter that passes locations satisfying ANY child filter (OR logic).",
+        "properties": {
+          "filters": {
+            "description": "At least one of these filters must be satisfied (OR logic).",
+            "items": {
+              "description": "A filter condition or composite filter combining multiple conditions.",
+              "discriminator": "type",
+              "oneOf": [
+                {
+                  "additionalProperties": false,
+                  "description": "A leaf filter condition applied to one attribute of the filtered object.\n\nExactly one operator field must be provided.\n\n- ``in``: Membership test. Provide string category names for\n    ``CategoryAttribute`` objects or integers for integer-coded indices.\n- ``not_in``: Exclusion test.\n- ``equal``, ``not_equal``: Numeric equality/inequality.\n- ``greater_than``, ``greater_than_or_equal_to``, ``less_than``,\n    ``less_than_or_equal_to``: Numeric comparisons on numeric attributes.",
+                  "properties": {
+                    "attribute": {
+                      "attribute_from": "/target_object",
+                      "attribute_path": {
+                        "regular-3d-grid/[>=1.2,<2]": [
+                          "cell_attributes[?attribute_type=='category']",
+                          "cell_attributes[?attribute_type=='scalar']"
+                        ],
+                        "regular-masked-3d-grid/[>=1.2,<2]": [
+                          "cell_attributes[?attribute_type=='category']",
+                          "cell_attributes[?attribute_type=='scalar']"
+                        ]
+                      },
+                      "description": "Attribute used to filter locations.",
+                      "reference_to": "attribute",
+                      "title": "Attribute",
+                      "type": "string"
+                    },
+                    "operator": {
+                      "description": "The filter operator. Use 'in' or 'not_in' for category/membership tests (pair with 'values'). Use 'equal', 'not_equal', 'greater_than', 'greater_than_or_equal_to', 'less_than', or 'less_than_or_equal_to' for numeric comparisons (pair with 'threshold').",
+                      "enum": [
+                        "in",
+                        "not_in",
+                        "equal",
+                        "not_equal",
+                        "greater_than",
+                        "greater_than_or_equal_to",
+                        "less_than",
+                        "less_than_or_equal_to"
+                      ],
+                      "title": "Operator"
+                    },
+                    "threshold": {
+                      "default": null,
+                      "description": "Numeric threshold for comparison. Required when operator is 'equal', 'not_equal', 'greater_than', 'greater_than_or_equal_to', 'less_than', or 'less_than_or_equal_to'.",
+                      "title": "Threshold",
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "type": {
+                      "const": "condition",
+                      "description": "Identifies this as a leaf filter condition.",
+                      "title": "Type"
+                    },
+                    "values": {
+                      "default": null,
+                      "description": "Category values to match. Required when operator is 'in' or 'not_in'. Use strings for string/category-name attributes; use integers for integer-coded attributes.",
+                      "items": {
+                        "description": "String category name or integer category key to match.",
+                        "title": "Filter Value",
+                        "type": "string"
+                      },
+                      "title": "Values",
+                      "type": [
+                        "array",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "operator",
+                    "attribute"
+                  ],
+                  "title": "FilterCondition",
+                  "type": "object"
+                },
+                {
+                  "$ref": "#/$defs/AllOfFilter"
+                },
+                {
+                  "$ref": "#/$defs/AnyOfFilter"
+                }
+              ],
+              "title": "Filter Expression"
+            },
+            "title": "Filters",
+            "type": "array"
+          },
+          "type": {
+            "const": "any_of",
+            "description": "Identifies this as an OR composite filter.",
+            "title": "Type"
+          }
+        },
+        "required": [
+          "filters"
+        ],
+        "title": "AnyOfFilter",
+        "type": "object"
+      },
+      "SourceAllOfFilter": {
+        "additionalProperties": false,
+        "description": "A composite filter that passes locations satisfying ALL child filters (AND logic).",
+        "properties": {
+          "filters": {
+            "description": "All of these filters must be satisfied (AND logic).",
+            "items": {
+              "description": "A filter condition or composite filter combining multiple conditions.",
+              "discriminator": "type",
+              "oneOf": [
+                {
+                  "additionalProperties": false,
+                  "description": "A leaf filter condition applied to one attribute of the filtered object.\n\nExactly one operator field must be provided.\n\n- ``in``: Membership test. Provide string category names for\n    ``CategoryAttribute`` objects or integers for integer-coded indices.\n- ``not_in``: Exclusion test.\n- ``equal``, ``not_equal``: Numeric equality/inequality.\n- ``greater_than``, ``greater_than_or_equal_to``, ``less_than``,\n    ``less_than_or_equal_to``: Numeric comparisons on numeric attributes.",
+                  "properties": {
+                    "attribute": {
+                      "attribute_from": "/source_object",
+                      "attribute_path": {
+                        "downhole-intervals/[>=1.2,<2]": [
+                          "attributes[?attribute_type=='category']",
+                          "attributes[?attribute_type=='scalar']"
+                        ],
+                        "pointset/[>=1.2,<2]": [
+                          "locations.attributes[?attribute_type=='category']",
+                          "locations.attributes[?attribute_type=='scalar']"
+                        ]
+                      },
+                      "description": "Attribute used to filter locations.",
+                      "reference_to": "attribute",
+                      "title": "Attribute",
+                      "type": "string"
+                    },
+                    "operator": {
+                      "description": "The filter operator. Use 'in' or 'not_in' for category/membership tests (pair with 'values'). Use 'equal', 'not_equal', 'greater_than', 'greater_than_or_equal_to', 'less_than', or 'less_than_or_equal_to' for numeric comparisons (pair with 'threshold').",
+                      "enum": [
+                        "in",
+                        "not_in",
+                        "equal",
+                        "not_equal",
+                        "greater_than",
+                        "greater_than_or_equal_to",
+                        "less_than",
+                        "less_than_or_equal_to"
+                      ],
+                      "title": "Operator"
+                    },
+                    "threshold": {
+                      "default": null,
+                      "description": "Numeric threshold for comparison. Required when operator is 'equal', 'not_equal', 'greater_than', 'greater_than_or_equal_to', 'less_than', or 'less_than_or_equal_to'.",
+                      "title": "Threshold",
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "type": {
+                      "const": "condition",
+                      "description": "Identifies this as a leaf filter condition.",
+                      "title": "Type"
+                    },
+                    "values": {
+                      "default": null,
+                      "description": "Category values to match. Required when operator is 'in' or 'not_in'. Use strings for string/category-name attributes; use integers for integer-coded attributes.",
+                      "items": {
+                        "description": "String category name or integer category key to match.",
+                        "title": "Filter Value",
+                        "type": "string"
+                      },
+                      "title": "Values",
+                      "type": [
+                        "array",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "operator",
+                    "attribute"
+                  ],
+                  "title": "SourceFilterCondition",
+                  "type": "object"
+                },
+                {
+                  "$ref": "#/$defs/SourceAllOfFilter"
+                },
+                {
+                  "$ref": "#/$defs/SourceAnyOfFilter"
+                }
+              ],
+              "title": "Filter Expression"
+            },
+            "title": "Filters",
+            "type": "array"
+          },
+          "type": {
+            "const": "all_of",
+            "description": "Identifies this as an AND composite filter.",
+            "title": "Type"
+          }
+        },
+        "required": [
+          "filters"
+        ],
+        "title": "SourceAllOfFilter",
+        "type": "object"
+      },
+      "SourceAnyOfFilter": {
+        "additionalProperties": false,
+        "description": "A composite filter that passes locations satisfying ANY child filter (OR logic).",
+        "properties": {
+          "filters": {
+            "description": "At least one of these filters must be satisfied (OR logic).",
+            "items": {
+              "description": "A filter condition or composite filter combining multiple conditions.",
+              "discriminator": "type",
+              "oneOf": [
+                {
+                  "additionalProperties": false,
+                  "description": "A leaf filter condition applied to one attribute of the filtered object.\n\nExactly one operator field must be provided.\n\n- ``in``: Membership test. Provide string category names for\n    ``CategoryAttribute`` objects or integers for integer-coded indices.\n- ``not_in``: Exclusion test.\n- ``equal``, ``not_equal``: Numeric equality/inequality.\n- ``greater_than``, ``greater_than_or_equal_to``, ``less_than``,\n    ``less_than_or_equal_to``: Numeric comparisons on numeric attributes.",
+                  "properties": {
+                    "attribute": {
+                      "attribute_from": "/source_object",
+                      "attribute_path": {
+                        "downhole-intervals/[>=1.2,<2]": [
+                          "attributes[?attribute_type=='category']",
+                          "attributes[?attribute_type=='scalar']"
+                        ],
+                        "pointset/[>=1.2,<2]": [
+                          "locations.attributes[?attribute_type=='category']",
+                          "locations.attributes[?attribute_type=='scalar']"
+                        ]
+                      },
+                      "description": "Attribute used to filter locations.",
+                      "reference_to": "attribute",
+                      "title": "Attribute",
+                      "type": "string"
+                    },
+                    "operator": {
+                      "description": "The filter operator. Use 'in' or 'not_in' for category/membership tests (pair with 'values'). Use 'equal', 'not_equal', 'greater_than', 'greater_than_or_equal_to', 'less_than', or 'less_than_or_equal_to' for numeric comparisons (pair with 'threshold').",
+                      "enum": [
+                        "in",
+                        "not_in",
+                        "equal",
+                        "not_equal",
+                        "greater_than",
+                        "greater_than_or_equal_to",
+                        "less_than",
+                        "less_than_or_equal_to"
+                      ],
+                      "title": "Operator"
+                    },
+                    "threshold": {
+                      "default": null,
+                      "description": "Numeric threshold for comparison. Required when operator is 'equal', 'not_equal', 'greater_than', 'greater_than_or_equal_to', 'less_than', or 'less_than_or_equal_to'.",
+                      "title": "Threshold",
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "type": {
+                      "const": "condition",
+                      "description": "Identifies this as a leaf filter condition.",
+                      "title": "Type"
+                    },
+                    "values": {
+                      "default": null,
+                      "description": "Category values to match. Required when operator is 'in' or 'not_in'. Use strings for string/category-name attributes; use integers for integer-coded attributes.",
+                      "items": {
+                        "description": "String category name or integer category key to match.",
+                        "title": "Filter Value",
+                        "type": "string"
+                      },
+                      "title": "Values",
+                      "type": [
+                        "array",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "operator",
+                    "attribute"
+                  ],
+                  "title": "SourceFilterCondition",
+                  "type": "object"
+                },
+                {
+                  "$ref": "#/$defs/SourceAllOfFilter"
+                },
+                {
+                  "$ref": "#/$defs/SourceAnyOfFilter"
+                }
+              ],
+              "title": "Filter Expression"
+            },
+            "title": "Filters",
+            "type": "array"
+          },
+          "type": {
+            "const": "any_of",
+            "description": "Identifies this as an OR composite filter.",
+            "title": "Type"
+          }
+        },
+        "required": [
+          "filters"
+        ],
+        "title": "SourceAnyOfFilter",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "description": "Parameters for the conditional simulation compute task.",
+    "properties": {
+      "block_discretization": {
+        "additionalProperties": false,
+        "description": "Sub-block discretization used for support correction within each grid block.",
+        "properties": {
+          "nx": {
+            "default": 1,
+            "description": "Number of subdivisions in the x direction",
+            "maximum": 9,
+            "minimum": 1,
+            "title": "Number of subdivisions in the x direction",
+            "type": "integer"
+          },
+          "ny": {
+            "default": 1,
+            "description": "Number of subdivisions in the y direction",
+            "maximum": 9,
+            "minimum": 1,
+            "title": "Number of subdivisions in the y direction",
+            "type": "integer"
+          },
+          "nz": {
+            "default": 1,
+            "description": "Number of subdivisions in the z direction",
+            "maximum": 9,
+            "minimum": 1,
+            "title": "Number of subdivisions in the z direction",
+            "type": "integer"
+          }
+        },
+        "required": [],
+        "title": "BlockDiscretization",
+        "type": "object"
+      },
+      "distribution": {
+        "additionalProperties": false,
+        "default": null,
+        "description": "Parameters for a continuous distribution used for normal-score transformation.",
+        "properties": {
+          "tail_extrapolation": {
+            "additionalProperties": false,
+            "description": "Tail extrapolation",
+            "properties": {
+              "lower": {
+                "additionalProperties": false,
+                "description": "Power model for extrapolating the lower tail of the distribution. Optional.",
+                "properties": {
+                  "min": {
+                    "description": "Minimum extent of tail, must be less than the minimum value in the data.",
+                    "title": "Minimum",
+                    "type": "number"
+                  },
+                  "power": {
+                    "description": "Denominator of the exponent for the power model (between 0 exclusive and 1 inclusive).",
+                    "exclusiveMinimum": 0,
+                    "maximum": 1,
+                    "title": "Power",
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "power",
+                  "min"
+                ],
+                "title": "Lower tail extrapolation",
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "upper": {
+                "additionalProperties": false,
+                "description": "Power model for extrapolating the upper tail of the distribution.",
+                "properties": {
+                  "max": {
+                    "description": "Maximum extent of tail, must be greater than the maximum value in the data.",
+                    "title": "Maximum",
+                    "type": "number"
+                  },
+                  "power": {
+                    "description": "Denominator of the exponent for the power model (between 0 exclusive and 1 inclusive).",
+                    "exclusiveMinimum": 0,
+                    "maximum": 1,
+                    "title": "Power",
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "power",
+                  "max"
+                ],
+                "title": "Upper tail extrapolation",
+                "type": "object"
+              }
+            },
+            "required": [
+              "upper",
+              "lower"
+            ],
+            "title": "tail_extrapolation",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "weights": {
+            "attribute_from": "2/source_object",
+            "attribute_path": {
+              "downhole-intervals/[>=1.2,<2]": [
+                "attributes[?attribute_type=='scalar']"
+              ],
+              "pointset/[>=1.2,<2]": [
+                "locations.attributes[?attribute_type=='scalar']"
+              ]
+            },
+            "default": null,
+            "description": "Optional weights attribute for weighted distribution",
+            "reference_to": "attribute",
+            "title": "Weights",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "tail_extrapolation"
+        ],
+        "title": "ContinuousDistributionParameters",
+        "type": [
+          "object",
+          "null"
+        ]
+      },
+      "filter": {
+        "additionalProperties": false,
+        "attribute_from": "1/target_object",
+        "attribute_path": {
+          "regular-3d-grid/[>=1.2,<2]": [
+            "cell_attributes[?attribute_type=='category']",
+            "cell_attributes[?attribute_type=='scalar']"
+          ],
+          "regular-masked-3d-grid/[>=1.2,<2]": [
+            "cell_attributes[?attribute_type=='category']",
+            "cell_attributes[?attribute_type=='scalar']"
+          ]
+        },
+        "composite": "filter",
+        "default": null,
+        "description": "Optional filter to apply to the target grid. This allows the simulation to only be applied to a subset of grid locations, defined by filtering an attribute on the target grid.",
+        "properties": {
+          "where": {
+            "description": "A filter expression defining which locations to include. Use a FilterCondition for a single predicate, AllOfFilter for AND logic, AnyOfFilter for OR logic, or nest them to build compound predicates.",
+            "discriminator": "type",
+            "oneOf": [
+              {
+                "additionalProperties": false,
+                "description": "A leaf filter condition applied to one attribute of the filtered object.\n\nExactly one operator field must be provided.\n\n- ``in``: Membership test. Provide string category names for\n    ``CategoryAttribute`` objects or integers for integer-coded indices.\n- ``not_in``: Exclusion test.\n- ``equal``, ``not_equal``: Numeric equality/inequality.\n- ``greater_than``, ``greater_than_or_equal_to``, ``less_than``,\n    ``less_than_or_equal_to``: Numeric comparisons on numeric attributes.",
+                "properties": {
+                  "attribute": {
+                    "attribute_from": "1/target_object",
+                    "attribute_path": {
+                      "regular-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='category']",
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ],
+                      "regular-masked-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='category']",
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ]
+                    },
+                    "description": "Attribute used to filter locations.",
+                    "reference_to": "attribute",
+                    "title": "Attribute",
+                    "type": "string"
+                  },
+                  "operator": {
+                    "description": "The filter operator. Use 'in' or 'not_in' for category/membership tests (pair with 'values'). Use 'equal', 'not_equal', 'greater_than', 'greater_than_or_equal_to', 'less_than', or 'less_than_or_equal_to' for numeric comparisons (pair with 'threshold').",
+                    "enum": [
+                      "in",
+                      "not_in",
+                      "equal",
+                      "not_equal",
+                      "greater_than",
+                      "greater_than_or_equal_to",
+                      "less_than",
+                      "less_than_or_equal_to"
+                    ],
+                    "title": "Operator"
+                  },
+                  "threshold": {
+                    "default": null,
+                    "description": "Numeric threshold for comparison. Required when operator is 'equal', 'not_equal', 'greater_than', 'greater_than_or_equal_to', 'less_than', or 'less_than_or_equal_to'.",
+                    "title": "Threshold",
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "type": {
+                    "const": "condition",
+                    "description": "Identifies this as a leaf filter condition.",
+                    "title": "Type"
+                  },
+                  "values": {
+                    "default": null,
+                    "description": "Category values to match. Required when operator is 'in' or 'not_in'. Use strings for string/category-name attributes; use integers for integer-coded attributes.",
+                    "items": {
+                      "description": "String category name or integer category key to match.",
+                      "title": "Filter Value",
+                      "type": "string"
+                    },
+                    "title": "Values",
+                    "type": [
+                      "array",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "operator",
+                  "attribute"
+                ],
+                "title": "FilterCondition",
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/AllOfFilter"
+              },
+              {
+                "$ref": "#/$defs/AnyOfFilter"
+              }
+            ],
+            "title": "Where"
+          }
+        },
+        "required": [
+          "where"
+        ],
+        "title": "Filter",
+        "type": [
+          "object",
+          "null"
+        ]
+      },
+      "kriging_method": {
+        "default": "simple",
+        "description": "The kriging method to use for the conditioning step.",
+        "enum": [
+          "simple",
+          "ordinary"
+        ],
+        "title": "Kriging method"
+      },
+      "location_wise_quantiles": {
+        "description": "List of quantiles to compute for each location.",
+        "items": {
+          "description": "Quantile to compute for each location.",
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Quantile",
+          "type": "number"
+        },
+        "title": "Quantiles",
+        "type": "array"
+      },
+      "loss_calculation": {
+        "additionalProperties": false,
+        "default": null,
+        "description": "Settings for loss calculations.",
+        "properties": {
+          "material_categories": {
+            "description": "Ordered list of material categories, from lowest to highest cutoff grade",
+            "items": {
+              "additionalProperties": false,
+              "description": "Material category for loss calculation.\n\nIf both cutoff_grade and metal_price are zero, this category is treated as waste.",
+              "properties": {
+                "cutoff_grade": {
+                  "description": "Cutoff grade for the category",
+                  "minimum": 0,
+                  "title": "Cutoff grade",
+                  "type": "number"
+                },
+                "label": {
+                  "description": "Label for the material category",
+                  "title": "Label",
+                  "type": "string"
+                },
+                "metal_price": {
+                  "description": "Price of the metal per unit",
+                  "minimum": 0,
+                  "title": "Metal price",
+                  "type": "number"
+                }
+              },
+              "required": [
+                "cutoff_grade",
+                "metal_price",
+                "label"
+              ],
+              "title": "ConSimMaterialCategory",
+              "type": "object"
+            },
+            "title": "Material categories",
+            "type": "array"
+          },
+          "metal_recovery_fraction": {
+            "description": "Fraction of metal expected to be recovered during processing",
+            "maximum": 1,
+            "minimum": 0,
+            "title": "Metal recovery fraction",
+            "type": "number"
+          },
+          "mining_ore_cost": {
+            "description": "Mining cost per unit of ore material",
+            "minimum": 0,
+            "title": "Mining ore cost",
+            "type": "number"
+          },
+          "mining_waste_cost": {
+            "description": "Mining cost per unit of waste material",
+            "minimum": 0,
+            "title": "Mining waste cost",
+            "type": "number"
+          },
+          "processing_cost": {
+            "description": "Processing cost per unit of material",
+            "minimum": 0,
+            "title": "Processing cost",
+            "type": "number"
+          },
+          "target_attribute": {
+            "description": "The target attribute that will be created or updated with loss calculation results.",
+            "oneOf": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "description": "The name of the attribute to create.",
+                    "title": "Name",
+                    "type": "string"
+                  },
+                  "operation": {
+                    "const": "create",
+                    "description": "The operation to perform on the attribute.",
+                    "title": "Operation"
+                  }
+                },
+                "required": [
+                  "operation",
+                  "name"
+                ],
+                "type": "object"
+              },
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "operation": {
+                    "const": "update",
+                    "description": "The operation to perform on the attribute.",
+                    "title": "Operation"
+                  },
+                  "reference": {
+                    "attribute_from": "3/target_object",
+                    "attribute_path": {
+                      "regular-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='category']"
+                      ],
+                      "regular-masked-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='category']"
+                      ]
+                    },
+                    "description": "Reference to an existing attribute to update.",
+                    "reference_to": "attribute",
+                    "title": "Reference",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "operation",
+                  "reference"
+                ],
+                "type": "object"
+              }
+            ],
+            "target": "attribute",
+            "title": "Target attribute"
+          }
+        },
+        "required": [
+          "material_categories",
+          "processing_cost",
+          "mining_waste_cost",
+          "mining_ore_cost",
+          "metal_recovery_fraction",
+          "target_attribute"
+        ],
+        "title": "Loss calculation settings",
+        "type": [
+          "object",
+          "null"
+        ]
+      },
+      "mean_above_cutoff": {
+        "default": null,
+        "description": "List of cutoff values to compute mean above for each location. If None, this calculation is not performed.",
+        "items": {
+          "description": "Cutoff value to compute mean above.",
+          "title": "Cutoff value",
+          "type": "number"
+        },
+        "title": "Mean above cutoff",
+        "type": [
+          "array",
+          "null"
+        ]
+      },
+      "neighborhood": {
+        "additionalProperties": false,
+        "description": "Search neighborhood for conditioning.",
+        "properties": {
+          "ellipsoid": {
+            "additionalProperties": false,
+            "description": "The ellipsoid, to search for points within\nAlias: anisotropy",
+            "properties": {
+              "ellipsoid_ranges": {
+                "additionalProperties": false,
+                "description": "The ranges of the ellipsoid",
+                "properties": {
+                  "major": {
+                    "description": "The major axis length of the ellipsoid",
+                    "exclusiveMinimum": 0,
+                    "title": "Major",
+                    "type": "number"
+                  },
+                  "minor": {
+                    "description": "The minor axis length of the ellipsoid",
+                    "exclusiveMinimum": 0,
+                    "title": "Minor",
+                    "type": "number"
+                  },
+                  "semi_major": {
+                    "description": "The semi major axis length of the ellipsoid",
+                    "exclusiveMinimum": 0,
+                    "title": "Semi Major",
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "major",
+                  "semi_major",
+                  "minor"
+                ],
+                "title": "Ellipsoid Ranges",
+                "type": "object"
+              },
+              "rotation": {
+                "additionalProperties": false,
+                "description": "The rotation of the ellipsoid",
+                "properties": {
+                  "dip": {
+                    "default": 0,
+                    "description": "second rotation, about the x-axis, in degrees",
+                    "maximum": 180,
+                    "minimum": 0,
+                    "title": "Dip",
+                    "type": "number"
+                  },
+                  "dip_azimuth": {
+                    "default": 0,
+                    "description": "first rotation, about the z-axis, in degrees",
+                    "maximum": 360,
+                    "minimum": 0,
+                    "title": "Dip Azimuth",
+                    "type": "number"
+                  },
+                  "pitch": {
+                    "default": 0,
+                    "description": "third rotation, about the z-axis, in degrees",
+                    "maximum": 360,
+                    "minimum": 0,
+                    "title": "Pitch",
+                    "type": "number"
+                  }
+                },
+                "required": [],
+                "title": "Rotation",
+                "type": "object"
+              }
+            },
+            "required": [
+              "ellipsoid_ranges",
+              "rotation"
+            ],
+            "title": "Ellipsoid",
+            "type": "object"
+          },
+          "max_samples": {
+            "description": "The maximum number of samples to use for each evaluation point.\nAlias: max-samples",
+            "minimum": 1,
+            "title": "Max Samples",
+            "type": "integer"
+          },
+          "min_samples": {
+            "default": 1,
+            "description": "The minimum number of samples to use for each evaluation point.\nAlias: min-samples",
+            "minimum": 1,
+            "title": "Min Samples",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "ellipsoid",
+          "max_samples"
+        ],
+        "title": "Neighborhood",
+        "type": "object"
+      },
+      "number_of_lines": {
+        "default": 500,
+        "description": "Number of lines to use for the turning-band simulation.",
+        "maximum": 1000,
+        "minimum": 1,
+        "title": "Number of lines",
+        "type": "integer"
+      },
+      "number_of_simulations": {
+        "default": 1,
+        "description": "Number of simulations to run.",
+        "maximum": 100,
+        "minimum": 1,
+        "title": "Number of simulations",
+        "type": "integer"
+      },
+      "number_of_simulations_to_save": {
+        "default": 5,
+        "description": "Number of simulations to publish to the output object. If perform_validation is true, the minimum value must be at least 1.",
+        "maximum": 100,
+        "minimum": 0,
+        "title": "Number of simulations to save",
+        "type": "integer"
+      },
+      "perform_validation": {
+        "default": false,
+        "description": "Whether to run validation and generate a validation report.",
+        "title": "Run validation",
+        "type": "boolean"
+      },
+      "probability_above_cutoff": {
+        "default": null,
+        "description": "List of cutoff values to compute probability above for each location. If None, this calculation is not performed.",
+        "items": {
+          "description": "Cutoff value to compute probability above.",
+          "title": "Cutoff value",
+          "type": "number"
+        },
+        "title": "Probability above cutoff",
+        "type": [
+          "array",
+          "null"
+        ]
+      },
+      "random_seed": {
+        "default": 38239342,
+        "description": "Random seed for simulation and tie-breaking.",
+        "title": "Random seed",
+        "type": "integer"
+      },
+      "report_context": {
+        "additionalProperties": false,
+        "default": null,
+        "description": "Context for the validation report.",
+        "properties": {
+          "details": {
+            "description": "Key-value pairs of details to appear on the report.",
+            "items": {
+              "additionalProperties": false,
+              "description": "A single item of contextual information to be included in the validation report.",
+              "properties": {
+                "label": {
+                  "description": "Label of the context item, which will appear on the report.",
+                  "title": "Label",
+                  "type": "string"
+                },
+                "value": {
+                  "description": "Value of the context item.",
+                  "title": "Value",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "label",
+                "value"
+              ],
+              "title": "ValidationReportContextItem",
+              "type": "object"
+            },
+            "maxItems": 10,
+            "minItems": 1,
+            "title": "Details",
+            "type": "array"
+          },
+          "title": {
+            "description": "Title that will appear on the report.",
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "details"
+        ],
+        "title": "Report context",
+        "type": [
+          "object",
+          "null"
+        ]
+      },
+      "report_mean_thresholds": {
+        "additionalProperties": false,
+        "default": null,
+        "description": "Thresholds for the mean comparison in the validation report.",
+        "properties": {
+          "acceptable": {
+            "description": "Threshold for the percentage difference between the reference and simulated means that is considered acceptable.",
+            "minimum": 0,
+            "title": "Acceptable threshold",
+            "type": "number"
+          },
+          "marginal": {
+            "description": "Threshold for the percentage difference between the reference and simulated means that is considered marginal.",
+            "minimum": 0,
+            "title": "Marginal threshold",
+            "type": "number"
+          }
+        },
+        "required": [
+          "acceptable",
+          "marginal"
+        ],
+        "title": "Report mean thresholds",
+        "type": [
+          "object",
+          "null"
+        ]
+      },
+      "source_attribute": {
+        "attribute_from": "1/source_object",
+        "attribute_path": {
+          "downhole-intervals/[>=1.2,<2]": [
+            "attributes[?attribute_type=='scalar']"
+          ],
+          "pointset/[>=1.2,<2]": [
+            "locations.attributes[?attribute_type=='scalar']"
+          ]
+        },
+        "description": "Reference to the attribute containing the source values. The values are transformed to normal-score space using the provided distribution.",
+        "reference_to": "attribute",
+        "title": "Source values",
+        "type": "string"
+      },
+      "source_filter": {
+        "additionalProperties": false,
+        "attribute_from": "1/source_object",
+        "attribute_path": {
+          "downhole-intervals/[>=1.2,<2]": [
+            "attributes[?attribute_type=='category']",
+            "attributes[?attribute_type=='scalar']"
+          ],
+          "pointset/[>=1.2,<2]": [
+            "locations.attributes[?attribute_type=='category']",
+            "locations.attributes[?attribute_type=='scalar']"
+          ]
+        },
+        "composite": "filter",
+        "default": null,
+        "description": "Optional filter to apply to the source object. This allows the simulation to use only a subset of the source data, defined by filtering an attribute on the source object.",
+        "properties": {
+          "where": {
+            "description": "A filter expression defining which locations to include. Use a FilterCondition for a single predicate, AllOfFilter for AND logic, AnyOfFilter for OR logic, or nest them to build compound predicates.",
+            "discriminator": "type",
+            "oneOf": [
+              {
+                "additionalProperties": false,
+                "description": "A leaf filter condition applied to one attribute of the filtered object.\n\nExactly one operator field must be provided.\n\n- ``in``: Membership test. Provide string category names for\n    ``CategoryAttribute`` objects or integers for integer-coded indices.\n- ``not_in``: Exclusion test.\n- ``equal``, ``not_equal``: Numeric equality/inequality.\n- ``greater_than``, ``greater_than_or_equal_to``, ``less_than``,\n    ``less_than_or_equal_to``: Numeric comparisons on numeric attributes.",
+                "properties": {
+                  "attribute": {
+                    "attribute_from": "1/source_object",
+                    "attribute_path": {
+                      "downhole-intervals/[>=1.2,<2]": [
+                        "attributes[?attribute_type=='category']",
+                        "attributes[?attribute_type=='scalar']"
+                      ],
+                      "pointset/[>=1.2,<2]": [
+                        "locations.attributes[?attribute_type=='category']",
+                        "locations.attributes[?attribute_type=='scalar']"
+                      ]
+                    },
+                    "description": "Attribute used to filter locations.",
+                    "reference_to": "attribute",
+                    "title": "Attribute",
+                    "type": "string"
+                  },
+                  "operator": {
+                    "description": "The filter operator. Use 'in' or 'not_in' for category/membership tests (pair with 'values'). Use 'equal', 'not_equal', 'greater_than', 'greater_than_or_equal_to', 'less_than', or 'less_than_or_equal_to' for numeric comparisons (pair with 'threshold').",
+                    "enum": [
+                      "in",
+                      "not_in",
+                      "equal",
+                      "not_equal",
+                      "greater_than",
+                      "greater_than_or_equal_to",
+                      "less_than",
+                      "less_than_or_equal_to"
+                    ],
+                    "title": "Operator"
+                  },
+                  "threshold": {
+                    "default": null,
+                    "description": "Numeric threshold for comparison. Required when operator is 'equal', 'not_equal', 'greater_than', 'greater_than_or_equal_to', 'less_than', or 'less_than_or_equal_to'.",
+                    "title": "Threshold",
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "type": {
+                    "const": "condition",
+                    "description": "Identifies this as a leaf filter condition.",
+                    "title": "Type"
+                  },
+                  "values": {
+                    "default": null,
+                    "description": "Category values to match. Required when operator is 'in' or 'not_in'. Use strings for string/category-name attributes; use integers for integer-coded attributes.",
+                    "items": {
+                      "description": "String category name or integer category key to match.",
+                      "title": "Filter Value",
+                      "type": "string"
+                    },
+                    "title": "Values",
+                    "type": [
+                      "array",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "operator",
+                  "attribute"
+                ],
+                "title": "SourceFilterCondition",
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/SourceAllOfFilter"
+              },
+              {
+                "$ref": "#/$defs/SourceAnyOfFilter"
+              }
+            ],
+            "title": "Where"
+          }
+        },
+        "required": [
+          "where"
+        ],
+        "title": "SourceFilter",
+        "type": [
+          "object",
+          "null"
+        ]
+      },
+      "source_object": {
+        "description": "Reference to the Geoscience Object containing the source data used for conditioning the simulation. Supported object types are point sets and downhole intervals.",
+        "format": "uri",
+        "reference_to": "geoscience-object",
+        "supported_schemas": [
+          "pointset/[>=1.2,<2]",
+          "downhole-intervals/[>=1.2,<2]"
+        ],
+        "title": "Source locations",
+        "type": "string"
+      },
+      "target_object": {
+        "description": "Reference to the Geoscience Object containing the grid to evaluate the simulation onto. A new attribute will be created on this object.",
+        "format": "uri",
+        "reference_to": "geoscience-object",
+        "supported_schemas": [
+          "regular-3d-grid/[>=1.2,<2]",
+          "regular-masked-3d-grid/[>=1.2,<2]"
+        ],
+        "title": "Grid to evaluate onto",
+        "type": "string"
+      },
+      "variogram_model": {
+        "description": "Reference to the variogram model used to model the covariance within the domain.",
+        "format": "uri",
+        "reference_to": "geoscience-object",
+        "supported_schemas": [
+          "variogram/[>=1.1,<2]"
+        ],
+        "title": "Variogram model",
+        "type": "string"
+      }
+    },
+    "required": [
+      "source_object",
+      "source_attribute",
+      "target_object",
+      "neighborhood",
+      "variogram_model",
+      "block_discretization"
+    ],
+    "title": "ConditionalSimulationParameters",
+    "type": "object"
+  },
+  "results": {
+    "additionalProperties": false,
+    "description": "Results of the conditional simulation compute task.",
+    "properties": {
+      "links": {
+        "additionalProperties": false,
+        "description": "Links related to the simulation task.",
+        "properties": {
+          "dashboard": {
+            "description": "Link to the validation dashboard.",
+            "format": "uri",
+            "maxLength": 2083,
+            "minLength": 1,
+            "title": "Dashboard URL",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "dashboard"
+        ],
+        "title": "Links",
+        "type": "object"
+      },
+      "target": {
+        "additionalProperties": false,
+        "description": "The target grid with simulation results.",
+        "output": "geoscience-object",
+        "properties": {
+          "description": {
+            "description": "The description of the geoscience object.",
+            "title": "Description",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "loss_calculation_attribute": {
+            "additionalProperties": false,
+            "description": "Attribute containing the loss calculation results.",
+            "output": "attribute",
+            "properties": {
+              "name": {
+                "description": "The name of the output attribute.",
+                "title": "Name",
+                "type": "string"
+              },
+              "reference": {
+                "attribute_from": "2/reference",
+                "attribute_path": {
+                  "regular-3d-grid/[>=1.2,<2]": [
+                    "cell_attributes[?attribute_type=='category']"
+                  ],
+                  "regular-masked-3d-grid/[>=1.2,<2]": [
+                    "cell_attributes[?attribute_type=='category']"
+                  ]
+                },
+                "description": "Reference to the attribute in the geoscience object.",
+                "reference_to": "attribute",
+                "title": "Reference",
+                "type": "string"
+              }
+            },
+            "required": [
+              "reference",
+              "name"
+            ],
+            "title": "Loss calculation",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "mean_above_cutoff_attributes": {
+            "description": "List of attributes containing mean above cutoff values.",
+            "items": {
+              "additionalProperties": false,
+              "description": "Attribute containing the mean of values above a cutoff.",
+              "output": "attribute",
+              "properties": {
+                "cutoff": {
+                  "description": "The cutoff value that this attribute represents.",
+                  "title": "Cutoff",
+                  "type": "number"
+                },
+                "name": {
+                  "description": "The name of the output attribute.",
+                  "title": "Name",
+                  "type": "string"
+                },
+                "reference": {
+                  "attribute_from": "3/reference",
+                  "attribute_path": {
+                    "regular-3d-grid/[>=1.2,<2]": [
+                      "cell_attributes[?attribute_type=='scalar']"
+                    ],
+                    "regular-masked-3d-grid/[>=1.2,<2]": [
+                      "cell_attributes[?attribute_type=='scalar']"
+                    ]
+                  },
+                  "description": "Reference to the attribute in the geoscience object.",
+                  "reference_to": "attribute",
+                  "title": "Reference",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "reference",
+                "name",
+                "cutoff"
+              ],
+              "title": "Mean above cutoff",
+              "type": "object"
+            },
+            "title": "Mean above cutoff",
+            "type": "array"
+          },
+          "name": {
+            "description": "The name of the geoscience object.",
+            "title": "Name",
+            "type": "string"
+          },
+          "point_simulations": {
+            "additionalProperties": false,
+            "description": "Attribute containing the point simulation results.",
+            "output": "attribute",
+            "properties": {
+              "name": {
+                "description": "The name of the output attribute.",
+                "title": "Name",
+                "type": "string"
+              },
+              "reference": {
+                "attribute_from": "2/reference",
+                "attribute_path": {
+                  "regular-3d-grid/[>=1.2,<2]": [
+                    "cell_attributes[?attribute_type=='ensemble_continuous']"
+                  ],
+                  "regular-masked-3d-grid/[>=1.2,<2]": [
+                    "cell_attributes[?attribute_type=='ensemble_continuous']"
+                  ]
+                },
+                "description": "Reference to the attribute in the geoscience object.",
+                "reference_to": "attribute",
+                "title": "Reference",
+                "type": "string"
+              }
+            },
+            "required": [
+              "reference",
+              "name"
+            ],
+            "title": "Point simulations",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "point_simulations_normal_score": {
+            "additionalProperties": false,
+            "description": "Attribute containing the point simulation results in normal score space.",
+            "output": "attribute",
+            "properties": {
+              "name": {
+                "description": "The name of the output attribute.",
+                "title": "Name",
+                "type": "string"
+              },
+              "reference": {
+                "attribute_from": "2/reference",
+                "attribute_path": {
+                  "regular-3d-grid/[>=1.2,<2]": [
+                    "cell_attributes[?attribute_type=='ensemble_continuous']"
+                  ],
+                  "regular-masked-3d-grid/[>=1.2,<2]": [
+                    "cell_attributes[?attribute_type=='ensemble_continuous']"
+                  ]
+                },
+                "description": "Reference to the attribute in the geoscience object.",
+                "reference_to": "attribute",
+                "title": "Reference",
+                "type": "string"
+              }
+            },
+            "required": [
+              "reference",
+              "name"
+            ],
+            "title": "Point simulations normal score",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "probability_above_cutoff_attributes": {
+            "description": "List of attributes containing probability above cutoff values.",
+            "items": {
+              "additionalProperties": false,
+              "description": "Attribute containing the probability of being above a cutoff value.",
+              "output": "attribute",
+              "properties": {
+                "cutoff": {
+                  "description": "The cutoff value that this attribute represents.",
+                  "title": "Cutoff",
+                  "type": "number"
+                },
+                "name": {
+                  "description": "The name of the output attribute.",
+                  "title": "Name",
+                  "type": "string"
+                },
+                "reference": {
+                  "attribute_from": "3/reference",
+                  "attribute_path": {
+                    "regular-3d-grid/[>=1.2,<2]": [
+                      "cell_attributes[?attribute_type=='scalar']"
+                    ],
+                    "regular-masked-3d-grid/[>=1.2,<2]": [
+                      "cell_attributes[?attribute_type=='scalar']"
+                    ]
+                  },
+                  "description": "Reference to the attribute in the geoscience object.",
+                  "reference_to": "attribute",
+                  "title": "Reference",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "reference",
+                "name",
+                "cutoff"
+              ],
+              "title": "Probability above cutoff",
+              "type": "object"
+            },
+            "title": "Probability above cutoff",
+            "type": "array"
+          },
+          "quantile_attributes": {
+            "description": "List of attributes containing quantiles of the simulation results.",
+            "items": {
+              "additionalProperties": false,
+              "description": "Attribute containing a quantile of the simulation results.",
+              "output": "attribute",
+              "properties": {
+                "name": {
+                  "description": "The name of the output attribute.",
+                  "title": "Name",
+                  "type": "string"
+                },
+                "quantile": {
+                  "description": "Quantile of the simulations, that this attribute represents.",
+                  "maximum": 1,
+                  "minimum": 0,
+                  "title": "Quantile",
+                  "type": "number"
+                },
+                "reference": {
+                  "attribute_from": "3/reference",
+                  "attribute_path": {
+                    "regular-3d-grid/[>=1.2,<2]": [
+                      "cell_attributes[?attribute_type=='scalar']"
+                    ],
+                    "regular-masked-3d-grid/[>=1.2,<2]": [
+                      "cell_attributes[?attribute_type=='scalar']"
+                    ]
+                  },
+                  "description": "Reference to the attribute in the geoscience object.",
+                  "reference_to": "attribute",
+                  "title": "Reference",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "reference",
+                "name",
+                "quantile"
+              ],
+              "title": "Quantile",
+              "type": "object"
+            },
+            "title": "Quantiles",
+            "type": "array"
+          },
+          "reference": {
+            "description": "Reference to a geoscience object.",
+            "format": "uri",
+            "reference_to": "geoscience-object",
+            "supported_schemas": [
+              "regular-3d-grid/[>=1.2,<2]",
+              "regular-masked-3d-grid/[>=1.2,<2]"
+            ],
+            "title": "Reference",
+            "type": "string"
+          },
+          "schema_id": {
+            "description": "The ID of the Geoscience Object schema.",
+            "title": "Schema ID",
+            "type": "string"
+          },
+          "simulations": {
+            "additionalProperties": false,
+            "description": "Attribute containing the simulation results.",
+            "output": "attribute",
+            "properties": {
+              "name": {
+                "description": "The name of the output attribute.",
+                "title": "Name",
+                "type": "string"
+              },
+              "reference": {
+                "attribute_from": "2/reference",
+                "attribute_path": {
+                  "regular-3d-grid/[>=1.2,<2]": [
+                    "cell_attributes[?attribute_type=='ensemble_continuous']"
+                  ],
+                  "regular-masked-3d-grid/[>=1.2,<2]": [
+                    "cell_attributes[?attribute_type=='ensemble_continuous']"
+                  ]
+                },
+                "description": "Reference to the attribute in the geoscience object.",
+                "reference_to": "attribute",
+                "title": "Reference",
+                "type": "string"
+              }
+            },
+            "required": [
+              "reference",
+              "name"
+            ],
+            "title": "Simulations",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "simulations_normal_score": {
+            "additionalProperties": false,
+            "description": "Attribute containing the simulation results in normal score space.",
+            "output": "attribute",
+            "properties": {
+              "name": {
+                "description": "The name of the output attribute.",
+                "title": "Name",
+                "type": "string"
+              },
+              "reference": {
+                "attribute_from": "2/reference",
+                "attribute_path": {
+                  "regular-3d-grid/[>=1.2,<2]": [
+                    "cell_attributes[?attribute_type=='ensemble_continuous']"
+                  ],
+                  "regular-masked-3d-grid/[>=1.2,<2]": [
+                    "cell_attributes[?attribute_type=='ensemble_continuous']"
+                  ]
+                },
+                "description": "Reference to the attribute in the geoscience object.",
+                "reference_to": "attribute",
+                "title": "Reference",
+                "type": "string"
+              }
+            },
+            "required": [
+              "reference",
+              "name"
+            ],
+            "title": "Simulations normal score",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "summary_attributes": {
+            "additionalProperties": false,
+            "description": "Attribute containing summary statistics of the simulation results.",
+            "properties": {
+              "max": {
+                "additionalProperties": false,
+                "description": "Attribute containing the maximum of the simulations.",
+                "output": "attribute",
+                "properties": {
+                  "name": {
+                    "description": "The name of the output attribute.",
+                    "title": "Name",
+                    "type": "string"
+                  },
+                  "reference": {
+                    "attribute_from": "3/reference",
+                    "attribute_path": {
+                      "regular-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ],
+                      "regular-masked-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ]
+                    },
+                    "description": "Reference to the attribute in the geoscience object.",
+                    "reference_to": "attribute",
+                    "title": "Reference",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "reference",
+                  "name"
+                ],
+                "title": "Maximum",
+                "type": "object"
+              },
+              "mean": {
+                "additionalProperties": false,
+                "description": "Attribute containing the mean of the simulations.",
+                "output": "attribute",
+                "properties": {
+                  "name": {
+                    "description": "The name of the output attribute.",
+                    "title": "Name",
+                    "type": "string"
+                  },
+                  "reference": {
+                    "attribute_from": "3/reference",
+                    "attribute_path": {
+                      "regular-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ],
+                      "regular-masked-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ]
+                    },
+                    "description": "Reference to the attribute in the geoscience object.",
+                    "reference_to": "attribute",
+                    "title": "Reference",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "reference",
+                  "name"
+                ],
+                "title": "Mean",
+                "type": "object"
+              },
+              "min": {
+                "additionalProperties": false,
+                "description": "Attribute containing the minimum of the simulations.",
+                "output": "attribute",
+                "properties": {
+                  "name": {
+                    "description": "The name of the output attribute.",
+                    "title": "Name",
+                    "type": "string"
+                  },
+                  "reference": {
+                    "attribute_from": "3/reference",
+                    "attribute_path": {
+                      "regular-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ],
+                      "regular-masked-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ]
+                    },
+                    "description": "Reference to the attribute in the geoscience object.",
+                    "reference_to": "attribute",
+                    "title": "Reference",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "reference",
+                  "name"
+                ],
+                "title": "Minimum",
+                "type": "object"
+              },
+              "variance": {
+                "additionalProperties": false,
+                "description": "Attribute containing the variance of the simulations.",
+                "output": "attribute",
+                "properties": {
+                  "name": {
+                    "description": "The name of the output attribute.",
+                    "title": "Name",
+                    "type": "string"
+                  },
+                  "reference": {
+                    "attribute_from": "3/reference",
+                    "attribute_path": {
+                      "regular-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ],
+                      "regular-masked-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ]
+                    },
+                    "description": "Reference to the attribute in the geoscience object.",
+                    "reference_to": "attribute",
+                    "title": "Reference",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "reference",
+                  "name"
+                ],
+                "title": "Variance",
+                "type": "object"
+              }
+            },
+            "required": [
+              "mean",
+              "variance",
+              "min",
+              "max"
+            ],
+            "title": "Summary statistics",
+            "type": "object"
+          }
+        },
+        "required": [
+          "reference",
+          "name",
+          "description",
+          "schema_id",
+          "summary_attributes",
+          "quantile_attributes",
+          "simulations",
+          "simulations_normal_score",
+          "point_simulations",
+          "point_simulations_normal_score",
+          "loss_calculation_attribute",
+          "probability_above_cutoff_attributes",
+          "mean_above_cutoff_attributes"
+        ],
+        "title": "Target grid",
+        "type": "object"
+      },
+      "validation_report": {
+        "additionalProperties": false,
+        "description": "Link to the validation report file.",
+        "output": "file",
+        "properties": {
+          "name": {
+            "description": "The name of the file, typically the terminal segment of the path.",
+            "title": "File Name",
+            "type": "string"
+          },
+          "reference": {
+            "description": "Reference to a file.",
+            "format": "uri",
+            "reference_to": "file",
+            "title": "File Reference",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reference",
+          "name"
+        ],
+        "title": "Validation report",
+        "type": [
+          "object",
+          "null"
+        ]
+      },
+      "validation_summary": {
+        "additionalProperties": false,
+        "description": "Summary of the validation results.",
+        "properties": {
+          "mean": {
+            "description": "Mean of the simulated values.",
+            "title": "Simulated mean",
+            "type": "number"
+          },
+          "reference_mean": {
+            "description": "Mean of the input values.",
+            "title": "Reference mean",
+            "type": "number"
+          }
+        },
+        "required": [
+          "reference_mean",
+          "mean"
+        ],
+        "title": "ValidationSummary",
+        "type": [
+          "object",
+          "null"
+        ]
+      }
+    },
+    "required": [
+      "target",
+      "validation_summary",
+      "validation_report",
+      "links"
+    ],
+    "title": "ConditionalSimulationResults",
+    "type": "object"
+  }
+}

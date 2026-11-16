@@ -1,0 +1,59 @@
+{
+  "display_name": "Detect Non-Manifold Vertices",
+  "version": "1.5.16",
+  "feature_flag": "geotech-preview",
+  "description": "Identifies vertices with non-manifold topology in a Triangle Mesh or Geological Model Meshes object.",
+  "parameters": {
+    "additionalProperties": false,
+    "description": "Parameters for detect-non-manifold-vertices.",
+    "properties": {
+      "source": {
+        "description": "The mesh to check for non-manifold vertices. Supports Triangle Mesh and Geological Model Meshes.",
+        "format": "uri",
+        "reference_to": "geoscience-object",
+        "supported_schemas": [
+          "triangle-mesh/[>=2.0,<3]",
+          "geological-model-meshes/[>=2.0,<3]"
+        ],
+        "title": "Input Mesh",
+        "type": "string"
+      }
+    },
+    "required": [
+      "source"
+    ],
+    "title": "DetectNonManifoldVerticesParameters",
+    "type": "object"
+  },
+  "results": {
+    "additionalProperties": false,
+    "description": "Results of detect-non-manifold-vertices.",
+    "properties": {
+      "message": {
+        "description": "Description of the result of the operation.",
+        "examples": [
+          "Found 0 non-manifold vertices."
+        ],
+        "title": "Message",
+        "type": "string"
+      },
+      "points": {
+        "description": "Indices of vertices with non-manifold topology.",
+        "items": {
+          "description": "Index of a vertex in the mesh.",
+          "minimum": 0,
+          "title": "Vertex Index",
+          "type": "integer"
+        },
+        "title": "Non-Manifold Vertices",
+        "type": "array"
+      }
+    },
+    "required": [
+      "points",
+      "message"
+    ],
+    "title": "DetectNonManifoldVerticesResults",
+    "type": "object"
+  }
+}

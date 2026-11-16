@@ -1,0 +1,59 @@
+{
+  "display_name": "Detect Duplicate Points",
+  "version": "1.5.16",
+  "feature_flag": "geotech-preview",
+  "description": "Identifies exact duplicate vertices in a Triangle Mesh or Geological Model Meshes object.",
+  "parameters": {
+    "additionalProperties": false,
+    "description": "Parameters for detect-duplicate-points.",
+    "properties": {
+      "source": {
+        "description": "The mesh to check for duplicate points. Supports Triangle Mesh and Geological Model Meshes.",
+        "format": "uri",
+        "reference_to": "geoscience-object",
+        "supported_schemas": [
+          "triangle-mesh/[>=2.0,<3]",
+          "geological-model-meshes/[>=2.0,<3]"
+        ],
+        "title": "Input Mesh",
+        "type": "string"
+      }
+    },
+    "required": [
+      "source"
+    ],
+    "title": "DetectDuplicatePointsParameters",
+    "type": "object"
+  },
+  "results": {
+    "additionalProperties": false,
+    "description": "Results of detect-duplicate-points.",
+    "properties": {
+      "message": {
+        "description": "Description of the result of the operation.",
+        "examples": [
+          "Found 0 duplicate point(s)."
+        ],
+        "title": "Message",
+        "type": "string"
+      },
+      "points": {
+        "description": "Indices of duplicate vertices (excluding first occurrence).",
+        "items": {
+          "description": "Index of a vertex in the mesh.",
+          "minimum": 0,
+          "title": "Point Index",
+          "type": "integer"
+        },
+        "title": "Duplicate Points",
+        "type": "array"
+      }
+    },
+    "required": [
+      "points",
+      "message"
+    ],
+    "title": "DetectDuplicatePointsResults",
+    "type": "object"
+  }
+}

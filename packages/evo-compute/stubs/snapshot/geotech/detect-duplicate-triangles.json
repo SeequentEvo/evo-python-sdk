@@ -1,0 +1,59 @@
+{
+  "display_name": "Detect Duplicate Triangles",
+  "version": "1.5.16",
+  "feature_flag": "geotech-preview",
+  "description": "Identifies duplicate triangles (same vertex indices regardless of order) in a Triangle Mesh or Geological Model Meshes object.",
+  "parameters": {
+    "additionalProperties": false,
+    "description": "Parameters for detect-duplicate-triangles.",
+    "properties": {
+      "source": {
+        "description": "The mesh to check for duplicate triangles. Supports Triangle Mesh and Geological Model Meshes.",
+        "format": "uri",
+        "reference_to": "geoscience-object",
+        "supported_schemas": [
+          "triangle-mesh/[>=2.0,<3]",
+          "geological-model-meshes/[>=2.0,<3]"
+        ],
+        "title": "Input Mesh",
+        "type": "string"
+      }
+    },
+    "required": [
+      "source"
+    ],
+    "title": "DetectDuplicateTrianglesParameters",
+    "type": "object"
+  },
+  "results": {
+    "additionalProperties": false,
+    "description": "Results of detect-duplicate-triangles.",
+    "properties": {
+      "message": {
+        "description": "Description of the result of the operation.",
+        "examples": [
+          "Found 0 duplicate triangle(s)."
+        ],
+        "title": "Message",
+        "type": "string"
+      },
+      "triangles": {
+        "description": "Indices of detected duplicate triangles (excluding first occurrence).",
+        "items": {
+          "description": "Index of a triangle in the mesh.",
+          "minimum": 0,
+          "title": "Triangle Index",
+          "type": "integer"
+        },
+        "title": "Duplicate Triangles",
+        "type": "array"
+      }
+    },
+    "required": [
+      "triangles",
+      "message"
+    ],
+    "title": "DetectDuplicateTrianglesResults",
+    "type": "object"
+  }
+}

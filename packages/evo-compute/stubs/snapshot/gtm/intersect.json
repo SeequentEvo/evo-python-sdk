@@ -1,0 +1,150 @@
+{
+  "display_name": "Intersect",
+  "version": "0.0.1",
+  "feature_flag": "",
+  "description": "[TODO: Add description] Performs Intersect operation on geotechnical objects.",
+  "parameters": {
+    "additionalProperties": false,
+    "description": "Parameters for this task.",
+    "properties": {
+      "action": {
+        "const": "intersect",
+        "description": "The action to perform",
+        "title": "Action"
+      },
+      "assumeNoSelfIntersectionsInParts": {
+        "description": "[TODO: Add description for assumeNoSelfIntersectionsInParts]",
+        "title": "Assume No Self Intersections In Parts",
+        "type": "boolean"
+      },
+      "gooseContext": {
+        "additionalProperties": false,
+        "description": "Context information for the Goose API",
+        "properties": {
+          "apiToken": {
+            "description": "Authentication token for the API",
+            "title": "API Token",
+            "type": "string"
+          },
+          "host": {
+            "description": "The hostname for the API",
+            "title": "Host",
+            "type": "string"
+          },
+          "hubUrl": {
+            "description": "Hub URL currently being used",
+            "title": "Hub URL",
+            "type": "string"
+          },
+          "workspaceId": {
+            "description": "The workspace identifier",
+            "format": "uuid",
+            "title": "Workspace ID",
+            "type": "string"
+          }
+        },
+        "required": [
+          "host",
+          "apiToken",
+          "workspaceId"
+        ],
+        "title": "Goose Context",
+        "type": "object"
+      },
+      "inputObjects": {
+        "description": "The geoscience objects to process.",
+        "items": {
+          "description": "A geoscience object to process.",
+          "format": "uri",
+          "reference_to": "geoscience-object",
+          "supported_schemas": [
+            "triangle-mesh/[>=2.0,<3]"
+          ],
+          "title": "Input Object",
+          "type": "string"
+        },
+        "minItems": 1,
+        "title": "Input Objects",
+        "type": "array"
+      },
+      "sessionId": {
+        "description": "The session identifier",
+        "title": "Session ID",
+        "type": "string"
+      },
+      "tolerance": {
+        "description": "[TODO: Add description for tolerance]",
+        "exclusiveMinimum": 0,
+        "title": "Tolerance",
+        "type": "number"
+      }
+    },
+    "required": [
+      "gooseContext",
+      "action",
+      "inputObjects",
+      "tolerance",
+      "assumeNoSelfIntersectionsInParts"
+    ],
+    "title": "Parameters",
+    "type": "object"
+  },
+  "results": {
+    "additionalProperties": false,
+    "description": "Results of the task.",
+    "properties": {
+      "created": {
+        "description": "Array of created object references",
+        "items": {
+          "description": "Reference to a geoscience object",
+          "format": "uri",
+          "reference_to": "geoscience-object",
+          "supported_schemas": [
+            "triangle-mesh/[>=2.0,<3]"
+          ],
+          "title": "Object Reference",
+          "type": "string"
+        },
+        "title": "Created Objects",
+        "type": "array"
+      },
+      "deleted": {
+        "description": "Array of deleted object references",
+        "items": {
+          "description": "Reference to a geoscience object",
+          "format": "uri",
+          "reference_to": "geoscience-object",
+          "supported_schemas": [
+            "triangle-mesh/[>=2.0,<3]"
+          ],
+          "title": "Object Reference",
+          "type": "string"
+        },
+        "title": "Deleted Objects",
+        "type": "array"
+      },
+      "modified": {
+        "description": "Array of modified object references",
+        "items": {
+          "description": "Reference to a geoscience object",
+          "format": "uri",
+          "reference_to": "geoscience-object",
+          "supported_schemas": [
+            "triangle-mesh/[>=2.0,<3]"
+          ],
+          "title": "Object Reference",
+          "type": "string"
+        },
+        "title": "Modified Objects",
+        "type": "array"
+      }
+    },
+    "required": [
+      "modified",
+      "created",
+      "deleted"
+    ],
+    "title": "Results",
+    "type": "object"
+  }
+}

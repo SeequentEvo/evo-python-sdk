@@ -1,0 +1,283 @@
+{
+  "display_name": "Location-wise",
+  "version": "0.8.0",
+  "feature_flag": "geostatistics-preview",
+  "description": "For more information, please read the <a href='/docs/guides/geostatistics-tasks/tasks/location-wise'>guide</a>",
+  "parameters": {
+    "additionalProperties": false,
+    "description": "Unified parameters for the location-wise compute task.\n\nAt least one of summary, quantiles, probability_above_cutoff, or mean_above_cutoff must be provided.",
+    "properties": {
+      "mean_above_cutoff": {
+        "additionalProperties": false,
+        "default": null,
+        "description": "Compute E[value | value > cutoff] per location for each cutoff.",
+        "properties": {
+          "cutoffs": {
+            "description": "List of cutoff values to compute E[value | value > cutoff] per location.",
+            "examples": [
+              [
+                0.12,
+                0.67
+              ]
+            ],
+            "items": {
+              "description": "Cutoff value to compute mean above.",
+              "title": "Cutoff",
+              "type": "number"
+            },
+            "minItems": 1,
+            "title": "Cutoffs",
+            "type": "array"
+          }
+        },
+        "required": [
+          "cutoffs"
+        ],
+        "title": "Mean Above Cutoff",
+        "type": [
+          "object",
+          "null"
+        ]
+      },
+      "probability_above_cutoff": {
+        "additionalProperties": false,
+        "default": null,
+        "description": "Compute P(value > cutoff) per location for each cutoff.",
+        "properties": {
+          "cutoffs": {
+            "description": "List of cutoff values to compute P(value > cutoff) per location.",
+            "examples": [
+              [
+                0.1,
+                0.43,
+                1.2
+              ]
+            ],
+            "items": {
+              "description": "Cutoff value to compute probability above.",
+              "title": "Cutoff",
+              "type": "number"
+            },
+            "minItems": 1,
+            "title": "Cutoffs",
+            "type": "array"
+          }
+        },
+        "required": [
+          "cutoffs"
+        ],
+        "title": "Probability Above Cutoff",
+        "type": [
+          "object",
+          "null"
+        ]
+      },
+      "quantiles": {
+        "default": null,
+        "description": "List of quantiles between 0.0 and 1.0 to compute.",
+        "examples": [
+          [
+            0.1,
+            0.5,
+            0.9
+          ]
+        ],
+        "items": {
+          "description": "Quantile between 0.0 and 1.0 to compute.",
+          "title": "Quantile",
+          "type": "number"
+        },
+        "minItems": 1,
+        "title": "Quantiles",
+        "type": [
+          "array",
+          "null"
+        ]
+      },
+      "source": {
+        "additionalProperties": false,
+        "description": "Source object and attribute containing ensemble values.",
+        "properties": {
+          "attribute": {
+            "attribute_from": "1/object",
+            "attribute_path": {
+              "regular-3d-grid/[>=1.2,<2]": [
+                "cell_attributes[?attribute_type=='ensemble_continuous']"
+              ],
+              "regular-masked-3d-grid/[>=1.2,<2]": [
+                "cell_attributes[?attribute_type=='ensemble_continuous']"
+              ],
+              "tensor-3d-grid/[>=1.2,<2]": [
+                "cell_attributes[?attribute_type=='ensemble_continuous']"
+              ]
+            },
+            "description": "Reference to the ensemble to be processed.",
+            "reference_to": "attribute",
+            "title": "Attribute",
+            "type": "string"
+          },
+          "object": {
+            "description": "Spatial locations of known values.",
+            "format": "uri",
+            "reference_to": "geoscience-object",
+            "supported_schemas": [
+              "regular-3d-grid/[>=1.2,<2]",
+              "regular-masked-3d-grid/[>=1.2,<2]",
+              "tensor-3d-grid/[>=1.2,<2]"
+            ],
+            "title": "Known Locations",
+            "type": "string"
+          }
+        },
+        "required": [
+          "object",
+          "attribute"
+        ],
+        "title": "Source",
+        "type": "object"
+      },
+      "summary": {
+        "default": null,
+        "description": "If true, compute summary statistics (min, max, mean, variance).",
+        "title": "Summary",
+        "type": [
+          "boolean",
+          "null"
+        ]
+      },
+      "target": {
+        "additionalProperties": false,
+        "description": "Target object to save summary statistics.",
+        "properties": {
+          "object": {
+            "description": "Object to evaluate onto.",
+            "format": "uri",
+            "reference_to": "geoscience-object",
+            "supported_schemas": [
+              "regular-3d-grid/[>=1.2,<2]",
+              "regular-masked-3d-grid/[>=1.2,<2]",
+              "tensor-3d-grid/[>=1.2,<2]"
+            ],
+            "title": "Evaluation Target",
+            "type": "string"
+          }
+        },
+        "required": [
+          "object"
+        ],
+        "title": "Target",
+        "type": "object"
+      }
+    },
+    "required": [
+      "source",
+      "target"
+    ],
+    "title": "LocationWiseParameters",
+    "type": "object"
+  },
+  "results": {
+    "additionalProperties": false,
+    "description": "Result of a location-wise task.",
+    "properties": {
+      "message": {
+        "description": "A message that says what happened in the task.",
+        "title": "Message",
+        "type": "string"
+      },
+      "target": {
+        "additionalProperties": false,
+        "description": "The target that was created or updated.",
+        "output": "geoscience-object",
+        "properties": {
+          "attributes": {
+            "description": "Computed location-wise values.",
+            "items": {
+              "additionalProperties": false,
+              "description": "Location-wise computed values.",
+              "output": "attribute",
+              "properties": {
+                "name": {
+                  "description": "The name of the output attribute.",
+                  "title": "Name",
+                  "type": "string"
+                },
+                "reference": {
+                  "attribute_from": "3/reference",
+                  "attribute_path": {
+                    "regular-3d-grid/[>=1.2,<2]": [
+                      "cell_attributes[?attribute_type=='scalar']"
+                    ],
+                    "regular-masked-3d-grid/[>=1.2,<2]": [
+                      "cell_attributes[?attribute_type=='scalar']"
+                    ],
+                    "tensor-3d-grid/[>=1.2,<2]": [
+                      "cell_attributes[?attribute_type=='scalar']"
+                    ]
+                  },
+                  "description": "Reference to the attribute in the geoscience object.",
+                  "reference_to": "attribute",
+                  "title": "Reference",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "reference",
+                "name"
+              ],
+              "title": "Location-wise attribute",
+              "type": "object"
+            },
+            "title": "Output attributes",
+            "type": "array"
+          },
+          "description": {
+            "description": "The description of the geoscience object.",
+            "title": "Description",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "description": "The name of the geoscience object.",
+            "title": "Name",
+            "type": "string"
+          },
+          "reference": {
+            "description": "Reference to a geoscience object.",
+            "format": "uri",
+            "reference_to": "geoscience-object",
+            "supported_schemas": [
+              "regular-3d-grid/[>=1.2,<2]",
+              "regular-masked-3d-grid/[>=1.2,<2]",
+              "tensor-3d-grid/[>=1.2,<2]"
+            ],
+            "title": "Reference",
+            "type": "string"
+          },
+          "schema_id": {
+            "description": "The ID of the Geoscience Object schema.",
+            "title": "Schema ID",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reference",
+          "name",
+          "description",
+          "schema_id",
+          "attributes"
+        ],
+        "title": "Target",
+        "type": "object"
+      }
+    },
+    "required": [
+      "message",
+      "target"
+    ],
+    "title": "LocationWiseResult",
+    "type": "object"
+  }
+}

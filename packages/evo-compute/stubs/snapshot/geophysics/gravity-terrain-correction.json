@@ -1,0 +1,192 @@
+{
+  "display_name": "Gravity Terrain Correction",
+  "version": "2.2.6",
+  "feature_flag": "geophysics-preview",
+  "description": "Gravity terrain correction compute task for geophysical surveys",
+  "parameters": {
+    "additionalProperties": false,
+    "description": "Parameters for the terrain correction task.",
+    "properties": {
+      "correction_radius": {
+        "description": "Radius used for terrain correction [m]. Should ideally be small enough so that a horizontal circle of this radius around any observation point fits within the grid area.",
+        "title": "Correction Radius",
+        "type": "number"
+      },
+      "observation_points": {
+        "description": "A point set with gravity stations for which terrain corrections will be calculated.",
+        "format": "uri",
+        "reference_to": "geoscience-object",
+        "supported_schemas": [
+          "pointset/[>=1.2,<2]"
+        ],
+        "title": "Observation Points",
+        "type": "string"
+      },
+      "surfaces": {
+        "description": "A 2D regular grid with topography values as attributes and (optionally, if a water layer is present) elevations of the top of the solid earth (the base of any water layer)",
+        "format": "uri",
+        "reference_to": "geoscience-object",
+        "supported_schemas": [
+          "regular-2d-grid/[>=1.2,<2]"
+        ],
+        "title": "Grids with elevations of stratigraphic surfaces defining layers for terrain correction modeling",
+        "type": "string"
+      },
+      "terrain_layer": {
+        "additionalProperties": false,
+        "description": "Parameters for the terrain layer, including density and reference to elevation attribute. In the absence of a specified water layer, the terrain represents the topography. If a water layer is provided, the terrain represents the elevation of the top of the solid earth (the base of the water layer).",
+        "properties": {
+          "density": {
+            "description": "Density of the layer [kg/m^3]",
+            "title": "Density",
+            "type": "number"
+          },
+          "elevation": {
+            "attribute_from": "2/surfaces",
+            "attribute_path": {
+              "regular-2d-grid/[>=1.2,<2]": [
+                "cell_attributes[?attribute_type=='scalar']"
+              ]
+            },
+            "description": "Reference to an attribute of a 2D grid representing the elevations of a layer defining a stratigraphic surface. Elevations [m] correspond to the same third coordinate axis as used in the observation points.",
+            "reference_to": "attribute",
+            "title": "Elevation",
+            "type": "string"
+          }
+        },
+        "required": [
+          "density",
+          "elevation"
+        ],
+        "title": "Terrain Layer",
+        "type": "object"
+      },
+      "water_layer": {
+        "additionalProperties": false,
+        "default": null,
+        "description": "Optional: Parameters for a water layer to be used in the model. If provided, the terrain layer represents the elevation of the top of the solid earth (the base of the water layer). At locations without water, terrain and water elevations should be identical. If not provided, no water layer is modeled.",
+        "properties": {
+          "density": {
+            "description": "Density of the layer [kg/m^3]",
+            "title": "Density",
+            "type": "number"
+          },
+          "elevation": {
+            "attribute_from": "2/surfaces",
+            "attribute_path": {
+              "regular-2d-grid/[>=1.2,<2]": [
+                "cell_attributes[?attribute_type=='scalar']"
+              ]
+            },
+            "description": "Reference to an attribute of a 2D grid representing the elevations of a layer defining a stratigraphic surface. Elevations [m] correspond to the same third coordinate axis as used in the observation points.",
+            "reference_to": "attribute",
+            "title": "Elevation",
+            "type": "string"
+          }
+        },
+        "required": [
+          "density",
+          "elevation"
+        ],
+        "title": "Water Layer",
+        "type": [
+          "object",
+          "null"
+        ]
+      }
+    },
+    "required": [
+      "surfaces",
+      "observation_points",
+      "correction_radius",
+      "terrain_layer"
+    ],
+    "title": "Parameters",
+    "type": "object"
+  },
+  "results": {
+    "additionalProperties": false,
+    "description": "Results of the terrain correction task.",
+    "properties": {
+      "target": {
+        "additionalProperties": false,
+        "description": "The object containing the computed terrain correction values.",
+        "output": "geoscience-object",
+        "properties": {
+          "description": {
+            "description": "The description of the geoscience object.",
+            "title": "Description",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "description": "The name of the geoscience object.",
+            "title": "Name",
+            "type": "string"
+          },
+          "reference": {
+            "description": "Reference to a geoscience object.",
+            "format": "uri",
+            "reference_to": "geoscience-object",
+            "supported_schemas": [
+              "pointset/[>=1.2,<2]"
+            ],
+            "title": "Reference",
+            "type": "string"
+          },
+          "schema_id": {
+            "description": "The ID of the Geoscience Object schema.",
+            "title": "Schema ID",
+            "type": "string"
+          },
+          "terrain_correction": {
+            "additionalProperties": false,
+            "description": "Attribute containing the terrain correction associated with each location at the input observation points. The terrain correction corresponds to the vertical gravity component. Unit is in m/s\u00b2 and corresponds to the coordinate system of the observation points where z-axis is positive upwards. This means that the terrain correction values should be multiplied by -1 if applied to gravity observations assuming a z-axis positive downwards.",
+            "output": "attribute",
+            "properties": {
+              "name": {
+                "description": "The name of the output attribute.",
+                "title": "Name",
+                "type": "string"
+              },
+              "reference": {
+                "attribute_from": "2/reference",
+                "attribute_path": {
+                  "pointset/[>=1.2,<2]": [
+                    "locations.attributes[?attribute_type=='scalar']"
+                  ]
+                },
+                "description": "Reference to the attribute in the geoscience object.",
+                "reference_to": "attribute",
+                "title": "Reference",
+                "type": "string"
+              }
+            },
+            "required": [
+              "reference",
+              "name"
+            ],
+            "title": "Terrain Correction",
+            "type": "object"
+          }
+        },
+        "required": [
+          "reference",
+          "name",
+          "description",
+          "schema_id",
+          "terrain_correction"
+        ],
+        "title": "Target Object",
+        "type": "object"
+      }
+    },
+    "required": [
+      "target"
+    ],
+    "title": "Results",
+    "type": "object"
+  }
+}

@@ -1,0 +1,90 @@
+{
+  "display_name": "Calculate Mesh Quality Histogram",
+  "version": "1.5.16",
+  "feature_flag": "geotech-preview",
+  "description": "Calculates a normalized inverse condition number histogram for triangles in a Triangle Mesh or Geological Model Meshes object.",
+  "parameters": {
+    "additionalProperties": false,
+    "description": "Parameters for calculate-mesh-quality-histogram.",
+    "properties": {
+      "bin_width": {
+        "default": 0.1,
+        "description": "Width of each quality bin. Bins span the quality range from 0.0 to 1.0.",
+        "exclusiveMinimum": 0,
+        "maximum": 1,
+        "title": "Bin Width",
+        "type": "number"
+      },
+      "source": {
+        "description": "The mesh to analyze. Supports Triangle Mesh and Geological Model Meshes.",
+        "format": "uri",
+        "reference_to": "geoscience-object",
+        "supported_schemas": [
+          "triangle-mesh/[>=2.0,<3]",
+          "geological-model-meshes/[>=2.0,<3]"
+        ],
+        "title": "Input Mesh",
+        "type": "string"
+      }
+    },
+    "required": [
+      "source"
+    ],
+    "title": "CalculateMeshQualityHistogramParameters",
+    "type": "object"
+  },
+  "results": {
+    "additionalProperties": false,
+    "description": "Results of calculate-mesh-quality-histogram.",
+    "properties": {
+      "bins": {
+        "description": "Ordered quality bins spanning the range from 0.0 to 1.0.",
+        "items": {
+          "additionalProperties": false,
+          "description": "A mesh quality range.",
+          "properties": {
+            "lower_bound": {
+              "description": "Inclusive lower bound of the quality range.",
+              "title": "Lower Bound",
+              "type": "number"
+            },
+            "triangle_count": {
+              "description": "Number of triangles in this quality range.",
+              "minimum": 0,
+              "title": "Triangle Count",
+              "type": "integer"
+            },
+            "upper_bound": {
+              "description": "Upper bound of the quality range.",
+              "title": "Upper Bound",
+              "type": "number"
+            }
+          },
+          "required": [
+            "lower_bound",
+            "upper_bound",
+            "triangle_count"
+          ],
+          "title": "Quality Bin",
+          "type": "object"
+        },
+        "title": "Quality Histogram",
+        "type": "array"
+      },
+      "message": {
+        "description": "Description of the result of the operation.",
+        "examples": [
+          "Calculated mesh quality histogram with 10 bin(s)."
+        ],
+        "title": "Message",
+        "type": "string"
+      }
+    },
+    "required": [
+      "bins",
+      "message"
+    ],
+    "title": "CalculateMeshQualityHistogramResults",
+    "type": "object"
+  }
+}

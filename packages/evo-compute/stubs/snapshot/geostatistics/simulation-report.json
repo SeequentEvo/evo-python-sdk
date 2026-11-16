@@ -1,0 +1,634 @@
+{
+  "display_name": "Simulation Report",
+  "version": "0.8.0",
+  "feature_flag": "geostatistics-preview",
+  "description": "For more information, please read the <a href='/docs/guides/geostatistics-tasks/tasks/simulation-report'>guide</a>",
+  "parameters": {
+    "additionalProperties": false,
+    "description": "Parameters for the standalone simulation report task.\n\nThis task reads existing simulation results from a grid and generates a validation\nreport (validation.json) containing CDF, quantile, summary statistics, swath plots,\nand variogram reproduction data.",
+    "properties": {
+      "block_discretization": {
+        "additionalProperties": false,
+        "description": "Sub-block discretization used for support correction within each grid block.",
+        "properties": {
+          "nx": {
+            "default": 1,
+            "description": "Number of subdivisions in the x direction",
+            "maximum": 9,
+            "minimum": 1,
+            "title": "Number of subdivisions in the x direction",
+            "type": "integer"
+          },
+          "ny": {
+            "default": 1,
+            "description": "Number of subdivisions in the y direction",
+            "maximum": 9,
+            "minimum": 1,
+            "title": "Number of subdivisions in the y direction",
+            "type": "integer"
+          },
+          "nz": {
+            "default": 1,
+            "description": "Number of subdivisions in the z direction",
+            "maximum": 9,
+            "minimum": 1,
+            "title": "Number of subdivisions in the z direction",
+            "type": "integer"
+          }
+        },
+        "required": [],
+        "title": "BlockDiscretization",
+        "type": "object"
+      },
+      "block_simulations": {
+        "attribute_from": "1/simulation_target",
+        "attribute_path": {
+          "regular-3d-grid/[>=1.2,<2]": [
+            "cell_attributes[?attribute_type=='ensemble_continuous']"
+          ],
+          "regular-masked-3d-grid/[>=1.2,<2]": [
+            "cell_attributes[?attribute_type=='ensemble_continuous']"
+          ]
+        },
+        "description": "Reference to the block-scale simulation results ensemble attribute on the target grid.",
+        "reference_to": "attribute",
+        "title": "Block simulations",
+        "type": "string"
+      },
+      "block_simulations_normal_score": {
+        "attribute_from": "1/simulation_target",
+        "attribute_path": {
+          "regular-3d-grid/[>=1.2,<2]": [
+            "cell_attributes[?attribute_type=='ensemble_continuous']"
+          ],
+          "regular-masked-3d-grid/[>=1.2,<2]": [
+            "cell_attributes[?attribute_type=='ensemble_continuous']"
+          ]
+        },
+        "description": "Reference to the block-scale normal-score simulation results ensemble attribute on the target grid.",
+        "reference_to": "attribute",
+        "title": "Block simulations (normal score)",
+        "type": "string"
+      },
+      "distribution": {
+        "additionalProperties": false,
+        "default": null,
+        "description": "Parameters for a continuous distribution used for normal-score transformation.",
+        "properties": {
+          "tail_extrapolation": {
+            "additionalProperties": false,
+            "description": "Tail extrapolation",
+            "properties": {
+              "lower": {
+                "additionalProperties": false,
+                "description": "Power model for extrapolating the lower tail of the distribution. Optional.",
+                "properties": {
+                  "min": {
+                    "description": "Minimum extent of tail, must be less than the minimum value in the data.",
+                    "title": "Minimum",
+                    "type": "number"
+                  },
+                  "power": {
+                    "description": "Denominator of the exponent for the power model (between 0 exclusive and 1 inclusive).",
+                    "exclusiveMinimum": 0,
+                    "maximum": 1,
+                    "title": "Power",
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "power",
+                  "min"
+                ],
+                "title": "Lower tail extrapolation",
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "upper": {
+                "additionalProperties": false,
+                "description": "Power model for extrapolating the upper tail of the distribution.",
+                "properties": {
+                  "max": {
+                    "description": "Maximum extent of tail, must be greater than the maximum value in the data.",
+                    "title": "Maximum",
+                    "type": "number"
+                  },
+                  "power": {
+                    "description": "Denominator of the exponent for the power model (between 0 exclusive and 1 inclusive).",
+                    "exclusiveMinimum": 0,
+                    "maximum": 1,
+                    "title": "Power",
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "power",
+                  "max"
+                ],
+                "title": "Upper tail extrapolation",
+                "type": "object"
+              }
+            },
+            "required": [
+              "upper",
+              "lower"
+            ],
+            "title": "tail_extrapolation",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "weights": {
+            "attribute_from": "2/simulation_source",
+            "attribute_path": {
+              "pointset/[>=1.2,<2]": [
+                "locations.attributes[?attribute_type=='scalar']"
+              ]
+            },
+            "default": null,
+            "description": "Optional weights attribute for weighted distribution",
+            "reference_to": "attribute",
+            "title": "Weights",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "tail_extrapolation"
+        ],
+        "title": "ContinuousDistributionParameters",
+        "type": [
+          "object",
+          "null"
+        ]
+      },
+      "kriging_method": {
+        "default": "simple",
+        "description": "The kriging method used for the conditioning step.",
+        "enum": [
+          "simple",
+          "ordinary"
+        ],
+        "title": "Kriging method"
+      },
+      "material": {
+        "additionalProperties": false,
+        "default": null,
+        "description": "Material cost and category information for loss calculations.",
+        "properties": {
+          "categories": {
+            "description": "List of material categories.",
+            "items": {
+              "additionalProperties": false,
+              "description": "A material category with cutoff grade and price information.",
+              "properties": {
+                "cutoff": {
+                  "description": "Cutoff grade for the material category.",
+                  "title": "Cutoff",
+                  "type": "number"
+                },
+                "min_price": {
+                  "description": "Minimum metal price for the material category.",
+                  "title": "Min price",
+                  "type": "number"
+                },
+                "name": {
+                  "description": "Name of the material category.",
+                  "title": "Name",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name",
+                "cutoff",
+                "min_price"
+              ],
+              "title": "ValidationReportMaterialCategory",
+              "type": "object"
+            },
+            "title": "Categories",
+            "type": "array"
+          },
+          "cost": {
+            "additionalProperties": false,
+            "description": "Material cost parameters.",
+            "properties": {
+              "mining_ore": {
+                "description": "Mining cost per unit of ore material.",
+                "title": "Mining ore",
+                "type": "number"
+              },
+              "mining_waste": {
+                "description": "Mining cost per unit of waste material.",
+                "title": "Mining waste",
+                "type": "number"
+              },
+              "processing": {
+                "description": "Processing cost per unit of material.",
+                "title": "Processing",
+                "type": "number"
+              },
+              "recovery_percentage": {
+                "description": "Fraction of metal expected to be recovered during processing.",
+                "title": "Recovery percentage",
+                "type": "number"
+              }
+            },
+            "required": [
+              "processing",
+              "mining_ore",
+              "mining_waste",
+              "recovery_percentage"
+            ],
+            "title": "Cost",
+            "type": "object"
+          }
+        },
+        "required": [
+          "cost",
+          "categories"
+        ],
+        "title": "Material",
+        "type": [
+          "object",
+          "null"
+        ]
+      },
+      "neighborhood": {
+        "additionalProperties": false,
+        "description": "Search neighborhood for conditioning.",
+        "properties": {
+          "ellipsoid": {
+            "additionalProperties": false,
+            "description": "The ellipsoid, to search for points within\nAlias: anisotropy",
+            "properties": {
+              "ellipsoid_ranges": {
+                "additionalProperties": false,
+                "description": "The ranges of the ellipsoid",
+                "properties": {
+                  "major": {
+                    "description": "The major axis length of the ellipsoid",
+                    "exclusiveMinimum": 0,
+                    "title": "Major",
+                    "type": "number"
+                  },
+                  "minor": {
+                    "description": "The minor axis length of the ellipsoid",
+                    "exclusiveMinimum": 0,
+                    "title": "Minor",
+                    "type": "number"
+                  },
+                  "semi_major": {
+                    "description": "The semi major axis length of the ellipsoid",
+                    "exclusiveMinimum": 0,
+                    "title": "Semi Major",
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "major",
+                  "semi_major",
+                  "minor"
+                ],
+                "title": "Ellipsoid Ranges",
+                "type": "object"
+              },
+              "rotation": {
+                "additionalProperties": false,
+                "description": "The rotation of the ellipsoid",
+                "properties": {
+                  "dip": {
+                    "default": 0,
+                    "description": "second rotation, about the x-axis, in degrees",
+                    "maximum": 180,
+                    "minimum": 0,
+                    "title": "Dip",
+                    "type": "number"
+                  },
+                  "dip_azimuth": {
+                    "default": 0,
+                    "description": "first rotation, about the z-axis, in degrees",
+                    "maximum": 360,
+                    "minimum": 0,
+                    "title": "Dip Azimuth",
+                    "type": "number"
+                  },
+                  "pitch": {
+                    "default": 0,
+                    "description": "third rotation, about the z-axis, in degrees",
+                    "maximum": 360,
+                    "minimum": 0,
+                    "title": "Pitch",
+                    "type": "number"
+                  }
+                },
+                "required": [],
+                "title": "Rotation",
+                "type": "object"
+              }
+            },
+            "required": [
+              "ellipsoid_ranges",
+              "rotation"
+            ],
+            "title": "Ellipsoid",
+            "type": "object"
+          },
+          "max_samples": {
+            "description": "The maximum number of samples to use for each evaluation point.\nAlias: max-samples",
+            "minimum": 1,
+            "title": "Max Samples",
+            "type": "integer"
+          },
+          "min_samples": {
+            "default": 1,
+            "description": "The minimum number of samples to use for each evaluation point.\nAlias: min-samples",
+            "minimum": 1,
+            "title": "Min Samples",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "ellipsoid",
+          "max_samples"
+        ],
+        "title": "Neighborhood",
+        "type": "object"
+      },
+      "number_of_lines": {
+        "default": 500,
+        "description": "Number of lines used for the turning-band simulation.",
+        "maximum": 1000,
+        "minimum": 1,
+        "title": "Number of lines",
+        "type": "integer"
+      },
+      "number_of_simulations": {
+        "description": "The total number of simulations that were performed.",
+        "maximum": 100,
+        "minimum": 1,
+        "title": "Number of simulations",
+        "type": "integer"
+      },
+      "point_simulations": {
+        "attribute_from": "1/simulation_target",
+        "attribute_path": {
+          "regular-3d-grid/[>=1.2,<2]": [
+            "cell_attributes[?attribute_type=='ensemble_continuous']"
+          ],
+          "regular-masked-3d-grid/[>=1.2,<2]": [
+            "cell_attributes[?attribute_type=='ensemble_continuous']"
+          ]
+        },
+        "description": "Reference to the point-scale simulation results ensemble attribute on the target grid.",
+        "reference_to": "attribute",
+        "title": "Point simulations",
+        "type": "string"
+      },
+      "point_simulations_normal_score": {
+        "attribute_from": "1/simulation_target",
+        "attribute_path": {
+          "regular-3d-grid/[>=1.2,<2]": [
+            "cell_attributes[?attribute_type=='ensemble_continuous']"
+          ],
+          "regular-masked-3d-grid/[>=1.2,<2]": [
+            "cell_attributes[?attribute_type=='ensemble_continuous']"
+          ]
+        },
+        "description": "Reference to the point-scale normal-score simulation results ensemble attribute on the target grid.",
+        "reference_to": "attribute",
+        "title": "Point simulations (normal score)",
+        "type": "string"
+      },
+      "random_seed": {
+        "default": 38239342,
+        "description": "Random seed for tie-breaking.",
+        "title": "Random seed",
+        "type": "integer"
+      },
+      "report_context": {
+        "additionalProperties": false,
+        "default": null,
+        "description": "Context for the validation report.",
+        "properties": {
+          "details": {
+            "description": "Key-value pairs of details to appear on the report.",
+            "items": {
+              "additionalProperties": false,
+              "description": "A single item of contextual information to be included in the validation report.",
+              "properties": {
+                "label": {
+                  "description": "Label of the context item, which will appear on the report.",
+                  "title": "Label",
+                  "type": "string"
+                },
+                "value": {
+                  "description": "Value of the context item.",
+                  "title": "Value",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "label",
+                "value"
+              ],
+              "title": "ValidationReportContextItem",
+              "type": "object"
+            },
+            "maxItems": 10,
+            "minItems": 1,
+            "title": "Details",
+            "type": "array"
+          },
+          "title": {
+            "description": "Title that will appear on the report.",
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "details"
+        ],
+        "title": "Report context",
+        "type": [
+          "object",
+          "null"
+        ]
+      },
+      "report_mean_thresholds": {
+        "additionalProperties": false,
+        "default": null,
+        "description": "Thresholds for the mean comparison in the validation report.",
+        "properties": {
+          "acceptable": {
+            "description": "Threshold for the percentage difference between the reference and simulated means that is considered acceptable.",
+            "minimum": 0,
+            "title": "Acceptable threshold",
+            "type": "number"
+          },
+          "marginal": {
+            "description": "Threshold for the percentage difference between the reference and simulated means that is considered marginal.",
+            "minimum": 0,
+            "title": "Marginal threshold",
+            "type": "number"
+          }
+        },
+        "required": [
+          "acceptable",
+          "marginal"
+        ],
+        "title": "Report mean thresholds",
+        "type": [
+          "object",
+          "null"
+        ]
+      },
+      "simulation_source": {
+        "description": "Reference to the Geoscience Object containing the source points used for conditioning the simulation.",
+        "format": "uri",
+        "reference_to": "geoscience-object",
+        "supported_schemas": [
+          "pointset/[>=1.2,<2]"
+        ],
+        "title": "Source locations",
+        "type": "string"
+      },
+      "simulation_target": {
+        "description": "Reference to the Geoscience Object containing the grid that already has simulation results. The report will be placed next to this object.",
+        "format": "uri",
+        "reference_to": "geoscience-object",
+        "supported_schemas": [
+          "regular-3d-grid/[>=1.2,<2]",
+          "regular-masked-3d-grid/[>=1.2,<2]"
+        ],
+        "title": "Grid with simulation results",
+        "type": "string"
+      },
+      "source_attribute": {
+        "attribute_from": "1/simulation_source",
+        "attribute_path": {
+          "pointset/[>=1.2,<2]": [
+            "locations.attributes[?attribute_type=='scalar']"
+          ]
+        },
+        "description": "Reference to the attribute containing the source values.",
+        "reference_to": "attribute",
+        "title": "Source values",
+        "type": "string"
+      },
+      "variogram_model": {
+        "description": "Reference to the variogram model used to model the covariance within the domain.",
+        "format": "uri",
+        "reference_to": "geoscience-object",
+        "supported_schemas": [
+          "variogram/[>=1.1,<2]"
+        ],
+        "title": "Variogram model",
+        "type": "string"
+      }
+    },
+    "required": [
+      "simulation_source",
+      "source_attribute",
+      "simulation_target",
+      "point_simulations",
+      "point_simulations_normal_score",
+      "block_simulations",
+      "block_simulations_normal_score",
+      "variogram_model",
+      "neighborhood",
+      "block_discretization",
+      "number_of_simulations"
+    ],
+    "title": "SimulationReportParameters",
+    "type": "object"
+  },
+  "results": {
+    "additionalProperties": false,
+    "description": "Results of the simulation report compute task.",
+    "properties": {
+      "links": {
+        "additionalProperties": false,
+        "description": "Links related to the simulation report task.",
+        "properties": {
+          "dashboard": {
+            "description": "Link to the validation dashboard.",
+            "format": "uri",
+            "maxLength": 2083,
+            "minLength": 1,
+            "title": "Dashboard URL",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "dashboard"
+        ],
+        "title": "Links",
+        "type": "object"
+      },
+      "validation_report": {
+        "additionalProperties": false,
+        "description": "Link to the validation report file.",
+        "output": "file",
+        "properties": {
+          "name": {
+            "description": "The name of the file, typically the terminal segment of the path.",
+            "title": "File Name",
+            "type": "string"
+          },
+          "reference": {
+            "description": "Reference to a file.",
+            "format": "uri",
+            "reference_to": "file",
+            "title": "File Reference",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reference",
+          "name"
+        ],
+        "title": "Validation report",
+        "type": "object"
+      },
+      "validation_summary": {
+        "additionalProperties": false,
+        "description": "Summary of the validation results.",
+        "properties": {
+          "mean": {
+            "description": "Mean of the simulated values.",
+            "title": "Simulated mean",
+            "type": "number"
+          },
+          "reference_mean": {
+            "description": "Mean of the input values.",
+            "title": "Reference mean",
+            "type": "number"
+          }
+        },
+        "required": [
+          "reference_mean",
+          "mean"
+        ],
+        "title": "ValidationSummary",
+        "type": "object"
+      }
+    },
+    "required": [
+      "validation_summary",
+      "validation_report",
+      "links"
+    ],
+    "title": "SimulationReportResults",
+    "type": "object"
+  }
+}

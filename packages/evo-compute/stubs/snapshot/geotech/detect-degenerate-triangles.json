@@ -1,0 +1,74 @@
+{
+  "display_name": "Detect Degenerate Triangles",
+  "version": "1.5.16",
+  "feature_flag": "geotech-preview",
+  "description": "Identifies needle and cap triangles in a Triangle Mesh or Geological Model Meshes object.",
+  "parameters": {
+    "additionalProperties": false,
+    "description": "Parameters for detect-degenerate-triangles.",
+    "properties": {
+      "cap_min_angle_degrees": {
+        "default": 177.5,
+        "description": "Minimum angle in degrees for cap detection.",
+        "exclusiveMaximum": 180,
+        "exclusiveMinimum": 0,
+        "title": "Cap Min Angle (degrees)",
+        "type": "number"
+      },
+      "needle_threshold_ratio": {
+        "default": 1000,
+        "description": "Longest-to-shortest edge ratio threshold for needle detection.",
+        "exclusiveMinimum": 0,
+        "title": "Needle Threshold Ratio",
+        "type": "number"
+      },
+      "source": {
+        "description": "The mesh to check for degenerate triangles. Supports Triangle Mesh and Geological Model Meshes.",
+        "format": "uri",
+        "reference_to": "geoscience-object",
+        "supported_schemas": [
+          "triangle-mesh/[>=2.0,<3]",
+          "geological-model-meshes/[>=2.0,<3]"
+        ],
+        "title": "Input Mesh",
+        "type": "string"
+      }
+    },
+    "required": [
+      "source"
+    ],
+    "title": "DetectDegenerateTrianglesParameters",
+    "type": "object"
+  },
+  "results": {
+    "additionalProperties": false,
+    "description": "Results of detect-degenerate-triangles.",
+    "properties": {
+      "message": {
+        "description": "Description of the result of the operation.",
+        "examples": [
+          "Found 0 degenerate triangle(s)."
+        ],
+        "title": "Message",
+        "type": "string"
+      },
+      "triangles": {
+        "description": "Indices of detected degenerate triangles.",
+        "items": {
+          "description": "Index of a triangle in the mesh.",
+          "minimum": 0,
+          "title": "Triangle Index",
+          "type": "integer"
+        },
+        "title": "Degenerate Triangles",
+        "type": "array"
+      }
+    },
+    "required": [
+      "triangles",
+      "message"
+    ],
+    "title": "DetectDegenerateTrianglesResults",
+    "type": "object"
+  }
+}

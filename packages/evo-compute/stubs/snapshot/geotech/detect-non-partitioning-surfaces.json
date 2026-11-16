@@ -1,0 +1,107 @@
+{
+  "display_name": "Detect Non-Partitioning Surfaces",
+  "version": "1.5.16",
+  "feature_flag": "geotech-preview",
+  "description": "Identifies non-partitioning surfaces that are neither fins nor surfaces with holes in a Triangle Mesh or Geological Model Meshes object.",
+  "parameters": {
+    "additionalProperties": false,
+    "description": "Parameters for detect-non-partitioning-surfaces.",
+    "properties": {
+      "hole_size_ratio_tolerance": {
+        "default": 0.05,
+        "description": "A boundary line is considered a hole if the ratio of the hole bounding box diagonal to the mesh bounding box diagonal is smaller than this tolerance.",
+        "exclusiveMinimum": 0,
+        "maximum": 1,
+        "title": "Hole Size Ratio Tolerance",
+        "type": "number"
+      },
+      "max_area_ratio": {
+        "default": 1,
+        "description": "Components with surface area larger than the largest component times this ratio are ignored.",
+        "exclusiveMinimum": 0,
+        "title": "Max Area Ratio",
+        "type": "number"
+      },
+      "source": {
+        "description": "The mesh to check for non-partitioning surfaces. Supports Triangle Mesh and Geological Model Meshes.",
+        "format": "uri",
+        "reference_to": "geoscience-object",
+        "supported_schemas": [
+          "triangle-mesh/[>=2.0,<3]",
+          "geological-model-meshes/[>=2.0,<3]"
+        ],
+        "title": "Input Mesh",
+        "type": "string"
+      }
+    },
+    "required": [
+      "source"
+    ],
+    "title": "DetectNonPartitioningSurfacesParameters",
+    "type": "object"
+  },
+  "results": {
+    "additionalProperties": false,
+    "description": "Results of detect-non-partitioning-surfaces.",
+    "properties": {
+      "message": {
+        "description": "Description of the result of the operation.",
+        "examples": [
+          "Found 0 non-partitioning surface(s)."
+        ],
+        "title": "Message",
+        "type": "string"
+      },
+      "surfaces": {
+        "description": "Detected non-partitioning surfaces with their triangles and edges.",
+        "items": {
+          "additionalProperties": false,
+          "description": "A single non-partitioning surface.",
+          "properties": {
+            "edges": {
+              "description": "Boundary edges of this surface, each as a pair of vertex indices.",
+              "items": {
+                "description": "A pair of vertex indices identifying a boundary edge.",
+                "items": {
+                  "description": "Index of a vertex in the mesh.",
+                  "minimum": 0,
+                  "title": "Vertex Index",
+                  "type": "integer"
+                },
+                "title": "Edge",
+                "type": "array"
+              },
+              "title": "Edges",
+              "type": "array"
+            },
+            "triangles": {
+              "description": "Indices of triangles forming this surface.",
+              "items": {
+                "description": "Index of a triangle in the mesh.",
+                "minimum": 0,
+                "title": "Triangle Index",
+                "type": "integer"
+              },
+              "title": "Triangles",
+              "type": "array"
+            }
+          },
+          "required": [
+            "triangles",
+            "edges"
+          ],
+          "title": "NonPartitioningSurfaceResult",
+          "type": "object"
+        },
+        "title": "Non-Partitioning Surfaces",
+        "type": "array"
+      }
+    },
+    "required": [
+      "surfaces",
+      "message"
+    ],
+    "title": "DetectNonPartitioningSurfacesResults",
+    "type": "object"
+  }
+}

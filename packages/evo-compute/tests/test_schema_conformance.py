@@ -146,3 +146,45 @@ class TestLiveCatalogueConformance(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(tasks, "live discovery returned no tasks")
         offenders = {task.name: unknown for task in tasks if (unknown := _unknown_keys_for_task(task))}
         self.assertEqual({}, offenders, f"unknown schema annotations in live catalogue: {offenders}")
+
+    @unittest.skipUnless(
+        os.getenv("EVO_COMPUTE_LIVE_DISCOVERY"),
+        "set EVO_COMPUTE_LIVE_DISCOVERY=1 (+ EVO_ACCESS_TOKEN, EVO_HUB_URL, EVO_ORG_ID) to run the live check",
+    )
+    async def test_the_snapshot_still_describes_tasks_the_catalogue_advertises(self) -> None:
+        """Report where the shipped snapshot and a live catalogue have drifted apart.
+
+        Nothing breaks when they differ -- a task the snapshot has not seen still runs, it
+        simply has no types -- so this is a staleness signal, not a correctness one.
+
+        Reads one organization's view, which is all any catalogue request can tell you:
+        tasks are gated per organization, so "missing here" may only mean "not entitled".
+        """
+        from evo.aio import AioTransport
+        from evo.common import APIConnector
+        from evo.oauth import AccessTokenAuthorizer
+
+        from evo.compute import DiscoveryClient
+        from evo.compute._stubgen import DEFAULT_SNAPSHOT_DIR, load_snapshot
+
+        transport = AioTransport(user_agent="evo-compute-conformance-test")
+        authorizer = AccessTokenAuthorizer(access_token=os.environ["EVO_ACCESS_TOKEN"])
+        connector = APIConnector(base_url=os.environ["EVO_HUB_URL"], transport=transport, authorizer=authorizer)
+        async with connector:
+            client = DiscoveryClient(connector, UUID(os.environ["EVO_ORG_ID"]))
+            tasks = await client.list_tasks()
+
+        self.assertTrue(tasks, "live discovery returned no tasks")
+        live = {(task.topic, task.name): task.version for task in tasks}
+        snapshotted = {(task.topic, task.name): task.version for task in load_snapshot(DEFAULT_SNAPSHOT_DIR)}
+
+        gone = sorted(key for key in snapshotted if key not in live)
+        moved = sorted(key for key, version in snapshotted.items() if key in live and live[key] != version)
+        self.assertEqual(
+            ([], []),
+            (gone, moved),
+            "the snapshot has drifted from the live catalogue; refresh it with "
+            "`python -m evo.compute._stubgen capture` and regenerate the stub. "
+            f"No longer advertised: {gone}. Different version: "
+            f"{ {key: (snapshotted[key], live[key]) for key in moved} }.",
+        )

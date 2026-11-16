@@ -1,0 +1,66 @@
+{
+  "display_name": "Detect Self-Intersections",
+  "version": "1.5.16",
+  "feature_flag": "geotech-preview",
+  "description": "Identifies self-intersecting triangles in a Triangle Mesh or Geological Model Meshes object.",
+  "parameters": {
+    "additionalProperties": false,
+    "description": "Parameters for detect-self-intersections.",
+    "properties": {
+      "source": {
+        "description": "The mesh to check for self-intersections. Supports Triangle Mesh and Geological Model Meshes.",
+        "format": "uri",
+        "reference_to": "geoscience-object",
+        "supported_schemas": [
+          "triangle-mesh/[>=2.0,<3]",
+          "geological-model-meshes/[>=2.0,<3]"
+        ],
+        "title": "Input Mesh",
+        "type": "string"
+      },
+      "tolerance": {
+        "default": 1e-06,
+        "description": "Tolerance for self-intersection detection.",
+        "minimum": 0,
+        "title": "Tolerance",
+        "type": "number"
+      }
+    },
+    "required": [
+      "source"
+    ],
+    "title": "DetectSelfIntersectionsParameters",
+    "type": "object"
+  },
+  "results": {
+    "additionalProperties": false,
+    "description": "Results of detect-self-intersections.",
+    "properties": {
+      "message": {
+        "description": "Description of the result of the operation.",
+        "examples": [
+          "Found 0 self-intersecting triangle(s)."
+        ],
+        "title": "Message",
+        "type": "string"
+      },
+      "triangles": {
+        "description": "Indices of triangles involved in self-intersections.",
+        "items": {
+          "description": "Index of a triangle in the mesh.",
+          "minimum": 0,
+          "title": "Triangle Index",
+          "type": "integer"
+        },
+        "title": "Self-Intersecting Triangles",
+        "type": "array"
+      }
+    },
+    "required": [
+      "triangles",
+      "message"
+    ],
+    "title": "DetectSelfIntersectionsResults",
+    "type": "object"
+  }
+}

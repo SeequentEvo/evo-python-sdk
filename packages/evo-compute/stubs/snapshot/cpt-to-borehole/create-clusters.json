@@ -1,0 +1,257 @@
+{
+  "display_name": "Create clusters task",
+  "version": "0.1.57",
+  "feature_flag": "cpt-to-borehole-preview",
+  "description": "Create clusters of related soil regions based on the stratification performed by the stratify task.",
+  "parameters": {
+    "additionalProperties": false,
+    "description": "Parameters for the \"Create clusters\" task.",
+    "properties": {
+      "downhole_collection": {
+        "description": "The DownholeCollection whose CPT/Hole data will be clustered.",
+        "format": "uri",
+        "reference_to": "geoscience-object",
+        "supported_schemas": [
+          "downhole-collection/[>=1.3,<2]"
+        ],
+        "title": "Input downhole collection",
+        "type": "string"
+      },
+      "features_option": {
+        "default": "qtAndRf",
+        "description": "Which CPT/Hole parameters to use to determine clusters. The default (qtAndRf) will use the corrected total cone resistance and the corrected friction ratio.",
+        "enum": [
+          "qtAndRf",
+          "QtnAndFr"
+        ],
+        "title": "Features option"
+      },
+      "hole_ids": {
+        "default": null,
+        "description": "List of Hole IDs to use for clustering. If not provided, all holes in the downhole collection will be used.",
+        "items": {
+          "description": "ID of the Hole to cluster.",
+          "title": "Hole ID",
+          "type": "string"
+        },
+        "minItems": 1,
+        "title": "Holes to cluster",
+        "type": [
+          "array",
+          "null"
+        ]
+      },
+      "number_of_clusters": {
+        "default": null,
+        "description": "The number of clusters to create. Will be determined automatically if not provided.",
+        "title": "Number of clusters",
+        "type": [
+          "integer",
+          "null"
+        ]
+      },
+      "uncluster": {
+        "default": false,
+        "description": "When set to true, removes the entire cluster collection and all stored clustering parameters from the downhole collection, then terminates without running the clustering algorithm. Only downhole_collection may be provided alongside this parameter.",
+        "title": "Uncluster",
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "downhole_collection"
+    ],
+    "title": "CreateClustersParameters",
+    "type": "object"
+  },
+  "results": {
+    "additionalProperties": false,
+    "description": "Result of the \"Create clusters\" task.",
+    "properties": {
+      "downhole_collection": {
+        "additionalProperties": false,
+        "description": "Reference to the DownholeCollection object that was created or updated which will hold the results of clusters creation.",
+        "output": "geoscience-object",
+        "properties": {
+          "description": {
+            "description": "The description of the geoscience object.",
+            "title": "Description",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "description": "The name of the geoscience object.",
+            "title": "Name",
+            "type": "string"
+          },
+          "reference": {
+            "description": "Reference to a geoscience object.",
+            "format": "uri",
+            "reference_to": "geoscience-object",
+            "supported_schemas": [
+              "downhole-collection/[>=1.3,<2]"
+            ],
+            "title": "Reference",
+            "type": "string"
+          },
+          "schema_id": {
+            "description": "The ID of the Geoscience Object schema.",
+            "title": "Schema ID",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reference",
+          "name",
+          "description",
+          "schema_id"
+        ],
+        "title": "The created or updated downhole collection",
+        "type": "object"
+      },
+      "inertia_silhouette_score": {
+        "additionalProperties": false,
+        "default": null,
+        "description": "Chart data for the inertia and silhouette score clustering diagnostics.",
+        "properties": {
+          "cluster_counts": {
+            "description": "Candidate cluster counts evaluated by the clustering algorithm.",
+            "items": {
+              "description": "One candidate cluster count evaluated by the clustering algorithm.",
+              "title": "Cluster count",
+              "type": "integer"
+            },
+            "title": "Cluster counts",
+            "type": "array"
+          },
+          "inertias": {
+            "description": "KMeans inertia values for each candidate cluster count.",
+            "items": {
+              "description": "One KMeans inertia value for a candidate cluster count.",
+              "title": "Inertia",
+              "type": "number"
+            },
+            "title": "Inertias",
+            "type": "array"
+          },
+          "optimal_number_of_clusters": {
+            "description": "Optimal number of clusters selected by the clustering algorithm.",
+            "title": "Optimal number of clusters",
+            "type": "integer"
+          },
+          "silhouette_scores": {
+            "description": "Silhouette scores for each candidate cluster count.",
+            "items": {
+              "description": "One silhouette score for a candidate cluster count.",
+              "title": "Silhouette score",
+              "type": "number"
+            },
+            "title": "Silhouette scores",
+            "type": "array"
+          }
+        },
+        "required": [
+          "optimal_number_of_clusters",
+          "cluster_counts",
+          "inertias",
+          "silhouette_scores"
+        ],
+        "title": "Inertia & Silhouette Score",
+        "type": [
+          "object",
+          "null"
+        ]
+      },
+      "messages": {
+        "description": "List of messages generated during the clustering process.",
+        "items": {
+          "additionalProperties": false,
+          "description": "A message produced by the task during execution.",
+          "properties": {
+            "code": {
+              "description": "Integer code that uniquely identifies this message type within its task. Allows consumers to handle specific messages without relying on text matching.",
+              "oneOf": [
+                {
+                  "const": 300,
+                  "description": "Cluster collection and stored clustering parameters have been removed from the downhole collection.",
+                  "title": "UNCLUSTERED"
+                },
+                {
+                  "const": 301,
+                  "description": "Locations were automatically selected because none were explicitly provided.",
+                  "title": "HOLE_IDS_AUTO_SELECTED"
+                },
+                {
+                  "const": 302,
+                  "description": "No changes were detected in clustering parameters, so existing results were returned without modification.",
+                  "title": "NO_CHANGES_DETECTED"
+                },
+                {
+                  "const": 305,
+                  "description": "A workflow step encountered an error during execution.",
+                  "title": "WORKFLOW_STEP_FAILED"
+                },
+                {
+                  "const": 307,
+                  "description": "Reports how many locations were successfully clustered.",
+                  "title": "HOLES_CLUSTERED"
+                },
+                {
+                  "const": 309,
+                  "description": "A requested location was not found.",
+                  "title": "HOLE_NOT_FOUND_IN_GEOLOGY"
+                },
+                {
+                  "const": 310,
+                  "description": "Number of clusters automatically determined using Inertia modelling.",
+                  "title": "OPTIMUM_CLUSTERS_DETERMINED"
+                }
+              ],
+              "title": "Code",
+              "type": "integer"
+            },
+            "level": {
+              "description": "The level of the message, e.g., 'info', 'warning', 'error'.",
+              "enum": [
+                "info",
+                "warning",
+                "error"
+              ],
+              "title": "Level"
+            },
+            "message": {
+              "description": "The content of the message.",
+              "title": "Message",
+              "type": "string"
+            },
+            "object_id": {
+              "default": null,
+              "description": "Optional identifier of the object (e.g., hole ID) this message relates to. None for global task-level messages.",
+              "title": "Object ID",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "code",
+            "level",
+            "message"
+          ],
+          "title": "Message[CreateClustersMessageCode]",
+          "type": "object"
+        },
+        "title": "Messages",
+        "type": "array"
+      }
+    },
+    "required": [
+      "downhole_collection",
+      "messages"
+    ],
+    "title": "Result",
+    "type": "object"
+  }
+}

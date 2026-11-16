@@ -1,0 +1,387 @@
+{
+  "display_name": "Break ties",
+  "version": "0.8.0",
+  "feature_flag": "geostatistics-preview",
+  "description": "For more information, please read the <a href='/docs/guides/geostatistics-tasks/tasks/break-ties'>guide</a>",
+  "parameters": {
+    "additionalProperties": false,
+    "description": "Parameters for the break ties task.",
+    "properties": {
+      "neighborhood": {
+        "additionalProperties": false,
+        "description": "Search parameters.\n\nIn this break ties algorithm, the final value of each tied point is influenced by the mean of nearby points.\nThe search parameters determines which nearby points to use.",
+        "properties": {
+          "ellipsoid": {
+            "additionalProperties": false,
+            "description": "The ellipsoid, to search for points within",
+            "properties": {
+              "ellipsoid_ranges": {
+                "additionalProperties": false,
+                "description": "The ranges of the ellipsoid",
+                "properties": {
+                  "major": {
+                    "description": "The major axis length of the ellipsoid",
+                    "exclusiveMinimum": 0,
+                    "title": "Major",
+                    "type": "number"
+                  },
+                  "minor": {
+                    "description": "The minor axis length of the ellipsoid",
+                    "exclusiveMinimum": 0,
+                    "title": "Minor",
+                    "type": "number"
+                  },
+                  "semi_major": {
+                    "description": "The semi major axis length of the ellipsoid",
+                    "exclusiveMinimum": 0,
+                    "title": "Semi Major",
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "major",
+                  "semi_major",
+                  "minor"
+                ],
+                "title": "Ellipsoid Ranges",
+                "type": "object"
+              },
+              "rotation": {
+                "additionalProperties": false,
+                "description": "The rotation of the ellipsoid",
+                "properties": {
+                  "dip": {
+                    "default": 0,
+                    "description": "second rotation, about the x-axis, in degrees",
+                    "maximum": 180,
+                    "minimum": 0,
+                    "title": "Dip",
+                    "type": "number"
+                  },
+                  "dip_azimuth": {
+                    "default": 0,
+                    "description": "first rotation, about the z-axis, in degrees",
+                    "maximum": 360,
+                    "minimum": 0,
+                    "title": "Dip Azimuth",
+                    "type": "number"
+                  },
+                  "pitch": {
+                    "default": 0,
+                    "description": "third rotation, about the z-axis, in degrees",
+                    "maximum": 360,
+                    "minimum": 0,
+                    "title": "Pitch",
+                    "type": "number"
+                  }
+                },
+                "required": [],
+                "title": "Rotation",
+                "type": "object"
+              }
+            },
+            "required": [
+              "ellipsoid_ranges",
+              "rotation"
+            ],
+            "title": "Ellipsoid",
+            "type": "object"
+          },
+          "max_samples": {
+            "description": "The maximum number of neighbors to find for each tied point.",
+            "minimum": 1,
+            "title": "Max Samples",
+            "type": "integer"
+          },
+          "min_samples": {
+            "default": 1,
+            "description": "The minimum number of samples to use for each evaluation point.",
+            "minimum": 1,
+            "title": "Min Samples",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "ellipsoid",
+          "max_samples"
+        ],
+        "title": "BreakTiesSearch",
+        "type": "object"
+      },
+      "seed": {
+        "default": 38239342,
+        "description": "Seed for the random number generator.",
+        "title": "Seed",
+        "type": "integer"
+      },
+      "source": {
+        "additionalProperties": false,
+        "description": "Data in which ties will be broken.",
+        "properties": {
+          "attribute": {
+            "attribute_from": "1/object",
+            "attribute_path": {
+              "block-model/[>=1.0,<2]": [
+                "attributes[?attribute_type=='Float64']"
+              ],
+              "downhole-intervals/[>=1.2,<2]": [
+                "attributes[?attribute_type=='scalar']"
+              ],
+              "pointset/[>=1.2,<2]": [
+                "locations.attributes[?attribute_type=='scalar']"
+              ],
+              "regular-3d-grid/[>=1.2,<2]": [
+                "cell_attributes[?attribute_type=='scalar']"
+              ],
+              "regular-masked-3d-grid/[>=1.2,<2]": [
+                "cell_attributes[?attribute_type=='scalar']"
+              ],
+              "tensor-3d-grid/[>=1.2,<2]": [
+                "cell_attributes[?attribute_type=='scalar']"
+              ]
+            },
+            "description": "The known values, used to estimate values at unknown locations.",
+            "reference_to": "attribute",
+            "title": "Attribute",
+            "type": "string"
+          },
+          "object": {
+            "description": "Object that contains the data in which ties will be broken.",
+            "format": "uri",
+            "reference_to": "geoscience-object",
+            "supported_schemas": [
+              "pointset/[>=1.2,<2]",
+              "block-model/[>=1.0,<2]",
+              "regular-3d-grid/[>=1.2,<2]",
+              "regular-masked-3d-grid/[>=1.2,<2]",
+              "tensor-3d-grid/[>=1.2,<2]",
+              "downhole-intervals/[>=1.2,<2]"
+            ],
+            "title": "Object",
+            "type": "string"
+          }
+        },
+        "required": [
+          "object",
+          "attribute"
+        ],
+        "title": "Source",
+        "type": "object"
+      },
+      "target": {
+        "additionalProperties": false,
+        "description": "Object and attribute where the results will be written.",
+        "properties": {
+          "attribute": {
+            "description": "The attribute to write the results to.",
+            "oneOf": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "description": "The name of the attribute to create.",
+                    "title": "Name",
+                    "type": "string"
+                  },
+                  "operation": {
+                    "const": "create",
+                    "description": "The operation to perform on the attribute.",
+                    "title": "Operation"
+                  }
+                },
+                "required": [
+                  "operation",
+                  "name"
+                ],
+                "type": "object"
+              },
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "operation": {
+                    "const": "update",
+                    "description": "The operation to perform on the attribute.",
+                    "title": "Operation"
+                  },
+                  "reference": {
+                    "attribute_from": "2/object",
+                    "attribute_path": {
+                      "block-model/[>=1.0,<2]": [
+                        "attributes[?attribute_type=='Float64']"
+                      ],
+                      "downhole-intervals/[>=1.2,<2]": [
+                        "attributes[?attribute_type=='scalar']"
+                      ],
+                      "pointset/[>=1.2,<2]": [
+                        "locations.attributes[?attribute_type=='scalar']"
+                      ],
+                      "regular-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ],
+                      "regular-masked-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ],
+                      "tensor-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ]
+                    },
+                    "description": "Reference to an existing attribute to update.",
+                    "reference_to": "attribute",
+                    "title": "Reference",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "operation",
+                  "reference"
+                ],
+                "type": "object"
+              }
+            ],
+            "target": "attribute",
+            "title": "Attribute"
+          },
+          "object": {
+            "description": "Object where the results will be written.",
+            "format": "uri",
+            "reference_to": "geoscience-object",
+            "supported_schemas": [
+              "pointset/[>=1.2,<2]",
+              "block-model/[>=1.0,<2]",
+              "regular-3d-grid/[>=1.2,<2]",
+              "regular-masked-3d-grid/[>=1.2,<2]",
+              "tensor-3d-grid/[>=1.2,<2]",
+              "downhole-intervals/[>=1.2,<2]"
+            ],
+            "title": "Object",
+            "type": "string"
+          }
+        },
+        "required": [
+          "object",
+          "attribute"
+        ],
+        "title": "Target",
+        "type": "object"
+      }
+    },
+    "required": [
+      "source",
+      "target",
+      "neighborhood"
+    ],
+    "title": "BreakTiesParameters",
+    "type": "object"
+  },
+  "results": {
+    "additionalProperties": false,
+    "description": "Result of the break ties task.",
+    "properties": {
+      "message": {
+        "description": "A message that says what happened in the task.",
+        "title": "Message",
+        "type": "string"
+      },
+      "target": {
+        "additionalProperties": false,
+        "description": "The target that was created or updated.",
+        "output": "geoscience-object",
+        "properties": {
+          "attribute": {
+            "additionalProperties": false,
+            "description": "Attribute containing the break ties result.",
+            "output": "attribute",
+            "properties": {
+              "name": {
+                "description": "The name of the output attribute.",
+                "title": "Name",
+                "type": "string"
+              },
+              "reference": {
+                "attribute_from": "2/reference",
+                "attribute_path": {
+                  "block-model/[>=1.0,<2]": [
+                    "attributes[?attribute_type=='Float64']"
+                  ],
+                  "downhole-intervals/[>=1.2,<2]": [
+                    "attributes[?attribute_type=='scalar']"
+                  ],
+                  "pointset/[>=1.2,<2]": [
+                    "locations.attributes[?attribute_type=='scalar']"
+                  ],
+                  "regular-3d-grid/[>=1.2,<2]": [
+                    "cell_attributes[?attribute_type=='scalar']"
+                  ],
+                  "regular-masked-3d-grid/[>=1.2,<2]": [
+                    "cell_attributes[?attribute_type=='scalar']"
+                  ],
+                  "tensor-3d-grid/[>=1.2,<2]": [
+                    "cell_attributes[?attribute_type=='scalar']"
+                  ]
+                },
+                "description": "Reference to the attribute in the geoscience object.",
+                "reference_to": "attribute",
+                "title": "Reference",
+                "type": "string"
+              }
+            },
+            "required": [
+              "reference",
+              "name"
+            ],
+            "title": "Attribute",
+            "type": "object"
+          },
+          "description": {
+            "description": "The description of the geoscience object.",
+            "title": "Description",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "description": "The name of the geoscience object.",
+            "title": "Name",
+            "type": "string"
+          },
+          "reference": {
+            "description": "Reference to a geoscience object.",
+            "format": "uri",
+            "reference_to": "geoscience-object",
+            "supported_schemas": [
+              "pointset/[>=1.2,<2]",
+              "block-model/[>=1.0,<2]",
+              "regular-3d-grid/[>=1.2,<2]",
+              "regular-masked-3d-grid/[>=1.2,<2]",
+              "tensor-3d-grid/[>=1.2,<2]",
+              "downhole-intervals/[>=1.2,<2]"
+            ],
+            "title": "Reference",
+            "type": "string"
+          },
+          "schema_id": {
+            "description": "The ID of the Geoscience Object schema.",
+            "title": "Schema ID",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reference",
+          "name",
+          "description",
+          "schema_id",
+          "attribute"
+        ],
+        "title": "Target",
+        "type": "object"
+      }
+    },
+    "required": [
+      "message",
+      "target"
+    ],
+    "title": "BreakTiesResult",
+    "type": "object"
+  }
+}

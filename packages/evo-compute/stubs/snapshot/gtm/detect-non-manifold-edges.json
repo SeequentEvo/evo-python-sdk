@@ -1,0 +1,147 @@
+{
+  "display_name": "Detect Non Manifold Edges",
+  "version": "0.0.1",
+  "feature_flag": "",
+  "description": "[TODO: Add description] Performs Detect Non Manifold Edges operation on geotechnical objects.",
+  "parameters": {
+    "additionalProperties": false,
+    "description": "Parameters for this task.",
+    "properties": {
+      "action": {
+        "const": "detect-non-manifold-edges",
+        "description": "The action to perform",
+        "title": "Action"
+      },
+      "gooseContext": {
+        "additionalProperties": false,
+        "description": "Context information for the Goose API",
+        "properties": {
+          "apiToken": {
+            "description": "Authentication token for the API",
+            "title": "API Token",
+            "type": "string"
+          },
+          "host": {
+            "description": "The hostname for the API",
+            "title": "Host",
+            "type": "string"
+          },
+          "hubUrl": {
+            "description": "Hub URL currently being used",
+            "title": "Hub URL",
+            "type": "string"
+          },
+          "workspaceId": {
+            "description": "The workspace identifier",
+            "format": "uuid",
+            "title": "Workspace ID",
+            "type": "string"
+          }
+        },
+        "required": [
+          "host",
+          "apiToken",
+          "workspaceId"
+        ],
+        "title": "Goose Context",
+        "type": "object"
+      },
+      "inputObjects": {
+        "description": "The geoscience objects to process.",
+        "items": {
+          "description": "A geoscience object to process.",
+          "format": "uri",
+          "reference_to": "geoscience-object",
+          "supported_schemas": [
+            "triangle-mesh/[>=2.0,<3]",
+            "geological-model-meshes/[>=2.1,<3]"
+          ],
+          "title": "Input Object",
+          "type": "string"
+        },
+        "maxItems": 1,
+        "minItems": 1,
+        "title": "Input Objects",
+        "type": "array"
+      },
+      "sessionId": {
+        "description": "The session identifier",
+        "title": "Session ID",
+        "type": "string"
+      }
+    },
+    "required": [
+      "gooseContext",
+      "action",
+      "inputObjects"
+    ],
+    "title": "Parameters",
+    "type": "object"
+  },
+  "results": {
+    "additionalProperties": false,
+    "description": "Detection results containing issues found.",
+    "properties": {
+      "issues": {
+        "description": "Array of detection issues [{},{},...].",
+        "items": {
+          "additionalProperties": false,
+          "description": "A single detection result containing vertex indices, edges and triangle indices.",
+          "properties": {
+            "edges": {
+              "description": "Array of 2-element arrays representing edge endpoint indices (v1, v2).",
+              "items": {
+                "description": "Two vertex indices describing an edge.",
+                "items": {
+                  "description": "Index of an edge endpoint (vertex index).",
+                  "title": "Edge endpoint index",
+                  "type": "number"
+                },
+                "maxItems": 2,
+                "minItems": 2,
+                "title": "Edge endpoints",
+                "type": "array"
+              },
+              "title": "Edge list",
+              "type": "array"
+            },
+            "points": {
+              "description": "Flat list of vertex indices in the mesh.",
+              "items": {
+                "description": "A single vertex index in the mesh.",
+                "title": "Point index",
+                "type": "number"
+              },
+              "title": "Vertex list",
+              "type": "array"
+            },
+            "triangles": {
+              "description": "List of triangle indices in the mesh.",
+              "items": {
+                "description": "Index of a triangle in the mesh.",
+                "title": "Triangle index",
+                "type": "number"
+              },
+              "title": "Triangle list",
+              "type": "array"
+            }
+          },
+          "required": [
+            "points",
+            "edges",
+            "triangles"
+          ],
+          "title": "Detection Result",
+          "type": "object"
+        },
+        "title": "Issues",
+        "type": "array"
+      }
+    },
+    "required": [
+      "issues"
+    ],
+    "title": "Results",
+    "type": "object"
+  }
+}

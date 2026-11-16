@@ -1,0 +1,852 @@
+{
+  "display_name": "Experimental Variogram",
+  "version": "0.8.0",
+  "feature_flag": "geostatistics-preview",
+  "description": "Computes one or more experimental (sample) variograms from a points or downhole intervals source object and writes them to a new experimental variogram object. A single call can mix omnidirectional, directional (azimuth/dip tolerance cone with optional bandwidth/bandheight) and downhole variograms, each with its own lag definition.",
+  "parameters": {
+    "$defs": {
+      "SourceAllOfFilter": {
+        "additionalProperties": false,
+        "description": "A composite filter that passes locations satisfying ALL child filters (AND logic).",
+        "properties": {
+          "filters": {
+            "description": "All of these filters must be satisfied (AND logic).",
+            "items": {
+              "description": "A filter condition or composite filter combining multiple conditions.",
+              "discriminator": "type",
+              "oneOf": [
+                {
+                  "additionalProperties": false,
+                  "description": "A leaf filter condition applied to one attribute of the filtered object.\n\nExactly one operator field must be provided.\n\n- ``in``: Membership test. Provide string category names for\n    ``CategoryAttribute`` objects or integers for integer-coded indices.\n- ``not_in``: Exclusion test.\n- ``equal``, ``not_equal``: Numeric equality/inequality.\n- ``greater_than``, ``greater_than_or_equal_to``, ``less_than``,\n    ``less_than_or_equal_to``: Numeric comparisons on numeric attributes.",
+                  "properties": {
+                    "attribute": {
+                      "attribute_from": "/source/object",
+                      "attribute_path": {
+                        "downhole-intervals/[>=1.2,<2]": [
+                          "attributes[?attribute_type=='category']",
+                          "attributes[?attribute_type=='scalar']"
+                        ],
+                        "pointset/[>=1.2,<2]": [
+                          "locations.attributes[?attribute_type=='category']",
+                          "locations.attributes[?attribute_type=='scalar']"
+                        ]
+                      },
+                      "description": "Attribute used to filter locations.",
+                      "reference_to": "attribute",
+                      "title": "Attribute",
+                      "type": "string"
+                    },
+                    "operator": {
+                      "description": "The filter operator. Use 'in' or 'not_in' for category/membership tests (pair with 'values'). Use 'equal', 'not_equal', 'greater_than', 'greater_than_or_equal_to', 'less_than', or 'less_than_or_equal_to' for numeric comparisons (pair with 'threshold').",
+                      "enum": [
+                        "in",
+                        "not_in",
+                        "equal",
+                        "not_equal",
+                        "greater_than",
+                        "greater_than_or_equal_to",
+                        "less_than",
+                        "less_than_or_equal_to"
+                      ],
+                      "title": "Operator"
+                    },
+                    "threshold": {
+                      "default": null,
+                      "description": "Numeric threshold for comparison. Required when operator is 'equal', 'not_equal', 'greater_than', 'greater_than_or_equal_to', 'less_than', or 'less_than_or_equal_to'.",
+                      "title": "Threshold",
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "type": {
+                      "const": "condition",
+                      "description": "Identifies this as a leaf filter condition.",
+                      "title": "Type"
+                    },
+                    "values": {
+                      "default": null,
+                      "description": "Category values to match. Required when operator is 'in' or 'not_in'. Use strings for string/category-name attributes; use integers for integer-coded attributes.",
+                      "items": {
+                        "description": "String category name or integer category key to match.",
+                        "title": "Filter Value",
+                        "type": "string"
+                      },
+                      "title": "Values",
+                      "type": [
+                        "array",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "operator",
+                    "attribute"
+                  ],
+                  "title": "SourceFilterCondition",
+                  "type": "object"
+                },
+                {
+                  "$ref": "#/$defs/SourceAllOfFilter"
+                },
+                {
+                  "$ref": "#/$defs/SourceAnyOfFilter"
+                }
+              ],
+              "title": "Filter Expression"
+            },
+            "title": "Filters",
+            "type": "array"
+          },
+          "type": {
+            "const": "all_of",
+            "description": "Identifies this as an AND composite filter.",
+            "title": "Type"
+          }
+        },
+        "required": [
+          "filters"
+        ],
+        "title": "SourceAllOfFilter",
+        "type": "object"
+      },
+      "SourceAnyOfFilter": {
+        "additionalProperties": false,
+        "description": "A composite filter that passes locations satisfying ANY child filter (OR logic).",
+        "properties": {
+          "filters": {
+            "description": "At least one of these filters must be satisfied (OR logic).",
+            "items": {
+              "description": "A filter condition or composite filter combining multiple conditions.",
+              "discriminator": "type",
+              "oneOf": [
+                {
+                  "additionalProperties": false,
+                  "description": "A leaf filter condition applied to one attribute of the filtered object.\n\nExactly one operator field must be provided.\n\n- ``in``: Membership test. Provide string category names for\n    ``CategoryAttribute`` objects or integers for integer-coded indices.\n- ``not_in``: Exclusion test.\n- ``equal``, ``not_equal``: Numeric equality/inequality.\n- ``greater_than``, ``greater_than_or_equal_to``, ``less_than``,\n    ``less_than_or_equal_to``: Numeric comparisons on numeric attributes.",
+                  "properties": {
+                    "attribute": {
+                      "attribute_from": "/source/object",
+                      "attribute_path": {
+                        "downhole-intervals/[>=1.2,<2]": [
+                          "attributes[?attribute_type=='category']",
+                          "attributes[?attribute_type=='scalar']"
+                        ],
+                        "pointset/[>=1.2,<2]": [
+                          "locations.attributes[?attribute_type=='category']",
+                          "locations.attributes[?attribute_type=='scalar']"
+                        ]
+                      },
+                      "description": "Attribute used to filter locations.",
+                      "reference_to": "attribute",
+                      "title": "Attribute",
+                      "type": "string"
+                    },
+                    "operator": {
+                      "description": "The filter operator. Use 'in' or 'not_in' for category/membership tests (pair with 'values'). Use 'equal', 'not_equal', 'greater_than', 'greater_than_or_equal_to', 'less_than', or 'less_than_or_equal_to' for numeric comparisons (pair with 'threshold').",
+                      "enum": [
+                        "in",
+                        "not_in",
+                        "equal",
+                        "not_equal",
+                        "greater_than",
+                        "greater_than_or_equal_to",
+                        "less_than",
+                        "less_than_or_equal_to"
+                      ],
+                      "title": "Operator"
+                    },
+                    "threshold": {
+                      "default": null,
+                      "description": "Numeric threshold for comparison. Required when operator is 'equal', 'not_equal', 'greater_than', 'greater_than_or_equal_to', 'less_than', or 'less_than_or_equal_to'.",
+                      "title": "Threshold",
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "type": {
+                      "const": "condition",
+                      "description": "Identifies this as a leaf filter condition.",
+                      "title": "Type"
+                    },
+                    "values": {
+                      "default": null,
+                      "description": "Category values to match. Required when operator is 'in' or 'not_in'. Use strings for string/category-name attributes; use integers for integer-coded attributes.",
+                      "items": {
+                        "description": "String category name or integer category key to match.",
+                        "title": "Filter Value",
+                        "type": "string"
+                      },
+                      "title": "Values",
+                      "type": [
+                        "array",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "operator",
+                    "attribute"
+                  ],
+                  "title": "SourceFilterCondition",
+                  "type": "object"
+                },
+                {
+                  "$ref": "#/$defs/SourceAllOfFilter"
+                },
+                {
+                  "$ref": "#/$defs/SourceAnyOfFilter"
+                }
+              ],
+              "title": "Filter Expression"
+            },
+            "title": "Filters",
+            "type": "array"
+          },
+          "type": {
+            "const": "any_of",
+            "description": "Identifies this as an OR composite filter.",
+            "title": "Type"
+          }
+        },
+        "required": [
+          "filters"
+        ],
+        "title": "SourceAnyOfFilter",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "description": "Task parameters for the experimental variogram computation.\n\nSample locations and values are read from a geoscience object (``source``). A single call\ncomputes one or more variograms \u2014 any mix of omnidirectional, directional and downhole \u2014\nlisted in ``directions``, each with its own lag definition. The results are written to a\nnew experimental variogram geoscience object (``target``).",
+    "properties": {
+      "directions": {
+        "description": "One or more variogram specifications to compute in this call (at most 100). Each entry is an omnidirectional, directional or downhole variogram with its own lag definition, and produces one direction in the output object.",
+        "items": {
+          "description": "A single omnidirectional, directional or downhole variogram specification.",
+          "discriminator": "type",
+          "oneOf": [
+            {
+              "additionalProperties": false,
+              "description": "An omnidirectional variogram \u2014 all sample pairs binned by separation distance.",
+              "properties": {
+                "lags": {
+                  "additionalProperties": false,
+                  "default": null,
+                  "description": "Lag bin definition. Omit to derive density-based lags automatically from the samples.",
+                  "properties": {
+                    "ends": {
+                      "default": null,
+                      "description": "Upper bounds (exclusive) of each lag bin. Provide with 'starts' for the explicit form.",
+                      "items": {
+                        "description": "A lag bin boundary distance value.",
+                        "title": "Lag bound",
+                        "type": "number"
+                      },
+                      "title": "Ends",
+                      "type": [
+                        "array",
+                        "null"
+                      ]
+                    },
+                    "lag_distance": {
+                      "default": null,
+                      "description": "Width of each uniform lag bin. Provide with 'n_lags' for the uniform form.",
+                      "exclusiveMinimum": 0,
+                      "title": "Lag Distance",
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "max_distance": {
+                      "default": null,
+                      "description": "Largest separation distance the automatically derived bins may reach. Only valid for the automatic form; omit it to derive the range from the extent of the samples. A common choice is half the extent of the domain being modelled.",
+                      "exclusiveMinimum": 0,
+                      "title": "Max Distance",
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "n_lags": {
+                      "default": null,
+                      "description": "Number of uniform lag bins. Provide with 'lag_distance' for the uniform form.",
+                      "minimum": 1,
+                      "title": "N Lags",
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    },
+                    "starts": {
+                      "default": null,
+                      "description": "Lower bounds (inclusive) of each lag bin. Provide with 'ends' for the explicit form.",
+                      "items": {
+                        "description": "A lag bin boundary distance value.",
+                        "title": "Lag bound",
+                        "type": "number"
+                      },
+                      "title": "Starts",
+                      "type": [
+                        "array",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [],
+                  "title": "Lags",
+                  "type": [
+                    "object",
+                    "null"
+                  ]
+                },
+                "type": {
+                  "const": "omnidirectional",
+                  "description": "Variogram type discriminator.",
+                  "title": "Type"
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "title": "OmnidirectionalVariogram",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "description": "A directional variogram \u2014 pairs filtered by an azimuth/dip tolerance cone.",
+              "properties": {
+                "azimuth": {
+                  "description": "Azimuth of the search direction in degrees, measured clockwise from North. Range [0, 360).",
+                  "exclusiveMaximum": 360,
+                  "minimum": 0,
+                  "title": "Azimuth",
+                  "type": "number"
+                },
+                "azimuth_tolerance": {
+                  "default": null,
+                  "description": "Half-width of the azimuth acceptance cone in degrees. Omit to fall back to a 15 degree default (density-based derivation is not yet available for the angular tolerances).",
+                  "exclusiveMinimum": 0,
+                  "maximum": 90,
+                  "title": "Azimuth Tolerance",
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "bandheight": {
+                  "default": null,
+                  "description": "Maximum perpendicular vertical distance from the search axis. Omit to derive it from the sample density.",
+                  "exclusiveMinimum": 0,
+                  "title": "Bandheight",
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "bandwidth": {
+                  "default": null,
+                  "description": "Maximum perpendicular horizontal distance from the search axis. Omit to derive it from the sample density.",
+                  "exclusiveMinimum": 0,
+                  "title": "Bandwidth",
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "dip": {
+                  "description": "Dip of the search direction in degrees, measured downward from horizontal. Range [-90, 90].",
+                  "maximum": 90,
+                  "minimum": -90,
+                  "title": "Dip",
+                  "type": "number"
+                },
+                "dip_tolerance": {
+                  "default": null,
+                  "description": "Half-width of the dip acceptance cone in degrees. Omit to fall back to a 15 degree default (density-based derivation is not yet available for the angular tolerances).",
+                  "exclusiveMinimum": 0,
+                  "maximum": 90,
+                  "title": "Dip Tolerance",
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "lags": {
+                  "additionalProperties": false,
+                  "default": null,
+                  "description": "Lag bin definition. Omit to derive density-based lags automatically from the samples.",
+                  "properties": {
+                    "ends": {
+                      "default": null,
+                      "description": "Upper bounds (exclusive) of each lag bin. Provide with 'starts' for the explicit form.",
+                      "items": {
+                        "description": "A lag bin boundary distance value.",
+                        "title": "Lag bound",
+                        "type": "number"
+                      },
+                      "title": "Ends",
+                      "type": [
+                        "array",
+                        "null"
+                      ]
+                    },
+                    "lag_distance": {
+                      "default": null,
+                      "description": "Width of each uniform lag bin. Provide with 'n_lags' for the uniform form.",
+                      "exclusiveMinimum": 0,
+                      "title": "Lag Distance",
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "max_distance": {
+                      "default": null,
+                      "description": "Largest separation distance the automatically derived bins may reach. Only valid for the automatic form; omit it to derive the range from the extent of the samples. A common choice is half the extent of the domain being modelled.",
+                      "exclusiveMinimum": 0,
+                      "title": "Max Distance",
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "n_lags": {
+                      "default": null,
+                      "description": "Number of uniform lag bins. Provide with 'lag_distance' for the uniform form.",
+                      "minimum": 1,
+                      "title": "N Lags",
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    },
+                    "starts": {
+                      "default": null,
+                      "description": "Lower bounds (inclusive) of each lag bin. Provide with 'ends' for the explicit form.",
+                      "items": {
+                        "description": "A lag bin boundary distance value.",
+                        "title": "Lag bound",
+                        "type": "number"
+                      },
+                      "title": "Starts",
+                      "type": [
+                        "array",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [],
+                  "title": "Lags",
+                  "type": [
+                    "object",
+                    "null"
+                  ]
+                },
+                "rectangular_cone": {
+                  "default": true,
+                  "description": "When True, the acceptance region is a rectangular (trapezoidal) search where the azimuth and dip tolerances are applied independently, matching Leapfrog's default search. When False, an elliptical cone is used.",
+                  "title": "Rectangular Cone",
+                  "type": "boolean"
+                },
+                "type": {
+                  "const": "directional",
+                  "description": "Variogram type discriminator.",
+                  "title": "Type"
+                }
+              },
+              "required": [
+                "type",
+                "azimuth",
+                "dip"
+              ],
+              "title": "DirectionalVariogram",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "description": "A downhole variogram \u2014 pairs within the same drillhole, binned by along-hole distance.",
+              "properties": {
+                "lags": {
+                  "additionalProperties": false,
+                  "default": null,
+                  "description": "Lag bin definition. Omit to derive density-based lags automatically from the samples.",
+                  "properties": {
+                    "ends": {
+                      "default": null,
+                      "description": "Upper bounds (exclusive) of each lag bin. Provide with 'starts' for the explicit form.",
+                      "items": {
+                        "description": "A lag bin boundary distance value.",
+                        "title": "Lag bound",
+                        "type": "number"
+                      },
+                      "title": "Ends",
+                      "type": [
+                        "array",
+                        "null"
+                      ]
+                    },
+                    "lag_distance": {
+                      "default": null,
+                      "description": "Width of each uniform lag bin. Provide with 'n_lags' for the uniform form.",
+                      "exclusiveMinimum": 0,
+                      "title": "Lag Distance",
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "max_distance": {
+                      "default": null,
+                      "description": "Largest separation distance the automatically derived bins may reach. Only valid for the automatic form; omit it to derive the range from the extent of the samples. A common choice is half the extent of the domain being modelled.",
+                      "exclusiveMinimum": 0,
+                      "title": "Max Distance",
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "n_lags": {
+                      "default": null,
+                      "description": "Number of uniform lag bins. Provide with 'lag_distance' for the uniform form.",
+                      "minimum": 1,
+                      "title": "N Lags",
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    },
+                    "starts": {
+                      "default": null,
+                      "description": "Lower bounds (inclusive) of each lag bin. Provide with 'ends' for the explicit form.",
+                      "items": {
+                        "description": "A lag bin boundary distance value.",
+                        "title": "Lag bound",
+                        "type": "number"
+                      },
+                      "title": "Starts",
+                      "type": [
+                        "array",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [],
+                  "title": "Lags",
+                  "type": [
+                    "object",
+                    "null"
+                  ]
+                },
+                "type": {
+                  "const": "downhole",
+                  "description": "Variogram type discriminator.",
+                  "title": "Type"
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "title": "DownholeVariogram",
+              "type": "object"
+            }
+          ],
+          "title": "Variogram direction"
+        },
+        "maxItems": 100,
+        "minItems": 1,
+        "title": "Directions",
+        "type": "array"
+      },
+      "source": {
+        "additionalProperties": false,
+        "description": "The source object and attribute providing the sample locations and values.",
+        "properties": {
+          "attribute": {
+            "attribute_from": "1/object",
+            "attribute_path": {
+              "downhole-intervals/[>=1.2,<2]": [
+                "attributes[?attribute_type=='scalar']"
+              ],
+              "pointset/[>=1.2,<2]": [
+                "locations.attributes[?attribute_type=='scalar']"
+              ]
+            },
+            "description": "The numeric attribute on the source object to compute the variogram on.",
+            "reference_to": "attribute",
+            "title": "Attribute",
+            "type": "string"
+          },
+          "domain": {
+            "default": null,
+            "description": "Optional label for the domain these samples represent, recorded on the created experimental variogram object. Typically describes the subset selected by 'filter', for example the name of an estimation domain.",
+            "title": "Domain",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "drillhole_id": {
+            "attribute_from": "1/object",
+            "attribute_path": {
+              "downhole-intervals/[>=1.2,<2]": [
+                "attributes[?attribute_type=='category']"
+              ],
+              "pointset/[>=1.2,<2]": [
+                "locations.attributes[?attribute_type=='category']"
+              ]
+            },
+            "default": null,
+            "description": "Optional category attribute identifying the drillhole each sample belongs to. Required for downhole variograms when the source is a points object. When the source is a downhole intervals object and this is omitted, the object's intrinsic hole identifier is used instead.",
+            "reference_to": "attribute",
+            "title": "Drillhole Id",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "filter": {
+            "additionalProperties": false,
+            "attribute_from": "1/object",
+            "attribute_path": {
+              "downhole-intervals/[>=1.2,<2]": [
+                "attributes[?attribute_type=='category']",
+                "attributes[?attribute_type=='scalar']"
+              ],
+              "pointset/[>=1.2,<2]": [
+                "locations.attributes[?attribute_type=='category']",
+                "locations.attributes[?attribute_type=='scalar']"
+              ]
+            },
+            "composite": "filter",
+            "default": null,
+            "description": "Optional filter to apply to the source object. This restricts the variogram computation to a subset of the samples, defined by filtering an attribute on the source object (for example a domain or region code).",
+            "properties": {
+              "where": {
+                "description": "A filter expression defining which locations to include. Use a FilterCondition for a single predicate, AllOfFilter for AND logic, AnyOfFilter for OR logic, or nest them to build compound predicates.",
+                "discriminator": "type",
+                "oneOf": [
+                  {
+                    "additionalProperties": false,
+                    "description": "A leaf filter condition applied to one attribute of the filtered object.\n\nExactly one operator field must be provided.\n\n- ``in``: Membership test. Provide string category names for\n    ``CategoryAttribute`` objects or integers for integer-coded indices.\n- ``not_in``: Exclusion test.\n- ``equal``, ``not_equal``: Numeric equality/inequality.\n- ``greater_than``, ``greater_than_or_equal_to``, ``less_than``,\n    ``less_than_or_equal_to``: Numeric comparisons on numeric attributes.",
+                    "properties": {
+                      "attribute": {
+                        "attribute_from": "1/object",
+                        "attribute_path": {
+                          "downhole-intervals/[>=1.2,<2]": [
+                            "attributes[?attribute_type=='category']",
+                            "attributes[?attribute_type=='scalar']"
+                          ],
+                          "pointset/[>=1.2,<2]": [
+                            "locations.attributes[?attribute_type=='category']",
+                            "locations.attributes[?attribute_type=='scalar']"
+                          ]
+                        },
+                        "description": "Attribute used to filter locations.",
+                        "reference_to": "attribute",
+                        "title": "Attribute",
+                        "type": "string"
+                      },
+                      "operator": {
+                        "description": "The filter operator. Use 'in' or 'not_in' for category/membership tests (pair with 'values'). Use 'equal', 'not_equal', 'greater_than', 'greater_than_or_equal_to', 'less_than', or 'less_than_or_equal_to' for numeric comparisons (pair with 'threshold').",
+                        "enum": [
+                          "in",
+                          "not_in",
+                          "equal",
+                          "not_equal",
+                          "greater_than",
+                          "greater_than_or_equal_to",
+                          "less_than",
+                          "less_than_or_equal_to"
+                        ],
+                        "title": "Operator"
+                      },
+                      "threshold": {
+                        "default": null,
+                        "description": "Numeric threshold for comparison. Required when operator is 'equal', 'not_equal', 'greater_than', 'greater_than_or_equal_to', 'less_than', or 'less_than_or_equal_to'.",
+                        "title": "Threshold",
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "type": {
+                        "const": "condition",
+                        "description": "Identifies this as a leaf filter condition.",
+                        "title": "Type"
+                      },
+                      "values": {
+                        "default": null,
+                        "description": "Category values to match. Required when operator is 'in' or 'not_in'. Use strings for string/category-name attributes; use integers for integer-coded attributes.",
+                        "items": {
+                          "description": "String category name or integer category key to match.",
+                          "title": "Filter Value",
+                          "type": "string"
+                        },
+                        "title": "Values",
+                        "type": [
+                          "array",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "operator",
+                      "attribute"
+                    ],
+                    "title": "SourceFilterCondition",
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/SourceAllOfFilter"
+                  },
+                  {
+                    "$ref": "#/$defs/SourceAnyOfFilter"
+                  }
+                ],
+                "title": "Where"
+              }
+            },
+            "required": [
+              "where"
+            ],
+            "title": "SourceFilter",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "object": {
+            "description": "Geoscience object containing the sample locations and values. Must be a points or downhole intervals object.",
+            "format": "uri",
+            "reference_to": "geoscience-object",
+            "supported_schemas": [
+              "pointset/[>=1.2,<2]",
+              "downhole-intervals/[>=1.2,<2]"
+            ],
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "object",
+          "attribute"
+        ],
+        "title": "Source",
+        "type": "object"
+      },
+      "target": {
+        "additionalProperties": false,
+        "description": "Target specifying where to create the experimental variogram object.",
+        "properties": {
+          "description": {
+            "default": null,
+            "description": "Description to put into the target object.",
+            "title": "Description",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "overwrite": {
+            "default": false,
+            "description": "Whether to overwrite the existing object.",
+            "title": "Overwrite",
+            "type": "boolean"
+          },
+          "reference": {
+            "description": "Reference to the targeted object.",
+            "format": "uri",
+            "reference_to": "geoscience-object",
+            "supported_schemas": [
+              "experimental-variogram/[>=1.0,<2]"
+            ],
+            "title": "Reference",
+            "type": "string"
+          },
+          "tags": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Tags to put into the target object.",
+            "title": "Tags",
+            "type": "object"
+          }
+        },
+        "required": [
+          "reference"
+        ],
+        "target": "geoscience-object",
+        "title": "Target",
+        "type": "object"
+      }
+    },
+    "required": [
+      "source",
+      "directions",
+      "target"
+    ],
+    "title": "ExperimentalVariogramParameters",
+    "type": "object"
+  },
+  "results": {
+    "additionalProperties": false,
+    "description": "Result of the experimental variogram task.",
+    "properties": {
+      "experimental_variogram": {
+        "additionalProperties": false,
+        "description": "Reference to the created experimental variogram object.",
+        "output": "geoscience-object",
+        "properties": {
+          "description": {
+            "description": "The description of the geoscience object.",
+            "title": "Description",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "description": "The name of the geoscience object.",
+            "title": "Name",
+            "type": "string"
+          },
+          "reference": {
+            "description": "Reference to a geoscience object.",
+            "format": "uri",
+            "reference_to": "geoscience-object",
+            "supported_schemas": [
+              "experimental-variogram/[>=1.0,<2]"
+            ],
+            "title": "Reference",
+            "type": "string"
+          },
+          "schema_id": {
+            "description": "The ID of the Geoscience Object schema.",
+            "title": "Schema ID",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reference",
+          "name",
+          "description",
+          "schema_id"
+        ],
+        "title": "Experimental variogram",
+        "type": "object"
+      },
+      "message": {
+        "description": "A message describing the result of the task.",
+        "title": "Message",
+        "type": "string"
+      }
+    },
+    "required": [
+      "message",
+      "experimental_variogram"
+    ],
+    "title": "ExperimentalVariogramResult",
+    "type": "object"
+  }
+}

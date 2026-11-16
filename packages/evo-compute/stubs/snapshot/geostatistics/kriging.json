@@ -1,0 +1,3442 @@
+{
+  "display_name": "Kriging",
+  "version": "0.8.0",
+  "feature_flag": "geostatistics-preview",
+  "description": "For more information, please read the <a href='/docs/guides/geostatistics-tasks/tasks/kriging'>guide</a>",
+  "parameters": {
+    "$defs": {
+      "AllOfFilter": {
+        "additionalProperties": false,
+        "description": "A composite filter that passes locations satisfying ALL child filters (AND logic).",
+        "properties": {
+          "filters": {
+            "description": "All of these filters must be satisfied (AND logic).",
+            "items": {
+              "description": "A filter condition or composite filter combining multiple conditions.",
+              "discriminator": "type",
+              "oneOf": [
+                {
+                  "additionalProperties": false,
+                  "description": "A leaf filter condition applied to one attribute of the filtered object.\n\nExactly one operator field must be provided.\n\n- ``in``: Membership test. Provide string category names for\n    ``CategoryAttribute`` objects or integers for integer-coded indices.\n- ``not_in``: Exclusion test.\n- ``equal``, ``not_equal``: Numeric equality/inequality.\n- ``greater_than``, ``greater_than_or_equal_to``, ``less_than``,\n    ``less_than_or_equal_to``: Numeric comparisons on numeric attributes.",
+                  "properties": {
+                    "attribute": {
+                      "attribute_from": "/target/object",
+                      "attribute_path": {
+                        "block-model/[>=1.0,<2]": [
+                          "attributes[?attribute_type=='Boolean'||attribute_type=='Utf8'||attribute_type=='Int8'||attribute_type=='Int16'||attribute_type=='Int32'||attribute_type=='Int64'||attribute_type=='UInt8'||attribute_type=='UInt16'||attribute_type=='UInt32'||attribute_type=='UInt64']",
+                          "attributes[?attribute_type=='Float64']"
+                        ],
+                        "downhole-intervals/[>=1.2,<2]": [
+                          "attributes[?attribute_type=='category']",
+                          "attributes[?attribute_type=='scalar']"
+                        ],
+                        "pointset/[>=1.2,<2]": [
+                          "locations.attributes[?attribute_type=='category']",
+                          "locations.attributes[?attribute_type=='scalar']"
+                        ],
+                        "regular-3d-grid/[>=1.2,<2]": [
+                          "cell_attributes[?attribute_type=='category']",
+                          "cell_attributes[?attribute_type=='scalar']"
+                        ],
+                        "regular-masked-3d-grid/[>=1.2,<2]": [
+                          "cell_attributes[?attribute_type=='category']",
+                          "cell_attributes[?attribute_type=='scalar']"
+                        ],
+                        "tensor-3d-grid/[>=1.2,<2]": [
+                          "cell_attributes[?attribute_type=='category']",
+                          "cell_attributes[?attribute_type=='scalar']"
+                        ]
+                      },
+                      "description": "Attribute used to filter locations.",
+                      "reference_to": "attribute",
+                      "title": "Attribute",
+                      "type": "string"
+                    },
+                    "operator": {
+                      "description": "The filter operator. Use 'in' or 'not_in' for category/membership tests (pair with 'values'). Use 'equal', 'not_equal', 'greater_than', 'greater_than_or_equal_to', 'less_than', or 'less_than_or_equal_to' for numeric comparisons (pair with 'threshold').",
+                      "enum": [
+                        "in",
+                        "not_in",
+                        "equal",
+                        "not_equal",
+                        "greater_than",
+                        "greater_than_or_equal_to",
+                        "less_than",
+                        "less_than_or_equal_to"
+                      ],
+                      "title": "Operator"
+                    },
+                    "threshold": {
+                      "default": null,
+                      "description": "Numeric threshold for comparison. Required when operator is 'equal', 'not_equal', 'greater_than', 'greater_than_or_equal_to', 'less_than', or 'less_than_or_equal_to'.",
+                      "title": "Threshold",
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "type": {
+                      "const": "condition",
+                      "description": "Identifies this as a leaf filter condition.",
+                      "title": "Type"
+                    },
+                    "values": {
+                      "default": null,
+                      "description": "Category values to match. Required when operator is 'in' or 'not_in'. Use strings for string/category-name attributes; use integers for integer-coded attributes.",
+                      "items": {
+                        "description": "String category name or integer category key to match.",
+                        "title": "Filter Value",
+                        "type": "string"
+                      },
+                      "title": "Values",
+                      "type": [
+                        "array",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "operator",
+                    "attribute"
+                  ],
+                  "title": "FilterCondition",
+                  "type": "object"
+                },
+                {
+                  "$ref": "#/$defs/AllOfFilter"
+                },
+                {
+                  "$ref": "#/$defs/AnyOfFilter"
+                }
+              ],
+              "title": "Filter Expression"
+            },
+            "title": "Filters",
+            "type": "array"
+          },
+          "type": {
+            "const": "all_of",
+            "description": "Identifies this as an AND composite filter.",
+            "title": "Type"
+          }
+        },
+        "required": [
+          "filters"
+        ],
+        "title": "AllOfFilter",
+        "type": "object"
+      },
+      "AnyOfFilter": {
+        "additionalProperties": false,
+        "description": "A composite filter that passes locations satisfying ANY child filter (OR logic).",
+        "properties": {
+          "filters": {
+            "description": "At least one of these filters must be satisfied (OR logic).",
+            "items": {
+              "description": "A filter condition or composite filter combining multiple conditions.",
+              "discriminator": "type",
+              "oneOf": [
+                {
+                  "additionalProperties": false,
+                  "description": "A leaf filter condition applied to one attribute of the filtered object.\n\nExactly one operator field must be provided.\n\n- ``in``: Membership test. Provide string category names for\n    ``CategoryAttribute`` objects or integers for integer-coded indices.\n- ``not_in``: Exclusion test.\n- ``equal``, ``not_equal``: Numeric equality/inequality.\n- ``greater_than``, ``greater_than_or_equal_to``, ``less_than``,\n    ``less_than_or_equal_to``: Numeric comparisons on numeric attributes.",
+                  "properties": {
+                    "attribute": {
+                      "attribute_from": "/target/object",
+                      "attribute_path": {
+                        "block-model/[>=1.0,<2]": [
+                          "attributes[?attribute_type=='Boolean'||attribute_type=='Utf8'||attribute_type=='Int8'||attribute_type=='Int16'||attribute_type=='Int32'||attribute_type=='Int64'||attribute_type=='UInt8'||attribute_type=='UInt16'||attribute_type=='UInt32'||attribute_type=='UInt64']",
+                          "attributes[?attribute_type=='Float64']"
+                        ],
+                        "downhole-intervals/[>=1.2,<2]": [
+                          "attributes[?attribute_type=='category']",
+                          "attributes[?attribute_type=='scalar']"
+                        ],
+                        "pointset/[>=1.2,<2]": [
+                          "locations.attributes[?attribute_type=='category']",
+                          "locations.attributes[?attribute_type=='scalar']"
+                        ],
+                        "regular-3d-grid/[>=1.2,<2]": [
+                          "cell_attributes[?attribute_type=='category']",
+                          "cell_attributes[?attribute_type=='scalar']"
+                        ],
+                        "regular-masked-3d-grid/[>=1.2,<2]": [
+                          "cell_attributes[?attribute_type=='category']",
+                          "cell_attributes[?attribute_type=='scalar']"
+                        ],
+                        "tensor-3d-grid/[>=1.2,<2]": [
+                          "cell_attributes[?attribute_type=='category']",
+                          "cell_attributes[?attribute_type=='scalar']"
+                        ]
+                      },
+                      "description": "Attribute used to filter locations.",
+                      "reference_to": "attribute",
+                      "title": "Attribute",
+                      "type": "string"
+                    },
+                    "operator": {
+                      "description": "The filter operator. Use 'in' or 'not_in' for category/membership tests (pair with 'values'). Use 'equal', 'not_equal', 'greater_than', 'greater_than_or_equal_to', 'less_than', or 'less_than_or_equal_to' for numeric comparisons (pair with 'threshold').",
+                      "enum": [
+                        "in",
+                        "not_in",
+                        "equal",
+                        "not_equal",
+                        "greater_than",
+                        "greater_than_or_equal_to",
+                        "less_than",
+                        "less_than_or_equal_to"
+                      ],
+                      "title": "Operator"
+                    },
+                    "threshold": {
+                      "default": null,
+                      "description": "Numeric threshold for comparison. Required when operator is 'equal', 'not_equal', 'greater_than', 'greater_than_or_equal_to', 'less_than', or 'less_than_or_equal_to'.",
+                      "title": "Threshold",
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "type": {
+                      "const": "condition",
+                      "description": "Identifies this as a leaf filter condition.",
+                      "title": "Type"
+                    },
+                    "values": {
+                      "default": null,
+                      "description": "Category values to match. Required when operator is 'in' or 'not_in'. Use strings for string/category-name attributes; use integers for integer-coded attributes.",
+                      "items": {
+                        "description": "String category name or integer category key to match.",
+                        "title": "Filter Value",
+                        "type": "string"
+                      },
+                      "title": "Values",
+                      "type": [
+                        "array",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "operator",
+                    "attribute"
+                  ],
+                  "title": "FilterCondition",
+                  "type": "object"
+                },
+                {
+                  "$ref": "#/$defs/AllOfFilter"
+                },
+                {
+                  "$ref": "#/$defs/AnyOfFilter"
+                }
+              ],
+              "title": "Filter Expression"
+            },
+            "title": "Filters",
+            "type": "array"
+          },
+          "type": {
+            "const": "any_of",
+            "description": "Identifies this as an OR composite filter.",
+            "title": "Type"
+          }
+        },
+        "required": [
+          "filters"
+        ],
+        "title": "AnyOfFilter",
+        "type": "object"
+      },
+      "SourceAllOfFilter": {
+        "additionalProperties": false,
+        "description": "A composite filter that passes locations satisfying ALL child filters (AND logic).",
+        "properties": {
+          "filters": {
+            "description": "All of these filters must be satisfied (AND logic).",
+            "items": {
+              "description": "A filter condition or composite filter combining multiple conditions.",
+              "discriminator": "type",
+              "oneOf": [
+                {
+                  "additionalProperties": false,
+                  "description": "A leaf filter condition applied to one attribute of the filtered object.\n\nExactly one operator field must be provided.\n\n- ``in``: Membership test. Provide string category names for\n    ``CategoryAttribute`` objects or integers for integer-coded indices.\n- ``not_in``: Exclusion test.\n- ``equal``, ``not_equal``: Numeric equality/inequality.\n- ``greater_than``, ``greater_than_or_equal_to``, ``less_than``,\n    ``less_than_or_equal_to``: Numeric comparisons on numeric attributes.",
+                  "properties": {
+                    "attribute": {
+                      "attribute_from": "/source/object",
+                      "attribute_path": {
+                        "block-model/[>=1.0,<2]": [
+                          "attributes[?attribute_type=='Boolean'||attribute_type=='Utf8'||attribute_type=='Int8'||attribute_type=='Int16'||attribute_type=='Int32'||attribute_type=='Int64'||attribute_type=='UInt8'||attribute_type=='UInt16'||attribute_type=='UInt32'||attribute_type=='UInt64']",
+                          "attributes[?attribute_type=='Float64']"
+                        ],
+                        "downhole-intervals/[>=1.2,<2]": [
+                          "attributes[?attribute_type=='category']",
+                          "attributes[?attribute_type=='scalar']"
+                        ],
+                        "pointset/[>=1.2,<2]": [
+                          "locations.attributes[?attribute_type=='category']",
+                          "locations.attributes[?attribute_type=='scalar']"
+                        ],
+                        "regular-3d-grid/[>=1.2,<2]": [
+                          "cell_attributes[?attribute_type=='category']",
+                          "cell_attributes[?attribute_type=='scalar']"
+                        ],
+                        "regular-masked-3d-grid/[>=1.2,<2]": [
+                          "cell_attributes[?attribute_type=='category']",
+                          "cell_attributes[?attribute_type=='scalar']"
+                        ],
+                        "tensor-3d-grid/[>=1.2,<2]": [
+                          "cell_attributes[?attribute_type=='category']",
+                          "cell_attributes[?attribute_type=='scalar']"
+                        ]
+                      },
+                      "description": "Attribute used to filter locations.",
+                      "reference_to": "attribute",
+                      "title": "Attribute",
+                      "type": "string"
+                    },
+                    "operator": {
+                      "description": "The filter operator. Use 'in' or 'not_in' for category/membership tests (pair with 'values'). Use 'equal', 'not_equal', 'greater_than', 'greater_than_or_equal_to', 'less_than', or 'less_than_or_equal_to' for numeric comparisons (pair with 'threshold').",
+                      "enum": [
+                        "in",
+                        "not_in",
+                        "equal",
+                        "not_equal",
+                        "greater_than",
+                        "greater_than_or_equal_to",
+                        "less_than",
+                        "less_than_or_equal_to"
+                      ],
+                      "title": "Operator"
+                    },
+                    "threshold": {
+                      "default": null,
+                      "description": "Numeric threshold for comparison. Required when operator is 'equal', 'not_equal', 'greater_than', 'greater_than_or_equal_to', 'less_than', or 'less_than_or_equal_to'.",
+                      "title": "Threshold",
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "type": {
+                      "const": "condition",
+                      "description": "Identifies this as a leaf filter condition.",
+                      "title": "Type"
+                    },
+                    "values": {
+                      "default": null,
+                      "description": "Category values to match. Required when operator is 'in' or 'not_in'. Use strings for string/category-name attributes; use integers for integer-coded attributes.",
+                      "items": {
+                        "description": "String category name or integer category key to match.",
+                        "title": "Filter Value",
+                        "type": "string"
+                      },
+                      "title": "Values",
+                      "type": [
+                        "array",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "operator",
+                    "attribute"
+                  ],
+                  "title": "SourceFilterCondition",
+                  "type": "object"
+                },
+                {
+                  "$ref": "#/$defs/SourceAllOfFilter"
+                },
+                {
+                  "$ref": "#/$defs/SourceAnyOfFilter"
+                }
+              ],
+              "title": "Filter Expression"
+            },
+            "title": "Filters",
+            "type": "array"
+          },
+          "type": {
+            "const": "all_of",
+            "description": "Identifies this as an AND composite filter.",
+            "title": "Type"
+          }
+        },
+        "required": [
+          "filters"
+        ],
+        "title": "SourceAllOfFilter",
+        "type": "object"
+      },
+      "SourceAnyOfFilter": {
+        "additionalProperties": false,
+        "description": "A composite filter that passes locations satisfying ANY child filter (OR logic).",
+        "properties": {
+          "filters": {
+            "description": "At least one of these filters must be satisfied (OR logic).",
+            "items": {
+              "description": "A filter condition or composite filter combining multiple conditions.",
+              "discriminator": "type",
+              "oneOf": [
+                {
+                  "additionalProperties": false,
+                  "description": "A leaf filter condition applied to one attribute of the filtered object.\n\nExactly one operator field must be provided.\n\n- ``in``: Membership test. Provide string category names for\n    ``CategoryAttribute`` objects or integers for integer-coded indices.\n- ``not_in``: Exclusion test.\n- ``equal``, ``not_equal``: Numeric equality/inequality.\n- ``greater_than``, ``greater_than_or_equal_to``, ``less_than``,\n    ``less_than_or_equal_to``: Numeric comparisons on numeric attributes.",
+                  "properties": {
+                    "attribute": {
+                      "attribute_from": "/source/object",
+                      "attribute_path": {
+                        "block-model/[>=1.0,<2]": [
+                          "attributes[?attribute_type=='Boolean'||attribute_type=='Utf8'||attribute_type=='Int8'||attribute_type=='Int16'||attribute_type=='Int32'||attribute_type=='Int64'||attribute_type=='UInt8'||attribute_type=='UInt16'||attribute_type=='UInt32'||attribute_type=='UInt64']",
+                          "attributes[?attribute_type=='Float64']"
+                        ],
+                        "downhole-intervals/[>=1.2,<2]": [
+                          "attributes[?attribute_type=='category']",
+                          "attributes[?attribute_type=='scalar']"
+                        ],
+                        "pointset/[>=1.2,<2]": [
+                          "locations.attributes[?attribute_type=='category']",
+                          "locations.attributes[?attribute_type=='scalar']"
+                        ],
+                        "regular-3d-grid/[>=1.2,<2]": [
+                          "cell_attributes[?attribute_type=='category']",
+                          "cell_attributes[?attribute_type=='scalar']"
+                        ],
+                        "regular-masked-3d-grid/[>=1.2,<2]": [
+                          "cell_attributes[?attribute_type=='category']",
+                          "cell_attributes[?attribute_type=='scalar']"
+                        ],
+                        "tensor-3d-grid/[>=1.2,<2]": [
+                          "cell_attributes[?attribute_type=='category']",
+                          "cell_attributes[?attribute_type=='scalar']"
+                        ]
+                      },
+                      "description": "Attribute used to filter locations.",
+                      "reference_to": "attribute",
+                      "title": "Attribute",
+                      "type": "string"
+                    },
+                    "operator": {
+                      "description": "The filter operator. Use 'in' or 'not_in' for category/membership tests (pair with 'values'). Use 'equal', 'not_equal', 'greater_than', 'greater_than_or_equal_to', 'less_than', or 'less_than_or_equal_to' for numeric comparisons (pair with 'threshold').",
+                      "enum": [
+                        "in",
+                        "not_in",
+                        "equal",
+                        "not_equal",
+                        "greater_than",
+                        "greater_than_or_equal_to",
+                        "less_than",
+                        "less_than_or_equal_to"
+                      ],
+                      "title": "Operator"
+                    },
+                    "threshold": {
+                      "default": null,
+                      "description": "Numeric threshold for comparison. Required when operator is 'equal', 'not_equal', 'greater_than', 'greater_than_or_equal_to', 'less_than', or 'less_than_or_equal_to'.",
+                      "title": "Threshold",
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "type": {
+                      "const": "condition",
+                      "description": "Identifies this as a leaf filter condition.",
+                      "title": "Type"
+                    },
+                    "values": {
+                      "default": null,
+                      "description": "Category values to match. Required when operator is 'in' or 'not_in'. Use strings for string/category-name attributes; use integers for integer-coded attributes.",
+                      "items": {
+                        "description": "String category name or integer category key to match.",
+                        "title": "Filter Value",
+                        "type": "string"
+                      },
+                      "title": "Values",
+                      "type": [
+                        "array",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "operator",
+                    "attribute"
+                  ],
+                  "title": "SourceFilterCondition",
+                  "type": "object"
+                },
+                {
+                  "$ref": "#/$defs/SourceAllOfFilter"
+                },
+                {
+                  "$ref": "#/$defs/SourceAnyOfFilter"
+                }
+              ],
+              "title": "Filter Expression"
+            },
+            "title": "Filters",
+            "type": "array"
+          },
+          "type": {
+            "const": "any_of",
+            "description": "Identifies this as an OR composite filter.",
+            "title": "Type"
+          }
+        },
+        "required": [
+          "filters"
+        ],
+        "title": "SourceAnyOfFilter",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "description": "Parameters for the kriging task.",
+    "properties": {
+      "block_discretisation": {
+        "additionalProperties": false,
+        "default": null,
+        "description": "Sub-block discretization for block kriging. When provided, each target block is subdivided into nx * ny * nz sub-cells and the kriged value is averaged across these sub-cells. When omitted, point kriging is performed. Only applicable when the target is a 3D grid or block model.",
+        "properties": {
+          "nx": {
+            "default": 1,
+            "description": "Number of subdivisions in the x direction",
+            "maximum": 9,
+            "minimum": 1,
+            "title": "Number of subdivisions in the x direction",
+            "type": "integer"
+          },
+          "ny": {
+            "default": 1,
+            "description": "Number of subdivisions in the y direction",
+            "maximum": 9,
+            "minimum": 1,
+            "title": "Number of subdivisions in the y direction",
+            "type": "integer"
+          },
+          "nz": {
+            "default": 1,
+            "description": "Number of subdivisions in the z direction",
+            "maximum": 9,
+            "minimum": 1,
+            "title": "Number of subdivisions in the z direction",
+            "type": "integer"
+          }
+        },
+        "required": [],
+        "title": "BlockDiscretization",
+        "type": [
+          "object",
+          "null"
+        ]
+      },
+      "kriging_method": {
+        "description": "The kriging method to use. Either simple or ordinary kriging.",
+        "discriminator": "type",
+        "oneOf": [
+          {
+            "additionalProperties": false,
+            "description": "Kriging method with a constant mean value.",
+            "properties": {
+              "mean": {
+                "description": "The mean value, assumed to be constant across the domain.",
+                "title": "Mean",
+                "type": "number"
+              },
+              "type": {
+                "const": "simple",
+                "description": "The type of kriging to use.",
+                "title": "Type"
+              }
+            },
+            "required": [
+              "type",
+              "mean"
+            ],
+            "title": "SimpleKriging",
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "description": "Kriging method with a variable mean value.",
+            "properties": {
+              "type": {
+                "const": "ordinary",
+                "description": "The type of kriging to use.",
+                "title": "Type"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "title": "OrdinaryKriging",
+            "type": "object"
+          }
+        ],
+        "title": "Kriging Method"
+      },
+      "neighborhood": {
+        "additionalProperties": false,
+        "description": "In Kriging, the value of each evaluation point is determined by a set of nearby points with known values. The search parameters determines which nearby points to use.",
+        "properties": {
+          "ellipsoid": {
+            "additionalProperties": false,
+            "description": "The ellipsoid, to search for points within\nAlias: anisotropy",
+            "properties": {
+              "ellipsoid_ranges": {
+                "additionalProperties": false,
+                "description": "The ranges of the ellipsoid",
+                "properties": {
+                  "major": {
+                    "description": "The major axis length of the ellipsoid",
+                    "exclusiveMinimum": 0,
+                    "title": "Major",
+                    "type": "number"
+                  },
+                  "minor": {
+                    "description": "The minor axis length of the ellipsoid",
+                    "exclusiveMinimum": 0,
+                    "title": "Minor",
+                    "type": "number"
+                  },
+                  "semi_major": {
+                    "description": "The semi major axis length of the ellipsoid",
+                    "exclusiveMinimum": 0,
+                    "title": "Semi Major",
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "major",
+                  "semi_major",
+                  "minor"
+                ],
+                "title": "Ellipsoid Ranges",
+                "type": "object"
+              },
+              "rotation": {
+                "additionalProperties": false,
+                "description": "The rotation of the ellipsoid",
+                "properties": {
+                  "dip": {
+                    "default": 0,
+                    "description": "second rotation, about the x-axis, in degrees",
+                    "maximum": 180,
+                    "minimum": 0,
+                    "title": "Dip",
+                    "type": "number"
+                  },
+                  "dip_azimuth": {
+                    "default": 0,
+                    "description": "first rotation, about the z-axis, in degrees",
+                    "maximum": 360,
+                    "minimum": 0,
+                    "title": "Dip Azimuth",
+                    "type": "number"
+                  },
+                  "pitch": {
+                    "default": 0,
+                    "description": "third rotation, about the z-axis, in degrees",
+                    "maximum": 360,
+                    "minimum": 0,
+                    "title": "Pitch",
+                    "type": "number"
+                  }
+                },
+                "required": [],
+                "title": "Rotation",
+                "type": "object"
+              }
+            },
+            "required": [
+              "ellipsoid_ranges",
+              "rotation"
+            ],
+            "title": "Ellipsoid",
+            "type": "object"
+          },
+          "max_drillholes_per_estimate": {
+            "default": null,
+            "description": "The maximum number of drillholes to be used in each estimate.",
+            "minimum": 1,
+            "title": "Max Drillholes Per Estimate",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "max_empty_octants": {
+            "default": 8,
+            "description": "The maximum number of empty octants (aka sectors) allowed when searching for neighbors. Omitting this, or a value of 8, disables the octant check.",
+            "maximum": 8,
+            "minimum": 0,
+            "title": "Max Empty Octants",
+            "type": "integer"
+          },
+          "max_empty_quadrants": {
+            "default": null,
+            "description": "The maximum number of empty quadrants (2D sectors, ignoring Z) allowed when searching for neighbors. If not specified, quadrant filtering is disabled.",
+            "maximum": 4,
+            "minimum": 0,
+            "title": "Max Empty Quadrants",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "max_samples": {
+            "description": "The maximum number of samples to use for each evaluation point.\nAlias: max-samples",
+            "minimum": 1,
+            "title": "Max Samples",
+            "type": "integer"
+          },
+          "max_samples_per_drillhole": {
+            "default": null,
+            "description": "The maximum number of samples to use from each drillhole (defined by drillhole ID)",
+            "minimum": 1,
+            "title": "Max Samples Per Drillhole",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "max_samples_per_octant": {
+            "default": null,
+            "description": "The maximum number of samples to use from each octant.",
+            "minimum": 1,
+            "title": "Max Samples Per Octant",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "max_samples_per_quadrant": {
+            "default": null,
+            "description": "The maximum number of samples to use from each quadrant (2D sectors, ignoring Z).",
+            "minimum": 1,
+            "title": "Max Samples Per Quadrant",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "min_samples": {
+            "default": 1,
+            "description": "The minimum number of samples to use for each evaluation point.\nAlias: min-samples",
+            "minimum": 1,
+            "title": "Min Samples",
+            "type": "integer"
+          },
+          "outliers": {
+            "additionalProperties": false,
+            "default": null,
+            "description": "Outlier restrictions.",
+            "properties": {
+              "action": {
+                "description": "The action to take on outliers. Clamp the value, or discard the point.",
+                "enum": [
+                  "clamp",
+                  "discard"
+                ],
+                "title": "Action"
+              },
+              "clamp_delta": {
+                "default": 1e-06,
+                "description": "The maximum randomly-applied delta value for clamped outlier values.Random delta values in the range [0.0...clamp_limit) are added to clamped values toavoid identical values occurring throughout the samples.",
+                "maximum": 1e-05,
+                "minimum": 0,
+                "title": "Clamp Delta",
+                "type": "number"
+              },
+              "distance": {
+                "description": "The distance to the outlier limit.",
+                "discriminator": "type",
+                "oneOf": [
+                  {
+                    "additionalProperties": false,
+                    "description": "Outlier distance specified as a fraction of the search radius.",
+                    "properties": {
+                      "distance": {
+                        "description": "The distance to the outlier limit, as a fraction of the search radius (0.0 to 1.0). For example, a value of 0.5 means the outlier boundary is at 50% of the search radius.",
+                        "maximum": 1,
+                        "minimum": 0,
+                        "title": "Distance",
+                        "type": "number"
+                      },
+                      "type": {
+                        "const": "fraction",
+                        "description": "Specify the distance as a fraction of the search radius.",
+                        "title": "Type"
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "distance"
+                    ],
+                    "title": "FractionalDistance",
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "description": "Outlier distance specified as an absolute value.",
+                    "properties": {
+                      "distance": {
+                        "description": "The absolute distance to the outlier limit. This cannot be used yet.",
+                        "maximum": 1,
+                        "minimum": 0,
+                        "title": "Distance",
+                        "type": "number"
+                      },
+                      "type": {
+                        "const": "absolute",
+                        "description": "Specify the distance as an absolute value.",
+                        "title": "Type"
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "distance"
+                    ],
+                    "title": "AbsoluteDistance",
+                    "type": "object"
+                  }
+                ],
+                "title": "Distance"
+              },
+              "max_value_threshold": {
+                "default": 0,
+                "description": "The maximum allowed value for the outlier limit. Values exceeding this threshold are either discarded or clamped.",
+                "title": "Max Value Threshold",
+                "type": "number"
+              }
+            },
+            "required": [
+              "action",
+              "distance"
+            ],
+            "title": "OutlierRestriction",
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ellipsoid",
+          "max_samples"
+        ],
+        "title": "NeighborhoodWithOutlierRestrictions",
+        "type": "object"
+      },
+      "source": {
+        "additionalProperties": false,
+        "description": "The source object and attribute containing known values.",
+        "properties": {
+          "attribute": {
+            "attribute_from": "1/object",
+            "attribute_path": {
+              "block-model/[>=1.0,<2]": [
+                "attributes[?attribute_type=='Float64']"
+              ],
+              "downhole-intervals/[>=1.2,<2]": [
+                "attributes[?attribute_type=='scalar']"
+              ],
+              "pointset/[>=1.2,<2]": [
+                "locations.attributes[?attribute_type=='scalar']"
+              ],
+              "regular-3d-grid/[>=1.2,<2]": [
+                "cell_attributes[?attribute_type=='scalar']"
+              ],
+              "regular-masked-3d-grid/[>=1.2,<2]": [
+                "cell_attributes[?attribute_type=='scalar']"
+              ],
+              "tensor-3d-grid/[>=1.2,<2]": [
+                "cell_attributes[?attribute_type=='scalar']"
+              ]
+            },
+            "description": "The known values, used to estimate values at unknown locations.",
+            "reference_to": "attribute",
+            "title": "Attribute",
+            "type": "string"
+          },
+          "filter": {
+            "additionalProperties": false,
+            "attribute_from": "1/object",
+            "attribute_path": {
+              "block-model/[>=1.0,<2]": [
+                "attributes[?attribute_type=='Boolean'||attribute_type=='Utf8'||attribute_type=='Int8'||attribute_type=='Int16'||attribute_type=='Int32'||attribute_type=='Int64'||attribute_type=='UInt8'||attribute_type=='UInt16'||attribute_type=='UInt32'||attribute_type=='UInt64']",
+                "attributes[?attribute_type=='Float64']"
+              ],
+              "downhole-intervals/[>=1.2,<2]": [
+                "attributes[?attribute_type=='category']",
+                "attributes[?attribute_type=='scalar']"
+              ],
+              "pointset/[>=1.2,<2]": [
+                "locations.attributes[?attribute_type=='category']",
+                "locations.attributes[?attribute_type=='scalar']"
+              ],
+              "regular-3d-grid/[>=1.2,<2]": [
+                "cell_attributes[?attribute_type=='category']",
+                "cell_attributes[?attribute_type=='scalar']"
+              ],
+              "regular-masked-3d-grid/[>=1.2,<2]": [
+                "cell_attributes[?attribute_type=='category']",
+                "cell_attributes[?attribute_type=='scalar']"
+              ],
+              "tensor-3d-grid/[>=1.2,<2]": [
+                "cell_attributes[?attribute_type=='category']",
+                "cell_attributes[?attribute_type=='scalar']"
+              ]
+            },
+            "composite": "filter",
+            "default": null,
+            "description": "Optional filter to apply to the source object. This allows kriging to use only a subset of the known data, defined by filtering an attribute on the source object.",
+            "properties": {
+              "where": {
+                "description": "A filter expression defining which locations to include. Use a FilterCondition for a single predicate, AllOfFilter for AND logic, AnyOfFilter for OR logic, or nest them to build compound predicates.",
+                "discriminator": "type",
+                "oneOf": [
+                  {
+                    "additionalProperties": false,
+                    "description": "A leaf filter condition applied to one attribute of the filtered object.\n\nExactly one operator field must be provided.\n\n- ``in``: Membership test. Provide string category names for\n    ``CategoryAttribute`` objects or integers for integer-coded indices.\n- ``not_in``: Exclusion test.\n- ``equal``, ``not_equal``: Numeric equality/inequality.\n- ``greater_than``, ``greater_than_or_equal_to``, ``less_than``,\n    ``less_than_or_equal_to``: Numeric comparisons on numeric attributes.",
+                    "properties": {
+                      "attribute": {
+                        "attribute_from": "1/object",
+                        "attribute_path": {
+                          "block-model/[>=1.0,<2]": [
+                            "attributes[?attribute_type=='Boolean'||attribute_type=='Utf8'||attribute_type=='Int8'||attribute_type=='Int16'||attribute_type=='Int32'||attribute_type=='Int64'||attribute_type=='UInt8'||attribute_type=='UInt16'||attribute_type=='UInt32'||attribute_type=='UInt64']",
+                            "attributes[?attribute_type=='Float64']"
+                          ],
+                          "downhole-intervals/[>=1.2,<2]": [
+                            "attributes[?attribute_type=='category']",
+                            "attributes[?attribute_type=='scalar']"
+                          ],
+                          "pointset/[>=1.2,<2]": [
+                            "locations.attributes[?attribute_type=='category']",
+                            "locations.attributes[?attribute_type=='scalar']"
+                          ],
+                          "regular-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='category']",
+                            "cell_attributes[?attribute_type=='scalar']"
+                          ],
+                          "regular-masked-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='category']",
+                            "cell_attributes[?attribute_type=='scalar']"
+                          ],
+                          "tensor-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='category']",
+                            "cell_attributes[?attribute_type=='scalar']"
+                          ]
+                        },
+                        "description": "Attribute used to filter locations.",
+                        "reference_to": "attribute",
+                        "title": "Attribute",
+                        "type": "string"
+                      },
+                      "operator": {
+                        "description": "The filter operator. Use 'in' or 'not_in' for category/membership tests (pair with 'values'). Use 'equal', 'not_equal', 'greater_than', 'greater_than_or_equal_to', 'less_than', or 'less_than_or_equal_to' for numeric comparisons (pair with 'threshold').",
+                        "enum": [
+                          "in",
+                          "not_in",
+                          "equal",
+                          "not_equal",
+                          "greater_than",
+                          "greater_than_or_equal_to",
+                          "less_than",
+                          "less_than_or_equal_to"
+                        ],
+                        "title": "Operator"
+                      },
+                      "threshold": {
+                        "default": null,
+                        "description": "Numeric threshold for comparison. Required when operator is 'equal', 'not_equal', 'greater_than', 'greater_than_or_equal_to', 'less_than', or 'less_than_or_equal_to'.",
+                        "title": "Threshold",
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "type": {
+                        "const": "condition",
+                        "description": "Identifies this as a leaf filter condition.",
+                        "title": "Type"
+                      },
+                      "values": {
+                        "default": null,
+                        "description": "Category values to match. Required when operator is 'in' or 'not_in'. Use strings for string/category-name attributes; use integers for integer-coded attributes.",
+                        "items": {
+                          "description": "String category name or integer category key to match.",
+                          "title": "Filter Value",
+                          "type": "string"
+                        },
+                        "title": "Values",
+                        "type": [
+                          "array",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "operator",
+                      "attribute"
+                    ],
+                    "title": "SourceFilterCondition",
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/SourceAllOfFilter"
+                  },
+                  {
+                    "$ref": "#/$defs/SourceAnyOfFilter"
+                  }
+                ],
+                "title": "Where"
+              }
+            },
+            "required": [
+              "where"
+            ],
+            "title": "SourceFilter",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "object": {
+            "description": "Spatial locations of known values.",
+            "format": "uri",
+            "reference_to": "geoscience-object",
+            "supported_schemas": [
+              "pointset/[>=1.2,<2]",
+              "block-model/[>=1.0,<2]",
+              "regular-3d-grid/[>=1.2,<2]",
+              "regular-masked-3d-grid/[>=1.2,<2]",
+              "tensor-3d-grid/[>=1.2,<2]",
+              "downhole-intervals/[>=1.2,<2]"
+            ],
+            "title": "Known Locations",
+            "type": "string"
+          }
+        },
+        "required": [
+          "object",
+          "attribute"
+        ],
+        "title": "Source",
+        "type": "object"
+      },
+      "target": {
+        "additionalProperties": false,
+        "description": "The target object and attribute to create or update with kriging results.",
+        "properties": {
+          "attribute": {
+            "description": "Attribute to create or update on the target object with the kriging estimate. Use `{\"operation\": \"create\", \"name\": ...}` to add a new attribute, or `{\"operation\": \"update\", \"reference\": ...}` to overwrite an existing one.",
+            "examples": [
+              {
+                "name": "kriging_result",
+                "operation": "create"
+              },
+              {
+                "operation": "update",
+                "reference": "locations.attributes[?name=='kriging_result']"
+              }
+            ],
+            "oneOf": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "description": "The name of the attribute to create.",
+                    "title": "Name",
+                    "type": "string"
+                  },
+                  "operation": {
+                    "const": "create",
+                    "description": "The operation to perform on the attribute.",
+                    "title": "Operation"
+                  }
+                },
+                "required": [
+                  "operation",
+                  "name"
+                ],
+                "type": "object"
+              },
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "operation": {
+                    "const": "update",
+                    "description": "The operation to perform on the attribute.",
+                    "title": "Operation"
+                  },
+                  "reference": {
+                    "attribute_from": "3/object",
+                    "attribute_path": {
+                      "block-model/[>=1.0,<2]": [
+                        "attributes[?attribute_type=='Float64']"
+                      ],
+                      "downhole-intervals/[>=1.2,<2]": [
+                        "attributes[?attribute_type=='scalar']"
+                      ],
+                      "pointset/[>=1.2,<2]": [
+                        "locations.attributes[?attribute_type=='scalar']"
+                      ],
+                      "regular-2d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ],
+                      "regular-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ],
+                      "regular-masked-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ],
+                      "tensor-2d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ],
+                      "tensor-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ]
+                    },
+                    "description": "Reference to an existing attribute to update.",
+                    "reference_to": "attribute",
+                    "title": "Reference",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "operation",
+                  "reference"
+                ],
+                "type": "object"
+              }
+            ],
+            "target": "attribute",
+            "title": "Kriging Target Attribute"
+          },
+          "diagnostics": {
+            "additionalProperties": false,
+            "default": null,
+            "description": "Optional per-location diagnostic attributes to compute and write alongside the kriging result. Only diagnostics with an explicit attribute target are produced.",
+            "properties": {
+              "aniso_mean_distance": {
+                "description": "Attribute to create or update with the mean anisotropic (ellipsoid-space) distance from the target location to all neighbours.",
+                "examples": [
+                  {
+                    "name": "AvgAD",
+                    "operation": "create"
+                  }
+                ],
+                "oneOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "name": {
+                        "description": "The name of the attribute to create.",
+                        "title": "Name",
+                        "type": "string"
+                      },
+                      "operation": {
+                        "const": "create",
+                        "description": "The operation to perform on the attribute.",
+                        "title": "Operation"
+                      }
+                    },
+                    "required": [
+                      "operation",
+                      "name"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "operation": {
+                        "const": "update",
+                        "description": "The operation to perform on the attribute.",
+                        "title": "Operation"
+                      },
+                      "reference": {
+                        "attribute_from": "3/object",
+                        "attribute_path": {
+                          "block-model/[>=1.0,<2]": [
+                            "attributes[?attribute_type=='Float64']"
+                          ],
+                          "downhole-intervals/[>=1.2,<2]": [
+                            "attributes[?attribute_type=='scalar']"
+                          ],
+                          "pointset/[>=1.2,<2]": [
+                            "locations.attributes[?attribute_type=='scalar']"
+                          ],
+                          "regular-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='scalar']"
+                          ],
+                          "regular-masked-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='scalar']"
+                          ],
+                          "tensor-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='scalar']"
+                          ]
+                        },
+                        "description": "Reference to an existing attribute to update.",
+                        "reference_to": "attribute",
+                        "title": "Reference",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "operation",
+                      "reference"
+                    ],
+                    "type": "object"
+                  }
+                ],
+                "target": "attribute",
+                "title": "Anisotropic Mean Distance"
+              },
+              "aniso_min_distance": {
+                "description": "Attribute to create or update with the minimum anisotropic (ellipsoid-space) distance from the target location to any neighbour.",
+                "examples": [
+                  {
+                    "name": "MinAD",
+                    "operation": "create"
+                  }
+                ],
+                "oneOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "name": {
+                        "description": "The name of the attribute to create.",
+                        "title": "Name",
+                        "type": "string"
+                      },
+                      "operation": {
+                        "const": "create",
+                        "description": "The operation to perform on the attribute.",
+                        "title": "Operation"
+                      }
+                    },
+                    "required": [
+                      "operation",
+                      "name"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "operation": {
+                        "const": "update",
+                        "description": "The operation to perform on the attribute.",
+                        "title": "Operation"
+                      },
+                      "reference": {
+                        "attribute_from": "3/object",
+                        "attribute_path": {
+                          "block-model/[>=1.0,<2]": [
+                            "attributes[?attribute_type=='Float64']"
+                          ],
+                          "downhole-intervals/[>=1.2,<2]": [
+                            "attributes[?attribute_type=='scalar']"
+                          ],
+                          "pointset/[>=1.2,<2]": [
+                            "locations.attributes[?attribute_type=='scalar']"
+                          ],
+                          "regular-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='scalar']"
+                          ],
+                          "regular-masked-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='scalar']"
+                          ],
+                          "tensor-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='scalar']"
+                          ]
+                        },
+                        "description": "Reference to an existing attribute to update.",
+                        "reference_to": "attribute",
+                        "title": "Reference",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "operation",
+                      "reference"
+                    ],
+                    "type": "object"
+                  }
+                ],
+                "target": "attribute",
+                "title": "Anisotropic Minimum Distance"
+              },
+              "kriging_efficiency": {
+                "description": "Attribute to create or update with the proportion of point or intra-block variance explained by the kriging weights.",
+                "examples": [
+                  {
+                    "name": "KE",
+                    "operation": "create"
+                  }
+                ],
+                "oneOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "name": {
+                        "description": "The name of the attribute to create.",
+                        "title": "Name",
+                        "type": "string"
+                      },
+                      "operation": {
+                        "const": "create",
+                        "description": "The operation to perform on the attribute.",
+                        "title": "Operation"
+                      }
+                    },
+                    "required": [
+                      "operation",
+                      "name"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "operation": {
+                        "const": "update",
+                        "description": "The operation to perform on the attribute.",
+                        "title": "Operation"
+                      },
+                      "reference": {
+                        "attribute_from": "3/object",
+                        "attribute_path": {
+                          "block-model/[>=1.0,<2]": [
+                            "attributes[?attribute_type=='Float64']"
+                          ],
+                          "downhole-intervals/[>=1.2,<2]": [
+                            "attributes[?attribute_type=='scalar']"
+                          ],
+                          "pointset/[>=1.2,<2]": [
+                            "locations.attributes[?attribute_type=='scalar']"
+                          ],
+                          "regular-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='scalar']"
+                          ],
+                          "regular-masked-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='scalar']"
+                          ],
+                          "tensor-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='scalar']"
+                          ]
+                        },
+                        "description": "Reference to an existing attribute to update.",
+                        "reference_to": "attribute",
+                        "title": "Reference",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "operation",
+                      "reference"
+                    ],
+                    "type": "object"
+                  }
+                ],
+                "target": "attribute",
+                "title": "Kriging Efficiency"
+              },
+              "kriging_mean": {
+                "description": "Attribute to create or update with the GLS mean for ordinary kriging, or the supplied constant mean for simple kriging.",
+                "examples": [
+                  {
+                    "name": "KM",
+                    "operation": "create"
+                  }
+                ],
+                "oneOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "name": {
+                        "description": "The name of the attribute to create.",
+                        "title": "Name",
+                        "type": "string"
+                      },
+                      "operation": {
+                        "const": "create",
+                        "description": "The operation to perform on the attribute.",
+                        "title": "Operation"
+                      }
+                    },
+                    "required": [
+                      "operation",
+                      "name"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "operation": {
+                        "const": "update",
+                        "description": "The operation to perform on the attribute.",
+                        "title": "Operation"
+                      },
+                      "reference": {
+                        "attribute_from": "3/object",
+                        "attribute_path": {
+                          "block-model/[>=1.0,<2]": [
+                            "attributes[?attribute_type=='Float64']"
+                          ],
+                          "downhole-intervals/[>=1.2,<2]": [
+                            "attributes[?attribute_type=='scalar']"
+                          ],
+                          "pointset/[>=1.2,<2]": [
+                            "locations.attributes[?attribute_type=='scalar']"
+                          ],
+                          "regular-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='scalar']"
+                          ],
+                          "regular-masked-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='scalar']"
+                          ],
+                          "tensor-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='scalar']"
+                          ]
+                        },
+                        "description": "Reference to an existing attribute to update.",
+                        "reference_to": "attribute",
+                        "title": "Reference",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "operation",
+                      "reference"
+                    ],
+                    "type": "object"
+                  }
+                ],
+                "target": "attribute",
+                "title": "Kriging Mean"
+              },
+              "kriging_variance": {
+                "description": "Attribute to create or update with the kriging variance (estimation uncertainty).",
+                "examples": [
+                  {
+                    "name": "KV",
+                    "operation": "create"
+                  }
+                ],
+                "oneOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "name": {
+                        "description": "The name of the attribute to create.",
+                        "title": "Name",
+                        "type": "string"
+                      },
+                      "operation": {
+                        "const": "create",
+                        "description": "The operation to perform on the attribute.",
+                        "title": "Operation"
+                      }
+                    },
+                    "required": [
+                      "operation",
+                      "name"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "operation": {
+                        "const": "update",
+                        "description": "The operation to perform on the attribute.",
+                        "title": "Operation"
+                      },
+                      "reference": {
+                        "attribute_from": "3/object",
+                        "attribute_path": {
+                          "block-model/[>=1.0,<2]": [
+                            "attributes[?attribute_type=='Float64']"
+                          ],
+                          "downhole-intervals/[>=1.2,<2]": [
+                            "attributes[?attribute_type=='scalar']"
+                          ],
+                          "pointset/[>=1.2,<2]": [
+                            "locations.attributes[?attribute_type=='scalar']"
+                          ],
+                          "regular-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='scalar']"
+                          ],
+                          "regular-masked-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='scalar']"
+                          ],
+                          "tensor-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='scalar']"
+                          ]
+                        },
+                        "description": "Reference to an existing attribute to update.",
+                        "reference_to": "attribute",
+                        "title": "Reference",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "operation",
+                      "reference"
+                    ],
+                    "type": "object"
+                  }
+                ],
+                "target": "attribute",
+                "title": "Kriging Variance"
+              },
+              "mean_distance": {
+                "description": "Attribute to create or update with the mean isotropic Euclidean distance from the target location to all neighbours.",
+                "examples": [
+                  {
+                    "name": "AvgD",
+                    "operation": "create"
+                  }
+                ],
+                "oneOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "name": {
+                        "description": "The name of the attribute to create.",
+                        "title": "Name",
+                        "type": "string"
+                      },
+                      "operation": {
+                        "const": "create",
+                        "description": "The operation to perform on the attribute.",
+                        "title": "Operation"
+                      }
+                    },
+                    "required": [
+                      "operation",
+                      "name"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "operation": {
+                        "const": "update",
+                        "description": "The operation to perform on the attribute.",
+                        "title": "Operation"
+                      },
+                      "reference": {
+                        "attribute_from": "3/object",
+                        "attribute_path": {
+                          "block-model/[>=1.0,<2]": [
+                            "attributes[?attribute_type=='Float64']"
+                          ],
+                          "downhole-intervals/[>=1.2,<2]": [
+                            "attributes[?attribute_type=='scalar']"
+                          ],
+                          "pointset/[>=1.2,<2]": [
+                            "locations.attributes[?attribute_type=='scalar']"
+                          ],
+                          "regular-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='scalar']"
+                          ],
+                          "regular-masked-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='scalar']"
+                          ],
+                          "tensor-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='scalar']"
+                          ]
+                        },
+                        "description": "Reference to an existing attribute to update.",
+                        "reference_to": "attribute",
+                        "title": "Reference",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "operation",
+                      "reference"
+                    ],
+                    "type": "object"
+                  }
+                ],
+                "target": "attribute",
+                "title": "Mean Distance"
+              },
+              "min_distance": {
+                "description": "Attribute to create or update with the minimum isotropic Euclidean distance from the target location to any neighbour.",
+                "examples": [
+                  {
+                    "name": "MinD",
+                    "operation": "create"
+                  }
+                ],
+                "oneOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "name": {
+                        "description": "The name of the attribute to create.",
+                        "title": "Name",
+                        "type": "string"
+                      },
+                      "operation": {
+                        "const": "create",
+                        "description": "The operation to perform on the attribute.",
+                        "title": "Operation"
+                      }
+                    },
+                    "required": [
+                      "operation",
+                      "name"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "operation": {
+                        "const": "update",
+                        "description": "The operation to perform on the attribute.",
+                        "title": "Operation"
+                      },
+                      "reference": {
+                        "attribute_from": "3/object",
+                        "attribute_path": {
+                          "block-model/[>=1.0,<2]": [
+                            "attributes[?attribute_type=='Float64']"
+                          ],
+                          "downhole-intervals/[>=1.2,<2]": [
+                            "attributes[?attribute_type=='scalar']"
+                          ],
+                          "pointset/[>=1.2,<2]": [
+                            "locations.attributes[?attribute_type=='scalar']"
+                          ],
+                          "regular-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='scalar']"
+                          ],
+                          "regular-masked-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='scalar']"
+                          ],
+                          "tensor-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='scalar']"
+                          ]
+                        },
+                        "description": "Reference to an existing attribute to update.",
+                        "reference_to": "attribute",
+                        "title": "Reference",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "operation",
+                      "reference"
+                    ],
+                    "type": "object"
+                  }
+                ],
+                "target": "attribute",
+                "title": "Minimum Distance"
+              },
+              "num_drillholes": {
+                "description": "Attribute to create or update with the number of distinct drillholes contributing to the estimate. Requires a DownholeIntervals source object.",
+                "examples": [
+                  {
+                    "name": "NDh",
+                    "operation": "create"
+                  }
+                ],
+                "oneOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "name": {
+                        "description": "The name of the attribute to create.",
+                        "title": "Name",
+                        "type": "string"
+                      },
+                      "operation": {
+                        "const": "create",
+                        "description": "The operation to perform on the attribute.",
+                        "title": "Operation"
+                      }
+                    },
+                    "required": [
+                      "operation",
+                      "name"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "operation": {
+                        "const": "update",
+                        "description": "The operation to perform on the attribute.",
+                        "title": "Operation"
+                      },
+                      "reference": {
+                        "attribute_from": "3/object",
+                        "attribute_path": {
+                          "block-model/[>=1.0,<2]": [
+                            "attributes[?attribute_type=='Int8'||attribute_type=='Int16'||attribute_type=='Int32'||attribute_type=='Int64'||attribute_type=='UInt8'||attribute_type=='UInt16'||attribute_type=='UInt32'||attribute_type=='UInt64']"
+                          ],
+                          "downhole-intervals/[>=1.2,<2]": [
+                            "attributes[?attribute_type=='integer']"
+                          ],
+                          "pointset/[>=1.2,<2]": [
+                            "locations.attributes[?attribute_type=='integer']"
+                          ],
+                          "regular-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='integer']"
+                          ],
+                          "regular-masked-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='integer']"
+                          ],
+                          "tensor-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='integer']"
+                          ]
+                        },
+                        "description": "Reference to an existing attribute to update.",
+                        "reference_to": "attribute",
+                        "title": "Reference",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "operation",
+                      "reference"
+                    ],
+                    "type": "object"
+                  }
+                ],
+                "target": "attribute",
+                "title": "Number of Drillholes"
+              },
+              "num_duplicates": {
+                "description": "Attribute to create or update with the number of duplicate sample locations used in the estimate.",
+                "examples": [
+                  {
+                    "name": "ND",
+                    "operation": "create"
+                  }
+                ],
+                "oneOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "name": {
+                        "description": "The name of the attribute to create.",
+                        "title": "Name",
+                        "type": "string"
+                      },
+                      "operation": {
+                        "const": "create",
+                        "description": "The operation to perform on the attribute.",
+                        "title": "Operation"
+                      }
+                    },
+                    "required": [
+                      "operation",
+                      "name"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "operation": {
+                        "const": "update",
+                        "description": "The operation to perform on the attribute.",
+                        "title": "Operation"
+                      },
+                      "reference": {
+                        "attribute_from": "3/object",
+                        "attribute_path": {
+                          "block-model/[>=1.0,<2]": [
+                            "attributes[?attribute_type=='Int8'||attribute_type=='Int16'||attribute_type=='Int32'||attribute_type=='Int64'||attribute_type=='UInt8'||attribute_type=='UInt16'||attribute_type=='UInt32'||attribute_type=='UInt64']"
+                          ],
+                          "downhole-intervals/[>=1.2,<2]": [
+                            "attributes[?attribute_type=='integer']"
+                          ],
+                          "pointset/[>=1.2,<2]": [
+                            "locations.attributes[?attribute_type=='integer']"
+                          ],
+                          "regular-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='integer']"
+                          ],
+                          "regular-masked-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='integer']"
+                          ],
+                          "tensor-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='integer']"
+                          ]
+                        },
+                        "description": "Reference to an existing attribute to update.",
+                        "reference_to": "attribute",
+                        "title": "Reference",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "operation",
+                      "reference"
+                    ],
+                    "type": "object"
+                  }
+                ],
+                "target": "attribute",
+                "title": "Number of Duplicates"
+              },
+              "num_equidistant": {
+                "description": "Attribute to create or update with a hint of how many other samples could have replaced the last returned sample because they were the same distance from the target location. This is counted after searching and before clipping to the maximum number of samples.",
+                "examples": [
+                  {
+                    "name": "NeD",
+                    "operation": "create"
+                  }
+                ],
+                "oneOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "name": {
+                        "description": "The name of the attribute to create.",
+                        "title": "Name",
+                        "type": "string"
+                      },
+                      "operation": {
+                        "const": "create",
+                        "description": "The operation to perform on the attribute.",
+                        "title": "Operation"
+                      }
+                    },
+                    "required": [
+                      "operation",
+                      "name"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "operation": {
+                        "const": "update",
+                        "description": "The operation to perform on the attribute.",
+                        "title": "Operation"
+                      },
+                      "reference": {
+                        "attribute_from": "3/object",
+                        "attribute_path": {
+                          "block-model/[>=1.0,<2]": [
+                            "attributes[?attribute_type=='Int8'||attribute_type=='Int16'||attribute_type=='Int32'||attribute_type=='Int64'||attribute_type=='UInt8'||attribute_type=='UInt16'||attribute_type=='UInt32'||attribute_type=='UInt64']"
+                          ],
+                          "downhole-intervals/[>=1.2,<2]": [
+                            "attributes[?attribute_type=='integer']"
+                          ],
+                          "pointset/[>=1.2,<2]": [
+                            "locations.attributes[?attribute_type=='integer']"
+                          ],
+                          "regular-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='integer']"
+                          ],
+                          "regular-masked-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='integer']"
+                          ],
+                          "tensor-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='integer']"
+                          ]
+                        },
+                        "description": "Reference to an existing attribute to update.",
+                        "reference_to": "attribute",
+                        "title": "Reference",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "operation",
+                      "reference"
+                    ],
+                    "type": "object"
+                  }
+                ],
+                "target": "attribute",
+                "title": "Number of Equidistant Samples"
+              },
+              "num_samples": {
+                "description": "Attribute to create or update with the number of data samples used in the estimate.",
+                "examples": [
+                  {
+                    "name": "NS",
+                    "operation": "create"
+                  }
+                ],
+                "oneOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "name": {
+                        "description": "The name of the attribute to create.",
+                        "title": "Name",
+                        "type": "string"
+                      },
+                      "operation": {
+                        "const": "create",
+                        "description": "The operation to perform on the attribute.",
+                        "title": "Operation"
+                      }
+                    },
+                    "required": [
+                      "operation",
+                      "name"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "operation": {
+                        "const": "update",
+                        "description": "The operation to perform on the attribute.",
+                        "title": "Operation"
+                      },
+                      "reference": {
+                        "attribute_from": "3/object",
+                        "attribute_path": {
+                          "block-model/[>=1.0,<2]": [
+                            "attributes[?attribute_type=='Int8'||attribute_type=='Int16'||attribute_type=='Int32'||attribute_type=='Int64'||attribute_type=='UInt8'||attribute_type=='UInt16'||attribute_type=='UInt32'||attribute_type=='UInt64']"
+                          ],
+                          "downhole-intervals/[>=1.2,<2]": [
+                            "attributes[?attribute_type=='integer']"
+                          ],
+                          "pointset/[>=1.2,<2]": [
+                            "locations.attributes[?attribute_type=='integer']"
+                          ],
+                          "regular-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='integer']"
+                          ],
+                          "regular-masked-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='integer']"
+                          ],
+                          "tensor-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='integer']"
+                          ]
+                        },
+                        "description": "Reference to an existing attribute to update.",
+                        "reference_to": "attribute",
+                        "title": "Reference",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "operation",
+                      "reference"
+                    ],
+                    "type": "object"
+                  }
+                ],
+                "target": "attribute",
+                "title": "Number of Samples"
+              },
+              "slope_of_regression": {
+                "description": "Attribute to create or update with the slope of regression, a diagnostic for conditional bias.",
+                "examples": [
+                  {
+                    "name": "SoR",
+                    "operation": "create"
+                  }
+                ],
+                "oneOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "name": {
+                        "description": "The name of the attribute to create.",
+                        "title": "Name",
+                        "type": "string"
+                      },
+                      "operation": {
+                        "const": "create",
+                        "description": "The operation to perform on the attribute.",
+                        "title": "Operation"
+                      }
+                    },
+                    "required": [
+                      "operation",
+                      "name"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "operation": {
+                        "const": "update",
+                        "description": "The operation to perform on the attribute.",
+                        "title": "Operation"
+                      },
+                      "reference": {
+                        "attribute_from": "3/object",
+                        "attribute_path": {
+                          "block-model/[>=1.0,<2]": [
+                            "attributes[?attribute_type=='Float64']"
+                          ],
+                          "downhole-intervals/[>=1.2,<2]": [
+                            "attributes[?attribute_type=='scalar']"
+                          ],
+                          "pointset/[>=1.2,<2]": [
+                            "locations.attributes[?attribute_type=='scalar']"
+                          ],
+                          "regular-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='scalar']"
+                          ],
+                          "regular-masked-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='scalar']"
+                          ],
+                          "tensor-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='scalar']"
+                          ]
+                        },
+                        "description": "Reference to an existing attribute to update.",
+                        "reference_to": "attribute",
+                        "title": "Reference",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "operation",
+                      "reference"
+                    ],
+                    "type": "object"
+                  }
+                ],
+                "target": "attribute",
+                "title": "Slope of Regression"
+              },
+              "sum_negative_weights": {
+                "description": "Attribute to create or update with the sum of negative kriging weights applied to data samples (zero when negative-weight removal is enabled).",
+                "examples": [
+                  {
+                    "name": "SumN",
+                    "operation": "create"
+                  }
+                ],
+                "oneOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "name": {
+                        "description": "The name of the attribute to create.",
+                        "title": "Name",
+                        "type": "string"
+                      },
+                      "operation": {
+                        "const": "create",
+                        "description": "The operation to perform on the attribute.",
+                        "title": "Operation"
+                      }
+                    },
+                    "required": [
+                      "operation",
+                      "name"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "operation": {
+                        "const": "update",
+                        "description": "The operation to perform on the attribute.",
+                        "title": "Operation"
+                      },
+                      "reference": {
+                        "attribute_from": "3/object",
+                        "attribute_path": {
+                          "block-model/[>=1.0,<2]": [
+                            "attributes[?attribute_type=='Float64']"
+                          ],
+                          "downhole-intervals/[>=1.2,<2]": [
+                            "attributes[?attribute_type=='scalar']"
+                          ],
+                          "pointset/[>=1.2,<2]": [
+                            "locations.attributes[?attribute_type=='scalar']"
+                          ],
+                          "regular-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='scalar']"
+                          ],
+                          "regular-masked-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='scalar']"
+                          ],
+                          "tensor-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='scalar']"
+                          ]
+                        },
+                        "description": "Reference to an existing attribute to update.",
+                        "reference_to": "attribute",
+                        "title": "Reference",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "operation",
+                      "reference"
+                    ],
+                    "type": "object"
+                  }
+                ],
+                "target": "attribute",
+                "title": "Sum of Negative Weights"
+              },
+              "sum_positive_weights": {
+                "description": "Attribute to create or update with the sum of positive kriging weights applied to data samples.",
+                "examples": [
+                  {
+                    "name": "SumP",
+                    "operation": "create"
+                  }
+                ],
+                "oneOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "name": {
+                        "description": "The name of the attribute to create.",
+                        "title": "Name",
+                        "type": "string"
+                      },
+                      "operation": {
+                        "const": "create",
+                        "description": "The operation to perform on the attribute.",
+                        "title": "Operation"
+                      }
+                    },
+                    "required": [
+                      "operation",
+                      "name"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "operation": {
+                        "const": "update",
+                        "description": "The operation to perform on the attribute.",
+                        "title": "Operation"
+                      },
+                      "reference": {
+                        "attribute_from": "3/object",
+                        "attribute_path": {
+                          "block-model/[>=1.0,<2]": [
+                            "attributes[?attribute_type=='Float64']"
+                          ],
+                          "downhole-intervals/[>=1.2,<2]": [
+                            "attributes[?attribute_type=='scalar']"
+                          ],
+                          "pointset/[>=1.2,<2]": [
+                            "locations.attributes[?attribute_type=='scalar']"
+                          ],
+                          "regular-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='scalar']"
+                          ],
+                          "regular-masked-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='scalar']"
+                          ],
+                          "tensor-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='scalar']"
+                          ]
+                        },
+                        "description": "Reference to an existing attribute to update.",
+                        "reference_to": "attribute",
+                        "title": "Reference",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "operation",
+                      "reference"
+                    ],
+                    "type": "object"
+                  }
+                ],
+                "target": "attribute",
+                "title": "Sum of Positive Weights"
+              },
+              "sum_weights": {
+                "description": "Attribute to create or update with the sum of kriging weights applied to data samples.",
+                "examples": [
+                  {
+                    "name": "Sum",
+                    "operation": "create"
+                  }
+                ],
+                "oneOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "name": {
+                        "description": "The name of the attribute to create.",
+                        "title": "Name",
+                        "type": "string"
+                      },
+                      "operation": {
+                        "const": "create",
+                        "description": "The operation to perform on the attribute.",
+                        "title": "Operation"
+                      }
+                    },
+                    "required": [
+                      "operation",
+                      "name"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "operation": {
+                        "const": "update",
+                        "description": "The operation to perform on the attribute.",
+                        "title": "Operation"
+                      },
+                      "reference": {
+                        "attribute_from": "3/object",
+                        "attribute_path": {
+                          "block-model/[>=1.0,<2]": [
+                            "attributes[?attribute_type=='Float64']"
+                          ],
+                          "downhole-intervals/[>=1.2,<2]": [
+                            "attributes[?attribute_type=='scalar']"
+                          ],
+                          "pointset/[>=1.2,<2]": [
+                            "locations.attributes[?attribute_type=='scalar']"
+                          ],
+                          "regular-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='scalar']"
+                          ],
+                          "regular-masked-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='scalar']"
+                          ],
+                          "tensor-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='scalar']"
+                          ]
+                        },
+                        "description": "Reference to an existing attribute to update.",
+                        "reference_to": "attribute",
+                        "title": "Reference",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "operation",
+                      "reference"
+                    ],
+                    "type": "object"
+                  }
+                ],
+                "target": "attribute",
+                "title": "Sum of Weights"
+              },
+              "valid": {
+                "description": "Attribute to create or update with whether each target location's neighbourhood satisfied the search constraints and produced an estimate.",
+                "examples": [
+                  {
+                    "name": "valid",
+                    "operation": "create"
+                  }
+                ],
+                "oneOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "name": {
+                        "description": "The name of the attribute to create.",
+                        "title": "Name",
+                        "type": "string"
+                      },
+                      "operation": {
+                        "const": "create",
+                        "description": "The operation to perform on the attribute.",
+                        "title": "Operation"
+                      }
+                    },
+                    "required": [
+                      "operation",
+                      "name"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "operation": {
+                        "const": "update",
+                        "description": "The operation to perform on the attribute.",
+                        "title": "Operation"
+                      },
+                      "reference": {
+                        "attribute_from": "3/object",
+                        "attribute_path": {
+                          "block-model/[>=1.0,<2]": [
+                            "attributes[?attribute_type=='Boolean']"
+                          ],
+                          "downhole-intervals/[>=1.2,<2]": [
+                            "attributes[?attribute_type=='bool']"
+                          ],
+                          "pointset/[>=1.2,<2]": [
+                            "locations.attributes[?attribute_type=='bool']"
+                          ],
+                          "regular-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='bool']"
+                          ],
+                          "regular-masked-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='bool']"
+                          ],
+                          "tensor-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='bool']"
+                          ]
+                        },
+                        "description": "Reference to an existing attribute to update.",
+                        "reference_to": "attribute",
+                        "title": "Reference",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "operation",
+                      "reference"
+                    ],
+                    "type": "object"
+                  }
+                ],
+                "target": "attribute",
+                "title": "Valid"
+              }
+            },
+            "required": [],
+            "title": "Diagnostics",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "filter": {
+            "additionalProperties": false,
+            "attribute_from": "1/object",
+            "attribute_path": {
+              "block-model/[>=1.0,<2]": [
+                "attributes[?attribute_type=='Boolean'||attribute_type=='Utf8'||attribute_type=='Int8'||attribute_type=='Int16'||attribute_type=='Int32'||attribute_type=='Int64'||attribute_type=='UInt8'||attribute_type=='UInt16'||attribute_type=='UInt32'||attribute_type=='UInt64']",
+                "attributes[?attribute_type=='Float64']"
+              ],
+              "downhole-intervals/[>=1.2,<2]": [
+                "attributes[?attribute_type=='category']",
+                "attributes[?attribute_type=='scalar']"
+              ],
+              "pointset/[>=1.2,<2]": [
+                "locations.attributes[?attribute_type=='category']",
+                "locations.attributes[?attribute_type=='scalar']"
+              ],
+              "regular-3d-grid/[>=1.2,<2]": [
+                "cell_attributes[?attribute_type=='category']",
+                "cell_attributes[?attribute_type=='scalar']"
+              ],
+              "regular-masked-3d-grid/[>=1.2,<2]": [
+                "cell_attributes[?attribute_type=='category']",
+                "cell_attributes[?attribute_type=='scalar']"
+              ],
+              "tensor-3d-grid/[>=1.2,<2]": [
+                "cell_attributes[?attribute_type=='category']",
+                "cell_attributes[?attribute_type=='scalar']"
+              ]
+            },
+            "composite": "filter",
+            "default": null,
+            "description": "Optional filter to apply to the target object. This allows the kriging to only be applied to a subset of the target object, defined by filtering an attribute on the target object.",
+            "properties": {
+              "where": {
+                "description": "A filter expression defining which locations to include. Use a FilterCondition for a single predicate, AllOfFilter for AND logic, AnyOfFilter for OR logic, or nest them to build compound predicates.",
+                "discriminator": "type",
+                "oneOf": [
+                  {
+                    "additionalProperties": false,
+                    "description": "A leaf filter condition applied to one attribute of the filtered object.\n\nExactly one operator field must be provided.\n\n- ``in``: Membership test. Provide string category names for\n    ``CategoryAttribute`` objects or integers for integer-coded indices.\n- ``not_in``: Exclusion test.\n- ``equal``, ``not_equal``: Numeric equality/inequality.\n- ``greater_than``, ``greater_than_or_equal_to``, ``less_than``,\n    ``less_than_or_equal_to``: Numeric comparisons on numeric attributes.",
+                    "properties": {
+                      "attribute": {
+                        "attribute_from": "1/object",
+                        "attribute_path": {
+                          "block-model/[>=1.0,<2]": [
+                            "attributes[?attribute_type=='Boolean'||attribute_type=='Utf8'||attribute_type=='Int8'||attribute_type=='Int16'||attribute_type=='Int32'||attribute_type=='Int64'||attribute_type=='UInt8'||attribute_type=='UInt16'||attribute_type=='UInt32'||attribute_type=='UInt64']",
+                            "attributes[?attribute_type=='Float64']"
+                          ],
+                          "downhole-intervals/[>=1.2,<2]": [
+                            "attributes[?attribute_type=='category']",
+                            "attributes[?attribute_type=='scalar']"
+                          ],
+                          "pointset/[>=1.2,<2]": [
+                            "locations.attributes[?attribute_type=='category']",
+                            "locations.attributes[?attribute_type=='scalar']"
+                          ],
+                          "regular-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='category']",
+                            "cell_attributes[?attribute_type=='scalar']"
+                          ],
+                          "regular-masked-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='category']",
+                            "cell_attributes[?attribute_type=='scalar']"
+                          ],
+                          "tensor-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='category']",
+                            "cell_attributes[?attribute_type=='scalar']"
+                          ]
+                        },
+                        "description": "Attribute used to filter locations.",
+                        "reference_to": "attribute",
+                        "title": "Attribute",
+                        "type": "string"
+                      },
+                      "operator": {
+                        "description": "The filter operator. Use 'in' or 'not_in' for category/membership tests (pair with 'values'). Use 'equal', 'not_equal', 'greater_than', 'greater_than_or_equal_to', 'less_than', or 'less_than_or_equal_to' for numeric comparisons (pair with 'threshold').",
+                        "enum": [
+                          "in",
+                          "not_in",
+                          "equal",
+                          "not_equal",
+                          "greater_than",
+                          "greater_than_or_equal_to",
+                          "less_than",
+                          "less_than_or_equal_to"
+                        ],
+                        "title": "Operator"
+                      },
+                      "threshold": {
+                        "default": null,
+                        "description": "Numeric threshold for comparison. Required when operator is 'equal', 'not_equal', 'greater_than', 'greater_than_or_equal_to', 'less_than', or 'less_than_or_equal_to'.",
+                        "title": "Threshold",
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "type": {
+                        "const": "condition",
+                        "description": "Identifies this as a leaf filter condition.",
+                        "title": "Type"
+                      },
+                      "values": {
+                        "default": null,
+                        "description": "Category values to match. Required when operator is 'in' or 'not_in'. Use strings for string/category-name attributes; use integers for integer-coded attributes.",
+                        "items": {
+                          "description": "String category name or integer category key to match.",
+                          "title": "Filter Value",
+                          "type": "string"
+                        },
+                        "title": "Values",
+                        "type": [
+                          "array",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "operator",
+                      "attribute"
+                    ],
+                    "title": "FilterCondition",
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/AllOfFilter"
+                  },
+                  {
+                    "$ref": "#/$defs/AnyOfFilter"
+                  }
+                ],
+                "title": "Where"
+              }
+            },
+            "required": [
+              "where"
+            ],
+            "title": "Filter",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "object": {
+            "description": "Object to evaluate onto.",
+            "format": "uri",
+            "reference_to": "geoscience-object",
+            "supported_schemas": [
+              "pointset/[>=1.2,<2]",
+              "block-model/[>=1.0,<2]",
+              "regular-3d-grid/[>=1.2,<2]",
+              "regular-masked-3d-grid/[>=1.2,<2]",
+              "tensor-3d-grid/[>=1.2,<2]",
+              "downhole-intervals/[>=1.2,<2]"
+            ],
+            "title": "Evaluation Target",
+            "type": "string"
+          },
+          "update_mode": {
+            "default": "auto",
+            "description": "How to treat target locations that this run did not estimate, such as locations excluded by the target filter or where the neighbourhood search found no samples. 'merge' keeps the values those locations already had, so running one domain at a time accumulates results into a single attribute. 'replace' clears them, so the attribute only ever holds the results of the latest run. 'auto' (the default) merges when a target filter is set and replaces otherwise. Merging only applies to attributes that already exist on the target object; a newly created attribute has nothing to merge with. Boolean and integer diagnostic attributes have no way to represent 'not estimated', so within the filter they are always written as produced.",
+            "enum": [
+              "auto",
+              "merge",
+              "replace"
+            ],
+            "title": "Update Mode"
+          }
+        },
+        "required": [
+          "object",
+          "attribute"
+        ],
+        "title": "Target",
+        "type": "object"
+      },
+      "variogram": {
+        "description": "Model of the covariance within the domain.",
+        "format": "uri",
+        "reference_to": "geoscience-object",
+        "supported_schemas": [
+          "variogram/[>=1.1,<2]"
+        ],
+        "title": "Variogram",
+        "type": "string"
+      }
+    },
+    "required": [
+      "source",
+      "target",
+      "kriging_method",
+      "variogram",
+      "neighborhood"
+    ],
+    "title": "KrigingParameters",
+    "type": "object"
+  },
+  "results": {
+    "additionalProperties": false,
+    "description": "Result of the kriging task.",
+    "properties": {
+      "message": {
+        "description": "A message that says what happened in the task.",
+        "title": "Message",
+        "type": "string"
+      },
+      "target": {
+        "additionalProperties": false,
+        "description": "The target that was created or updated.",
+        "output": "geoscience-object",
+        "properties": {
+          "attribute": {
+            "additionalProperties": false,
+            "description": "Attribute containing the kriging result.",
+            "output": "attribute",
+            "properties": {
+              "name": {
+                "description": "The name of the output attribute.",
+                "title": "Name",
+                "type": "string"
+              },
+              "reference": {
+                "attribute_from": "3/reference",
+                "attribute_path": {
+                  "block-model/[>=1.0,<2]": [
+                    "attributes[?attribute_type=='Float64']"
+                  ],
+                  "downhole-intervals/[>=1.2,<2]": [
+                    "attributes[?attribute_type=='scalar']"
+                  ],
+                  "pointset/[>=1.2,<2]": [
+                    "locations.attributes[?attribute_type=='scalar']"
+                  ],
+                  "regular-2d-grid/[>=1.2,<2]": [
+                    "cell_attributes[?attribute_type=='scalar']"
+                  ],
+                  "regular-3d-grid/[>=1.2,<2]": [
+                    "cell_attributes[?attribute_type=='scalar']"
+                  ],
+                  "regular-masked-3d-grid/[>=1.2,<2]": [
+                    "cell_attributes[?attribute_type=='scalar']"
+                  ],
+                  "tensor-2d-grid/[>=1.2,<2]": [
+                    "cell_attributes[?attribute_type=='scalar']"
+                  ],
+                  "tensor-3d-grid/[>=1.2,<2]": [
+                    "cell_attributes[?attribute_type=='scalar']"
+                  ]
+                },
+                "description": "Reference to the attribute in the geoscience object.",
+                "reference_to": "attribute",
+                "title": "Reference",
+                "type": "string"
+              }
+            },
+            "required": [
+              "reference",
+              "name"
+            ],
+            "title": "Attribute",
+            "type": "object"
+          },
+          "description": {
+            "description": "The description of the geoscience object.",
+            "title": "Description",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "diagnostics": {
+            "additionalProperties": false,
+            "default": null,
+            "description": "Diagnostic attributes produced alongside the kriging result, when requested.",
+            "properties": {
+              "aniso_mean_distance": {
+                "additionalProperties": false,
+                "description": "Attribute containing the mean anisotropic (ellipsoid-space) distance from the target location to all neighbours.",
+                "output": "attribute",
+                "properties": {
+                  "name": {
+                    "description": "The name of the output attribute.",
+                    "title": "Name",
+                    "type": "string"
+                  },
+                  "reference": {
+                    "attribute_from": "3/reference",
+                    "attribute_path": {
+                      "block-model/[>=1.0,<2]": [
+                        "attributes[?attribute_type=='Float64']"
+                      ],
+                      "downhole-intervals/[>=1.2,<2]": [
+                        "attributes[?attribute_type=='scalar']"
+                      ],
+                      "pointset/[>=1.2,<2]": [
+                        "locations.attributes[?attribute_type=='scalar']"
+                      ],
+                      "regular-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ],
+                      "regular-masked-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ],
+                      "tensor-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ]
+                    },
+                    "description": "Reference to the attribute in the geoscience object.",
+                    "reference_to": "attribute",
+                    "title": "Reference",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "reference",
+                  "name"
+                ],
+                "title": "Anisotropic Mean Distance",
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "aniso_min_distance": {
+                "additionalProperties": false,
+                "description": "Attribute containing the minimum anisotropic (ellipsoid-space) distance from the target location to any neighbour.",
+                "output": "attribute",
+                "properties": {
+                  "name": {
+                    "description": "The name of the output attribute.",
+                    "title": "Name",
+                    "type": "string"
+                  },
+                  "reference": {
+                    "attribute_from": "3/reference",
+                    "attribute_path": {
+                      "block-model/[>=1.0,<2]": [
+                        "attributes[?attribute_type=='Float64']"
+                      ],
+                      "downhole-intervals/[>=1.2,<2]": [
+                        "attributes[?attribute_type=='scalar']"
+                      ],
+                      "pointset/[>=1.2,<2]": [
+                        "locations.attributes[?attribute_type=='scalar']"
+                      ],
+                      "regular-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ],
+                      "regular-masked-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ],
+                      "tensor-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ]
+                    },
+                    "description": "Reference to the attribute in the geoscience object.",
+                    "reference_to": "attribute",
+                    "title": "Reference",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "reference",
+                  "name"
+                ],
+                "title": "Anisotropic Minimum Distance",
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "kriging_efficiency": {
+                "additionalProperties": false,
+                "description": "Attribute containing the proportion of point or intra-block variance explained by kriging weights.",
+                "output": "attribute",
+                "properties": {
+                  "name": {
+                    "description": "The name of the output attribute.",
+                    "title": "Name",
+                    "type": "string"
+                  },
+                  "reference": {
+                    "attribute_from": "3/reference",
+                    "attribute_path": {
+                      "block-model/[>=1.0,<2]": [
+                        "attributes[?attribute_type=='Float64']"
+                      ],
+                      "downhole-intervals/[>=1.2,<2]": [
+                        "attributes[?attribute_type=='scalar']"
+                      ],
+                      "pointset/[>=1.2,<2]": [
+                        "locations.attributes[?attribute_type=='scalar']"
+                      ],
+                      "regular-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ],
+                      "regular-masked-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ],
+                      "tensor-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ]
+                    },
+                    "description": "Reference to the attribute in the geoscience object.",
+                    "reference_to": "attribute",
+                    "title": "Reference",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "reference",
+                  "name"
+                ],
+                "title": "Kriging Efficiency",
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "kriging_mean": {
+                "additionalProperties": false,
+                "description": "Attribute containing the GLS mean for ordinary kriging, or the supplied constant mean for simple kriging.",
+                "output": "attribute",
+                "properties": {
+                  "name": {
+                    "description": "The name of the output attribute.",
+                    "title": "Name",
+                    "type": "string"
+                  },
+                  "reference": {
+                    "attribute_from": "3/reference",
+                    "attribute_path": {
+                      "block-model/[>=1.0,<2]": [
+                        "attributes[?attribute_type=='Float64']"
+                      ],
+                      "downhole-intervals/[>=1.2,<2]": [
+                        "attributes[?attribute_type=='scalar']"
+                      ],
+                      "pointset/[>=1.2,<2]": [
+                        "locations.attributes[?attribute_type=='scalar']"
+                      ],
+                      "regular-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ],
+                      "regular-masked-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ],
+                      "tensor-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ]
+                    },
+                    "description": "Reference to the attribute in the geoscience object.",
+                    "reference_to": "attribute",
+                    "title": "Reference",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "reference",
+                  "name"
+                ],
+                "title": "Kriging Mean",
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "kriging_variance": {
+                "additionalProperties": false,
+                "description": "Attribute containing the kriging variance (estimation uncertainty).",
+                "output": "attribute",
+                "properties": {
+                  "name": {
+                    "description": "The name of the output attribute.",
+                    "title": "Name",
+                    "type": "string"
+                  },
+                  "reference": {
+                    "attribute_from": "3/reference",
+                    "attribute_path": {
+                      "block-model/[>=1.0,<2]": [
+                        "attributes[?attribute_type=='Float64']"
+                      ],
+                      "downhole-intervals/[>=1.2,<2]": [
+                        "attributes[?attribute_type=='scalar']"
+                      ],
+                      "pointset/[>=1.2,<2]": [
+                        "locations.attributes[?attribute_type=='scalar']"
+                      ],
+                      "regular-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ],
+                      "regular-masked-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ],
+                      "tensor-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ]
+                    },
+                    "description": "Reference to the attribute in the geoscience object.",
+                    "reference_to": "attribute",
+                    "title": "Reference",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "reference",
+                  "name"
+                ],
+                "title": "Kriging Variance",
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "mean_distance": {
+                "additionalProperties": false,
+                "description": "Attribute containing the mean isotropic Euclidean distance from the target location to all neighbours.",
+                "output": "attribute",
+                "properties": {
+                  "name": {
+                    "description": "The name of the output attribute.",
+                    "title": "Name",
+                    "type": "string"
+                  },
+                  "reference": {
+                    "attribute_from": "3/reference",
+                    "attribute_path": {
+                      "block-model/[>=1.0,<2]": [
+                        "attributes[?attribute_type=='Float64']"
+                      ],
+                      "downhole-intervals/[>=1.2,<2]": [
+                        "attributes[?attribute_type=='scalar']"
+                      ],
+                      "pointset/[>=1.2,<2]": [
+                        "locations.attributes[?attribute_type=='scalar']"
+                      ],
+                      "regular-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ],
+                      "regular-masked-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ],
+                      "tensor-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ]
+                    },
+                    "description": "Reference to the attribute in the geoscience object.",
+                    "reference_to": "attribute",
+                    "title": "Reference",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "reference",
+                  "name"
+                ],
+                "title": "Mean Distance",
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "min_distance": {
+                "additionalProperties": false,
+                "description": "Attribute containing the minimum isotropic Euclidean distance from the target location to any neighbour.",
+                "output": "attribute",
+                "properties": {
+                  "name": {
+                    "description": "The name of the output attribute.",
+                    "title": "Name",
+                    "type": "string"
+                  },
+                  "reference": {
+                    "attribute_from": "3/reference",
+                    "attribute_path": {
+                      "block-model/[>=1.0,<2]": [
+                        "attributes[?attribute_type=='Float64']"
+                      ],
+                      "downhole-intervals/[>=1.2,<2]": [
+                        "attributes[?attribute_type=='scalar']"
+                      ],
+                      "pointset/[>=1.2,<2]": [
+                        "locations.attributes[?attribute_type=='scalar']"
+                      ],
+                      "regular-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ],
+                      "regular-masked-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ],
+                      "tensor-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ]
+                    },
+                    "description": "Reference to the attribute in the geoscience object.",
+                    "reference_to": "attribute",
+                    "title": "Reference",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "reference",
+                  "name"
+                ],
+                "title": "Minimum Distance",
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "num_drillholes": {
+                "additionalProperties": false,
+                "description": "Attribute containing the number of distinct drillholes contributing to the estimate.",
+                "output": "attribute",
+                "properties": {
+                  "name": {
+                    "description": "The name of the output attribute.",
+                    "title": "Name",
+                    "type": "string"
+                  },
+                  "reference": {
+                    "attribute_from": "3/reference",
+                    "attribute_path": {
+                      "block-model/[>=1.0,<2]": [
+                        "attributes[?attribute_type=='Int8'||attribute_type=='Int16'||attribute_type=='Int32'||attribute_type=='Int64'||attribute_type=='UInt8'||attribute_type=='UInt16'||attribute_type=='UInt32'||attribute_type=='UInt64']"
+                      ],
+                      "downhole-intervals/[>=1.2,<2]": [
+                        "attributes[?attribute_type=='integer']"
+                      ],
+                      "pointset/[>=1.2,<2]": [
+                        "locations.attributes[?attribute_type=='integer']"
+                      ],
+                      "regular-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='integer']"
+                      ],
+                      "regular-masked-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='integer']"
+                      ],
+                      "tensor-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='integer']"
+                      ]
+                    },
+                    "description": "Reference to the attribute in the geoscience object.",
+                    "reference_to": "attribute",
+                    "title": "Reference",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "reference",
+                  "name"
+                ],
+                "title": "Number of Drillholes",
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "num_duplicates": {
+                "additionalProperties": false,
+                "description": "Attribute containing the number of duplicate sample locations used in the estimate.",
+                "output": "attribute",
+                "properties": {
+                  "name": {
+                    "description": "The name of the output attribute.",
+                    "title": "Name",
+                    "type": "string"
+                  },
+                  "reference": {
+                    "attribute_from": "3/reference",
+                    "attribute_path": {
+                      "block-model/[>=1.0,<2]": [
+                        "attributes[?attribute_type=='Int8'||attribute_type=='Int16'||attribute_type=='Int32'||attribute_type=='Int64'||attribute_type=='UInt8'||attribute_type=='UInt16'||attribute_type=='UInt32'||attribute_type=='UInt64']"
+                      ],
+                      "downhole-intervals/[>=1.2,<2]": [
+                        "attributes[?attribute_type=='integer']"
+                      ],
+                      "pointset/[>=1.2,<2]": [
+                        "locations.attributes[?attribute_type=='integer']"
+                      ],
+                      "regular-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='integer']"
+                      ],
+                      "regular-masked-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='integer']"
+                      ],
+                      "tensor-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='integer']"
+                      ]
+                    },
+                    "description": "Reference to the attribute in the geoscience object.",
+                    "reference_to": "attribute",
+                    "title": "Reference",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "reference",
+                  "name"
+                ],
+                "title": "Number of Duplicates",
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "num_equidistant": {
+                "additionalProperties": false,
+                "description": "Attribute containing a hint of how many other samples could have replaced the last returned sample because they were the same distance from the target location. This is counted after searching and before clipping to the maximum number of samples.",
+                "output": "attribute",
+                "properties": {
+                  "name": {
+                    "description": "The name of the output attribute.",
+                    "title": "Name",
+                    "type": "string"
+                  },
+                  "reference": {
+                    "attribute_from": "3/reference",
+                    "attribute_path": {
+                      "block-model/[>=1.0,<2]": [
+                        "attributes[?attribute_type=='Int8'||attribute_type=='Int16'||attribute_type=='Int32'||attribute_type=='Int64'||attribute_type=='UInt8'||attribute_type=='UInt16'||attribute_type=='UInt32'||attribute_type=='UInt64']"
+                      ],
+                      "downhole-intervals/[>=1.2,<2]": [
+                        "attributes[?attribute_type=='integer']"
+                      ],
+                      "pointset/[>=1.2,<2]": [
+                        "locations.attributes[?attribute_type=='integer']"
+                      ],
+                      "regular-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='integer']"
+                      ],
+                      "regular-masked-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='integer']"
+                      ],
+                      "tensor-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='integer']"
+                      ]
+                    },
+                    "description": "Reference to the attribute in the geoscience object.",
+                    "reference_to": "attribute",
+                    "title": "Reference",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "reference",
+                  "name"
+                ],
+                "title": "Number of Equidistant Samples",
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "num_samples": {
+                "additionalProperties": false,
+                "description": "Attribute containing the number of data samples used in the estimate.",
+                "output": "attribute",
+                "properties": {
+                  "name": {
+                    "description": "The name of the output attribute.",
+                    "title": "Name",
+                    "type": "string"
+                  },
+                  "reference": {
+                    "attribute_from": "3/reference",
+                    "attribute_path": {
+                      "block-model/[>=1.0,<2]": [
+                        "attributes[?attribute_type=='Int8'||attribute_type=='Int16'||attribute_type=='Int32'||attribute_type=='Int64'||attribute_type=='UInt8'||attribute_type=='UInt16'||attribute_type=='UInt32'||attribute_type=='UInt64']"
+                      ],
+                      "downhole-intervals/[>=1.2,<2]": [
+                        "attributes[?attribute_type=='integer']"
+                      ],
+                      "pointset/[>=1.2,<2]": [
+                        "locations.attributes[?attribute_type=='integer']"
+                      ],
+                      "regular-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='integer']"
+                      ],
+                      "regular-masked-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='integer']"
+                      ],
+                      "tensor-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='integer']"
+                      ]
+                    },
+                    "description": "Reference to the attribute in the geoscience object.",
+                    "reference_to": "attribute",
+                    "title": "Reference",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "reference",
+                  "name"
+                ],
+                "title": "Number of Samples",
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "slope_of_regression": {
+                "additionalProperties": false,
+                "description": "Attribute containing the diagnostic for conditional bias.",
+                "output": "attribute",
+                "properties": {
+                  "name": {
+                    "description": "The name of the output attribute.",
+                    "title": "Name",
+                    "type": "string"
+                  },
+                  "reference": {
+                    "attribute_from": "3/reference",
+                    "attribute_path": {
+                      "block-model/[>=1.0,<2]": [
+                        "attributes[?attribute_type=='Float64']"
+                      ],
+                      "downhole-intervals/[>=1.2,<2]": [
+                        "attributes[?attribute_type=='scalar']"
+                      ],
+                      "pointset/[>=1.2,<2]": [
+                        "locations.attributes[?attribute_type=='scalar']"
+                      ],
+                      "regular-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ],
+                      "regular-masked-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ],
+                      "tensor-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ]
+                    },
+                    "description": "Reference to the attribute in the geoscience object.",
+                    "reference_to": "attribute",
+                    "title": "Reference",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "reference",
+                  "name"
+                ],
+                "title": "Slope of Regression",
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "sum_negative_weights": {
+                "additionalProperties": false,
+                "description": "Attribute containing the sum of negative kriging weights applied to data samples (zero when negative-weight removal is enabled).",
+                "output": "attribute",
+                "properties": {
+                  "name": {
+                    "description": "The name of the output attribute.",
+                    "title": "Name",
+                    "type": "string"
+                  },
+                  "reference": {
+                    "attribute_from": "3/reference",
+                    "attribute_path": {
+                      "block-model/[>=1.0,<2]": [
+                        "attributes[?attribute_type=='Float64']"
+                      ],
+                      "downhole-intervals/[>=1.2,<2]": [
+                        "attributes[?attribute_type=='scalar']"
+                      ],
+                      "pointset/[>=1.2,<2]": [
+                        "locations.attributes[?attribute_type=='scalar']"
+                      ],
+                      "regular-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ],
+                      "regular-masked-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ],
+                      "tensor-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ]
+                    },
+                    "description": "Reference to the attribute in the geoscience object.",
+                    "reference_to": "attribute",
+                    "title": "Reference",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "reference",
+                  "name"
+                ],
+                "title": "Sum of Negative Weights",
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "sum_positive_weights": {
+                "additionalProperties": false,
+                "description": "Attribute containing the sum of positive kriging weights applied to data samples.",
+                "output": "attribute",
+                "properties": {
+                  "name": {
+                    "description": "The name of the output attribute.",
+                    "title": "Name",
+                    "type": "string"
+                  },
+                  "reference": {
+                    "attribute_from": "3/reference",
+                    "attribute_path": {
+                      "block-model/[>=1.0,<2]": [
+                        "attributes[?attribute_type=='Float64']"
+                      ],
+                      "downhole-intervals/[>=1.2,<2]": [
+                        "attributes[?attribute_type=='scalar']"
+                      ],
+                      "pointset/[>=1.2,<2]": [
+                        "locations.attributes[?attribute_type=='scalar']"
+                      ],
+                      "regular-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ],
+                      "regular-masked-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ],
+                      "tensor-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ]
+                    },
+                    "description": "Reference to the attribute in the geoscience object.",
+                    "reference_to": "attribute",
+                    "title": "Reference",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "reference",
+                  "name"
+                ],
+                "title": "Sum of Positive Weights",
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "sum_weights": {
+                "additionalProperties": false,
+                "description": "Attribute containing the sum of kriging weights applied to data samples.",
+                "output": "attribute",
+                "properties": {
+                  "name": {
+                    "description": "The name of the output attribute.",
+                    "title": "Name",
+                    "type": "string"
+                  },
+                  "reference": {
+                    "attribute_from": "3/reference",
+                    "attribute_path": {
+                      "block-model/[>=1.0,<2]": [
+                        "attributes[?attribute_type=='Float64']"
+                      ],
+                      "downhole-intervals/[>=1.2,<2]": [
+                        "attributes[?attribute_type=='scalar']"
+                      ],
+                      "pointset/[>=1.2,<2]": [
+                        "locations.attributes[?attribute_type=='scalar']"
+                      ],
+                      "regular-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ],
+                      "regular-masked-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ],
+                      "tensor-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ]
+                    },
+                    "description": "Reference to the attribute in the geoscience object.",
+                    "reference_to": "attribute",
+                    "title": "Reference",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "reference",
+                  "name"
+                ],
+                "title": "Sum of Weights",
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "valid": {
+                "additionalProperties": false,
+                "description": "Attribute containing whether each target location's neighbourhood satisfied the search constraints and produced an estimate.",
+                "output": "attribute",
+                "properties": {
+                  "name": {
+                    "description": "The name of the output attribute.",
+                    "title": "Name",
+                    "type": "string"
+                  },
+                  "reference": {
+                    "attribute_from": "3/reference",
+                    "attribute_path": {
+                      "block-model/[>=1.0,<2]": [
+                        "attributes[?attribute_type=='Boolean']"
+                      ],
+                      "downhole-intervals/[>=1.2,<2]": [
+                        "attributes[?attribute_type=='bool']"
+                      ],
+                      "pointset/[>=1.2,<2]": [
+                        "locations.attributes[?attribute_type=='bool']"
+                      ],
+                      "regular-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='bool']"
+                      ],
+                      "regular-masked-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='bool']"
+                      ],
+                      "tensor-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='bool']"
+                      ]
+                    },
+                    "description": "Reference to the attribute in the geoscience object.",
+                    "reference_to": "attribute",
+                    "title": "Reference",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "reference",
+                  "name"
+                ],
+                "title": "Valid",
+                "type": [
+                  "object",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "valid",
+              "kriging_variance",
+              "slope_of_regression",
+              "kriging_efficiency",
+              "kriging_mean",
+              "num_samples",
+              "num_drillholes",
+              "num_duplicates",
+              "num_equidistant",
+              "sum_weights",
+              "sum_positive_weights",
+              "sum_negative_weights",
+              "min_distance",
+              "mean_distance",
+              "aniso_min_distance",
+              "aniso_mean_distance"
+            ],
+            "title": "Diagnostics",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "name": {
+            "description": "The name of the geoscience object.",
+            "title": "Name",
+            "type": "string"
+          },
+          "reference": {
+            "description": "Reference to a geoscience object.",
+            "format": "uri",
+            "reference_to": "geoscience-object",
+            "supported_schemas": [
+              "pointset/[>=1.2,<2]",
+              "block-model/[>=1.0,<2]",
+              "regular-3d-grid/[>=1.2,<2]",
+              "regular-masked-3d-grid/[>=1.2,<2]",
+              "tensor-3d-grid/[>=1.2,<2]",
+              "downhole-intervals/[>=1.2,<2]"
+            ],
+            "title": "Reference",
+            "type": "string"
+          },
+          "schema_id": {
+            "description": "The ID of the Geoscience Object schema.",
+            "title": "Schema ID",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reference",
+          "name",
+          "description",
+          "schema_id",
+          "attribute"
+        ],
+        "title": "Target",
+        "type": "object"
+      }
+    },
+    "required": [
+      "message",
+      "target"
+    ],
+    "title": "KrigingResult",
+    "type": "object"
+  }
+}
