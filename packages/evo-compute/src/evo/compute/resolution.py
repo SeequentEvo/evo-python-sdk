@@ -116,6 +116,7 @@ class _Walk:
     label: str
     supplied: dict[str, Any]
     check_schemas: bool = True
+    operation: str = "run"
     resolved: dict[str, Any] = field(default_factory=dict)
 
 
@@ -139,6 +140,7 @@ class ReferenceResolver:
         *,
         check_schemas: bool = True,
         task_label: str | None = None,
+        operation: str = "run",
     ) -> dict[str, Any]:
         """Resolve every reference in ``parameters`` against the task's parameter schema.
 
@@ -147,6 +149,7 @@ class ReferenceResolver:
         :param check_schemas: Enforce ``supported_schemas`` on object references.
         :param task_label: A ``topic.task`` label for error messages; derived from ``spec``
             when omitted.
+        :param operation: The method named in error messages, such as ``run`` or ``submit``.
 
         :return: A new payload with every reference in the form the schema declares.
 
@@ -159,15 +162,16 @@ class ReferenceResolver:
             label=task_label or f"{spec.topic}.{spec.name.replace('-', '_')}",
             supplied=parameters,
             check_schemas=check_schemas,
+            operation=operation,
         )
         properties = schema.get("properties", {}) or {}
         additional = schema.get("additionalProperties")
         if additional is False:
-            _warn_unknown_fields(schema, parameters, [], walk.label, root=schema)
+            _warn_unknown_fields(schema, parameters, [], walk.label, root=schema, operation=walk.operation)
         for name, value in parameters.items():
             node = _deref(properties.get(name, additional if isinstance(additional, dict) else {}), schema)
             walk.resolved[name] = await self._resolve_node(node, value, [name], walk)
-        _warn_unknown_fields(schema, walk.resolved, [], walk.label, root=schema)
+        _warn_unknown_fields(schema, walk.resolved, [], walk.label, root=schema, operation=walk.operation)
         return walk.resolved
 
     # -- the walk ---------------------------------------------------------- #
@@ -205,7 +209,7 @@ class ReferenceResolver:
         properties = node.get("properties", {}) or {}
         additional = node.get("additionalProperties")
         if additional is False and isinstance(value, dict):
-            _warn_unknown_fields(node, value, path, walk.label, root=walk.schema)
+            _warn_unknown_fields(node, value, path, walk.label, root=walk.schema, operation=walk.operation)
         if properties or isinstance(additional, dict):
             if (frame := self._frame_from_attribute(properties, value, path, walk)) is not None:
                 # Carry on into the walk below rather than returning: the frame's object leaf
@@ -224,11 +228,11 @@ class ReferenceResolver:
                         properties.get(key, additional if isinstance(additional, dict) else {}), walk.schema
                     )
                     resolved[key] = await self._resolve_node(child_node, child, [*path, key], walk)
-                _warn_unknown_fields(node, resolved, path, walk.label, root=walk.schema)
+                _warn_unknown_fields(node, resolved, path, walk.label, root=walk.schema, operation=walk.operation)
                 return resolved
 
         if isinstance(value, dict):
-            _warn_unknown_fields(node, value, path, walk.label, root=walk.schema)
+            _warn_unknown_fields(node, value, path, walk.label, root=walk.schema, operation=walk.operation)
 
         if node.get("type") == "array" and isinstance(value, list):
             items = _deref(node.get("items", {}), walk.schema)
@@ -616,10 +620,10 @@ def _graft(root: dict[str, Any], path: list[str], container: dict[str, Any]) -> 
 
 
 def _describe(path: list[str], walk: _Walk) -> str:
-    return f"{walk.label}.run(): {'.'.join(path)}"
+    return f"{walk.label}.{walk.operation}(): {'.'.join(path)}"
 
 
 def _invalid(path: list[str], walk: _Walk, message: str) -> ParameterValidationError:
     location = ".".join(path)
     detail = f"{location}: {message}"
-    return ParameterValidationError(f"{walk.label}.run(): {detail}", task=walk.label, errors=[detail])
+    return ParameterValidationError(f"{walk.label}.{walk.operation}(): {detail}", task=walk.label, errors=[detail])

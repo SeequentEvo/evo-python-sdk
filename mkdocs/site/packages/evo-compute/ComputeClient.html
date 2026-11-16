@@ -196,6 +196,24 @@ the guard that catches an object the task cannot read.</p>
                   <code>None</code>
             </td>
           </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>fb</code>
+            </td>
+            <td>
+                  <code><span title="evo.common.interfaces.IFeedback">IFeedback</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Feedback used while waiting for any job submitted by this client.
+Set it here so engine options do not occupy task parameter names in the namespace.
+<code>TaskJob.results</code> can override it for one wait.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="evo.common.utils.NoFeedback">NoFeedback</span></code>
+            </td>
+          </tr>
       </tbody>
     </table>
 
@@ -273,7 +291,43 @@ the guard that catches an object the task cannot read.</p>
 <p>Parameters use the same names as <code>client.&lt;topic&gt;.&lt;task&gt;.run(...)</code>.
 Custom tasks return their native result; other tasks return <code>TaskResult</code>.
 Validation options override the client's settings for this call.
-Preview is off unless <code>parameters</code> explicitly includes <code>preview=True</code>.</p>
+Preview is off unless <code>parameters</code> explicitly includes <code>preview=True</code>.
+Feedback comes from the client; for one call, use :meth:<code>asubmit</code> and pass <code>fb</code> to
+<code>job.results</code>.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.compute.engine.ComputeClient.asubmit" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">asubmit</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">asubmit</span><span class="p">(</span>
+    <span class="n">topic</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">task</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">validate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">deep_validation</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">check_schemas</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TaskJob</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Submit by name, using the same custom runner as attribute-based submission.</p>
+<p>Validation options have the same meaning as on <code>arun</code>. The accepted job carries
+its result converter and client feedback for the caller's eventual wait.</p>
 
 
     </div>

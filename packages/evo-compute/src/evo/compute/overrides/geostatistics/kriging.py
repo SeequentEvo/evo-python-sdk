@@ -32,8 +32,9 @@ What the override adds, and nothing more:
   ``target_name``, ``attribute_name``, ``schema``, ``get_target_object()``,
   ``to_dataframe()`` -- in place of the generic :class:`~evo.compute.outputs.TaskResult`.
 
-Attribute-based calls and :meth:`~evo.compute.engine.ComputeClient.arun` both use this
-runner. The shared engine still discovers, validates, resolves and submits the job.
+Attribute-based calls, :meth:`~evo.compute.engine.ComputeClient.arun` and
+:meth:`~evo.compute.engine.ComputeClient.asubmit` all use this runner.
+The shared engine still discovers, validates, resolves and submits the job.
 """
 
 from __future__ import annotations
@@ -48,6 +49,8 @@ from evo.objects.typed.base import BaseObject
 from pydantic import BaseModel
 
 from ...exceptions import ParameterValidationError
+from ...jobs import TaskJob
+from ...outputs import TaskResult
 from ...tasks.common import Filter, SearchNeighborhood, Source, Target
 from ...tasks.common.source_target import AnyTypedAttribute, UpdateAttribute
 from ...tasks.geostatistics.kriging import (
@@ -68,7 +71,7 @@ __all__ = [
     "bind",
 ]
 
-# The published catalogue uses the British spelling for this parameter.
+# The published catalogue uses the British spelling; the SDK keeps the current public name.
 PARAMETER_ALIASES = {"block_discretisation": "block_discretization"}
 
 # What each reference parameter takes. The model fields are annotated with their *validated*
@@ -144,7 +147,7 @@ def _same_object(left: str, right: str) -> bool:
 
 
 class KrigingOverride:
-    """The override's stand-in for the generic task proxy: same ``run(...)``, typed by hand."""
+    """The typed ``run(...)`` and ``submit(...)`` surface for Kriging."""
 
     params_type = KrigingParameters
 
@@ -168,6 +171,9 @@ class KrigingOverride:
         preview: bool = False,
     ) -> KrigingResult:
         """Estimate an attribute on a target object by kriging from a source attribute.
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
 
         :param source: The object and attribute holding the known values, or the typed
             attribute itself.
@@ -203,15 +209,55 @@ class KrigingOverride:
             )
         )
 
-    def _prepare_parameters(self, supplied: dict[str, Any]) -> dict[str, Any]:
+    async def submit(
+        self,
+        *,
+        source: _SourceInput,
+        target: _TargetInput,
+        variogram: _ObjectInput,
+        neighborhood: SearchNeighborhood,
+        kriging_method: SimpleKriging | OrdinaryKriging | None = None,
+        source_filter: Filter | None = None,
+        target_filter: Filter | None = None,
+        block_discretization: BlockDiscretization | None = None,
+        diagnostics: KrigingDiagnostics | None = None,
+        preview: bool = False,
+    ) -> TaskJob[KrigingResult]:
+        """Submit with the same arguments and checks as ``run``, without waiting.
+
+        ``await job.results()`` returns ``KrigingResult``, including its object and
+        dataframe helpers. Preview requires an explicit ``preview=True``.
+        """
+        return await self.submit_parameters(
+            dict(
+                source=source,
+                target=target,
+                variogram=variogram,
+                neighborhood=neighborhood,
+                kriging_method=kriging_method if kriging_method is not None else OrdinaryKriging(),
+                source_filter=source_filter,
+                target_filter=target_filter,
+                block_discretization=block_discretization,
+                diagnostics=diagnostics,
+                preview=preview,
+            )
+        )
+
+    def _prepare_parameters(self, supplied: dict[str, Any], operation: str) -> dict[str, Any]:
         parameters = dict(supplied)
         preview = parameters.pop("preview", False)
         label = f"{self._topic}.{self._task.replace('-', '_')}"
+        for wire_name, argument in PARAMETER_ALIASES.items():
+            if wire_name in parameters:
+                if argument in parameters:
+                    message = f"{argument} was supplied both as {argument} and {wire_name}"
+                    raise ParameterValidationError(f"{label}.{operation}(): {message}", task=label, errors=[message])
+                parameters[argument] = parameters.pop(wire_name)
         for argument, (name, field) in _FOLDED_ARGUMENTS.items():
             if isinstance(frame := parameters.get(name), dict) and field in frame:
                 if parameters.get(argument) is not None:
                     message = f"{argument} was supplied both directly and inside {name}"
-                    raise ParameterValidationError(f"{label}.run(): {message}", task=label, errors=[message])
+                    raise ParameterValidationError(f"{label}.{operation}(): {message}", task=label, errors=[message])
                 frame = dict(frame)
                 parameters[argument] = frame.pop(field)
                 parameters[name] = frame
@@ -221,14 +267,14 @@ class KrigingOverride:
         try:
             signature.bind(**parameters)
         except TypeError as error:
-            raise ParameterValidationError(f"{label}.run(): {error}", task=label, errors=[str(error)]) from None
+            raise ParameterValidationError(f"{label}.{operation}(): {error}", task=label, errors=[str(error)]) from None
         validated = parameters
         if isinstance(diagnostics := parameters.get("diagnostics"), dict):
             # The diagnostics model refuses unknown keys outright; the schema decides what happens to them.
             known = {name: value for name, value in diagnostics.items() if name in KrigingDiagnostics.model_fields}
             validated = {**parameters, "diagnostics": known}
         model = KrigingParameters.model_validate(validated)
-        self._check_parameters(model)
+        self._check_parameters(model, operation)
         payload = model.model_dump(mode="json", by_alias=True, exclude_none=True)
         _preserve_extra_fields(payload, parameters, model)
         for argument, (name, field) in _FOLDED_ARGUMENTS.items():
@@ -246,17 +292,57 @@ class KrigingOverride:
         check_schemas: bool | None = None,
     ) -> KrigingResult:
         """Run named or typed inputs through the same preparation and checks."""
-        result = await self._client._run_generic(
-            self._topic,
-            self._task,
-            self._prepare_parameters(parameters),
+        job = await self._submit_parameters(
+            parameters,
+            "run",
             validate=validate,
             deep_validation=deep_validation,
             check_schemas=check_schemas,
         )
+        return await job.results()
+
+    async def submit_parameters(
+        self,
+        parameters: dict[str, Any],
+        *,
+        validate: bool | None = None,
+        deep_validation: bool | None = None,
+        check_schemas: bool | None = None,
+    ) -> TaskJob[KrigingResult]:
+        """Submit named or typed inputs through the same preparation and checks."""
+        return await self._submit_parameters(
+            parameters,
+            "submit",
+            validate=validate,
+            deep_validation=deep_validation,
+            check_schemas=check_schemas,
+        )
+
+    async def _submit_parameters(
+        self,
+        parameters: dict[str, Any],
+        operation: str,
+        *,
+        validate: bool | None,
+        deep_validation: bool | None,
+        check_schemas: bool | None,
+    ) -> TaskJob[KrigingResult]:
+        job = await self._client._submit(
+            self._topic,
+            self._task,
+            self._prepare_parameters(parameters, operation),
+            operation,
+            validate=validate,
+            deep_validation=deep_validation,
+            check_schemas=check_schemas,
+        )
+        return job.map(self.convert_result)
+
+    async def convert_result(self, result: TaskResult) -> KrigingResult:
+        """Restore the native result for submitted and reopened jobs alike."""
         return KrigingResult(self._client.context, KrigingResultModel.model_validate(dict(result)))
 
-    def _check_parameters(self, parameters: KrigingParameters) -> None:
+    def _check_parameters(self, parameters: KrigingParameters, operation: str) -> None:
         """Reject the two inconsistencies the task's JSON Schema has no way to state."""
         label = f"{self._topic}.{self._task.replace('-', '_')}"
         errors: list[str] = []
@@ -281,7 +367,7 @@ class KrigingOverride:
 
         if errors:
             raise ParameterValidationError(
-                f"{label}.run(): " + "; ".join(errors),
+                f"{label}.{operation}(): " + "; ".join(errors),
                 task=label,
                 errors=errors,
             )

@@ -1,14 +1,15 @@
 # Static typing for the generic compute engine
 
 `ComputeClient` builds its `client.<topic>.<task>.run(...)` namespace at runtime from the
-live discovery catalogue. Nothing about that surface exists in `engine.py`, so a type
+live discovery catalogue, with `submit(...)` for the same tasks. Nothing about that surface exists in `engine.py`, so a type
 checker sees `Any` and an editor offers no completion.
 
 This directory closes that gap. An **offline** generator turns a checked-in snapshot of the
 task catalogue into [`src/evo/compute/engine.pyi`](../src/evo/compute/engine.pyi), which
 type checkers read instead of `engine.py`. Every snapshotted task then gets completion,
 signature help, hover documentation, parameter type-checking and a typed result through
-the async client.
+the async client. Submission returns `TaskJob[TaskResultType]`, preserving that result type
+through `await job.results()`.
 
 ```
 stubs/
@@ -35,6 +36,13 @@ result = await client.geostatistics.declustering.run(
 print(result["message"])           # the raw payload is still a dict
 weights = await result.target.attribute.to_dataframe()   # and the references load
 ```
+
+`submit(...)` uses the same parameter types as `run(...)`, but returns a job without waiting.
+Its status, cancellation and results methods are async. A task absent from the snapshot
+still exposes both operations, with generic `TaskResult` hints. Overrides expose their own
+declared methods: Kriging provides both operations and submission returns
+`TaskJob[KrigingResult]`. Named `asubmit(...)` calls use the same override, so their
+result type is dynamic rather than always `TaskResult`.
 
 To name a shape in your own annotations, import it under `TYPE_CHECKING`. The generated
 types exist only in the stub — they are not runtime objects:
@@ -107,7 +115,7 @@ exactly what was taken and from where, and
 reports drift against a live catalogue when run with credentials.
 
 **Custom runners supply their own types.** An overridden task imports its runner class
-instead of generating a second signature. Attribute-based calls and `arun(...)` both use
+instead of generating a second signature. Attribute-based calls, `arun(...)` and `asubmit(...)` all use
 that runner's argument names, checks and native result. Overrides are found in the package,
 so they remain available even if the catalogue snapshot does not mention them.
 
@@ -149,7 +157,7 @@ The stub is one half of a contract the engine enforces at run time from the same
 
 | Mistake | Caught statically by | Caught at run time by |
 |---|---|---|
-| unknown topic or task | *nothing — by design* | discovery lookup in `arun` |
+| unknown topic or task | *nothing — by design* | discovery lookup in `arun` / `asubmit` |
 | unknown parameter | the stub's `run(...)` signature | the object's `additionalProperties` rule |
 | missing required parameter | the stub's `run(...)` signature | signature binding, then `validate_parameters` |
 | wrong scalar type, bad enum member, missing nested field | the stub's `TypedDict`s and `Literal`s | `validate_parameters(..., deep=True)` |
@@ -178,8 +186,8 @@ explicit opt-in, including for tasks with a feature flag.
 
 | Checker | Result |
 |---|---|
-| pyright | `usage_ok.py` clean; `usage_bad.py` reports all seven mistakes |
-| mypy | `usage_ok.py` clean; `usage_bad.py` reports all seven mistakes |
+| pyright | `usage_ok.py` clean; `usage_bad.py` reports the expected errors |
+| mypy | `usage_ok.py` clean; `usage_bad.py` reports the expected errors |
 | PyCharm / VS Code | completion, signature help and hover text on `client.<topic>.<task>.run(...)` |
 
 `tests/test_stubgen.py` runs both checkers as required test dependencies.

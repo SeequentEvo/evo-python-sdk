@@ -34,6 +34,7 @@ from evo.compute.tasks.geostatistics.idw import (
     IDWResultModel,
     IDWRunner,
 )
+from test_payload_parity import runner_catalogue
 
 # ---------------------------------------------------------------------------
 # Test helpers
@@ -279,13 +280,16 @@ class TestIDWRunnerAsync(unittest.IsolatedAsyncioTestCase):
         ctx = self._make_context()
         params = _params()
         job = AsyncMock()
-        job.wait_for_results.return_value = _make_result_model()
+        job.wait_for_results.return_value = _make_result_model().model_dump(mode="json")
 
-        with patch(
-            "evo.compute.tasks.common.runner.JobClient.submit",
-            new_callable=AsyncMock,
-            return_value=job,
-        ) as mock_submit:
+        with (
+            runner_catalogue(IDWRunner),
+            patch(
+                "evo.compute.engine.JobClient.submit",
+                new_callable=AsyncMock,
+                return_value=job,
+            ) as mock_submit,
+        ):
             result = await IDWRunner(ctx, params)
 
         mock_submit.assert_called_once()
@@ -298,7 +302,7 @@ class TestIDWRunnerAsync(unittest.IsolatedAsyncioTestCase):
         ctx = self._make_context()
         params = _params(power=3.0)
         job = AsyncMock()
-        job.wait_for_results.return_value = _make_result_model()
+        job.wait_for_results.return_value = _make_result_model().model_dump(mode="json")
 
         captured_payload = {}
 
@@ -306,7 +310,7 @@ class TestIDWRunnerAsync(unittest.IsolatedAsyncioTestCase):
             captured_payload.update(kwargs)
             return job
 
-        with patch("evo.compute.tasks.common.runner.JobClient.submit", side_effect=capture_submit):
+        with runner_catalogue(IDWRunner), patch("evo.compute.engine.JobClient.submit", side_effect=capture_submit):
             await IDWRunner(ctx, params)
 
         payload = captured_payload.get("parameters", {})

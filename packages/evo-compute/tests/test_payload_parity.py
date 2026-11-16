@@ -298,6 +298,13 @@ def task_spec(runner_cls) -> TaskResource:
     return TaskResource(topic=runner_cls.topic, name=runner_cls.task, parameters=schema)
 
 
+@contextmanager
+def runner_catalogue(runner_cls) -> Iterator[None]:
+    """Serve discovery using the runner's parameter schema without bypassing the engine."""
+    with mock.patch.object(DiscoveryClient, "list_tasks", mock.AsyncMock(return_value=[task_spec(runner_cls)])):
+        yield
+
+
 class PayloadParityTestCase(IsolatedAsyncioTestCase):
     """Runs one job through both paths and compares what each hands to ``JobClient.submit``."""
 
@@ -308,17 +315,14 @@ class PayloadParityTestCase(IsolatedAsyncioTestCase):
 
     async def runner_payload(self, runner_cls, params) -> dict[str, Any]:
         """The payload the hand-written runner submits for ``params``."""
-        with _capture_submit("evo.compute.tasks.common.runner") as submit:
+        with runner_catalogue(runner_cls), _capture_submit("evo.compute.engine") as submit:
             with self.assertRaises(_SubmitCaptured):
                 await runner_cls(self.context, params)
         return submit.await_args.kwargs["parameters"]
 
     async def engine_payload(self, runner_cls, **parameters: Any) -> dict[str, Any]:
         """The payload the generic engine submits for the same job, described as plain JSON."""
-        catalogue = mock.patch.object(
-            DiscoveryClient, "list_tasks", mock.AsyncMock(return_value=[task_spec(runner_cls)])
-        )
-        with catalogue, _capture_submit("evo.compute.engine") as submit:
+        with runner_catalogue(runner_cls), _capture_submit("evo.compute.engine") as submit:
             with self.assertRaises(_SubmitCaptured):
                 await self.client._run_generic("geostatistics", runner_cls.task, parameters)
         return submit.await_args.kwargs["parameters"]
@@ -541,18 +545,10 @@ class TestKrigingPayloadParity(PayloadParityTestCase):
             await self.payload_difference(KrigingRunner, **inputs),
         )
 
-    async def test_a_bare_attribute_name_is_expanded_by_the_engine_only(self) -> None:
-        """DIVERGENCE: the runner passes a bare attribute name through; the engine expands it.
-
-        ``_get_attribute_expression`` treats any string as an expression already written, so a
-        name reaches the platform as a name. The engine reads the leaf's ``reference_to:
-        attribute`` and projects the name into the container that attribute's family keeps its
-        attributes in -- ``attributes`` unless the schema names another through
-        ``attribute_path``, which is the container the typed paths above resolve to as well.
-        Only the engine's payload is one the platform can look the attribute up from.
-        """
+    async def test_a_bare_attribute_name_is_expanded_on_both_paths(self) -> None:
+        """Direct runners use the engine's schema-driven attribute expansion too."""
         self.assertEqual(
-            ["parameters.source.attribute: expected 'grade', got \"attributes[?name=='grade']\""],
+            [],
             await self.payload_difference(
                 KrigingRunner, **self._inputs(source=Source(object=POINTSET_URL, attribute="grade"))
             ),
