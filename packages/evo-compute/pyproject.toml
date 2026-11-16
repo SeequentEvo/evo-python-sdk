@@ -12,6 +12,7 @@ dependencies = [
     "evo-blockmodels[utils]",
     "evo-objects[utils,blockmodels]",
     "evo-sdk-common",
+    "jsonschema>=4.18",
     "pydantic>=2",
     "typing_extensions>=4.0",
 ]

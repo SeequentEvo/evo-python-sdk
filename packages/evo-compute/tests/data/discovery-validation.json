@@ -1,0 +1,25 @@
+{
+  "limit": 100,
+  "offset": 0,
+  "total": 1,
+  "count": 1,
+  "results": [
+    {
+      "key": "demo/widget",
+      "topic": "demo",
+      "name": "widget",
+      "display_name": "Widget",
+      "version": "1.0.0",
+      "description": "A demo task carrying non-reference constraints for validation tests.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "source": {"type": "object", "reference_to": "geoscience-object"},
+          "mode": {"type": "string", "enum": ["fast", "accurate"]},
+          "iterations": {"type": "integer", "minimum": 1, "default": null}
+        },
+        "required": ["source", "mode"]
+      }
+    }
+  ]
+}

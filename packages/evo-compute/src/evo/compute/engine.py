@@ -41,6 +41,8 @@ from evo.common import APIConnector, IContext
 from .client import JobClient
 from .discovery import DEFAULT_CACHE_TTL_SECONDS, DiscoveryClient
 from .endpoints.models import TaskResource
+from .exceptions import ParameterValidationError
+from .validation import validate_parameters
 
 __all__ = [
     "ComputeClient",
@@ -136,10 +138,12 @@ def _check_fallback_parameters(spec: TaskResource, parameters: dict[str, Any], l
     properties: dict[str, Any] = schema.get("properties", {})
     for name in schema.get("required", []):
         if name not in parameters:
-            raise TypeError(f"{label}.run(): missing a required keyword-only argument: {name!r}")
+            detail = f"missing a required keyword-only argument: {name!r}"
+            raise ParameterValidationError(f"{label}.run(): {detail}", task=label, errors=[detail])
     for name in parameters:
         if name not in properties:
-            raise TypeError(f"{label}.run(): got an unexpected keyword argument {name!r}")
+            detail = f"got an unexpected keyword argument {name!r}"
+            raise ParameterValidationError(f"{label}.run(): {detail}", task=label, errors=[detail])
 
 
 class ComputeClient:
@@ -150,12 +154,26 @@ class ComputeClient:
 
     :param context: An authenticated Evo context.
     :param cache_ttl_seconds: How long a discovered task catalogue is cached.
+    :param validate: Validate parameters against the task schema before submitting
+        (required-field presence). Defaults to ``True``. This is the master switch:
+        ``False`` turns off deep validation too, whatever ``deep_validation`` says.
+    :param deep_validation: Additionally run full JSON Schema Draft 2020-12 validation.
+        Defaults to ``False``. Only consulted when ``validate`` is ``True``.
     """
 
-    def __init__(self, context: IContext, *, cache_ttl_seconds: float = DEFAULT_CACHE_TTL_SECONDS) -> None:
+    def __init__(
+        self,
+        context: IContext,
+        *,
+        cache_ttl_seconds: float = DEFAULT_CACHE_TTL_SECONDS,
+        validate: bool = True,
+        deep_validation: bool = False,
+    ) -> None:
         self._org_id: UUID = context.get_org_id()
         self._connector: APIConnector = context.get_connector()
         self._discovery = DiscoveryClient(self._connector, self._org_id, cache_ttl_seconds=cache_ttl_seconds)
+        self._validate = validate
+        self._deep_validation = deep_validation
 
     # -- dynamic namespace ------------------------------------------------- #
 
@@ -184,7 +202,15 @@ class ComputeClient:
 
     # -- execution --------------------------------------------------------- #
 
-    async def arun(self, topic: str, task: str, parameters: dict[str, Any]) -> dict:
+    async def arun(
+        self,
+        topic: str,
+        task: str,
+        parameters: dict[str, Any],
+        *,
+        validate: bool | None = None,
+        deep_validation: bool | None = None,
+    ) -> dict:
         """Run a task by name and wait for its results.
 
         The same as ``await client.<topic>.<task>.run(**parameters)``, for names held as
@@ -193,11 +219,15 @@ class ComputeClient:
         :param topic: The task topic.
         :param task: The task name.
         :param parameters: The task parameters, plus ``preview=True`` to run a preview task.
+        :param validate: Override the client's shallow-validation setting for this call.
+            The master switch: ``False`` skips deep validation too.
+        :param deep_validation: Override the client's deep-validation setting for this call.
+            Only consulted when validation is enabled.
 
         :return: The results of the finished job.
 
         :raises AttributeError: If the topic does not advertise the task.
-        :raises TypeError: If the parameters do not match the task's schema.
+        :raises ParameterValidationError: If the parameters do not match the task's schema.
         """
         spec = await self._resolve_spec(topic, task)
         label = f"{topic}.{_normalise(task)}"
@@ -205,7 +235,7 @@ class ComputeClient:
         try:
             bound = signature.bind(**parameters)
         except TypeError as error:
-            raise TypeError(f"{label}.run(): {error}") from None
+            raise ParameterValidationError(f"{label}.run(): {error}", task=label, errors=[str(error)]) from None
 
         # Forward only what the caller actually passed, so unset optionals fall back to the
         # platform's own defaults while an explicit ``None`` still reaches the wire.
@@ -218,6 +248,14 @@ class ComputeClient:
             wire_parameters.update(wire_parameters.pop("parameters", {}))
             if (spec.parameters or {}).get("properties"):
                 _check_fallback_parameters(spec, wire_parameters, label)
+
+        if validate is None:
+            validate = self._validate
+        if deep_validation is None:
+            deep_validation = self._deep_validation
+        # ``validate`` is the master switch; deep validation only runs underneath it.
+        if validate:
+            validate_parameters(spec, wire_parameters, deep=deep_validation, task_label=label)
 
         job: JobClient[dict] = await JobClient.submit(
             connector=self._connector,
