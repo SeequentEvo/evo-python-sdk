@@ -23,7 +23,8 @@ from evo.notebooks import FeedbackWidget
 
 
 class MeshSelectorWidget(widgets.VBox):
-    """Widget for selecting triangle meshes to merge with checkboxes, and naming the merged mesh."""
+    """Widget for selecting triangle meshes to merge with checkboxes, and either naming a new merged mesh or choosing
+    an existing mesh to update with a new version."""
 
     def __init__(self, meshes, default_name="Merged_Mesh_SDK_demo", default_path="Jupyter_Example/Mesh"):
         """
@@ -31,6 +32,9 @@ class MeshSelectorWidget(widgets.VBox):
             meshes (list[ObjectMetadata]): The triangle mesh objects to list, in display order.
             default_name (str): The initial name of the merged mesh.
             default_path (str): The initial path of the merged mesh.
+
+        Tick "Update existing merged mesh" to choose an existing mesh from a dropdown; the merge is then published as
+        a new version of that mesh instead of as a new mesh.
         """
         self.meshes = list(meshes)
 
@@ -44,17 +48,28 @@ class MeshSelectorWidget(widgets.VBox):
         self.select_all_checkbox = widgets.Checkbox(value=False, description="Select all", indent=False)
         self.selection_label = widgets.Label()
 
-        self.select_all_checkbox.observe(self._toggle_all, names="value")
-        for checkbox in self.mesh_checkboxes:
-            checkbox.observe(self._update_selection_label, names="value")
-        self._update_selection_label()
-
         self.merged_name_text = widgets.Text(
             value=default_name, description="Merged name:", style=widget_style, layout=widget_layout
         )
         self.merged_path_text = widgets.Text(
             value=default_path, description="Merged path:", style=widget_style, layout=widget_layout
         )
+        self.new_mesh_fields = widgets.VBox([self.merged_name_text, self.merged_path_text])
+
+        self.update_existing_checkbox = widgets.Checkbox(
+            value=False, description="Update existing merged mesh", indent=False
+        )
+        self.target_mesh_dropdown = widgets.Dropdown(
+            description="Target mesh:",
+            style=widget_style,
+            layout=widgets.Layout(width="90%", display="none"),
+        )
+        self.update_existing_checkbox.observe(self._toggle_update_existing, names="value")
+
+        self.select_all_checkbox.observe(self._toggle_all, names="value")
+        for checkbox in self.mesh_checkboxes:
+            checkbox.observe(self._on_selection_changed, names="value")
+        self._on_selection_changed()
 
         # Scroll the mesh list if the workspace contains many meshes.
         mesh_list = widgets.VBox(
@@ -66,8 +81,9 @@ class MeshSelectorWidget(widgets.VBox):
             [
                 widgets.HBox([self.select_all_checkbox, self.selection_label]),
                 mesh_list,
-                self.merged_name_text,
-                self.merged_path_text,
+                self.update_existing_checkbox,
+                self.target_mesh_dropdown,
+                self.new_mesh_fields,
             ]
         )
 
@@ -86,9 +102,36 @@ class MeshSelectorWidget(widgets.VBox):
         """str: The path entered for the merged mesh."""
         return self.merged_path_text.value
 
-    def _update_selection_label(self, _=None):
+    @property
+    def update_existing(self):
+        """bool: Whether to publish the merge as a new version of an existing mesh instead of a new mesh."""
+        return self.update_existing_checkbox.value
+
+    @property
+    def target_mesh(self):
+        """ObjectMetadata | None: The existing mesh to update when `update_existing` is ticked. Selected meshes are
+        excluded from the choices."""
+        return self.target_mesh_dropdown.value
+
+    def _toggle_update_existing(self, change):
+        # Show the target mesh dropdown when updating, otherwise show the name and path fields for a new mesh.
+        self.target_mesh_dropdown.layout.display = None if change["new"] else "none"
+        self.new_mesh_fields.layout.display = "none" if change["new"] else None
+
+    def _on_selection_changed(self, _=None):
         selected_count = sum(checkbox.value for checkbox in self.mesh_checkboxes)
         self.selection_label.value = f"{selected_count} of {len(self.mesh_checkboxes)} meshes selected"
+        self._update_target_options()
+
+    def _update_target_options(self):
+        """Offer only the meshes that are not selected for merging as targets to update."""
+        available = [obj for obj, checkbox in zip(self.meshes, self.mesh_checkboxes) if not checkbox.value]
+        current = self.target_mesh_dropdown.value
+        # Changing the options resets the dropdown, so restore the current target if it is still available.
+        self.target_mesh_dropdown.options = [("Select a target mesh...", None)] + [
+            (f"{obj.path}  ({obj.id})", obj) for obj in available
+        ]
+        self.target_mesh_dropdown.value = current if current in available else None
 
     def _toggle_all(self, change):
         for checkbox in self.mesh_checkboxes:
