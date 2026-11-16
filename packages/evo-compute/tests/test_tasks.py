@@ -308,7 +308,7 @@ class TestConvertObjectReference(unittest.TestCase):
 
 
 class TestSearchNeighborhood(unittest.TestCase):
-    """Tests for the octant, quadrant and drillhole limits on SearchNeighborhood."""
+    """Tests for sample, octant, quadrant and drillhole limits on SearchNeighborhood."""
 
     LIMITS = {
         "max_empty_octants": 4,
@@ -319,15 +319,40 @@ class TestSearchNeighborhood(unittest.TestCase):
         "max_drillholes_per_estimate": 6,
     }
 
-    def _search(self, **limits) -> SearchNeighborhood:
+    def _search(self, max_samples: int = 24, **limits) -> SearchNeighborhood:
         return SearchNeighborhood(
             ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=200, semi_major=150, minor=100)),
-            max_samples=24,
+            max_samples=max_samples,
             **limits,
         )
 
     def test_limits_are_omitted_unless_set(self):
-        self.assertEqual(set(self._search().model_dump(mode="json")), {"ellipsoid", "max_samples"})
+        search = self._search()
+        self.assertIsNone(search.min_samples)
+        self.assertEqual(set(search.model_dump(mode="json")), {"ellipsoid", "max_samples"})
+
+    def test_sample_limit_boundaries_are_accepted(self):
+        single = self._search(max_samples=1).model_dump(mode="json")
+        self.assertEqual(single["max_samples"], 1)
+        self.assertNotIn("min_samples", single)
+
+        for max_samples, min_samples in [(1, 1), (20, 1), (20, 20)]:
+            with self.subTest(max_samples=max_samples, min_samples=min_samples):
+                dumped = self._search(max_samples=max_samples, min_samples=min_samples).model_dump(mode="json")
+                self.assertEqual(dumped["max_samples"], max_samples)
+                self.assertEqual(dumped["min_samples"], min_samples)
+
+    def test_invalid_sample_limits_are_refused(self):
+        for kwargs in [
+            {"max_samples": 0},
+            {"max_samples": -1},
+            {"max_samples": 20, "min_samples": 0},
+            {"max_samples": 20, "min_samples": -1},
+            {"max_samples": 20, "min_samples": 21},
+            {"max_samples": 1, "min_samples": 2},
+        ]:
+            with self.subTest(**kwargs), self.assertRaises(ValidationError):
+                self._search(**kwargs)
 
     def test_limits_are_sent_when_set(self):
         dumped = self._search(**self.LIMITS).model_dump(mode="json")
