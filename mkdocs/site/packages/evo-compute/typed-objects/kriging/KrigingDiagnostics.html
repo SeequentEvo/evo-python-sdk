@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        
+        <link rel="shortcut icon" href="../../../../img/favicon.ico">
+        <title>KrigingDiagnostics - Evo Python SDK</title>
+        <link href="../../../../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../../../../css/fontawesome.min.css" rel="stylesheet">
+        <link href="../../../../css/brands.min.css" rel="stylesheet">
+        <link href="../../../../css/solid.min.css" rel="stylesheet">
+        <link href="../../../../css/v4-font-face.min.css" rel="stylesheet">
+        <link href="../../../../css/base.css" rel="stylesheet">
+        <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" >
+        <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
+        <link href="../../../../assets/_mkdocstrings.css" rel="stylesheet">
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="../../../..">Evo Python SDK</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar-collapse" aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+
+                    <ul class="nav navbar-nav ms-md-auto">
+                            <li class="nav-item">
+                                <a rel="prev" href="Filter.html" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="KrigingDiagnosticsResult.html" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-bs-toggle="collapse" data-bs-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-bs-level="2"><a href="#evo.compute.tasks.geostatistics.kriging.KrigingDiagnostics" class="nav-link">KrigingDiagnostics</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<p><a href="https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-compute/src/evo/compute/tasks/geostatistics/kriging.py">GitHub source</a>
+</p>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="evo.compute.tasks.geostatistics.kriging.KrigingDiagnostics" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">evo.compute.tasks.geostatistics.kriging.KrigingDiagnostics</span>
+
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>Optional per-location diagnostics written alongside the kriging estimate.</p>
+<p>Each field selects one diagnostic and says where to write it on the target object.
+Only the diagnostics you set are computed; the rest are left out entirely.</p>
+<p>Every field accepts:</p>
+<ul>
+<li><code>True</code> — create an attribute using the Leapfrog-aligned recommended name from
+  :data:<code>RECOMMENDED_DIAGNOSTIC_NAMES</code> (for example <code>KV</code> for <code>kriging_variance</code>).</li>
+<li>a <code>str</code> — create an attribute with that name.</li>
+<li>a typed attribute from the target object — update it if it already exists,
+  otherwise create it.</li>
+<li>a :class:<code>~evo.compute.tasks.common.CreateAttribute</code> or
+  :class:<code>~evo.compute.tasks.common.UpdateAttribute</code> for full control.</li>
+</ul>
+<p>Every output of a kriging task writes to its own attribute, so each diagnostic name
+must differ from the estimate's attribute name and from every other diagnostic.</p>
+<p>An existing attribute must be able to hold the diagnostic's values: boolean for <code>valid</code>,
+integer for the <code>num_*</code> counts, and floating-point for the rest.</p>
+<p>Example::</p>
+<pre><code>&gt;&gt;&gt; diagnostics = KrigingDiagnostics(
+...     kriging_variance=True,  # creates "KV"
+...     num_samples="sample_count",  # creates "sample_count"
+...     slope_of_regression=block_model.attributes["SoR"],  # updates if it exists
+... )
+</code></pre>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.kriging.KrigingDiagnostics.valid" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">valid</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">valid</span><span class="p">:</span> <span class="n">CreateAttribute</span> <span class="o">|</span> <span class="n">UpdateAttribute</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Whether each target location's neighbourhood satisfied the search constraints.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.kriging.KrigingDiagnostics.kriging_variance" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">kriging_variance</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">kriging_variance</span><span class="p">:</span> <span class="n">CreateAttribute</span> <span class="o">|</span> <span class="n">UpdateAttribute</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The kriging variance (estimation uncertainty).</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.kriging.KrigingDiagnostics.slope_of_regression" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">slope_of_regression</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">slope_of_regression</span><span class="p">:</span> <span class="n">CreateAttribute</span> <span class="o">|</span> <span class="n">UpdateAttribute</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The slope of regression, a diagnostic for conditional bias.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.kriging.KrigingDiagnostics.kriging_efficiency" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">kriging_efficiency</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">kriging_efficiency</span><span class="p">:</span> <span class="n">CreateAttribute</span> <span class="o">|</span> <span class="n">UpdateAttribute</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The proportion of point or intra-block variance explained by the kriging weights.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.kriging.KrigingDiagnostics.kriging_mean" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">kriging_mean</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">kriging_mean</span><span class="p">:</span> <span class="n">CreateAttribute</span> <span class="o">|</span> <span class="n">UpdateAttribute</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The GLS mean for ordinary kriging, or the supplied constant mean for simple kriging.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.kriging.KrigingDiagnostics.num_samples" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">num_samples</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">num_samples</span><span class="p">:</span> <span class="n">CreateAttribute</span> <span class="o">|</span> <span class="n">UpdateAttribute</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The number of data samples used in the estimate.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.kriging.KrigingDiagnostics.num_drillholes" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">num_drillholes</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">num_drillholes</span><span class="p">:</span> <span class="n">CreateAttribute</span> <span class="o">|</span> <span class="n">UpdateAttribute</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The number of distinct drillholes contributing to the estimate.</p>
+<p>Requires a downhole intervals source object.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.kriging.KrigingDiagnostics.num_duplicates" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">num_duplicates</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">num_duplicates</span><span class="p">:</span> <span class="n">CreateAttribute</span> <span class="o">|</span> <span class="n">UpdateAttribute</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The number of duplicate sample locations used in the estimate.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.kriging.KrigingDiagnostics.num_equidistant" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">num_equidistant</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">num_equidistant</span><span class="p">:</span> <span class="n">CreateAttribute</span> <span class="o">|</span> <span class="n">UpdateAttribute</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>A hint of how many other samples could have replaced the last returned sample
+because they were the same distance from the target location. Counted after searching
+and before clipping to the maximum number of samples.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.kriging.KrigingDiagnostics.sum_weights" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">sum_weights</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">sum_weights</span><span class="p">:</span> <span class="n">CreateAttribute</span> <span class="o">|</span> <span class="n">UpdateAttribute</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The sum of kriging weights applied to data samples.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.kriging.KrigingDiagnostics.sum_positive_weights" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">sum_positive_weights</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">sum_positive_weights</span><span class="p">:</span> <span class="n">CreateAttribute</span> <span class="o">|</span> <span class="n">UpdateAttribute</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The sum of positive kriging weights applied to data samples.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.kriging.KrigingDiagnostics.sum_negative_weights" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">sum_negative_weights</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">sum_negative_weights</span><span class="p">:</span> <span class="n">CreateAttribute</span> <span class="o">|</span> <span class="n">UpdateAttribute</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The sum of negative kriging weights applied to data samples (zero when
+negative-weight removal is enabled).</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.kriging.KrigingDiagnostics.min_distance" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">min_distance</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">min_distance</span><span class="p">:</span> <span class="n">CreateAttribute</span> <span class="o">|</span> <span class="n">UpdateAttribute</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The minimum isotropic Euclidean distance from the target location to any neighbour.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.kriging.KrigingDiagnostics.mean_distance" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">mean_distance</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">mean_distance</span><span class="p">:</span> <span class="n">CreateAttribute</span> <span class="o">|</span> <span class="n">UpdateAttribute</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The mean isotropic Euclidean distance from the target location to all neighbours.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.kriging.KrigingDiagnostics.aniso_min_distance" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">aniso_min_distance</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">aniso_min_distance</span><span class="p">:</span> <span class="n">CreateAttribute</span> <span class="o">|</span> <span class="n">UpdateAttribute</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The minimum anisotropic (ellipsoid-space) distance from the target location to any neighbour.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.kriging.KrigingDiagnostics.aniso_mean_distance" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">aniso_mean_distance</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">aniso_mean_distance</span><span class="p">:</span> <span class="n">CreateAttribute</span> <span class="o">|</span> <span class="n">UpdateAttribute</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The mean anisotropic (ellipsoid-space) distance from the target location to all neighbours.</p>
+
+    </div>
+
+</div>
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>
