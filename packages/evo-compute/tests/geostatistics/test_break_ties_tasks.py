@@ -168,9 +168,9 @@ class TestBreakTiesParametersSerialization(TestCase):
         search = SearchNeighborhood(
             ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=200, semi_major=150, minor=100)),
             max_samples=20,
-            max_drillholes_per_estimate=4,
+            max_drillholes=4,
         )
-        with self.assertRaisesRegex(ValidationError, "does not support max_drillholes_per_estimate"):
+        with self.assertRaisesRegex(ValidationError, "does not support max_drillholes"):
             self._params(neighborhood=search)
 
     def test_default_seed(self):

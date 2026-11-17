@@ -228,11 +228,12 @@ class TestIDWParametersSerialization(unittest.TestCase):
             ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=200, semi_major=150, minor=100)),
             max_samples=20,
             max_empty_quadrants=1,
-            max_drillholes_per_estimate=4,
+            max_drillholes=4,
         )
         d = _dump(_params(neighborhood=search))
         self.assertEqual(d["neighborhood"]["max_empty_quadrants"], 1)
-        self.assertEqual(d["neighborhood"]["max_drillholes_per_estimate"], 4)
+        self.assertEqual(d["neighborhood"]["max_drillholes"], 4)
+        self.assertNotIn("max_drillholes_per_estimate", d["neighborhood"])
 
     def test_sample_limit_boundaries_in_neighborhood(self):
         ellipsoid = Ellipsoid(ranges=EllipsoidRanges(major=200, semi_major=150, minor=100))
