@@ -1166,10 +1166,31 @@ class TestSearchNeighborhoodAlias(TestCase):
             max_samples=20,
             max_samples_per_octant=2,
             max_samples_per_drillhole=3,
+            max_drillholes=6,
+            min_drillholes=2,
+            drillhole_limit_scope="octant",
         )
         params_dict = self._make_params(search=search).model_dump(mode="json", by_alias=True, exclude_none=True)
         self.assertEqual(params_dict["neighborhood"]["max_samples_per_octant"], 2)
         self.assertEqual(params_dict["neighborhood"]["max_samples_per_drillhole"], 3)
+        self.assertEqual(params_dict["neighborhood"]["max_drillholes"], 6)
+        self.assertEqual(params_dict["neighborhood"]["min_drillholes"], 2)
+        self.assertEqual(params_dict["neighborhood"]["drillhole_limit_scope"], "octant")
+
+        default_drillholes = SearchNeighborhood(
+            ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=100, semi_major=100, minor=50)),
+            max_samples=20,
+            max_drillholes_per_estimate=5,
+            min_drillholes=0,
+            drillhole_limit_scope="global",
+        )
+        default_dict = self._make_params(search=default_drillholes).model_dump(
+            mode="json", by_alias=True, exclude_none=True
+        )
+        self.assertEqual(default_dict["neighborhood"]["max_drillholes"], 5)
+        self.assertNotIn("max_drillholes_per_estimate", default_dict["neighborhood"])
+        self.assertNotIn("min_drillholes", default_dict["neighborhood"])
+        self.assertNotIn("drillhole_limit_scope", default_dict["neighborhood"])
 
     def test_can_construct_with_field_name_search(self):
         """Users should be able to construct KrigingParameters with search=..."""

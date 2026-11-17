@@ -165,13 +165,31 @@ class TestBreakTiesParametersSerialization(TestCase):
         self.assertNotIn("min_samples", d["neighborhood"])
 
     def test_search_limits_are_refused(self):
-        search = SearchNeighborhood(
-            ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=200, semi_major=150, minor=100)),
-            max_samples=20,
-            max_drillholes=4,
+        ellipsoid = Ellipsoid(ranges=EllipsoidRanges(major=200, semi_major=150, minor=100))
+        dumped_defaults = self._dump(
+            self._params(
+                neighborhood=SearchNeighborhood(
+                    ellipsoid=ellipsoid,
+                    max_samples=20,
+                    min_drillholes=0,
+                    drillhole_limit_scope="global",
+                )
+            )
         )
-        with self.assertRaisesRegex(ValidationError, "does not support max_drillholes"):
-            self._params(neighborhood=search)
+        self.assertNotIn("min_drillholes", dumped_defaults["neighborhood"])
+        self.assertNotIn("drillhole_limit_scope", dumped_defaults["neighborhood"])
+
+        for kwargs, expected in [
+            ({"max_drillholes": 4}, "does not support max_drillholes"),
+            ({"max_drillholes_per_estimate": 4}, "does not support max_drillholes"),
+            ({"min_drillholes": 2}, "does not support min_drillholes"),
+            (
+                {"max_samples_per_drillhole": 2, "drillhole_limit_scope": "quadrant"},
+                "does not support max_samples_per_drillhole, drillhole_limit_scope",
+            ),
+        ]:
+            with self.subTest(**kwargs), self.assertRaisesRegex(ValidationError, expected):
+                self._params(neighborhood=SearchNeighborhood(ellipsoid=ellipsoid, max_samples=20, **kwargs))
 
     def test_default_seed(self):
         d = self._dump(self._params())

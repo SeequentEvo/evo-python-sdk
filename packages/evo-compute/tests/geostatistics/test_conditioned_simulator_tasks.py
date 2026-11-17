@@ -152,13 +152,18 @@ class TestConSimParametersSerialization(unittest.TestCase):
         self.assertEqual(d["block_discretization"]["nx"], 1)
 
     def test_search_limits_are_refused(self):
-        search = SearchNeighborhood(
-            ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=300, semi_major=200, minor=100)),
-            max_samples=24,
-            max_samples_per_drillhole=3,
-        )
-        with self.assertRaisesRegex(ValidationError, "does not support max_samples_per_drillhole"):
-            _params(neighborhood=search)
+        ellipsoid = Ellipsoid(ranges=EllipsoidRanges(major=300, semi_major=200, minor=100))
+        for kwargs, expected in [
+            ({"max_samples_per_drillhole": 3}, "does not support max_samples_per_drillhole"),
+            ({"max_drillholes": 4}, "does not support max_drillholes"),
+            ({"min_drillholes": 2}, "does not support min_drillholes"),
+            (
+                {"max_samples_per_drillhole": 2, "drillhole_limit_scope": "octant"},
+                "does not support max_samples_per_drillhole, drillhole_limit_scope",
+            ),
+        ]:
+            with self.subTest(**kwargs), self.assertRaisesRegex(ValidationError, expected):
+                _params(neighborhood=SearchNeighborhood(ellipsoid=ellipsoid, max_samples=24, **kwargs))
 
     def test_custom_simulations(self):
         d = _dump(_params(number_of_simulations=10, number_of_simulations_to_save=3))
