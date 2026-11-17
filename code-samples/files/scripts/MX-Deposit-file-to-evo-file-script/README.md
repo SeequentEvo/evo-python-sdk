@@ -4,7 +4,7 @@ This script exports collar data from MX Deposit, downloads the exported CSV file
 
 ## Prerequisites
 
-- Python 3.10+
+- Python 3.11.5+
 - The following Python packages:
   - `python-dotenv`
   - `requests`

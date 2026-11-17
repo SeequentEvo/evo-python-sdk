@@ -1,8 +1,8 @@
 [project]
 name = "evo-colormaps"
 description = "Python SDK for using the Seequent Evo Colormap API"
-version = "0.0.3"
-requires-python = ">=3.10"
+version = "0.0.4"
+requires-python = ">=3.11.5"
 license-files = ["LICENSE.md"]
 dynamic = ["readme"]
 authors = [
@@ -10,7 +10,7 @@ authors = [
 ]
 
 dependencies = [
-    "evo-sdk-common>=0.1.0",
+    "evo-sdk-common>=0.5.33",
     "pydantic>=2,<3",
 ]
 
@@ -21,8 +21,8 @@ Homepage = "https://www.seequent.com/"
 Documentation = "https://developer.seequent.com/"
 
 [project.optional-dependencies]
-aiohttp = ["evo-sdk-common[aiohttp]>=0.1.0"]
-notebooks = ["evo-sdk-common[notebooks]>=0.1.0"]
+aiohttp = ["evo-sdk-common[aiohttp]>=0.5.33"]
+notebooks = ["evo-sdk-common[notebooks]>=0.5.33"]
 
 [dependency-groups]
 # Dev dependencies. The version is left unspecified so the latest is installed.
