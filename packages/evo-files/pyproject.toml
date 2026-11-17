@@ -1,7 +1,7 @@
 [project]
 name = "evo-files"
 description = "Python SDK for using the Seequent Evo File API"
-version = "0.2.5"
+version = "0.3.0"
 requires-python = ">=3.11.5"
 license-files = ["LICENSE.md"]
 dynamic = ["readme"]
@@ -10,7 +10,7 @@ authors = [
 ]
 
 dependencies = [
-    "evo-sdk-common>=0.5.33",
+    "evo-sdk-common>=0.6.0",
     "pydantic>=2,<3",
 ]
 
@@ -21,8 +21,8 @@ Homepage = "https://www.seequent.com/"
 Documentation = "https://developer.seequent.com/"
 
 [project.optional-dependencies]
-aiohttp = ["evo-sdk-common[aiohttp]>=0.5.33"]
-notebooks = ["evo-sdk-common[notebooks]>=0.5.33"]
+aiohttp = ["evo-sdk-common[aiohttp]>=0.6.0"]
+notebooks = ["evo-sdk-common[notebooks]>=0.6.0"]
 
 [dependency-groups]
 # Dev dependencies. The version is left unspecified so the latest is installed.

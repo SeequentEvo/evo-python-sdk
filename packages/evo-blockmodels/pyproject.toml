@@ -1,7 +1,7 @@
 [project]
 name = "evo-blockmodels"
 description = "Python SDK for using the Seequent Evo Geoscience Block Model API"
-version = "0.9.1"
+version = "0.10.0"
 requires-python = ">=3.11.5"
 license-files = ["LICENSE.md"]
 dynamic = ["readme"]
@@ -10,7 +10,7 @@ authors = [
 ]
 
 dependencies = [
-    "evo-sdk-common>=0.5.33",
+    "evo-sdk-common>=0.6.0",
     "pydantic>=2,<3",
 ]
 
@@ -22,8 +22,8 @@ Documentation = "https://developer.seequent.com/"
 
 [project.optional-dependencies]
 utils = ["pyarrow>=19.0.0", "pandas>=2.0.0"]
-aiohttp = ["evo-sdk-common[aiohttp]>=0.5.33"]
-notebooks = ["evo-sdk-common[notebooks]>=0.5.33"]
+aiohttp = ["evo-sdk-common[aiohttp]>=0.6.0"]
+notebooks = ["evo-sdk-common[notebooks]>=0.6.0"]
 
 [dependency-groups]
 # Dev dependencies. The version is left unspecified so the latest is installed.

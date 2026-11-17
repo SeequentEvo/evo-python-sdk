@@ -815,7 +815,7 @@ wheels = [
 
 [[package]]
 name = "evo-blockmodels"
-version = "0.9.1"
+version = "0.10.0"
 source = { editable = "packages/evo-blockmodels" }
 dependencies = [
     { name = "evo-sdk-common" },
@@ -886,7 +886,7 @@ test = [
 
 [[package]]
 name = "evo-colormaps"
-version = "0.0.4"
+version = "0.1.0"
 source = { editable = "packages/evo-colormaps" }
 dependencies = [
     { name = "evo-sdk-common" },
@@ -950,7 +950,7 @@ test = [
 
 [[package]]
 name = "evo-compute"
-version = "0.0.8"
+version = "0.1.0"
 source = { editable = "packages/evo-compute" }
 dependencies = [
     { name = "evo-blockmodels", extra = ["utils"] },
@@ -1013,7 +1013,7 @@ test = [
 
 [[package]]
 name = "evo-files"
-version = "0.2.5"
+version = "0.3.0"
 source = { editable = "packages/evo-files" }
 dependencies = [
     { name = "evo-sdk-common" },
@@ -1077,7 +1077,7 @@ test = [
 
 [[package]]
 name = "evo-objects"
-version = "0.6.7"
+version = "0.7.0"
 source = { editable = "packages/evo-objects" }
 dependencies = [
     { name = "evo-sdk-common", extra = ["jmespath"] },
@@ -1160,7 +1160,7 @@ test = [
 
 [[package]]
 name = "evo-sdk"
-version = "0.2.4"
+version = "0.3.0"
 source = { editable = "." }
 dependencies = [
     { name = "authlib" },
@@ -1231,7 +1231,7 @@ test = [
 
 [[package]]
 name = "evo-sdk-common"
-version = "0.5.33"
+version = "0.6.0"
 source = { editable = "packages/evo-sdk-common" }
 dependencies = [
     { name = "pure-interface" },
@@ -1318,7 +1318,7 @@ test = [
 
 [[package]]
 name = "evo-widgets"
-version = "0.2.4"
+version = "0.3.0"
 source = { editable = "packages/evo-widgets" }
 dependencies = [
     { name = "evo-sdk-common" },
