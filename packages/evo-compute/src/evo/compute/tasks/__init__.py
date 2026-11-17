@@ -136,7 +136,7 @@ async def run(
         ...     source=pointset.attributes["grade"],
         ...     target=Target.new_attribute(block_model, "kriged_grade"),
         ...     variogram=variogram,
-        ...     search=SearchNeighborhood(
+        ...     neighborhood=SearchNeighborhood(
         ...         ellipsoid=var_ell.scaled(2.0),
         ...         max_samples=20,
         ...     ),

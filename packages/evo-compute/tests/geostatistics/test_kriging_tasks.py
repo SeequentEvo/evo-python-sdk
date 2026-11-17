@@ -45,9 +45,12 @@ from evo.compute.tasks.common import (
 from evo.compute.tasks.geostatistics.kriging import (
     RECOMMENDED_DIAGNOSTIC_NAMES,
     KrigingDiagnostics,
+    KrigingMethod,
     KrigingParameters,
     KrigingResult,
     KrigingResultModel,
+    OrdinaryKriging,
+    SimpleKriging,
 )
 
 # ---------------------------------------------------------------------------
@@ -1148,17 +1151,49 @@ class TestSearchNeighborhoodAlias(TestCase):
         return KrigingParameters(**defaults)
 
     def test_search_serializes_as_neighborhood_with_by_alias(self):
-        """When by_alias=True, the 'search' field should serialize as 'neighborhood'."""
+        """When by_alias=True, the neighborhood field should serialize as 'neighborhood'."""
         params = self._make_params()
         params_dict = params.model_dump(mode="json", by_alias=True, exclude_none=True)
         self.assertIn("neighborhood", params_dict)
         self.assertNotIn("search", params_dict)
+        self.assertIn("kriging_method", params_dict)
+        self.assertNotIn("method", params_dict)
 
-    def test_search_serializes_as_search_without_by_alias(self):
-        """When by_alias=False (default), the field should serialize as 'search'."""
+    def test_always_serializes_neighborhood_and_kriging_method_without_by_alias(self):
+        """Even when by_alias=False (default), canonical 'neighborhood' and 'kriging_method' keys are emitted."""
         params = self._make_params()
         params_dict = params.model_dump()
-        self.assertIn("search", params_dict)
+        self.assertIn("neighborhood", params_dict)
+        self.assertNotIn("search", params_dict)
+        self.assertIn("kriging_method", params_dict)
+        self.assertNotIn("method", params_dict)
+
+    def test_kriging_method_canonical_and_legacy_alias(self):
+        """KrigingParameters accepts both kriging_method=... and method=... and exposes both attributes."""
+        default_params = self._make_params()
+        self.assertIsInstance(default_params.kriging_method, OrdinaryKriging)
+        self.assertIs(default_params.method, default_params.kriging_method)
+
+        via_canonical = KrigingParameters(
+            source=Source(object=POINTSET_URL, attribute="grade"),
+            target=Target.new_attribute(GRID_URL, "kriged_grade"),
+            variogram=VARIOGRAM_URL,
+            neighborhood=SearchNeighborhood(
+                ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=100, semi_major=100, minor=50)),
+                max_samples=20,
+            ),
+            kriging_method=KrigingMethod.simple(mean=42.5),
+        )
+        self.assertIsInstance(via_canonical.kriging_method, SimpleKriging)
+        self.assertEqual(via_canonical.kriging_method.mean, 42.5)
+        self.assertIs(via_canonical.method, via_canonical.kriging_method)
+        self.assertEqual(via_canonical.model_dump()["kriging_method"], {"type": "simple", "mean": 42.5})
+
+        via_legacy = self._make_params(method=KrigingMethod.simple(mean=12.0))
+        self.assertIsInstance(via_legacy.kriging_method, SimpleKriging)
+        self.assertEqual(via_legacy.method.mean, 12.0)
+        self.assertIs(via_legacy.method, via_legacy.kriging_method)
+        self.assertEqual(via_legacy.model_dump()["kriging_method"], {"type": "simple", "mean": 12.0})
 
     def test_search_limits_are_sent_in_the_neighborhood(self):
         search = SearchNeighborhood(
@@ -1195,7 +1230,8 @@ class TestSearchNeighborhoodAlias(TestCase):
     def test_can_construct_with_field_name_search(self):
         """Users should be able to construct KrigingParameters with search=..."""
         params = self._make_params()
-        self.assertIsNotNone(params.search)
+        self.assertIsNotNone(params.neighborhood)
+        self.assertIs(params.search, params.neighborhood)
 
     def test_can_construct_with_alias_neighborhood(self):
         """Users should also be able to construct with neighborhood=..."""
@@ -1209,7 +1245,8 @@ class TestSearchNeighborhoodAlias(TestCase):
             variogram=VARIOGRAM_URL,
             neighborhood=search,
         )
-        self.assertIsNotNone(params.search)
+        self.assertIs(params.neighborhood, search)
+        self.assertIs(params.search, search)
 
     def test_sample_limit_boundaries_in_neighborhood(self):
         ellipsoid = Ellipsoid(ranges=EllipsoidRanges(major=100, semi_major=100, minor=50))
