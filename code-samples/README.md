@@ -5,7 +5,7 @@ Welcome to the Evo Python SDK code samples! This directory contains comprehensiv
 ## 📋 Prerequisites
 
 - **Evo app**: You need a [registered app](https://developer.seequent.com/my-apps)
-- **Python**: Version 3.10 or higher
+- **Python**: Version 3.11.5 or higher
 - **Jupyter Environment**: JupyterLab, VS Code, or another Jupyter notebook editor
 
 ## 🚀 Quick start
@@ -269,7 +269,7 @@ Advanced file processing:
 
 If you encounter issues:
 1. Check that you've completed the authentication setup.
-2. Verify your Python version (3.10+).
+2. Verify your Python version (3.11.5+).
 3. Ensure all requirements are installed.
 4. Visit the [Seequent Community](https://community.seequent.com/group/19-evo) for support.
 5. Check the [GitHub issues](https://github.com/SeequentEvo/evo-python-sdk/issues) for known problems.

@@ -4,7 +4,7 @@ This script uploads all CSV files from a specified directory to an Evo workspace
 
 ## Prerequisites
 
-- Python 3.10+
+- Python 3.11.5+
 - The following Python packages:
   - `python-dotenv`
   - `evo-sdk-common`

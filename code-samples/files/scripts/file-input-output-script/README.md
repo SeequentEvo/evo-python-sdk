@@ -4,7 +4,7 @@ This script downloads a CSV file from an Evo workspace, allows you to process it
 
 ## Prerequisites
 
-- Python 3.10+
+- Python 3.11.5+
 - The following Python packages:
   - `python-dotenv`
   - `requests`
