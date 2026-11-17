@@ -150,11 +150,11 @@ class SearchNeighborhood(BaseModel):
     The search neighborhood is defined by an ellipsoid (spatial extent and
     orientation) and constraints on the number of samples to use.
 
-    Kriging, IDW, KNN and declustering can further limit the samples by octant,
-    quadrant and drillhole (``max_samples_per_drillhole`` and ``max_drillholes``).
-    Kriging additionally supports ``min_drillholes`` and non-global
-    ``drillhole_limit_scope``. The other tasks do not support these limits and
-    refuse a neighborhood that sets them.
+    Kriging, IDW, KNN, cross-validation and declustering can further limit the
+    samples by octant, quadrant and drillhole (``max_samples_per_drillhole`` and
+    ``max_drillholes``). Kriging additionally supports ``min_drillholes`` and
+    non-global ``drillhole_limit_scope``. The other tasks do not support these
+    limits and refuse a neighborhood that sets them.
 
     Example::
 
@@ -350,7 +350,8 @@ def _reject_sector_and_drillhole_limits(neighborhood: SearchNeighborhood) -> Sea
     if limits:
         raise ValueError(
             f"This task does not support {', '.join(limits)}. "
-            "Octant, quadrant and drillhole limits are only available for kriging, IDW, KNN and declustering."
+            "Octant, quadrant and drillhole limits are only available for kriging, IDW, KNN, cross-validation "
+            "and declustering."
         )
     return neighborhood
 

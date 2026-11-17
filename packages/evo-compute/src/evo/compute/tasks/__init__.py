@@ -67,6 +67,9 @@ from .common.runner import TParams, TResult
 # Break Ties-specific result types
 from .geostatistics.break_ties import BreakTiesResult
 
+# Cross-Validation result types
+from .geostatistics.cross_validation import CrossValidationResult
+
 # Declustering result types
 from .geostatistics.declustering import DeclusteringResult
 
@@ -177,6 +180,7 @@ __all__ = [
     "BlockDiscretization",
     "BreakTiesResult",
     "CreateAttribute",
+    "CrossValidationResult",
     "DeclusteringResult",
     "Ellipsoid",
     "EllipsoidRanges",

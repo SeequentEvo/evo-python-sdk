@@ -16,6 +16,7 @@ This package groups all geostatistics-topic compute tasks:
 - **kriging** — Kriging interpolation
 - **knn** — K-nearest neighbour estimation
 - **idw** — Inverse distance weighting estimation
+- **cross_validation** — Cross-validation for kriging, KNN, and IDW
 - **break_ties** — Spatial tie-breaking
 - **conditioned_simulator** — Conditional turning-band simulation
 - **conditional_turning_bands** — Conditional turning-band simulation (pre-computed distribution)
@@ -42,6 +43,7 @@ from . import break_ties as _break_ties_module  # noqa: F401
 from . import conditional_turning_bands as _conditional_turning_bands_module  # noqa: F401
 from . import conditioned_simulator as _conditioned_simulator_module  # noqa: F401
 from . import continuous_distribution as _continuous_distribution_module  # noqa: F401
+from . import cross_validation as _cross_validation_module  # noqa: F401
 from . import declustering as _declustering_module  # noqa: F401
 from . import idw as _idw_module  # noqa: F401
 from . import knn as _knn_module  # noqa: F401
@@ -53,6 +55,7 @@ from . import profit_calculation as _profit_calculation_module  # noqa: F401
 from . import simulation_report as _simulation_report_module  # noqa: F401
 from .break_ties import BreakTiesResult
 from .conditional_turning_bands import ConditionalTurningBandsResult
+from .cross_validation import CrossValidationResult
 from .declustering import DeclusteringResult
 from .idw import IDWResult
 from .knn import KNNResult
@@ -68,6 +71,7 @@ __all__ = [
     "BlockDiscretization",
     "BreakTiesResult",
     "ConditionalTurningBandsResult",
+    "CrossValidationResult",
     "DeclusteringResult",
     "Filter",
     "IDWResult",
