@@ -62,13 +62,13 @@ from ..common import (
     CreateAttribute,
     Filter,
     GeoscienceObjectReference,
-    SearchNeighborhood,
     UpdateAttribute,
     attribute_spec,
 )
 from ..common.results import TaskAttribute, TaskTarget
 from ..common.runner import TaskRunner
 from ..common.source_target import AnyTypedAttribute
+from .search import SearchNeighborhood
 
 __all__ = [
     # Kriging-specific (users import from evo.compute.tasks.kriging)
