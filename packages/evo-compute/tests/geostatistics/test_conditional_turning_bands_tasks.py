@@ -14,11 +14,12 @@
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
 from evo.objects import ObjectReference
 from evo.objects.typed.attributes import Attribute, BlockModelAttribute, PendingAttribute
 from pydantic import ValidationError
 
-from evo.compute.tasks import SearchNeighborhood
+from evo.compute.tasks import SearchNeighborhood, SimpleSearchNeighborhood
 from evo.compute.tasks.common import (
     AllOfFilter,
     AnyOfFilter,
@@ -144,77 +145,77 @@ class TestBlockDiscretization(unittest.TestCase):
 # ---------------------------------------------------------------------------
 
 
-class TestConditionalTurningBandsParametersSerialization(unittest.TestCase):
+class TestConditionalTurningBandsParametersSerialization:
     def test_required_fields_present(self):
-        d = _dump(_params())
-        self.assertEqual(d["source"], POINTSET_URL)
-        self.assertEqual(d["source_attribute"], "locations.attributes[?name=='grade']")
-        self.assertEqual(d["target"], GRID_URL)
-        self.assertEqual(d["distribution"], DISTRIBUTION_URL)
-        self.assertEqual(d["variogram_model"], VARIOGRAM_URL)
+        params = _params()
+        assert type(params.neighborhood) is SimpleSearchNeighborhood
+        d = _dump(params)
+        assert d["source"] == POINTSET_URL
+        assert d["source_attribute"] == "locations.attributes[?name=='grade']"
+        assert d["target"] == GRID_URL
+        assert d["distribution"] == DISTRIBUTION_URL
+        assert d["variogram_model"] == VARIOGRAM_URL
 
     def test_defaults(self):
         d = _dump(_params())
-        self.assertEqual(d["kriging_method"], "simple")
-        self.assertEqual(d["number_of_lines"], 500)
-        self.assertEqual(d["realizations"], 1)
-        self.assertEqual(d["random_seed"], 38239342)
+        assert d["kriging_method"] == "simple"
+        assert d["number_of_lines"] == 500
+        assert d["realizations"] == 1
+        assert d["random_seed"] == 38239342
 
     def test_block_discretization_default(self):
         d = _dump(_params())
         bd = d["block_discretization"]
-        self.assertEqual(bd["nx"], 1)
-        self.assertEqual(bd["ny"], 1)
-        self.assertEqual(bd["nz"], 1)
+        assert bd["nx"] == 1
+        assert bd["ny"] == 1
+        assert bd["nz"] == 1
 
     def test_block_discretization_custom(self):
         d = _dump(_params(block_discretization=BlockDiscretization(nx=5, ny=5, nz=3)))
         bd = d["block_discretization"]
-        self.assertEqual(bd["nx"], 5)
-        self.assertEqual(bd["nz"], 3)
+        assert bd["nx"] == 5
+        assert bd["nz"] == 3
 
     def test_custom_realizations(self):
         d = _dump(_params(realizations=10))
-        self.assertEqual(d["realizations"], 10)
+        assert d["realizations"] == 10
 
     def test_custom_number_of_lines(self):
         d = _dump(_params(number_of_lines=250))
-        self.assertEqual(d["number_of_lines"], 250)
+        assert d["number_of_lines"] == 250
 
     def test_ordinary_kriging_method(self):
         d = _dump(_params(kriging_method="ordinary"))
-        self.assertEqual(d["kriging_method"], "ordinary")
+        assert d["kriging_method"] == "ordinary"
 
-    def test_realizations_out_of_range_rejected(self):
-        with self.assertRaises(ValidationError):
-            _params(realizations=0)
-        with self.assertRaises(ValidationError):
-            _params(realizations=101)
+    @pytest.mark.parametrize("realizations", [0, 101])
+    def test_realizations_out_of_range_rejected(self, realizations: int):
+        with pytest.raises(ValidationError):
+            _params(realizations=realizations)
 
-    def test_number_of_lines_out_of_range_rejected(self):
-        with self.assertRaises(ValidationError):
-            _params(number_of_lines=0)
-        with self.assertRaises(ValidationError):
-            _params(number_of_lines=1001)
+    @pytest.mark.parametrize("number_of_lines", [0, 1001])
+    def test_number_of_lines_out_of_range_rejected(self, number_of_lines: int):
+        with pytest.raises(ValidationError):
+            _params(number_of_lines=number_of_lines)
 
-    def test_search_limits_are_refused(self):
+    @pytest.mark.parametrize(
+        ("kwargs", "expected_field"),
+        [
+            ({"max_empty_octants": 2}, "max_empty_octants"),
+            ({"max_drillholes": 4}, "max_drillholes"),
+            ({"min_drillholes": 2}, "min_drillholes"),
+            ({"max_samples_per_drillhole": 2, "drillhole_limit_scope": "quadrant"}, "drillhole_limit_scope"),
+        ],
+    )
+    def test_search_limits_are_refused(self, kwargs: dict, expected_field: str):
         ellipsoid = Ellipsoid(ranges=EllipsoidRanges(major=70, semi_major=70, minor=5))
-        for kwargs, expected in [
-            ({"max_empty_octants": 2}, "does not support max_empty_octants"),
-            ({"max_drillholes": 4}, "does not support max_drillholes"),
-            ({"min_drillholes": 2}, "does not support min_drillholes"),
-            (
-                {"max_samples_per_drillhole": 2, "drillhole_limit_scope": "quadrant"},
-                "does not support max_samples_per_drillhole, drillhole_limit_scope",
-            ),
-        ]:
-            with self.subTest(**kwargs), self.assertRaisesRegex(ValidationError, expected):
-                _params(neighborhood=SearchNeighborhood(ellipsoid=ellipsoid, max_samples=40, **kwargs))
+        with pytest.raises(ValidationError, match=expected_field):
+            _params(neighborhood=SearchNeighborhood(ellipsoid=ellipsoid, max_samples=40, **kwargs))
 
     def test_no_filters_by_default(self):
         d = _dump(_params())
-        self.assertNotIn("filter", d)
-        self.assertNotIn("source_filter", d)
+        assert "filter" not in d
+        assert "source_filter" not in d
 
     def test_target_filter_single_condition(self):
         params = _params(
@@ -228,9 +229,9 @@ class TestConditionalTurningBandsParametersSerialization(unittest.TestCase):
         )
         d = _dump(params)
         where = d["filter"]["where"]
-        self.assertEqual(where["type"], "condition")
-        self.assertEqual(where["operator"], "in")
-        self.assertEqual(where["values"], ["LMS1", "LMS2"])
+        assert where["type"] == "condition"
+        assert where["operator"] == "in"
+        assert where["values"] == ["LMS1", "LMS2"]
 
     def test_source_filter_numeric_condition(self):
         params = _params(
@@ -244,8 +245,8 @@ class TestConditionalTurningBandsParametersSerialization(unittest.TestCase):
         )
         d = _dump(params)
         where = d["source_filter"]["where"]
-        self.assertEqual(where["operator"], "greater_than")
-        self.assertEqual(where["threshold"], 0.5)
+        assert where["operator"] == "greater_than"
+        assert where["threshold"] == 0.5
 
     def test_composite_all_of_filter(self):
         params = _params(
@@ -268,8 +269,8 @@ class TestConditionalTurningBandsParametersSerialization(unittest.TestCase):
         )
         d = _dump(params)
         where = d["filter"]["where"]
-        self.assertEqual(where["type"], "all_of")
-        self.assertEqual(len(where["filters"]), 2)
+        assert where["type"] == "all_of"
+        assert len(where["filters"]) == 2
 
     def test_composite_any_of_filter(self):
         params = _params(
@@ -292,7 +293,7 @@ class TestConditionalTurningBandsParametersSerialization(unittest.TestCase):
         )
         d = _dump(params)
         where = d["source_filter"]["where"]
-        self.assertEqual(where["type"], "any_of")
+        assert where["type"] == "any_of"
 
     def test_both_filter_and_source_filter(self):
         params = _params(
@@ -312,8 +313,8 @@ class TestConditionalTurningBandsParametersSerialization(unittest.TestCase):
             ),
         )
         d = _dump(params)
-        self.assertIn("filter", d)
-        self.assertIn("source_filter", d)
+        assert "filter" in d
+        assert "source_filter" in d
 
 
 # ---------------------------------------------------------------------------

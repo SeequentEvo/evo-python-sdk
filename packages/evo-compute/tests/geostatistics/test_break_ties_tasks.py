@@ -14,6 +14,7 @@
 from unittest import IsolatedAsyncioTestCase, TestCase
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
 from evo.objects import ObjectReference
 from evo.objects.typed.attributes import BlockModelPendingAttribute, PendingAttribute
 from pydantic import ValidationError
@@ -21,6 +22,7 @@ from pydantic import ValidationError
 from evo.compute.tasks import (
     CreateAttribute,
     SearchNeighborhood,
+    SimpleSearchNeighborhood,
     Source,
     Target,
     UpdateAttribute,
@@ -105,7 +107,7 @@ class TestBreakTiesRegistration(TestCase):
 # ---------------------------------------------------------------------------
 
 
-class TestBreakTiesParametersSerialization(TestCase):
+class TestBreakTiesParametersSerialization:
     def _params(self, **kwargs) -> BreakTiesParameters:
         defaults = dict(
             source=Source(object=POINTSET_URL, attribute="locations.attributes[?name=='grade']"),
@@ -120,14 +122,14 @@ class TestBreakTiesParametersSerialization(TestCase):
 
     def test_source_serializes_correctly(self):
         d = self._dump(self._params())
-        self.assertEqual(d["source"]["object"], POINTSET_URL)
-        self.assertEqual(d["source"]["attribute"], "locations.attributes[?name=='grade']")
+        assert d["source"]["object"] == POINTSET_URL
+        assert d["source"]["attribute"] == "locations.attributes[?name=='grade']"
 
     def test_target_create_serializes_correctly(self):
         d = self._dump(self._params())
-        self.assertEqual(d["target"]["object"], TARGET_URL)
-        self.assertEqual(d["target"]["attribute"]["operation"], "create")
-        self.assertEqual(d["target"]["attribute"]["name"], "grade_bt")
+        assert d["target"]["object"] == TARGET_URL
+        assert d["target"]["attribute"]["operation"] == "create"
+        assert d["target"]["attribute"]["name"] == "grade_bt"
 
     def test_target_update_serializes_correctly(self):
         params = self._params(
@@ -136,37 +138,43 @@ class TestBreakTiesParametersSerialization(TestCase):
             )
         )
         d = self._dump(params)
-        self.assertEqual(d["target"]["attribute"]["operation"], "update")
-        self.assertEqual(d["target"]["attribute"]["reference"], "locations.attributes[?name=='grade']")
+        assert d["target"]["attribute"]["operation"] == "update"
+        assert d["target"]["attribute"]["reference"] == "locations.attributes[?name=='grade']"
 
-    def test_neighborhood_serializes_correctly(self):
-        d = self._dump(self._params())
+    def test_neighborhood_serializes_and_describes_simple_wire_schema(self):
+        params = self._params()
+        assert type(params.neighborhood) is SimpleSearchNeighborhood
+        d = self._dump(params)
         nbh = d["neighborhood"]
-        self.assertIn("ellipsoid", nbh)
-        self.assertEqual(nbh["max_samples"], 20)
+        assert "ellipsoid" in nbh
+        assert nbh["max_samples"] == 20
         ellipsoid = nbh["ellipsoid"]
-        self.assertEqual(ellipsoid["ellipsoid_ranges"]["major"], 200.0)
-        self.assertEqual(ellipsoid["ellipsoid_ranges"]["semi_major"], 150.0)
-        self.assertEqual(ellipsoid["ellipsoid_ranges"]["minor"], 100.0)
+        assert ellipsoid["ellipsoid_ranges"]["major"] == 200.0
+        assert ellipsoid["ellipsoid_ranges"]["semi_major"] == 150.0
+        assert ellipsoid["ellipsoid_ranges"]["minor"] == 100.0
+
+        schema = BreakTiesParameters.model_json_schema()
+        nbh_schema = schema["$defs"]["SimpleSearchNeighborhood"]
+        assert set(nbh_schema["properties"]) == {"ellipsoid", "max_samples", "min_samples"}
 
     def test_min_samples_included_when_set(self):
         params = self._params(
-            neighborhood=SearchNeighborhood(
+            neighborhood=SimpleSearchNeighborhood(
                 ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=200, semi_major=150, minor=100)),
                 max_samples=20,
                 min_samples=4,
             )
         )
         d = self._dump(params)
-        self.assertEqual(d["neighborhood"]["min_samples"], 4)
+        assert d["neighborhood"]["min_samples"] == 4
 
     def test_min_samples_absent_when_not_set(self):
         d = self._dump(self._params())
-        self.assertNotIn("min_samples", d["neighborhood"])
+        assert "min_samples" not in d["neighborhood"]
 
-    def test_search_limits_are_refused(self):
+    def test_disabled_drillhole_defaults_on_search_neighborhood_are_accepted(self):
         ellipsoid = Ellipsoid(ranges=EllipsoidRanges(major=200, semi_major=150, minor=100))
-        dumped_defaults = self._dump(
+        dumped = self._dump(
             self._params(
                 neighborhood=SearchNeighborhood(
                     ellipsoid=ellipsoid,
@@ -176,32 +184,33 @@ class TestBreakTiesParametersSerialization(TestCase):
                 )
             )
         )
-        self.assertNotIn("min_drillholes", dumped_defaults["neighborhood"])
-        self.assertNotIn("drillhole_limit_scope", dumped_defaults["neighborhood"])
+        assert set(dumped["neighborhood"]) == {"ellipsoid", "max_samples"}
 
-        for kwargs, expected in [
-            ({"max_drillholes": 4}, "does not support max_drillholes"),
-            ({"max_drillholes_per_estimate": 4}, "does not support max_drillholes"),
-            ({"min_drillholes": 2}, "does not support min_drillholes"),
-            (
-                {"max_samples_per_drillhole": 2, "drillhole_limit_scope": "quadrant"},
-                "does not support max_samples_per_drillhole, drillhole_limit_scope",
-            ),
-        ]:
-            with self.subTest(**kwargs), self.assertRaisesRegex(ValidationError, expected):
-                self._params(neighborhood=SearchNeighborhood(ellipsoid=ellipsoid, max_samples=20, **kwargs))
+    @pytest.mark.parametrize(
+        ("kwargs", "expected_field"),
+        [
+            ({"max_drillholes": 4}, "max_drillholes"),
+            ({"max_drillholes_per_estimate": 4}, "max_drillholes"),
+            ({"min_drillholes": 2}, "min_drillholes"),
+            ({"max_samples_per_drillhole": 2, "drillhole_limit_scope": "quadrant"}, "drillhole_limit_scope"),
+        ],
+    )
+    def test_search_limits_are_refused(self, kwargs: dict, expected_field: str):
+        ellipsoid = Ellipsoid(ranges=EllipsoidRanges(major=200, semi_major=150, minor=100))
+        with pytest.raises(ValidationError, match=expected_field):
+            self._params(neighborhood=SearchNeighborhood(ellipsoid=ellipsoid, max_samples=20, **kwargs))
 
     def test_default_seed(self):
         d = self._dump(self._params())
-        self.assertEqual(d["seed"], 38239342)
+        assert d["seed"] == 38239342
 
     def test_custom_seed(self):
         d = self._dump(self._params(seed=12345))
-        self.assertEqual(d["seed"], 12345)
+        assert d["seed"] == 12345
 
     def test_neighborhood_with_rotation(self):
         params = self._params(
-            neighborhood=SearchNeighborhood(
+            neighborhood=SimpleSearchNeighborhood(
                 ellipsoid=Ellipsoid(
                     ranges=EllipsoidRanges(major=300, semi_major=200, minor=100),
                     rotation=Rotation(dip_azimuth=45.0, dip=30.0, pitch=0.0),
@@ -211,8 +220,8 @@ class TestBreakTiesParametersSerialization(TestCase):
         )
         d = self._dump(params)
         rotation = d["neighborhood"]["ellipsoid"]["rotation"]
-        self.assertEqual(rotation["dip_azimuth"], 45.0)
-        self.assertEqual(rotation["dip"], 30.0)
+        assert rotation["dip_azimuth"] == 45.0
+        assert rotation["dip"] == 30.0
 
     def test_pending_attribute_target(self):
         mock_obj = MagicMock()
@@ -223,9 +232,9 @@ class TestBreakTiesParametersSerialization(TestCase):
 
         params = self._params(target=pending)
         d = self._dump(params)
-        self.assertEqual(d["target"]["object"], TARGET_URL)
-        self.assertEqual(d["target"]["attribute"]["operation"], "create")
-        self.assertEqual(d["target"]["attribute"]["name"], "new_grade_bt")
+        assert d["target"]["object"] == TARGET_URL
+        assert d["target"]["attribute"]["operation"] == "create"
+        assert d["target"]["attribute"]["name"] == "new_grade_bt"
 
     def test_block_model_pending_attribute_target(self):
         mock_bm = MagicMock()
@@ -234,8 +243,8 @@ class TestBreakTiesParametersSerialization(TestCase):
 
         params = self._params(target=bm_pending)
         d = self._dump(params)
-        self.assertEqual(d["target"]["attribute"]["operation"], "create")
-        self.assertEqual(d["target"]["attribute"]["name"], "bt_attr")
+        assert d["target"]["attribute"]["operation"] == "create"
+        assert d["target"]["attribute"]["name"] == "bt_attr"
 
 
 # ---------------------------------------------------------------------------

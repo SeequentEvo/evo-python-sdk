@@ -14,6 +14,7 @@
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
 from pydantic import ValidationError
 
 from evo.compute.tasks import SearchNeighborhood
@@ -110,19 +111,19 @@ class TestKNNRegistration(unittest.TestCase):
 # ---------------------------------------------------------------------------
 
 
-class TestKNNParametersSerialization(unittest.TestCase):
+class TestKNNParametersSerialization:
     def test_basic_fields_present(self):
         d = _dump(_params())
-        self.assertEqual(d["source"]["object"], POINTSET_URL)
-        self.assertEqual(d["source"]["attribute"], "locations.attributes[?name=='grade']")
-        self.assertEqual(d["target"]["object"], GRID_URL)
-        self.assertIn("neighborhood", d)
+        assert d["source"]["object"] == POINTSET_URL
+        assert d["source"]["attribute"] == "locations.attributes[?name=='grade']"
+        assert d["target"]["object"] == GRID_URL
+        assert "neighborhood" in d
 
     def test_neighborhood_fields(self):
         d = _dump(_params())
         nbr = d["neighborhood"]
-        self.assertIn("ellipsoid", nbr)
-        self.assertEqual(nbr["max_samples"], 20)
+        assert "ellipsoid" in nbr
+        assert nbr["max_samples"] == 20
 
     def test_search_limits_in_neighborhood(self):
         search = SearchNeighborhood(
@@ -130,57 +131,59 @@ class TestKNNParametersSerialization(unittest.TestCase):
             max_samples=20,
             max_empty_octants=2,
             max_samples_per_quadrant=5,
+            max_samples_per_drillhole=2,
             max_drillholes=4,
+            min_drillholes=2,
+            drillhole_limit_scope="octant",
+        )
+        d = _dump(_params(neighborhood=search))
+        assert d["neighborhood"]["max_empty_octants"] == 2
+        assert d["neighborhood"]["max_samples_per_quadrant"] == 5
+        assert d["neighborhood"]["max_samples_per_drillhole"] == 2
+        assert d["neighborhood"]["max_drillholes"] == 4
+        assert d["neighborhood"]["min_drillholes"] == 2
+        assert d["neighborhood"]["drillhole_limit_scope"] == "octant"
+
+        defaults = SearchNeighborhood(
+            ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=200, semi_major=150, minor=100)),
+            max_samples=20,
             min_drillholes=0,
             drillhole_limit_scope="global",
         )
-        d = _dump(_params(neighborhood=search))
-        self.assertEqual(d["neighborhood"]["max_empty_octants"], 2)
-        self.assertEqual(d["neighborhood"]["max_samples_per_quadrant"], 5)
-        self.assertEqual(d["neighborhood"]["max_drillholes"], 4)
-        self.assertNotIn("min_drillholes", d["neighborhood"])
-        self.assertNotIn("drillhole_limit_scope", d["neighborhood"])
+        d_defaults = _dump(_params(neighborhood=defaults))
+        assert "min_drillholes" not in d_defaults["neighborhood"]
+        assert "drillhole_limit_scope" not in d_defaults["neighborhood"]
 
-    def test_kriging_only_drillhole_limits_rejected(self):
+    @pytest.mark.parametrize(("max_samples", "min_samples"), [(1, 1), (20, 1), (20, 20)])
+    def test_sample_limit_boundaries_in_neighborhood(self, max_samples: int, min_samples: int):
         ellipsoid = Ellipsoid(ranges=EllipsoidRanges(major=200, semi_major=150, minor=100))
-        for limits in [
-            {"min_drillholes": 2},
-            {"max_samples_per_drillhole": 2, "drillhole_limit_scope": "quadrant"},
-            {"max_samples_per_drillhole": 2, "drillhole_limit_scope": "octant"},
-        ]:
-            with self.subTest(**limits), self.assertRaisesRegex(ValidationError, "only supported by Kriging"):
-                _params(neighborhood=SearchNeighborhood(ellipsoid=ellipsoid, max_samples=20, **limits))
+        d_single = _dump(_params(neighborhood={"ellipsoid": ellipsoid, "max_samples": 1}))
+        assert d_single["neighborhood"]["max_samples"] == 1
+        assert "min_samples" not in d_single["neighborhood"]
 
-    def test_sample_limit_boundaries_in_neighborhood(self):
-        ellipsoid = Ellipsoid(ranges=EllipsoidRanges(major=200, semi_major=150, minor=100))
-        d = _dump(_params(neighborhood={"ellipsoid": ellipsoid, "max_samples": 1}))
-        self.assertEqual(d["neighborhood"]["max_samples"], 1)
-        self.assertNotIn("min_samples", d["neighborhood"])
+        d = _dump(
+            _params(neighborhood={"ellipsoid": ellipsoid, "max_samples": max_samples, "min_samples": min_samples})
+        )
+        assert d["neighborhood"]["max_samples"] == max_samples
+        assert d["neighborhood"]["min_samples"] == min_samples
 
-        for max_samples, min_samples in [(1, 1), (20, 1), (20, 20)]:
-            with self.subTest(max_samples=max_samples, min_samples=min_samples):
-                d = _dump(
-                    _params(
-                        neighborhood={"ellipsoid": ellipsoid, "max_samples": max_samples, "min_samples": min_samples}
-                    )
-                )
-                self.assertEqual(d["neighborhood"]["max_samples"], max_samples)
-                self.assertEqual(d["neighborhood"]["min_samples"], min_samples)
-
-    def test_invalid_sample_limits_rejected(self):
-        ellipsoid = Ellipsoid(ranges=EllipsoidRanges(major=200, semi_major=150, minor=100))
-        for limits in [
+    @pytest.mark.parametrize(
+        "limits",
+        [
             {"max_samples": 0},
             {"max_samples": 20, "min_samples": 0},
             {"max_samples": 20, "min_samples": 21},
-        ]:
-            with self.subTest(**limits), self.assertRaises(ValidationError):
-                _params(neighborhood={"ellipsoid": ellipsoid, **limits})
+        ],
+    )
+    def test_invalid_sample_limits_rejected(self, limits: dict):
+        ellipsoid = Ellipsoid(ranges=EllipsoidRanges(major=200, semi_major=150, minor=100))
+        with pytest.raises(ValidationError):
+            _params(neighborhood={"ellipsoid": ellipsoid, **limits})
 
     def test_new_attribute_target(self):
         d = _dump(_params(target=Target.new_attribute(GRID_URL, "result")))
-        self.assertEqual(d["target"]["attribute"]["operation"], "create")
-        self.assertEqual(d["target"]["attribute"]["name"], "result")
+        assert d["target"]["attribute"]["operation"] == "create"
+        assert d["target"]["attribute"]["name"] == "result"
 
     def test_update_attribute_target(self):
         from evo.compute.tasks.common.source_target import Target as _Target
@@ -190,13 +193,13 @@ class TestKNNParametersSerialization(unittest.TestCase):
             attribute=UpdateAttribute(operation="update", name="existing", reference="attributes[?key=='abc']"),
         )
         d = _dump(_params(target=target))
-        self.assertEqual(d["target"]["attribute"]["operation"], "update")
-        self.assertEqual(d["target"]["attribute"]["reference"], "attributes[?key=='abc']")
+        assert d["target"]["attribute"]["operation"] == "update"
+        assert d["target"]["attribute"]["reference"] == "attributes[?key=='abc']"
 
     def test_no_filter_by_default(self):
         d = _dump(_params())
-        self.assertNotIn("filter", d.get("target", {}))
-        self.assertNotIn("filter", d.get("source", {}))
+        assert "filter" not in d.get("target", {})
+        assert "filter" not in d.get("source", {})
 
     def test_target_filter_injected_into_target(self):
         params = _params(
@@ -210,10 +213,10 @@ class TestKNNParametersSerialization(unittest.TestCase):
         )
         d = _dump(params)
         f = d["target"]["filter"]
-        self.assertEqual(f["where"]["attribute"], "attributes[?name=='domain']")
-        self.assertEqual(f["where"]["operator"], "in")
-        self.assertEqual(f["where"]["values"], ["LMS1", "LMS2"])
-        self.assertNotIn("filter", d["source"])
+        assert f["where"]["attribute"] == "attributes[?name=='domain']"
+        assert f["where"]["operator"] == "in"
+        assert f["where"]["values"] == ["LMS1", "LMS2"]
+        assert "filter" not in d["source"]
 
     def test_target_filter_with_integer_keys(self):
         params = _params(
@@ -226,7 +229,7 @@ class TestKNNParametersSerialization(unittest.TestCase):
             )
         )
         d = _dump(params)
-        self.assertEqual(d["target"]["filter"]["where"]["values"], [1, 2])
+        assert d["target"]["filter"]["where"]["values"] == [1, 2]
 
     def test_source_filter_injected_into_source(self):
         params = _params(
@@ -236,8 +239,8 @@ class TestKNNParametersSerialization(unittest.TestCase):
         )
         d = _dump(params)
         f = d["source"]["filter"]
-        self.assertEqual(f["where"]["threshold"], 0.0)
-        self.assertNotIn("filter", d["target"])
+        assert f["where"]["threshold"] == 0.0
+        assert "filter" not in d["target"]
 
     def test_filter_excluded_from_top_level(self):
         """source_filter / target_filter must not appear at the top-level; only inside source/target."""
@@ -247,8 +250,8 @@ class TestKNNParametersSerialization(unittest.TestCase):
             )
         )
         d = _dump(params)
-        self.assertNotIn("target_filter", d)
-        self.assertNotIn("source_filter", d)
+        assert "target_filter" not in d
+        assert "source_filter" not in d
 
     def test_source_construct_shorthand(self):
         """Source accepts (object_url, attribute) via Source(...)."""
@@ -259,7 +262,7 @@ class TestKNNParametersSerialization(unittest.TestCase):
             neighborhood=_search(),
         )
         d = _dump(params)
-        self.assertEqual(d["source"]["attribute"], "grade")
+        assert d["source"]["attribute"] == "grade"
 
 
 # ---------------------------------------------------------------------------
