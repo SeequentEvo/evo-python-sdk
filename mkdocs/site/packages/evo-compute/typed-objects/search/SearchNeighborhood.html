@@ -94,11 +94,11 @@
 or estimation. Used by kriging, simulation, and other geostatistical tasks.</p>
 <p>The search neighborhood is defined by an ellipsoid (spatial extent and
 orientation) and constraints on the number of samples to use.</p>
-<p>Kriging, IDW, KNN and declustering can further limit the samples by octant,
-quadrant and drillhole (<code>max_samples_per_drillhole</code> and <code>max_drillholes</code>).
-Kriging additionally supports <code>min_drillholes</code> and non-global
-<code>drillhole_limit_scope</code>. The other tasks do not support these limits and
-refuse a neighborhood that sets them.</p>
+<p>Kriging, IDW, KNN, cross-validation and declustering can further limit the
+samples by octant, quadrant and drillhole (<code>max_samples_per_drillhole</code> and
+<code>max_drillholes</code>). Kriging additionally supports <code>min_drillholes</code> and
+non-global <code>drillhole_limit_scope</code>. The other tasks do not support these
+limits and refuse a neighborhood that sets them.</p>
 <p>Example::</p>
 <pre><code>&gt;&gt;&gt; search = SearchNeighborhood(
 ...     ellipsoid=Ellipsoid(
