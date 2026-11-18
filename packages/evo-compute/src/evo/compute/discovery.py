@@ -96,6 +96,20 @@ class DiscoveryClient:
     def _cache_is_valid(self) -> bool:
         return self._cache_expiry is not None and time.monotonic() < self._cache_expiry
 
+    def peek_tasks(self) -> list[TaskResource]:
+        """Return the cached catalogue without fetching it.
+
+        This is the synchronous counterpart to :meth:`list_tasks`, for callers that can use the
+        catalogue if it is already there (tab-completion, signature help) but must not block or
+        make a request. The result is empty until the first fetch, and empty again once the
+        cache has expired.
+
+        :return: The cached tasks, or an empty list if the cache is unset or expired.
+        """
+        if not self._cache_is_valid():
+            return []
+        return [task.model_copy(deep=True) for task in self._cache]
+
     async def _fetch(self) -> None:
         """Fetch every page of the catalogue and refresh the cache."""
         tasks: list[TaskResource] = []
