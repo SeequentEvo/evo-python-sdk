@@ -11,13 +11,18 @@
 
 from __future__ import annotations
 
+import copy
+from collections.abc import Mapping
 from dataclasses import dataclass
+from functools import singledispatch
 from numbers import Real
 from typing import Annotated, Any, overload
 
 import numpy as np
 import numpy.typing as npt
 import pydantic
+from pydantic.json_schema import JsonSchemaValue
+from pydantic_core import core_schema
 
 # Import basic geometry types from evo.common and re-export
 from evo.common.crs import EpsgCode, parse_crs
@@ -298,6 +303,108 @@ class EllipsoidRanges:
         return cls(*_validate_array_like(value, kind=Real, positive=True))
 
 
+_ELLIPSOID_JSON_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "title": "Ellipsoid",
+    "additionalProperties": False,
+    "required": ["ellipsoid_ranges", "rotation"],
+    "properties": {
+        "ellipsoid_ranges": {
+            "type": "object",
+            "title": "Ellipsoid Ranges",
+            "additionalProperties": False,
+            "required": ["major", "semi_major", "minor"],
+            "properties": {
+                "major": {"type": "number", "exclusiveMinimum": 0, "title": "Major"},
+                "semi_major": {"type": "number", "exclusiveMinimum": 0, "title": "Semi Major"},
+                "minor": {"type": "number", "exclusiveMinimum": 0, "title": "Minor"},
+            },
+        },
+        "rotation": {
+            "type": "object",
+            "title": "Rotation",
+            "additionalProperties": False,
+            "properties": {
+                "dip_azimuth": {"type": "number", "minimum": 0, "maximum": 360, "default": 0, "title": "Dip Azimuth"},
+                "dip": {"type": "number", "minimum": 0, "maximum": 180, "default": 0, "title": "Dip"},
+                "pitch": {"type": "number", "minimum": 0, "maximum": 360, "default": 0, "title": "Pitch"},
+            },
+        },
+    },
+}
+
+
+_UNSET: Any = object()
+
+
+def _build_rotation(*, dip_azimuth: float = 0.0, dip: float = 0.0, pitch: float = 0.0) -> Rotation:
+    return Rotation(dip_azimuth=dip_azimuth, dip=dip, pitch=pitch)
+
+
+def _build_ellipsoid(
+    *,
+    ellipsoid_ranges: Any = _UNSET,
+    ranges: Any = _UNSET,
+    rotation: Any = None,
+) -> Ellipsoid:
+    if ellipsoid_ranges is _UNSET and ranges is _UNSET:
+        raise ValueError("Ellipsoid mapping requires 'ellipsoid_ranges' (or 'ranges').")
+    if ellipsoid_ranges is not _UNSET and ranges is not _UNSET:
+        wire_ranges = _parse_ellipsoid_ranges(ellipsoid_ranges)
+        attr_ranges = _parse_ellipsoid_ranges(ranges)
+        if wire_ranges != attr_ranges:
+            raise ValueError("Conflicting 'ellipsoid_ranges' and 'ranges' values on ellipsoid.")
+        resolved_ranges = wire_ranges
+    elif ellipsoid_ranges is not _UNSET:
+        resolved_ranges = _parse_ellipsoid_ranges(ellipsoid_ranges)
+    else:
+        resolved_ranges = _parse_ellipsoid_ranges(ranges)
+    return Ellipsoid(ranges=resolved_ranges, rotation=_parse_rotation(rotation))
+
+
+@singledispatch
+def _parse_ellipsoid_ranges(raw: Any) -> EllipsoidRanges:
+    try:
+        return EllipsoidRanges.from_array_like(raw)
+    except TypeError as exc:
+        raise ValueError(str(exc)) from exc
+
+
+@_parse_ellipsoid_ranges.register(EllipsoidRanges)
+def _(raw: EllipsoidRanges) -> EllipsoidRanges:
+    return EllipsoidRanges.from_array_like(raw)
+
+
+@_parse_ellipsoid_ranges.register(Mapping)
+def _(raw: Mapping[str, Any]) -> EllipsoidRanges:
+    try:
+        return EllipsoidRanges(**raw)
+    except TypeError as exc:
+        raise ValueError(str(exc)) from exc
+
+
+@singledispatch
+def _parse_rotation(raw: Any) -> Rotation | None:
+    try:
+        return Rotation.from_array_like(raw)
+    except TypeError as exc:
+        raise ValueError(str(exc)) from exc
+
+
+@_parse_rotation.register(type(None))
+@_parse_rotation.register(Rotation)
+def _(raw: Rotation | None) -> Rotation | None:
+    return raw
+
+
+@_parse_rotation.register(Mapping)
+def _(raw: Mapping[str, Any]) -> Rotation:
+    try:
+        return _build_rotation(**raw)
+    except TypeError as exc:
+        raise ValueError(str(exc)) from exc
+
+
 @dataclass
 class Ellipsoid:
     """An ellipsoid defining a spatial region.
@@ -321,7 +428,7 @@ class Ellipsoid:
         rotation: Rotation | FloatArrayLike3 | None = None,
     ):
         self.ranges = EllipsoidRanges.from_array_like(ranges)
-        self._rotation = Rotation.from_array_like(rotation) if rotation is not None else None
+        self._rotation = Rotation.from_array_like(rotation) if rotation is not None else Rotation(0.0, 0.0, 0.0)
 
     @property
     def rotation(self) -> Rotation:
@@ -337,6 +444,40 @@ class Ellipsoid:
                 "pitch": self.rotation.pitch,
             },
         }
+
+    @classmethod
+    def from_dict(cls, data: Mapping[str, Any]) -> Ellipsoid:
+        """Construct an :class:`Ellipsoid` from a wire-shaped mapping.
+
+        Accepts ``ellipsoid_ranges`` (or ``ranges``) and an optional ``rotation``
+        mapping whose omitted angles default to ``0``.
+        """
+        try:
+            return _build_ellipsoid(**data)
+        except TypeError as exc:
+            raise ValueError(str(exc)) from exc
+
+    @classmethod
+    def __get_pydantic_core_schema__(
+        cls, _source_type: Any, _handler: pydantic.GetCoreSchemaHandler
+    ) -> core_schema.CoreSchema:
+        def _validate(value: Any) -> Ellipsoid:
+            if isinstance(value, cls):
+                return value
+            if isinstance(value, Mapping):
+                return cls.from_dict(value)
+            raise ValueError(f"Expected an Ellipsoid or mapping, got {type(value).__name__}.")
+
+        return core_schema.no_info_plain_validator_function(
+            _validate,
+            serialization=core_schema.plain_serializer_function_ser_schema(cls.to_dict),
+        )
+
+    @classmethod
+    def __get_pydantic_json_schema__(
+        cls, _core_schema: core_schema.CoreSchema, _handler: pydantic.GetJsonSchemaHandler
+    ) -> JsonSchemaValue:
+        return copy.deepcopy(_ELLIPSOID_JSON_SCHEMA)
 
     def scaled(self, factor: float) -> "Ellipsoid":
         return Ellipsoid(
