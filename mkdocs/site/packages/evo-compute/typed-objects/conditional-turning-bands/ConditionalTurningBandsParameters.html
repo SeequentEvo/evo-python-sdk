@@ -100,7 +100,7 @@ the target grid, containing one column per realization.</p>
 ...     target=grid,
 ...     distribution=distribution_object,
 ...     variogram_model=variogram,
-...     neighborhood=SearchNeighborhood(
+...     neighborhood=SimpleSearchNeighborhood(
 ...         ellipsoid=Ellipsoid(ranges=EllipsoidRanges(70, 70, 5)),
 ...         max_samples=40,
 ...     ),
@@ -237,7 +237,7 @@ or an attribute expression such as <code>"locations.attributes[?name=='grade']"<
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">neighborhood</span><span class="p">:</span> <span class="n">SearchNeighborhood</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">neighborhood</span><span class="p">:</span> <span class="n">SimpleSearchNeighborhood</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
