@@ -61,7 +61,7 @@ import pandas as pd
 from evo.common import IContext, IFeedback
 from evo.objects import ObjectSchema
 from evo.objects.typed import BaseObject, object_from_reference
-from pydantic import BaseModel, BeforeValidator, Field, SerializerFunctionWrapHandler, model_serializer
+from pydantic import BaseModel, BeforeValidator, Field, SerializerFunctionWrapHandler, field_validator, model_serializer
 
 from ..common import (
     AnyTargetAttribute,
@@ -70,6 +70,7 @@ from ..common import (
 )
 from ..common.results import TaskTarget
 from ..common.runner import TaskRunner
+from ..common.search import _reject_kriging_only_drillhole_limits
 from ..common.source_target import _convert_object_reference
 
 __all__ = [
@@ -170,6 +171,11 @@ class DeclusteringParameters(BaseModel):
 
     Default is ``2.0`` (standard IDW).  Must be positive when provided.
     """
+
+    @field_validator("neighborhood")
+    @classmethod
+    def _check_neighborhood(cls, neighborhood: SearchNeighborhood) -> SearchNeighborhood:
+        return _reject_kriging_only_drillhole_limits(neighborhood)
 
     @model_serializer(mode="wrap")
     def _serialize(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:

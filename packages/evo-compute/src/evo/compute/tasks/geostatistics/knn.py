@@ -40,7 +40,7 @@ import pandas as pd
 from evo.common import IContext, IFeedback
 from evo.objects import ObjectSchema
 from evo.objects.typed import BaseObject, object_from_reference
-from pydantic import BaseModel, Field, SerializerFunctionWrapHandler, model_serializer
+from pydantic import BaseModel, Field, SerializerFunctionWrapHandler, field_validator, model_serializer
 
 from ..common import (
     AnySourceAttribute,
@@ -50,6 +50,7 @@ from ..common import (
 )
 from ..common.results import TaskTarget
 from ..common.runner import TaskRunner
+from ..common.search import _reject_kriging_only_drillhole_limits
 
 __all__ = [
     "KNNParameters",
@@ -121,6 +122,11 @@ class KNNParameters(BaseModel):
     Excluded from top-level serialisation (``exclude=True``) and injected as
     ``target["filter"]`` by the custom serialiser.
     """
+
+    @field_validator("neighborhood")
+    @classmethod
+    def _check_neighborhood(cls, neighborhood: SearchNeighborhood) -> SearchNeighborhood:
+        return _reject_kriging_only_drillhole_limits(neighborhood)
 
     @model_serializer(mode="wrap")
     def _serialize(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:

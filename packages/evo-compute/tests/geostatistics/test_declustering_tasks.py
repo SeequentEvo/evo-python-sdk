@@ -160,10 +160,26 @@ class TestDeclusteringParametersSerialization(TestCase):
             max_samples=20,
             max_samples_per_octant=2,
             max_samples_per_drillhole=3,
+            max_drillholes=5,
+            min_drillholes=0,
+            drillhole_limit_scope="global",
         )
         d = self._dump(self._params(neighborhood=search))
         self.assertEqual(d["neighborhood"]["max_samples_per_octant"], 2)
         self.assertEqual(d["neighborhood"]["max_samples_per_drillhole"], 3)
+        self.assertEqual(d["neighborhood"]["max_drillholes"], 5)
+        self.assertNotIn("min_drillholes", d["neighborhood"])
+        self.assertNotIn("drillhole_limit_scope", d["neighborhood"])
+
+    def test_kriging_only_drillhole_limits_rejected(self):
+        ellipsoid = Ellipsoid(ranges=EllipsoidRanges(major=200, semi_major=150, minor=100))
+        for limits in [
+            {"min_drillholes": 2},
+            {"max_samples_per_drillhole": 2, "drillhole_limit_scope": "quadrant"},
+            {"max_samples_per_drillhole": 2, "drillhole_limit_scope": "octant"},
+        ]:
+            with self.subTest(**limits), self.assertRaisesRegex(ValidationError, "only supported by Kriging"):
+                self._params(neighborhood=SearchNeighborhood(ellipsoid=ellipsoid, max_samples=20, **limits))
 
     def test_default_power_is_idw(self):
         params = self._params()

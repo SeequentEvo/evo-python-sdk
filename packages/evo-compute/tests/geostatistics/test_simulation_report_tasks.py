@@ -142,13 +142,18 @@ class TestSimulationReportParametersSerialization(unittest.TestCase):
         self.assertEqual(d["neighborhood"]["max_samples"], 20)
 
     def test_search_limits_are_refused(self):
-        search = SearchNeighborhood(
-            ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=200.0, semi_major=150.0, minor=100.0)),
-            max_samples=20,
-            max_samples_per_quadrant=4,
-        )
-        with self.assertRaisesRegex(ValidationError, "does not support max_samples_per_quadrant"):
-            _params(neighborhood=search)
+        ellipsoid = Ellipsoid(ranges=EllipsoidRanges(major=200.0, semi_major=150.0, minor=100.0))
+        for kwargs, expected in [
+            ({"max_samples_per_quadrant": 4}, "does not support max_samples_per_quadrant"),
+            ({"max_drillholes": 4}, "does not support max_drillholes"),
+            ({"min_drillholes": 2}, "does not support min_drillholes"),
+            (
+                {"max_samples_per_drillhole": 2, "drillhole_limit_scope": "octant"},
+                "does not support max_samples_per_drillhole, drillhole_limit_scope",
+            ),
+        ]:
+            with self.subTest(**kwargs), self.assertRaisesRegex(ValidationError, expected):
+                _params(neighborhood=SearchNeighborhood(ellipsoid=ellipsoid, max_samples=20, **kwargs))
 
     def test_block_discretization_defaults(self):
         d = _dump(_params())

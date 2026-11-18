@@ -228,11 +228,35 @@ class TestIDWParametersSerialization(unittest.TestCase):
             ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=200, semi_major=150, minor=100)),
             max_samples=20,
             max_empty_quadrants=1,
-            max_drillholes_per_estimate=4,
+            max_drillholes=4,
+            min_drillholes=0,
+            drillhole_limit_scope="global",
         )
         d = _dump(_params(neighborhood=search))
         self.assertEqual(d["neighborhood"]["max_empty_quadrants"], 1)
-        self.assertEqual(d["neighborhood"]["max_drillholes_per_estimate"], 4)
+        self.assertEqual(d["neighborhood"]["max_drillholes"], 4)
+        self.assertNotIn("max_drillholes_per_estimate", d["neighborhood"])
+        self.assertNotIn("min_drillholes", d["neighborhood"])
+        self.assertNotIn("drillhole_limit_scope", d["neighborhood"])
+
+        legacy = SearchNeighborhood(
+            ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=200, semi_major=150, minor=100)),
+            max_samples=20,
+            max_drillholes_per_estimate=4,
+        )
+        d_legacy = _dump(_params(neighborhood=legacy))
+        self.assertEqual(d_legacy["neighborhood"]["max_drillholes"], 4)
+        self.assertNotIn("max_drillholes_per_estimate", d_legacy["neighborhood"])
+
+    def test_kriging_only_drillhole_limits_rejected(self):
+        ellipsoid = Ellipsoid(ranges=EllipsoidRanges(major=200, semi_major=150, minor=100))
+        for limits in [
+            {"min_drillholes": 2},
+            {"max_samples_per_drillhole": 2, "drillhole_limit_scope": "quadrant"},
+            {"max_samples_per_drillhole": 2, "drillhole_limit_scope": "octant"},
+        ]:
+            with self.subTest(**limits), self.assertRaisesRegex(ValidationError, "only supported by Kriging"):
+                _params(neighborhood=SearchNeighborhood(ellipsoid=ellipsoid, max_samples=20, **limits))
 
     def test_sample_limit_boundaries_in_neighborhood(self):
         ellipsoid = Ellipsoid(ranges=EllipsoidRanges(major=200, semi_major=150, minor=100))

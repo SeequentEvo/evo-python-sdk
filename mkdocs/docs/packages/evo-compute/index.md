@@ -19,7 +19,7 @@ params = KrigingParameters(
     source=pointset.attributes["grade"],
     target=block_model.attributes["kriged_grade"],  # Creates if new, updates if exists
     variogram=variogram,
-    search=SearchNeighborhood(
+    neighborhood=SearchNeighborhood(
         ellipsoid=Ellipsoid(ranges=EllipsoidRanges(200, 150, 100)),
         max_samples=20,
     ),
@@ -40,13 +40,13 @@ results = await run(manager, [
         source=pointset.attributes["Au"],
         target=block_model.attributes["Au_kriged"],
         variogram=au_variogram,
-        search=SearchNeighborhood(...),
+        neighborhood=SearchNeighborhood(...),
     ),
     KrigingParameters(
         source=pointset.attributes["Cu"],
         target=block_model.attributes["Cu_kriged"],
         variogram=cu_variogram,
-        search=SearchNeighborhood(...),
+        neighborhood=SearchNeighborhood(...),
     ),
 ], preview=True)
 
@@ -94,7 +94,7 @@ first_result = await run(manager, KrigingParameters(
     source=pointset.attributes["grade"],
     target=block_model.attributes["kriged_grade"],
     variogram=variogram,
-    search=SearchNeighborhood(...),
+    neighborhood=SearchNeighborhood(...),
     target_filter=Filter(
         where=FilterCondition(
             attribute=block_model.attributes["domain"],
@@ -113,7 +113,7 @@ results = await run(manager, [
         source=pointset.attributes["grade"],
         target=block_model.attributes["kriged_grade"],  # Exists → update
         variogram=variogram,
-        search=SearchNeighborhood(...),
+        neighborhood=SearchNeighborhood(...),
         target_filter=Filter(
             where=FilterCondition(
                 attribute=block_model.attributes["domain"],
@@ -126,7 +126,7 @@ results = await run(manager, [
         source=pointset.attributes["grade"],
         target=block_model.attributes["kriged_grade"],  # Exists → update
         variogram=variogram,
-        search=SearchNeighborhood(...),
+        neighborhood=SearchNeighborhood(...),
         target_filter=Filter(
             where=FilterCondition(
                 attribute=block_model.attributes["domain"],
