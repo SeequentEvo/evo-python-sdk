@@ -25,6 +25,17 @@ data, empowering our users to build responsive modern workflows.
 pip install evo-objects
 ```
 
+The base installation supports object operations and low-level data transfers without PyArrow.
+`ObjectAPIClient.prepare_data_upload()` and `prepare_data_download()` return contexts for transferring existing Parquet files. You must create or read the files yourself and provide matching table descriptions when creating objects.
+
+The optional `ObjectDataClient` provides higher-level operations on PyArrow tables without requiring pandas. Its
+DataFrame methods and other pandas-based helpers additionally require pandas. Install the `utils` extra for these
+dependencies:
+
+```shell
+pip install "evo-objects[utils]"
+```
+
 ## Usage
 
 See [the evo-sdk-common documentation](https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-sdk-common/README.md)
