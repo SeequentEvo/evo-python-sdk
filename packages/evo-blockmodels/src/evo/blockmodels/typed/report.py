@@ -83,14 +83,6 @@ __all__ = [
 TRIANGLE_MESH_SUB_CLASSIFICATION = "triangle-mesh"
 
 
-class _Unset:
-    def __repr__(self) -> str:
-        return "UNSET"
-
-
-_UNSET: Any = _Unset()
-
-
 class Aggregation(str, Enum):
     """Aggregation methods for report columns.
 
@@ -698,46 +690,78 @@ class Report:
     async def update(
         self,
         *,
-        name: str = _UNSET,
-        description: str | None = _UNSET,
-        autorun: bool = _UNSET,
-        volume_filter: VolumeFilter | None = _UNSET,
+        name: str | None = None,
+        description: str | None = None,
+        autorun: bool | None = None,
+        volume_filter: VolumeFilter | None = None,
         run_now: bool = False,
         fb: IFeedback = NoFeedback,
     ) -> Report:
         """Update this report specification.
 
         Only the arguments you pass are changed; the rest of the specification is kept.
-        Changing the volume filter creates a new revision of the report.
+        Changing the volume filter creates a new revision of the report. To remove the
+        volume filter, use `remove_volume_filter()`.
 
         :param name: New name for the report.
-        :param description: New description, or None to remove it.
+        :param description: New description for the report.
         :param autorun: Whether to run the report automatically when the block model is updated.
-        :param volume_filter: New volume filter, or None to remove the existing one. Setting a
-            volume filter requires this report to have been created or listed with ``preview=True``.
+        :param volume_filter: New volume filter. Requires this report to have been created or
+            listed with ``preview=True``.
+        :param run_now: Whether to run the report immediately after updating it.
+        :param fb: Optional feedback interface for progress reporting.
+        :return: This report, with the updated specification.
+
+        Example::
+
+            >>> await report.update(
+            ...     volume_filter=VolumeFilter.from_object(mesh, relation=SpatialRelation.OUTSIDE),
+            ... )
+        """
+        fb.progress(0.0, "Updating report specification...")
+
+        spec = self._current_update_specification()
+        if name is not None:
+            spec.name = name
+        if description is not None:
+            spec.description = description
+        if autorun is not None:
+            spec.autorun = autorun
+        if volume_filter is not None:
+            volume_filter._check_workspace(self._context.get_environment().workspace_id)
+            spec.volume_filter_options = volume_filter._to_api()
+
+        await self._submit_update(spec, run_now)
+        fb.progress(1.0, "Report specification updated")
+        return self
+
+    async def remove_volume_filter(self, run_now: bool = False, fb: IFeedback = NoFeedback) -> Report:
+        """Remove the volume filter from this report, so it reports on all blocks again.
+
+        This creates a new revision of the report. The rest of the specification is kept.
+
         :param run_now: Whether to run the report immediately after updating it.
         :param fb: Optional feedback interface for progress reporting.
         :return: This report, with the updated specification.
         """
-        fb.progress(0.0, "Updating report specification...")
+        fb.progress(0.0, "Removing volume filter...")
 
-        environment = self._context.get_environment()
+        spec = self._current_update_specification()
+        spec.volume_filter_options = None
+
+        await self._submit_update(spec, run_now)
+        fb.progress(1.0, "Volume filter removed")
+        return self
+
+    def _current_update_specification(self) -> UpdateReportSpecification:
+        # The service replaces the whole specification on update, so start from the current one.
         current = self._specification.model_dump(
             mode="json", include=set(UpdateReportSpecification.model_fields), exclude_unset=True
         )
-        spec = UpdateReportSpecification.model_validate(current)
+        return UpdateReportSpecification.model_validate(current)
 
-        if name is not _UNSET:
-            spec.name = name
-        if description is not _UNSET:
-            spec.description = description
-        if autorun is not _UNSET:
-            spec.autorun = autorun
-        if volume_filter is not _UNSET:
-            if volume_filter is not None:
-                volume_filter._check_workspace(environment.workspace_id)
-            spec.volume_filter_options = volume_filter._to_api() if volume_filter is not None else None
-
+    async def _submit_update(self, spec: UpdateReportSpecification, run_now: bool) -> None:
+        environment = self._context.get_environment()
         client = self._get_client()
         self._specification = await client._reports_api.update_report_specification(
             rs_id=str(self.id),
@@ -748,9 +772,6 @@ class Report:
             run_now=run_now,
             additional_headers=client._preview_headers(),
         )
-
-        fb.progress(1.0, "Report specification updated")
-        return self
 
     async def run(self, version_uuid: UUID | None = None, fb: IFeedback = NoFeedback) -> ReportResult:
         """Run the report to generate a new result.

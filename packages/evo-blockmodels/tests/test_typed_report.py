@@ -500,9 +500,9 @@ class TestReportVolumeFilter(TestWithConnector, TestWithStorage):
         spec = models.ReportSpecificationWithJobUrl.model_validate(self._spec_response(**overrides))
         return Report(self.context, BM_UUID, spec, preview=True)
 
-    async def _update(self, report: Report, response: dict, **kwargs) -> dict:
+    async def _update(self, report: Report, response: dict, method: str = "update", **kwargs) -> dict:
         with self.transport.set_http_response(200, json.dumps(response)):
-            await report.update(**kwargs)
+            await getattr(report, method)(**kwargs)
         headers, body = self._last_request()
         self.assertEqual(headers["API-Preview"], "opt-in")
         return body
@@ -520,16 +520,22 @@ class TestReportVolumeFilter(TestWithConnector, TestWithStorage):
         self.assertEqual(report.revision, 2)
         self.assertEqual(report.volume_filter.relation, SpatialRelation.OUTSIDE)
 
-    async def test_update_keeps_or_clears_filter(self) -> None:
+    async def test_update_without_volume_filter_keeps_it(self) -> None:
         report = self._report(volume_filter_options=_api_volume_filter_options())
 
         body = await self._update(report, self._spec_response(name="Renamed"), name="Renamed")
+
         self.assertEqual(body["name"], "Renamed")
+        self.assertEqual(body["description"], "A test report")
         self.assertEqual(body["volume_filter_options"]["volume_filter"]["spatial_relation"], "OUTSIDE")
 
+    async def test_remove_volume_filter(self) -> None:
         report = self._report(volume_filter_options=_api_volume_filter_options())
-        body = await self._update(report, self._spec_response(), volume_filter=None)
+
+        body = await self._update(report, self._spec_response(), method="remove_volume_filter")
+
         self.assertIsNone(body["volume_filter_options"])
+        self.assertEqual(body["name"], "Test Report")
         self.assertIsNone(report.volume_filter)
 
     def test_result_volume_filter_and_warnings(self) -> None:
