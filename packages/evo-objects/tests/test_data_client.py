@@ -10,6 +10,7 @@
 #  limitations under the License.
 
 import asyncio
+import hashlib
 import json
 import sys
 import threading
@@ -122,6 +123,27 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
             await self.data_client.upload_dataframe(pd.DataFrame({"value": [1.0, 2.0]}))
             await self.data_client.upload_category_dataframe(pd.DataFrame({"value": ["sand", "clay"]}))
         self.assertEqual(3, len(uploaded))
+
+    async def test_concurrent_identical_uploads_share_one_cached_file(self):
+        table = pa.table({name: pa.array(range(20_000), type=pa.float64()) for name in "xyz"})
+        uploaded = []
+
+        def read(filename):
+            with filename.open("rb") as file:
+                return file.read()
+
+        async def upload(data_upload, filename, **kwargs):
+            # Read in a worker thread, so uploads overlap with the preparation of identical tables.
+            uploaded.append(await asyncio.to_thread(read, filename))
+
+        with mock.patch("evo.objects.io.ObjectDataUpload.upload_from_path", new=upload):
+            results = await asyncio.gather(*(self.data_client.upload_table(table) for _ in range(16)))
+
+        names = {result["data"] for result in results}
+        self.assertEqual(1, len(names))
+        self.assertEqual(names, {path.name for path in self.data_client.cache_location.iterdir()})
+        self.assertEqual(16, len(uploaded))
+        self.assertEqual(names, {hashlib.sha256(content).hexdigest() for content in uploaded})
 
     async def test_dataframe_upload_preserves_table_overrides(self):
         frame = pd.DataFrame({"value": [1.0, 2.0]})

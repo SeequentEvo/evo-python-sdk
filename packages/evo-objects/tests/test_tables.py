@@ -9,11 +9,16 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import errno
 import hashlib
+import os
+import threading
 import unittest
 import uuid
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from io import BytesIO
+from multiprocessing import get_context
 from pathlib import Path
 from typing import BinaryIO
 from unittest import mock
@@ -34,6 +39,13 @@ from evo.objects.utils import (
     KnownTableFormat,
     all_known_formats,
     get_known_format,
+)
+from evo.objects.utils.tables import (
+    _FILE_ACCESS_RETRY_DELAYS,
+    _discard_temporary_file,
+    _link_without_replacing,
+    _publish_without_replacing,
+    _rename_without_replacing,
 )
 from helpers import get_sample_table
 
@@ -355,3 +367,287 @@ class TestComplexFormats(unittest.TestCase):
             known_format.save_table(self.sample_table, self.data_dir)
 
         self.assertFalse(self.parquet_file.is_file())
+
+
+_CONCURRENT_WORKERS = 8
+_SAVES_PER_WORKER = 10
+_CONCURRENT_PROCESSES = 4
+_CONCURRENT_TABLE_ROWS = 20_000
+
+
+def _get_float_table(n_rows: int) -> pa.Table:
+    return pa.table({name: pa.array(range(n_rows), type=pa.float64()) for name in "xyz"})
+
+
+def _save_and_read_in_process(destination: Path, n_rows: int, n_saves: int) -> set[str]:
+    table = _get_float_table(n_rows)
+    known_format = get_known_format(table)
+    names = set()
+    for _ in range(n_saves):
+        name = known_format.save_table(table, destination)["data"]
+        with (destination / name).open("rb") as file:
+            assert _get_buffer_digest(file) == name, f"Published file '{name}' has unexpected content"
+        names.add(name)
+    return names
+
+
+class TestConcurrentSaveTable(unittest.TestCase):
+    """Identical tables share one immutable content-addressed file, which concurrent saves must not disturb."""
+
+    def setUp(self) -> None:
+        self.scope = f"{self.__class__.__name__}-{uuid.uuid4()}"
+        self.data_dir = CACHE.get_location(ENVIRONMENT, self.scope)
+        self.table = _get_float_table(_CONCURRENT_TABLE_ROWS)
+        self.known_format = get_known_format(self.table)
+        self.expected_digest = _get_table_digest(self.table)
+        self.parquet_file = self.data_dir / self.expected_digest
+
+    def tearDown(self) -> None:
+        CACHE.clear_cache(ENVIRONMENT, self.scope)
+
+    def assert_only_parquet_file_remains(self) -> None:
+        self.assertEqual([self.expected_digest], [path.name for path in self.data_dir.iterdir()])
+        with self.parquet_file.open("rb") as file:
+            self.assertEqual(self.expected_digest, _get_buffer_digest(file))
+
+    def test_concurrent_identical_saves_and_reads(self) -> None:
+        barrier = threading.Barrier(_CONCURRENT_WORKERS)
+
+        def save_and_read() -> set[str]:
+            barrier.wait()
+            names = set()
+            for _ in range(_SAVES_PER_WORKER):
+                name = self.known_format.save_table(self.table, self.data_dir)["data"]
+                with (self.data_dir / name).open("rb") as file:  # Like an upload of the published file.
+                    self.assertEqual(name, _get_buffer_digest(file))
+                names.add(name)
+            return names
+
+        with ThreadPoolExecutor(_CONCURRENT_WORKERS) as executor:
+            futures = [executor.submit(save_and_read) for _ in range(_CONCURRENT_WORKERS)]
+            names = set().union(*(future.result() for future in futures))
+
+        self.assertEqual({self.expected_digest}, names)
+        self.assert_only_parquet_file_remains()
+
+    def test_concurrent_identical_saves_across_processes(self) -> None:
+        with ProcessPoolExecutor(max_workers=_CONCURRENT_PROCESSES, mp_context=get_context("spawn")) as executor:
+            futures = [
+                executor.submit(_save_and_read_in_process, self.data_dir, _CONCURRENT_TABLE_ROWS, _SAVES_PER_WORKER)
+                for _ in range(_CONCURRENT_PROCESSES)
+            ]
+            for future in futures:
+                self.assertEqual({self.expected_digest}, future.result(timeout=120))
+        self.assert_only_parquet_file_remains()
+
+    def test_existing_file_open_by_reader_is_not_replaced(self) -> None:
+        self.known_format.save_table(self.table, self.data_dir)
+        original = self.parquet_file.stat()
+
+        with self.parquet_file.open("rb") as reader:
+            self.assertEqual(self.expected_digest, self.known_format.save_table(self.table, self.data_dir)["data"])
+            self.assertEqual(self.expected_digest, _get_buffer_digest(reader))
+
+        current = self.parquet_file.stat()
+        self.assertEqual((original.st_ino, original.st_mtime_ns), (current.st_ino, current.st_mtime_ns))
+        self.assert_only_parquet_file_remains()
+
+    def test_table_info_failure_keeps_shared_file(self) -> None:
+        error = RuntimeError("Unexpected failure")
+        field_names = mock.MagicMock()
+        field_names.__contains__.side_effect = error  # Fails after the parquet file is published.
+        with (
+            mock.patch.object(self.known_format, "_field_names", field_names),
+            self.assertRaises(RuntimeError) as raised,
+        ):
+            self.known_format.save_table(self.table, self.data_dir)
+
+        self.assertIs(error, raised.exception)
+        self.assert_only_parquet_file_remains()
+
+
+class TestPublishWithoutReplacing(unittest.TestCase):
+    def setUp(self) -> None:
+        self.scope = f"{self.__class__.__name__}-{uuid.uuid4()}"
+        self.data_dir = CACHE.get_location(ENVIRONMENT, self.scope)
+        self.source = self.data_dir / "source"
+        self.target = self.data_dir / "target"
+        self.source.write_bytes(b"new")
+
+    def tearDown(self) -> None:
+        CACHE.clear_cache(ENVIRONMENT, self.scope)
+
+    def test_publishes_new_file(self) -> None:
+        self.assertTrue(_publish_without_replacing(self.source, self.target))
+        self.assertFalse(self.source.exists())
+        self.assertEqual(b"new", self.target.read_bytes())
+
+    def test_keeps_existing_file(self) -> None:
+        self.target.write_bytes(b"existing")
+        self.assertFalse(_publish_without_replacing(self.source, self.target))
+        self.assertFalse(self.source.exists())
+        self.assertEqual(b"existing", self.target.read_bytes())
+
+    def test_failure_removes_source(self) -> None:
+        error = OSError(errno.ENOSPC, "No space left on device")
+        with (
+            mock.patch("evo.objects.utils.tables._rename_without_replacing", side_effect=error),
+            mock.patch("evo.objects.utils.tables._link_without_replacing", side_effect=error),
+            self.assertRaises(OSError) as raised,
+        ):
+            _publish_without_replacing(self.source, self.target)
+
+        self.assertIs(error, raised.exception)
+        self.assertFalse(self.source.exists())
+        self.assertFalse(self.target.exists())
+
+    def test_link_does_not_replace_existing_file(self) -> None:
+        self.target.write_bytes(b"existing")
+        with self.assertRaises(FileExistsError):
+            _link_without_replacing(self.source, self.target)
+        self.assertEqual(b"existing", self.target.read_bytes())
+
+    @parameterized.expand(
+        [
+            ("unsupported", errno.EOPNOTSUPP),
+            ("permission_denied", errno.EACCES),
+            ("operation_not_permitted", errno.EPERM),
+            ("cross_device", errno.EXDEV),
+            ("disk_full", errno.ENOSPC),
+        ]
+    )
+    def test_failed_link_preserves_existing_target(self, _name: str, error_number: int) -> None:
+        self.target.write_bytes(b"existing")
+        original = self.target.stat()
+        error = OSError(error_number, "Hard-link publication failed")
+
+        with (
+            mock.patch("evo.objects.utils.tables.os", wraps=os) as platform,
+            mock.patch("evo.objects.utils.tables.time.sleep") as sleep,
+        ):
+            platform.name = "posix"
+            platform.link.side_effect = error
+            with self.assertRaises(OSError) as raised:
+                _publish_without_replacing(self.source, self.target)
+            platform.replace.assert_not_called()
+
+        delays = _FILE_ACCESS_RETRY_DELAYS if isinstance(error, PermissionError) else ()
+        self.assertEqual([mock.call(delay) for delay in delays], sleep.call_args_list)
+        self.assertEqual(len(delays) + 1, platform.link.call_count)
+        self.assertIs(error, raised.exception)
+        self.assertFalse(self.source.exists())
+        self.assertEqual(b"existing", self.target.read_bytes())
+        current = self.target.stat()
+        self.assertEqual((original.st_ino, original.st_mtime_ns), (current.st_ino, current.st_mtime_ns))
+
+    def test_unsupported_link_does_not_publish_target(self) -> None:
+        error = OSError(errno.EOPNOTSUPP, "Hard links are not supported")
+        with mock.patch("evo.objects.utils.tables.os", wraps=os) as platform:
+            platform.name = "posix"
+            platform.link.side_effect = error
+            with self.assertRaises(OSError) as raised:
+                _publish_without_replacing(self.source, self.target)
+            platform.replace.assert_not_called()
+
+        self.assertIs(error, raised.exception)
+        self.assertFalse(self.source.exists())
+        self.assertFalse(self.target.exists())
+
+    def test_failed_link_preserves_concurrently_published_target(self) -> None:
+        error = OSError(errno.EOPNOTSUPP, "Hard links are not supported")
+
+        def fail_link(source: Path, target: Path) -> None:
+            target.write_bytes(b"another writer")
+            raise error
+
+        with mock.patch("evo.objects.utils.tables.os", wraps=os) as platform:
+            platform.name = "posix"
+            platform.link.side_effect = fail_link
+            with self.assertRaises(OSError) as raised:
+                _publish_without_replacing(self.source, self.target)
+            platform.replace.assert_not_called()
+
+        self.assertIs(error, raised.exception)
+        self.assertFalse(self.source.exists())
+        self.assertEqual(b"another writer", self.target.read_bytes())
+
+    @unittest.skipUnless(os.name == "nt", "os.rename only refuses to replace an existing file on Windows")
+    def test_rename_does_not_replace_file_open_by_reader(self) -> None:
+        self.target.write_bytes(b"existing")
+        with self.target.open("rb") as reader:
+            with self.assertRaises(FileExistsError):
+                _rename_without_replacing(self.source, self.target)
+            self.assertEqual(b"existing", reader.read())
+        self.assertEqual(b"new", self.source.read_bytes())
+
+    @parameterized.expand([("rename", _rename_without_replacing), ("link", _link_without_replacing)])
+    def test_publication_retries_permission_errors(self, operation: str, publish: Callable[[Path, Path], None]) -> None:
+        with (
+            mock.patch(
+                f"evo.objects.utils.tables.os.{operation}", side_effect=[PermissionError, PermissionError, None]
+            ) as action,
+            mock.patch("time.sleep") as sleep,
+        ):
+            publish(self.source, self.target)
+
+        self.assertEqual(3, action.call_count)
+        self.assertEqual([mock.call(delay) for delay in _FILE_ACCESS_RETRY_DELAYS[:2]], sleep.call_args_list)
+
+    @parameterized.expand([("rename", _rename_without_replacing), ("link", _link_without_replacing)])
+    def test_publication_raises_when_access_stays_denied(
+        self, operation: str, publish: Callable[[Path, Path], None]
+    ) -> None:
+        error = PermissionError("Access denied")
+        with (
+            mock.patch(f"evo.objects.utils.tables.os.{operation}", side_effect=error) as action,
+            mock.patch("time.sleep"),
+            self.assertRaises(PermissionError) as raised,
+        ):
+            publish(self.source, self.target)
+        self.assertIs(error, raised.exception)
+        self.assertEqual(len(_FILE_ACCESS_RETRY_DELAYS) + 1, action.call_count)
+
+    @parameterized.expand([("rename", _rename_without_replacing), ("link", _link_without_replacing)])
+    def test_publication_does_not_retry_existing_file(
+        self, operation: str, publish: Callable[[Path, Path], None]
+    ) -> None:
+        with (
+            mock.patch(f"evo.objects.utils.tables.os.{operation}", side_effect=FileExistsError) as action,
+            mock.patch("time.sleep") as sleep,
+            self.assertRaises(FileExistsError),
+        ):
+            publish(self.source, self.target)
+        action.assert_called_once()
+        sleep.assert_not_called()
+
+    def test_discard_retries_locked_file(self) -> None:
+        unlink = Path.unlink
+        attempts = []
+
+        def unlink_once_locked(path: Path, missing_ok: bool = False) -> None:
+            attempts.append(path)
+            if len(attempts) == 1:
+                raise PermissionError
+            unlink(path, missing_ok=missing_ok)
+
+        with (
+            mock.patch.object(Path, "unlink", autospec=True, side_effect=unlink_once_locked),
+            mock.patch("time.sleep") as sleep,
+        ):
+            _discard_temporary_file(self.source)
+
+        self.assertEqual([self.source, self.source], attempts)
+        sleep.assert_called_once_with(_FILE_ACCESS_RETRY_DELAYS[0])
+        self.assertFalse(self.source.exists())
+
+    def test_file_that_stays_locked_does_not_fail_publication(self) -> None:
+        self.target.write_bytes(b"existing")
+        with (
+            mock.patch.object(Path, "unlink", side_effect=PermissionError),
+            mock.patch("time.sleep"),
+            mock.patch("evo.objects.utils.tables.logger") as logger,
+        ):
+            self.assertFalse(_publish_without_replacing(self.source, self.target))
+
+        logger.warning.assert_called_once()
+        self.assertEqual(b"existing", self.target.read_bytes())

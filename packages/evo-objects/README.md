@@ -114,6 +114,11 @@ upload slot. The default DataFrame path passes cached-file metadata to uploading
 Arrow tables. Existing `upload_table`/`upload_category_table` overrides still intercept DataFrame uploads, but may
 retain their Arrow inputs until the override returns.
 
+Identical tables share an immutable, hash-named Parquet cache file. Completed files are published atomically
+without replacing an existing file, including across threads and processes. On POSIX, the cache file system
+must support hard links; publication errors propagate rather than falling back to an overwrite.
+Publication and temporary-file cleanup use bounded retries for `PermissionError` on all platforms.
+
 Results retain input order. Parallel table/attribute replacement stages results and checks for attribute conflicts
 before applying changes. Failure cancels and drains sibling tasks; cancellation waits for running cache writers
 and chunk tasks before returning. Uploaded blobs are not rolled back on failure. Subclasses that customize
