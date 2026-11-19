@@ -103,7 +103,7 @@ nested Source/Target objects. Attribute fields accept a typed attribute such as
 ...     block_simulations=grid.attributes["block_sims"],
 ...     block_simulations_normal_score=grid.attributes["block_sims_ns"],
 ...     variogram_model=variogram_url,
-...     neighborhood=SearchNeighborhood(...),
+...     neighborhood=SimpleSearchNeighborhood(...),
 ...     number_of_simulations=50,
 ...     random_seed=38239342,
 ... )
@@ -297,7 +297,7 @@ or an attribute expression such as <code>"locations.attributes[0]"</code>.</p>
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">neighborhood</span><span class="p">:</span> <span class="n">SearchNeighborhood</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">neighborhood</span><span class="p">:</span> <span class="n">SimpleSearchNeighborhood</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">

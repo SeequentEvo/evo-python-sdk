@@ -92,13 +92,13 @@
         <p>Parameters for the break-ties task.</p>
 <p>Defines all inputs needed to run a break-ties spatial tie-breaking task.</p>
 <p>Example::</p>
-<pre><code>&gt;&gt;&gt; from evo.compute.tasks import run, SearchNeighborhood, Ellipsoid, EllipsoidRanges, Target
+<pre><code>&gt;&gt;&gt; from evo.compute.tasks import run, SimpleSearchNeighborhood, Ellipsoid, EllipsoidRanges, Target
 &gt;&gt;&gt; from evo.compute.tasks.geostatistics.break_ties import BreakTiesParameters
 &gt;&gt;&gt;
 &gt;&gt;&gt; params = BreakTiesParameters(
 ...     source=pointset.attributes["grade"],
 ...     target=Target.new_attribute(pointset, "grade_tiebroken"),
-...     neighborhood=SearchNeighborhood(
+...     neighborhood=SimpleSearchNeighborhood(
 ...         ellipsoid=Ellipsoid(ranges=EllipsoidRanges(200, 150, 100)),
 ...         max_samples=20,
 ...     ),
@@ -173,7 +173,7 @@
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">neighborhood</span><span class="p">:</span> <span class="n">SearchNeighborhood</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">neighborhood</span><span class="p">:</span> <span class="n">SimpleSearchNeighborhood</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">

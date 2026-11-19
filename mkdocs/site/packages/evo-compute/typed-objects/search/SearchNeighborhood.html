@@ -39,7 +39,7 @@
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a rel="next" href="../simulation-report/SimReportContext.html" class="nav-link">
+                                <a rel="next" href="SimpleSearchNeighborhood.html" class="nav-link">
                                     Next <i class="fa fa-arrow-right"></i>
                                 </a>
                             </li>
@@ -61,7 +61,7 @@
     <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
         <ul class="nav flex-column">
             
-            <li class="nav-item" data-bs-level="2"><a href="#evo.compute.tasks.common.search.SearchNeighborhood" class="nav-link">SearchNeighborhood</a>
+            <li class="nav-item" data-bs-level="2"><a href="#evo.compute.tasks.geostatistics.search.SearchNeighborhood" class="nav-link">SearchNeighborhood</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -70,7 +70,7 @@
 </div></div>
                     <div class="col-md-9" role="main">
 
-<p><a href="https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-compute/src/evo/compute/tasks/common/search.py">GitHub source</a>
+<p><a href="https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-compute/src/evo/compute/tasks/geostatistics/search.py">GitHub source</a>
 </p>
 
 
@@ -78,8 +78,8 @@
 
 
 
-<h2 id="evo.compute.tasks.common.search.SearchNeighborhood" class="doc doc-heading">
-            <span class="doc doc-object-name doc-class-name">evo.compute.tasks.common.search.SearchNeighborhood</span>
+<h2 id="evo.compute.tasks.geostatistics.search.SearchNeighborhood" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">evo.compute.tasks.geostatistics.search.SearchNeighborhood</span>
 
 
 </h2>
@@ -89,16 +89,10 @@
 
 
 
-        <p>Search neighborhood parameters for geostatistical operations.</p>
-<p>Defines how to find nearby samples when performing spatial interpolation
-or estimation. Used by kriging, simulation, and other geostatistical tasks.</p>
-<p>The search neighborhood is defined by an ellipsoid (spatial extent and
-orientation) and constraints on the number of samples to use.</p>
-<p>Kriging, IDW, KNN and declustering can further limit the samples by octant,
-quadrant and drillhole (<code>max_samples_per_drillhole</code> and <code>max_drillholes</code>).
-Kriging additionally supports <code>min_drillholes</code> and non-global
-<code>drillhole_limit_scope</code>. The other tasks do not support these limits and
-refuse a neighborhood that sets them.</p>
+        <p>Extended search neighborhood with octant, quadrant, and drillhole controls.</p>
+<p>Extends :class:<code>SimpleSearchNeighborhood</code> with sector (octant / quadrant)
+and drillhole quotas for estimation and declustering tasks (Kriging, IDW,
+KNN, and Declustering).</p>
 <p>Example::</p>
 <pre><code>&gt;&gt;&gt; search = SearchNeighborhood(
 ...     ellipsoid=Ellipsoid(
@@ -141,17 +135,12 @@ refuse a neighborhood that sets them.</p>
 
 
 
-<h3 id="evo.compute.tasks.common.search.SearchNeighborhood.ellipsoid" class="doc doc-heading">
+<h3 id="evo.compute.tasks.geostatistics.search.SearchNeighborhood.ellipsoid" class="doc doc-heading">
             <span class="doc doc-object-name doc-attribute-name">ellipsoid</span>
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">ellipsoid</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
-    <span class="n">Ellipsoid</span><span class="p">,</span>
-    <span class="n">PlainValidator</span><span class="p">(</span><span class="n">_validate_ellipsoid</span><span class="p">),</span>
-    <span class="n">PlainSerializer</span><span class="p">(</span><span class="n">_serialize_ellipsoid</span><span class="p">),</span>
-    <span class="n">WithJsonSchema</span><span class="p">(</span><span class="n">_ELLIPSOID_JSON_SCHEMA</span><span class="p">),</span>
-<span class="p">]</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">ellipsoid</span><span class="p">:</span> <span class="n">Ellipsoid</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -166,7 +155,7 @@ refuse a neighborhood that sets them.</p>
 
 
 
-<h3 id="evo.compute.tasks.common.search.SearchNeighborhood.max_samples" class="doc doc-heading">
+<h3 id="evo.compute.tasks.geostatistics.search.SearchNeighborhood.max_samples" class="doc doc-heading">
             <span class="doc doc-object-name doc-attribute-name">max_samples</span>
 
 
@@ -186,7 +175,7 @@ refuse a neighborhood that sets them.</p>
 
 
 
-<h3 id="evo.compute.tasks.common.search.SearchNeighborhood.min_samples" class="doc doc-heading">
+<h3 id="evo.compute.tasks.geostatistics.search.SearchNeighborhood.min_samples" class="doc doc-heading">
             <span class="doc doc-object-name doc-attribute-name">min_samples</span>
 
 
@@ -207,7 +196,7 @@ refuse a neighborhood that sets them.</p>
 
 
 
-<h3 id="evo.compute.tasks.common.search.SearchNeighborhood.max_empty_octants" class="doc doc-heading">
+<h3 id="evo.compute.tasks.geostatistics.search.SearchNeighborhood.max_empty_octants" class="doc doc-heading">
             <span class="doc doc-object-name doc-attribute-name">max_empty_octants</span>
 
 
@@ -228,7 +217,7 @@ refuse a neighborhood that sets them.</p>
 
 
 
-<h3 id="evo.compute.tasks.common.search.SearchNeighborhood.max_samples_per_octant" class="doc doc-heading">
+<h3 id="evo.compute.tasks.geostatistics.search.SearchNeighborhood.max_samples_per_octant" class="doc doc-heading">
             <span class="doc doc-object-name doc-attribute-name">max_samples_per_octant</span>
 
 
@@ -248,7 +237,7 @@ refuse a neighborhood that sets them.</p>
 
 
 
-<h3 id="evo.compute.tasks.common.search.SearchNeighborhood.max_empty_quadrants" class="doc doc-heading">
+<h3 id="evo.compute.tasks.geostatistics.search.SearchNeighborhood.max_empty_quadrants" class="doc doc-heading">
             <span class="doc doc-object-name doc-attribute-name">max_empty_quadrants</span>
 
 
@@ -269,7 +258,7 @@ refuse a neighborhood that sets them.</p>
 
 
 
-<h3 id="evo.compute.tasks.common.search.SearchNeighborhood.max_samples_per_quadrant" class="doc doc-heading">
+<h3 id="evo.compute.tasks.geostatistics.search.SearchNeighborhood.max_samples_per_quadrant" class="doc doc-heading">
             <span class="doc doc-object-name doc-attribute-name">max_samples_per_quadrant</span>
 
 
@@ -289,7 +278,7 @@ refuse a neighborhood that sets them.</p>
 
 
 
-<h3 id="evo.compute.tasks.common.search.SearchNeighborhood.max_samples_per_drillhole" class="doc doc-heading">
+<h3 id="evo.compute.tasks.geostatistics.search.SearchNeighborhood.max_samples_per_drillhole" class="doc doc-heading">
             <span class="doc doc-object-name doc-attribute-name">max_samples_per_drillhole</span>
 
 
@@ -309,7 +298,7 @@ refuse a neighborhood that sets them.</p>
 
 
 
-<h3 id="evo.compute.tasks.common.search.SearchNeighborhood.max_drillholes" class="doc doc-heading">
+<h3 id="evo.compute.tasks.geostatistics.search.SearchNeighborhood.max_drillholes" class="doc doc-heading">
             <span class="doc doc-object-name doc-attribute-name">max_drillholes</span>
 
 
@@ -331,7 +320,7 @@ refuse a neighborhood that sets them.</p>
 
 
 
-<h3 id="evo.compute.tasks.common.search.SearchNeighborhood.min_drillholes" class="doc doc-heading">
+<h3 id="evo.compute.tasks.geostatistics.search.SearchNeighborhood.min_drillholes" class="doc doc-heading">
             <span class="doc doc-object-name doc-attribute-name">min_drillholes</span>
 
 
@@ -344,8 +333,7 @@ refuse a neighborhood that sets them.</p>
     <div class="doc doc-contents ">
 
         <p>The minimum number of distinct drillholes required per estimate.</p>
-<p>Omitted (disabled) when <code>None</code> or <code>0</code>. Currently supported only by kriging
-and requires a downhole intervals source object.</p>
+<p>Omitted (disabled) when <code>None</code> or <code>0</code>. Requires a downhole intervals source object.</p>
 
     </div>
 
@@ -355,7 +343,7 @@ and requires a downhole intervals source object.</p>
 
 
 
-<h3 id="evo.compute.tasks.common.search.SearchNeighborhood.drillhole_limit_scope" class="doc doc-heading">
+<h3 id="evo.compute.tasks.geostatistics.search.SearchNeighborhood.drillhole_limit_scope" class="doc doc-heading">
             <span class="doc doc-object-name doc-attribute-name">drillhole_limit_scope</span>
 
 
@@ -368,8 +356,8 @@ and requires a downhole intervals source object.</p>
         <p>Scope at which <code>max_samples_per_drillhole</code> is applied.</p>
 <p><code>"global"</code> (or <code>None</code>) applies <code>max_samples_per_drillhole</code> across the whole
 neighborhood and is omitted on the wire. <code>"quadrant"</code> and <code>"octant"</code> apply
-<code>max_samples_per_drillhole</code> within each sector, require <code>max_samples_per_drillhole</code>
-to be set, and are currently supported only by kriging.</p>
+<code>max_samples_per_drillhole</code> within each sector and require <code>max_samples_per_drillhole</code>
+to be set.</p>
 
     </div>
 
@@ -379,7 +367,7 @@ to be set, and are currently supported only by kriging.</p>
 
 
 
-<h3 id="evo.compute.tasks.common.search.SearchNeighborhood.max_drillholes_per_estimate" class="doc doc-heading">
+<h3 id="evo.compute.tasks.geostatistics.search.SearchNeighborhood.max_drillholes_per_estimate" class="doc doc-heading">
             <span class="doc doc-object-name doc-attribute-name">max_drillholes_per_estimate</span>
 
 

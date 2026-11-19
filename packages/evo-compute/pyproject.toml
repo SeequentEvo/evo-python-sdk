@@ -1,6 +1,6 @@
 [project]
 name = "evo-compute"
-version = "0.1.1"
+version = "0.1.2"
 requires-python = ">=3.11.5"
 license-files = ["LICENSE.md"]
 dynamic = ["readme"]
@@ -10,7 +10,7 @@ authors = [
 
 dependencies = [
     "evo-blockmodels[utils]>=0.10.0",
-    "evo-objects[utils,blockmodels]>=0.7.0",
+    "evo-objects[utils,blockmodels]>=0.7.1",
     "evo-sdk-common>=0.6.0",
     "pydantic>=2",
     "typing_extensions>=4.0",

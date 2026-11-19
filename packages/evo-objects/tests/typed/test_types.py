@@ -15,8 +15,9 @@ from unittest import TestCase
 
 import numpy as np
 import numpy.testing as npt
+import pytest
 from parameterized import parameterized
-from pydantic import TypeAdapter, ValidationError
+from pydantic import BaseModel, TypeAdapter, ValidationError
 
 from evo.common import EpsgCode as CommonEpsgCode
 from evo.objects.typed import (
@@ -464,3 +465,86 @@ class TestEllipsoid(TestCase):
         x2, y2, z2 = ell_rot.wireframe_points()
         # Rotated should have different coordinates
         self.assertFalse(np.allclose(x1, x2, equal_nan=True))
+
+
+class _EllipsoidContainer(BaseModel):
+    ellipsoid: Ellipsoid
+
+
+class TestEllipsoidPydantic:
+    """Tests for Ellipsoid.from_dict and Pydantic validation, serialization, and JSON schema."""
+
+    @pytest.mark.parametrize(
+        "original",
+        [
+            Ellipsoid(ranges=EllipsoidRanges(major=200.0, semi_major=150.0, minor=100.0)),
+            Ellipsoid(
+                ranges=EllipsoidRanges(major=200.0, semi_major=150.0, minor=100.0),
+                rotation=Rotation(dip_azimuth=45.0, dip=30.0, pitch=15.0),
+            ),
+        ],
+    )
+    def test_wire_round_trip_and_json_schema(self, original: Ellipsoid):
+        container = _EllipsoidContainer(ellipsoid=original)
+        dumped = container.model_dump(mode="json")
+        assert dumped == {"ellipsoid": original.to_dict()}
+
+        reloaded = _EllipsoidContainer.model_validate(dumped)
+        assert reloaded == container
+        assert reloaded.ellipsoid == original
+        assert Ellipsoid.from_dict(original.to_dict()) == original
+
+        for mode in ("validation", "serialization"):
+            schema = _EllipsoidContainer.model_json_schema(mode=mode)["properties"]["ellipsoid"]
+            assert schema["required"] == ["ellipsoid_ranges", "rotation"]
+            assert set(schema["properties"]) == {"ellipsoid_ranges", "rotation"}
+            assert set(schema["properties"]["ellipsoid_ranges"]["properties"]) == {"major", "semi_major", "minor"}
+
+    @pytest.mark.parametrize(
+        ("payload", "expected_rotation"),
+        [
+            (
+                {"ellipsoid_ranges": {"major": 200.0, "semi_major": 150.0, "minor": 100.0}},
+                Rotation(0.0, 0.0, 0.0),
+            ),
+            (
+                {"ranges": {"major": 200.0, "semi_major": 150.0, "minor": 100.0}, "rotation": {"dip_azimuth": 60.0}},
+                Rotation(60.0, 0.0, 0.0),
+            ),
+            (
+                {"ellipsoid_ranges": (200.0, 150.0, 100.0), "rotation": (10.0, 20.0, 30.0)},
+                Rotation(10.0, 20.0, 30.0),
+            ),
+        ],
+    )
+    def test_valid_ellipsoid_mappings(self, payload, expected_rotation):
+        parsed = _EllipsoidContainer.model_validate({"ellipsoid": payload}).ellipsoid
+        assert parsed.ranges == EllipsoidRanges(200.0, 150.0, 100.0)
+        assert parsed.rotation == expected_rotation
+
+    @pytest.mark.parametrize(
+        "bad_payload",
+        [
+            "not_an_ellipsoid",
+            {},
+            {"ellipsoid_ranges": None},
+            {"ellipsoid_ranges": {"major": 200.0, "semi_major": 150.0}},
+            {"ellipsoid_ranges": {"major": 200.0, "semi_major": 150.0, "minor": 100.0, "extra": 1.0}},
+            {
+                "ellipsoid_ranges": {"major": 200.0, "semi_major": 150.0, "minor": 100.0},
+                "ranges": {"major": 100.0, "semi_major": 150.0, "minor": 100.0},
+            },
+            {
+                "ellipsoid_ranges": {"major": 200.0, "semi_major": 150.0, "minor": 100.0},
+                "rotation": {"extra": 10.0},
+            },
+            {
+                "ellipsoid_ranges": {"major": 200.0, "semi_major": 150.0, "minor": 100.0},
+                "rotation": "none",
+            },
+            {1: 2},
+        ],
+    )
+    def test_invalid_ellipsoid_payloads_raise_validation_error(self, bad_payload):
+        with pytest.raises(ValidationError):
+            _EllipsoidContainer.model_validate({"ellipsoid": bad_payload})

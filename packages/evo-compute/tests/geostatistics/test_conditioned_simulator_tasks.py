@@ -6,11 +6,12 @@
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
 from evo.objects import ObjectReference
 from evo.objects.typed.attributes import Attribute, BlockModelAttribute, PendingAttribute
 from pydantic import ValidationError
 
-from evo.compute.tasks import SearchNeighborhood
+from evo.compute.tasks import SearchNeighborhood, SimpleSearchNeighborhood
 from evo.compute.tasks.common import (
     AllOfFilter,
     CreateAttribute,
@@ -130,45 +131,47 @@ class TestBlockDiscretization(unittest.TestCase):
 
 
 # ---------------------------------------------------------------------------
-class TestConSimParametersSerialization(unittest.TestCase):
+class TestConSimParametersSerialization:
     def test_basic(self):
-        d = _dump(_params())
-        self.assertEqual(d["source_object"], POINTSET_URL)
-        self.assertEqual(d["source_attribute"], "locations.attributes[?name=='grade']")
-        self.assertEqual(d["target_object"], GRID_URL)
-        self.assertEqual(d["variogram_model"], VARIOGRAM_URL)
+        params = _params()
+        assert type(params.neighborhood) is SimpleSearchNeighborhood
+        d = _dump(params)
+        assert d["source_object"] == POINTSET_URL
+        assert d["source_attribute"] == "locations.attributes[?name=='grade']"
+        assert d["target_object"] == GRID_URL
+        assert d["variogram_model"] == VARIOGRAM_URL
 
     def test_defaults(self):
         d = _dump(_params())
-        self.assertEqual(d["kriging_method"], "simple")
-        self.assertEqual(d["number_of_lines"], 500)
-        self.assertEqual(d["number_of_simulations"], 1)
-        self.assertEqual(d["random_seed"], 38239342)
-        self.assertEqual(d["number_of_simulations_to_save"], 5)
-        self.assertFalse(d["perform_validation"])
+        assert d["kriging_method"] == "simple"
+        assert d["number_of_lines"] == 500
+        assert d["number_of_simulations"] == 1
+        assert d["random_seed"] == 38239342
+        assert d["number_of_simulations_to_save"] == 5
+        assert d["perform_validation"] is False
 
     def test_block_discretization_default(self):
         d = _dump(_params())
-        self.assertEqual(d["block_discretization"]["nx"], 1)
+        assert d["block_discretization"]["nx"] == 1
 
-    def test_search_limits_are_refused(self):
+    @pytest.mark.parametrize(
+        ("kwargs", "expected_field"),
+        [
+            ({"max_samples_per_drillhole": 3}, "max_samples_per_drillhole"),
+            ({"max_drillholes": 4}, "max_drillholes"),
+            ({"min_drillholes": 2}, "min_drillholes"),
+            ({"max_samples_per_drillhole": 2, "drillhole_limit_scope": "octant"}, "drillhole_limit_scope"),
+        ],
+    )
+    def test_search_limits_are_refused(self, kwargs: dict, expected_field: str):
         ellipsoid = Ellipsoid(ranges=EllipsoidRanges(major=300, semi_major=200, minor=100))
-        for kwargs, expected in [
-            ({"max_samples_per_drillhole": 3}, "does not support max_samples_per_drillhole"),
-            ({"max_drillholes": 4}, "does not support max_drillholes"),
-            ({"min_drillholes": 2}, "does not support min_drillholes"),
-            (
-                {"max_samples_per_drillhole": 2, "drillhole_limit_scope": "octant"},
-                "does not support max_samples_per_drillhole, drillhole_limit_scope",
-            ),
-        ]:
-            with self.subTest(**kwargs), self.assertRaisesRegex(ValidationError, expected):
-                _params(neighborhood=SearchNeighborhood(ellipsoid=ellipsoid, max_samples=24, **kwargs))
+        with pytest.raises(ValidationError, match=expected_field):
+            _params(neighborhood=SearchNeighborhood(ellipsoid=ellipsoid, max_samples=24, **kwargs))
 
     def test_custom_simulations(self):
         d = _dump(_params(number_of_simulations=10, number_of_simulations_to_save=3))
-        self.assertEqual(d["number_of_simulations"], 10)
-        self.assertEqual(d["number_of_simulations_to_save"], 3)
+        assert d["number_of_simulations"] == 10
+        assert d["number_of_simulations_to_save"] == 3
 
     def test_distribution_params(self):
         params = _params(
@@ -179,11 +182,11 @@ class TestConSimParametersSerialization(unittest.TestCase):
             ),
         )
         d = _dump(params)
-        self.assertEqual(d["distribution"]["tail_extrapolation"]["upper"]["power"], 0.5)
+        assert d["distribution"]["tail_extrapolation"]["upper"]["power"] == 0.5
 
     def test_distribution_without_tail_extrapolation_omits_key(self):
         d = _dump(_params(distribution=DistributionParams(weights="declustering_weights")))
-        self.assertEqual(d["distribution"], {"weights": "declustering_weights"})
+        assert d["distribution"] == {"weights": "declustering_weights"}
 
     def test_tail_extrapolation_without_lower_omits_key(self):
         params = _params(
@@ -192,7 +195,7 @@ class TestConSimParametersSerialization(unittest.TestCase):
             ),
         )
         d = _dump(params)
-        self.assertEqual(d["distribution"]["tail_extrapolation"], {"upper": {"power": 0.5, "max": 100.0}})
+        assert d["distribution"]["tail_extrapolation"] == {"upper": {"power": 0.5, "max": 100.0}}
 
     def test_tail_extrapolation_with_lower(self):
         params = _params(
@@ -204,7 +207,7 @@ class TestConSimParametersSerialization(unittest.TestCase):
             ),
         )
         d = _dump(params)
-        self.assertEqual(d["distribution"]["tail_extrapolation"]["lower"], {"power": 0.3, "min": 0.0})
+        assert d["distribution"]["tail_extrapolation"]["lower"] == {"power": 0.3, "min": 0.0}
 
     def test_loss_calculation_params(self):
         params = _params(
@@ -222,13 +225,13 @@ class TestConSimParametersSerialization(unittest.TestCase):
         )
         d = _dump(params)
         lc = d["loss_calculation"]
-        self.assertEqual(len(lc["material_categories"]), 2)
-        self.assertEqual(lc["processing_cost"], 20.0)
+        assert len(lc["material_categories"]) == 2
+        assert lc["processing_cost"] == 20.0
 
     def test_location_wise_quantiles(self):
         params = _params(location_wise_quantiles=[0.1, 0.5, 0.9])
         d = _dump(params)
-        self.assertEqual(d["location_wise_quantiles"], [0.1, 0.5, 0.9])
+        assert d["location_wise_quantiles"] == [0.1, 0.5, 0.9]
 
     def test_report_context(self):
         params = _params(
@@ -239,15 +242,15 @@ class TestConSimParametersSerialization(unittest.TestCase):
             ),
         )
         d = _dump(params)
-        self.assertTrue(d["perform_validation"])
-        self.assertEqual(d["report_context"]["title"], "Simulation QC")
+        assert d["perform_validation"] is True
+        assert d["report_context"]["title"] == "Simulation QC"
 
     def test_report_mean_thresholds(self):
         params = _params(
             report_mean_thresholds=ReportMeanThresholds(acceptable=0.02, marginal=0.05),
         )
         d = _dump(params)
-        self.assertEqual(d["report_mean_thresholds"]["acceptable"], 0.02)
+        assert d["report_mean_thresholds"]["acceptable"] == 0.02
 
     def test_filter_single_condition(self):
         params = _params(
@@ -257,10 +260,10 @@ class TestConSimParametersSerialization(unittest.TestCase):
         )
         d = _dump(params)
         where = d["filter"]["where"]
-        self.assertEqual(where["type"], "condition")
-        self.assertEqual(where["operator"], "in")
-        self.assertEqual(where["values"], ["LMS1", "LMS2"])
-        self.assertEqual(where["attribute"], "attributes[?name=='domain']")
+        assert where["type"] == "condition"
+        assert where["operator"] == "in"
+        assert where["values"] == ["LMS1", "LMS2"]
+        assert where["attribute"] == "attributes[?name=='domain']"
 
     def test_source_filter_numeric(self):
         params = _params(
@@ -274,8 +277,8 @@ class TestConSimParametersSerialization(unittest.TestCase):
         )
         d = _dump(params)
         where = d["source_filter"]["where"]
-        self.assertEqual(where["operator"], "greater_than_or_equal_to")
-        self.assertEqual(where["threshold"], 0.5)
+        assert where["operator"] == "greater_than_or_equal_to"
+        assert where["threshold"] == 0.5
 
     def test_filter_composite_all_of(self):
         params = _params(
@@ -290,21 +293,26 @@ class TestConSimParametersSerialization(unittest.TestCase):
         )
         d = _dump(params)
         where = d["filter"]["where"]
-        self.assertEqual(where["type"], "all_of")
-        self.assertEqual(len(where["filters"]), 2)
-        self.assertEqual(where["filters"][0]["values"], [1, 2])
+        assert where["type"] == "all_of"
+        assert len(where["filters"]) == 2
+        assert where["filters"][0]["values"] == [1, 2]
 
-    def test_filter_condition_requires_matching_payload(self):
-        with self.assertRaises(ValueError):
-            FilterCondition(attribute="attributes[?name=='domain']", operator="in", threshold=1.0)
-        with self.assertRaises(ValueError):
-            FilterCondition(attribute="attributes[?name=='grade']", operator="greater_than", values=[1])
+    @pytest.mark.parametrize(
+        "kwargs",
+        [
+            {"attribute": "attributes[?name=='domain']", "operator": "in", "threshold": 1.0},
+            {"attribute": "attributes[?name=='grade']", "operator": "greater_than", "values": [1]},
+        ],
+    )
+    def test_filter_condition_requires_matching_payload(self, kwargs: dict):
+        with pytest.raises(ValueError):
+            FilterCondition(**kwargs)
 
     def test_probability_and_mean_above_cutoff(self):
         params = _params(probability_above_cutoff=[0.5, 1.0], mean_above_cutoff=[0.5])
         d = _dump(params)
-        self.assertEqual(d["probability_above_cutoff"], [0.5, 1.0])
-        self.assertEqual(d["mean_above_cutoff"], [0.5])
+        assert d["probability_above_cutoff"] == [0.5, 1.0]
+        assert d["mean_above_cutoff"] == [0.5]
 
 
 # ---------------------------------------------------------------------------

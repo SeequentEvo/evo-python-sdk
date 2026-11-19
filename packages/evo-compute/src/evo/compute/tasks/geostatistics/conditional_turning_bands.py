@@ -20,7 +20,7 @@ is already available.
 
 Example::
 
-    >>> from evo.compute.tasks import run, SearchNeighborhood, Ellipsoid, EllipsoidRanges
+    >>> from evo.compute.tasks import run, SimpleSearchNeighborhood, Ellipsoid, EllipsoidRanges
     >>> from evo.compute.tasks.geostatistics.conditioned_simulator import BlockDiscretization
     >>> from evo.compute.tasks.geostatistics.conditional_turning_bands import (
     ...     ConditionalTurningBandsParameters,
@@ -32,7 +32,7 @@ Example::
     ...     target=grid,
     ...     distribution=distribution_object,
     ...     variogram_model=variogram,
-    ...     neighborhood=SearchNeighborhood(
+    ...     neighborhood=SimpleSearchNeighborhood(
     ...         ellipsoid=Ellipsoid(ranges=EllipsoidRanges(70, 70, 5)),
     ...         max_samples=40,
     ...     ),
@@ -50,18 +50,17 @@ import pandas as pd
 from evo.common import IContext, IFeedback
 from evo.objects import ObjectSchema
 from evo.objects.typed import BaseObject, object_from_reference
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 
 from ..common import (
     AttributeExpression,
     Filter,
     GeoscienceObjectReference,
-    SearchNeighborhood,
 )
 from ..common.results import TaskAttribute
 from ..common.runner import TaskRunner
-from ..common.search import _reject_sector_and_drillhole_limits
 from .conditioned_simulator import BlockDiscretization
+from .search import SimpleSearchNeighborhood
 
 __all__ = [
     "BlockDiscretization",
@@ -94,7 +93,7 @@ class ConditionalTurningBandsParameters(BaseModel):
         ...     target=grid,
         ...     distribution=distribution_object,
         ...     variogram_model=variogram,
-        ...     neighborhood=SearchNeighborhood(
+        ...     neighborhood=SimpleSearchNeighborhood(
         ...         ellipsoid=Ellipsoid(ranges=EllipsoidRanges(70, 70, 5)),
         ...         max_samples=40,
         ...     ),
@@ -119,7 +118,7 @@ class ConditionalTurningBandsParameters(BaseModel):
     source_filter: Filter | None = None
     """Optional filter restricting conditioning to a subset of the source data."""
 
-    neighborhood: SearchNeighborhood
+    neighborhood: SimpleSearchNeighborhood
     """Search neighbourhood used both for simulation and for the conditioning kriging step."""
 
     distribution: GeoscienceObjectReference
@@ -163,11 +162,6 @@ class ConditionalTurningBandsParameters(BaseModel):
 
     random_seed: int = 38239342
     """Random seed for reproducible simulations."""
-
-    @field_validator("neighborhood")
-    @classmethod
-    def _check_neighborhood(cls, neighborhood: SearchNeighborhood) -> SearchNeighborhood:
-        return _reject_sector_and_drillhole_limits(neighborhood)
 
 
 # =============================================================================

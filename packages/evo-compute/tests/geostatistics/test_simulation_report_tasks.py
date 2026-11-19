@@ -14,11 +14,12 @@
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
 from evo.objects import ObjectReference
 from evo.objects.typed.attributes import Attribute, BlockModelAttribute, PendingAttribute
 from pydantic import ValidationError
 
-from evo.compute.tasks import SearchNeighborhood
+from evo.compute.tasks import SearchNeighborhood, SimpleSearchNeighborhood
 from evo.compute.tasks.common import Ellipsoid, EllipsoidRanges
 from evo.compute.tasks.common.runner import TaskRegistry
 from evo.compute.tasks.geostatistics.conditioned_simulator import TailExtrapolationParams, UpperTailParams
@@ -124,75 +125,84 @@ class TestSimulationReportRegistration(unittest.TestCase):
 # ---------------------------------------------------------------------------
 
 
-class TestSimulationReportParametersSerialization(unittest.TestCase):
+class TestSimulationReportParametersSerialization:
     def test_flat_fields(self):
         d = _dump(_params())
-        self.assertEqual(d["simulation_source"], POINTSET_URL)
-        self.assertEqual(d["source_attribute"], "locations.attributes[0]")
-        self.assertEqual(d["simulation_target"], GRID_URL)
-        self.assertEqual(d["point_simulations"], "cell_attributes[0]")
-        self.assertEqual(d["point_simulations_normal_score"], "cell_attributes[1]")
-        self.assertEqual(d["block_simulations"], "cell_attributes[2]")
-        self.assertEqual(d["block_simulations_normal_score"], "cell_attributes[3]")
-        self.assertEqual(d["variogram_model"], VARIOGRAM_URL)
+        assert d["simulation_source"] == POINTSET_URL
+        assert d["source_attribute"] == "locations.attributes[0]"
+        assert d["simulation_target"] == GRID_URL
+        assert d["point_simulations"] == "cell_attributes[0]"
+        assert d["point_simulations_normal_score"] == "cell_attributes[1]"
+        assert d["block_simulations"] == "cell_attributes[2]"
+        assert d["block_simulations_normal_score"] == "cell_attributes[3]"
+        assert d["variogram_model"] == VARIOGRAM_URL
 
     def test_neighborhood(self):
-        d = _dump(_params())
-        self.assertIn("ellipsoid", d["neighborhood"])
-        self.assertEqual(d["neighborhood"]["max_samples"], 20)
+        params = _params()
+        assert type(params.neighborhood) is SimpleSearchNeighborhood
+        d = _dump(params)
+        assert "ellipsoid" in d["neighborhood"]
+        assert d["neighborhood"]["max_samples"] == 20
 
-    def test_search_limits_are_refused(self):
+        schema = SimulationReportParameters.model_json_schema()
+        assert set(schema["$defs"]["SimpleSearchNeighborhood"]["properties"]) == {
+            "ellipsoid",
+            "max_samples",
+            "min_samples",
+        }
+
+    @pytest.mark.parametrize(
+        ("kwargs", "expected_field"),
+        [
+            ({"max_samples_per_quadrant": 4}, "max_samples_per_quadrant"),
+            ({"max_drillholes": 4}, "max_drillholes"),
+            ({"min_drillholes": 2}, "min_drillholes"),
+            ({"max_samples_per_drillhole": 2, "drillhole_limit_scope": "octant"}, "drillhole_limit_scope"),
+        ],
+    )
+    def test_search_limits_are_refused(self, kwargs: dict, expected_field: str):
         ellipsoid = Ellipsoid(ranges=EllipsoidRanges(major=200.0, semi_major=150.0, minor=100.0))
-        for kwargs, expected in [
-            ({"max_samples_per_quadrant": 4}, "does not support max_samples_per_quadrant"),
-            ({"max_drillholes": 4}, "does not support max_drillholes"),
-            ({"min_drillholes": 2}, "does not support min_drillholes"),
-            (
-                {"max_samples_per_drillhole": 2, "drillhole_limit_scope": "octant"},
-                "does not support max_samples_per_drillhole, drillhole_limit_scope",
-            ),
-        ]:
-            with self.subTest(**kwargs), self.assertRaisesRegex(ValidationError, expected):
-                _params(neighborhood=SearchNeighborhood(ellipsoid=ellipsoid, max_samples=20, **kwargs))
+        with pytest.raises(ValidationError, match=expected_field):
+            _params(neighborhood=SearchNeighborhood(ellipsoid=ellipsoid, max_samples=20, **kwargs))
 
     def test_block_discretization_defaults(self):
         d = _dump(_params())
-        self.assertEqual(d["block_discretization"]["nx"], 1)
-        self.assertEqual(d["block_discretization"]["ny"], 1)
-        self.assertEqual(d["block_discretization"]["nz"], 1)
+        assert d["block_discretization"]["nx"] == 1
+        assert d["block_discretization"]["ny"] == 1
+        assert d["block_discretization"]["nz"] == 1
 
     def test_block_discretization_custom(self):
         d = _dump(_params(block_discretization=SimulationReportBlockDiscretization(nx=3, ny=3, nz=3)))
-        self.assertEqual(d["block_discretization"]["nx"], 3)
+        assert d["block_discretization"]["nx"] == 3
 
     def test_number_of_simulations(self):
         d = _dump(_params())
-        self.assertEqual(d["number_of_simulations"], 50)
+        assert d["number_of_simulations"] == 50
 
     def test_kriging_method_default(self):
         d = _dump(_params())
-        self.assertEqual(d["kriging_method"], "simple")
+        assert d["kriging_method"] == "simple"
 
     def test_number_of_lines_default(self):
         d = _dump(_params())
-        self.assertEqual(d["number_of_lines"], 500)
+        assert d["number_of_lines"] == 500
 
     def test_distribution_optional(self):
         d = _dump(_params())
-        self.assertNotIn("distribution", d)
+        assert "distribution" not in d
 
     def test_distribution_with_weights(self):
         d = _dump(_params(distribution=SimulationReportDistribution(weights="declustering_weights")))
-        self.assertEqual(d["distribution"]["weights"], "declustering_weights")
+        assert d["distribution"]["weights"] == "declustering_weights"
 
     def test_distribution_without_tail_extrapolation_omits_key(self):
         d = _dump(_params(distribution=SimulationReportDistribution(weights="declustering_weights")))
-        self.assertEqual(d["distribution"], {"weights": "declustering_weights"})
+        assert d["distribution"] == {"weights": "declustering_weights"}
 
     def test_distribution_with_tail_extrapolation(self):
         tail = TailExtrapolationParams(upper=UpperTailParams(power=0.5, max=100.0))
         d = _dump(_params(distribution=SimulationReportDistribution(tail_extrapolation=tail)))
-        self.assertEqual(d["distribution"]["tail_extrapolation"], {"upper": {"power": 0.5, "max": 100.0}})
+        assert d["distribution"]["tail_extrapolation"] == {"upper": {"power": 0.5, "max": 100.0}}
 
     def test_report_context(self):
         d = _dump(
@@ -203,19 +213,19 @@ class TestSimulationReportParametersSerialization(unittest.TestCase):
                 )
             )
         )
-        self.assertEqual(d["report_context"]["title"], "Test Report")
-        self.assertEqual(d["report_context"]["details"][0]["label"], "Variable")
+        assert d["report_context"]["title"] == "Test Report"
+        assert d["report_context"]["details"][0]["label"] == "Variable"
 
     def test_report_mean_thresholds(self):
         d = _dump(_params(report_mean_thresholds=SimReportThresholds(acceptable=0.05, marginal=0.10)))
-        self.assertAlmostEqual(d["report_mean_thresholds"]["acceptable"], 0.05)
-        self.assertAlmostEqual(d["report_mean_thresholds"]["marginal"], 0.10)
+        assert d["report_mean_thresholds"]["acceptable"] == pytest.approx(0.05)
+        assert d["report_mean_thresholds"]["marginal"] == pytest.approx(0.10)
 
     def test_none_optional_fields_excluded(self):
         d = _dump(_params())
-        self.assertNotIn("distribution", d)
-        self.assertNotIn("report_context", d)
-        self.assertNotIn("report_mean_thresholds", d)
+        assert "distribution" not in d
+        assert "report_context" not in d
+        assert "report_mean_thresholds" not in d
 
 
 # ---------------------------------------------------------------------------

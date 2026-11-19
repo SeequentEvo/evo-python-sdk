@@ -15,6 +15,7 @@ from types import SimpleNamespace
 from unittest import TestCase
 from unittest.mock import MagicMock
 
+import pytest
 from evo.objects import ObjectReference
 from evo.objects.typed.attributes import (
     Attribute,
@@ -1132,8 +1133,8 @@ class TestObjectReferenceValidation(TestCase):
             Source(object=12345, attribute="grade")
 
 
-class TestSearchNeighborhoodAlias(TestCase):
-    """Tests for the search/neighborhood alias on KrigingParameters."""
+class TestSearchNeighborhoodAlias:
+    """Tests for the search/neighborhood and method/kriging_method aliases on KrigingParameters."""
 
     def _make_params(self, **kwargs):
         """Create KrigingParameters with default values, overridable via kwargs."""
@@ -1154,25 +1155,25 @@ class TestSearchNeighborhoodAlias(TestCase):
         """When by_alias=True, the neighborhood field should serialize as 'neighborhood'."""
         params = self._make_params()
         params_dict = params.model_dump(mode="json", by_alias=True, exclude_none=True)
-        self.assertIn("neighborhood", params_dict)
-        self.assertNotIn("search", params_dict)
-        self.assertIn("kriging_method", params_dict)
-        self.assertNotIn("method", params_dict)
+        assert "neighborhood" in params_dict
+        assert "search" not in params_dict
+        assert "kriging_method" in params_dict
+        assert "method" not in params_dict
 
     def test_always_serializes_neighborhood_and_kriging_method_without_by_alias(self):
         """Even when by_alias=False (default), canonical 'neighborhood' and 'kriging_method' keys are emitted."""
         params = self._make_params()
         params_dict = params.model_dump()
-        self.assertIn("neighborhood", params_dict)
-        self.assertNotIn("search", params_dict)
-        self.assertIn("kriging_method", params_dict)
-        self.assertNotIn("method", params_dict)
+        assert "neighborhood" in params_dict
+        assert "search" not in params_dict
+        assert "kriging_method" in params_dict
+        assert "method" not in params_dict
 
     def test_kriging_method_canonical_and_legacy_alias(self):
         """KrigingParameters accepts both kriging_method=... and method=... and exposes both attributes."""
         default_params = self._make_params()
-        self.assertIsInstance(default_params.kriging_method, OrdinaryKriging)
-        self.assertIs(default_params.method, default_params.kriging_method)
+        assert isinstance(default_params.kriging_method, OrdinaryKriging)
+        assert default_params.method is default_params.kriging_method
 
         via_canonical = KrigingParameters(
             source=Source(object=POINTSET_URL, attribute="grade"),
@@ -1184,16 +1185,16 @@ class TestSearchNeighborhoodAlias(TestCase):
             ),
             kriging_method=KrigingMethod.simple(mean=42.5),
         )
-        self.assertIsInstance(via_canonical.kriging_method, SimpleKriging)
-        self.assertEqual(via_canonical.kriging_method.mean, 42.5)
-        self.assertIs(via_canonical.method, via_canonical.kriging_method)
-        self.assertEqual(via_canonical.model_dump()["kriging_method"], {"type": "simple", "mean": 42.5})
+        assert isinstance(via_canonical.kriging_method, SimpleKriging)
+        assert via_canonical.kriging_method.mean == 42.5
+        assert via_canonical.method is via_canonical.kriging_method
+        assert via_canonical.model_dump()["kriging_method"] == {"type": "simple", "mean": 42.5}
 
         via_legacy = self._make_params(method=KrigingMethod.simple(mean=12.0))
-        self.assertIsInstance(via_legacy.kriging_method, SimpleKriging)
-        self.assertEqual(via_legacy.method.mean, 12.0)
-        self.assertIs(via_legacy.method, via_legacy.kriging_method)
-        self.assertEqual(via_legacy.model_dump()["kriging_method"], {"type": "simple", "mean": 12.0})
+        assert isinstance(via_legacy.kriging_method, SimpleKriging)
+        assert via_legacy.method.mean == 12.0
+        assert via_legacy.method is via_legacy.kriging_method
+        assert via_legacy.model_dump()["kriging_method"] == {"type": "simple", "mean": 12.0}
 
     def test_search_limits_are_sent_in_the_neighborhood(self):
         search = SearchNeighborhood(
@@ -1206,11 +1207,11 @@ class TestSearchNeighborhoodAlias(TestCase):
             drillhole_limit_scope="octant",
         )
         params_dict = self._make_params(search=search).model_dump(mode="json", by_alias=True, exclude_none=True)
-        self.assertEqual(params_dict["neighborhood"]["max_samples_per_octant"], 2)
-        self.assertEqual(params_dict["neighborhood"]["max_samples_per_drillhole"], 3)
-        self.assertEqual(params_dict["neighborhood"]["max_drillholes"], 6)
-        self.assertEqual(params_dict["neighborhood"]["min_drillholes"], 2)
-        self.assertEqual(params_dict["neighborhood"]["drillhole_limit_scope"], "octant")
+        assert params_dict["neighborhood"]["max_samples_per_octant"] == 2
+        assert params_dict["neighborhood"]["max_samples_per_drillhole"] == 3
+        assert params_dict["neighborhood"]["max_drillholes"] == 6
+        assert params_dict["neighborhood"]["min_drillholes"] == 2
+        assert params_dict["neighborhood"]["drillhole_limit_scope"] == "octant"
 
         default_drillholes = SearchNeighborhood(
             ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=100, semi_major=100, minor=50)),
@@ -1222,16 +1223,16 @@ class TestSearchNeighborhoodAlias(TestCase):
         default_dict = self._make_params(search=default_drillholes).model_dump(
             mode="json", by_alias=True, exclude_none=True
         )
-        self.assertEqual(default_dict["neighborhood"]["max_drillholes"], 5)
-        self.assertNotIn("max_drillholes_per_estimate", default_dict["neighborhood"])
-        self.assertNotIn("min_drillholes", default_dict["neighborhood"])
-        self.assertNotIn("drillhole_limit_scope", default_dict["neighborhood"])
+        assert default_dict["neighborhood"]["max_drillholes"] == 5
+        assert "max_drillholes_per_estimate" not in default_dict["neighborhood"]
+        assert "min_drillholes" not in default_dict["neighborhood"]
+        assert "drillhole_limit_scope" not in default_dict["neighborhood"]
 
     def test_can_construct_with_field_name_search(self):
         """Users should be able to construct KrigingParameters with search=..."""
         params = self._make_params()
-        self.assertIsNotNone(params.neighborhood)
-        self.assertIs(params.search, params.neighborhood)
+        assert params.neighborhood is not None
+        assert params.search is params.neighborhood
 
     def test_can_construct_with_alias_neighborhood(self):
         """Users should also be able to construct with neighborhood=..."""
@@ -1245,37 +1246,39 @@ class TestSearchNeighborhoodAlias(TestCase):
             variogram=VARIOGRAM_URL,
             neighborhood=search,
         )
-        self.assertIs(params.neighborhood, search)
-        self.assertIs(params.search, search)
+        assert params.neighborhood is search
+        assert params.search is search
 
-    def test_sample_limit_boundaries_in_neighborhood(self):
+    @pytest.mark.parametrize(("max_samples", "min_samples"), [(1, 1), (20, 1), (20, 20)])
+    def test_sample_limit_boundaries_in_neighborhood(self, max_samples: int, min_samples: int):
         ellipsoid = Ellipsoid(ranges=EllipsoidRanges(major=100, semi_major=100, minor=50))
         default_min = self._make_params(search={"ellipsoid": ellipsoid, "max_samples": 1}).model_dump(
             mode="json", by_alias=True, exclude_none=True
         )
-        self.assertEqual(default_min["neighborhood"]["max_samples"], 1)
-        self.assertNotIn("min_samples", default_min["neighborhood"])
+        assert default_min["neighborhood"]["max_samples"] == 1
+        assert "min_samples" not in default_min["neighborhood"]
 
-        for max_samples, min_samples in [(1, 1), (20, 1), (20, 20)]:
-            with self.subTest(max_samples=max_samples, min_samples=min_samples):
-                dumped = self._make_params(
-                    search={"ellipsoid": ellipsoid, "max_samples": max_samples, "min_samples": min_samples}
-                ).model_dump(mode="json", by_alias=True, exclude_none=True)
-                self.assertEqual(dumped["neighborhood"]["max_samples"], max_samples)
-                self.assertEqual(dumped["neighborhood"]["min_samples"], min_samples)
+        dumped = self._make_params(
+            search={"ellipsoid": ellipsoid, "max_samples": max_samples, "min_samples": min_samples}
+        ).model_dump(mode="json", by_alias=True, exclude_none=True)
+        assert dumped["neighborhood"]["max_samples"] == max_samples
+        assert dumped["neighborhood"]["min_samples"] == min_samples
 
-    def test_invalid_sample_limits_rejected(self):
+    @pytest.mark.parametrize("field_name", ["search", "neighborhood"])
+    @pytest.mark.parametrize(
+        "limits",
+        [
+            {"max_samples": 0},
+            {"max_samples": 20, "min_samples": 0},
+            {"max_samples": 20, "min_samples": 21},
+        ],
+    )
+    def test_invalid_sample_limits_rejected(self, field_name: str, limits: dict):
         ellipsoid = Ellipsoid(ranges=EllipsoidRanges(major=100, semi_major=100, minor=50))
-        for field_name in ("search", "neighborhood"):
-            for limits in [
-                {"max_samples": 0},
-                {"max_samples": 20, "min_samples": 0},
-                {"max_samples": 20, "min_samples": 21},
-            ]:
-                with self.subTest(field=field_name, **limits), self.assertRaises(ValidationError):
-                    KrigingParameters(
-                        source=Source(object=POINTSET_URL, attribute="grade"),
-                        target=Target.new_attribute(GRID_URL, "kriged_grade"),
-                        variogram=VARIOGRAM_URL,
-                        **{field_name: {"ellipsoid": ellipsoid, **limits}},
-                    )
+        with pytest.raises(ValidationError):
+            KrigingParameters(
+                source=Source(object=POINTSET_URL, attribute="grade"),
+                target=Target.new_attribute(GRID_URL, "kriged_grade"),
+                variogram=VARIOGRAM_URL,
+                **{field_name: {"ellipsoid": ellipsoid, **limits}},
+            )

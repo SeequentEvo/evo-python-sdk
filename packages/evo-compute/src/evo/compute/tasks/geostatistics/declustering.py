@@ -61,17 +61,16 @@ import pandas as pd
 from evo.common import IContext, IFeedback
 from evo.objects import ObjectSchema
 from evo.objects.typed import BaseObject, object_from_reference
-from pydantic import BaseModel, BeforeValidator, Field, SerializerFunctionWrapHandler, field_validator, model_serializer
+from pydantic import BaseModel, BeforeValidator, Field, SerializerFunctionWrapHandler, model_serializer
 
 from ..common import (
     AnyTargetAttribute,
     GeoscienceObjectReference,
-    SearchNeighborhood,
 )
 from ..common.results import TaskTarget
 from ..common.runner import TaskRunner
-from ..common.search import _reject_kriging_only_drillhole_limits
 from ..common.source_target import _convert_object_reference
+from .search import SearchNeighborhood
 
 __all__ = [
     "DeclusteringParameters",
@@ -172,11 +171,6 @@ class DeclusteringParameters(BaseModel):
     Default is ``2.0`` (standard IDW).  Must be positive when provided.
     """
 
-    @field_validator("neighborhood")
-    @classmethod
-    def _check_neighborhood(cls, neighborhood: SearchNeighborhood) -> SearchNeighborhood:
-        return _reject_kriging_only_drillhole_limits(neighborhood)
-
     @model_serializer(mode="wrap")
     def _serialize(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
         result = handler(self)
@@ -234,7 +228,7 @@ def knn(
 
     Uses equal neighbour weights (arithmetic mean).  For true
     nearest-neighbour behaviour, set ``max_samples=1`` on the
-    :class:`~evo.compute.tasks.common.SearchNeighborhood`.
+    :class:`~evo.compute.tasks.geostatistics.SearchNeighborhood`.
 
     Args:
         source: Source sample locations (geoscience object URL or DeclusteringSource).

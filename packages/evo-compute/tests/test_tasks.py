@@ -15,10 +15,11 @@ import inspect
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
 from evo.objects.exceptions import SchemaIDFormatError
 from pydantic import ValidationError
 
-from evo.compute.tasks import SearchNeighborhood, run
+from evo.compute.tasks import SearchNeighborhood, SimpleSearchNeighborhood, run
 from evo.compute.tasks.common import Ellipsoid, EllipsoidRanges, Rotation
 from evo.compute.tasks.common.results import TaskAttribute, TaskResultList, TaskTarget
 from evo.compute.tasks.common.runner import TaskRegistry, run_tasks
@@ -307,8 +308,8 @@ class TestConvertObjectReference(unittest.TestCase):
             _convert_object_reference("not_a_url")
 
 
-class TestSearchNeighborhood(unittest.TestCase):
-    """Tests for sample, octant, quadrant, drillhole limits and wire schema on SearchNeighborhood."""
+class TestSearchNeighborhood:
+    """Tests for SimpleSearchNeighborhood and SearchNeighborhood models, re-exports, and wire schemas."""
 
     LIMITS = {
         "max_empty_octants": 4,
@@ -328,48 +329,90 @@ class TestSearchNeighborhood(unittest.TestCase):
             **limits,
         )
 
+    @pytest.mark.parametrize(
+        "module_name",
+        [
+            "evo.compute.tasks",
+            "evo.compute.tasks.geostatistics",
+            "evo.compute.tasks.geostatistics.search",
+        ],
+    )
+    def test_canonical_exports(self, module_name: str):
+        from importlib import import_module
+
+        module = import_module(module_name)
+        assert module.SearchNeighborhood is SearchNeighborhood
+        assert module.SimpleSearchNeighborhood is SimpleSearchNeighborhood
+        assert issubclass(SearchNeighborhood, SimpleSearchNeighborhood)
+
+    @pytest.mark.parametrize(
+        "module_name",
+        [
+            "evo.compute.tasks.common",
+            "evo.compute.tasks.common.search",
+        ],
+    )
+    def test_common_only_reexports_legacy_search_neighborhood(self, module_name: str):
+        from importlib import import_module
+
+        module = import_module(module_name)
+        assert module.SearchNeighborhood is SearchNeighborhood
+        assert not hasattr(module, "SimpleSearchNeighborhood")
+
     def test_limits_are_omitted_unless_set(self):
         search = self._search()
-        self.assertIsNone(search.min_samples)
-        self.assertIsNone(search.max_drillholes)
-        self.assertIsNone(search.min_drillholes)
-        self.assertIsNone(search.drillhole_limit_scope)
-        self.assertEqual(set(search.model_dump(mode="json")), {"ellipsoid", "max_samples"})
+        assert search.min_samples is None
+        assert search.max_drillholes is None
+        assert search.min_drillholes is None
+        assert search.drillhole_limit_scope is None
+        assert set(search.model_dump(mode="json")) == {"ellipsoid", "max_samples"}
 
-    def test_sample_limit_boundaries_are_accepted(self):
+        simple = SimpleSearchNeighborhood(
+            ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=200, semi_major=150, minor=100)),
+            max_samples=24,
+        )
+        assert simple.min_samples is None
+        assert set(simple.model_dump(mode="json")) == {"ellipsoid", "max_samples"}
+
+    @pytest.mark.parametrize(("max_samples", "min_samples"), [(1, 1), (20, 1), (20, 20)])
+    def test_sample_limit_boundaries_are_accepted(self, max_samples: int, min_samples: int):
         single = self._search(max_samples=1).model_dump(mode="json")
-        self.assertEqual(single["max_samples"], 1)
-        self.assertNotIn("min_samples", single)
+        assert single["max_samples"] == 1
+        assert "min_samples" not in single
 
-        for max_samples, min_samples in [(1, 1), (20, 1), (20, 20)]:
-            with self.subTest(max_samples=max_samples, min_samples=min_samples):
-                dumped = self._search(max_samples=max_samples, min_samples=min_samples).model_dump(mode="json")
-                self.assertEqual(dumped["max_samples"], max_samples)
-                self.assertEqual(dumped["min_samples"], min_samples)
+        dumped = self._search(max_samples=max_samples, min_samples=min_samples).model_dump(mode="json")
+        assert dumped["max_samples"] == max_samples
+        assert dumped["min_samples"] == min_samples
 
-    def test_invalid_sample_limits_are_refused(self):
-        for kwargs in [
+    @pytest.mark.parametrize("cls", [SimpleSearchNeighborhood, SearchNeighborhood])
+    @pytest.mark.parametrize(
+        "kwargs",
+        [
             {"max_samples": 0},
             {"max_samples": -1},
             {"max_samples": 20, "min_samples": 0},
             {"max_samples": 20, "min_samples": -1},
             {"max_samples": 20, "min_samples": 21},
             {"max_samples": 1, "min_samples": 2},
-        ]:
-            with self.subTest(**kwargs), self.assertRaises(ValidationError):
-                self._search(**kwargs)
+        ],
+    )
+    def test_invalid_sample_limits_are_refused(self, cls: type[SimpleSearchNeighborhood], kwargs: dict):
+        ellipsoid = Ellipsoid(ranges=EllipsoidRanges(major=200, semi_major=150, minor=100))
+        with pytest.raises(ValidationError):
+            cls(ellipsoid=ellipsoid, **kwargs)
 
     def test_limits_are_sent_when_set(self):
         dumped = self._search(**self.LIMITS).model_dump(mode="json")
-        self.assertEqual({name: dumped[name] for name in self.LIMITS}, self.LIMITS)
+        assert {name: dumped[name] for name in self.LIMITS} == self.LIMITS
 
     def test_zero_empty_sectors_is_sent(self):
         dumped = self._search(max_empty_octants=0, max_empty_quadrants=0).model_dump(mode="json")
-        self.assertEqual(dumped["max_empty_octants"], 0)
-        self.assertEqual(dumped["max_empty_quadrants"], 0)
+        assert dumped["max_empty_octants"] == 0
+        assert dumped["max_empty_quadrants"] == 0
 
-    def test_limits_outside_the_service_bounds_are_refused(self):
-        for name, value in [
+    @pytest.mark.parametrize(
+        ("name", "value"),
+        [
             ("max_empty_octants", -1),
             ("max_empty_octants", 9),
             ("max_empty_quadrants", -1),
@@ -382,29 +425,41 @@ class TestSearchNeighborhood(unittest.TestCase):
             ("min_drillholes", -1),
             ("min_drillholes_per_estimate", -1),
             ("drillhole_limit_scope", "sector"),
-        ]:
-            with self.subTest(name=name, value=value), self.assertRaises(ValidationError):
-                self._search(**{name: value})
+            ("unexpected_field", 1),
+        ],
+    )
+    def test_limits_outside_the_service_bounds_are_refused(self, name: str, value: object):
+        with pytest.raises(ValidationError):
+            self._search(**{name: value})
 
     def test_max_drillholes_backwards_compatibility(self):
         via_canonical = self._search(max_drillholes=6)
-        self.assertEqual(via_canonical.max_drillholes, 6)
-        self.assertEqual(via_canonical.max_drillholes_per_estimate, 6)
+        assert via_canonical.max_drillholes == 6
+        assert via_canonical.max_drillholes_per_estimate == 6
         dumped_canonical = via_canonical.model_dump(mode="json", by_alias=True, exclude_none=True)
-        self.assertEqual(dumped_canonical["max_drillholes"], 6)
-        self.assertNotIn("max_drillholes_per_estimate", dumped_canonical)
+        assert dumped_canonical["max_drillholes"] == 6
+        assert "max_drillholes_per_estimate" not in dumped_canonical
 
         via_legacy = self._search(max_drillholes_per_estimate=6)
-        self.assertEqual(via_legacy.max_drillholes, 6)
-        self.assertEqual(via_legacy.max_drillholes_per_estimate, 6)
+        assert via_legacy.max_drillholes == 6
+        assert via_legacy.max_drillholes_per_estimate == 6
         dumped_legacy = via_legacy.model_dump(mode="json", by_alias=True, exclude_none=True)
-        self.assertEqual(dumped_legacy["max_drillholes"], 6)
-        self.assertNotIn("max_drillholes_per_estimate", dumped_legacy)
+        assert dumped_legacy["max_drillholes"] == 6
+        assert "max_drillholes_per_estimate" not in dumped_legacy
 
-        with self.assertRaises(AttributeError):
+        with pytest.raises(AttributeError):
             via_canonical.max_drillholes_per_estimate = 4  # type: ignore[misc]
 
-    def test_conflicting_drillhole_aliases_are_rejected(self):
+    @pytest.mark.parametrize(
+        "conflicting",
+        [
+            {"max_drillholes": 6, "max_drillholes_per_estimate": 4},
+            {"max_drillholes": None, "max_drillholes_per_estimate": 4},
+            {"min_drillholes": 2, "min_drillholes_per_estimate": 3},
+            {"min_drillholes": 0, "min_drillholes_per_estimate": 2},
+        ],
+    )
+    def test_conflicting_drillhole_aliases_are_rejected(self, conflicting: dict):
         ellipsoid = Ellipsoid(ranges=EllipsoidRanges(major=200, semi_major=150, minor=100))
         equal = SearchNeighborhood.model_validate(
             {
@@ -416,52 +471,46 @@ class TestSearchNeighborhood(unittest.TestCase):
                 "min_drillholes_per_estimate": 2,
             }
         )
-        self.assertEqual(equal.max_drillholes, 6)
-        self.assertEqual(equal.min_drillholes, 2)
+        assert equal.max_drillholes == 6
+        assert equal.min_drillholes == 2
 
-        for conflicting in [
-            {"max_drillholes": 6, "max_drillholes_per_estimate": 4},
-            {"max_drillholes": None, "max_drillholes_per_estimate": 4},
-            {"min_drillholes": 2, "min_drillholes_per_estimate": 3},
-            {"min_drillholes": 0, "min_drillholes_per_estimate": 2},
-        ]:
-            with self.subTest(**conflicting), self.assertRaisesRegex(ValidationError, "Conflicting values"):
-                SearchNeighborhood.model_validate({"ellipsoid": ellipsoid, "max_samples": 24, **conflicting})
+        with pytest.raises(ValidationError, match="Conflicting values"):
+            SearchNeighborhood.model_validate({"ellipsoid": ellipsoid, "max_samples": 24, **conflicting})
 
-    def test_min_drillholes_omitted_when_none_or_zero_and_emitted_when_positive(self):
-        for kwargs in [{}, {"min_drillholes": None}, {"min_drillholes": 0}, {"min_drillholes_per_estimate": 0}]:
-            with self.subTest(**kwargs):
-                dumped = self._search(**kwargs).model_dump(mode="json", by_alias=True, exclude_none=True)
-                self.assertNotIn("min_drillholes", dumped)
-                self.assertNotIn("min_drillholes_per_estimate", dumped)
+    @pytest.mark.parametrize(
+        "kwargs",
+        [{}, {"min_drillholes": None}, {"min_drillholes": 0}, {"min_drillholes_per_estimate": 0}],
+    )
+    def test_min_drillholes_omitted_when_none_or_zero(self, kwargs: dict):
+        dumped = self._search(**kwargs).model_dump(mode="json", by_alias=True, exclude_none=True)
+        assert "min_drillholes" not in dumped
+        assert "min_drillholes_per_estimate" not in dumped
 
-        for kwargs in [{"min_drillholes": 3}, {"min_drillholes_per_estimate": 3}]:
-            with self.subTest(**kwargs):
-                dumped = self._search(**kwargs).model_dump(mode="json", by_alias=True, exclude_none=True)
-                self.assertEqual(dumped["min_drillholes"], 3)
-                self.assertNotIn("min_drillholes_per_estimate", dumped)
+    @pytest.mark.parametrize("kwargs", [{"min_drillholes": 3}, {"min_drillholes_per_estimate": 3}])
+    def test_min_drillholes_emitted_when_positive(self, kwargs: dict):
+        dumped = self._search(**kwargs).model_dump(mode="json", by_alias=True, exclude_none=True)
+        assert dumped["min_drillholes"] == 3
+        assert "min_drillholes_per_estimate" not in dumped
 
-    def test_drillhole_limit_scope_omitted_when_global_and_requires_samples_per_drillhole(self):
-        for scope in (None, "global"):
-            with self.subTest(scope=scope):
-                dumped = self._search(drillhole_limit_scope=scope).model_dump(
-                    mode="json", by_alias=True, exclude_none=True
-                )
-                self.assertNotIn("drillhole_limit_scope", dumped)
+    @pytest.mark.parametrize("scope", [None, "global"])
+    def test_drillhole_limit_scope_omitted_when_global(self, scope: str | None):
+        dumped = self._search(drillhole_limit_scope=scope).model_dump(mode="json", by_alias=True, exclude_none=True)
+        assert "drillhole_limit_scope" not in dumped
 
-        for scope in ("quadrant", "octant"):
-            with self.subTest(scope=scope):
-                with self.assertRaisesRegex(ValidationError, "requires max_samples_per_drillhole"):
-                    self._search(drillhole_limit_scope=scope)
+    @pytest.mark.parametrize("scope", ["quadrant", "octant"])
+    def test_drillhole_limit_scope_requires_samples_per_drillhole(self, scope: str):
+        with pytest.raises(ValidationError, match="requires max_samples_per_drillhole"):
+            self._search(drillhole_limit_scope=scope)
 
-                dumped = self._search(max_samples_per_drillhole=2, drillhole_limit_scope=scope).model_dump(
-                    mode="json", by_alias=True, exclude_none=True
-                )
-                self.assertEqual(dumped["drillhole_limit_scope"], scope)
-                self.assertEqual(dumped["max_samples_per_drillhole"], 2)
+        dumped = self._search(max_samples_per_drillhole=2, drillhole_limit_scope=scope).model_dump(
+            mode="json", by_alias=True, exclude_none=True
+        )
+        assert dumped["drillhole_limit_scope"] == scope
+        assert dumped["max_samples_per_drillhole"] == 2
 
-    def test_contradictory_neighborhood_bounds_are_rejected(self):
-        valid_cases = [
+    @pytest.mark.parametrize(
+        "kwargs",
+        [
             {"max_samples": 8, "min_samples": 8, "max_samples_per_octant": 1},
             {"max_samples": 8, "min_samples": 8, "max_samples_per_quadrant": 2},
             {"max_samples": 20, "min_drillholes": 4, "max_drillholes": 4},
@@ -489,12 +538,14 @@ class TestSearchNeighborhood(unittest.TestCase):
                 "drillhole_limit_scope": "quadrant",
             },
             {"max_samples": 4, "max_empty_quadrants": 0, "max_drillholes": 2, "max_samples_per_drillhole": 2},
-        ]
-        for kwargs in valid_cases:
-            with self.subTest(valid=kwargs):
-                self._search(**kwargs)
+        ],
+    )
+    def test_consistent_neighborhood_bounds_are_accepted(self, kwargs: dict):
+        assert self._search(**kwargs) is not None
 
-        invalid_cases = [
+    @pytest.mark.parametrize(
+        "kwargs",
+        [
             {"max_samples": 20, "min_samples": 9, "max_samples_per_octant": 1},
             {"max_samples": 20, "min_samples": 9, "max_samples_per_quadrant": 2},
             {"max_samples": 20, "min_samples": 7, "max_drillholes": 3, "max_samples_per_drillhole": 2},
@@ -521,12 +572,19 @@ class TestSearchNeighborhood(unittest.TestCase):
             {"max_samples": 20, "max_empty_octants": 0, "max_drillholes": 2, "max_samples_per_drillhole": 2},
             {"max_samples": 3, "max_empty_quadrants": 0},
             {"max_samples": 20, "max_empty_quadrants": 0, "max_drillholes": 1, "max_samples_per_drillhole": 3},
-        ]
-        for kwargs in invalid_cases:
-            with self.subTest(invalid=kwargs), self.assertRaises(ValidationError):
-                self._search(**kwargs)
+        ],
+    )
+    def test_contradictory_neighborhood_bounds_are_rejected(self, kwargs: dict):
+        with pytest.raises(ValidationError):
+            self._search(**kwargs)
 
-    def test_model_json_schema_describes_wire_payload_and_round_trips(self):
+    @pytest.mark.parametrize("mode", ["validation", "serialization"])
+    def test_model_json_schema_describes_wire_payload(self, mode: str):
+        simple_schema = SimpleSearchNeighborhood.model_json_schema(mode=mode)
+        assert set(simple_schema["properties"]) == {"ellipsoid", "max_samples", "min_samples"}
+        assert simple_schema["required"] == ["ellipsoid", "max_samples"]
+        assert simple_schema["additionalProperties"] is False
+
         expected_fields = {
             "ellipsoid",
             "max_samples",
@@ -540,21 +598,22 @@ class TestSearchNeighborhood(unittest.TestCase):
             "min_drillholes",
             "drillhole_limit_scope",
         }
-        for mode in ("validation", "serialization"):
-            with self.subTest(mode=mode):
-                schema = SearchNeighborhood.model_json_schema(mode=mode)
-                self.assertEqual(set(schema["properties"]), expected_fields)
-                self.assertEqual(schema["required"], ["ellipsoid", "max_samples"])
-                ellipsoid_schema = schema["properties"]["ellipsoid"]
-                self.assertIn("ellipsoid_ranges", ellipsoid_schema["properties"])
-                self.assertIn("rotation", ellipsoid_schema["properties"])
-                self.assertNotIn("ranges", ellipsoid_schema["properties"])
-                self.assertNotIn("_rotation", ellipsoid_schema["properties"])
-                self.assertEqual(
-                    set(ellipsoid_schema["properties"]["ellipsoid_ranges"]["properties"]),
-                    {"major", "semi_major", "minor"},
-                )
+        schema = SearchNeighborhood.model_json_schema(mode=mode)
+        assert set(schema["properties"]) == expected_fields
+        assert schema["required"] == ["ellipsoid", "max_samples"]
+        assert schema["additionalProperties"] is False
+        ellipsoid_schema = schema["properties"]["ellipsoid"]
+        assert "ellipsoid_ranges" in ellipsoid_schema["properties"]
+        assert "rotation" in ellipsoid_schema["properties"]
+        assert "ranges" not in ellipsoid_schema["properties"]
+        assert "_rotation" not in ellipsoid_schema["properties"]
+        assert set(ellipsoid_schema["properties"]["ellipsoid_ranges"]["properties"]) == {
+            "major",
+            "semi_major",
+            "minor",
+        }
 
+    def test_wire_payload_round_trips(self):
         original = SearchNeighborhood(
             ellipsoid=Ellipsoid(
                 ranges=EllipsoidRanges(major=200.0, semi_major=150.0, minor=100.0),
@@ -565,7 +624,7 @@ class TestSearchNeighborhood(unittest.TestCase):
         )
         wire = original.model_dump(mode="json", by_alias=True, exclude_none=True)
         round_tripped = SearchNeighborhood.model_validate(wire)
-        self.assertEqual(round_tripped.model_dump(mode="json", by_alias=True, exclude_none=True), wire)
+        assert round_tripped.model_dump(mode="json", by_alias=True, exclude_none=True) == wire
 
         from_attr_dict = SearchNeighborhood.model_validate(
             {
@@ -573,9 +632,11 @@ class TestSearchNeighborhood(unittest.TestCase):
                 "max_samples": 20,
             }
         )
-        self.assertEqual(from_attr_dict.ellipsoid.ranges.major, 200.0)
+        assert from_attr_dict.ellipsoid.ranges.major == 200.0
 
-        for bad_ellipsoid in [
+    @pytest.mark.parametrize(
+        "bad_ellipsoid",
+        [
             {
                 "ellipsoid_ranges": {"major": 200.0, "semi_major": 150.0, "minor": 100.0},
                 "ranges": {"major": 100.0, "semi_major": 150.0, "minor": 100.0},
@@ -583,9 +644,11 @@ class TestSearchNeighborhood(unittest.TestCase):
             {"ellipsoid_ranges": None},
             {"ellipsoid_ranges": {"major": 200.0, "semi_major": 150.0, "minor": 100.0}, "rotation": "none"},
             {1: 2},
-        ]:
-            with self.subTest(bad_ellipsoid=bad_ellipsoid), self.assertRaises(ValidationError):
-                SearchNeighborhood.model_validate({"ellipsoid": bad_ellipsoid, "max_samples": 20})
+        ],
+    )
+    def test_invalid_ellipsoid_mappings_raise_validation_error(self, bad_ellipsoid: dict):
+        with pytest.raises(ValidationError):
+            SearchNeighborhood.model_validate({"ellipsoid": bad_ellipsoid, "max_samples": 20})
 
 
 class TestRunTasksDispatch(unittest.IsolatedAsyncioTestCase):

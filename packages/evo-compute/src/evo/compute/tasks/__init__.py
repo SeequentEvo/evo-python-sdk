@@ -51,7 +51,6 @@ from .common import (
     Filter,
     FilterCondition,
     Rotation,
-    SearchNeighborhood,
     Source,
     Target,
     UpdateAttribute,
@@ -63,6 +62,9 @@ from .common.results import TaskResultList
 
 # Result types from common (generic base classes)
 from .common.runner import TParams, TResult
+
+# Geostatistics search neighborhood types
+from .geostatistics import SearchNeighborhood, SimpleSearchNeighborhood
 
 # Break Ties-specific result types
 from .geostatistics.break_ties import BreakTiesResult
@@ -187,6 +189,7 @@ __all__ = [
     "LocationWiseResult",
     "Rotation",
     "SearchNeighborhood",
+    "SimpleSearchNeighborhood",
     "Source",
     "Target",
     "TaskResultList",

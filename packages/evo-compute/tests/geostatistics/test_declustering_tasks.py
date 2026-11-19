@@ -14,6 +14,7 @@
 from unittest import IsolatedAsyncioTestCase, TestCase
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
 from pydantic import ValidationError
 
 from evo.compute.tasks import (
@@ -106,7 +107,7 @@ class TestDeclusteringRegistration(TestCase):
 # ---------------------------------------------------------------------------
 
 
-class TestDeclusteringParametersSerialization(TestCase):
+class TestDeclusteringParametersSerialization:
     def _params(self, **kwargs) -> DeclusteringParameters:
         defaults = dict(
             source=POINTSET_URL,
@@ -122,22 +123,22 @@ class TestDeclusteringParametersSerialization(TestCase):
 
     def test_source_serializes_correctly(self):
         d = self._dump(self._params())
-        self.assertEqual(d["source"]["object"], POINTSET_URL)
+        assert d["source"]["object"] == POINTSET_URL
 
     def test_source_accepts_raw_url(self):
         params = self._params(source=POINTSET_URL)
-        self.assertIsInstance(params.source, DeclusteringSource)
-        self.assertEqual(str(params.source.object), POINTSET_URL)
+        assert isinstance(params.source, DeclusteringSource)
+        assert str(params.source.object) == POINTSET_URL
 
     def test_grid_serializes_correctly(self):
         d = self._dump(self._params())
-        self.assertEqual(d["grid"]["object"], GRID_URL)
+        assert d["grid"]["object"] == GRID_URL
 
     def test_target_create_serializes_correctly(self):
         d = self._dump(self._params())
-        self.assertEqual(d["target"]["object"], TARGET_URL)
-        self.assertEqual(d["target"]["attribute"]["operation"], "create")
-        self.assertEqual(d["target"]["attribute"]["name"], "weights")
+        assert d["target"]["object"] == TARGET_URL
+        assert d["target"]["attribute"]["operation"] == "create"
+        assert d["target"]["attribute"]["name"] == "weights"
 
     def test_target_update_serializes_correctly(self):
         params = self._params(
@@ -146,70 +147,68 @@ class TestDeclusteringParametersSerialization(TestCase):
             )
         )
         d = self._dump(params)
-        self.assertEqual(d["target"]["attribute"]["operation"], "update")
+        assert d["target"]["attribute"]["operation"] == "update"
 
     def test_neighborhood_serializes_correctly(self):
         d = self._dump(self._params())
         nbh = d["neighborhood"]
-        self.assertIn("ellipsoid", nbh)
-        self.assertEqual(nbh["max_samples"], 20)
+        assert "ellipsoid" in nbh
+        assert nbh["max_samples"] == 20
 
-    def test_search_limits_in_neighborhood(self):
+    @pytest.mark.parametrize("scope", ["quadrant", "octant"])
+    def test_search_limits_in_neighborhood(self, scope: str):
         search = SearchNeighborhood(
             ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=200, semi_major=150, minor=100)),
             max_samples=20,
             max_samples_per_octant=2,
             max_samples_per_drillhole=3,
             max_drillholes=5,
+            min_drillholes=2,
+            drillhole_limit_scope=scope,
+        )
+        d = self._dump(self._params(neighborhood=search))
+        assert d["neighborhood"]["max_samples_per_octant"] == 2
+        assert d["neighborhood"]["max_samples_per_drillhole"] == 3
+        assert d["neighborhood"]["max_drillholes"] == 5
+        assert d["neighborhood"]["min_drillholes"] == 2
+        assert d["neighborhood"]["drillhole_limit_scope"] == scope
+
+        defaults = SearchNeighborhood(
+            ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=200, semi_major=150, minor=100)),
+            max_samples=20,
             min_drillholes=0,
             drillhole_limit_scope="global",
         )
-        d = self._dump(self._params(neighborhood=search))
-        self.assertEqual(d["neighborhood"]["max_samples_per_octant"], 2)
-        self.assertEqual(d["neighborhood"]["max_samples_per_drillhole"], 3)
-        self.assertEqual(d["neighborhood"]["max_drillholes"], 5)
-        self.assertNotIn("min_drillholes", d["neighborhood"])
-        self.assertNotIn("drillhole_limit_scope", d["neighborhood"])
-
-    def test_kriging_only_drillhole_limits_rejected(self):
-        ellipsoid = Ellipsoid(ranges=EllipsoidRanges(major=200, semi_major=150, minor=100))
-        for limits in [
-            {"min_drillholes": 2},
-            {"max_samples_per_drillhole": 2, "drillhole_limit_scope": "quadrant"},
-            {"max_samples_per_drillhole": 2, "drillhole_limit_scope": "octant"},
-        ]:
-            with self.subTest(**limits), self.assertRaisesRegex(ValidationError, "only supported by Kriging"):
-                self._params(neighborhood=SearchNeighborhood(ellipsoid=ellipsoid, max_samples=20, **limits))
+        d_defaults = self._dump(self._params(neighborhood=defaults))
+        assert "min_drillholes" not in d_defaults["neighborhood"]
+        assert "drillhole_limit_scope" not in d_defaults["neighborhood"]
 
     def test_default_power_is_idw(self):
         params = self._params()
-        self.assertEqual(params.power, 2.0)
+        assert params.power == 2.0
 
     def test_default_power_in_serialized_output(self):
         d = self._dump(self._params())
-        self.assertEqual(d["power"], 2.0)
+        assert d["power"] == 2.0
 
     def test_custom_power(self):
         d = self._dump(self._params(power=3.0))
-        self.assertEqual(d["power"], 3.0)
+        assert d["power"] == 3.0
 
     def test_knn_mode_power_none(self):
         params = self._params(power=None)
-        self.assertIsNone(params.power)
+        assert params.power is None
 
     def test_knn_power_none_preserved_with_exclude_none(self):
         """When power=None, serialization must explicitly include power: null."""
         d = self._dump(self._params(power=None))
-        self.assertIn("power", d)
-        self.assertIsNone(d["power"])
+        assert "power" in d
+        assert d["power"] is None
 
-    def test_negative_power_rejected(self):
-        with self.assertRaises(ValidationError):
-            self._params(power=-1.0)
-
-    def test_zero_power_rejected(self):
-        with self.assertRaises(ValidationError):
-            self._params(power=0.0)
+    @pytest.mark.parametrize("power", [-1.0, 0.0])
+    def test_nonpositive_power_rejected(self, power: float):
+        with pytest.raises(ValidationError):
+            self._params(power=power)
 
     def test_neighborhood_with_rotation(self):
         params = self._params(
@@ -223,8 +222,8 @@ class TestDeclusteringParametersSerialization(TestCase):
         )
         d = self._dump(params)
         rotation = d["neighborhood"]["ellipsoid"]["rotation"]
-        self.assertEqual(rotation["dip_azimuth"], 45.0)
-        self.assertEqual(rotation["dip"], 30.0)
+        assert rotation["dip_azimuth"] == 45.0
+        assert rotation["dip"] == 30.0
 
 
 # ---------------------------------------------------------------------------
