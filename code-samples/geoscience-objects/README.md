@@ -32,6 +32,10 @@ The publishing notebooks use the lower-level `evo-schemas` interfaces. Use them 
 - [Publish a Regular 2D Grid](publish-regular-2d-grid/publish-regular-2d-grid.ipynb)
 - [Publish a Triangular Mesh](publish-triangular-mesh/publish-triangular-mesh.ipynb)
 
+## Bonus
+
+- [Merge Triangle Meshes](bonus/merge-triangle-meshes/merge-triangle-meshes.ipynb)
+
 ## Requirements
 
 Each notebook directory contains its own dependency instructions. You need a [supported Python version](../README.md#before-you-start), a Seequent account with Evo access, and Evo application credentials to authenticate in the notebooks.
