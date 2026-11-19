@@ -884,11 +884,13 @@ class TestFormatReport(HtmlFixtureTestCase):
             "columns": [],
             "categories": [],
             "last_result_created_at": None,
+            "volume_filter": None,
         }
         defaults.update(kwargs)
 
         obj = MagicMock()
         obj.id = defaults["id"]
+        obj.volume_filter = defaults["volume_filter"]
         obj.name = defaults["name"]
         obj.revision = defaults["revision"]
         obj._block_model_uuid = defaults["block_model_uuid"]
@@ -1008,6 +1010,17 @@ class TestFormatReport(HtmlFixtureTestCase):
 
         self.assert_html_matches_fixture(html, "report_non_string_category_values")
 
+    def test_formats_report_with_volume_filter(self):
+        """A report's volume filter is shown with its relation, mesh and version."""
+        volume_filter = SimpleNamespace(
+            mesh_id=UUID("11111111-2222-3333-4444-555555555555"), relation="OUTSIDE", mesh_version_id=None
+        )
+
+        html = format_report(self._create_mock_report(volume_filter=volume_filter))
+
+        self.assertIn("Volume filter:", html)
+        self.assertIn("Outside mesh 11111111-2222-3333-4444-555555555555 (version: latest)", html)
+
 
 class TestFormatReportResult(HtmlFixtureTestCase):
     """Tests for the format_report_result function."""
@@ -1020,10 +1033,14 @@ class TestFormatReportResult(HtmlFixtureTestCase):
             "dataframe": pd.DataFrame(
                 {"cutoff": [0.0, 0.5], "Domain": ["ore", "waste"], "Tonnage": [1000.0, 500.0], "Au Grade": [2.5, 1.2]}
             ),
+            "volume_filter": None,
+            "warnings": [],
         }
         defaults.update(kwargs)
 
         obj = MagicMock()
+        obj.volume_filter = defaults["volume_filter"]
+        obj.warnings = defaults["warnings"]
         obj.version_id = defaults["version_id"]
         obj.created_at = defaults["created_at"]
         obj.to_dataframe.return_value = defaults["dataframe"]
@@ -1065,6 +1082,23 @@ class TestFormatReportResult(HtmlFixtureTestCase):
         html = format_report_result(self._create_mock_report_result(dataframe=df))
 
         self.assert_html_matches_fixture(html, "report_result_escaped")
+
+    def test_formats_report_result_volume_filter_and_warnings(self):
+        """The volume filter used for the run and any warnings are shown, with warnings escaped."""
+        volume_filter = SimpleNamespace(
+            mesh_id=UUID("11111111-2222-3333-4444-555555555555"), relation="INSIDE", mesh_version_id="42"
+        )
+        warnings = [
+            {"warning_type": "MESH_FILTER_EXCLUDED_ALL_BLOCKS", "message": "<b>No blocks</b>", "occurrences": 1}
+        ]
+
+        html = format_report_result(self._create_mock_report_result(volume_filter=volume_filter, warnings=warnings))
+
+        self.assertIn("Volume filter: Inside mesh 11111111-2222-3333-4444-555555555555 (version: 42)", html)
+        self.assertIn("Warnings:", html)
+        self.assertIn("MESH_FILTER_EXCLUDED_ALL_BLOCKS", html)
+        self.assertIn("&lt;b&gt;No blocks&lt;/b&gt;", html)
+        self.assertNotIn("Warnings:", format_report_result(self._create_mock_report_result()))
 
 
 class TestFormatTaskResult(HtmlFixtureTestCase):

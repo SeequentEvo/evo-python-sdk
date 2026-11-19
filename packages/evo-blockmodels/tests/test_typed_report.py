@@ -9,8 +9,11 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import json
 import uuid
-from datetime import datetime
+from collections.abc import Mapping
+from datetime import datetime, timezone
+from types import SimpleNamespace
 
 import pandas as pd
 
@@ -24,6 +27,8 @@ from evo.blockmodels.typed import (
     ReportColumnSpec,
     ReportResult,
     ReportSpecificationData,
+    SpatialRelation,
+    VolumeFilter,
 )
 from evo.common import StaticContext
 from evo.common.test_tools import TestWithConnector, TestWithStorage
@@ -35,6 +40,7 @@ VERSION_UUID = uuid.uuid4()
 COL_UUID = uuid.uuid4()
 CAT_COL_UUID = uuid.uuid4()
 DATE = datetime(2026, 1, 1)
+MESH_UUID = uuid.uuid4()
 
 
 class TestReportSpecificationData(TestWithConnector):
@@ -336,3 +342,224 @@ class TestReportCellSchema(TestWithConnector):
         revalidated = models.ReportCell.model_validate(original)
         self.assertEqual(revalidated.value, 1.5)
         self.assertEqual(revalidated.status, ReportCellStatus.OK)
+
+
+def _mesh_metadata(sub_classification: str = "triangle-mesh", workspace_id: uuid.UUID | None = None) -> SimpleNamespace:
+    """Duck-typed stand-in for evo-objects ObjectMetadata."""
+    return SimpleNamespace(
+        id=MESH_UUID,
+        version_id="1700000000000",
+        schema_id=SimpleNamespace(sub_classification=sub_classification),
+        environment=SimpleNamespace(workspace_id=workspace_id or uuid.uuid4()),
+    )
+
+
+def _api_volume_filter_options(selector: str | None = None) -> dict:
+    mesh = {"geoscience_object_id": str(MESH_UUID), "geoscience_version_id": "1700000000000"}
+    if selector is not None:
+        mesh["selector"] = selector
+    return {
+        "volume_filter": {"mesh": mesh, "spatial_relation": "OUTSIDE"},
+        "volume_filter_block_inclusion": "CENTROID_IN",
+    }
+
+
+class TestVolumeFilter(TestWithConnector):
+    """Tests for VolumeFilter conversion and construction."""
+
+    def test_to_api(self) -> None:
+        options = VolumeFilter(mesh_id=MESH_UUID, relation=SpatialRelation.OUTSIDE)._to_api()
+        self.assertEqual(
+            options.model_dump(mode="json", exclude_unset=True),
+            {
+                "volume_filter": {
+                    "mesh": {"geoscience_object_id": str(MESH_UUID), "geoscience_version_id": None},
+                    "spatial_relation": "OUTSIDE",
+                },
+                "volume_filter_block_inclusion": "CENTROID_IN",
+            },
+        )
+
+    def test_from_api_round_trip(self) -> None:
+        options = models.VolumeFilterOptionsOutput.model_validate(_api_volume_filter_options())
+        self.assertEqual(
+            VolumeFilter._from_api(options),
+            VolumeFilter(mesh_id=MESH_UUID, relation=SpatialRelation.OUTSIDE, mesh_version_id="1700000000000"),
+        )
+        self.assertIsNone(VolumeFilter._from_api(None))
+
+    def test_from_api_unsupported_expressions(self) -> None:
+        mesh = {"mesh": {"geoscience_object_id": str(MESH_UUID)}, "spatial_relation": "INSIDE"}
+        group = {
+            "volume_filter": {"operator": "UNION", "volumes": [mesh, mesh]},
+            "volume_filter_block_inclusion": "CENTROID_IN",
+        }
+        for payload in (group, _api_volume_filter_options(selector="/parts/0")):
+            with self.subTest(payload=payload), self.assertRaises(NotImplementedError):
+                VolumeFilter._from_api(models.VolumeFilterOptionsOutput.model_validate(payload))
+
+    def test_from_object(self) -> None:
+        workspace_id = uuid.uuid4()
+        metadata = _mesh_metadata(workspace_id=workspace_id)
+
+        latest = VolumeFilter.from_object(metadata)
+        self.assertEqual(latest.mesh_id, MESH_UUID)
+        self.assertEqual(latest.relation, SpatialRelation.INSIDE)
+        self.assertIsNone(latest.mesh_version_id)
+
+        pinned = VolumeFilter.from_object(SimpleNamespace(metadata=metadata), "OUTSIDE", pin_version=True)
+        self.assertEqual(pinned.relation, SpatialRelation.OUTSIDE)
+        self.assertEqual(pinned.mesh_version_id, "1700000000000")
+
+        reference = SimpleNamespace(object_id=str(MESH_UUID), workspace_id=workspace_id, version_id=None)
+        self.assertEqual(VolumeFilter.from_object(reference).mesh_id, MESH_UUID)
+
+    def test_from_object_rejects_invalid_objects(self) -> None:
+        with self.assertRaisesRegex(ValueError, "triangle-mesh"):
+            VolumeFilter.from_object(_mesh_metadata(sub_classification="pointset"))
+        with self.assertRaisesRegex(ValueError, "no object ID"):
+            VolumeFilter.from_object(SimpleNamespace())
+
+    def test_workspace_check(self) -> None:
+        workspace_id = uuid.uuid4()
+        volume_filter = VolumeFilter.from_object(_mesh_metadata(workspace_id=workspace_id))
+        volume_filter._check_workspace(workspace_id)
+        with self.assertRaisesRegex(ValueError, "same workspace"):
+            volume_filter._check_workspace(uuid.uuid4())
+        # Filters created from a bare ID can't be checked client-side.
+        VolumeFilter(mesh_id=MESH_UUID)._check_workspace(uuid.uuid4())
+
+
+class TestReportVolumeFilter(TestWithConnector, TestWithStorage):
+    """Tests for sending and reading volume filters through Report."""
+
+    def setUp(self) -> None:
+        TestWithConnector.setUp(self)
+        TestWithStorage.setUp(self)
+        self.context = StaticContext.from_environment(self.environment, self.connector, self.cache)
+
+    def _spec_response(self, **overrides) -> dict:
+        return {
+            "report_specification_uuid": str(RS_UUID),
+            "bm_uuid": str(BM_UUID),
+            "name": "Test Report",
+            "description": "A test report",
+            "revision": 1,
+            "autorun": True,
+            "mass_unit_id": "t",
+            "density_value": 2.7,
+            "density_unit_id": "t/m3",
+            "columns": [
+                {"col_id": str(COL_UUID), "label": "Au", "aggregation": "MASS_AVERAGE", "output_unit_id": "g/t"}
+            ],
+            "categories": [{"col_id": str(CAT_COL_UUID), "label": "Domain", "values": ["LMS1"]}],
+            **overrides,
+        }
+
+    def _last_request(self) -> tuple[Mapping[str, str], dict]:
+        kwargs = self.transport.request.call_args.kwargs
+        body = kwargs["body"]
+        return kwargs["headers"], json.loads(body) if isinstance(body, (str, bytes)) else body
+
+    async def _create(self, volume_filter: VolumeFilter | None, preview: bool) -> Report:
+        data = ReportSpecificationData(
+            name="Test Report",
+            columns=[ReportColumnSpec(column_name="Au", output_unit_id="g/t")],
+            categories=[ReportCategorySpec(column_name="Domain")],
+            mass_unit_id="t",
+            density_value=2.7,
+            density_unit_id="t/m3",
+            volume_filter=volume_filter,
+        )
+        with self.transport.set_http_response(201, json.dumps(self._spec_response())):
+            return await Report.create(
+                self.context, BM_UUID, data, {"Au": COL_UUID, "Domain": CAT_COL_UUID}, preview=preview
+            )
+
+    async def test_create_without_volume_filter(self) -> None:
+        await self._create(None, preview=False)
+        headers, body = self._last_request()
+        self.assertNotIn("volume_filter_options", body)
+        self.assertNotIn("API-Preview", headers)
+
+    async def test_create_with_volume_filter(self) -> None:
+        report = await self._create(VolumeFilter(mesh_id=MESH_UUID), preview=True)
+        headers, body = self._last_request()
+        self.assertEqual(headers["API-Preview"], "opt-in")
+        self.assertEqual(body["volume_filter_options"]["volume_filter"]["mesh"]["geoscience_object_id"], str(MESH_UUID))
+        self.assertEqual(body["volume_filter_options"]["volume_filter"]["spatial_relation"], "INSIDE")
+        self.assertTrue(report._preview)
+
+    async def test_create_rejects_mesh_from_other_workspace(self) -> None:
+        volume_filter = VolumeFilter.from_object(_mesh_metadata(workspace_id=uuid.uuid4()))
+        with self.assertRaisesRegex(ValueError, "same workspace"):
+            await self._create(volume_filter, preview=True)
+        self.transport.request.assert_not_called()
+
+    def _report(self, **overrides) -> Report:
+        spec = models.ReportSpecificationWithJobUrl.model_validate(self._spec_response(**overrides))
+        return Report(self.context, BM_UUID, spec, preview=True)
+
+    async def _update(self, report: Report, response: dict, **kwargs) -> dict:
+        with self.transport.set_http_response(200, json.dumps(response)):
+            await report.update(**kwargs)
+        headers, body = self._last_request()
+        self.assertEqual(headers["API-Preview"], "opt-in")
+        return body
+
+    async def test_update_sets_filter_and_keeps_spec(self) -> None:
+        report = self._report()
+        response = self._spec_response(revision=2, volume_filter_options=_api_volume_filter_options())
+        body = await self._update(report, response, volume_filter=VolumeFilter(mesh_id=MESH_UUID))
+
+        self.assertEqual(body["name"], "Test Report")
+        self.assertEqual(body["description"], "A test report")
+        self.assertEqual(body["density_value"], 2.7)
+        self.assertEqual(body["columns"][0]["col_id"], str(COL_UUID))
+        self.assertEqual(body["volume_filter_options"]["volume_filter"]["mesh"]["geoscience_object_id"], str(MESH_UUID))
+        self.assertEqual(report.revision, 2)
+        self.assertEqual(report.volume_filter.relation, SpatialRelation.OUTSIDE)
+
+    async def test_update_keeps_or_clears_filter(self) -> None:
+        report = self._report(volume_filter_options=_api_volume_filter_options())
+
+        body = await self._update(report, self._spec_response(name="Renamed"), name="Renamed")
+        self.assertEqual(body["name"], "Renamed")
+        self.assertEqual(body["volume_filter_options"]["volume_filter"]["spatial_relation"], "OUTSIDE")
+
+        report = self._report(volume_filter_options=_api_volume_filter_options())
+        body = await self._update(report, self._spec_response(), volume_filter=None)
+        self.assertIsNone(body["volume_filter_options"])
+        self.assertIsNone(report.volume_filter)
+
+    def test_result_volume_filter_and_warnings(self) -> None:
+        result = models.ReportResult.model_validate(
+            {
+                "bm_uuid": str(BM_UUID),
+                "report_result_uuid": str(RESULT_UUID),
+                "report_specification_uuid": str(RS_UUID),
+                "report_specification_name": "Test Report",
+                "report_specification_revision": 1,
+                "report_result_created_at": DATE.replace(tzinfo=timezone.utc).isoformat(),
+                "version_id": 1,
+                "version_uuid": str(VERSION_UUID),
+                "version_created_at": DATE.replace(tzinfo=timezone.utc).isoformat(),
+                "version_created_by": {"id": str(uuid.uuid4()), "name": None, "email": None},
+                "categories": [],
+                "value_columns": [],
+                "referenced_columns": [],
+                "result_sets": [],
+                "volume_filter_options": _api_volume_filter_options(),
+                "warnings": [
+                    {
+                        "message": "The volume filter excluded all blocks",
+                        "occurrences": 1,
+                        "warning_type": "MESH_FILTER_EXCLUDED_ALL_BLOCKS",
+                    }
+                ],
+            }
+        )
+        typed = ReportResult._from_api_result(result)
+        self.assertEqual(typed.volume_filter.mesh_id, MESH_UUID)
+        self.assertEqual(typed.warnings[0]["warning_type"], "MESH_FILTER_EXCLUDED_ALL_BLOCKS")
+        self.assertIn("warnings=1", repr(typed))
