@@ -1,7 +1,7 @@
 [project]
 name = "evo-objects"
 description = "Python SDK for using the Seequent Evo Geoscience Object API"
-version = "0.7.0"
+version = "0.8.0"
 requires-python = ">=3.11.5"
 license-files = ["LICENSE.md"]
 dynamic = ["readme"]
@@ -24,7 +24,7 @@ Documentation = "https://developer.seequent.com/"
 aiohttp = ["evo-sdk-common[aiohttp]>=0.6.0"]
 notebooks = ["evo-sdk-common[notebooks]>=0.6.0"]
 utils = ["pyarrow", "pyarrow-stubs", "pandas", "numpy"]
-blockmodels = ["evo-blockmodels[utils]>=0.10.0"]
+blockmodels = ["evo-blockmodels[utils]>=0.11.0"]
 
 [dependency-groups]
 # Dev dependencies. The version is left unspecified so the latest is installed.

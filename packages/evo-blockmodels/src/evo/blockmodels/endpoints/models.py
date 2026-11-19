@@ -396,9 +396,31 @@ class Location(CustomBaseModel):
     z: Annotated[StrictFloat, Field(title="Z")]
 
 
-class MeshFilterRelation(Enum):
+class SpatialRelation(Enum):
+    """
+    Represents the relation between a mesh and the filtered block model.
+    """
+
     INSIDE = "INSIDE"
     OUTSIDE = "OUTSIDE"
+
+
+class VolumeFilterBlockInclusion(Enum):
+    """
+    Represents how qualifying blocks contribute to a volume-filtered report.
+    """
+
+    CENTROID_IN = "CENTROID_IN"
+
+
+class VolumeFilterOperator(Enum):
+    """
+    Represents a set operation on volume filter expressions.
+    """
+
+    UNION = "UNION"
+    INTERSECTION = "INTERSECTION"
+    COMPLEMENT = "COMPLEMENT"
 
 
 class MissingColumnPolicy(Enum):
@@ -790,6 +812,7 @@ class ReportWarningType(Enum):
     LONG_CATEGORY_VALUE = "LONG_CATEGORY_VALUE"
     UNIT_FROM_LATEST_VERSION = "UNIT_FROM_LATEST_VERSION"
     MISSING_SUB_BLOCK = "MISSING_SUB_BLOCK"
+    MESH_FILTER_EXCLUDED_ALL_BLOCKS = "MESH_FILTER_EXCLUDED_ALL_BLOCKS"
 
 
 class ReportingJobResult(CustomBaseModel):
@@ -1402,9 +1425,38 @@ class Mapping(CustomBaseModel):
     """
 
 
-class MeshFilter(CustomBaseModel):
-    relation: MeshFilterRelation
-    uuid: Annotated[UUID, Field(title="Uuid")]
+class Mesh(CustomBaseModel):
+    """
+    Represents a mesh.
+    """
+
+    geoscience_object_id: Annotated[UUID, Field(title="Geoscience Object Id")]
+    """
+    UUID of the mesh
+    """
+    geoscience_version_id: Annotated[StrictStr | None, Field(title="Geoscience Version Id")] = None
+    """
+    Version ID of the mesh; uses latest when omitted
+    """
+    selector: Annotated[StrictStr | None, Field(title="Selector")] = None
+    """
+    Identifier for nested mesh within a geological-model-mesh
+    """
+
+
+class VolumeFilter(CustomBaseModel):
+    """
+    Represents a volume filter for a single mesh.
+    """
+
+    mesh: Mesh
+    """
+    Mesh defining the volume filter
+    """
+    spatial_relation: SpatialRelation
+    """
+    Relation for the volume filter
+    """
 
 
 class QueryCriteria(CustomBaseModel):
@@ -1573,6 +1625,10 @@ class ReportComparisonResultInfo(CustomBaseModel):
     """
     Version UUID of the version of block model that the report was run on
     """
+    volume_filter_options: VolumeFilterOptionsOutput | None = None
+    """
+    Volume filter options applied to the report
+    """
 
 
 class ReportComparisonRow(CustomBaseModel):
@@ -1601,10 +1657,6 @@ class ReportResultSet(CustomBaseModel):
 
 
 class ReportResultSummary(CustomBaseModel):
-    mesh_filter_used: MeshFilter | None = None
-    """
-    The mesh filter that was active when this report was run, or null if no mesh filter was applied.
-    """
     report_result_created_at: Annotated[
         AwareDatetime,
         Field(examples=["2021-01-01T00:00:00Z"], title="Report Result Created At"),
@@ -1653,6 +1705,10 @@ class ReportResultSummary(CustomBaseModel):
     ] = None
     """
     Version UUID of the version of block model that the report was run on
+    """
+    volume_filter_options: VolumeFilterOptionsOutput | None = None
+    """
+    Volume filter options applied to the report
     """
 
 
@@ -1768,10 +1824,6 @@ class ReportSpecificationWithJobUrl(CustomBaseModel):
     """
     ID of the unit to use for total mass. The unit must be of type `MASS`
     """
-    mesh_filter: MeshFilter | None = None
-    """
-    Mesh filter to apply when running the report. Blocks are included or excluded based on whether their centroid falls inside or outside the referenced mesh object. Setting to null removes any existing mesh constraint.
-    """
     name: Annotated[StrictStr, Field(max_length=120, title="Name")]
     """
     The human-readable label used to identify the report
@@ -1797,6 +1849,10 @@ class ReportSpecificationWithJobUrl(CustomBaseModel):
     revision: Annotated[StrictInt, Field(title="Revision")] = 0
     """
     Revision number of this Report Specification
+    """
+    volume_filter_options: VolumeFilterOptionsOutput | None = None
+    """
+    Volume filter options for this report
     """
 
 
@@ -1919,10 +1975,6 @@ class ReportSpecificationWithLastRunInfo(CustomBaseModel):
     """
     ID of the unit to use for total mass. The unit must be of type `MASS`
     """
-    mesh_filter: MeshFilter | None = None
-    """
-    Mesh filter to apply when running the report. Blocks are included or excluded based on whether their centroid falls inside or outside the referenced mesh object. Setting to null removes any existing mesh constraint.
-    """
     name: Annotated[StrictStr, Field(max_length=120, title="Name")]
     """
     The human-readable label used to identify the report
@@ -1948,6 +2000,10 @@ class ReportSpecificationWithLastRunInfo(CustomBaseModel):
     revision: Annotated[StrictInt, Field(title="Revision")] = 0
     """
     Revision number of this Report Specification
+    """
+    volume_filter_options: VolumeFilterOptionsOutput | None = None
+    """
+    Volume filter options for this report
     """
 
 
@@ -2129,10 +2185,6 @@ class UpdateReportSpecification(CustomBaseModel):
     """
     ID of the unit to use for total mass. The unit must be of type `MASS`
     """
-    mesh_filter: MeshFilter | None = None
-    """
-    Mesh filter to apply when running the report. Blocks are included or excluded based on whether their centroid falls inside or outside the referenced mesh object. Setting to null removes any existing mesh constraint.
-    """
     name: Annotated[StrictStr, Field(max_length=120, title="Name")]
     """
     The human-readable label used to identify the report
@@ -2144,6 +2196,10 @@ class UpdateReportSpecification(CustomBaseModel):
     null_values_policy: Annotated[CreateReportNullValuesPolicy | None, Field(examples=["ZERO"])] = None
     """
     Policy for handling null values in the report's cut-off or value columns. If omitted or null, the existing policy will be retained
+    """
+    volume_filter_options: VolumeFilterOptionsInput | None = None
+    """
+    Volume filter options for this report
     """
 
 
@@ -2555,10 +2611,6 @@ class CreateReportSpecification(CustomBaseModel):
     """
     ID of the unit to use for total mass. The unit must be of type `MASS`
     """
-    mesh_filter: MeshFilter | None = None
-    """
-    Mesh filter to apply when running the report. Blocks are included or excluded based on whether their centroid falls inside or outside the referenced mesh object. Setting to null removes any existing mesh constraint.
-    """
     name: Annotated[StrictStr, Field(max_length=120, title="Name")]
     """
     The human-readable label used to identify the report
@@ -2570,6 +2622,10 @@ class CreateReportSpecification(CustomBaseModel):
     null_values_policy: Annotated[CreateReportNullValuesPolicy, Field(examples=["ZERO"])] = "IGNORE_BLOCK"
     """
     Policy for handling null values in the report's cut-off or value columns
+    """
+    volume_filter_options: VolumeFilterOptionsInput | None = None
+    """
+    Volume filter options for this report
     """
 
 
@@ -2792,10 +2848,6 @@ class ReportResult(CustomBaseModel):
     """
     ID of the column that was used for cut-off evaluation
     """
-    mesh_filter_used: MeshFilter | None = None
-    """
-    The mesh filter that was active when this report was run, or null if no mesh filter was applied.
-    """
     referenced_columns: Annotated[list[ReportResultReferencedColumn], Field(title="Referenced Columns")]
     report_result_created_at: Annotated[
         AwareDatetime,
@@ -2888,6 +2940,10 @@ class ReportResult(CustomBaseModel):
     ] = None
     """
     Version UUID of the version of block model that the report was run on
+    """
+    volume_filter_options: VolumeFilterOptionsOutput | None = None
+    """
+    Volume filter options applied to the report
     """
     warnings: Annotated[list[ReportWarning], Field(title="Warnings")]
 
@@ -3504,6 +3560,90 @@ class ListingDeltaResponseData(CustomBaseModel):
     """
     Details about the changes per version
     """
+
+
+class VolumeFilterGroupInput(CustomBaseModel):
+    """
+    Represents recursively combined volume filters.
+    """
+
+    operator: VolumeFilterOperator
+    """
+    Operator joining the nested volume filters
+    """
+    volumes: Annotated[list[VolumeFilterExpressionInput], Field(min_length=1, title="Volumes")]
+    """
+    Volume filters or nested volume filter groups
+    """
+
+
+class VolumeFilterGroupOutput(CustomBaseModel):
+    """
+    Represents recursively combined volume filters.
+    """
+
+    operator: VolumeFilterOperator
+    """
+    Operator joining the nested volume filters
+    """
+    volumes: Annotated[list[VolumeFilterExpressionOutput], Field(min_length=1, title="Volumes")]
+    """
+    Volume filters or nested volume filter groups
+    """
+
+
+class VolumeFilterOptionsInput(CustomBaseModel):
+    """
+    Represents the options for applying a volume filter.
+    """
+
+    volume_filter: VolumeFilterExpressionInput
+    """
+    Volume filter expression
+    """
+    volume_filter_block_inclusion: VolumeFilterBlockInclusion
+    """
+    How qualifying blocks contribute to the report
+    """
+
+
+class VolumeFilterOptionsOutput(CustomBaseModel):
+    """
+    Represents the options for applying a volume filter.
+    """
+
+    volume_filter: VolumeFilterExpressionOutput
+    """
+    Volume filter expression
+    """
+    volume_filter_block_inclusion: VolumeFilterBlockInclusion
+    """
+    How qualifying blocks contribute to the report
+    """
+
+
+class VolumeFilterExpressionInput(RootModel[VolumeFilter | VolumeFilterGroupInput]):
+    root: VolumeFilter | VolumeFilterGroupInput
+
+
+class VolumeFilterExpressionOutput(RootModel[VolumeFilter | VolumeFilterGroupOutput]):
+    root: VolumeFilter | VolumeFilterGroupOutput
+
+
+CreateReportSpecification.model_rebuild()
+PaginatedResponseWithUnitsReportSpecificationWithLastRunInfo.model_rebuild()
+PaginatedResponseReportResultSummary.model_rebuild()
+ReportComparison.model_rebuild()
+ReportComparisonResultInfo.model_rebuild()
+ReportResult.model_rebuild()
+ReportResultSummary.model_rebuild()
+ReportSpecificationWithJobUrl.model_rebuild()
+ReportSpecificationWithLastRunInfo.model_rebuild()
+UpdateReportSpecification.model_rebuild()
+VolumeFilterGroupInput.model_rebuild()
+VolumeFilterGroupOutput.model_rebuild()
+VolumeFilterOptionsInput.model_rebuild()
+VolumeFilterOptionsOutput.model_rebuild()
 
 
 ResponseRetrieveBlockModelVersion = VersionWithChanges | Version
