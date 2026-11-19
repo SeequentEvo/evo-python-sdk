@@ -67,8 +67,8 @@ class Upload(ABC):
 
         :param filename: file to upload
         :param transport: The transport to use for the API calls.
-        :param max_workers: The maximum number of concurrent connections to use for data transfer. If None, the default
-            is `min(32, os.cpu_count() + 4)`
+        :param max_workers: Maximum concurrent chunk workers for this file. Defaults to four, additionally
+            constrained by any shared transport file/chunk limits.
         :param retry: A Retry object with a wait strategy. If None, a default Retry is created. If a chunk is successfully
             transferred the attempt counter will be reset.
         :param fb: feedback to track the upload, by tracking reads from the file only

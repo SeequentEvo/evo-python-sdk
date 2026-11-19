@@ -94,8 +94,8 @@ class Download(ABC, Generic[T]):
 
         :param filename: file to download to
         :param transport: The transport to use for the API calls.
-        :param max_workers: The maximum number of concurrent connections to use for data transfer. If None, the default
-            is `min(32, os.cpu_count() + 4)`
+        :param max_workers: Maximum concurrent chunk workers for this file. Defaults to four, additionally
+            constrained by any shared transport file/chunk limits.
         :param retry: A Retry object with a wait strategy. If None, a default Retry is created. If a chunk is successfully
             transferred the attempt counter will be reset.
         :param overwrite: whether to overwrite an existing local file
@@ -133,8 +133,8 @@ class Download(ABC, Generic[T]):
 
         :param cache: The cache to store the downloaded file.
         :param transport: The transport to use for the API calls.
-        :param max_workers: The maximum number of concurrent connections to use for data transfer. If None, the default
-            is `min(32, os.cpu_count() + 4)`
+        :param max_workers: Maximum concurrent chunk workers for this file. Defaults to four, additionally
+            constrained by any shared transport file/chunk limits.
         :param retry: A Retry object with a wait strategy. If None, a default Retry is created. If a chunk is successfully
             transferred the attempt counter will be reset.
         :param overwrite: whether to overwrite an existing local file

@@ -9,8 +9,11 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import asyncio
 import json
 import sys
+import threading
+import weakref
 from unittest import mock
 from uuid import UUID
 
@@ -44,6 +47,94 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
     @property
     def base_path(self) -> str:
         return f"geoscience-object/orgs/{self.environment.org_id}/workspaces/{self.environment.workspace_id}"
+
+    async def test_conversion_save_and_hash_overlap_without_waiting_for_upload(self):
+        frame = pd.DataFrame({"value": [1.0, 2.0]})
+        save = self.data_client.save_table
+        both_preparing = threading.Event()
+        release_saves = threading.Event()
+        upload_started = asyncio.Event()
+        third_prepared = asyncio.Event()
+        release_uploads = asyncio.Event()
+        loop = asyncio.get_running_loop()
+        lock = threading.Lock()
+        workers = []
+
+        def blocked_save(table, table_format=None):
+            with lock:
+                workers.append(threading.get_ident())
+                if len(workers) == 2:
+                    both_preparing.set()
+                if len(workers) == 3:
+                    loop.call_soon_threadsafe(third_prepared.set)
+            if not release_saves.wait(5):
+                raise TimeoutError("test did not release preparation")
+            return save(table, table_format)
+
+        async def upload(*args, **kwargs):
+            upload_started.set()
+            await release_uploads.wait()
+
+        with (
+            mock.patch.object(self.data_client, "save_table", side_effect=blocked_save),
+            mock.patch("evo.objects.io.ObjectDataUpload.upload_from_cache", side_effect=upload),
+        ):
+            tasks = [asyncio.create_task(self.data_client.upload_dataframe(frame)) for _ in range(2)]
+            try:
+                self.assertTrue(await asyncio.to_thread(both_preparing.wait, 3))
+                self.assertNotIn(threading.get_ident(), workers)
+                self.assertEqual(2, len(set(workers)))
+                release_saves.set()
+                await asyncio.wait_for(upload_started.wait(), 3)
+                tasks.append(asyncio.create_task(self.data_client.upload_dataframe(frame)))
+                await asyncio.wait_for(third_prepared.wait(), 3)
+                self.assertEqual(3, len(workers))
+                release_uploads.set()
+                results = await asyncio.wait_for(asyncio.gather(*tasks), 3)
+            finally:
+                release_saves.set()
+                release_uploads.set()
+                for task in tasks:
+                    task.cancel()
+                await asyncio.gather(*tasks, return_exceptions=True)
+        self.assertEqual(results[0], results[1])
+
+    async def test_prepared_arrow_tables_are_not_retained_during_upload(self):
+        references = {}
+        uploaded = []
+        save = self.data_client.save_table
+
+        def record_table(table, table_format=None):
+            table_info = save(table, table_format)
+            references[table_info["data"]] = weakref.ref(table)
+            return table_info
+
+        async def upload(data_upload, *args, **kwargs):
+            # Sibling tables may still be preparing concurrently, but this table must already be released.
+            uploaded.append(data_upload.name)
+            self.assertIsNone(references[data_upload.name]())
+
+        # A plain function avoids Mock retaining its call arguments (the Arrow tables).
+        with (
+            mock.patch.object(self.data_client, "save_table", new=record_table),
+            mock.patch("evo.objects.io.ObjectDataUpload.upload_from_cache", new=upload),
+        ):
+            await self.data_client.upload_dataframe(pd.DataFrame({"value": [1.0, 2.0]}))
+            await self.data_client.upload_category_dataframe(pd.DataFrame({"value": ["sand", "clay"]}))
+        self.assertEqual(3, len(uploaded))
+
+    async def test_dataframe_upload_preserves_table_overrides(self):
+        frame = pd.DataFrame({"value": [1.0, 2.0]})
+        with mock.patch.object(self.data_client, "upload_table", return_value={"data": "override"}) as upload:
+            self.assertEqual({"data": "override"}, await self.data_client.upload_dataframe(frame))
+        upload.assert_awaited_once()
+        self.assertEqual([1.0, 2.0], upload.call_args.args[0].column(0).to_pylist())
+
+    async def test_category_dataframe_upload_preserves_category_override(self):
+        with mock.patch.object(self.data_client, "upload_category_table", return_value={"data": "override"}) as upload:
+            result = await self.data_client.upload_category_dataframe(pd.DataFrame({"value": ["sand"]}))
+        self.assertEqual({"data": "override"}, result)
+        upload.assert_awaited_once()
 
     @parameterized.expand(
         [

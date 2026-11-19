@@ -25,6 +25,7 @@ from evo.common.utils import NoFeedback, PartialFeedback, split_feedback
 
 from ..exceptions import TableFormatError
 from ..io import _CACHE_SCOPE, ObjectDataDownload, ObjectDataUpload
+from ._concurrency import gather_cancelling, run_upload_preparation
 from .table_formats import INTEGER_ARRAY_1_INT32, INTEGER_ARRAY_MD_INT32, LOOKUP_TABLE_INT32
 from .tables import KnownTableFormat
 from .types import ArrayTableInfo, CategoryInfo, LookupTableInfo
@@ -90,6 +91,10 @@ def _get_schema_from_dataframe(dataframe: "pd.DataFrame") -> pa.Schema:
         else:
             fields.append(field)
     return pa.schema(fields)
+
+
+def _dataframe_to_table(dataframe: "pd.DataFrame") -> pa.Table:
+    return pa.Table.from_pandas(dataframe, _get_schema_from_dataframe(dataframe))
 
 
 class ObjectDataClient:
@@ -211,13 +216,15 @@ class ObjectDataClient:
         :raises TableFormatError: If the provided table does not match any of the specified formats. If
             no table formats are specified, raised when the table does not match any known format.
         """
-        table_info = self.save_table(table, table_format)
-        upload = ObjectDataUpload(connector=self._connector, environment=self._environment, name=table_info["data"])
-        with error_context(f"While uploading table data '{table_info['data']}'", logger=logger):
+        table_info = await run_upload_preparation(self.save_table, table, table_format)
+        del table
+        name = table_info["data"]
+        upload = ObjectDataUpload(connector=self._connector, environment=self._environment, name=name)
+        with error_context(f"While uploading table data '{name}'", logger=logger):
             try:
                 await upload.upload_from_cache(cache=self._cache, transport=self._connector.transport, fb=fb)
             except DataExistsError:
-                logger.debug(f"Data not uploaded because data already exists (label: {table_info['data']})")
+                logger.debug(f"Data not uploaded because data already exists (label: {name})")
                 fb.progress(1)
         return table_info
 
@@ -236,7 +243,22 @@ class ObjectDataClient:
         :raises TableFormatError: If the table isn't a valid category table, or if the number of categories exceeds
             what int32 type can represent.
         """
+        values, lookup = await run_upload_preparation(self._build_category_tables, table)
+        del table
+        values_fb, lookup_fb = split_feedback(
+            fb, [values.num_rows * values.num_columns, lookup.num_rows * lookup.num_columns]
+        )
+        value_format = INTEGER_ARRAY_1_INT32 if values.num_columns == 1 else INTEGER_ARRAY_MD_INT32
+        uploads = (
+            self.upload_table(values, fb=values_fb, table_format=value_format),
+            self.upload_table(lookup, fb=lookup_fb, table_format=LOOKUP_TABLE_INT32),
+        )
+        del values, lookup  # upload_table releases its table once it is saved to the cache.
+        value_info, lookup_info = await gather_cancelling(*uploads)
+        return CategoryInfo(values=cast(ArrayTableInfo, value_info), table=cast(LookupTableInfo, lookup_info))
 
+    @staticmethod
+    def _build_category_tables(table: pa.Table) -> tuple[pa.Table, pa.Table]:
         all_chunks = []
         columns_chunk_range = []
         for column in table.itercolumns():
@@ -273,14 +295,7 @@ class ObjectDataClient:
             [np.arange(len(dictionary_values), dtype=np.int32), dictionary_values], names=["key", "value"]
         )
 
-        v_size = values.num_rows * values.num_columns
-        t_size = lookup.num_rows * lookup.num_columns
-        values_fb, lookup_fb = split_feedback(fb, [v_size, t_size])
-
-        value_table_format = INTEGER_ARRAY_1_INT32 if values.num_columns == 1 else INTEGER_ARRAY_MD_INT32
-        value_table = await self.upload_table(values, fb=values_fb, table_format=value_table_format)
-        lookup_table = await self.upload_table(lookup, fb=lookup_fb, table_format=LOOKUP_TABLE_INT32)
-        return CategoryInfo(values=cast(ArrayTableInfo, value_table), table=cast(LookupTableInfo, lookup_table))
+        return values, lookup
 
     async def download_table(
         self, object_id: UUID, version_id: str, table_info: dict, fb: IFeedback = NoFeedback
@@ -426,9 +441,7 @@ class ObjectDataClient:
                 no table formats are specified, raised when the table does not match any known format.
             :raises StorageFileNotFoundError: If the destination does not exist or is not a directory.
             """
-            schema = _get_schema_from_dataframe(dataframe)
-            table = pa.Table.from_pandas(dataframe, schema)
-            return self.save_table(table, table_format=table_format)
+            return self.save_table(_dataframe_to_table(dataframe), table_format=table_format)
 
         async def upload_dataframe(
             self,
@@ -450,10 +463,10 @@ class ObjectDataClient:
             :raises TableFormatError: If the provided table does not match any of the specified formats. If
                 no table formats are specified, raised when the table does not match any known format.
             """
-            schema = _get_schema_from_dataframe(dataframe)
-            table = pa.Table.from_pandas(dataframe, schema)
-            table_info = await self.upload_table(table, table_format=table_format, fb=fb)
-            return table_info
+            # Pass the converted table straight through so upload_table can release it before uploading.
+            return await self.upload_table(
+                await run_upload_preparation(_dataframe_to_table, dataframe), table_format=table_format, fb=fb
+            )
 
         async def upload_category_dataframe(self, dataframe: pd.DataFrame, fb: IFeedback = NoFeedback) -> CategoryInfo:
             """Upload a pandas dataframe with category data to the geoscience object service, returning the reference to
@@ -472,10 +485,7 @@ class ObjectDataClient:
             :raises TableFormatError: If the table isn't a valid category table, or if the number of categories exceeds
                 what int32 type can represent.
             """
-            schema = _get_schema_from_dataframe(dataframe)
-            table = pa.Table.from_pandas(dataframe, schema)
-            category_info = await self.upload_category_table(table, fb=fb)
-            return category_info
+            return await self.upload_category_table(await run_upload_preparation(_dataframe_to_table, dataframe), fb=fb)
 
         async def download_dataframe(
             self, object_id: UUID, version_id: str, table_info: dict, fb: IFeedback = NoFeedback

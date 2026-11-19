@@ -10,7 +10,7 @@
 #  limitations under the License.
 
 import asyncio
-import os
+import traceback
 from collections.abc import Iterator
 from dataclasses import dataclass
 from threading import Lock
@@ -119,6 +119,7 @@ class ChunkedIOManager:
         retry: Retry | None = None,
         chunk_size: int = DEFAULT_CHUNK_SIZE,
         max_workers: int | None = None,
+        chunk_limiter: asyncio.Semaphore | None = None,
     ):
         """
         :param message: The message to update feedback progress with.
@@ -126,23 +127,41 @@ class ChunkedIOManager:
             successfully transferred the attempt counter will be reset.
         :param chunk_size: The maximum size of each chunk to be transferred. The final chunk will usually be smaller
             than the chunk_size.
-        :param max_workers: The maximum number of concurrent connections to use for data transfer. If None, the default
-            is `min(32, os.cpu_count() + 4)`, which is consistent with `concurrent.futures.ThreadPoolExecutor`.
+        :param max_workers: Maximum concurrent chunk workers for this file. Defaults to four.
+        :param chunk_limiter: Optional transport-owned budget acquired before reading each chunk.
         """
         self._message = message
         self._retry = Retry(logger=logger) if retry is None else retry
         self._chunk_size = chunk_size
         self._tracker: ChunkedIOTracker | None = None
 
-        if max_workers is None:
-            # Same default as concurrent.futures.ThreadPoolExecutor.
-            max_workers = min(32, os.cpu_count() + 4)
-        self._rate_limiter = asyncio.BoundedSemaphore(max_workers)
+        max_workers = 4 if max_workers is None else max_workers
+        for name, value in (("max_workers", max_workers), ("chunk_size", chunk_size)):
+            if isinstance(value, bool) or not isinstance(value, int) or value < 1:
+                raise ValueError(f"{name} must be a positive integer")
+        self._max_workers = max_workers
+        self._chunk_limiter = chunk_limiter or asyncio.BoundedSemaphore(max_workers)
 
     async def _transfer(self, source: ISource, destination: IDestination, chunk: ChunkMetadata) -> float:
-        async with self._rate_limiter:
+        async with self._chunk_limiter:
             data = await source.read_chunk(chunk.offset, chunk.size)
-            await destination.write_chunk(chunk.offset, data)
+            try:
+                await destination.write_chunk(chunk.offset, data)
+            except BaseException as error:
+                # Retry history must not keep request payloads alive after releasing a chunk slot.
+                pending = [error]
+                seen = set()
+                while pending:
+                    failure = pending.pop()
+                    if id(failure) in seen:
+                        continue
+                    seen.add(id(failure))
+                    traceback.clear_frames(failure.__traceback__)
+                    pending.extend(e for e in (failure.__cause__, failure.__context__) if e is not None)
+                raise
+            finally:
+                # Exceptions retain traceback frames: release payloads before returning a budget slot.
+                del data
             self._tracker.set_complete(chunk)
             return self._tracker.get_progress()
 
@@ -154,31 +173,42 @@ class ChunkedIOManager:
         last_progress = self._tracker.get_progress()
         fb.progress(last_progress, self._message)
 
-        # Python 3.11 introduces asyncio.TaskGroup, which can be used to make this much cleaner.
-        transfers = []
-        try:
-            # Append rather than list comprehension, because we want to be able to cancel previous tasks if creating a
-            # new task fails. With TaskGroup this can become a list comprehension.
-            for chunk in self._tracker:
-                if chunk.completed:
-                    continue
-                transfers.append(asyncio.create_task(self._transfer(source, destination, chunk)))
+        chunks = (chunk for chunk in self._tracker if not chunk.completed)
 
-            for transfer in asyncio.as_completed(transfers):
-                this_progress = await transfer
+        async def worker() -> None:
+            nonlocal last_progress
+            for chunk in chunks:
+                this_progress = await self._transfer(source, destination, chunk)
                 if this_progress != last_progress:
                     fb.progress(this_progress, self._message)
                     last_progress = this_progress
-                retry_handler.reset_counter()  # Reset retry counter on successful transfer.
+                retry_handler.reset_counter()
+
+        transfers = []
+        group = None
+        try:
+            for _ in range(self._max_workers):
+                transfers.append(asyncio.create_task(worker()))
+            group = asyncio.gather(*transfers)
+            await asyncio.shield(group)
         finally:
             for transfer in transfers:
                 if not transfer.done():
                     transfer.cancel()
+            cleanup = asyncio.gather(*transfers, *([group] if group is not None else []), return_exceptions=True)
+            cancelled = False
+            while not cleanup.done():
+                try:
+                    await asyncio.shield(cleanup)
+                except asyncio.CancelledError:
+                    cancelled = True
+            if cancelled:
+                raise asyncio.CancelledError
 
     async def run(self, source: ISource, destination: IDestination, fb: IFeedback | None = None) -> None:
         """Transfer all data from source to destination.
 
-        Recoverable transfer failures must be raised as a subclass of `evo.common.io.ChunkedIOManager`,
+        Recoverable transfer failures must be raised as a subclass of `evo.common.io.exceptions.ChunkedIOError`,
         this will retry recoverable transfers up to the max_attempts specified in Retry after calling the error's
         recover() method. The attempt counter is reset whenever a chunk is successfully transferred.
 
@@ -195,7 +225,7 @@ class ChunkedIOManager:
                 await self._attempt_transfer(source, destination, fb, handler)
 
             if isinstance(handler.exception, ChunkedIOError):
-                fb.progress(0.0, "Retrying...")
+                fb.progress(self._tracker.get_progress() if self._tracker is not None else 0.0, "Retrying...")
                 if not await handler.exception.recover():
                     raise handler.exception
 
