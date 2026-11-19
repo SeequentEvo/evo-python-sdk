@@ -23,6 +23,7 @@ from urllib.parse import urlencode
 from parameterized import parameterized_class
 
 from evo.common import RequestMethod
+from evo.common._types import resolve_path
 from evo.common.connector import APIConnector
 from evo.common.io.storage import BlockList, StorageBlock, StorageDestination
 from evo.common.test_tools import TestWithUploadHandler, utc_datetime
@@ -197,6 +198,17 @@ class TestStorageDestination(TestIDestination, TestWithUploadHandler):
         await StorageDestination.upload_file(test_data_file, self.url_generator.get_new_url, self.transport)
         uploaded_data = await self.handler.get_committed()
         self.assertEqual(test_data_file.read_bytes(), uploaded_data)
+
+    async def test_upload_file_long_path(self) -> None:
+        test_data_file = self.CACHE_DIR / ("a" * 100) / ("b" * 100) / "upload.csv"
+        resolved = resolve_path(test_data_file)
+        resolved.parent.mkdir(parents=True)
+        resolved.write_bytes(TEST_DATA)
+        self.assertGreater(len(str(test_data_file)), 259)
+
+        await StorageDestination.upload_file(str(test_data_file), self.url_generator.get_new_url, self.transport)
+
+        self.assertEqual(TEST_DATA, await self.handler.get_committed())
 
     @mock.patch("evo.common.io.http.APIConnector", wraps=APIConnector)
     async def test_additional_headers_passed_to_connector(self, mock_api_connector: mock.Mock) -> None:

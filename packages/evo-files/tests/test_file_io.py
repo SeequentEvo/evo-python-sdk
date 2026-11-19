@@ -10,10 +10,14 @@
 #  limitations under the License.
 
 import json
+import os
+import unittest
+from unittest import mock
 from uuid import UUID
 
 from data import load_test_data
 from evo.common import ServiceUser
+from evo.common._types import resolve_path
 from evo.common.test_tools import TestWithConnector, TestWithDownloadHandler, TestWithUploadHandler, utc_datetime
 from evo.files import FileAPIDownload, FileAPIUpload, FileMetadata
 
@@ -106,6 +110,31 @@ class TestFileAPIDownload(TestWithConnector, TestWithDownloadHandler):
         self.assertEqual(expected, dest)
 
         # Check the file was downloaded correctly.
+        self.assertEqual(TEST_DATA, dest.read_bytes())
+        self.assert_download_requests(INITIAL_URL)
+
+    @unittest.skipUnless(os.name == "nt", "Windows long-path regression")
+    async def test_download_to_cache_long_path(self) -> None:
+        cache_location = self.cache.root / ("a" * 70) / ("b" * 70) / ("c" * 70)
+        resolved_cache_location = resolve_path(cache_location)
+        resolved_cache_location.mkdir(parents=True, exist_ok=True)
+        cache = mock.Mock()
+        cache.get_location.return_value = cache_location
+
+        expected = resolve_path(cache_location / str(FILE_ID) / VERSION_ID / self.metadata.name)
+        self.assertGreater(len(str(expected)), 259)
+
+        original_mkdir = type(resolved_cache_location).mkdir
+
+        def mkdir_with_legacy_limit(path, *args, **kwargs):
+            if len(str(path)) > 259 and not str(path).startswith("\\\\?\\"):
+                raise OSError("Path exceeds the legacy Windows limit")
+            return original_mkdir(path, *args, **kwargs)
+
+        with mock.patch.object(type(resolved_cache_location), "mkdir", mkdir_with_legacy_limit):
+            dest = await self.download.download_to_cache(cache, self.transport)
+
+        self.assertEqual(expected, resolve_path(dest))
         self.assertEqual(TEST_DATA, dest.read_bytes())
         self.assert_download_requests(INITIAL_URL)
 
