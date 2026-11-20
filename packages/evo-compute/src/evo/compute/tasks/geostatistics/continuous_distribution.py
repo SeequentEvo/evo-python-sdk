@@ -31,14 +31,21 @@ Example::
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import ClassVar
 
 from evo.common import IContext
 from evo.objects import ObjectSchema
-from evo.objects.typed import BaseObject, object_from_reference
-from pydantic import BaseModel, Field
+from evo.objects.typed import BaseObject, BaseSpatialObject, object_from_reference
+from pydantic import BaseModel, Field, model_validator
 
-from ..common import AnySourceAttribute, GeoscienceObjectReference
+from ..common import (
+    AnySourceAttribute,
+    GeoscienceObjectReference,
+    TaskInputModel,
+    TaskParameters,
+    validate_distribution_object,
+)
 from ..common.runner import TaskRunner
 
 __all__ = [
@@ -46,6 +53,7 @@ __all__ = [
     "ContinuousDistributionResult",
     "ContinuousDistributionResultModel",
     "ContinuousDistributionRunner",
+    "DistributionOutput",
     "DistributionTarget",
     "LowerTail",
     "TailExtrapolation",
@@ -58,7 +66,7 @@ __all__ = [
 # =============================================================================
 
 
-class UpperTail(BaseModel):
+class UpperTail(TaskInputModel):
     """Power model for extrapolating the upper tail of the distribution."""
 
     power: float = Field(gt=0.0, le=1.0)
@@ -68,7 +76,7 @@ class UpperTail(BaseModel):
     """Maximum extent of tail, must be greater than the maximum value in the data."""
 
 
-class LowerTail(BaseModel):
+class LowerTail(TaskInputModel):
     """Power model for extrapolating the lower tail of the distribution."""
 
     power: float = Field(gt=0.0, le=1.0)
@@ -78,7 +86,7 @@ class LowerTail(BaseModel):
     """Minimum extent of tail, must be less than the minimum value in the data."""
 
 
-class TailExtrapolation(BaseModel):
+class TailExtrapolation(TaskInputModel):
     """Parameters for extending the distribution beyond the data range."""
 
     upper: UpperTail
@@ -87,13 +95,19 @@ class TailExtrapolation(BaseModel):
     lower: LowerTail | None = None
     """Optional lower tail extrapolation parameters."""
 
+    @model_validator(mode="after")
+    def _validate_tail_bounds(self) -> TailExtrapolation:
+        if self.lower is not None and self.lower.min >= self.upper.max:
+            raise ValueError(f"lower.min ({self.lower.min}) must be strictly less than upper.max ({self.upper.max}).")
+        return self
+
 
 # =============================================================================
 # Target and Source
 # =============================================================================
 
 
-class DistributionTarget(BaseModel):
+class DistributionTarget(TaskInputModel):
     """Target specifying where to create the continuous distribution object."""
 
     reference: GeoscienceObjectReference
@@ -108,14 +122,27 @@ class DistributionTarget(BaseModel):
     tags: dict[str, str] = Field(default_factory=dict)
     """Tags to put into the target object."""
 
+    @model_validator(mode="before")
+    @classmethod
+    def _check_distribution_reference(cls, data: object) -> object:
+        if isinstance(data, Mapping) and "reference" in data and data["reference"] is not None:
+            validate_distribution_object("target.reference", data["reference"])
+        return data
+
 
 # =============================================================================
 # Parameters
 # =============================================================================
 
 
-class ContinuousDistributionParameters(BaseModel):
+class ContinuousDistributionParameters(TaskParameters):
     """Parameters for the continuous-distribution task."""
+
+    _object_roles: ClassVar[Mapping[str, tuple[type, ...]]] = {
+        "source": (BaseSpatialObject,),
+        "weights": (BaseSpatialObject,),
+    }
+    _distribution_fields: ClassVar[tuple[str, ...]] = ("target",)
 
     source: AnySourceAttribute
     """The source object and attribute containing values to create a distribution from."""
@@ -164,6 +191,11 @@ class ContinuousDistributionResult:
         return self._message
 
     @property
+    def distribution(self) -> DistributionOutput:
+        """Metadata of the created distribution object."""
+        return self._distribution
+
+    @property
     def distribution_name(self) -> str:
         """The name of the created distribution object."""
         return self._distribution.name
@@ -172,6 +204,11 @@ class ContinuousDistributionResult:
     def distribution_reference(self) -> str:
         """Reference URL to the distribution object."""
         return self._distribution.reference
+
+    @property
+    def distribution_description(self) -> str | None:
+        """Optional description of the created distribution object."""
+        return self._distribution.description
 
     @property
     def schema(self) -> ObjectSchema:

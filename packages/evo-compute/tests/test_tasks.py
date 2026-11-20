@@ -540,20 +540,37 @@ class TestSearchNeighborhood(unittest.TestCase):
             "min_drillholes",
             "drillhole_limit_scope",
         }
-        for mode in ("validation", "serialization"):
-            with self.subTest(mode=mode):
-                schema = SearchNeighborhood.model_json_schema(mode=mode)
-                self.assertEqual(set(schema["properties"]), expected_fields)
-                self.assertEqual(schema["required"], ["ellipsoid", "max_samples"])
-                ellipsoid_schema = schema["properties"]["ellipsoid"]
-                self.assertIn("ellipsoid_ranges", ellipsoid_schema["properties"])
-                self.assertIn("rotation", ellipsoid_schema["properties"])
-                self.assertNotIn("ranges", ellipsoid_schema["properties"])
-                self.assertNotIn("_rotation", ellipsoid_schema["properties"])
-                self.assertEqual(
-                    set(ellipsoid_schema["properties"]["ellipsoid_ranges"]["properties"]),
-                    {"major", "semi_major", "minor"},
-                )
+        val_schema = SearchNeighborhood.model_json_schema(mode="validation")
+        self.assertEqual(set(val_schema["properties"]), expected_fields)
+        self.assertEqual(val_schema["required"], ["ellipsoid", "max_samples"])
+        val_ellipsoid = val_schema["properties"]["ellipsoid"]
+        self.assertIn("ellipsoid_ranges", val_ellipsoid["properties"])
+        self.assertIn("ranges", val_ellipsoid["properties"])
+        self.assertIn("rotation", val_ellipsoid["properties"])
+        self.assertNotIn("_rotation", val_ellipsoid["properties"])
+        self.assertNotIn("required", val_ellipsoid)
+        self.assertEqual(
+            val_ellipsoid["anyOf"],
+            [{"required": ["ellipsoid_ranges"]}, {"required": ["ranges"]}],
+        )
+        self.assertEqual(
+            set(val_ellipsoid["properties"]["ellipsoid_ranges"]["properties"]),
+            {"major", "semi_major", "minor"},
+        )
+
+        ser_schema = SearchNeighborhood.model_json_schema(mode="serialization")
+        self.assertEqual(set(ser_schema["properties"]), expected_fields)
+        self.assertEqual(ser_schema["required"], ["ellipsoid", "max_samples"])
+        ser_ellipsoid = ser_schema["properties"]["ellipsoid"]
+        self.assertIn("ellipsoid_ranges", ser_ellipsoid["properties"])
+        self.assertIn("rotation", ser_ellipsoid["properties"])
+        self.assertNotIn("ranges", ser_ellipsoid["properties"])
+        self.assertNotIn("_rotation", ser_ellipsoid["properties"])
+        self.assertEqual(ser_ellipsoid["required"], ["ellipsoid_ranges", "rotation"])
+        self.assertEqual(
+            set(ser_ellipsoid["properties"]["ellipsoid_ranges"]["properties"]),
+            {"major", "semi_major", "minor"},
+        )
 
         original = SearchNeighborhood(
             ellipsoid=Ellipsoid(

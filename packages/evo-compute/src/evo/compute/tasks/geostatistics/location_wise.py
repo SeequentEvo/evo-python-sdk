@@ -44,17 +44,23 @@ Example::
 
 from __future__ import annotations
 
-from typing import ClassVar, Protocol, runtime_checkable
+from collections.abc import Mapping
+from typing import Any, ClassVar, Protocol, runtime_checkable
 
 import pandas as pd
 from evo.common import IContext, IFeedback
 from evo.objects import ObjectSchema
-from evo.objects.typed import BaseObject, object_from_reference
-from pydantic import BaseModel, Field
+from evo.objects.typed import BaseObject, BaseSpatialObject, BlockModel, object_from_reference
+from pydantic import BaseModel, Field, PrivateAttr, ValidatorFunctionWrapHandler, model_validator
 
 from ..common import (
     AnySourceAttribute,
+    FiniteFloat,
     GeoscienceObjectReference,
+    QuantileFloat,
+    TaskInputModel,
+    TaskParameters,
+    extract_typed_object,
 )
 from ..common.results import TaskAttribute
 from ..common.runner import TaskRunner
@@ -76,36 +82,51 @@ __all__ = [
 # =============================================================================
 
 
-class LocationWiseTarget(BaseModel):
+class LocationWiseTarget(TaskInputModel):
     """Target object for location-wise tasks.
 
     Only the object reference is needed — the task creates output attributes
     automatically based on the requested operations.
     """
 
+    _typed_object: BaseObject | None = PrivateAttr(default=None)
+
     object: GeoscienceObjectReference
     """Reference URL to the target geoscience object."""
 
+    @model_validator(mode="wrap")
+    @classmethod
+    def _remember_typed_object(cls, data: Any, handler: ValidatorFunctionWrapHandler) -> LocationWiseTarget:
+        typed_obj: BaseObject | None = None
+        if isinstance(data, LocationWiseTarget):
+            typed_obj = data._typed_object
+        elif isinstance(data, Mapping):
+            typed_obj = extract_typed_object(data.get("object"))
+        target = handler(data)
+        if typed_obj is not None and target._typed_object is None:
+            target._typed_object = typed_obj
+        return target
 
-class ProbabilityAboveCutoff(BaseModel):
+
+class ProbabilityAboveCutoff(TaskInputModel):
     """Configuration for probability-above-cutoff operation.
 
     For each cutoff value, the task computes P(X > cutoff) at every location
     across all realizations.
     """
 
-    cutoffs: list[float] = Field(min_length=1)
+    cutoffs: list[FiniteFloat] = Field(min_length=1)
     """List of cutoff values. Must contain at least one value."""
 
 
-class MeanAboveCutoff(BaseModel):
+class MeanAboveCutoff(TaskInputModel):
     """Configuration for mean-above-cutoff operation.
 
     For each cutoff value, the task computes E[X | X > cutoff] at every
     location across all realizations.
     """
 
-    cutoffs: list[float] = Field(min_length=1)
+    cutoffs: list[FiniteFloat] = Field(min_length=1)
     """List of cutoff values. Must contain at least one value."""
 
 
@@ -114,7 +135,7 @@ class MeanAboveCutoff(BaseModel):
 # =============================================================================
 
 
-class LocationWiseParameters(BaseModel):
+class LocationWiseParameters(TaskParameters):
     """Parameters for the unified location-wise task.
 
     At least one operation must be specified (summary, quantiles,
@@ -130,6 +151,11 @@ class LocationWiseParameters(BaseModel):
         ... )
     """
 
+    _object_roles: ClassVar[Mapping[str, tuple[type, ...]]] = {
+        "source": (BaseSpatialObject,),
+        "target": (BaseSpatialObject,),
+    }
+
     source: AnySourceAttribute
     """The source object and attribute containing simulation realizations."""
 
@@ -139,7 +165,7 @@ class LocationWiseParameters(BaseModel):
     summary: bool | None = None
     """If True, compute min, max, mean, and variance at each location."""
 
-    quantiles: list[float] | None = None
+    quantiles: list[QuantileFloat] | None = Field(None, min_length=1)
     """List of quantile values (0–1) to compute at each location."""
 
     probability_above_cutoff: ProbabilityAboveCutoff | None = None
@@ -147,6 +173,20 @@ class LocationWiseParameters(BaseModel):
 
     mean_above_cutoff: MeanAboveCutoff | None = None
     """Configuration for mean-above-cutoff computation."""
+
+    @model_validator(mode="after")
+    def _require_at_least_one_operation(self) -> LocationWiseParameters:
+        if (
+            self.summary is not True
+            and self.quantiles is None
+            and self.probability_above_cutoff is None
+            and self.mean_above_cutoff is None
+        ):
+            raise ValueError(
+                "At least one location-wise operation must be specified "
+                "(summary=True, quantiles, probability_above_cutoff, or mean_above_cutoff)."
+            )
+        return self
 
 
 # =============================================================================
@@ -213,6 +253,11 @@ class LocationWiseResult:
         return self._message
 
     @property
+    def target(self) -> LocationWiseTargetResult:
+        """Target metadata with all created attributes."""
+        return self._target
+
+    @property
     def target_name(self) -> str:
         """The name of the target object."""
         return self._target.name
@@ -221,6 +266,16 @@ class LocationWiseResult:
     def target_reference(self) -> str:
         """The reference URL to the target object."""
         return self._target.reference
+
+    @property
+    def target_description(self) -> str | None:
+        """Optional description of the target object."""
+        return self._target.description
+
+    @property
+    def attributes(self) -> list[TaskAttribute]:
+        """All attributes created by the task."""
+        return list(self._target.attributes)
 
     @property
     def attribute_names(self) -> list[str]:
@@ -251,13 +306,14 @@ class LocationWiseResult:
         """
         target_obj = await self.get_target_object()
 
+        if isinstance(target_obj, BlockModel) and hasattr(target_obj, "to_dataframe"):
+            return await target_obj.to_dataframe(columns=list(columns) if columns else None)
         if isinstance(target_obj, _ObjToDataframeProtocol):
             return await target_obj.to_dataframe(*columns)
-        else:
-            raise TypeError(
-                f"Don't know how to get DataFrame from {type(target_obj).__name__}. "
-                "Use get_target_object() and access the data manually."
-            )
+        raise TypeError(
+            f"Don't know how to get DataFrame from {type(target_obj).__name__}. "
+            "Use get_target_object() and access the data manually."
+        )
 
     def __str__(self) -> str:
         """String representation."""

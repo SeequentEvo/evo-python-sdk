@@ -13,18 +13,22 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import Annotated, Any, Literal, TypeAlias
 
 from evo.objects import DownloadedObject, ObjectMetadata, ObjectReference
 from evo.objects.typed import Attribute, BlockModelAttribute, BlockModelPendingAttribute, PendingAttribute
 from evo.objects.typed.base import BaseObject
-from pydantic import BaseModel, BeforeValidator
+from pydantic import BeforeValidator, Field, PrivateAttr, ValidatorFunctionWrapHandler, model_validator
+
+from .models import TaskInputModel, extract_typed_object, object_identity, object_matches_reference
 
 __all__ = [
     "AnySourceAttribute",
     "AnyTargetAttribute",
     "AttributeExpression",
     "CreateAttribute",
+    "ExistingAttributeExpression",
     "GeoscienceObjectReference",
     "Source",
     "Target",
@@ -99,6 +103,8 @@ def _get_attribute_expression(
         TypeError: If the attribute type is not recognised.
     """
     if not isinstance(attr, AnyTypedAttribute):
+        if isinstance(attr, str) and not attr.strip():
+            raise ValueError("Attribute expression cannot be empty.")
         return attr  # Allow passthrough of already-constructed expression strings or other types
 
     if isinstance(attr, Attribute):
@@ -110,10 +116,24 @@ def _get_attribute_expression(
         raise ValueError(f"Cannot get expression for attribute type {type(attr).__name__}")
 
 
+def _get_existing_attribute_expression(
+    attr: str | Attribute | BlockModelAttribute,
+) -> str:
+    """Get the JMESPath expression for an existing input/read attribute, rejecting pending attributes."""
+    if isinstance(attr, (PendingAttribute, BlockModelPendingAttribute)):
+        available = _available_attribute_names(attr)
+        hint = f" Available attributes: {available}." if available else ""
+        raise ValueError(
+            f"Attribute {attr.name!r} does not exist on the object. An existing attribute is required.{hint}"
+        )
+    return _get_attribute_expression(attr)
+
+
 AttributeExpression: TypeAlias = Annotated[str, BeforeValidator(_get_attribute_expression)]
+ExistingAttributeExpression: TypeAlias = Annotated[str, BeforeValidator(_get_existing_attribute_expression)]
 
 
-class Source(BaseModel):
+class Source(TaskInputModel):
     """The source object and attribute containing known values.
 
     Used to specify where input data comes from for geostatistical operations.
@@ -128,34 +148,70 @@ class Source(BaseModel):
         >>> source = Source(object=pointset, attribute="grade")
     """
 
+    _typed_object: BaseObject | None = PrivateAttr(default=None)
+
     object: GeoscienceObjectReference
     """Reference to the source geoscience object."""
 
-    attribute: AttributeExpression
-    """Name of the attribute on the source object."""
+    attribute: ExistingAttributeExpression
+    """Name or JMESPath expression of the attribute on the source object."""
+
+    @model_validator(mode="wrap")
+    @classmethod
+    def _remember_typed_object(cls, data: Any, handler: ValidatorFunctionWrapHandler) -> Source:
+        if isinstance(data, Source):
+            typed_obj = data._typed_object
+            source = handler(data)
+            if typed_obj is not None and source._typed_object is None:
+                source._typed_object = typed_obj
+            return source
+
+        raw_obj = data.get("object") if isinstance(data, Mapping) else None
+        raw_attr = data.get("attribute") if isinstance(data, Mapping) else None
+        obj_typed = extract_typed_object(raw_obj)
+        attr_typed = extract_typed_object(raw_attr)
+        attr_parent = getattr(raw_attr, "_obj", None) if isinstance(raw_attr, AnyTypedAttribute) else None
+
+        source = handler(data)
+
+        if attr_parent is not None and not object_matches_reference(
+            attr_parent,
+            source.object,
+            supplied_obj=raw_obj,
+        ):
+            attr_label = getattr(raw_attr, "name", None) or source.attribute
+            raise ValueError(
+                f"Source attribute {attr_label!r} belongs to a different object than 'source.object' "
+                f"({object_identity(source.object)!r})."
+            )
+
+        resolved_typed = obj_typed or attr_typed
+        if resolved_typed is not None and source._typed_object is None:
+            source._typed_object = resolved_typed
+        return source
 
 
-class CreateAttribute(BaseModel):
+class CreateAttribute(TaskInputModel):
     """Specification for creating a new attribute on a target object."""
 
     operation: Literal["create"] = "create"
     """The operation type (always 'create')."""
 
-    name: str
+    name: str = Field(min_length=1)
     """The name of the attribute to create."""
 
 
-class UpdateAttribute(BaseModel):
+class UpdateAttribute(TaskInputModel):
     """Specification for updating an existing attribute on a target object."""
 
     operation: Literal["update"] = "update"
     """The operation type (always 'update')."""
 
-    reference: str
+    reference: str = Field(min_length=1)
     """Reference to an existing attribute to update."""
 
 
-class Target(BaseModel):
+class Target(TaskInputModel):
     """The target object and attribute to create or update with results.
 
     Used to specify where output data should be written for geostatistical operations.
@@ -169,11 +225,53 @@ class Target(BaseModel):
         >>> target = Target(object=grid, attribute=UpdateAttribute(reference="existing_ref"))
     """
 
+    _typed_object: BaseObject | None = PrivateAttr(default=None)
+    _attribute_name: str | None = PrivateAttr(default=None)
+
     object: GeoscienceObjectReference
     """Object to write results onto."""
 
     attribute: CreateAttribute | UpdateAttribute
     """Attribute specification (create new or update existing)."""
+
+    @model_validator(mode="wrap")
+    @classmethod
+    def _remember_typed_metadata(cls, data: Any, handler: ValidatorFunctionWrapHandler) -> Target:
+        if isinstance(data, Target):
+            typed_obj = data._typed_object
+            attr_name = data._attribute_name
+            target = handler(data)
+            if typed_obj is not None and target._typed_object is None:
+                target._typed_object = typed_obj
+            if attr_name is not None and target._attribute_name is None:
+                target._attribute_name = attr_name
+            return target
+
+        raw_obj = data.get("object") if isinstance(data, Mapping) else None
+        raw_attr = data.get("attribute") if isinstance(data, Mapping) else None
+        obj_typed = extract_typed_object(raw_obj)
+        attr_typed = extract_typed_object(raw_attr)
+        attr_parent = getattr(raw_attr, "_obj", None) if isinstance(raw_attr, AnyTypedAttribute) else None
+        attr_name = raw_attr.name if isinstance(raw_attr, AnyTypedAttribute) else None
+
+        target = handler(data)
+
+        if attr_parent is not None and not object_matches_reference(
+            attr_parent,
+            target.object,
+            supplied_obj=raw_obj,
+        ):
+            raise ValueError(
+                f"Target attribute {attr_name!r} belongs to a different object than 'target.object' "
+                f"({object_identity(target.object)!r})."
+            )
+
+        resolved_typed = obj_typed or attr_typed
+        if resolved_typed is not None and target._typed_object is None:
+            target._typed_object = resolved_typed
+        if attr_name is not None and target._attribute_name is None:
+            target._attribute_name = attr_name
+        return target
 
     @classmethod
     def new_attribute(cls, object: GeoscienceObjectReference, attribute_name: str) -> Target:
@@ -257,10 +355,14 @@ def _source_from_attribute(attr: Source | Attribute | BlockModelAttribute) -> So
             "Attribute must have an _obj reference to its parent object."
         )
 
-    return Source(
+    typed_obj = extract_typed_object(attr)
+    source = Source(
         object=str(attr._obj.metadata.url),
         attribute=_get_attribute_expression(attr),
     )
+    if typed_obj is not None:
+        source._typed_object = typed_obj
+    return source
 
 
 AnySourceAttribute: TypeAlias = Annotated[Source, BeforeValidator(_source_from_attribute)]
@@ -320,7 +422,10 @@ def _validate_target_attribute(attr: Target | AnyTypedAttribute) -> Target:
     # (same pattern as source_from_attribute)
     obj_url = str(attr._obj.metadata.url)
 
-    return Target(object=obj_url, attribute=attribute_spec(attr))
+    target = Target(object=obj_url, attribute=attribute_spec(attr))
+    target._typed_object = extract_typed_object(attr)
+    target._attribute_name = attr.name
+    return target
 
 
 AnyTargetAttribute: TypeAlias = Annotated[Target, BeforeValidator(_validate_target_attribute)]

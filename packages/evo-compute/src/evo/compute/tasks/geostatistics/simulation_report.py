@@ -46,24 +46,43 @@ Example::
 
 from __future__ import annotations
 
-from typing import ClassVar, Literal
+from collections.abc import Mapping
+from typing import Any, ClassVar, Literal
 
 from evo.common import IContext
-from pydantic import BaseModel, Field, field_validator
+from evo.objects.typed import BlockModel, PointSet, Regular3DGrid, RegularMasked3DGrid, Variogram
+from pydantic import (
+    BaseModel,
+    Field,
+    PrivateAttr,
+    StrictInt,
+    ValidatorFunctionWrapHandler,
+    field_validator,
+    model_validator,
+)
 
 from ..common import (
-    AttributeExpression,
+    ExistingAttributeExpression,
     GeoscienceObjectReference,
+    OutputTarget,
     SearchNeighborhood,
+    TaskInputModel,
+    TaskParameters,
+    object_identity,
+    object_matches_reference,
 )
 from ..common.runner import TaskRunner
 from ..common.search import _reject_sector_and_drillhole_limits
+from ..common.source_target import AnyTypedAttribute
 from .conditioned_simulator import TailExtrapolationParams
 
 __all__ = [
     "SimReportContext",
     "SimReportContextItem",
+    "SimReportLinks",
     "SimReportThresholds",
+    "SimReportValidationReport",
+    "SimReportValidationSummary",
     "SimulationReportBlockDiscretization",
     "SimulationReportDistribution",
     "SimulationReportParameters",
@@ -78,37 +97,63 @@ __all__ = [
 # =============================================================================
 
 
-class SimulationReportBlockDiscretization(BaseModel):
+class SimulationReportBlockDiscretization(TaskInputModel):
     """Sub-block discretization for support correction.
 
     Controls how each block is subdivided for point-to-block variance correction.
     Each dimension must be between 1 and 9 inclusive.
     """
 
-    nx: int = Field(1, ge=1, le=9)
+    nx: StrictInt = Field(1, ge=1, le=9)
     """Number of sub-blocks along the X axis."""
 
-    ny: int = Field(1, ge=1, le=9)
+    ny: StrictInt = Field(1, ge=1, le=9)
     """Number of sub-blocks along the Y axis."""
 
-    nz: int = Field(1, ge=1, le=9)
+    nz: StrictInt = Field(1, ge=1, le=9)
     """Number of sub-blocks along the Z axis."""
 
 
-class SimulationReportDistribution(BaseModel):
+class SimulationReportDistribution(TaskInputModel):
     """Optional distribution settings for the simulation report.
 
     When provided, the report includes distribution-related validation.
     """
 
+    _weights_object_url: str | None = PrivateAttr(default=None)
+    _weights_parent: Any = PrivateAttr(default=None)
+
     tail_extrapolation: TailExtrapolationParams | None = None
     """Optional tail extrapolation parameters."""
 
-    weights: AttributeExpression | None = None
+    weights: ExistingAttributeExpression | None = None
     """Optional sample weights. Accepts a typed attribute or an attribute expression."""
 
+    @model_validator(mode="wrap")
+    @classmethod
+    def _remember_weights_object(cls, data: Any, handler: ValidatorFunctionWrapHandler) -> SimulationReportDistribution:
+        weights_url: str | None = None
+        weights_parent: Any = None
+        if isinstance(data, SimulationReportDistribution):
+            weights_url = data._weights_object_url
+            weights_parent = data._weights_parent
+        elif isinstance(data, Mapping):
+            raw_weights = data.get("weights")
+            if isinstance(raw_weights, AnyTypedAttribute) and raw_weights._obj is not None:
+                weights_parent = raw_weights._obj
+                try:
+                    weights_url = str(raw_weights._obj.metadata.url)
+                except Exception:
+                    weights_url = None
+        dist = handler(data)
+        if weights_url is not None and dist._weights_object_url is None:
+            dist._weights_object_url = weights_url
+        if weights_parent is not None and dist._weights_parent is None:
+            dist._weights_parent = weights_parent
+        return dist
 
-class SimReportContextItem(BaseModel):
+
+class SimReportContextItem(TaskInputModel):
     """Single key-value detail for a simulation report."""
 
     label: str
@@ -118,7 +163,7 @@ class SimReportContextItem(BaseModel):
     """Display value for this detail."""
 
 
-class SimReportContext(BaseModel):
+class SimReportContext(TaskInputModel):
     """Report context metadata.
 
     Adds a title and descriptive details to the generated validation report.
@@ -127,11 +172,11 @@ class SimReportContext(BaseModel):
     title: str
     """Title for the validation report."""
 
-    details: list[SimReportContextItem] = Field(default_factory=list)
+    details: list[SimReportContextItem] = Field(default_factory=list, max_length=10)
     """Key-value details to include in the report header."""
 
 
-class SimReportThresholds(BaseModel):
+class SimReportThresholds(TaskInputModel):
     """Acceptable/marginal thresholds for mean validation.
 
     Used to classify the difference between reference mean and simulation mean.
@@ -143,13 +188,22 @@ class SimReportThresholds(BaseModel):
     marginal: float = Field(ge=0.0)
     """Maximum difference considered marginal (between acceptable and failing)."""
 
+    @model_validator(mode="after")
+    def _validate_threshold_order(self) -> SimReportThresholds:
+        if self.marginal < self.acceptable:
+            raise ValueError(
+                f"marginal threshold ({self.marginal}) must be greater than or equal to "
+                f"acceptable threshold ({self.acceptable})."
+            )
+        return self
+
 
 # =============================================================================
 # Simulation Report Parameters
 # =============================================================================
 
 
-class SimulationReportParameters(BaseModel):
+class SimulationReportParameters(TaskParameters):
     """Parameters for the simulation-report compute task.
 
     Simulation data is referenced by flat object/attribute field pairs rather than
@@ -173,26 +227,44 @@ class SimulationReportParameters(BaseModel):
         ... )
     """
 
+    _object_roles: ClassVar[Mapping[str, tuple[type, ...]]] = {
+        "simulation_source": (PointSet,),
+        "source_attribute": (PointSet,),
+        "simulation_target": (Regular3DGrid, RegularMasked3DGrid, BlockModel),
+        "point_simulations": (Regular3DGrid, RegularMasked3DGrid, BlockModel),
+        "point_simulations_normal_score": (Regular3DGrid, RegularMasked3DGrid, BlockModel),
+        "block_simulations": (Regular3DGrid, RegularMasked3DGrid, BlockModel),
+        "block_simulations_normal_score": (Regular3DGrid, RegularMasked3DGrid, BlockModel),
+        "variogram_model": (Variogram,),
+    }
+    _attribute_object_bindings: ClassVar[tuple[tuple[str, str], ...]] = (
+        ("source_attribute", "simulation_source"),
+        ("point_simulations", "simulation_target"),
+        ("point_simulations_normal_score", "simulation_target"),
+        ("block_simulations", "simulation_target"),
+        ("block_simulations_normal_score", "simulation_target"),
+    )
+
     simulation_source: GeoscienceObjectReference
     """Reference URL to the source geoscience object (typically a pointset)."""
 
-    source_attribute: AttributeExpression
+    source_attribute: ExistingAttributeExpression
     """The source values. Accepts a typed attribute such as ``pointset.attributes["grade"]``,
     or an attribute expression such as ``"locations.attributes[0]"``."""
 
     simulation_target: GeoscienceObjectReference
     """Reference URL to the target geoscience object (typically a block model)."""
 
-    point_simulations: AttributeExpression
+    point_simulations: ExistingAttributeExpression
     """Point simulations on the target. Accepts a typed attribute or an attribute expression."""
 
-    point_simulations_normal_score: AttributeExpression
+    point_simulations_normal_score: ExistingAttributeExpression
     """Point simulation normal scores on the target. Accepts a typed attribute or an attribute expression."""
 
-    block_simulations: AttributeExpression
+    block_simulations: ExistingAttributeExpression
     """Block simulations on the target. Accepts a typed attribute or an attribute expression."""
 
-    block_simulations_normal_score: AttributeExpression
+    block_simulations_normal_score: ExistingAttributeExpression
     """Block simulation normal scores on the target. Accepts a typed attribute or an attribute expression."""
 
     variogram_model: GeoscienceObjectReference
@@ -209,7 +281,7 @@ class SimulationReportParameters(BaseModel):
     distribution: SimulationReportDistribution | None = None
     """Optional distribution settings."""
 
-    number_of_simulations: int = Field(ge=1)
+    number_of_simulations: int = Field(ge=1, le=100)
     """Number of simulation realizations to validate."""
 
     random_seed: int = 38239342
@@ -218,7 +290,7 @@ class SimulationReportParameters(BaseModel):
     kriging_method: Literal["simple", "ordinary"] = "simple"
     """Kriging method used in the simulation."""
 
-    number_of_lines: int = Field(500, ge=1)
+    number_of_lines: int = Field(500, ge=1, le=1000)
     """Number of turning-band lines."""
 
     report_context: SimReportContext | None = None
@@ -231,6 +303,29 @@ class SimulationReportParameters(BaseModel):
     @classmethod
     def _check_neighborhood(cls, neighborhood: SearchNeighborhood) -> SearchNeighborhood:
         return _reject_sector_and_drillhole_limits(neighborhood)
+
+    @model_validator(mode="after")
+    def _validate_distribution_weights_object(self) -> SimulationReportParameters:
+        if self.distribution is not None and self.distribution._weights_parent is not None:
+            source_obj = self._typed_objects.get(object_identity(self.simulation_source))
+            if not object_matches_reference(
+                self.distribution._weights_parent,
+                self.simulation_source,
+                supplied_obj=source_obj,
+            ):
+                actual = (
+                    object_identity(self.distribution._weights_object_url)
+                    if self.distribution._weights_object_url
+                    else "unknown"
+                )
+                raise ValueError(
+                    f"distribution.weights belongs to object {actual!r}, "
+                    f"which does not match 'simulation_source' ({object_identity(self.simulation_source)!r})."
+                )
+        return self
+
+    def output_targets(self) -> list[OutputTarget]:
+        return []
 
 
 # =============================================================================
@@ -295,11 +390,21 @@ class SimulationReportResult:
         return self._validation_summary
 
     @property
+    def validation_report(self) -> SimReportValidationReport | None:
+        """Validation report metadata, if available."""
+        return self._validation_report
+
+    @property
     def report_reference(self) -> str | None:
         """URL to the generated validation report file."""
         if self._validation_report:
             return self._validation_report.reference
         return None
+
+    @property
+    def links(self) -> SimReportLinks | None:
+        """Links associated with the simulation report result."""
+        return self._links
 
     @property
     def dashboard_url(self) -> str | None:

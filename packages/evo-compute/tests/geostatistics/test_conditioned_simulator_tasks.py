@@ -144,8 +144,11 @@ class TestConSimParametersSerialization(unittest.TestCase):
         self.assertEqual(d["number_of_lines"], 500)
         self.assertEqual(d["number_of_simulations"], 1)
         self.assertEqual(d["random_seed"], 38239342)
-        self.assertEqual(d["number_of_simulations_to_save"], 5)
+        self.assertEqual(d["number_of_simulations_to_save"], 1)
         self.assertFalse(d["perform_validation"])
+
+        d10 = _dump(_params(number_of_simulations=10))
+        self.assertEqual(d10["number_of_simulations_to_save"], 5)
 
     def test_block_discretization_default(self):
         d = _dump(_params())
@@ -244,10 +247,14 @@ class TestConSimParametersSerialization(unittest.TestCase):
 
     def test_report_mean_thresholds(self):
         params = _params(
+            perform_validation=True,
             report_mean_thresholds=ReportMeanThresholds(acceptable=0.02, marginal=0.05),
         )
         d = _dump(params)
         self.assertEqual(d["report_mean_thresholds"]["acceptable"], 0.02)
+
+        with self.assertRaisesRegex(ValidationError, "perform_validation=True"):
+            _params(report_mean_thresholds=ReportMeanThresholds(acceptable=0.02, marginal=0.05))
 
     def test_filter_single_condition(self):
         params = _params(
@@ -412,9 +419,13 @@ class TestSourceAttributeAcceptsTypedAttributes(unittest.TestCase):
         params = _params(source_attribute=_existing_attribute("grade", "abc-key"))
         self.assertEqual(params.source_attribute, "locations.attributes[?key=='abc-key']")
 
-    def test_pending_attribute_resolves_to_name_expression(self):
-        params = _params(source_attribute=PendingAttribute(MagicMock(), "grade"))
-        self.assertEqual(params.source_attribute, "attributes[?name=='grade']")
+    def test_pending_attribute_is_rejected_with_available_attributes(self):
+        parent = MagicMock()
+        parent.__iter__.return_value = iter([type("Attr", (), {"name": "au_ppm"})()])
+        with self.assertRaises(ValidationError) as ctx:
+            _params(source_attribute=PendingAttribute(parent, "grde"))
+        self.assertIn("grde", str(ctx.exception))
+        self.assertIn("au_ppm", str(ctx.exception))
 
     def test_block_model_attribute_resolves_to_name_expression(self):
         params = _params(source_attribute=BlockModelAttribute(name="grade", attribute_type="Float64"))

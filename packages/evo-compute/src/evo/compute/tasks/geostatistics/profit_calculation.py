@@ -42,17 +42,18 @@ Example::
 
 from __future__ import annotations
 
-from typing import ClassVar, Protocol, runtime_checkable
+from collections.abc import Mapping
+from typing import ClassVar
 
-import pandas as pd
-from evo.common import IContext, IFeedback
-from evo.objects import ObjectSchema
-from evo.objects.typed import BaseObject, object_from_reference
-from pydantic import BaseModel, Field
+from evo.common import IContext
+from evo.objects.typed import BaseSpatialObject
+from pydantic import BaseModel, Field, model_validator
 
-from ..common import AnySourceAttribute, AnyTargetAttribute
+from ..common import AnySourceAttribute, AnyTargetAttribute, SingleTargetTaskResult, TaskParameters
 from ..common.results import TaskTarget
 from ..common.runner import TaskRunner
+from .conditioned_simulator import _validate_material_category_sequence
+from .loss_calculation import MaterialCategory
 
 __all__ = [
     "MaterialCategory",
@@ -63,29 +64,17 @@ __all__ = [
 ]
 
 
-class MaterialCategory(BaseModel):
-    """A material category for grade calculations.
-
-    Each category is defined by a cutoff grade, metal price, and label.
-    Categories should be ordered from lowest to highest cutoff grade.
-    """
-
-    cutoff_grade: float = Field(0.0, ge=0.0)
-    """The cutoff grade for this category."""
-
-    metal_price: float = Field(0.0, ge=0.0)
-    """The metal price per unit for this category."""
-
-    label: str = "waste"
-    """Label for the material category (e.g. 'ore', 'waste')."""
-
-
-class ProfitCalculationParameters(BaseModel):
+class ProfitCalculationParameters(TaskParameters):
     """Parameters for the profit-calculation task.
 
     Same parameter schema as loss-calculation: classifies grid cells into
     material categories based on ensemble data and economic parameters.
     """
+
+    _object_roles: ClassVar[Mapping[str, tuple[type, ...]]] = {
+        "source": (BaseSpatialObject,),
+        "target": (BaseSpatialObject,),
+    }
 
     source: AnySourceAttribute
     """The source object and attribute containing ensemble simulation values."""
@@ -93,7 +82,7 @@ class ProfitCalculationParameters(BaseModel):
     target: AnyTargetAttribute
     """The target object and attribute to create or update with grade categories."""
 
-    material_categories: list[MaterialCategory]
+    material_categories: list[MaterialCategory] = Field(min_length=1)
     """List of material categories, ordered from lowest to highest cutoff grade."""
 
     processing_cost: float = Field(ge=0.0)
@@ -108,6 +97,11 @@ class ProfitCalculationParameters(BaseModel):
     metal_recovery_fraction: float = Field(ge=0.0, le=1.0)
     """Fraction of metal expected to be recovered during processing (0.0–1.0)."""
 
+    @model_validator(mode="after")
+    def _check_categories(self) -> ProfitCalculationParameters:
+        _validate_material_category_sequence(self.material_categories)
+        return self
+
 
 class ProfitCalculationResultModel(BaseModel):
     """Pydantic model for the raw profit-calculation task result."""
@@ -116,50 +110,11 @@ class ProfitCalculationResultModel(BaseModel):
     target: TaskTarget
 
 
-@runtime_checkable
-class _ObjToDataframeProtocol(Protocol):
-    async def to_dataframe(self, *keys: str, fb: IFeedback = ...) -> pd.DataFrame: ...
-
-
-class ProfitCalculationResult:
+class ProfitCalculationResult(SingleTargetTaskResult[TaskTarget]):
     TASK_DISPLAY_NAME: ClassVar[str] = "Profit Calculation"
 
     def __init__(self, context: IContext, model: ProfitCalculationResultModel) -> None:
-        self._target = model.target
-        self._message = model.message
-        self._context = context
-
-    @property
-    def message(self) -> str:
-        return self._message
-
-    @property
-    def target_name(self) -> str:
-        return self._target.name
-
-    @property
-    def target_reference(self) -> str:
-        return self._target.reference
-
-    @property
-    def attribute_name(self) -> str:
-        return self._target.attribute.name
-
-    @property
-    def schema(self) -> ObjectSchema:
-        return ObjectSchema.from_id(self._target.schema_id)
-
-    async def get_target_object(self) -> BaseObject:
-        return await object_from_reference(self._context, self._target.reference)
-
-    async def to_dataframe(self, *columns: str) -> pd.DataFrame:
-        target_obj = await self.get_target_object()
-        if isinstance(target_obj, _ObjToDataframeProtocol):
-            return await target_obj.to_dataframe(*columns)
-        raise TypeError(
-            f"Don't know how to get DataFrame from {type(target_obj).__name__}. "
-            "Use get_target_object() and access the data manually."
-        )
+        super().__init__(context, model)
 
     def __str__(self) -> str:
         lines = [
