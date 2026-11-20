@@ -509,15 +509,17 @@ class Attributes(SchemaList[Attribute]):
         self._check_unchanged(prepared)
         documents = []
         for original, document in prepared.documents:
+            data_unchanged = original is not None and all(
+                original.get(field, {}).get("data") == document.get(field, {}).get("data")
+                for field in ("values", "table")
+            )
             if original is not None:
-                previous_data = original.get("values", {}).get("data")
                 original.clear()
                 original.update(document)
                 document = original
             documents.append(document)
-            if original is not None and previous_data == document.get("values", {}).get("data"):
-                continue
-            self._context.mark_modified(document["values"]["data"])
+            if not data_unchanged:
+                self._context.mark_modified(document["values"]["data"])
         self._document[:] = documents
 
     def validate_lengths(self, expected_length: int) -> None:

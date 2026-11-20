@@ -31,6 +31,7 @@ from evo.objects.typed.attributes import (
     UnSupportedDataTypeError,
     _infer_attribute_type_from_series,
 )
+from evo.objects.typed.exceptions import DataLoaderError
 
 
 class TestConcurrentAttributeUploads(IsolatedAsyncioTestCase):
@@ -330,6 +331,48 @@ class TestConcurrentAttributeUploads(IsolatedAsyncioTestCase):
         client.upload_category_dataframe.assert_awaited_once()
         client.upload_dataframe.assert_not_awaited()
         self.assertEqual({"previous-change", "new-values"}, self.context.data_modified)
+
+    @parameterized.expand(
+        [
+            ("unchanged_scalar", "scalar", "old-first", None, False),
+            ("changed_scalar", "scalar", "new-values", None, True),
+            ("unchanged_category", "category", "old-first", "old-lookup", False),
+            ("renamed_categories", "category", "old-first", "new-lookup", True),
+            ("changed_codes", "category", "new-values", "old-lookup", True),
+            ("changed_codes_and_lookup", "category", "new-values", "new-lookup", True),
+        ]
+    )
+    async def test_replacement_tracks_values_and_lookup_changes(
+        self, _name, attribute_type, values_ref, lookup_ref, modified
+    ):
+        original = self.documents[0]
+        original["attribute_type"] = attribute_type
+        if attribute_type == "category":
+            original["table"] = {"data": "old-lookup"}
+        attribute = self.attributes["first"]
+        frame = pd.DataFrame({"first": [2.0]})
+        values = {"data": values_ref, "length": 1}
+        client = Mock()
+        client.upload_dataframe = AsyncMock(return_value=values)
+        client.upload_category_dataframe = AsyncMock(return_value={"values": values, "table": {"data": lookup_ref}})
+        self.context.obj.download_attribute_dataframe = AsyncMock(return_value=frame)
+
+        with patch("evo.objects.typed.attributes.get_data_client", return_value=client):
+            await self.attributes.set_attributes(frame)
+
+        self.assertIs(original, self.documents[0])
+        self.assertEqual(values_ref, attribute._data)
+        if attribute_type == "category":
+            self.assertEqual(lookup_ref, attribute.as_dict()["table"]["data"])
+        expected_modified = {"previous-change"} | ({values_ref} if modified else set())
+        self.assertEqual(expected_modified, self.context.data_modified)
+        if modified:
+            with self.assertRaises(DataLoaderError):
+                await attribute.to_dataframe()
+            self.context.obj.download_attribute_dataframe.assert_not_awaited()
+        else:
+            self.assertIs(frame, await attribute.to_dataframe())
+            self.context.obj.download_attribute_dataframe.assert_awaited_once()
 
 
 class TestAttributeTypeInference(TestCase):

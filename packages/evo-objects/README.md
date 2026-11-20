@@ -107,49 +107,9 @@ distance or `from` column is ignored.
 
 ### Concurrent persistence
 
-Typed creation and replacement prepare and upload independent attributes, submodels and collections
-concurrently. DataFrame conversion, Parquet compression and hashing run in the default thread pool, not on the
-event loop. Completed files can upload while other files are still being prepared; preparation never holds an
-upload slot. The default DataFrame path passes cached-file metadata to uploading rather than retaining intermediate
-Arrow tables. Existing `upload_table`/`upload_category_table` overrides still intercept DataFrame uploads, but may
-retain their Arrow inputs until the override returns.
-
-Identical tables share an immutable, hash-named Parquet cache file. Completed files are published atomically
-without replacing an existing file, including across threads and processes. On POSIX, the cache file system
-must support hard links; publication errors propagate rather than falling back to an overwrite.
-Publication and temporary-file cleanup use bounded retries for `PermissionError` on all platforms.
-
-Results retain input order. Parallel table/attribute replacement stages results and checks for attribute conflicts
-before applying changes. Failure cancels and drains sibling tasks; cancellation waits for running cache writers
-and chunk tasks before returning. Uploaded blobs are not rolled back on failure. Subclasses that customize
-`DataTable.from_dataframe` must put commit-time derived-metadata updates in `_apply_uploaded_table` for those
-updates to run during combined table/attribute replacement; perform fallible checks before modifying live state.
-
-File admission and buffered chunks are controlled by the shared transport, not a global typed-upload semaphore:
-
-```python
-from evo.aio import AioTransport
-
-transport = AioTransport(
-    user_agent="Your Application Name",
-    max_connections=100,            # Total simultaneous HTTP connections (replaces the deprecated num_pools).
-    max_concurrent_transfers=16,    # Files, before requesting a SAS URL or opening the cache file.
-    max_concurrent_chunks=16,       # Buffered chunks across file uploads and downloads.
-)
-# Supply this transport to the APIConnector used by your context.
-```
-
-The defaults allow up to 64 MiB of active chunk payloads (16 x 4 MiB), excluding input frames, preparation,
-HTTP overhead and cached disk data. They are starting defaults, not a total-memory guarantee. Custom transports
-can opt into shared limits as described in `evo-sdk-common`; otherwise per-file limits still apply.
-Do not modify input DataFrames or clear/evict their cache while persistence is running. Pending preparation
-jobs and completed cached files are not bounded by the transfer limits.
-
-Transient storage HTTP errors (408, 429, 500, 502, 503, 504), raw connection failures and timeouts use bounded
-backoff in the common I/O layer. Chunk retries retain completed blocks; final commits and URL acquisition have
-their own retry budgets. Permanent errors and exhausted transport retries propagate, and cancellation is never
-treated as success. The default is three consecutive attempts with exponential backoff; successful chunks reset
-the chunk-transfer attempt counter. This does not retry the whole object or discard successfully prepared files.
+Typed creation and replacement upload independent data concurrently while preserving input order.
+The defaults suit most applications. For larger workloads, see
+[Concurrent persistence](docs/concurrent-persistence.md) for transfer settings, cache setup and failure handling.
 
 ## Contributing
 
