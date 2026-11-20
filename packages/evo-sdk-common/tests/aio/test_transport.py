@@ -408,7 +408,7 @@ class TestTransportRequest(unittest.IsolatedAsyncioTestCase):
 
         # Open the transport and check that the session and connector are created.
         await transport.open()
-        mock_connector_klass.assert_called_once_with(ssl=None, limit=4)
+        mock_connector_klass.assert_called_once_with(ssl=None, limit=100)
         mock_session_klass.assert_called_once_with(
             connector=mock_connector, skip_auto_headers=["Accept", "Accept-Encoding"]
         )
@@ -436,7 +436,7 @@ class TestTransportRequest(unittest.IsolatedAsyncioTestCase):
 
         # Open the transport and check that the session and connector are created.
         async with transport:
-            mock_connector_klass.assert_called_once_with(ssl=None, limit=4)
+            mock_connector_klass.assert_called_once_with(ssl=None, limit=100)
             mock_session_klass.assert_called_once_with(
                 connector=mock_connector, skip_auto_headers=["Accept", "Accept-Encoding"]
             )
@@ -515,7 +515,7 @@ class TestTransportRequest(unittest.IsolatedAsyncioTestCase):
 
         # Open the transport and check that the session and connector are created.
         await transport.open()
-        mock_connector_klass.assert_called_once_with(ssl=None, limit=4)
+        mock_connector_klass.assert_called_once_with(ssl=None, limit=100)
         mock_session_klass.assert_called_once_with(
             connector=mock_connector, skip_auto_headers=["Accept", "Accept-Encoding"]
         )
@@ -527,7 +527,7 @@ class TestTransportRequest(unittest.IsolatedAsyncioTestCase):
 
         # Open the transport again and check that the session and connector are not created again.
         await transport.open()
-        mock_connector_klass.assert_called_once_with(ssl=None, limit=4)
+        mock_connector_klass.assert_called_once_with(ssl=None, limit=100)
         mock_session_klass.assert_called_once_with(
             connector=mock_connector, skip_auto_headers=["Accept", "Accept-Encoding"]
         )
@@ -573,7 +573,7 @@ class TestTransportRequest(unittest.IsolatedAsyncioTestCase):
 
         # Open the transport and check that the session and connector are created.
         async with transport:
-            mock_connector_klass.assert_called_once_with(ssl=None, limit=4)
+            mock_connector_klass.assert_called_once_with(ssl=None, limit=100)
             mock_session_klass.assert_called_once_with(
                 connector=mock_connector, skip_auto_headers=["Accept", "Accept-Encoding"]
             )
@@ -585,7 +585,7 @@ class TestTransportRequest(unittest.IsolatedAsyncioTestCase):
 
             # Open the transport again and check that the session and connector are not created again.
             async with transport:
-                mock_connector_klass.assert_called_once_with(ssl=None, limit=4)
+                mock_connector_klass.assert_called_once_with(ssl=None, limit=100)
                 mock_session_klass.assert_called_once_with(
                     connector=mock_connector, skip_auto_headers=["Accept", "Accept-Encoding"]
                 )

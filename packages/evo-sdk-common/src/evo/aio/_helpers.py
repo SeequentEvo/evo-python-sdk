@@ -31,8 +31,8 @@ class Config:
     user_agent: str
     """The value to provide in the `User-Agent` header."""
 
-    num_pools: int
-    """Number of connection pools to cache before discarding the least recently used pool."""
+    max_connections: int
+    """Maximum simultaneous HTTP connections across all hosts; 0 disables the limit."""
 
     verify_ssl: bool
     """Verify SSL certificates."""
@@ -48,7 +48,7 @@ class Config:
 
     async def create_context(self) -> Context:
         return Context(
-            num_pools=self.num_pools,
+            max_connections=self.max_connections,
             verify_ssl=self.verify_ssl,
             retry_handler=self.retry,
             proxy=self.proxy,
@@ -60,14 +60,19 @@ class Context:
     """Inner class to manage the aiohttp session."""
 
     def __init__(
-        self, num_pools: int, verify_ssl: bool, retry_handler: Retry, proxy: StrOrURL | None, close_grace_period_ms: int
+        self,
+        max_connections: int,
+        verify_ssl: bool,
+        retry_handler: Retry,
+        proxy: StrOrURL | None,
+        close_grace_period_ms: int,
     ) -> None:
         """
-        :param num_pools: Number of connection pools to cache before discarding the least recently used pool.
+        :param max_connections: Maximum simultaneous HTTP connections across all hosts; 0 disables the limit.
         :param verify_ssl: Verify SSL certificates.
         :param retry_handler: Retry handler.
         """
-        connector = aiohttp.TCPConnector(ssl=None if verify_ssl else False, limit=num_pools)
+        connector = aiohttp.TCPConnector(ssl=None if verify_ssl else False, limit=max_connections)
 
         # TODO: Debug tracing? https://docs.aiohttp.org/en/stable/tracing_reference.html
         self.__session: aiohttp.ClientSession | None = aiohttp.ClientSession(
