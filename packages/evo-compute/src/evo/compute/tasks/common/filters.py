@@ -37,11 +37,15 @@ Example::
 
 from __future__ import annotations
 
-from typing import Annotated, Literal
+from collections.abc import Mapping, Sequence
+from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, Field, model_validator
+from evo.objects.typed.attributes import BlockModelPendingAttribute, PendingAttribute
+from evo.objects.typed.base import BaseObject
+from pydantic import Field, PrivateAttr, ValidatorFunctionWrapHandler, field_validator, model_validator
 
-from .source_target import AttributeExpression
+from .models import TaskInputModel, object_identity
+from .source_target import AnyTypedAttribute, ExistingAttributeExpression, _get_existing_attribute_expression
 
 __all__ = [
     "AllOfFilter",
@@ -71,7 +75,7 @@ Membership operators (``"in"``, ``"not_in"``) require ``values``; all other
 _MEMBERSHIP_OPERATORS: frozenset[str] = frozenset(("in", "not_in"))
 
 
-class FilterCondition(BaseModel):
+class FilterCondition(TaskInputModel):
     """A leaf filter condition applied to a single attribute of the filtered object.
 
     Provide exactly one operator and the matching payload:
@@ -88,10 +92,12 @@ class FilterCondition(BaseModel):
         >>> FilterCondition(attribute=grid.attributes["grade"], operator="greater_than", threshold=0.5)
     """
 
+    _attribute_object_url: str | None = PrivateAttr(default=None)
+
     type: Literal["condition"] = "condition"
     """Discriminator identifying this as a leaf filter condition."""
 
-    attribute: AttributeExpression
+    attribute: ExistingAttributeExpression
     """The attribute on the filtered object to evaluate the condition against."""
 
     operator: FilterOperator
@@ -103,12 +109,38 @@ class FilterCondition(BaseModel):
     threshold: float | None = None
     """Numeric threshold. Required for the numeric comparison operators."""
 
+    @field_validator("values", mode="before")
+    @classmethod
+    def _reject_bool_values(cls, raw: Any) -> Any:
+        if isinstance(raw, Sequence) and not isinstance(raw, (str, bytes)):
+            if any(isinstance(item, bool) for item in raw):
+                raise ValueError("Filter 'values' must contain category names (str) or keys (int), not booleans.")
+        return raw
+
+    @model_validator(mode="wrap")
+    @classmethod
+    def _remember_attribute_object(cls, data: Any, handler: ValidatorFunctionWrapHandler) -> FilterCondition:
+        attr_url: str | None = None
+        if isinstance(data, FilterCondition):
+            attr_url = data._attribute_object_url
+        elif isinstance(data, Mapping):
+            raw_attr = data.get("attribute")
+            if isinstance(raw_attr, AnyTypedAttribute) and raw_attr._obj is not None:
+                try:
+                    attr_url = str(raw_attr._obj.metadata.url)
+                except Exception:
+                    attr_url = None
+        condition = handler(data)
+        if attr_url is not None and condition._attribute_object_url is None:
+            condition._attribute_object_url = attr_url
+        return condition
+
     @model_validator(mode="after")
     def _validate_operator_payload(self) -> FilterCondition:
         if self.operator in _MEMBERSHIP_OPERATORS:
-            if self.values is None:
+            if self.values is None or len(self.values) == 0:
                 raise ValueError(
-                    f"Operator '{self.operator}' requires 'values' (list of category names or integer keys)."
+                    f"Operator '{self.operator}' requires a non-empty 'values' list (category names or integer keys)."
                 )
             if self.threshold is not None:
                 raise ValueError(f"Operator '{self.operator}' does not accept 'threshold'.")
@@ -120,23 +152,23 @@ class FilterCondition(BaseModel):
         return self
 
 
-class AllOfFilter(BaseModel):
+class AllOfFilter(TaskInputModel):
     """A composite filter that passes locations satisfying ALL child filters (AND logic)."""
 
     type: Literal["all_of"] = "all_of"
     """Discriminator identifying this as an AND composite filter."""
 
-    filters: list[FilterExpression]
+    filters: list[FilterExpression] = Field(min_length=1)
     """The child expressions that must all be satisfied."""
 
 
-class AnyOfFilter(BaseModel):
+class AnyOfFilter(TaskInputModel):
     """A composite filter that passes locations satisfying ANY child filter (OR logic)."""
 
     type: Literal["any_of"] = "any_of"
     """Discriminator identifying this as an OR composite filter."""
 
-    filters: list[FilterExpression]
+    filters: list[FilterExpression] = Field(min_length=1)
     """The child expressions, at least one of which must be satisfied."""
 
 
@@ -147,11 +179,103 @@ FilterExpression = Annotated[
 """A filter condition or composite filter combining multiple conditions."""
 
 
-class Filter(BaseModel):
+def _check_expression_object_url(expr: FilterExpression, expected_url: str) -> None:
+    if isinstance(expr, (AllOfFilter, AnyOfFilter)):
+        for child in expr.filters:
+            _check_expression_object_url(child, expected_url)
+        return
+    if expr._attribute_object_url is not None and object_identity(expr._attribute_object_url) != object_identity(
+        expected_url
+    ):
+        raise ValueError(
+            f"Filter condition references an attribute from object {object_identity(expr._attribute_object_url)!r}, "
+            f"which does not match filtered object {object_identity(expected_url)!r}."
+        )
+
+
+def _resolve_expression(expr: FilterExpression, obj: BaseObject) -> FilterExpression:
+    if isinstance(expr, AllOfFilter):
+        return AllOfFilter(filters=[_resolve_expression(child, obj) for child in expr.filters])
+    if isinstance(expr, AnyOfFilter):
+        return AnyOfFilter(filters=[_resolve_expression(child, obj) for child in expr.filters])
+
+    if expr._attribute_object_url is not None:
+        try:
+            obj_url = str(obj.metadata.url)
+        except Exception:
+            obj_url = None
+        if obj_url is not None and object_identity(expr._attribute_object_url) != object_identity(obj_url):
+            raise ValueError(
+                f"Filter condition references an attribute from object "
+                f"{object_identity(expr._attribute_object_url)!r}, which does not match "
+                f"filtered object {object_identity(obj_url)!r}."
+            )
+
+    if "[" in expr.attribute:
+        resolved = FilterCondition(
+            type=expr.type,
+            attribute=expr.attribute,
+            operator=expr.operator,
+            values=expr.values,
+            threshold=expr.threshold,
+        )
+        resolved._attribute_object_url = expr._attribute_object_url
+        return resolved
+
+    attributes = getattr(obj, "attributes", None)
+    if attributes is None:
+        raise ValueError(
+            f"Cannot resolve filter attribute {expr.attribute!r} on {type(obj).__name__}: object has no attributes."
+        )
+
+    attr = attributes[expr.attribute]
+    if isinstance(attr, (PendingAttribute, BlockModelPendingAttribute)) or not getattr(attr, "exists", False):
+        available = [name for a in attributes if isinstance(name := getattr(a, "name", None), str)]
+        hint = f" Available attributes: {available}." if available else ""
+        raise ValueError(f"Filter attribute {expr.attribute!r} does not exist on {type(obj).__name__}.{hint}")
+
+    resolved = FilterCondition(
+        type=expr.type,
+        attribute=_get_existing_attribute_expression(attr),
+        operator=expr.operator,
+        values=expr.values,
+        threshold=expr.threshold,
+    )
+    try:
+        resolved._attribute_object_url = str(obj.metadata.url)
+    except Exception:
+        pass
+    return resolved
+
+
+class Filter(TaskInputModel):
     """A filter expression defining which locations to include in a computation."""
 
     where: FilterExpression
     """The root filter expression. A condition, or an ``all_of`` / ``any_of`` composite."""
+
+    def resolve(self, obj: BaseObject) -> Filter:
+        """Resolve bare attribute names in this filter against ``obj.attributes``.
+
+        Already-constructed JMESPath expressions (containing ``"["``) are preserved unchanged.
+
+        Args:
+            obj: The typed geoscience object whose attributes should be searched.
+
+        Returns:
+            A new :class:`Filter` with bare attribute names resolved to JMESPath expressions.
+
+        Raises:
+            TypeError: If *obj* is not a :class:`BaseObject`.
+            ValueError: If any bare attribute name does not exist on *obj*, or if a typed
+                attribute in the filter belongs to a different object.
+        """
+        if not isinstance(obj, BaseObject):
+            raise TypeError(f"Expected a BaseObject instance to resolve filter attributes, got {type(obj).__name__}.")
+        return Filter(where=_resolve_expression(self.where, obj))
+
+    def _check_object_url(self, expected_url: str) -> None:
+        _check_expression_object_url(self.where, expected_url)
 
 
 # ``FilterExpression`` is recursive: it includes ``AllOfFilter``/``AnyOfFilter``, which

@@ -33,18 +33,19 @@ Example::
 
 from __future__ import annotations
 
-from typing import ClassVar, Protocol, runtime_checkable
+from collections.abc import Mapping
+from typing import ClassVar
 
-import pandas as pd
-from evo.common import IContext, IFeedback
-from evo.objects import ObjectSchema
-from evo.objects.typed import BaseObject, object_from_reference
+from evo.common import IContext
+from evo.objects.typed import BaseSpatialObject
 from pydantic import BaseModel, field_validator
 
 from ..common import (
     AnySourceAttribute,
     AnyTargetAttribute,
     SearchNeighborhood,
+    SingleTargetTaskResult,
+    TaskParameters,
 )
 from ..common.results import TaskTarget
 from ..common.runner import TaskRunner
@@ -63,7 +64,7 @@ __all__ = [
 # =============================================================================
 
 
-class BreakTiesParameters(BaseModel):
+class BreakTiesParameters(TaskParameters):
     """Parameters for the break-ties task.
 
     Defines all inputs needed to run a break-ties spatial tie-breaking task.
@@ -83,6 +84,11 @@ class BreakTiesParameters(BaseModel):
         ... )
         >>> result = await run(manager, params)
     """
+
+    _object_roles: ClassVar[Mapping[str, tuple[type, ...]]] = {
+        "source": (BaseSpatialObject,),
+        "target": (BaseSpatialObject,),
+    }
 
     source: AnySourceAttribute
     """The source object and attribute containing values in which ties will be broken."""
@@ -111,13 +117,6 @@ class BreakTiesParameters(BaseModel):
 # =============================================================================
 
 
-@runtime_checkable
-class _ObjToDataframeProtocol(Protocol):
-    """Protocol for objects that can convert themselves to a DataFrame."""
-
-    async def to_dataframe(self, *keys: str, fb: IFeedback = ...) -> pd.DataFrame: ...
-
-
 class BreakTiesResultModel(BaseModel):
     """Pydantic model for the raw break-ties task result."""
 
@@ -128,79 +127,11 @@ class BreakTiesResultModel(BaseModel):
     """Target information from the task result."""
 
 
-class BreakTiesResult:
+class BreakTiesResult(SingleTargetTaskResult[TaskTarget]):
     TASK_DISPLAY_NAME: ClassVar[str] = "Break Ties"
 
     def __init__(self, context: IContext, model: BreakTiesResultModel) -> None:
-        self._target = model.target
-        self._message = model.message
-        self._context = context
-
-    @property
-    def message(self) -> str:
-        """A message describing what happened in the task."""
-        return self._message
-
-    @property
-    def target_name(self) -> str:
-        """The name of the target object."""
-        return self._target.name
-
-    @property
-    def target_reference(self) -> str:
-        """Reference URL to the target object."""
-        return self._target.reference
-
-    @property
-    def attribute_name(self) -> str:
-        """The name of the attribute that was created/updated."""
-        return self._target.attribute.name
-
-    @property
-    def schema(self) -> ObjectSchema:
-        """The schema type of the target object (e.g., 'pointset').
-
-        Uses ``ObjectSchema.from_id`` to parse the schema ID.
-        """
-        return ObjectSchema.from_id(self._target.schema_id)
-
-    async def get_target_object(self) -> BaseObject:
-        """Load and return the target geoscience object.
-
-        Returns:
-            The typed geoscience object (e.g., PointSet, Regular3DGrid)
-
-        Example::
-
-            >>> result = await run(manager, params)
-            >>> target = await result.get_target_object()
-        """
-        return await object_from_reference(self._context, self._target.reference)
-
-    async def to_dataframe(self, *columns: str) -> pd.DataFrame:
-        """Get the task results as a DataFrame.
-
-        Args:
-            columns: Optional column names to include. If omitted, returns all columns.
-
-        Returns:
-            A pandas DataFrame containing the tie-broken attribute values.
-
-        Example::
-
-            >>> result = await run(manager, params)
-            >>> df = await result.to_dataframe()
-            >>> df.head()
-        """
-        target_obj = await self.get_target_object()
-
-        if isinstance(target_obj, _ObjToDataframeProtocol):
-            return await target_obj.to_dataframe(*columns)
-        else:
-            raise TypeError(
-                f"Don't know how to get DataFrame from {type(target_obj).__name__}. "
-                "Use get_target_object() and access the data manually."
-            )
+        super().__init__(context, model)
 
     def __str__(self) -> str:
         """String representation."""

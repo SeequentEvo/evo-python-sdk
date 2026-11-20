@@ -18,17 +18,36 @@ for any task type.
 
 from __future__ import annotations
 
-from typing import Generic, Iterator, TypeVar, overload
+from typing import ClassVar, Generic, Iterator, Protocol, TypeVar, overload, runtime_checkable
 
+import pandas as pd
+from evo.common import IContext, IFeedback
+from evo.objects import ObjectSchema
+from evo.objects.typed import BaseObject, BlockModel, object_from_reference
 from pydantic import BaseModel
 
 T = TypeVar("T")
+TTarget_co = TypeVar("TTarget_co", bound="TaskTarget", covariant=True)
 
 __all__ = [
+    "SingleTargetTaskResult",
     "TaskAttribute",
     "TaskResultList",
     "TaskTarget",
 ]
+
+
+@runtime_checkable
+class _ObjToDataframeProtocol(Protocol):
+    async def to_dataframe(self, *keys: str, fb: IFeedback = ...) -> pd.DataFrame: ...
+
+
+class _HasTargetAndMessage(Protocol[TTarget_co]):
+    @property
+    def message(self) -> str: ...
+
+    @property
+    def target(self) -> TTarget_co: ...
 
 
 class TaskAttribute(BaseModel):
@@ -46,6 +65,78 @@ class TaskTarget(BaseModel):
     description: str | None = None
     schema_id: str
     attribute: TaskAttribute
+
+
+class SingleTargetTaskResult(Generic[TTarget_co]):
+    """Shared result wrapper for tasks that write a primary attribute onto a target object."""
+
+    TASK_DISPLAY_NAME: ClassVar[str] = "Task"
+
+    def __init__(self, context: IContext, model: _HasTargetAndMessage[TTarget_co]) -> None:
+        self._target: TTarget_co = model.target
+        self._message: str = model.message
+        self._context: IContext = context
+
+    @property
+    def message(self) -> str:
+        """A message describing what happened in the task."""
+        return self._message
+
+    @property
+    def target(self) -> TTarget_co:
+        """Target metadata returned by the task."""
+        return self._target
+
+    @property
+    def target_name(self) -> str:
+        """The name of the target object."""
+        return self._target.name
+
+    @property
+    def target_reference(self) -> str:
+        """Reference URL to the target object."""
+        return self._target.reference
+
+    @property
+    def target_description(self) -> str | None:
+        """Optional description of the target object."""
+        return self._target.description
+
+    @property
+    def attribute(self) -> TaskAttribute:
+        """The attribute metadata that was created or updated."""
+        return self._target.attribute
+
+    @property
+    def attribute_name(self) -> str:
+        """The name of the attribute that was created or updated."""
+        return self._target.attribute.name
+
+    @property
+    def attribute_reference(self) -> str:
+        """JMESPath reference to the attribute that was created or updated."""
+        return self._target.attribute.reference
+
+    @property
+    def schema(self) -> ObjectSchema:
+        """The schema type of the target object."""
+        return ObjectSchema.from_id(self._target.schema_id)
+
+    async def get_target_object(self) -> BaseObject:
+        """Load and return the target geoscience object."""
+        return await object_from_reference(self._context, self._target.reference)
+
+    async def to_dataframe(self, *columns: str) -> pd.DataFrame:
+        """Load the target object and return its data as a DataFrame."""
+        target_obj = await self.get_target_object()
+        if isinstance(target_obj, BlockModel) and hasattr(target_obj, "to_dataframe"):
+            return await target_obj.to_dataframe(columns=list(columns) if columns else None)
+        if isinstance(target_obj, _ObjToDataframeProtocol):
+            return await target_obj.to_dataframe(*columns)
+        raise TypeError(
+            f"Don't know how to get DataFrame from {type(target_obj).__name__}. "
+            "Use get_target_object() and access the data manually."
+        )
 
 
 class TaskResultList(Generic[T]):
@@ -100,7 +191,20 @@ class TaskResultList(Generic[T]):
         result_type = getattr(self._results[0], "TASK_DISPLAY_NAME", "Task")
         lines = [f"✓ {len(self._results)} {result_type} Result(s)"]
         for i, result in enumerate(self._results):
-            target = getattr(result, "target_name", "?")
-            attr = getattr(result, "attribute_name", "?")
-            lines.append(f"  {i + 1}. {target} → {attr}")
+            target = getattr(result, "target_name", None)
+            attr = getattr(result, "attribute_name", None)
+            if target is not None and attr is not None:
+                lines.append(f"  {i + 1}. {target} → {attr}")
+            elif target is not None and (attr_names := getattr(result, "attribute_names", None)):
+                lines.append(f"  {i + 1}. {target} → {', '.join(attr_names)}")
+            elif target is not None and (summary := getattr(result, "summary_attributes", None)) is not None:
+                lines.append(f"  {i + 1}. {target} → {summary.mean.name}")
+            elif target is not None and (sims := getattr(result, "simulations_attribute", None)) is not None:
+                lines.append(f"  {i + 1}. {target} → {sims.name}")
+            elif (dist_name := getattr(result, "distribution_name", None)) is not None:
+                lines.append(f"  {i + 1}. {dist_name}")
+            elif (report_ref := getattr(result, "report_reference", None)) is not None:
+                lines.append(f"  {i + 1}. {report_ref}")
+            else:
+                lines.append(f"  {i + 1}. {target or '?'} → {attr or '?'}")
         return "\n".join(lines)
