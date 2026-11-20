@@ -151,11 +151,14 @@ class TestIDWParametersSerialization(unittest.TestCase):
 
         target = _Target(
             object=GRID_URL,
-            attribute=UpdateAttribute(operation="update", name="existing", reference="attributes[?key=='abc']"),
+            attribute=UpdateAttribute(operation="update", reference="attributes[?key=='abc']"),
         )
         d = _dump(_params(target=target))
         self.assertEqual(d["target"]["attribute"]["operation"], "update")
         self.assertEqual(d["target"]["attribute"]["reference"], "attributes[?key=='abc']")
+
+        with self.assertRaises(ValidationError):
+            UpdateAttribute(operation="update", name="existing", reference="attributes[?key=='abc']")
 
     def test_no_filter_by_default(self):
         d = _dump(_params())

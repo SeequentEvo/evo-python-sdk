@@ -53,6 +53,8 @@ from . import profit_calculation as _profit_calculation_module  # noqa: F401
 from . import simulation_report as _simulation_report_module  # noqa: F401
 from .break_ties import BreakTiesResult
 from .conditional_turning_bands import ConditionalTurningBandsResult
+from .conditioned_simulator import ConSimResult
+from .continuous_distribution import ContinuousDistributionResult
 from .declustering import DeclusteringResult
 from .idw import IDWResult
 from .knn import KNNResult
@@ -63,11 +65,17 @@ from .kriging import (
     KrigingResult,
 )
 from .location_wise import LocationWiseResult
+from .loss_calculation import LossCalculationResult
+from .normal_score import NormalScoreResult
+from .profit_calculation import ProfitCalculationResult
+from .simulation_report import SimulationReportResult
 
 __all__ = [
     "BlockDiscretization",
     "BreakTiesResult",
+    "ConSimResult",
     "ConditionalTurningBandsResult",
+    "ContinuousDistributionResult",
     "DeclusteringResult",
     "Filter",
     "IDWResult",
@@ -75,4 +83,8 @@ __all__ = [
     "KrigingDiagnostics",
     "KrigingResult",
     "LocationWiseResult",
+    "LossCalculationResult",
+    "NormalScoreResult",
+    "ProfitCalculationResult",
+    "SimulationReportResult",
 ]

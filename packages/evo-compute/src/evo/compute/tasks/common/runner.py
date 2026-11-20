@@ -46,7 +46,7 @@ from __future__ import annotations
 import asyncio
 import inspect
 from abc import ABC, abstractmethod
-from collections.abc import Callable, Generator
+from collections.abc import Callable, Generator, Sequence
 from typing import Any, ClassVar, Generic, TypeVar, get_args, get_origin
 
 from evo.common import IContext
@@ -55,6 +55,8 @@ from evo.common.utils import NoFeedback, Retry, split_feedback
 from pydantic import BaseModel
 
 from evo.compute.client import JobClient
+
+from .models import OutputTarget, TaskParameters, check_batch_output_collisions, object_identity, resolve_output_target
 
 __all__ = [
     "TParams",
@@ -228,6 +230,45 @@ class TaskRunner(ABC, Generic[TParams, TResultModel, TResult]):
         self._retry = retry
         self._fb = fb
 
+    @classmethod
+    def output_targets(cls, params: TParams) -> Sequence[OutputTarget]:
+        """Return the :class:`OutputTarget` specifications written by *params*.
+
+        Used by :func:`run_tasks` to reject concurrent tasks that would overwrite the
+        same output before any remote job is submitted. Subclasses or parameter models
+        with custom outputs can override this hook or :meth:`TaskParameters.output_targets`.
+        """
+        if isinstance(params, TaskParameters):
+            return params.output_targets()
+
+        from .source_target import CreateAttribute, Target, UpdateAttribute
+
+        target = getattr(params, "target", None)
+        if isinstance(target, Target) and isinstance(target.object, str):
+            return [
+                resolve_output_target(
+                    target.object,
+                    target.attribute,
+                    known_name=target._attribute_name,
+                )
+            ]
+        if target is not None:
+            obj_url = getattr(target, "object", None)
+            attr_spec = getattr(target, "attribute", None)
+            if isinstance(obj_url, str) and isinstance(attr_spec, (CreateAttribute, UpdateAttribute)):
+                return [resolve_output_target(obj_url, attr_spec)]
+            if isinstance(obj_url, str):
+                return [OutputTarget(object_id=object_identity(obj_url), attribute_aliases=None)]
+            ref_url = getattr(target, "reference", None)
+            if isinstance(ref_url, str):
+                return [OutputTarget(object_id=object_identity(ref_url), attribute_aliases=None)]
+            if isinstance(target, str):
+                return [OutputTarget(object_id=object_identity(target), attribute_aliases=None)]
+        target_object = getattr(params, "target_object", None)
+        if isinstance(target_object, str):
+            return [OutputTarget(object_id=object_identity(target_object), attribute_aliases=None)]
+        return ()
+
     @abstractmethod
     async def _get_result(self, raw_result: TResultModel) -> TResult: ...
 
@@ -318,6 +359,9 @@ async def run_tasks(
     for params in parameters:
         runner_cls = _registry.get_runner_for_params(params)
         runner_classes.append(runner_cls)
+
+    # Check across the batch that concurrent tasks do not collide on outputs
+    check_batch_output_collisions(runner_classes, parameters)
 
     # Split feedback across tasks — each sub-feedback maps its 0→1 progress
     # to an equal slice of the parent's 0→1 range.
