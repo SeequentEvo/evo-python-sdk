@@ -14,6 +14,8 @@
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 
+from pydantic import ValidationError
+
 from evo.compute.tasks import SearchNeighborhood
 from evo.compute.tasks.common import (
     Ellipsoid,
@@ -128,10 +130,52 @@ class TestKNNParametersSerialization(unittest.TestCase):
             max_samples=20,
             max_empty_octants=2,
             max_samples_per_quadrant=5,
+            max_drillholes=4,
+            min_drillholes=0,
+            drillhole_limit_scope="global",
         )
         d = _dump(_params(neighborhood=search))
         self.assertEqual(d["neighborhood"]["max_empty_octants"], 2)
         self.assertEqual(d["neighborhood"]["max_samples_per_quadrant"], 5)
+        self.assertEqual(d["neighborhood"]["max_drillholes"], 4)
+        self.assertNotIn("min_drillholes", d["neighborhood"])
+        self.assertNotIn("drillhole_limit_scope", d["neighborhood"])
+
+    def test_kriging_only_drillhole_limits_rejected(self):
+        ellipsoid = Ellipsoid(ranges=EllipsoidRanges(major=200, semi_major=150, minor=100))
+        for limits in [
+            {"min_drillholes": 2},
+            {"max_samples_per_drillhole": 2, "drillhole_limit_scope": "quadrant"},
+            {"max_samples_per_drillhole": 2, "drillhole_limit_scope": "octant"},
+        ]:
+            with self.subTest(**limits), self.assertRaisesRegex(ValidationError, "only supported by Kriging"):
+                _params(neighborhood=SearchNeighborhood(ellipsoid=ellipsoid, max_samples=20, **limits))
+
+    def test_sample_limit_boundaries_in_neighborhood(self):
+        ellipsoid = Ellipsoid(ranges=EllipsoidRanges(major=200, semi_major=150, minor=100))
+        d = _dump(_params(neighborhood={"ellipsoid": ellipsoid, "max_samples": 1}))
+        self.assertEqual(d["neighborhood"]["max_samples"], 1)
+        self.assertNotIn("min_samples", d["neighborhood"])
+
+        for max_samples, min_samples in [(1, 1), (20, 1), (20, 20)]:
+            with self.subTest(max_samples=max_samples, min_samples=min_samples):
+                d = _dump(
+                    _params(
+                        neighborhood={"ellipsoid": ellipsoid, "max_samples": max_samples, "min_samples": min_samples}
+                    )
+                )
+                self.assertEqual(d["neighborhood"]["max_samples"], max_samples)
+                self.assertEqual(d["neighborhood"]["min_samples"], min_samples)
+
+    def test_invalid_sample_limits_rejected(self):
+        ellipsoid = Ellipsoid(ranges=EllipsoidRanges(major=200, semi_major=150, minor=100))
+        for limits in [
+            {"max_samples": 0},
+            {"max_samples": 20, "min_samples": 0},
+            {"max_samples": 20, "min_samples": 21},
+        ]:
+            with self.subTest(**limits), self.assertRaises(ValidationError):
+                _params(neighborhood={"ellipsoid": ellipsoid, **limits})
 
     def test_new_attribute_target(self):
         d = _dump(_params(target=Target.new_attribute(GRID_URL, "result")))

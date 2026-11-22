@@ -17,7 +17,7 @@ Tasks are created, triggering a job to be executed asynchronously within a speci
 
 ## Pre-requisites
 
-* Python ^3.10
+* Python 3.11.5 or higher
 * An [application registered in Bentley](https://developer.bentley.com/register/?product=seequent-evo)
 
 ## Installation

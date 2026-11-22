@@ -1,7 +1,7 @@
 [project]
 name = "evo-compute"
-version = "0.0.6"
-requires-python = ">=3.10"
+version = "0.1.1"
+requires-python = ">=3.11.5"
 license-files = ["LICENSE.md"]
 dynamic = ["readme"]
 authors = [
@@ -9,9 +9,9 @@ authors = [
 ]
 
 dependencies = [
-    "evo-blockmodels[utils]",
-    "evo-objects[utils,blockmodels]",
-    "evo-sdk-common",
+    "evo-blockmodels[utils]>=0.10.0",
+    "evo-objects[utils,blockmodels]>=0.7.0",
+    "evo-sdk-common>=0.6.0",
     "pydantic>=2",
     "typing_extensions>=4.0",
 ]
@@ -23,8 +23,8 @@ Homepage = "https://www.seequent.com/"
 Documentation = "https://developer.seequent.com/"
 
 [project.optional-dependencies]
-aiohttp = ["evo-sdk-common[aiohttp]"]
-notebooks = ["evo-sdk-common[notebooks]"]
+aiohttp = ["evo-sdk-common[aiohttp]>=0.6.0"]
+notebooks = ["evo-sdk-common[notebooks]>=0.6.0"]
 
 [dependency-groups]
 # Dev dependencies. The version is left unspecified so the latest is installed.

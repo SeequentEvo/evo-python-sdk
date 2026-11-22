@@ -100,11 +100,11 @@
 ...     source=pointset.attributes["grade"],  # Source attribute
 ...     target=block_model.attributes["kriged_grade"],  # Target attribute (creates if doesn't exist)
 ...     variogram=variogram,  # Variogram model
-...     search=SearchNeighborhood(
+...     neighborhood=SearchNeighborhood(
 ...         ellipsoid=Ellipsoid(ranges=EllipsoidRanges(200, 150, 100)),
 ...         max_samples=20,
 ...     ),
-...     # method defaults to ordinary kriging
+...     # kriging_method defaults to ordinary kriging
 ... )
 &gt;&gt;&gt;
 &gt;&gt;&gt; # With a target filter to restrict kriging to specific categories on the target:
@@ -112,7 +112,7 @@
 ...     source=pointset.attributes["grade"],
 ...     target=block_model.attributes["kriged_grade"],
 ...     variogram=variogram,
-...     search=SearchNeighborhood(...),
+...     neighborhood=SearchNeighborhood(...),
 ...     target_filter=Filter(
 ...         where=FilterCondition(
 ...             attribute=block_model.attributes["domain"],
@@ -127,7 +127,7 @@
 ...     source=pointset.attributes["grade"],
 ...     target=block_model.attributes["kriged_grade"],
 ...     variogram=variogram,
-...     search=SearchNeighborhood(...),
+...     neighborhood=SearchNeighborhood(...),
 ...     diagnostics=KrigingDiagnostics(kriging_variance=True, num_samples=True),
 ... )
 </code></pre>
@@ -214,12 +214,12 @@
 
 
 
-<h3 id="evo.compute.tasks.geostatistics.kriging.KrigingParameters.search" class="doc doc-heading">
-            <span class="doc doc-object-name doc-attribute-name">search</span>
+<h3 id="evo.compute.tasks.geostatistics.kriging.KrigingParameters.neighborhood" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">neighborhood</span>
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">search</span><span class="p">:</span> <span class="n">SearchNeighborhood</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">alias</span><span class="o">=</span><span class="s1">&#39;neighborhood&#39;</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">neighborhood</span><span class="p">:</span> <span class="n">SearchNeighborhood</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">validation_alias</span><span class="o">=</span><span class="n">AliasChoices</span><span class="p">(</span><span class="s1">&#39;neighborhood&#39;</span><span class="p">,</span> <span class="s1">&#39;search&#39;</span><span class="p">))</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -234,17 +234,59 @@
 
 
 
-<h3 id="evo.compute.tasks.geostatistics.kriging.KrigingParameters.method" class="doc doc-heading">
-            <span class="doc doc-object-name doc-attribute-name">method</span>
+<h3 id="evo.compute.tasks.geostatistics.kriging.KrigingParameters.kriging_method" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">kriging_method</span>
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">method</span><span class="p">:</span> <span class="n">SimpleKriging</span> <span class="o">|</span> <span class="n">OrdinaryKriging</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">OrdinaryKriging</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="s1">&#39;kriging_method&#39;</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">kriging_method</span><span class="p">:</span> <span class="n">SimpleKriging</span> <span class="o">|</span> <span class="n">OrdinaryKriging</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+    <span class="n">default_factory</span><span class="o">=</span><span class="n">OrdinaryKriging</span><span class="p">,</span> <span class="n">validation_alias</span><span class="o">=</span><span class="n">AliasChoices</span><span class="p">(</span><span class="s2">&quot;kriging_method&quot;</span><span class="p">,</span> <span class="s2">&quot;method&quot;</span><span class="p">)</span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>The kriging method to use. Defaults to ordinary kriging if not specified.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.kriging.KrigingParameters.search" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">search</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">search</span><span class="p">:</span> <span class="n">SearchNeighborhood</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Backwards-compatible alias for :attr:<code>neighborhood</code>.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.kriging.KrigingParameters.method" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">method</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">method</span><span class="p">:</span> <span class="n">SimpleKriging</span> <span class="o">|</span> <span class="n">OrdinaryKriging</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Backwards-compatible alias for :attr:<code>kriging_method</code>.</p>
 
     </div>
 
