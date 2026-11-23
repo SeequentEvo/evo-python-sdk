@@ -331,12 +331,13 @@ class ObjectAPIClient(BaseAPIClient):
     async def move_geoscience_object(
         self, path: str, object_dict: dict, request_timeout: int | float | tuple[int | float, int | float] | None = None
     ) -> ObjectMetadata:
-        """Move an existing geoscience object to a new path in the geoscience object service.
+        """Move and/or rename an existing geoscience object by uploading it to a new path.
 
+        The path includes the object name, so a path in the same folder with a different name renames the object.
         This uploads the object to the new path, which creates a new version of the object. To move or rename an
-        object without creating a new version, use `move_object_by_id` instead.
+        object without creating a new version, use `move_geoscience_object_by_id` instead.
 
-        :param path: The new path to move the object to.
+        :param path: The new path of the object, including its name.
         :param object_dict: The geoscience object to be moved.
         :param request_timeout: Timeout setting for this request. If one number is provided, it will be the
             total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.
@@ -358,7 +359,7 @@ class ObjectAPIClient(BaseAPIClient):
         )
         return parse.object_metadata(result, self._environment)
 
-    async def move_object_by_id(
+    async def move_geoscience_object_by_id(
         self,
         object_id: UUID,
         name: str | None = None,
@@ -368,9 +369,13 @@ class ObjectAPIClient(BaseAPIClient):
     ) -> ObjectMetadata:
         """Move and/or rename an existing geoscience object (by UUID) without creating a new version.
 
-        Arguments that are `None` are left unchanged. Provide only `name` to rename the object in place, or only
-        `folder_path` and/or `folder_id` to move it while keeping its name. If both `folder_path` and `folder_id`
-        are provided, they must refer to the same folder.
+        Despite the name, this method also renames objects. Arguments that are `None` are left unchanged:
+
+        - Provide only `name` to rename the object in its current folder.
+        - Provide only `folder_path` and/or `folder_id` to move the object while keeping its name.
+        - Provide `name` together with a folder to move and rename the object in a single request.
+
+        If both `folder_path` and `folder_id` are provided, they must refer to the same folder.
 
         :param object_id: The UUID of the geoscience object.
         :param name: The new name of the object, including the `.json` extension.
@@ -382,6 +387,8 @@ class ObjectAPIClient(BaseAPIClient):
 
         :return: The metadata of the object. If nothing changed, because no arguments were provided or the destination
             is the object's current location, the current metadata is returned and `modified_at` is unchanged.
+
+        :raises ObjectAlreadyExistsError: If an object with the same name already exists in the destination folder.
         """
         org_id = str(self._environment.org_id)
         workspace_id = str(self._environment.workspace_id)

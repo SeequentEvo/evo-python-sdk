@@ -987,7 +987,7 @@ class TestObjectAPIClient(TestWithConnector, TestWithStorage):
         actual_error_str = str(cm.exception)
         self.assertEqual(expected_error_str, actual_error_str)
 
-    async def test_move_object_by_id(self) -> None:
+    async def test_move_geoscience_object_by_id(self) -> None:
         move_object_response = load_test_data("move_object.json")
         object_id = UUID(int=2)
         folder_id = UUID(int=9)
@@ -995,7 +995,7 @@ class TestObjectAPIClient(TestWithConnector, TestWithStorage):
         with self.transport.set_http_response(
             status_code=200, content=json.dumps(move_object_response), headers={"Content-Type": "application/json"}
         ):
-            moved_object_metadata = await self.object_client.move_object_by_id(
+            moved_object_metadata = await self.object_client.move_geoscience_object_by_id(
                 object_id, name="n.json", folder_path="/B", folder_id=folder_id
             )
 
@@ -1011,7 +1011,7 @@ class TestObjectAPIClient(TestWithConnector, TestWithStorage):
         self.assertEqual("2023-08-03T05:47:18.3402289Z", moved_object_metadata.version_id)
         self.assertEqual(dateutil_parse("2023-08-05T05:47:18Z"), moved_object_metadata.modified_at)
 
-    async def test_move_object_by_id_request_body(self) -> None:
+    async def test_move_geoscience_object_by_id_request_body(self) -> None:
         move_object_response = load_test_data("move_object.json")
         object_id = UUID(int=2)
         folder_id = UUID(int=9)
@@ -1031,7 +1031,7 @@ class TestObjectAPIClient(TestWithConnector, TestWithStorage):
                     content=json.dumps(move_object_response),
                     headers={"Content-Type": "application/json"},
                 ):
-                    await self.object_client.move_object_by_id(object_id, **kwargs)
+                    await self.object_client.move_geoscience_object_by_id(object_id, **kwargs)
 
                 self.assert_request_made(
                     method=RequestMethod.PATCH,
@@ -1040,7 +1040,7 @@ class TestObjectAPIClient(TestWithConnector, TestWithStorage):
                     body=expected_body,
                 )
 
-    async def test_move_object_by_id_unchanged_fetches_current_metadata(self) -> None:
+    async def test_move_geoscience_object_by_id_unchanged_fetches_current_metadata(self) -> None:
         get_object_response = load_test_data("get_object.json")
         object_id = UUID(int=2)
         self.transport.request.side_effect = [
@@ -1052,7 +1052,7 @@ class TestObjectAPIClient(TestWithConnector, TestWithStorage):
             ),
         ]
 
-        object_metadata = await self.object_client.move_object_by_id(object_id, name="m.json")
+        object_metadata = await self.object_client.move_geoscience_object_by_id(object_id, name="m.json")
 
         self.assertEqual(2, self.transport.request.call_count)
         self.assertEqual(RequestMethod.PATCH, self.transport.request.call_args_list[0].kwargs["method"])
@@ -1066,7 +1066,7 @@ class TestObjectAPIClient(TestWithConnector, TestWithStorage):
         self.assertEqual("A", object_metadata.parent)
         self.assertEqual(dateutil_parse("2023-08-04T05:47:18Z"), object_metadata.modified_at)
 
-    async def test_move_object_by_id_already_exists(self) -> None:
+    async def test_move_geoscience_object_by_id_already_exists(self) -> None:
         already_exists_response = load_test_data("object_already_exists_error.json")
         object_id = UUID(int=3)
         with (
@@ -1077,7 +1077,7 @@ class TestObjectAPIClient(TestWithConnector, TestWithStorage):
             ),
             self.assertRaises(ObjectAlreadyExistsError) as cm,
         ):
-            await self.object_client.move_object_by_id(object_id, name="m.json")
+            await self.object_client.move_geoscience_object_by_id(object_id, name="m.json")
 
         self.assert_request_made(
             method=RequestMethod.PATCH,
