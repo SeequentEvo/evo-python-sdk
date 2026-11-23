@@ -333,6 +333,9 @@ class ObjectAPIClient(BaseAPIClient):
     ) -> ObjectMetadata:
         """Move an existing geoscience object to a new path in the geoscience object service.
 
+        This uploads the object to the new path, which creates a new version of the object. To move or rename an
+        object without creating a new version, use `move_object_by_id` instead.
+
         :param path: The new path to move the object to.
         :param object_dict: The geoscience object to be moved.
         :param request_timeout: Timeout setting for this request. If one number is provided, it will be the

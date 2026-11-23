@@ -987,6 +987,106 @@ class TestObjectAPIClient(TestWithConnector, TestWithStorage):
         actual_error_str = str(cm.exception)
         self.assertEqual(expected_error_str, actual_error_str)
 
+    async def test_move_object_by_id(self) -> None:
+        move_object_response = load_test_data("move_object.json")
+        object_id = UUID(int=2)
+        folder_id = UUID(int=9)
+
+        with self.transport.set_http_response(
+            status_code=200, content=json.dumps(move_object_response), headers={"Content-Type": "application/json"}
+        ):
+            moved_object_metadata = await self.object_client.move_object_by_id(
+                object_id, name="n.json", folder_path="/B", folder_id=folder_id
+            )
+
+        self.assert_request_made(
+            method=RequestMethod.PATCH,
+            path=f"{self.base_path}/objects/{object_id}",
+            headers={"Content-Type": "application/json", "Accept": "application/json"},
+            body={"name": "n.json", "folder_path": "/B", "folder_id": str(folder_id)},
+        )
+        self.assertEqual(object_id, moved_object_metadata.id)
+        self.assertEqual("n.json", moved_object_metadata.name)
+        self.assertEqual("B", moved_object_metadata.parent)
+        self.assertEqual("2023-08-03T05:47:18.3402289Z", moved_object_metadata.version_id)
+        self.assertEqual(dateutil_parse("2023-08-05T05:47:18Z"), moved_object_metadata.modified_at)
+
+    async def test_move_object_by_id_request_body(self) -> None:
+        move_object_response = load_test_data("move_object.json")
+        object_id = UUID(int=2)
+        folder_id = UUID(int=9)
+        cases = [
+            ("rename only", {"name": "n.json"}, {"name": "n.json", "folder_path": None, "folder_id": None}),
+            ("move by folder path", {"folder_path": "/B"}, {"name": None, "folder_path": "/B", "folder_id": None}),
+            (
+                "move by folder ID",
+                {"folder_id": folder_id},
+                {"name": None, "folder_path": None, "folder_id": str(folder_id)},
+            ),
+        ]
+        for label, kwargs, expected_body in cases:
+            with self.subTest(label):
+                with self.transport.set_http_response(
+                    status_code=200,
+                    content=json.dumps(move_object_response),
+                    headers={"Content-Type": "application/json"},
+                ):
+                    await self.object_client.move_object_by_id(object_id, **kwargs)
+
+                self.assert_request_made(
+                    method=RequestMethod.PATCH,
+                    path=f"{self.base_path}/objects/{object_id}",
+                    headers={"Content-Type": "application/json", "Accept": "application/json"},
+                    body=expected_body,
+                )
+
+    async def test_move_object_by_id_unchanged_fetches_current_metadata(self) -> None:
+        get_object_response = load_test_data("get_object.json")
+        object_id = UUID(int=2)
+        self.transport.request.side_effect = [
+            MockResponse(status_code=204),
+            MockResponse(
+                status_code=200,
+                content=json.dumps(get_object_response),
+                headers={"Content-Type": "application/json"},
+            ),
+        ]
+
+        object_metadata = await self.object_client.move_object_by_id(object_id, name="m.json")
+
+        self.assertEqual(2, self.transport.request.call_count)
+        self.assertEqual(RequestMethod.PATCH, self.transport.request.call_args_list[0].kwargs["method"])
+        self.assert_request_made(
+            method=RequestMethod.GET,
+            path=f"{self.base_path}/objects/{object_id}",
+            headers={"Accept": "application/json"},
+        )
+        self.assertEqual(object_id, object_metadata.id)
+        self.assertEqual("m.json", object_metadata.name)
+        self.assertEqual("A", object_metadata.parent)
+        self.assertEqual(dateutil_parse("2023-08-04T05:47:18Z"), object_metadata.modified_at)
+
+    async def test_move_object_by_id_already_exists(self) -> None:
+        already_exists_response = load_test_data("object_already_exists_error.json")
+        object_id = UUID(int=3)
+        with (
+            self.transport.set_http_response(
+                status_code=409,
+                content=json.dumps(already_exists_response),
+                reason="Conflict",
+            ),
+            self.assertRaises(ObjectAlreadyExistsError) as cm,
+        ):
+            await self.object_client.move_object_by_id(object_id, name="m.json")
+
+        self.assert_request_made(
+            method=RequestMethod.PATCH,
+            path=f"{self.base_path}/objects/{object_id}",
+            headers={"Content-Type": "application/json", "Accept": "application/json"},
+            body={"name": "m.json", "folder_path": None, "folder_id": None},
+        )
+        self.assertEqual(UUID(already_exists_response["existing_id"]), cm.exception.existing_id)
+
     async def test_move_geoscience_object_without_uuid_fails(self) -> None:
         existing_pointset = {
             "name": "Sample pointset",
