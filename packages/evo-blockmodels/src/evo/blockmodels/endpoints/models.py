@@ -416,6 +416,9 @@ class VolumeFilterBlockInclusion(Enum):
 class VolumeFilterOperator(Enum):
     """
     Represents a set operation on volume filter expressions.
+
+    Reserved for multi-mesh support in a future release. The Block Model Service currently
+    rejects filter groups that use these operators with a 501 FeatureNotImplementedError.
     """
 
     UNION = "UNION"
@@ -1436,11 +1439,14 @@ class Mesh(CustomBaseModel):
     """
     geoscience_version_id: Annotated[StrictStr | None, Field(title="Geoscience Version Id")] = None
     """
-    Version ID of the mesh; uses latest when omitted
+    Version ID of the mesh; uses latest when omitted, and keeps using the current latest
+    version on each run while it remains omitted
     """
     selector: Annotated[StrictStr | None, Field(title="Selector")] = None
     """
-    Identifier for nested mesh within a geological-model-mesh
+    Identifier for nested mesh within a geological-model-mesh. Geological model meshes are
+    not supported yet; the Block Model Service rejects selectors with a 501
+    FeatureNotImplementedError
     """
 
 

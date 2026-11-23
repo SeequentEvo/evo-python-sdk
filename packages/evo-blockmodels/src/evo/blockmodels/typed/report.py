@@ -216,7 +216,7 @@ class SpatialRelation(str, Enum):
 class VolumeFilter:
     """Restrict a report to the blocks inside or outside a closed triangle mesh.
 
-    A block is included when its centroid satisfies the relation. The mesh must be a
+    A block is included when its centroid satisfies the relation. The single mesh must be a
     closed, non-self-intersecting ``triangle-mesh`` geoscience object in the same
     workspace as the block model, with the same coordinate reference system. The Block
     Model Service checks this when the report runs.
