@@ -9,6 +9,7 @@ dependencies = [
     "evo-schemas>=2025.12.15",
     "evo-sdk>=0.2.2",
     "geosoft>=2025.1.1 ; sys_platform == 'win32' and python_version < '3.14'",
+    "jupyter-server>=2.21.1",
     "PyJWT",
     "matplotlib>=3.10.8",
     "pandas[excel]>=2.2.3",

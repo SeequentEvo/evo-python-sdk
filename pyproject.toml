@@ -12,6 +12,7 @@ dependencies = [
     "evo-colormaps[aiohttp,notebooks]>=0.1.0",
     "evo-compute[aiohttp,notebooks]>=0.1.0",
     "jupyter",
+    "jupyter-server>=2.21.1",
     "authlib>=1.9.1",
     "pyjwt>=2.11.0",
     "plotly>=6.9.0",
