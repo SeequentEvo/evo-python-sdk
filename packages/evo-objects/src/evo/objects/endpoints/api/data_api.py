@@ -21,11 +21,11 @@ For more information on using the Geoscience Object API, see the [Geoscience Obj
 
 
 This code is generated from the OpenAPI specification for Geoscience Object API.
-API version: 1.21.0
+API version: 1.26.0
 """
 
 from evo.common.connector import APIConnector
-from evo.common.data import RequestMethod
+from evo.common.data import EmptyResponse, RequestMethod  # noqa: F401
 from evo.common.utils import get_header_metadata
 
 from ..models import *  # noqa: F403
@@ -51,6 +51,7 @@ class DataApi:
         self,
         org_id: str,
         workspace_id: str,
+        authorization: str,
         data_upload_request_body: list[DataUploadRequestBody],  # noqa: F405
         additional_headers: dict[str, str] | None = None,
         request_timeout: int | float | tuple[int | float, int | float] | None = None,
@@ -65,6 +66,8 @@ class DataApi:
         :param workspace_id:
             Format: `uuid`
             Example: `'032806a8-dcd7-11ed-8d5c-00155d8f28b5'`
+        :param authorization:
+            Example: `'authorization_example'`
         :param data_upload_request_body:
             Example: `[endpoints.DataUploadRequestBody()]`
         :param additional_headers: (optional) Additional headers to send with the request.
@@ -94,6 +97,7 @@ class DataApi:
         _header_params = {
             "Content-Type": "application/json",
             "Accept": "application/json",
+            "authorization": authorization,
         } | get_header_metadata(__name__)
         if additional_headers is not None:
             _header_params.update(additional_headers)
