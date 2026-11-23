@@ -21,7 +21,7 @@ from evo.common.utils import get_service_health, parse_order_by
 
 from ..data import ObjectMetadata, ObjectOrderByEnum, ObjectReference, ObjectVersion, OrgObjectMetadata, Stage
 from ..endpoints import MetadataApi, ObjectsApi, StagesApi
-from ..endpoints.models import GeoscienceObject, MetadataUpdateBody, UpdateGeoscienceObject
+from ..endpoints.models import GeoscienceObject, MetadataUpdateBody, MoveObjectRequest, UpdateGeoscienceObject
 from ..exceptions import ObjectUUIDError
 from ..io import ObjectDataDownload, ObjectDataUpload
 from . import parse
@@ -353,6 +353,50 @@ class ObjectAPIClient(BaseAPIClient):
             geoscience_object=object_for_upload,
             request_timeout=request_timeout,
         )
+        return parse.object_metadata(result, self._environment)
+
+    async def move_object_by_id(
+        self,
+        object_id: UUID,
+        name: str | None = None,
+        folder_path: str | None = None,
+        folder_id: UUID | None = None,
+        request_timeout: int | float | tuple[int | float, int | float] | None = None,
+    ) -> ObjectMetadata:
+        """Move and/or rename an existing geoscience object (by UUID) without creating a new version.
+
+        Arguments that are `None` are left unchanged. Provide only `name` to rename the object in place, or only
+        `folder_path` and/or `folder_id` to move it while keeping its name. If both `folder_path` and `folder_id`
+        are provided, they must refer to the same folder.
+
+        :param object_id: The UUID of the geoscience object.
+        :param name: The new name of the object, including the `.json` extension.
+        :param folder_path: The path of the destination folder, starting with `/` and excluding the object name.
+            Missing intermediate folders are created.
+        :param folder_id: The UUID of an existing destination folder in the same workspace.
+        :param request_timeout: Timeout setting for this request. If one number is provided, it will be the
+            total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.
+
+        :return: The metadata of the object. If nothing changed, because no arguments were provided or the destination
+            is the object's current location, the current metadata is returned and `modified_at` is unchanged.
+        """
+        org_id = str(self._environment.org_id)
+        workspace_id = str(self._environment.workspace_id)
+        result = await self._objects_api.move_object_by_id(
+            object_id=str(object_id),
+            org_id=org_id,
+            workspace_id=workspace_id,
+            move_object_request=MoveObjectRequest(name=name, folder_id=folder_id, folder_path=folder_path),
+            request_timeout=request_timeout,
+        )
+        if isinstance(result, EmptyResponse):
+            # The service responds with 204 No Content when nothing changed, so fetch the current metadata.
+            result = await self._objects_api.get_object_by_id(
+                object_id=str(object_id),
+                org_id=org_id,
+                workspace_id=workspace_id,
+                request_timeout=request_timeout,
+            )
         return parse.object_metadata(result, self._environment)
 
     async def update_geoscience_object(

@@ -98,7 +98,8 @@ def schema(schema_id: str) -> ObjectSchema:
 
 
 def object_metadata(
-    model: models.ListedObject | models.GetObjectResponse | models.PostObjectResponse, environment: Environment
+    model: models.ListedObject | models.GetObjectResponse | models.PostObjectResponse | models.MoveObjectResponse,
+    environment: Environment,
 ) -> ObjectMetadata:
     """Parse an ObjectMetadata from the generated model.
 
