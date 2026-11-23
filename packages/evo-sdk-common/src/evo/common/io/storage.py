@@ -28,6 +28,7 @@ from .chunked_io_manager import ChunkedIOManager
 from .exceptions import ChunkedIOError
 from .http import HTTPIOBase
 from .interfaces import IDestination
+from .transfer_limits import file_transfer_slot
 
 logger = logging.getLogger("io.storage")
 
@@ -109,8 +110,9 @@ class StorageDestination(HTTPIOBase, IDestination):
         url_callback: Callable[[], Awaitable[str]],
         transport: ITransport,
         additional_headers: dict[str, str] | None = None,
+        retry: Retry | None = None,
     ) -> None:
-        super().__init__(url_callback, transport, additional_headers)
+        super().__init__(url_callback, transport, additional_headers, retry)
         self._block_list = BlockList()
         self._committed = False
 
@@ -196,8 +198,8 @@ class StorageDestination(HTTPIOBase, IDestination):
         :param filename: file to upload
         :param url_generator: An awaitable callback that accepts no arguments and returns a URL to download from
         :param transport: The transport to use for the API calls.
-        :param max_workers: The maximum number of concurrent connections to use for data transfer. If None, the default
-            is `min(32, os.cpu_count() + 4)`
+        :param max_workers: Maximum concurrent chunk workers for this file. Defaults to four; transport-owned
+            limits additionally bound chunks and active files across transfers, before URL acquisition.
         :param retry: A Retry object with a wait strategy. If None, a default Retry is created. If a chunk is successfully
             transferred the attempt counter will be reset.
         :param additional_headers: Additional headers to include in each request.
@@ -216,12 +218,18 @@ class StorageDestination(HTTPIOBase, IDestination):
         if retry is None:
             retry = Retry(logger=logger)
 
-        manager = ChunkedIOManager(message="Uploading", retry=retry, max_workers=max_workers)
-        async with StorageDestination(
-            url_callback=url_generator, transport=transport, additional_headers=additional_headers
-        ) as destination:
-            size = os.path.getsize(src_path)
-            with src_path.open("rb") as input_:
-                source = BytesSource(input_, size)
-                await manager.run(source, destination, fb)
-            await destination.commit(retry=retry)
+        async with file_transfer_slot(transport) as limits:
+            manager = ChunkedIOManager(
+                message="Uploading",
+                retry=retry,
+                max_workers=max_workers,
+                chunk_limiter=limits.chunks if limits is not None else None,
+            )
+            async with StorageDestination(
+                url_callback=url_generator, transport=transport, additional_headers=additional_headers, retry=retry
+            ) as destination:
+                size = os.path.getsize(src_path)
+                with src_path.open("rb") as input_:
+                    source = BytesSource(input_, size)
+                    await manager.run(source, destination, fb)
+                await destination.commit(retry=retry)

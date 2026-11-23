@@ -20,11 +20,13 @@ except ImportError:
 import asyncio
 import json
 import re
+import warnings
 from types import TracebackType
 
 from evo.common import HTTPHeaderDict, HTTPResponse, RequestMethod
 from evo.common.exceptions import ClientValueError, TransportError
 from evo.common.interfaces import ITransport
+from evo.common.io.transfer_limits import TransferLimits
 from evo.common.utils import BackoffIncremental, BackoffMethod, Retry
 from evo.logging import getLogger
 
@@ -35,6 +37,29 @@ __all__ = ["AioTransport"]
 logger = getLogger("aio.transport")
 
 _RE_JSON = re.compile(r"json", re.IGNORECASE)
+
+_DEFAULT_MAX_CONNECTIONS = 100
+
+
+def _resolve_max_connections(num_pools: int | None, max_connections: int | None) -> int:
+    """Resolve the HTTP connection limit from the current argument or its deprecated alias."""
+    if num_pools is not None:
+        if max_connections is not None:
+            raise ValueError("Pass either max_connections or the deprecated num_pools, not both")
+        warnings.warn(
+            "AioTransport(num_pools=...) is deprecated, use max_connections=... instead",
+            DeprecationWarning,
+            # Skip this helper, AioTransport.__init__ and pure_interface's metaclass __call__ to reach the caller.
+            stacklevel=4,
+        )
+        max_connections, name = num_pools, "num_pools"
+    else:
+        name = "max_connections"
+        if max_connections is None:
+            max_connections = _DEFAULT_MAX_CONNECTIONS
+    if isinstance(max_connections, bool) or not isinstance(max_connections, int) or max_connections < 0:
+        raise ValueError(f"{name} must be a non-negative integer")
+    return max_connections
 
 
 class AioTransport(ITransport):
@@ -48,24 +73,40 @@ class AioTransport(ITransport):
         user_agent: str,
         max_attempts: int = 3,
         backoff_method: BackoffMethod = BackoffIncremental(2),
-        num_pools: int = 4,
+        num_pools: int | None = None,
         verify_ssl: bool = True,
         proxy: StrOrURL | None = None,
         close_grace_period_ms: int = 250,
+        *,
+        max_connections: int | None = None,
+        max_concurrent_transfers: int = 16,
+        max_concurrent_chunks: int = 16,
     ):
         """
         :param user_agent: The value to provide in the `User-Agent` header.
         :param max_attempts: Configure the number of retries to allow before raising a `MaxRetryError`
             exception.
         :param backoff_method: Configure the retry backoff implementation.
-        :param num_pools: Number of connection pools to cache before discarding the least recently used pool.
+        :param num_pools: Deprecated alias of `max_connections`, kept for backwards compatibility.
         :param verify_ssl: Verify SSL certificates. This should not be disabled unless you really absolutely have to,
             and never in production environments.
         :param close_grace_period_ms: Grace period (in milliseconds) to wait for connections to close.
+        :param max_connections: Maximum simultaneous HTTP connections across all hosts.
+            Defaults to 100 (previously 4); 0 disables the connection limit.
+        :param max_concurrent_transfers: Maximum active file uploads/downloads per session, including URL
+            acquisition and commit. Defaults to 16. Does not limit preparation or unrelated API calls.
+        :param max_concurrent_chunks: Maximum buffered chunks across those transfers. Defaults to 16,
+            or up to 64 MiB of payloads at the default 4 MiB chunk size. Keep this below max_connections to
+            leave capacity for other requests; this is not a reservation of HTTP connections.
+
+        :raises ValueError: If both `num_pools` and `max_connections` are provided, or if any limit is invalid.
         """
+        max_connections = _resolve_max_connections(num_pools, max_connections)
+        self.__transfer_limits = TransferLimits(max_concurrent_transfers, max_concurrent_chunks)
+        self.__transfer_settings = (max_concurrent_transfers, max_concurrent_chunks)
         self.__config = Config(
             user_agent=user_agent,
-            num_pools=num_pools,
+            max_connections=max_connections,
             verify_ssl=verify_ssl,
             retry=Retry(logger=logger, max_attempts=max_attempts, backoff_method=backoff_method),
             proxy=proxy,
@@ -74,6 +115,13 @@ class AioTransport(ITransport):
         self.__context: Context | None = None
         self.__mutex = asyncio.Lock()
         self.__num_handles = 0
+
+    @property
+    def transfer_limits(self) -> TransferLimits:
+        """Shared file/chunk admission for the current open transport session."""
+        if self.__context is None:
+            raise TransportError("Open the transport before acquiring transfer limits.")
+        return self.__transfer_limits
 
     def __n_handles(self) -> str:
         """Helper method that returns a string describing the number of open handles."""
@@ -86,6 +134,7 @@ class AioTransport(ITransport):
             if self.__context is None:
                 logger.debug("Creating new context.")
                 self.__context = await self.__config.create_context()
+                self.__transfer_limits = TransferLimits(*self.__transfer_settings)
             self.__num_handles += 1
             logger.debug(f"Transport has {self.__n_handles()}.")
         logger.debug("Transport opened.")

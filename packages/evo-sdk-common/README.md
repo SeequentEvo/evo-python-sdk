@@ -63,6 +63,38 @@ async def discovery():
 asyncio.run(main())
 ```
 
+### Connection and file-transfer limits
+
+`AioTransport(max_connections=...)` controls **total simultaneous HTTP connections** across all hosts.
+Its default is now **100** (previously 4), matching aiohttp. Passing `max_connections=4` preserves the old
+connection limit; `0` disables it. The legacy `num_pools` argument is a deprecated alias that emits a
+`DeprecationWarning`; passing both raises `ValueError`.
+
+File uploads and downloads share two independent, session-owned limits:
+
+| Setting | Default | Scope |
+|---|---:|---|
+| `max_concurrent_transfers` | 16 | Active files, acquired before requesting their URL or opening the local file; held through commit/cleanup |
+| `max_concurrent_chunks` | 16 | Active chunks, acquired before reading data and held through writing it |
+| File operation's `max_workers` | 4 | Worker tasks per file, rather than one task per chunk |
+
+With the default 4 MiB chunks, at most 64 MiB of active chunk payloads are admitted across these transfers.
+This is not a bound on total process memory, preparation work, queued files or cache size. File/chunk limits must
+be positive integers and are separate from HTTP connections; keeping them below the HTTP limit leaves capacity
+for API traffic but does not reserve connections. Increasing `max_connections` alone does not increase buffered chunks.
+
+Limits are shared by all clients using one open `AioTransport`, recreated on reopening it, and independent across
+transports. There is no process-global semaphore or registry. Custom `ITransport` implementations can expose a
+`transfer_limits` property returning one `evo.common.io.TransferLimits(max_files=..., max_chunks=...)` per session.
+Without that optional property, existing custom transports retain per-file limiting only.
+
+Storage operations retry transient HTTP statuses 408, 429, 500, 502, 503 and 504, raw connection failures and
+timeouts with the existing `Retry` backoff policy. Failed chunk attempts cancel and drain workers, then retry only
+unfinished chunks using the same tracker and staged block list. Completed chunks are not deliberately resent;
+a lost acknowledgement can still cause an idempotent block PUT to be repeated. URL acquisition and final commits
+have separate attempt budgets. Exhausted transport retries are not wrapped in another retry loop. Existing
+401/403 URL renewal remains supported; permanent failures and exhausted budgets are reported to the caller.
+
 ## Contributing
 
 For instructions on contributing to the development of this library, please refer to the [evo-python-sdk documentation](https://github.com/seequentevo/evo-python-sdk).

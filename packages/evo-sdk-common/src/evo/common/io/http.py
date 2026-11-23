@@ -26,13 +26,14 @@ from evo import logging
 from .._types import PathLike, resolve_path
 from ..connector import APIConnector
 from ..data import EmptyResponse, HTTPHeaderDict, HTTPResponse, RequestMethod
-from ..exceptions import ForbiddenException, UnauthorizedException
+from ..exceptions import ForbiddenException, RetryError, UnauthorizedException
 from ..interfaces import IFeedback, ITransport
 from ..utils import NoFeedback, Retry
 from .bytes import BytesDestination
 from .chunked_io_manager import ChunkedIOManager
-from .exceptions import ChunkedIOError, RenewalError, RenewalTimeoutError
+from .exceptions import ChunkedIOError, RenewalError, RenewalTimeoutError, TransientIOError, is_transient_io_error
 from .interfaces import ISource
+from .transfer_limits import file_transfer_slot
 
 logger = logging.getLogger("io.http")
 
@@ -83,6 +84,7 @@ class HTTPIOBase:
         url_callback: Callable[[], Awaitable[str]],
         transport: ITransport,
         additional_headers: dict[str, str] | None = None,
+        retry: Retry | None = None,
     ) -> None:
         """
         :param url_callback: An awaitable callback method that accepts no arguments and returns a new resource url.
@@ -98,13 +100,28 @@ class HTTPIOBase:
         self.__query_params: list[tuple[str, Any]] = []
         self.__renewal_time: datetime | None = None
         self.__additional_headers = additional_headers
+        self.__url_retry = Retry(logger=logger) if retry is None else retry
 
     async def __get_new_url(self) -> str:
         """Get a new resource url.
 
         :returns: The new resource url.
         """
-        url = await self.__callback()
+        last_error: Exception | None = None
+        try:
+            async for attempt in self.__url_retry:
+                try:
+                    url = await self.__callback()
+                except Exception as error:
+                    if not is_transient_io_error(error):
+                        raise
+                    last_error = error
+                    attempt.set_exception(error)
+        except RetryError as retry_error:
+            # Preserve the original exception type for callers once transient retries are exhausted.
+            if last_error is None or not retry_error.exceptions or retry_error.exceptions[-1] is not last_error:
+                raise
+            raise last_error from retry_error
         self.__renewal_time = datetime.now(timezone.utc)
         return url
 
@@ -205,6 +222,8 @@ class HTTPIOBase:
         except (UnauthorizedException, ForbiddenException) as e:
             raise ResourceAuthorizationError(str(e), self) from e
         except Exception as e:
+            if is_transient_io_error(e):
+                raise TransientIOError(str(e)) from e
             raise ChunkedIOError(str(e)) from e
 
 
@@ -223,13 +242,18 @@ class HTTPSource(HTTPIOBase, ISource):
         url_callback: Callable[[], Awaitable[str]],
         transport: ITransport,
         additional_headers: dict[str, str] | None = None,
+        retry: Retry | None = None,
     ) -> None:
-        super().__init__(url_callback, transport, additional_headers)
+        super().__init__(url_callback, transport, additional_headers, retry)
         self._size: int | None = None
 
     async def __aenter__(self) -> HTTPSource:
         await super().__aenter__()
-        await self.get_size()
+        try:
+            await self.get_size()
+        except BaseException:
+            await super().__aexit__(None, None, None)
+            raise
         return self
 
     async def get_size(self) -> int:
@@ -294,8 +318,8 @@ class HTTPSource(HTTPIOBase, ISource):
         :param filename: file to download to
         :param url_generator: An awaitable callback that accepts no arguments and returns a URL to download from
         :param transport: The transport to use for the API calls.
-        :param max_workers: The maximum number of concurrent connections to use for data transfer. If None, the default
-            is `min(32, os.cpu_count() + 4)`
+        :param max_workers: Maximum concurrent chunk workers for this file. Defaults to four. Transport-owned
+            limits additionally bound chunks and active files across transfers.
         :param retry: A Retry object with a wait strategy. If None, a default Retry is created. If a chunk is successfully
             transferred the attempt counter will be reset.
         :param overwrite: whether to overwrite an existing local file
@@ -314,9 +338,16 @@ class HTTPSource(HTTPIOBase, ISource):
 
         if retry is None:
             retry = Retry(logger=logger)
-        manager = ChunkedIOManager(retry=retry, max_workers=max_workers)
 
-        async with HTTPSource(url_generator, transport, additional_headers=additional_headers) as source:
+        async with (
+            file_transfer_slot(transport) as limits,
+            HTTPSource(url_generator, transport, additional_headers=additional_headers, retry=retry) as source,
+        ):
+            manager = ChunkedIOManager(
+                retry=retry,
+                max_workers=max_workers,
+                chunk_limiter=limits.chunks if limits is not None else None,
+            )
             tmp_file = None
             try:
                 with NamedTemporaryFile(delete=False, dir=dst_path.parent) as tmp_file:

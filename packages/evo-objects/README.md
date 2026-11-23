@@ -105,6 +105,12 @@ Attribute descriptions for ordinary attributes round-trip through `DataFrame.att
 Collection coordinate units come only from `DistanceCollection.unit` or `IntervalCollection.unit`; unit metadata on the
 distance or `from` column is ignored.
 
+### Concurrent persistence
+
+Typed creation and replacement upload independent data concurrently while preserving input order.
+The defaults suit most applications. For larger workloads, see
+[Concurrent persistence](docs/concurrent-persistence.md) for transfer settings, cache setup and failure handling.
+
 ## Contributing
 
 For instructions on contributing to the development of this library, please refer to the [evo-python-sdk documentation](https://github.com/seequentevo/evo-python-sdk).

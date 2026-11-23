@@ -9,14 +9,22 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from ..exceptions import EvoClientException
+from ..exceptions import EvoAPIException, EvoClientException
 
 __all__ = [
     "ChunkedIOError",
     "ChunkedIOException",
     "RenewalError",
     "RenewalTimeoutError",
+    "TransientIOError",
 ]
+
+
+def is_transient_io_error(error: Exception) -> bool:
+    """Classify retryable storage/URL failures without repeating exhausted transport retries."""
+    if isinstance(error, EvoAPIException):
+        return error.status in {408, 429, 500, 502, 503, 504}
+    return isinstance(error, (TimeoutError, ConnectionError))
 
 
 class ChunkedIOException(EvoClientException):
@@ -49,6 +57,13 @@ class ChunkedIOError(ChunkedIOException):
 
 class RenewalError(EvoClientException):
     """RenewalError is raised when renewing the url fails."""
+
+
+class TransientIOError(ChunkedIOError):
+    """A temporary storage failure that can retry without discarding completed chunks."""
+
+    async def recover(self) -> bool:
+        return True
 
 
 class RenewalTimeoutError(RenewalError):

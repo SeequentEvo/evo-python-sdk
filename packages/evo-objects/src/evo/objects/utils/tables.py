@@ -13,6 +13,8 @@ from __future__ import annotations
 
 import hashlib
 import os
+import time
+from collections.abc import Callable
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from types import EllipsisType
@@ -36,6 +38,63 @@ __all__ = [
 
 # Block size to limit memory use while calculating the sha256 digest of a file.
 _DIGEST_BLOCK_SIZE = 4 * 1024 * 1024
+
+# Bounded backoff in seconds for file operations that raise PermissionError.
+_FILE_ACCESS_RETRY_DELAYS = (0.01, 0.05, 0.1, 0.25, 0.5)
+
+
+def _retry_file_access(operation: Callable[[], object], path: Path) -> None:
+    """Retry denied file access with bounded backoff; propagate persistent failures and other errors."""
+    for delay in (*_FILE_ACCESS_RETRY_DELAYS, None):
+        try:
+            operation()
+            return
+        except PermissionError:
+            if delay is None:
+                raise
+            logger.debug(f"Access to file '{path.name}' denied, retrying in {delay} seconds")
+            time.sleep(delay)
+
+
+def _rename_without_replacing(source: Path, target: Path) -> None:
+    """Rename a file on Windows, where `os.rename` raises FileExistsError instead of replacing an existing target."""
+    _retry_file_access(lambda: os.rename(source, target), source)
+
+
+def _link_without_replacing(source: Path, target: Path) -> None:
+    """Publish with a POSIX hard link; propagate failures rather than risk replacing an existing target."""
+    _retry_file_access(lambda: os.link(source, target), source)
+
+
+def _discard_temporary_file(path: Path) -> None:
+    """Remove a temporary file, logging instead of raising if it cannot be removed, because it is only left over."""
+    try:
+        _retry_file_access(lambda: path.unlink(missing_ok=True), path)
+    except OSError:
+        logger.warning(f"Failed to remove temporary file '{path.name}'", exc_info=True)
+
+
+def _publish_without_replacing(source: Path, target: Path) -> bool:
+    """Atomically move a completed file to a content-addressed path, unless that path already exists.
+
+    Content-addressed files are immutable, so an existing target is never replaced. This is safe across threads and
+    processes, and never disturbs a reader that has the existing target open.
+
+    :param source: The completed temporary file, which is removed on a best-effort basis after publication is attempted.
+    :param target: The content-addressed path to publish the file to.
+
+    :return: True if the source was published to the target, or False if the target already existed.
+
+    :raises OSError: If atomic no-overwrite publication fails, including when POSIX hard links are unsupported.
+    """
+    publish = _rename_without_replacing if os.name == "nt" else _link_without_replacing
+    try:
+        publish(source, target)
+    except FileExistsError:
+        return False
+    finally:
+        _discard_temporary_file(source)
+    return True
 
 
 class _ColumnFormat:
@@ -234,12 +293,16 @@ class KnownTableFormat(BaseTableFormat):
     def _save_table_as_parquet(cls, table: pa.Table, destination: Path) -> str:
         """Save a table in parquet format.
 
+        The file is named after its sha256 digest, so identical tables share one immutable file. Concurrent saves of
+        identical tables, from any thread or process, never replace a file that another save has already published.
+
         :param table: The table to save to parquet file.
         :param destination: A local directory to save the parquet file in.
 
         :return: The sha256 digest of the saved parquet file, which is also the filename.
 
         :raises StorageFileNotFoundError: If the destination does not exist or is not a directory.
+        :raises OSError: If publication fails. On POSIX, the destination file system must support hard links.
         """
         if not destination.is_dir():
             raise StorageFileNotFoundError(f"'{destination}' is not a directory")
@@ -257,16 +320,14 @@ class KnownTableFormat(BaseTableFormat):
             raise
 
         new_path = destination / data_ref
-        try:  # Rename temporary file using sha256 digest.
-            logger.debug(f"Renaming {tmp_path.name} to {new_path.name}")
-            tmp_path.replace(new_path)
-        except PermissionError:  # When the same file is already opened somewhere else.
-            os.unlink(tmp_file.name)
-            if new_path.exists():
-                logger.info(f"File '{new_path.name}' already exists")
-            else:
-                logger.error(f"Failed to rename file '{tmp_file.name}' due to an unhandled exception", exc_info=True)
-                raise
+        logger.debug(f"Publishing {tmp_path.name} as {new_path.name}")
+        try:
+            published = _publish_without_replacing(tmp_path, new_path)
+        except BaseException:
+            logger.error(f"Failed to publish file '{tmp_path.name}' due to an unhandled exception", exc_info=True)
+            raise
+        if not published:
+            logger.debug(f"File '{new_path.name}' already exists")
 
         return data_ref
 
@@ -308,12 +369,8 @@ class KnownTableFormat(BaseTableFormat):
             return data_dict
 
         except Exception as error:
+            # The parquet file is not removed, because identical tables saved concurrently share it.
             logger.error(error, exc_info=True)
-            parquet_file = destination / data_id
-            try:
-                parquet_file.unlink(missing_ok=True)
-            except Exception:
-                pass
             raise
 
     @classmethod

@@ -10,7 +10,7 @@ authors = [
 ]
 
 dependencies = [
-    "evo-sdk-common[jmespath]>=0.6.0",
+    "evo-sdk-common[jmespath]>=0.6.1",
     "pydantic>=2,<3",
 ]
 
@@ -21,8 +21,8 @@ Homepage = "https://www.seequent.com/"
 Documentation = "https://developer.seequent.com/"
 
 [project.optional-dependencies]
-aiohttp = ["evo-sdk-common[aiohttp]>=0.6.0"]
-notebooks = ["evo-sdk-common[notebooks]>=0.6.0"]
+aiohttp = ["evo-sdk-common[aiohttp]>=0.6.1"]
+notebooks = ["evo-sdk-common[notebooks]>=0.6.1"]
 utils = ["pyarrow", "pyarrow-stubs", "pandas", "numpy"]
 blockmodels = ["evo-blockmodels[utils]>=0.10.0"]
 

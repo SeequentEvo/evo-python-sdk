@@ -14,6 +14,7 @@ from .chunked_io_manager import ChunkedIOManager, ChunkedIOTracker, ChunkMetadat
 from .download import Download
 from .http import HTTPIOBase, HTTPSource, ResourceAuthorizationError
 from .storage import StorageDestination
+from .transfer_limits import TransferLimits
 from .upload import Upload
 
 __all__ = [
@@ -27,5 +28,6 @@ __all__ = [
     "HTTPSource",
     "ResourceAuthorizationError",
     "StorageDestination",
+    "TransferLimits",
     "Upload",
 ]
