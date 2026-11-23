@@ -2,6 +2,8 @@
     "objects": [
         {
             "name": "m.json",
+            "path": "/A/",
+            "geojson_bounding_box_from_workspace_crs": false,
             "object_id": "00000000-0000-0000-0000-000000000002",
             "schema": "/objects/test/1.2.3/test.schema.json",
             "version_id": "2",
@@ -26,6 +28,8 @@
         },
         {
             "name": "n.json",
+            "path": "/A/",
+            "geojson_bounding_box_from_workspace_crs": false,
             "object_id": "00000000-0000-0000-0000-000000000003",
             "schema": "/objects/test/1.2.3/test.schema.json",
             "version_id": "1",

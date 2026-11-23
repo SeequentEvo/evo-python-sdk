@@ -38,6 +38,7 @@
         "email": "t.user@example.com"
     },
     "etag": "",
+    "geojson_bounding_box_from_workspace_crs": false,
     "links": {
         "download": "https://unittest.localhost/path/geoscience-object/orgs/00000000-0000-0000-0000-0000000004d2/workspaces/00000000-0000-0000-0000-00000000162e/objects/path/A/m.json",
         "data": [

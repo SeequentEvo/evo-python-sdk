@@ -14,12 +14,12 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from enum import Enum
 from typing import Annotated
 from uuid import UUID
 
 from pydantic import (
-    AwareDatetime,
     Field,
     RootModel,
     StrictBool,
@@ -225,7 +225,7 @@ class GeoscienceObjectVersion(CustomBaseModel):
     Geoscience object version.
     """
 
-    created_at: Annotated[AwareDatetime, Field(title="Created At")]
+    created_at: Annotated[datetime, Field(title="Created At")]
     created_by: User | None = None
     etag: Annotated[StrictStr, Field(title="Etag")]
     links: ObjectVersionResponseLinks
@@ -234,9 +234,9 @@ class GeoscienceObjectVersion(CustomBaseModel):
 
 
 class GetObjectResponse(CustomBaseModel):
-    created_at: Annotated[AwareDatetime, Field(title="Created At")]
+    created_at: Annotated[datetime, Field(title="Created At")]
     created_by: User | None = None
-    deleted_at: Annotated[AwareDatetime | None, Field(title="Deleted At")] = None
+    deleted_at: Annotated[datetime | None, Field(title="Deleted At")] = None
     deleted_by: User | None = None
     etag: Annotated[StrictStr, Field(title="Etag")]
     folder_id: Annotated[UUID | None, Field(title="Folder Id")] = None
@@ -248,7 +248,7 @@ class GetObjectResponse(CustomBaseModel):
     True if the bounding box was calculated using the workspace CRS, else False.
     """
     links: ObjectResponseLinks
-    modified_at: Annotated[AwareDatetime, Field(title="Modified At")]
+    modified_at: Annotated[datetime, Field(title="Modified At")]
     modified_by: User | None = None
     object: GeoscienceObject
     object_id: Annotated[UUID, Field(title="Object Id")]
@@ -267,9 +267,9 @@ class ListVersionsResponse(CustomBaseModel):
 
 
 class ListedObject(CustomBaseModel):
-    created_at: Annotated[AwareDatetime, Field(title="Created At")]
+    created_at: Annotated[datetime, Field(title="Created At")]
     created_by: User | None = None
-    deleted_at: Annotated[AwareDatetime | None, Field(title="Deleted At")] = None
+    deleted_at: Annotated[datetime | None, Field(title="Deleted At")] = None
     deleted_by: User | None = None
     etag: Annotated[StrictStr, Field(title="Etag")]
     folder_id: Annotated[UUID | None, Field(title="Folder Id")] = None
@@ -281,7 +281,7 @@ class ListedObject(CustomBaseModel):
     True if the bounding box was calculated using the workspace CRS, else False.
     """
     links: ListedObjectLinks
-    modified_at: Annotated[AwareDatetime, Field(title="Modified At")]
+    modified_at: Annotated[datetime, Field(title="Modified At")]
     modified_by: User | None = None
     name: Annotated[StrictStr, Field(title="Name")]
     object_id: Annotated[UUID, Field(title="Object Id")]
@@ -295,9 +295,9 @@ class ListedObject(CustomBaseModel):
 
 
 class MoveObjectResponse(CustomBaseModel):
-    created_at: Annotated[AwareDatetime, Field(title="Created At")]
+    created_at: Annotated[datetime, Field(title="Created At")]
     created_by: User | None = None
-    deleted_at: Annotated[AwareDatetime | None, Field(title="Deleted At")] = None
+    deleted_at: Annotated[datetime | None, Field(title="Deleted At")] = None
     deleted_by: User | None = None
     etag: Annotated[StrictStr, Field(title="Etag")]
     folder_id: Annotated[UUID | None, Field(title="Folder Id")] = None
@@ -309,7 +309,7 @@ class MoveObjectResponse(CustomBaseModel):
     True if the bounding box was calculated using the workspace CRS, else False.
     """
     links: ObjectResponseLinks
-    modified_at: Annotated[AwareDatetime, Field(title="Modified At")]
+    modified_at: Annotated[datetime, Field(title="Modified At")]
     modified_by: User | None = None
     object: GeoscienceObject
     object_id: Annotated[UUID, Field(title="Object Id")]
@@ -319,9 +319,9 @@ class MoveObjectResponse(CustomBaseModel):
 
 
 class OrgListedObject(CustomBaseModel):
-    created_at: Annotated[AwareDatetime, Field(title="Created At")]
+    created_at: Annotated[datetime, Field(title="Created At")]
     created_by: User | None = None
-    deleted_at: Annotated[AwareDatetime | None, Field(title="Deleted At")] = None
+    deleted_at: Annotated[datetime | None, Field(title="Deleted At")] = None
     deleted_by: User | None = None
     folder_id: Annotated[UUID | None, Field(title="Folder Id")] = None
     geojson_bounding_box: BoundingBox | None = None
@@ -331,7 +331,7 @@ class OrgListedObject(CustomBaseModel):
     """
     True if the bounding box was calculated using the workspace CRS, else False.
     """
-    modified_at: Annotated[AwareDatetime, Field(title="Modified At")]
+    modified_at: Annotated[datetime, Field(title="Modified At")]
     modified_by: User | None = None
     name: Annotated[StrictStr, Field(title="Name")]
     object_id: Annotated[UUID, Field(title="Object Id")]
@@ -344,9 +344,9 @@ class OrgListedObject(CustomBaseModel):
 
 
 class PostObjectResponse(CustomBaseModel):
-    created_at: Annotated[AwareDatetime, Field(title="Created At")]
+    created_at: Annotated[datetime, Field(title="Created At")]
     created_by: User | None = None
-    deleted_at: Annotated[AwareDatetime | None, Field(title="Deleted At")] = None
+    deleted_at: Annotated[datetime | None, Field(title="Deleted At")] = None
     deleted_by: User | None = None
     etag: Annotated[StrictStr, Field(title="Etag")]
     folder_id: Annotated[UUID | None, Field(title="Folder Id")] = None
@@ -358,7 +358,7 @@ class PostObjectResponse(CustomBaseModel):
     True if the bounding box was calculated using the workspace CRS, else False.
     """
     links: ObjectResponseLinks
-    modified_at: Annotated[AwareDatetime, Field(title="Modified At")]
+    modified_at: Annotated[datetime, Field(title="Modified At")]
     modified_by: User | None = None
     object: GeoscienceObject
     object_id: Annotated[UUID | None, Field(title="Object Id")] = None

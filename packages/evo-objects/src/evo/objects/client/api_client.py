@@ -190,7 +190,6 @@ class ObjectAPIClient(BaseAPIClient):
             order_by=parsed_order_by,
             schema_id=schema_id,
             request_timeout=request_timeout,
-            permitted_workspaces_only=True,
             deleted=deleted,
         )
         return parse.page_of_metadata(response, self._environment)

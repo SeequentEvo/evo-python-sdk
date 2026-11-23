@@ -50,7 +50,6 @@ class StagesApi:
     async def list_stages(
         self,
         org_id: str,
-        authorization: str,
         additional_headers: dict[str, str] | None = None,
         request_timeout: int | float | tuple[int | float, int | float] | None = None,
     ) -> ListStagesResponse:  # noqa: F405
@@ -61,8 +60,6 @@ class StagesApi:
         :param org_id: The customer's organisation ID
             Format: `uuid`
             Example: `'b208a6c9-6881-4b97-b02d-acb5d81299bb'`
-        :param authorization:
-            Example: `'authorization_example'`
         :param additional_headers: (optional) Additional headers to send with the request.
         :param request_timeout: (optional) Timeout setting for this request. If one number is provided, it will be the
             total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.
@@ -88,7 +85,6 @@ class StagesApi:
         # Prepare the header parameters.
         _header_params = {
             "Accept": "application/json",
-            "authorization": authorization,
         } | get_header_metadata(__name__)
         if additional_headers is not None:
             _header_params.update(additional_headers)
