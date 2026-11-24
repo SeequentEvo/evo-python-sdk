@@ -17,6 +17,10 @@ calculate tonnages, grades, and metal content by category (e.g., geological doma
 Reports require:
 1. Columns to have units set (e.g., grade in g/t, density in t/m³)
 2. At least one category column for grouping (e.g., domain, rock type)
+
+Reports can optionally be restricted to the blocks inside or outside a closed triangle
+mesh by setting a `VolumeFilter`. Volume filters are a preview feature of the Block Model
+API, so reports that use them must be created or listed with ``preview=True``.
 """
 
 from __future__ import annotations
@@ -37,6 +41,7 @@ from evo.common.utils import NoFeedback
 from ..client import BlockModelAPIClient
 from ..endpoints.models import (
     CreateReportSpecification,
+    Mesh,
     ReportAggregation,
     ReportCategory,
     ReportCell,
@@ -45,9 +50,20 @@ from ..endpoints.models import (
     ReportingJobSpec,
     ReportSpecificationWithJobUrl,
     ReportSpecificationWithLastRunInfo,
+    UpdateReportSpecification,
+    VolumeFilterBlockInclusion,
+    VolumeFilterExpressionInput,
+    VolumeFilterOptionsInput,
+    VolumeFilterOptionsOutput,
 )
 from ..endpoints.models import (
     ReportResult as APIReportResult,
+)
+from ..endpoints.models import (
+    SpatialRelation as APISpatialRelation,
+)
+from ..endpoints.models import (
+    VolumeFilter as APIVolumeFilter,
 )
 
 __all__ = [
@@ -60,7 +76,11 @@ __all__ = [
     "ReportColumnSpec",
     "ReportResult",
     "ReportSpecificationData",
+    "SpatialRelation",
+    "VolumeFilter",
 ]
+
+TRIANGLE_MESH_SUB_CLASSIFICATION = "triangle-mesh"
 
 
 class Aggregation(str, Enum):
@@ -182,6 +202,124 @@ class MassUnits:
     """Pounds"""
 
 
+class SpatialRelation(str, Enum):
+    """Which blocks a `VolumeFilter` keeps, relative to its mesh."""
+
+    INSIDE = "INSIDE"
+    """Keep blocks whose centroid is inside the mesh."""
+
+    OUTSIDE = "OUTSIDE"
+    """Keep blocks whose centroid is outside the mesh."""
+
+
+@dataclass(frozen=True, kw_only=True)
+class VolumeFilter:
+    """Restrict a report to the blocks inside or outside a closed triangle mesh.
+
+    A block is included when its centroid satisfies the relation. The single mesh must be a
+    closed, non-self-intersecting ``triangle-mesh`` geoscience object in the same
+    workspace as the block model, with the same coordinate reference system. The Block
+    Model Service checks this when the report runs.
+
+    Volume filters are a preview feature of the Block Model API. Create, list or update
+    reports that use them with ``preview=True``.
+
+    :param mesh_id: UUID of the triangle mesh geoscience object.
+    :param relation: Whether to keep blocks inside or outside the mesh.
+    :param mesh_version_id: Version of the mesh to use. If omitted, each run uses the latest
+        version, and the result records the version that was used.
+
+    Example::
+
+        >>> objects = await object_client.list_all_objects()
+        >>> meshes = [o for o in objects if o.schema_id.sub_classification == "triangle-mesh"]
+        >>> volume_filter = VolumeFilter.from_object(meshes[0], relation=SpatialRelation.INSIDE)
+    """
+
+    mesh_id: UUID
+    relation: SpatialRelation = SpatialRelation.INSIDE
+    mesh_version_id: str | None = None
+    _workspace_id: UUID | None = field(default=None, repr=False, compare=False)
+
+    @classmethod
+    def from_object(
+        cls,
+        obj: Any,
+        relation: SpatialRelation = SpatialRelation.INSIDE,
+        pin_version: bool = False,
+    ) -> VolumeFilter:
+        """Create a volume filter from a geoscience object.
+
+        Accepts anything that exposes geoscience object metadata, for example an
+        ``ObjectMetadata`` from ``ObjectAPIClient.list_objects()``, a ``DownloadedObject``,
+        a typed geoscience object, or an ``ObjectReference`` that contains an object ID.
+
+        :param obj: The triangle mesh object, its metadata, or a reference to it.
+        :param relation: Whether to keep blocks inside or outside the mesh.
+        :param pin_version: If True, always use the object's current version. If False,
+            each run uses the latest version of the mesh.
+        :return: A volume filter for the object.
+        :raises ValueError: If the object isn't a triangle mesh, or no object ID is available.
+        """
+        metadata = getattr(obj, "metadata", obj)
+
+        object_id = getattr(metadata, "id", None) or getattr(metadata, "object_id", None)
+        if object_id is None:
+            raise ValueError("Cannot create a volume filter: the object has no object ID")
+
+        schema = getattr(metadata, "schema_id", None)
+        sub_classification = getattr(schema, "sub_classification", None)
+        if sub_classification is not None and sub_classification != TRIANGLE_MESH_SUB_CLASSIFICATION:
+            raise ValueError(
+                f"Volume filters require a '{TRIANGLE_MESH_SUB_CLASSIFICATION}' object, "
+                f"but object {object_id} is a '{sub_classification}'"
+            )
+
+        environment = getattr(metadata, "environment", None)
+        workspace_id = getattr(environment, "workspace_id", None) or getattr(metadata, "workspace_id", None)
+
+        return cls(
+            mesh_id=UUID(str(object_id)),
+            relation=SpatialRelation(relation),
+            mesh_version_id=getattr(metadata, "version_id", None) if pin_version else None,
+            _workspace_id=workspace_id,
+        )
+
+    def _check_workspace(self, workspace_id: UUID) -> None:
+        if self._workspace_id is not None and self._workspace_id != workspace_id:
+            raise ValueError(
+                f"Volume filter mesh {self.mesh_id} is in workspace {self._workspace_id}, "
+                f"but the block model is in workspace {workspace_id}. The mesh must be in the same workspace."
+            )
+
+    def _to_api(self) -> VolumeFilterOptionsInput:
+        return VolumeFilterOptionsInput(
+            volume_filter=VolumeFilterExpressionInput(
+                APIVolumeFilter(
+                    mesh=Mesh(geoscience_object_id=self.mesh_id, geoscience_version_id=self.mesh_version_id),
+                    spatial_relation=APISpatialRelation(self.relation.value),
+                )
+            ),
+            volume_filter_block_inclusion=VolumeFilterBlockInclusion.CENTROID_IN,
+        )
+
+    @classmethod
+    def _from_api(cls, options: VolumeFilterOptionsOutput | None) -> VolumeFilter | None:
+        if options is None:
+            return None
+        expression = options.volume_filter.root
+        if not isinstance(expression, APIVolumeFilter) or expression.mesh.selector is not None:
+            raise NotImplementedError(
+                "This report uses a volume filter expression (a group of meshes or a nested mesh selector) "
+                "that this version of evo-blockmodels doesn't support."
+            )
+        return cls(
+            mesh_id=expression.mesh.geoscience_object_id,
+            relation=SpatialRelation(expression.spatial_relation.value),
+            mesh_version_id=expression.mesh.geoscience_version_id,
+        )
+
+
 @dataclass(frozen=True, kw_only=True)
 class ReportSpecificationData:
     """Data for creating a report specification.
@@ -209,6 +347,8 @@ class ReportSpecificationData:
     :param cutoff_values: List of cut-off values to evaluate.
     :param autorun: Whether to automatically run the report when block model is updated.
     :param run_now: Whether to run the report immediately after creation.
+    :param volume_filter: Optional `VolumeFilter` that restricts the report to blocks inside or
+        outside a triangle mesh. Requires ``preview=True`` when creating the report.
 
     Example with density column::
 
@@ -254,6 +394,7 @@ class ReportSpecificationData:
     cutoff_values: list[float] | None = None
     autorun: bool = True
     run_now: bool = True
+    volume_filter: VolumeFilter | None = None
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -261,6 +402,9 @@ class ReportResult:
     """A result from running a report.
 
     Contains the calculated values for each category and cut-off combination.
+    ``volume_filter`` is the filter that was applied to this run, including the mesh version
+    that was used. ``warnings`` lists problems found while calculating the result, such as a
+    volume filter that excluded every block.
     """
 
     result_uuid: UUID
@@ -272,6 +416,8 @@ class ReportResult:
     categories: list[dict[str, Any]]
     columns: list[dict[str, Any]]
     result_sets: list[dict[str, Any]]
+    volume_filter: VolumeFilter | None = None
+    warnings: list[dict[str, Any]] = field(default_factory=list)
 
     @classmethod
     def _from_api_result(cls, result: APIReportResult) -> ReportResult:
@@ -286,6 +432,8 @@ class ReportResult:
             categories=[cat.model_dump() for cat in result.categories],
             columns=[col.model_dump() for col in result.value_columns],
             result_sets=[rs.model_dump() for rs in result.result_sets],
+            volume_filter=VolumeFilter._from_api(result.volume_filter_options),
+            warnings=[warning.model_dump(mode="json") for warning in result.warnings],
         )
 
     def to_dataframe(self, include_status: bool = False) -> pd.DataFrame:
@@ -333,10 +481,12 @@ class ReportResult:
     def __repr__(self) -> str:
         """Return a string representation of the report result."""
         df = self.to_dataframe()
+        volume_filter = f", volume_filter={self.volume_filter!r}" if self.volume_filter else ""
+        warnings = f", warnings={len(self.warnings)}" if self.warnings else ""
         return (
             f"ReportResult(version={self.version_id}, "
             f"created={self.created_at.strftime('%Y-%m-%d %H:%M:%S')}, "
-            f"rows={len(df)})\n{df.to_string()}"
+            f"rows={len(df)}{volume_filter}{warnings})\n{df.to_string()}"
         )
 
 
@@ -372,6 +522,7 @@ class Report:
         block_model_uuid: UUID,
         specification: ReportSpecificationWithLastRunInfo | ReportSpecificationWithJobUrl,
         block_model_name: str | None = None,
+        preview: bool = False,
     ) -> None:
         """Initialize a Report instance.
 
@@ -379,11 +530,14 @@ class Report:
         :param block_model_uuid: The UUID of the block model this report is for.
         :param specification: The report specification from the API.
         :param block_model_name: The name of the block model (for display purposes).
+        :param preview: Whether to send the ``API-Preview: opt-in`` header with report requests.
+            Required for reports that use a volume filter.
         """
         self._context = context
         self._block_model_uuid = block_model_uuid
         self._specification = specification
         self._block_model_name = block_model_name
+        self._preview = preview
 
     @property
     def id(self) -> UUID:
@@ -410,10 +564,15 @@ class Report:
         """The revision number of the report specification."""
         return self._specification.revision
 
+    @property
+    def volume_filter(self) -> VolumeFilter | None:
+        """The volume filter applied when this report runs, or None if the report isn't filtered."""
+        return VolumeFilter._from_api(self._specification.volume_filter_options)
+
     def _get_client(self) -> BlockModelAPIClient:
         """Get a BlockModelAPIClient for the current context."""
 
-        return BlockModelAPIClient.from_context(self._context)
+        return BlockModelAPIClient.from_context(self._context, preview=self._preview)
 
     @classmethod
     async def create(
@@ -424,6 +583,7 @@ class Report:
         column_id_map: dict[str, UUID],
         fb: IFeedback = NoFeedback,
         block_model_name: str | None = None,
+        preview: bool = False,
     ) -> Report:
         """Create a new report specification.
 
@@ -433,10 +593,13 @@ class Report:
         :param column_id_map: Mapping of column names to their UUIDs in the block model.
         :param fb: Optional feedback interface for progress reporting.
         :param block_model_name: The name of the block model (for display purposes).
+        :param preview: Whether to send the ``API-Preview: opt-in`` header with report requests.
+            Required when ``data.volume_filter`` is set.
         :return: A Report instance representing the created report.
         """
 
         fb.progress(0.0, "Creating report specification...")
+        environment = context.get_environment()
 
         # Build columns list
         columns = []
@@ -483,6 +646,11 @@ class Report:
             if density_col_id is None:
                 raise ValueError(f"Density column '{data.density_column_name}' not found in block model")
 
+        volume_filter_options = None
+        if data.volume_filter is not None:
+            data.volume_filter._check_workspace(environment.workspace_id)
+            volume_filter_options = data.volume_filter._to_api()
+
         # Create the specification
         spec = CreateReportSpecification(
             name=data.name,
@@ -497,13 +665,14 @@ class Report:
             cutoff_values=data.cutoff_values,
             autorun=data.autorun,
         )
+        if volume_filter_options is not None:
+            spec.volume_filter_options = volume_filter_options
 
         fb.progress(0.3, "Submitting to Block Model Service...")
 
         # Call the API
 
-        client = BlockModelAPIClient.from_context(context)
-        environment = context.get_environment()
+        client = BlockModelAPIClient.from_context(context, preview=preview)
 
         result = await client._reports_api.create_report_specification(
             workspace_id=str(environment.workspace_id),
@@ -511,11 +680,98 @@ class Report:
             bm_id=str(block_model_uuid),
             create_report_specification=spec,
             run_now=data.run_now,
+            additional_headers=client._preview_headers(),
         )
 
         fb.progress(1.0, "Report specification created")
 
-        return cls(context, block_model_uuid, result, block_model_name=block_model_name)
+        return cls(context, block_model_uuid, result, block_model_name=block_model_name, preview=preview)
+
+    async def update(
+        self,
+        *,
+        name: str | None = None,
+        description: str | None = None,
+        autorun: bool | None = None,
+        volume_filter: VolumeFilter | None = None,
+        run_now: bool = False,
+        fb: IFeedback = NoFeedback,
+    ) -> Report:
+        """Update this report specification.
+
+        Only the arguments you pass are changed; the rest of the specification is kept.
+        Changing the volume filter creates a new revision of the report. To remove the
+        volume filter, use `remove_volume_filter()`.
+
+        :param name: New name for the report.
+        :param description: New description for the report.
+        :param autorun: Whether to run the report automatically when the block model is updated.
+        :param volume_filter: New volume filter. Requires this report to have been created or
+            listed with ``preview=True``.
+        :param run_now: Whether to run the report immediately after updating it.
+        :param fb: Optional feedback interface for progress reporting.
+        :return: This report, with the updated specification.
+
+        Example::
+
+            >>> await report.update(
+            ...     volume_filter=VolumeFilter.from_object(mesh, relation=SpatialRelation.OUTSIDE),
+            ... )
+        """
+        fb.progress(0.0, "Updating report specification...")
+
+        spec = self._current_update_specification()
+        if name is not None:
+            spec.name = name
+        if description is not None:
+            spec.description = description
+        if autorun is not None:
+            spec.autorun = autorun
+        if volume_filter is not None:
+            volume_filter._check_workspace(self._context.get_environment().workspace_id)
+            spec.volume_filter_options = volume_filter._to_api()
+
+        await self._submit_update(spec, run_now)
+        fb.progress(1.0, "Report specification updated")
+        return self
+
+    async def remove_volume_filter(self, run_now: bool = False, fb: IFeedback = NoFeedback) -> Report:
+        """Remove the volume filter from this report, so it reports on all blocks again.
+
+        This creates a new revision of the report. The rest of the specification is kept.
+
+        :param run_now: Whether to run the report immediately after updating it.
+        :param fb: Optional feedback interface for progress reporting.
+        :return: This report, with the updated specification.
+        """
+        fb.progress(0.0, "Removing volume filter...")
+
+        spec = self._current_update_specification()
+        spec.volume_filter_options = None
+
+        await self._submit_update(spec, run_now)
+        fb.progress(1.0, "Volume filter removed")
+        return self
+
+    def _current_update_specification(self) -> UpdateReportSpecification:
+        # The service replaces the whole specification on update, so start from the current one.
+        current = self._specification.model_dump(
+            mode="json", include=set(UpdateReportSpecification.model_fields), exclude_unset=True
+        )
+        return UpdateReportSpecification.model_validate(current)
+
+    async def _submit_update(self, spec: UpdateReportSpecification, run_now: bool) -> None:
+        environment = self._context.get_environment()
+        client = self._get_client()
+        self._specification = await client._reports_api.update_report_specification(
+            rs_id=str(self.id),
+            workspace_id=str(environment.workspace_id),
+            org_id=str(environment.org_id),
+            bm_id=str(self._block_model_uuid),
+            update_report_specification=spec,
+            run_now=run_now,
+            additional_headers=client._preview_headers(),
+        )
 
     async def run(self, version_uuid: UUID | None = None, fb: IFeedback = NoFeedback) -> ReportResult:
         """Run the report to generate a new result.
@@ -541,6 +797,7 @@ class Report:
             org_id=str(environment.org_id),
             bm_id=str(self._block_model_uuid),
             reporting_job_spec=job_spec,
+            additional_headers=client._preview_headers(),
         )
 
         fb.progress(0.5, "Fetching result...")
@@ -552,6 +809,7 @@ class Report:
             workspace_id=str(environment.workspace_id),
             org_id=str(environment.org_id),
             bm_id=str(self._block_model_uuid),
+            additional_headers=client._preview_headers(),
         )
 
         fb.progress(1.0, "Report complete")
@@ -595,6 +853,7 @@ class Report:
                 org_id=str(environment.org_id),
                 bm_id=str(self._block_model_uuid),
                 limit=1,
+                additional_headers=client._preview_headers(),
             )
 
             if results_list.results:
@@ -606,6 +865,7 @@ class Report:
                     workspace_id=str(environment.workspace_id),
                     org_id=str(environment.org_id),
                     bm_id=str(self._block_model_uuid),
+                    additional_headers=client._preview_headers(),
                 )
 
                 fb.progress(1.0, "Result fetched")
@@ -642,6 +902,7 @@ class Report:
             org_id=str(environment.org_id),
             bm_id=str(self._block_model_uuid),
             limit=limit,
+            additional_headers=client._preview_headers(),
         )
 
         fb.progress(0.5, f"Fetching {len(results_list.results)} results...")
@@ -655,6 +916,7 @@ class Report:
                 workspace_id=str(environment.workspace_id),
                 org_id=str(environment.org_id),
                 bm_id=str(self._block_model_uuid),
+                additional_headers=client._preview_headers(),
             )
             results.append(ReportResult._from_api_result(result))
             fb.progress(0.5 + 0.5 * (i + 1) / len(results_list.results), f"Fetched {i + 1}/{len(results_list.results)}")

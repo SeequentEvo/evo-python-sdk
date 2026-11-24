@@ -23,6 +23,8 @@ from .report import (
     ReportColumnSpec,
     ReportResult,
     ReportSpecificationData,
+    SpatialRelation,
+    VolumeFilter,
 )
 from .types import BoundingBox, Point3, Size3d, Size3i
 from .units import UnitInfo, Units, UnitType, get_available_units
@@ -44,8 +46,10 @@ __all__ = [
     "ReportSpecificationData",
     "Size3d",
     "Size3i",
+    "SpatialRelation",
     "UnitInfo",
     "UnitType",
     "Units",
+    "VolumeFilter",
     "get_available_units",
 ]

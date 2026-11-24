@@ -141,6 +141,8 @@ try:
         ReportColumnSpec,
         ReportResult,
         ReportSpecificationData,
+        SpatialRelation,
+        VolumeFilter,
     )
 
     __all__ += [
@@ -152,6 +154,8 @@ try:
         "ReportColumnSpec",
         "ReportResult",
         "ReportSpecificationData",
+        "SpatialRelation",
+        "VolumeFilter",
     ]
 except ImportError:
     pass

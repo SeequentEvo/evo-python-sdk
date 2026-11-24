@@ -410,6 +410,12 @@ def format_block_model_version(obj: Any) -> str:
     return html
 
 
+def _describe_volume_filter(volume_filter: Any) -> str:
+    relation = getattr(volume_filter.relation, "value", volume_filter.relation)
+    version = volume_filter.mesh_version_id or "latest"
+    return f"{str(relation).capitalize()} mesh {volume_filter.mesh_id} (version: {version})"
+
+
 def format_report_result(obj: Any) -> str:
     """Format a ReportResult object as HTML.
 
@@ -431,7 +437,26 @@ def format_report_result(obj: Any) -> str:
         cells = "".join([f"<td>{escape(str(v)) if v is not None and v == v else ''}</td>" for v in row])
         rows_html.append(f"<tr {row_class}>{cells}</tr>")
 
-    subtitle = f'<div class="subtitle">Created: {obj.created_at.strftime("%Y-%m-%d %H:%M:%S")} | Rows: {len(df)}</div>'
+    subtitle_text = f"Created: {obj.created_at.strftime('%Y-%m-%d %H:%M:%S')} | Rows: {len(df)}"
+    volume_filter = getattr(obj, "volume_filter", None)
+    if volume_filter is not None:
+        subtitle_text += f" | Volume filter: {_describe_volume_filter(volume_filter)}"
+    subtitle = f'<div class="subtitle">{escape(subtitle_text)}</div>'
+
+    warnings_html = ""
+    warnings = getattr(obj, "warnings", None) or []
+    if warnings:
+        warning_rows = "".join(
+            f"<tr><td>{escape(str(w.get('warning_type', '')))}</td><td>{escape(str(w.get('message', '')))}</td>"
+            f"<td>{escape(str(w.get('occurrences', '')))}</td></tr>"
+            for w in warnings
+        )
+        warnings_html = f"""
+<div style="margin-top: 8px;"><strong>Warnings:</strong></div>
+<table class="nested">
+    <tr><th>Type</th><th>Message</th><th>Occurrences</th></tr>
+    {warning_rows}
+</table>"""
 
     html = f"""{STYLESHEET}
 <div class="evo">
@@ -440,7 +465,7 @@ def format_report_result(obj: Any) -> str:
 <table class="nested">
     <tr>{header_html}</tr>
     {"".join(rows_html)}
-</table>
+</table>{warnings_html}
 </div>
 """
     return html
@@ -512,6 +537,10 @@ def format_report(obj: Any) -> str:
         ("Block Model:", block_model_display),
         ("Revision:", str(obj.revision)),
     ]
+
+    volume_filter = getattr(obj, "volume_filter", None)
+    if volume_filter is not None:
+        rows.append(("Volume filter:", _describe_volume_filter(volume_filter)))
 
     # Add last run if available
     if hasattr(obj._specification, "last_result_created_at") and obj._specification.last_result_created_at:

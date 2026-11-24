@@ -353,6 +353,7 @@ class BlockModel(BaseSpatialObject):
             self,
             data: ReportSpecificationData,
             fb: IFeedback = NoFeedback,
+            preview: bool = False,
         ) -> Report:
             """Create a new report specification for this block model.
 
@@ -362,6 +363,8 @@ class BlockModel(BaseSpatialObject):
 
             :param data: The report specification data.
             :param fb: Optional feedback interface for progress reporting.
+            :param preview: Opt in to preview API features (required when ``data.volume_filter`` is set).
+                The returned report keeps this setting for subsequent calls.
             :return: A Report instance representing the created report.
 
             Example::
@@ -378,13 +381,15 @@ class BlockModel(BaseSpatialObject):
                 >>> report  # Pretty-prints with BlockSync link
             """
             typed_bm = await self._get_or_create_typed_block_model()
-            return await typed_bm.create_report(data, fb=fb)
+            return await typed_bm.create_report(data, fb=fb, preview=preview)
 
-        async def list_reports(self, fb: IFeedback = NoFeedback) -> list[Report]:
+        async def list_reports(self, fb: IFeedback = NoFeedback, preview: bool = False) -> list[Report]:
             """List all report specifications for this block model.
 
             :param fb: Optional feedback interface for progress reporting.
+            :param preview: Opt in to preview API features (e.g. reports with volume filters).
+                The returned reports keep this setting for subsequent calls.
             :return: List of Report instances.
             """
             typed_bm = await self._get_or_create_typed_block_model()
-            return await typed_bm.list_reports(fb=fb)
+            return await typed_bm.list_reports(fb=fb, preview=preview)
