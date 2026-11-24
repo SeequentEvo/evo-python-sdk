@@ -21,7 +21,7 @@ from evo.common.utils import get_service_health, parse_order_by
 
 from ..data import ObjectMetadata, ObjectOrderByEnum, ObjectReference, ObjectVersion, OrgObjectMetadata, Stage
 from ..endpoints import MetadataApi, ObjectsApi, StagesApi
-from ..endpoints.models import GeoscienceObject, MetadataUpdateBody, UpdateGeoscienceObject
+from ..endpoints.models import GeoscienceObject, MetadataUpdateBody, MoveObjectRequest, UpdateGeoscienceObject
 from ..exceptions import ObjectUUIDError
 from ..io import ObjectDataDownload, ObjectDataUpload
 from . import parse
@@ -190,7 +190,6 @@ class ObjectAPIClient(BaseAPIClient):
             order_by=parsed_order_by,
             schema_id=schema_id,
             request_timeout=request_timeout,
-            permitted_workspaces_only=True,
             deleted=deleted,
         )
         return parse.page_of_metadata(response, self._environment)
@@ -332,9 +331,13 @@ class ObjectAPIClient(BaseAPIClient):
     async def move_geoscience_object(
         self, path: str, object_dict: dict, request_timeout: int | float | tuple[int | float, int | float] | None = None
     ) -> ObjectMetadata:
-        """Move an existing geoscience object to a new path in the geoscience object service.
+        """Move and/or rename an existing geoscience object by uploading it to a new path.
 
-        :param path: The new path to move the object to.
+        The path includes the object name, so a path in the same folder with a different name renames the object.
+        This uploads the object to the new path, which creates a new version of the object. To move or rename an
+        object without creating a new version, use `move_geoscience_object_by_id` instead.
+
+        :param path: The new path of the object, including its name.
         :param object_dict: The geoscience object to be moved.
         :param request_timeout: Timeout setting for this request. If one number is provided, it will be the
             total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.
@@ -354,6 +357,56 @@ class ObjectAPIClient(BaseAPIClient):
             geoscience_object=object_for_upload,
             request_timeout=request_timeout,
         )
+        return parse.object_metadata(result, self._environment)
+
+    async def move_geoscience_object_by_id(
+        self,
+        object_id: UUID,
+        name: str | None = None,
+        folder_path: str | None = None,
+        folder_id: UUID | None = None,
+        request_timeout: int | float | tuple[int | float, int | float] | None = None,
+    ) -> ObjectMetadata:
+        """Move and/or rename an existing geoscience object (by UUID) without creating a new version.
+
+        Despite the name, this method also renames objects. Arguments that are `None` are left unchanged:
+
+        - Provide only `name` to rename the object in its current folder.
+        - Provide only `folder_path` and/or `folder_id` to move the object while keeping its name.
+        - Provide `name` together with a folder to move and rename the object in a single request.
+
+        If both `folder_path` and `folder_id` are provided, they must refer to the same folder.
+
+        :param object_id: The UUID of the geoscience object.
+        :param name: The new name of the object, including the `.json` extension.
+        :param folder_path: The path of the destination folder, starting with `/` and excluding the object name.
+            Missing intermediate folders are created.
+        :param folder_id: The UUID of an existing destination folder in the same workspace.
+        :param request_timeout: Timeout setting for this request. If one number is provided, it will be the
+            total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.
+
+        :return: The metadata of the object. If nothing changed, because no arguments were provided or the destination
+            is the object's current location, the current metadata is returned and `modified_at` is unchanged.
+
+        :raises ObjectAlreadyExistsError: If an object with the same name already exists in the destination folder.
+        """
+        org_id = str(self._environment.org_id)
+        workspace_id = str(self._environment.workspace_id)
+        result = await self._objects_api.move_object_by_id(
+            object_id=str(object_id),
+            org_id=org_id,
+            workspace_id=workspace_id,
+            move_object_request=MoveObjectRequest(name=name, folder_id=folder_id, folder_path=folder_path),
+            request_timeout=request_timeout,
+        )
+        if isinstance(result, EmptyResponse):
+            # The service responds with 204 No Content when nothing changed, so fetch the current metadata.
+            result = await self._objects_api.get_object_by_id(
+                object_id=str(object_id),
+                org_id=org_id,
+                workspace_id=workspace_id,
+                request_timeout=request_timeout,
+            )
         return parse.object_metadata(result, self._environment)
 
     async def update_geoscience_object(
