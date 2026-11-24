@@ -314,6 +314,7 @@ class BaseTypedBlockModel(ABC):
         self,
         data: ReportSpecificationData,
         fb: IFeedback = NoFeedback,
+        preview: bool = False,
     ) -> Report:
         """Create a new report specification for this block model.
 
@@ -323,6 +324,8 @@ class BaseTypedBlockModel(ABC):
 
         :param data: The report specification data.
         :param fb: Optional feedback interface for progress reporting.
+        :param preview: Opt in to preview API features (required when ``data.volume_filter`` is set).
+            The returned report keeps this setting for subsequent calls.
         :return: A Report instance representing the created report.
 
         Example::
@@ -353,30 +356,38 @@ class BaseTypedBlockModel(ABC):
             column_id_map=column_id_map,
             fb=fb,
             block_model_name=self.name,
+            preview=preview,
         )
 
         return report
 
-    async def list_reports(self, fb: IFeedback = NoFeedback) -> list[Report]:
+    async def list_reports(self, fb: IFeedback = NoFeedback, preview: bool = False) -> list[Report]:
         """List all report specifications for this block model.
 
         :param fb: Optional feedback interface for progress reporting.
+        :param preview: Opt in to preview API features (e.g. reports with volume filters).
+            The returned reports keep this setting for subsequent calls.
         :return: List of Report instances.
         """
         fb.progress(0.0, "Fetching reports...")
 
         environment = self._metadata.environment
         context = self._get_context()
+        client = BlockModelAPIClient.from_context(context, preview=preview)
 
-        result = await self._client._reports_api.list_block_model_report_specifications(
+        result = await client._reports_api.list_block_model_report_specifications(
             workspace_id=str(environment.workspace_id),
             org_id=str(environment.org_id),
             bm_id=str(self._metadata.id),
+            additional_headers=client._preview_headers(),
         )
 
         fb.progress(1.0, f"Found {result.total} reports")
 
-        return [Report(context, self._metadata.id, spec, block_model_name=self.name) for spec in result.results]
+        return [
+            Report(context, self._metadata.id, spec, block_model_name=self.name, preview=preview)
+            for spec in result.results
+        ]
 
     # ---- Refresh ----
 
