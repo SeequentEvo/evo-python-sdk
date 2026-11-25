@@ -11,7 +11,6 @@ authors = [
 
 dependencies = [
     # Specify the minimum versions to avoid security issues.
-    "pure-interface>=8.0.0",
     "pydantic>=2",
     "python-dateutil",
 ]
