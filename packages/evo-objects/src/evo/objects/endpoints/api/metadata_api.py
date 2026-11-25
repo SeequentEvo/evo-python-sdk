@@ -54,7 +54,6 @@ class MetadataApi:
         object_id: str,
         org_id: str,
         workspace_id: str,
-        authorization: str,
         metadata_update_body: MetadataUpdateBody,  # noqa: F405
         version_id: int | None = None,
         additional_headers: dict[str, str] | None = None,
@@ -73,8 +72,6 @@ class MetadataApi:
         :param workspace_id:
             Format: `uuid`
             Example: `'032806a8-dcd7-11ed-8d5c-00155d8f28b5'`
-        :param authorization:
-            Example: `'authorization_example'`
         :param metadata_update_body:
             Example: `endpoints.MetadataUpdateBody()`
         :param version_id: (optional) The version of the object to retrieve. Defaults to the latest version if not specified.
@@ -111,7 +108,6 @@ class MetadataApi:
         # Prepare the header parameters.
         _header_params = {
             "Content-Type": "application/json",
-            "authorization": authorization,
         } | get_header_metadata(__name__)
         if additional_headers is not None:
             _header_params.update(additional_headers)

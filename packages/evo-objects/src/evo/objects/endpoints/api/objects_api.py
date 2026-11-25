@@ -53,7 +53,6 @@ class ObjectsApi:
         self,
         org_id: str,
         workspace_id: str,
-        authorization: str,
         objects_path: str,
         additional_headers: dict[str, str] | None = None,
         request_timeout: int | float | tuple[int | float, int | float] | None = None,
@@ -68,8 +67,6 @@ class ObjectsApi:
         :param workspace_id:
             Format: `uuid`
             Example: `'032806a8-dcd7-11ed-8d5c-00155d8f28b5'`
-        :param authorization:
-            Example: `'authorization_example'`
         :param objects_path: Objects path. This parameter was automatically generated from a wildcard path.
             Example: `'objects_path_example'`
         :param additional_headers: (optional) Additional headers to send with the request.
@@ -97,9 +94,7 @@ class ObjectsApi:
         }
 
         # Prepare the header parameters.
-        _header_params = {
-            "authorization": authorization,
-        } | get_header_metadata(__name__)
+        _header_params = {} | get_header_metadata(__name__)
         if additional_headers is not None:
             _header_params.update(additional_headers)
 
@@ -125,7 +120,6 @@ class ObjectsApi:
         object_id: str,
         org_id: str,
         workspace_id: str,
-        authorization: str,
         additional_headers: dict[str, str] | None = None,
         request_timeout: int | float | tuple[int | float, int | float] | None = None,
     ) -> EmptyResponse:
@@ -142,8 +136,6 @@ class ObjectsApi:
         :param workspace_id:
             Format: `uuid`
             Example: `'032806a8-dcd7-11ed-8d5c-00155d8f28b5'`
-        :param authorization:
-            Example: `'authorization_example'`
         :param additional_headers: (optional) Additional headers to send with the request.
         :param request_timeout: (optional) Timeout setting for this request. If one number is provided, it will be the
             total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.
@@ -169,9 +161,7 @@ class ObjectsApi:
         }
 
         # Prepare the header parameters.
-        _header_params = {
-            "authorization": authorization,
-        } | get_header_metadata(__name__)
+        _header_params = {} | get_header_metadata(__name__)
         if additional_headers is not None:
             _header_params.update(additional_headers)
 
@@ -196,7 +186,6 @@ class ObjectsApi:
         self,
         org_id: str,
         workspace_id: str,
-        authorization: str,
         objects_path: str,
         version: str | None = None,
         include_versions: bool | None = None,
@@ -214,8 +203,6 @@ class ObjectsApi:
         :param workspace_id:
             Format: `uuid`
             Example: `'032806a8-dcd7-11ed-8d5c-00155d8f28b5'`
-        :param authorization:
-            Example: `'authorization_example'`
         :param objects_path: Objects path. This parameter was automatically generated from a wildcard path.
             Example: `'objects_path_example'`
         :param version: (optional) The (timestamp) version of the object to retrieve. Defaults to the latest version if not specified.
@@ -258,7 +245,6 @@ class ObjectsApi:
         # Prepare the header parameters.
         _header_params = {
             "Accept": "application/json",
-            "authorization": authorization,
         } | get_header_metadata(__name__)
         if if_none_match is not None:
             _header_params["If-None-Match"] = if_none_match
@@ -289,7 +275,6 @@ class ObjectsApi:
         object_id: str,
         org_id: str,
         workspace_id: str,
-        authorization: str,
         version: str | None = None,
         include_versions: bool | None = None,
         deleted: bool | None = None,
@@ -310,8 +295,6 @@ class ObjectsApi:
         :param workspace_id:
             Format: `uuid`
             Example: `'032806a8-dcd7-11ed-8d5c-00155d8f28b5'`
-        :param authorization:
-            Example: `'authorization_example'`
         :param version: (optional) The (timestamp) version of the object to retrieve. Defaults to the latest version if not specified.
             Example: `'1746593470905878783'`
         :param include_versions: (optional) Whether to return all versions of the object
@@ -356,7 +339,6 @@ class ObjectsApi:
         # Prepare the header parameters.
         _header_params = {
             "Accept": "application/json",
-            "authorization": authorization,
         } | get_header_metadata(__name__)
         if if_none_match is not None:
             _header_params["If-None-Match"] = if_none_match
@@ -386,7 +368,6 @@ class ObjectsApi:
         self,
         org_id: str,
         workspace_id: str,
-        authorization: str,
         request_body: list[str],
         additional_headers: dict[str, str] | None = None,
         request_timeout: int | float | tuple[int | float, int | float] | None = None,
@@ -401,8 +382,6 @@ class ObjectsApi:
         :param workspace_id:
             Format: `uuid`
             Example: `'032806a8-dcd7-11ed-8d5c-00155d8f28b5'`
-        :param authorization:
-            Example: `'authorization_example'`
         :param request_body:
             Example: `['request_body_example']`
         :param additional_headers: (optional) Additional headers to send with the request.
@@ -432,7 +411,6 @@ class ObjectsApi:
         _header_params = {
             "Content-Type": "application/json",
             "Accept": "application/json",
-            "authorization": authorization,
         } | get_header_metadata(__name__)
         if additional_headers is not None:
             _header_params.update(additional_headers)
@@ -462,7 +440,6 @@ class ObjectsApi:
         object_id: str,
         org_id: str,
         workspace_id: str,
-        authorization: str,
         list_versions_body: ListVersionsBody,  # noqa: F405
         additional_headers: dict[str, str] | None = None,
         request_timeout: int | float | tuple[int | float, int | float] | None = None,
@@ -480,8 +457,6 @@ class ObjectsApi:
         :param workspace_id:
             Format: `uuid`
             Example: `'032806a8-dcd7-11ed-8d5c-00155d8f28b5'`
-        :param authorization:
-            Example: `'authorization_example'`
         :param list_versions_body:
             Example: `endpoints.ListVersionsBody()`
         :param additional_headers: (optional) Additional headers to send with the request.
@@ -512,7 +487,6 @@ class ObjectsApi:
         _header_params = {
             "Content-Type": "application/json",
             "Accept": "application/json",
-            "authorization": authorization,
         } | get_header_metadata(__name__)
         if additional_headers is not None:
             _header_params.update(additional_headers)
@@ -539,21 +513,20 @@ class ObjectsApi:
         self,
         org_id: str,
         workspace_id: str,
-        authorization: str,
         limit: int | None = None,
         offset: int | None = None,
         folder_id: str | None = None,
         folder_depth: int | None = None,
         deleted: bool | None = None,
         order_by: str | None = None,
-        author: list[CreatedByInner] | None = None,  # noqa: F405
-        created_by: list[CreatedByInner] | None = None,  # noqa: F405
+        author: list[str] | None = None,
+        created_by: list[str] | None = None,
         created_at: list[str] | None = None,
-        modified_by: list[CreatedByInner] | None = None,  # noqa: F405
+        modified_by: list[str] | None = None,
         modified_at: list[str] | None = None,
         object_name: list[str] | None = None,
         schema_id: list[str] | None = None,
-        deleted_by: list[CreatedByInner] | None = None,  # noqa: F405
+        deleted_by: list[str] | None = None,
         deleted_at: list[str] | None = None,
         geojson_bounding_box: list[str] | None = None,
         additional_headers: dict[str, str] | None = None,
@@ -569,8 +542,6 @@ class ObjectsApi:
         :param workspace_id:
             Format: `uuid`
             Example: `'032806a8-dcd7-11ed-8d5c-00155d8f28b5'`
-        :param authorization:
-            Example: `'authorization_example'`
         :param limit: (optional) Max number of results per page.
             Example: `5000`
         :param offset: (optional) Number of results to skip before returning `limit` number of results.
@@ -585,13 +556,13 @@ class ObjectsApi:
         :param order_by: (optional) A comma separated list of fields to order by, where the default sort order is ascending. To specify the sort order, prefix the field name with either `asc:` or `desc:` for ascending or descending respectively. Field names can either be arbitrary, representing a field nested inside the data, or one of the following known sort fields: `author`, `created_at`, `created_by`, `deleted_at`, `modified_at`, `modified_by`, `object_name`
             Example: `'object_name,desc:created_by,asc:object.a.b.c'`
         :param author: (optional) (deprecated, use `created_by`) The profile ID that you want to filter by
-            Example: `[endpoints.CreatedByInner()]`
+            Example: `['00000000-0000-0000-0000-000000000000']`
         :param created_by: (optional) The UUID of the user that created an object
-            Example: `[endpoints.CreatedByInner()]`
+            Example: `['00000000-0000-0000-0000-000000000000']`
         :param created_at: (optional)  A date or dates (max 2) to filter objects by. Dates may contain operator prefixes, in the form `<operator>:<datetime>`. The following operators are available (`lt`=less than, `lte`=less than or equal to, `gt`=greater than, `gte`=greater than or equal to). If you omit the operator, then it is assumed the operator is 'equal to'. In this case you may only supply one date. The dates must also be in a valid ISO 8601 format. Dates may include a UTC offset. If the offset is omitted, the timezone is assumed to be UTC.
             Example: `['gte:2023-03-10T22:56:53Z']`
         :param modified_by: (optional) The UUID of the user that modified an object
-            Example: `[endpoints.CreatedByInner()]`
+            Example: `['00000000-0000-0000-0000-000000000000']`
         :param modified_at: (optional)  A date or dates (max 2) to filter objects by. Dates may contain operator prefixes, in the form `<operator>:<datetime>`. The following operators are available (`lt`=less than, `lte`=less than or equal to, `gt`=greater than, `gte`=greater than or equal to). If you omit the operator, then it is assumed the operator is 'equal to'. In this case you may only supply one date. The dates must also be in a valid ISO 8601 format. Dates may include a UTC offset. If the offset is omitted, the timezone is assumed to be UTC.
             Example: `['gte:2023-03-10T22:56:53Z']`
         :param object_name: (optional) The name of the object to filter on. For backwards compatibility, when no operators are supplied, this will perform a case sensitive prefix match of the object file name. The query `object_name=gold` will match an object with the name `goldcolumns.json`. Providing an operator will query over the file name.
@@ -599,7 +570,7 @@ class ObjectsApi:
         :param schema_id: (optional) The type of schema you want to filter by.
             Example: `['/objects/variogram/0.1.0/variogram.schema.json']`
         :param deleted_by: (optional) The UUID of the user that deleted an object
-            Example: `[endpoints.CreatedByInner()]`
+            Example: `['00000000-0000-0000-0000-000000000000']`
         :param deleted_at: (optional)  A date or dates (max 2) to filter objects by. Dates may contain operator prefixes, in the form `<operator>:<datetime>`. The following operators are available (`lt`=less than, `lte`=less than or equal to, `gt`=greater than, `gte`=greater than or equal to). If you omit the operator, then it is assumed the operator is 'equal to'. In this case you may only supply one date. The dates must also be in a valid ISO 8601 format. Dates may include a UTC offset. If the offset is omitted, the timezone is assumed to be UTC.
             Example: `['gte:2023-03-10T22:56:53Z']`
         :param geojson_bounding_box: (optional) The coordinates of the data to spatially search on. The value may optionally include one of two spatial operators, `geowithin` or `geointersects`. If an operator is not defined, then `geointersects` will be used by default. The coordinates must be 5 pairs of longitude and latitude, representing a closed polygon. The first and last coordinates must be the same to close the polygon.
@@ -665,7 +636,6 @@ class ObjectsApi:
         # Prepare the header parameters.
         _header_params = {
             "Accept": "application/json",
-            "authorization": authorization,
         } | get_header_metadata(__name__)
         if additional_headers is not None:
             _header_params.update(additional_headers)
@@ -702,19 +672,18 @@ class ObjectsApi:
     async def list_objects_by_org(
         self,
         org_id: str,
-        authorization: str,
         offset: int | None = None,
         limit: int | None = None,
         deleted: bool | None = None,
         order_by: str | None = None,
-        created_by: list[CreatedByInner] | None = None,  # noqa: F405
+        created_by: list[str] | None = None,
         created_at: list[str] | None = None,
-        modified_by: list[CreatedByInner] | None = None,  # noqa: F405
+        modified_by: list[str] | None = None,
         modified_at: list[str] | None = None,
         object_name: list[str] | None = None,
         schema_id: list[str] | None = None,
         geojson_bounding_box: list[str] | None = None,
-        deleted_by: list[CreatedByInner] | None = None,  # noqa: F405
+        deleted_by: list[str] | None = None,
         deleted_at: list[str] | None = None,
         additional_headers: dict[str, str] | None = None,
         request_timeout: int | float | tuple[int | float, int | float] | None = None,
@@ -726,8 +695,6 @@ class ObjectsApi:
         :param org_id: The customer's organisation ID
             Format: `uuid`
             Example: `'b208a6c9-6881-4b97-b02d-acb5d81299bb'`
-        :param authorization:
-            Example: `'authorization_example'`
         :param offset: (optional) Number of results to skip before returning `limit` number of results.
             Example: `0`
         :param limit: (optional) Max number of results per page.
@@ -737,11 +704,11 @@ class ObjectsApi:
         :param order_by: (optional) A comma separated list of fields to order by, where the default sort order is ascending. To specify the sort order, prefix the field name with either `asc:` or `desc:` for ascending or descending respectively. Field names can either be arbitrary, representing a field nested inside the data, or one of the following known sort fields: `created_at`, `created_by`, `modified_at`, `modified_by`, `object_name`, `deleted_at`
             Example: `'object_name,desc:created_by,asc:object.a.b.c'`
         :param created_by: (optional) The UUID of the user that created an object
-            Example: `[endpoints.CreatedByInner()]`
+            Example: `['00000000-0000-0000-0000-000000000000']`
         :param created_at: (optional)  A date or dates (max 2) to filter objects by. Dates may contain operator prefixes, in the form `<operator>:<datetime>`. The following operators are available (`lt`=less than, `lte`=less than or equal to, `gt`=greater than, `gte`=greater than or equal to). If you omit the operator, then it is assumed the operator is 'equal to'. In this case you may only supply one date. The dates must also be in a valid ISO 8601 format. Dates may include a UTC offset. If the offset is omitted, the timezone is assumed to be UTC.
             Example: `['gte:2023-03-10T22:56:53Z']`
         :param modified_by: (optional) The UUID of the user that modified an object
-            Example: `[endpoints.CreatedByInner()]`
+            Example: `['00000000-0000-0000-0000-000000000000']`
         :param modified_at: (optional)  A date or dates (max 2) to filter objects by. Dates may contain operator prefixes, in the form `<operator>:<datetime>`. The following operators are available (`lt`=less than, `lte`=less than or equal to, `gt`=greater than, `gte`=greater than or equal to). If you omit the operator, then it is assumed the operator is 'equal to'. In this case you may only supply one date. The dates must also be in a valid ISO 8601 format. Dates may include a UTC offset. If the offset is omitted, the timezone is assumed to be UTC.
             Example: `['gte:2023-03-10T22:56:53Z']`
         :param object_name: (optional) The name of the object to filter on. For backwards compatibility, when no operators are supplied, this will perform a case sensitive prefix match of the object file name. The query `object_name=gold` will match an object with the name `goldcolumns.json`. Providing an operator will query over the file name.
@@ -751,7 +718,7 @@ class ObjectsApi:
         :param geojson_bounding_box: (optional) The coordinates of the data to spatially search on. The value may optionally include one of two spatial operators, `geowithin` or `geointersects`. If an operator is not defined, then `geointersects` will be used by default. The coordinates must be 5 pairs of longitude and latitude, representing a closed polygon. The first and last coordinates must be the same to close the polygon.
             Example: `['geointersects:(171.6,-44.5),(173.7,-44.5),(173.7,-42.9),(171.6,-42.9),(171.6,-44.5)']`
         :param deleted_by: (optional) The UUID of the user that deleted an object
-            Example: `[endpoints.CreatedByInner()]`
+            Example: `['00000000-0000-0000-0000-000000000000']`
         :param deleted_at: (optional)  A date or dates (max 2) to filter objects by. Dates may contain operator prefixes, in the form `<operator>:<datetime>`. The following operators are available (`lt`=less than, `lte`=less than or equal to, `gt`=greater than, `gte`=greater than or equal to). If you omit the operator, then it is assumed the operator is 'equal to'. In this case you may only supply one date. The dates must also be in a valid ISO 8601 format. Dates may include a UTC offset. If the offset is omitted, the timezone is assumed to be UTC.
             Example: `['gte:2023-03-10T22:56:53Z']`
         :param additional_headers: (optional) Additional headers to send with the request.
@@ -808,7 +775,6 @@ class ObjectsApi:
         # Prepare the header parameters.
         _header_params = {
             "Accept": "application/json",
-            "authorization": authorization,
         } | get_header_metadata(__name__)
         if additional_headers is not None:
             _header_params.update(additional_headers)
@@ -846,7 +812,6 @@ class ObjectsApi:
         object_id: str,
         org_id: str,
         workspace_id: str,
-        authorization: str,
         move_object_request: MoveObjectRequest,  # noqa: F405
         additional_headers: dict[str, str] | None = None,
         request_timeout: int | float | tuple[int | float, int | float] | None = None,
@@ -864,8 +829,6 @@ class ObjectsApi:
         :param workspace_id:
             Format: `uuid`
             Example: `'032806a8-dcd7-11ed-8d5c-00155d8f28b5'`
-        :param authorization:
-            Example: `'authorization_example'`
         :param move_object_request:
             Example: `endpoints.MoveObjectRequest()`
         :param additional_headers: (optional) Additional headers to send with the request.
@@ -896,7 +859,6 @@ class ObjectsApi:
         _header_params = {
             "Content-Type": "application/json",
             "Accept": "application/json",
-            "authorization": authorization,
         } | get_header_metadata(__name__)
         if additional_headers is not None:
             _header_params.update(additional_headers)
@@ -924,7 +886,6 @@ class ObjectsApi:
         self,
         org_id: str,
         workspace_id: str,
-        authorization: str,
         objects_path: str,
         geoscience_object: GeoscienceObject,  # noqa: F405
         if_match: str | None = None,
@@ -941,8 +902,6 @@ class ObjectsApi:
         :param workspace_id:
             Format: `uuid`
             Example: `'032806a8-dcd7-11ed-8d5c-00155d8f28b5'`
-        :param authorization:
-            Example: `'authorization_example'`
         :param objects_path: Objects path. This parameter was automatically generated from a wildcard path.
             Example: `'objects_path_example'`
         :param geoscience_object:
@@ -977,7 +936,6 @@ class ObjectsApi:
         _header_params = {
             "Content-Type": "application/json",
             "Accept": "application/json",
-            "authorization": authorization,
         } | get_header_metadata(__name__)
         if if_match is not None:
             _header_params["If-Match"] = if_match
@@ -1007,7 +965,6 @@ class ObjectsApi:
         object_id: str,
         org_id: str,
         workspace_id: str,
-        authorization: str,
         deleted: bool | None = None,
         if_match: str | None = None,
         update_geoscience_object: UpdateGeoscienceObject | None = None,  # noqa: F405
@@ -1027,8 +984,6 @@ class ObjectsApi:
         :param workspace_id:
             Format: `uuid`
             Example: `'032806a8-dcd7-11ed-8d5c-00155d8f28b5'`
-        :param authorization:
-            Example: `'authorization_example'`
         :param deleted: (optional) When set to false, the operation will attempt to restore the object.
             Example: `True`
         :param if_match: (optional) Optional header to apply an update _only if_ the specified object version is the most recent available on the server.
@@ -1068,7 +1023,6 @@ class ObjectsApi:
         _header_params = {
             "Content-Type": "application/json",
             "Accept": "application/json",
-            "authorization": authorization,
         } | get_header_metadata(__name__)
         if if_match is not None:
             _header_params["If-Match"] = if_match
