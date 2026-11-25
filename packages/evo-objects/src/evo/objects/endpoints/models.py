@@ -14,12 +14,12 @@
 
 from __future__ import annotations
 
-from datetime import datetime
 from enum import Enum
 from typing import Annotated
 from uuid import UUID
 
 from pydantic import (
+    AwareDatetime,
     Field,
     RootModel,
     StrictBool,
@@ -140,7 +140,8 @@ class MoveObjectRequest(CustomBaseModel):
             Does not contain the name of the object itself.
             Folder names are 1-100 UTF-8 characters with a total max folder_path length of 1520 characters.
             Will create all intermediate folders if they do not exist.
-            If `folder_id` is also provided then `folder_path` must match the path of the folder specified by `folder_id`.
+            If `folder_id` is also provided then `folder_path` must match its path, ignoring case;
+            no folders are created in that case.
             Omit both `folder_id` and `folder_path` to keep the current folder.
     """
     name: Annotated[StrictStr | None, Field(examples=["grid_collection.json"], title="Name")] = None
@@ -225,7 +226,7 @@ class GeoscienceObjectVersion(CustomBaseModel):
     Geoscience object version.
     """
 
-    created_at: Annotated[datetime, Field(title="Created At")]
+    created_at: Annotated[AwareDatetime, Field(title="Created At")]
     created_by: User | None = None
     etag: Annotated[StrictStr, Field(title="Etag")]
     links: ObjectVersionResponseLinks
@@ -234,12 +235,15 @@ class GeoscienceObjectVersion(CustomBaseModel):
 
 
 class GetObjectResponse(CustomBaseModel):
-    created_at: Annotated[datetime, Field(title="Created At")]
+    created_at: Annotated[AwareDatetime, Field(title="Created At")]
     created_by: User | None = None
-    deleted_at: Annotated[datetime | None, Field(title="Deleted At")] = None
+    deleted_at: Annotated[AwareDatetime | None, Field(title="Deleted At")] = None
     deleted_by: User | None = None
     etag: Annotated[StrictStr, Field(title="Etag")]
     folder_id: Annotated[UUID | None, Field(title="Folder Id")] = None
+    """
+    The UUID of the object's containing folder in this workspace. Use it with the Folder API to retrieve folder details. For objects deleted explicitly in the geoscience object service, this is the workspace's recycle-bin root ID, not the folder identified by the retained object path.
+    """
     geojson_bounding_box: BoundingBox | None = None
     geojson_bounding_box_from_workspace_crs: Annotated[
         StrictBool, Field(title="Geojson Bounding Box From Workspace Crs")
@@ -248,11 +252,14 @@ class GetObjectResponse(CustomBaseModel):
     True if the bounding box was calculated using the workspace CRS, else False.
     """
     links: ObjectResponseLinks
-    modified_at: Annotated[datetime, Field(title="Modified At")]
+    modified_at: Annotated[AwareDatetime, Field(title="Modified At")]
     modified_by: User | None = None
     object: GeoscienceObject
     object_id: Annotated[UUID, Field(title="Object Id")]
     object_path: Annotated[StrictStr | None, Field(title="Object Path")] = None
+    """
+    The object's path relative to the workspace root, including its name and without a leading '/'. For active objects, this reflects the current parent folder and object name, even for historical versions. Individually deleted objects retain their last active path for restoration.
+    """
     stage: StageResponse | None = None
     version_id: Annotated[StrictStr, Field(title="Version Id")]
     versions: Annotated[list[GeoscienceObjectVersion] | None, Field(title="Versions")] = None
@@ -267,12 +274,15 @@ class ListVersionsResponse(CustomBaseModel):
 
 
 class ListedObject(CustomBaseModel):
-    created_at: Annotated[datetime, Field(title="Created At")]
+    created_at: Annotated[AwareDatetime, Field(title="Created At")]
     created_by: User | None = None
-    deleted_at: Annotated[datetime | None, Field(title="Deleted At")] = None
+    deleted_at: Annotated[AwareDatetime | None, Field(title="Deleted At")] = None
     deleted_by: User | None = None
     etag: Annotated[StrictStr, Field(title="Etag")]
     folder_id: Annotated[UUID | None, Field(title="Folder Id")] = None
+    """
+    The UUID of the object's containing folder in this workspace. Use it with the Folder API to retrieve folder details. For objects deleted explicitly in the geoscience object service, this is the workspace's recycle-bin root ID, not the folder identified by the retained object path.
+    """
     geojson_bounding_box: BoundingBox | None = None
     geojson_bounding_box_from_workspace_crs: Annotated[
         StrictBool, Field(title="Geojson Bounding Box From Workspace Crs")
@@ -281,11 +291,14 @@ class ListedObject(CustomBaseModel):
     True if the bounding box was calculated using the workspace CRS, else False.
     """
     links: ListedObjectLinks
-    modified_at: Annotated[datetime, Field(title="Modified At")]
+    modified_at: Annotated[AwareDatetime, Field(title="Modified At")]
     modified_by: User | None = None
     name: Annotated[StrictStr, Field(title="Name")]
     object_id: Annotated[UUID, Field(title="Object Id")]
     path: Annotated[StrictStr, Field(title="Path")]
+    """
+    The object's containing folder path, with leading and trailing slashes, or '/' for the workspace root. The object name is returned separately in `name`. Reflects the current folder hierarchy for active objects, or the last active path for deleted objects.
+    """
     schema_: Annotated[StrictStr, Field(alias="schema", title="Schema")]
     """
     The geoscience object schema.
@@ -295,12 +308,15 @@ class ListedObject(CustomBaseModel):
 
 
 class MoveObjectResponse(CustomBaseModel):
-    created_at: Annotated[datetime, Field(title="Created At")]
+    created_at: Annotated[AwareDatetime, Field(title="Created At")]
     created_by: User | None = None
-    deleted_at: Annotated[datetime | None, Field(title="Deleted At")] = None
+    deleted_at: Annotated[AwareDatetime | None, Field(title="Deleted At")] = None
     deleted_by: User | None = None
     etag: Annotated[StrictStr, Field(title="Etag")]
     folder_id: Annotated[UUID | None, Field(title="Folder Id")] = None
+    """
+    The UUID of the object's containing folder in this workspace. Use it with the Folder API to retrieve folder details. For objects deleted explicitly in the geoscience object service, this is the workspace's recycle-bin root ID, not the folder identified by the retained object path.
+    """
     geojson_bounding_box: BoundingBox | None = None
     geojson_bounding_box_from_workspace_crs: Annotated[
         StrictBool, Field(title="Geojson Bounding Box From Workspace Crs")
@@ -309,21 +325,27 @@ class MoveObjectResponse(CustomBaseModel):
     True if the bounding box was calculated using the workspace CRS, else False.
     """
     links: ObjectResponseLinks
-    modified_at: Annotated[datetime, Field(title="Modified At")]
+    modified_at: Annotated[AwareDatetime, Field(title="Modified At")]
     modified_by: User | None = None
     object: GeoscienceObject
     object_id: Annotated[UUID, Field(title="Object Id")]
     object_path: Annotated[StrictStr | None, Field(title="Object Path")] = None
+    """
+    The object's path relative to the workspace root, including its name and without a leading '/'. For active objects, this reflects the current parent folder and object name, even for historical versions. Individually deleted objects retain their last active path for restoration.
+    """
     stage: StageResponse | None = None
     version_id: Annotated[StrictStr, Field(title="Version Id")]
 
 
 class OrgListedObject(CustomBaseModel):
-    created_at: Annotated[datetime, Field(title="Created At")]
+    created_at: Annotated[AwareDatetime, Field(title="Created At")]
     created_by: User | None = None
-    deleted_at: Annotated[datetime | None, Field(title="Deleted At")] = None
+    deleted_at: Annotated[AwareDatetime | None, Field(title="Deleted At")] = None
     deleted_by: User | None = None
     folder_id: Annotated[UUID | None, Field(title="Folder Id")] = None
+    """
+    The UUID of the object's containing folder in this workspace. Use it with the Folder API to retrieve folder details. For objects deleted explicitly in the geoscience object service, this is the workspace's recycle-bin root ID, not the folder identified by the retained object path.
+    """
     geojson_bounding_box: BoundingBox | None = None
     geojson_bounding_box_from_workspace_crs: Annotated[
         StrictBool, Field(title="Geojson Bounding Box From Workspace Crs")
@@ -331,11 +353,14 @@ class OrgListedObject(CustomBaseModel):
     """
     True if the bounding box was calculated using the workspace CRS, else False.
     """
-    modified_at: Annotated[datetime, Field(title="Modified At")]
+    modified_at: Annotated[AwareDatetime, Field(title="Modified At")]
     modified_by: User | None = None
     name: Annotated[StrictStr, Field(title="Name")]
     object_id: Annotated[UUID, Field(title="Object Id")]
     path: Annotated[StrictStr, Field(title="Path")]
+    """
+    The object's containing folder path, with leading and trailing slashes, or '/' for the workspace root. The object name is returned separately in `name`. Reflects the current folder hierarchy for active objects, or the last active path for deleted objects.
+    """
     schema_: Annotated[StrictStr, Field(alias="schema", title="Schema")]
     stage: StageResponse | None = None
     workspace_access: RoleEnum | None = None
@@ -344,12 +369,15 @@ class OrgListedObject(CustomBaseModel):
 
 
 class PostObjectResponse(CustomBaseModel):
-    created_at: Annotated[datetime, Field(title="Created At")]
+    created_at: Annotated[AwareDatetime, Field(title="Created At")]
     created_by: User | None = None
-    deleted_at: Annotated[datetime | None, Field(title="Deleted At")] = None
+    deleted_at: Annotated[AwareDatetime | None, Field(title="Deleted At")] = None
     deleted_by: User | None = None
     etag: Annotated[StrictStr, Field(title="Etag")]
     folder_id: Annotated[UUID | None, Field(title="Folder Id")] = None
+    """
+    The UUID of the object's containing folder in this workspace. Use it with the Folder API to retrieve folder details. For objects deleted explicitly in the geoscience object service, this is the workspace's recycle-bin root ID, not the folder identified by the retained object path.
+    """
     geojson_bounding_box: BoundingBox | None = None
     geojson_bounding_box_from_workspace_crs: Annotated[
         StrictBool, Field(title="Geojson Bounding Box From Workspace Crs")
@@ -358,11 +386,14 @@ class PostObjectResponse(CustomBaseModel):
     True if the bounding box was calculated using the workspace CRS, else False.
     """
     links: ObjectResponseLinks
-    modified_at: Annotated[datetime, Field(title="Modified At")]
+    modified_at: Annotated[AwareDatetime, Field(title="Modified At")]
     modified_by: User | None = None
     object: GeoscienceObject
     object_id: Annotated[UUID | None, Field(title="Object Id")] = None
     object_path: Annotated[StrictStr | None, Field(title="Object Path")] = None
+    """
+    The object's path relative to the workspace root, including its name and without a leading '/'. For active objects, this reflects the current parent folder and object name, even for historical versions. Individually deleted objects retain their last active path for restoration.
+    """
     stage: StageResponse | None = None
     version_id: Annotated[StrictStr, Field(title="Version Id")]
 
