@@ -1077,7 +1077,7 @@ test = [
 
 [[package]]
 name = "evo-objects"
-version = "0.9.0"
+version = "0.10.0"
 source = { editable = "packages/evo-objects" }
 dependencies = [
     { name = "evo-sdk-common", extra = ["jmespath"] },

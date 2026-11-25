@@ -138,6 +138,8 @@ def object_metadata(
         schema_id=schema(schema_id),
         version_id=model.version_id,
         stage=stage_or_none(model.stage),
+        deleted_at=model.deleted_at,
+        deleted_by=user_or_none(model.deleted_by),
     )
 
 
