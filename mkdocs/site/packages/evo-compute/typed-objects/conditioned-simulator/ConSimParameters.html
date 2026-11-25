@@ -39,7 +39,7 @@
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a rel="next" href="ConSimResult.html" class="nav-link">
+                                <a rel="next" href="ConSimQuantileAttribute.html" class="nav-link">
                                     Next <i class="fa fa-arrow-right"></i>
                                 </a>
                             </li>
@@ -140,7 +140,7 @@ the full conditional turning-band simulation workflow.</p>
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">source_attribute</span><span class="p">:</span> <span class="n">AttributeExpression</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">source_attribute</span><span class="p">:</span> <span class="n">ExistingAttributeExpression</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -421,7 +421,7 @@ or an attribute expression such as <code>"locations.attributes[?name=='grade']"<
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">location_wise_quantiles</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">location_wise_quantiles</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">QuantileFloat</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -441,7 +441,7 @@ or an attribute expression such as <code>"locations.attributes[?name=='grade']"<
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">probability_above_cutoff</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">probability_above_cutoff</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">FiniteFloat</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -461,7 +461,7 @@ or an attribute expression such as <code>"locations.attributes[?name=='grade']"<
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">mean_above_cutoff</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">mean_above_cutoff</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">FiniteFloat</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">

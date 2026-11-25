@@ -34,7 +34,7 @@
 
                     <ul class="nav navbar-nav ms-md-auto">
                             <li class="nav-item">
-                                <a rel="prev" href="ConSimParameters.html" class="nav-link">
+                                <a rel="prev" href="ConSimQuantileAttribute.html" class="nav-link">
                                     <i class="fa fa-arrow-left"></i> Previous
                                 </a>
                             </li>
@@ -106,6 +106,26 @@
 
 
 
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.conditioned_simulator.ConSimResult.target" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">target</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">target</span><span class="p">:</span> <span class="n">ConSimTargetResult</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Target grid result metadata.</p>
+
+    </div>
+
+</div>
 
 <div class="doc doc-object doc-attribute">
 
@@ -201,7 +221,67 @@
 
     <div class="doc doc-contents ">
 
-        <p>Ensemble attribute containing saved simulations.</p>
+        <p>Ensemble attribute containing saved block-scale simulations.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.conditioned_simulator.ConSimResult.simulations_normal_score_attribute" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">simulations_normal_score_attribute</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">simulations_normal_score_attribute</span><span class="p">:</span> <span class="n">TaskAttribute</span> <span class="o">|</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Ensemble attribute containing saved block-scale normal-score simulations.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.conditioned_simulator.ConSimResult.point_simulations_attribute" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">point_simulations_attribute</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">point_simulations_attribute</span><span class="p">:</span> <span class="n">TaskAttribute</span> <span class="o">|</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Ensemble attribute containing saved point-scale simulations.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.conditioned_simulator.ConSimResult.point_simulations_normal_score_attribute" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">point_simulations_normal_score_attribute</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">point_simulations_normal_score_attribute</span><span class="p">:</span> <span class="n">TaskAttribute</span> <span class="o">|</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Ensemble attribute containing saved point-scale normal-score simulations.</p>
 
     </div>
 
@@ -222,6 +302,66 @@
     <div class="doc doc-contents ">
 
         <p>Category attribute containing loss calculation results.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.conditioned_simulator.ConSimResult.validation_report" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">validation_report</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">validation_report</span><span class="p">:</span> <span class="n">ConSimValidationReport</span> <span class="o">|</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Validation report metadata, if validation was performed.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.conditioned_simulator.ConSimResult.report_reference" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">report_reference</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">report_reference</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>URL to the generated validation report file, if validation was performed.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.conditioned_simulator.ConSimResult.links" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">links</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">links</span><span class="p">:</span> <span class="n">ConSimLinks</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Links related to the simulation task.</p>
 
     </div>
 

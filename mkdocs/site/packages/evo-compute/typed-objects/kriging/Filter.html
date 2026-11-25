@@ -132,6 +132,35 @@
 
 
 
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.compute.tasks.geostatistics.kriging.Filter.resolve" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">resolve</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">resolve</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">BaseObject</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Filter</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Resolve bare attribute names in this filter against <code>obj.attributes</code>.</p>
+<p>Already-constructed JMESPath expressions (containing <code>"["</code>) are preserved unchanged.</p>
+<p>Args:
+    obj: The typed geoscience object whose attributes should be searched.</p>
+<p>Returns:
+    A new :class:<code>Filter</code> with bare attribute names resolved to JMESPath expressions.</p>
+<p>Raises:
+    TypeError: If <em>obj</em> is not a :class:<code>BaseObject</code>.
+    ValueError: If any bare attribute name does not exist on <em>obj</em>, or if a typed
+        attribute in the filter belongs to a different object.</p>
+
+
+    </div>
+
+</div>
+
 
 
   </div>
