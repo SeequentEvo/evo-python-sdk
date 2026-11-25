@@ -135,7 +135,14 @@ class MeshSelectorWidget(widgets.VBox):
 
     def _toggle_all(self, change):
         for checkbox in self.mesh_checkboxes:
-            checkbox.value = change["new"]
+            checkbox.unobserve(self._on_selection_changed, names="value")
+        try:
+            for checkbox in self.mesh_checkboxes:
+                checkbox.value = change["new"]
+        finally:
+            for checkbox in self.mesh_checkboxes:
+                checkbox.observe(self._on_selection_changed, names="value")
+            self._on_selection_changed()
 
 
 class TriangleMeshHelper:
