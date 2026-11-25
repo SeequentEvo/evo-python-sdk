@@ -189,7 +189,6 @@ class ChunkedIOManager:
         :param destination: The destination to write data to.
         :param fb: A feedback object for reporting transfer progress.
         """
-        ### fb = NoFeedback if fb is None else IFeedback.adapt(fb, allow_implicit=True)
         if fb is None:
             fb = NoFeedback
         elif not isinstance(fb, IFeedback):

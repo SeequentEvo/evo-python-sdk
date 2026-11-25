@@ -35,8 +35,6 @@ T = TypeVar("T", bound=AccessToken)
 
 
 class _BaseAuthorizer(IAuthorizer, Generic[T]):
-    pi_partial_implementation = True  # Suppress warning about missing interface methods.
-
     def __init__(self, oauth_connector: OAuthConnector, scopes: AnyScopes = EvoScopes.default) -> None:
         """
         :param oauth_connector: The connector to use for fetching tokens.
