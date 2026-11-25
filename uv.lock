@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.11.5"
 resolution-markers = [
     "python_full_version >= '3.14' and sys_platform == 'win32'",
@@ -3043,11 +3043,11 @@ wheels = [
 
 [[package]]
 name = "pure-interface"
-version = "8.3.0"
+version = "8.5.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/3c/10/d07cf934878084245920e032090e7f70cb57c51b14d4e08cd80200d63748/pure_interface-8.3.0.tar.gz", hash = "sha256:7366cb2804527f62ad99d26751e4eafc4a467a26419b6790f26182f54ce6c192", size = 62443, upload-time = "2026-02-15T20:12:58.706Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/86/42/b943ba90a0ad05f1ef233d855add356d030cef2178c489c39650ee05255f/pure_interface-8.5.0.tar.gz", hash = "sha256:a37902c8026e2537d93fbd9c36c365da2fb2f41547a1f21e402058bd2eddd835", size = 64352, upload-time = "2026-08-10T22:46:00.108Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d3/4b/3ea4f98b6a4251531674ee261026953d520e4b4b06bfc4541b0a62dd8867/pure_interface-8.3.0-py3-none-any.whl", hash = "sha256:2b1e099fddcc722ad91caeabe0f9c9e171e451febe3865ca08e3612da343306b", size = 31243, upload-time = "2026-02-15T20:12:56.964Z" },
+    { url = "https://files.pythonhosted.org/packages/b6/03/14862659ecb702b653e63521b941db1ff377fdd0a03535a513dcbab3f858/pure_interface-8.5.0-py3-none-any.whl", hash = "sha256:078eedb0935edc357bc9e5abe944c64a796fc9cc01e0e6a72ae23522b2e3eaff", size = 31662, upload-time = "2026-08-10T22:45:57.876Z" },
 ]
 
 [[package]]
