@@ -103,5 +103,5 @@ For next steps and more information about using Evo APIs directly, see:
 * [`evo-objects`](evo-python-sdk/evo-objects/ObjectAPIClient): Geoscience Object API client
 * [`evo-colormaps`](evo-python-sdk/evo-colormaps/ColormapAPIClient): Colormap API client
 * [`evo-blockmodels`](evo-python-sdk/evo-blockmodels/BlockModelAPIClient): Block Model API client
-* `evo-compute` ([`ComputeClient`](evo-python-sdk/evo-compute/ComputeClient), [`DiscoveryClient`](evo-python-sdk/evo-compute/DiscoveryClient), and [`JobClient`](evo-python-sdk/evo-compute/JobClient)): Compute Tasks API clients
+* `evo-compute` ([`ComputeClient`](evo-python-sdk/evo-compute/ComputeClient), [`TaskJob`](evo-python-sdk/evo-compute/TaskJob), [`DiscoveryClient`](evo-python-sdk/evo-compute/DiscoveryClient), and [`JobClient`](evo-python-sdk/evo-compute/JobClient)): Compute Tasks API clients
 * [Seequent Developer Portal](https://developer.seequent.com/docs/guides/getting-started/quick-start-guide): guides, tutorials, and API references

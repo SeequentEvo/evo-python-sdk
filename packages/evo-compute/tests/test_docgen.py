@@ -49,6 +49,8 @@ class TestTopicDocGen(unittest.TestCase):
     def test_includes_parameters_hydrated_results_and_nested_shapes(self) -> None:
         geostats = self.pages["geostatistics"]
         self.assertIn("await client.geostatistics.declustering.run(", geostats)
+        self.assertIn("await client.geostatistics.declustering.submit(", geostats)
+        self.assertIn(") -> TaskJob[GeostatisticsDeclusteringResult]", geostats)
         self.assertIn("Supported schemas:", geostats)
         self.assertIn("await result.target.load()", geostats)
         self.assertIn("#### Nested Shapes", geostats)
@@ -58,7 +60,9 @@ class TestTopicDocGen(unittest.TestCase):
         geostats = self.pages["geostatistics"]
         self.assertIn("Custom runner: `KrigingOverride`", geostats)
         self.assertIn("await client.geostatistics.kriging.run(", geostats)
+        self.assertIn("await client.geostatistics.kriging.submit(", geostats)
         self.assertIn(") -> KrigingResult", geostats)
+        self.assertIn(") -> TaskJob[KrigingResult]", geostats)
         self.assertIn("`source_filter`", geostats)
         self.assertIn("`diagnostics`", geostats)
         self.assertIn("`await result.to_dataframe()`", geostats)

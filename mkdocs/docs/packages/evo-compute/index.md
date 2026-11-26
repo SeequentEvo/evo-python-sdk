@@ -4,8 +4,9 @@
 
 The `evo-compute` package provides clients for discovering and running compute tasks on Evo:
 
-- **`ComputeClient`** — a discovery-driven async client (`client.<topic>.<task>.run(...)` and `client.arun(...)`) that runs any task advertised in your organization's compute catalogue without requiring a dedicated hand-written task module.
-- **`evo.compute.tasks.run()`** — typed Pydantic parameter models and result helpers for geostatistics workflows, supporting single-task and concurrent batch execution.
+- **`ComputeClient`** — a discovery-driven async client (`client.<topic>.<task>.run(...)`, `submit(...)`, `arun(...)`, and `asubmit(...)`) that runs any task advertised in your organization's compute catalogue without requiring a dedicated hand-written task module.
+- **`TaskJob`** — typed async job handles for non-blocking submission, status checks, cancellation, deferred result hydration, and reopening jobs from saved URLs (`TaskJob.from_url(...)`).
+- **`evo.compute.tasks.run()`** — typed Pydantic parameter models and result helpers for geostatistics workflows, routed concurrently through `ComputeClient`.
 - **`DiscoveryClient` and `JobClient`** — direct access to task catalogue discovery (`TaskResource`) and low-level job submission/polling.
 
 ## Running Any Catalogued Task with `ComputeClient`
@@ -36,11 +37,32 @@ weights_df = await result.target.attribute.to_dataframe()
 
 `ReferenceResolver` automatically converts typed geoscience objects, attributes, file handles, and target attribute slots into the wire references each task's schema declares (and verifies `supported_schemas` unless `check_schemas=False`). Parameters are validated before submission (`validate=True` by default; `deep_validation=True` for full JSON Schema Draft 2020-12 checks, raising `ParameterValidationError` on failure), and output references hydrate into `TaskResult` / `ResultNode` objects supporting `.load()` and `.to_dataframe()`. Tasks with custom SDK runners (such as `client.geostatistics.kriging`, backed by `KrigingOverride`) expose additional cross-field checks, convenience parameters (`source_filter`, `target_filter`, `diagnostics`), and native result wrappers (`KrigingResult`) across both attribute access and `client.arun(...)`.
 
+### Submitting and Managing Jobs with `TaskJob`
+
+Every task also exposes `submit(...)` (and `client.asubmit(...)` by name) to return a `TaskJob` without waiting, and `TaskJob.from_url(...)` to restore a job later from its saved status URL:
+
+```python
+from evo.compute import TaskJob
+
+job = await client.geostatistics.declustering.submit(
+    source=pointset,
+    grid=block_model,
+    target=pointset.attributes["IDW declus"],
+    neighborhood=neighborhood,
+    preview=True,
+)
+progress = await job.status()
+
+# Reopen a saved status URL later and wait for hydrated results
+reopened = await TaskJob.from_url(manager, job.url, preview=True)
+result = await reopened.results()
+```
+
 ### Static Typing and Task Catalogue Reference
 
-`evo-compute` ships a generated static type stub (`evo/compute/engine.pyi`) and `py.typed` marker built from a snapshot of discoverable compute task JSON schemas, giving editors and `mypy` / `pyright` full autocomplete, parameter `TypedDict` checking, and typed `TaskResult` / `ResultNode` hints on `client.<topic>.<task>.run(...)` while keeping runtime execution live.
+`evo-compute` ships a generated static type stub (`evo/compute/engine.pyi`) and `py.typed` marker built from a snapshot of discoverable compute task JSON schemas, giving editors and `mypy` / `pyright` full autocomplete, parameter `TypedDict` checking, and typed `TaskResult` / `ResultNode` / `TaskJob` hints on `client.<topic>.<task>.run(...)` and `submit(...)` while keeping runtime execution live.
 
-In the SDK reference sidebar under **`tasks`**, each topic page (`converter`, `cpt-to-borehole`, `geology`, `geophysics`, `geostatistics`, `geotech`, `isosurfacing`, `rbf`, `utilities`) documents the snapshotted tasks' `run(...)` signatures, accepted SDK input shorthands, nested dictionary/union shapes, and hydrated result loaders. Tasks published to the platform after the snapshot remain callable via `client.<topic>.<task>.run(...)` or `client.arun(topic, task, parameters)`.
+In the SDK reference sidebar under **`tasks`**, each topic page (`converter`, `cpt-to-borehole`, `geology`, `geophysics`, `geostatistics`, `geotech`, `isosurfacing`, `rbf`, `utilities`) documents the snapshotted tasks' `run(...)` and `submit(...)` signatures, accepted SDK input shorthands, nested dictionary/union shapes, and hydrated result loaders. Tasks published to the platform after the snapshot remain callable via `client.<topic>.<task>.run(...)`, `submit(...)`, `arun(...)`, or `asubmit(...)`.
 
 ## Running Typed Geostatistics Tasks
 

@@ -63,7 +63,7 @@ from unittest import IsolatedAsyncioTestCase, mock
 
 from pydantic import ValidationError
 
-from evo.compute import ComputeClient, DiscoveryClient, ParameterValidationError
+from evo.compute import ComputeClient, ParameterValidationError
 from evo.compute.tasks import CreateAttribute, Source, Target
 from evo.compute.tasks.geostatistics.conditioned_simulator import ConSimRunner
 from evo.compute.tasks.geostatistics.declustering import DeclusteringGrid, DeclusteringRunner, DeclusteringSource
@@ -80,11 +80,10 @@ from test_payload_parity import (
     _capture_submit,
     _search,
     _SubmitCaptured,
-    task_spec,
+    runner_catalogue,
 )
 
-#: Where ``JobClient`` is looked up on each path, so submission can be captured there.
-RUNNER_MODULE = "evo.compute.tasks.common.runner"
+#: Direct runners and generic calls now submit through the same engine.
 ENGINE_MODULE = "evo.compute.engine"
 
 
@@ -141,11 +140,12 @@ class BehaviorParityTestCase(IsolatedAsyncioTestCase):
 
     def _catalogue(self, runner_cls):
         """Serve the engine the task's schema, derived from the runner's own parameter model."""
-        return mock.patch.object(DiscoveryClient, "list_tasks", mock.AsyncMock(return_value=[task_spec(runner_cls)]))
+        return runner_catalogue(runner_cls)
 
     async def runner_refusal(self, runner_cls, **inputs: Any) -> Exception:
         """The error the hand-written runner raises for ``inputs``, having submitted nothing."""
-        submit, error = await self._attempt(RUNNER_MODULE, self._runner_call(runner_cls, inputs))
+        with self._catalogue(runner_cls):
+            submit, error = await self._attempt(ENGINE_MODULE, self._runner_call(runner_cls, inputs))
         return self._refused("runner", submit, error)
 
     async def engine_refusal(self, runner_cls, **inputs: Any) -> Exception:
@@ -192,7 +192,8 @@ class BehaviorParityTestCase(IsolatedAsyncioTestCase):
 
     async def assertRunnerAccepts(self, runner_cls, **inputs: Any) -> dict[str, Any]:
         """Require the runner to submit, and return the payload it submitted."""
-        submit, error = await self._attempt(RUNNER_MODULE, self._runner_call(runner_cls, inputs))
+        with self._catalogue(runner_cls):
+            submit, error = await self._attempt(ENGINE_MODULE, self._runner_call(runner_cls, inputs))
         self.assertEqual(1, submit.await_count, f"the runner refused parameters it should have accepted: {error}")
         return submit.await_args.kwargs["parameters"]
 

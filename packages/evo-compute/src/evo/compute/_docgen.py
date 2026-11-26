@@ -228,6 +228,13 @@ def _render_generic_task(task: TaskResource) -> tuple[list[str], str]:
     for p in sig_params:
         lines.append(f"    {p},")
     lines.append(f") -> {stub.return_type}")
+    lines.append("")
+    lines.append(f"await client.{topic_attr}.{task_attr}.submit(")
+    if sig_params != ["**parameters: Any"]:
+        lines.append("    *,")
+    for p in sig_params:
+        lines.append(f"    {p},")
+    lines.append(f") -> TaskJob[{stub.return_type}]")
     lines.append("```")
     lines.append("")
 
@@ -556,7 +563,8 @@ def render_topic_docs(snapshot_dir: Path = DEFAULT_SNAPSHOT_DIR) -> dict[str, st
             f"# {_topic_title(topic)}",
             "",
             f"Discoverable compute tasks in the `{topic}` topic. Call any task below through `ComputeClient` as "
-            f'`await client.{topic_attr}.<task>.run(...)`, or by name via `await client.arun("{topic}", "<task>", parameters)`.',
+            f"`await client.{topic_attr}.<task>.run(...)` (or `submit(...)` for a non-blocking `TaskJob`), or by name via "
+            f'`await client.arun("{topic}", "<task>", parameters)` / `await client.asubmit("{topic}", "<task>", parameters)`.',
             "",
             *_render_shorthands_section("\n".join(blobs)),
             "## Tasks",
