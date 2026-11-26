@@ -36,6 +36,12 @@ weights_df = await result.target.attribute.to_dataframe()
 
 `ReferenceResolver` automatically converts typed geoscience objects, attributes, file handles, and target attribute slots into the wire references each task's schema declares (and verifies `supported_schemas` unless `check_schemas=False`). Parameters are validated before submission (`validate=True` by default; `deep_validation=True` for full JSON Schema Draft 2020-12 checks, raising `ParameterValidationError` on failure), and output references hydrate into `TaskResult` / `ResultNode` objects supporting `.load()` and `.to_dataframe()`.
 
+### Static Typing and Task Catalogue Reference
+
+`evo-compute` ships a generated static type stub (`evo/compute/engine.pyi`) and `py.typed` marker built from a snapshot of discoverable compute task JSON schemas, giving editors and `mypy` / `pyright` full autocomplete, parameter `TypedDict` checking, and typed `TaskResult` / `ResultNode` hints on `client.<topic>.<task>.run(...)` while keeping runtime execution live.
+
+In the SDK reference sidebar under **`tasks`**, each topic page (`converter`, `cpt-to-borehole`, `geology`, `geophysics`, `geostatistics`, `geotech`, `isosurfacing`, `rbf`, `utilities`) documents the snapshotted tasks' `run(...)` signatures, accepted SDK input shorthands, nested dictionary/union shapes, and hydrated result loaders. Tasks published to the platform after the snapshot remain callable via `client.<topic>.<task>.run(...)` or `client.arun(topic, task, parameters)`.
+
 ## Running Typed Geostatistics Tasks
 
 The `run()` function executes typed task parameter models — either a single task or multiple tasks concurrently.

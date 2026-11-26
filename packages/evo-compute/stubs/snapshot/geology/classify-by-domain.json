@@ -1,0 +1,881 @@
+{
+  "display_name": "Classify by domain",
+  "version": "0.1.0",
+  "feature_flag": "geology-preview",
+  "description": "Classifies locations from a source geometry object against an ordered list of domain entries (volumes and surfaces), writing a categorical attribute back to the source object.",
+  "parameters": {
+    "$defs": {
+      "AllOfFilter": {
+        "additionalProperties": false,
+        "description": "A composite filter that passes locations satisfying ALL child filters (AND logic).",
+        "properties": {
+          "type": {
+            "const": "all_of",
+            "description": "Identifies this as an AND composite filter.",
+            "title": "Type"
+          },
+          "filters": {
+            "description": "All of these filters must be satisfied (AND logic).",
+            "items": {
+              "description": "A filter condition or composite filter combining multiple conditions.",
+              "discriminator": "type",
+              "oneOf": [
+                {
+                  "additionalProperties": false,
+                  "description": "A leaf filter condition applied to one attribute of the filtered object.\n\nExactly one operator field must be provided.\n\n- ``in``: Membership test. Provide string category names for\n    ``CategoryAttribute`` objects or integers for integer-coded indices.\n- ``not_in``: Exclusion test.\n- ``equal``, ``not_equal``: Numeric equality/inequality.\n- ``greater_than``, ``greater_than_or_equal_to``, ``less_than``,\n    ``less_than_or_equal_to``: Numeric comparisons on numeric attributes.",
+                  "properties": {
+                    "operator": {
+                      "description": "The filter operator. Use 'in' or 'not_in' for category/membership tests (pair with 'values'). Use 'equal', 'not_equal', 'greater_than', 'greater_than_or_equal_to', 'less_than', or 'less_than_or_equal_to' for numeric comparisons (pair with 'threshold').",
+                      "enum": [
+                        "in",
+                        "not_in",
+                        "equal",
+                        "not_equal",
+                        "greater_than",
+                        "greater_than_or_equal_to",
+                        "less_than",
+                        "less_than_or_equal_to"
+                      ],
+                      "title": "Operator"
+                    },
+                    "values": {
+                      "default": null,
+                      "description": "Category values to match. Required when operator is 'in' or 'not_in'. Use strings for string/category-name attributes; use integers for integer-coded attributes.",
+                      "items": {
+                        "description": "String category name or integer category key to match.",
+                        "title": "Filter Value",
+                        "type": "string"
+                      },
+                      "title": "Values",
+                      "type": [
+                        "array",
+                        "null"
+                      ]
+                    },
+                    "threshold": {
+                      "default": null,
+                      "description": "Numeric threshold for comparison. Required when operator is 'equal', 'not_equal', 'greater_than', 'greater_than_or_equal_to', 'less_than', or 'less_than_or_equal_to'.",
+                      "title": "Threshold",
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "type": {
+                      "const": "condition",
+                      "description": "Identifies this as a leaf filter condition.",
+                      "title": "Type"
+                    },
+                    "attribute": {
+                      "description": "Attribute used to filter locations.",
+                      "reference_to": "attribute",
+                      "title": "Attribute",
+                      "type": "string",
+                      "attribute_from": "/source/object",
+                      "attribute_path": {
+                        "pointset/[>=1.2,<2]": [
+                          "locations.attributes[?attribute_type=='category']",
+                          "locations.attributes[?attribute_type=='scalar']"
+                        ],
+                        "downhole-intervals/[>=1.2,<2]": [
+                          "attributes[?attribute_type=='category']",
+                          "attributes[?attribute_type=='scalar']"
+                        ],
+                        "regular-3d-grid/[>=1.2,<2]": [
+                          "cell_attributes[?attribute_type=='category']",
+                          "cell_attributes[?attribute_type=='scalar']"
+                        ],
+                        "regular-masked-3d-grid/[>=1.2,<2]": [
+                          "cell_attributes[?attribute_type=='category']",
+                          "cell_attributes[?attribute_type=='scalar']"
+                        ],
+                        "tensor-3d-grid/[>=1.2,<2]": [
+                          "cell_attributes[?attribute_type=='category']",
+                          "cell_attributes[?attribute_type=='scalar']"
+                        ],
+                        "block-model/[>=1.0,<2]": [
+                          "attributes[?attribute_type=='Boolean'||attribute_type=='Utf8'||attribute_type=='Int8'||attribute_type=='Int16'||attribute_type=='Int32'||attribute_type=='Int64'||attribute_type=='UInt8'||attribute_type=='UInt16'||attribute_type=='UInt32'||attribute_type=='UInt64']",
+                          "attributes[?attribute_type=='Float64']"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "operator",
+                    "attribute"
+                  ],
+                  "title": "FilterCondition",
+                  "type": "object"
+                },
+                {
+                  "$ref": "#/$defs/AllOfFilter"
+                },
+                {
+                  "$ref": "#/$defs/AnyOfFilter"
+                }
+              ],
+              "title": "Filter Expression"
+            },
+            "title": "Filters",
+            "type": "array"
+          }
+        },
+        "required": [
+          "filters"
+        ],
+        "title": "AllOfFilter",
+        "type": "object"
+      },
+      "AnyOfFilter": {
+        "additionalProperties": false,
+        "description": "A composite filter that passes locations satisfying ANY child filter (OR logic).",
+        "properties": {
+          "type": {
+            "const": "any_of",
+            "description": "Identifies this as an OR composite filter.",
+            "title": "Type"
+          },
+          "filters": {
+            "description": "At least one of these filters must be satisfied (OR logic).",
+            "items": {
+              "description": "A filter condition or composite filter combining multiple conditions.",
+              "discriminator": "type",
+              "oneOf": [
+                {
+                  "additionalProperties": false,
+                  "description": "A leaf filter condition applied to one attribute of the filtered object.\n\nExactly one operator field must be provided.\n\n- ``in``: Membership test. Provide string category names for\n    ``CategoryAttribute`` objects or integers for integer-coded indices.\n- ``not_in``: Exclusion test.\n- ``equal``, ``not_equal``: Numeric equality/inequality.\n- ``greater_than``, ``greater_than_or_equal_to``, ``less_than``,\n    ``less_than_or_equal_to``: Numeric comparisons on numeric attributes.",
+                  "properties": {
+                    "operator": {
+                      "description": "The filter operator. Use 'in' or 'not_in' for category/membership tests (pair with 'values'). Use 'equal', 'not_equal', 'greater_than', 'greater_than_or_equal_to', 'less_than', or 'less_than_or_equal_to' for numeric comparisons (pair with 'threshold').",
+                      "enum": [
+                        "in",
+                        "not_in",
+                        "equal",
+                        "not_equal",
+                        "greater_than",
+                        "greater_than_or_equal_to",
+                        "less_than",
+                        "less_than_or_equal_to"
+                      ],
+                      "title": "Operator"
+                    },
+                    "values": {
+                      "default": null,
+                      "description": "Category values to match. Required when operator is 'in' or 'not_in'. Use strings for string/category-name attributes; use integers for integer-coded attributes.",
+                      "items": {
+                        "description": "String category name or integer category key to match.",
+                        "title": "Filter Value",
+                        "type": "string"
+                      },
+                      "title": "Values",
+                      "type": [
+                        "array",
+                        "null"
+                      ]
+                    },
+                    "threshold": {
+                      "default": null,
+                      "description": "Numeric threshold for comparison. Required when operator is 'equal', 'not_equal', 'greater_than', 'greater_than_or_equal_to', 'less_than', or 'less_than_or_equal_to'.",
+                      "title": "Threshold",
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "type": {
+                      "const": "condition",
+                      "description": "Identifies this as a leaf filter condition.",
+                      "title": "Type"
+                    },
+                    "attribute": {
+                      "description": "Attribute used to filter locations.",
+                      "reference_to": "attribute",
+                      "title": "Attribute",
+                      "type": "string",
+                      "attribute_from": "/source/object",
+                      "attribute_path": {
+                        "pointset/[>=1.2,<2]": [
+                          "locations.attributes[?attribute_type=='category']",
+                          "locations.attributes[?attribute_type=='scalar']"
+                        ],
+                        "downhole-intervals/[>=1.2,<2]": [
+                          "attributes[?attribute_type=='category']",
+                          "attributes[?attribute_type=='scalar']"
+                        ],
+                        "regular-3d-grid/[>=1.2,<2]": [
+                          "cell_attributes[?attribute_type=='category']",
+                          "cell_attributes[?attribute_type=='scalar']"
+                        ],
+                        "regular-masked-3d-grid/[>=1.2,<2]": [
+                          "cell_attributes[?attribute_type=='category']",
+                          "cell_attributes[?attribute_type=='scalar']"
+                        ],
+                        "tensor-3d-grid/[>=1.2,<2]": [
+                          "cell_attributes[?attribute_type=='category']",
+                          "cell_attributes[?attribute_type=='scalar']"
+                        ],
+                        "block-model/[>=1.0,<2]": [
+                          "attributes[?attribute_type=='Boolean'||attribute_type=='Utf8'||attribute_type=='Int8'||attribute_type=='Int16'||attribute_type=='Int32'||attribute_type=='Int64'||attribute_type=='UInt8'||attribute_type=='UInt16'||attribute_type=='UInt32'||attribute_type=='UInt64']",
+                          "attributes[?attribute_type=='Float64']"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "operator",
+                    "attribute"
+                  ],
+                  "title": "FilterCondition",
+                  "type": "object"
+                },
+                {
+                  "$ref": "#/$defs/AllOfFilter"
+                },
+                {
+                  "$ref": "#/$defs/AnyOfFilter"
+                }
+              ],
+              "title": "Filter Expression"
+            },
+            "title": "Filters",
+            "type": "array"
+          }
+        },
+        "required": [
+          "filters"
+        ],
+        "title": "AnyOfFilter",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "description": "Parameters for the classify-by-domain task.",
+    "properties": {
+      "source": {
+        "additionalProperties": false,
+        "description": "Source geometry object whose locations will be classified.",
+        "properties": {
+          "object": {
+            "format": "uri",
+            "reference_to": "geoscience-object",
+            "supported_schemas": [
+              "pointset/[>=1.2,<2]",
+              "block-model/[>=1.0,<2]",
+              "regular-3d-grid/[>=1.2,<2]",
+              "regular-masked-3d-grid/[>=1.2,<2]",
+              "tensor-3d-grid/[>=1.2,<2]",
+              "downhole-intervals/[>=1.2,<2]"
+            ],
+            "type": "string",
+            "description": "The source geometry object whose locations will be classified. Supports pointsets, block models, regular 3D grids, masked 3D grids, tensor 3D grids, and downhole intervals (midpoints).",
+            "title": "Object"
+          },
+          "filter": {
+            "additionalProperties": false,
+            "attribute_from": "1/object",
+            "composite": "filter",
+            "default": null,
+            "description": "Optional filter to restrict which locations are classified. Filtered-out locations are written as null in the output attribute.",
+            "properties": {
+              "where": {
+                "description": "A filter expression defining which locations to include. Use a FilterCondition for a single predicate, AllOfFilter for AND logic, AnyOfFilter for OR logic, or nest them to build compound predicates.",
+                "discriminator": "type",
+                "oneOf": [
+                  {
+                    "additionalProperties": false,
+                    "description": "A leaf filter condition applied to one attribute of the filtered object.\n\nExactly one operator field must be provided.\n\n- ``in``: Membership test. Provide string category names for\n    ``CategoryAttribute`` objects or integers for integer-coded indices.\n- ``not_in``: Exclusion test.\n- ``equal``, ``not_equal``: Numeric equality/inequality.\n- ``greater_than``, ``greater_than_or_equal_to``, ``less_than``,\n    ``less_than_or_equal_to``: Numeric comparisons on numeric attributes.",
+                    "properties": {
+                      "operator": {
+                        "description": "The filter operator. Use 'in' or 'not_in' for category/membership tests (pair with 'values'). Use 'equal', 'not_equal', 'greater_than', 'greater_than_or_equal_to', 'less_than', or 'less_than_or_equal_to' for numeric comparisons (pair with 'threshold').",
+                        "enum": [
+                          "in",
+                          "not_in",
+                          "equal",
+                          "not_equal",
+                          "greater_than",
+                          "greater_than_or_equal_to",
+                          "less_than",
+                          "less_than_or_equal_to"
+                        ],
+                        "title": "Operator"
+                      },
+                      "values": {
+                        "default": null,
+                        "description": "Category values to match. Required when operator is 'in' or 'not_in'. Use strings for string/category-name attributes; use integers for integer-coded attributes.",
+                        "items": {
+                          "description": "String category name or integer category key to match.",
+                          "title": "Filter Value",
+                          "type": "string"
+                        },
+                        "title": "Values",
+                        "type": [
+                          "array",
+                          "null"
+                        ]
+                      },
+                      "threshold": {
+                        "default": null,
+                        "description": "Numeric threshold for comparison. Required when operator is 'equal', 'not_equal', 'greater_than', 'greater_than_or_equal_to', 'less_than', or 'less_than_or_equal_to'.",
+                        "title": "Threshold",
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "type": {
+                        "const": "condition",
+                        "description": "Identifies this as a leaf filter condition.",
+                        "title": "Type"
+                      },
+                      "attribute": {
+                        "description": "Attribute used to filter locations.",
+                        "reference_to": "attribute",
+                        "title": "Attribute",
+                        "type": "string",
+                        "attribute_from": "1/object",
+                        "attribute_path": {
+                          "pointset/[>=1.2,<2]": [
+                            "locations.attributes[?attribute_type=='category']",
+                            "locations.attributes[?attribute_type=='scalar']"
+                          ],
+                          "downhole-intervals/[>=1.2,<2]": [
+                            "attributes[?attribute_type=='category']",
+                            "attributes[?attribute_type=='scalar']"
+                          ],
+                          "regular-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='category']",
+                            "cell_attributes[?attribute_type=='scalar']"
+                          ],
+                          "regular-masked-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='category']",
+                            "cell_attributes[?attribute_type=='scalar']"
+                          ],
+                          "tensor-3d-grid/[>=1.2,<2]": [
+                            "cell_attributes[?attribute_type=='category']",
+                            "cell_attributes[?attribute_type=='scalar']"
+                          ],
+                          "block-model/[>=1.0,<2]": [
+                            "attributes[?attribute_type=='Boolean'||attribute_type=='Utf8'||attribute_type=='Int8'||attribute_type=='Int16'||attribute_type=='Int32'||attribute_type=='Int64'||attribute_type=='UInt8'||attribute_type=='UInt16'||attribute_type=='UInt32'||attribute_type=='UInt64']",
+                            "attributes[?attribute_type=='Float64']"
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "operator",
+                      "attribute"
+                    ],
+                    "title": "FilterCondition",
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/AllOfFilter"
+                  },
+                  {
+                    "$ref": "#/$defs/AnyOfFilter"
+                  }
+                ],
+                "title": "Where"
+              }
+            },
+            "required": [
+              "where"
+            ],
+            "title": "Filter",
+            "type": [
+              "object",
+              "null"
+            ],
+            "attribute_path": {
+              "pointset/[>=1.2,<2]": [
+                "locations.attributes[?attribute_type=='category']",
+                "locations.attributes[?attribute_type=='scalar']"
+              ],
+              "downhole-intervals/[>=1.2,<2]": [
+                "attributes[?attribute_type=='category']",
+                "attributes[?attribute_type=='scalar']"
+              ],
+              "regular-3d-grid/[>=1.2,<2]": [
+                "cell_attributes[?attribute_type=='category']",
+                "cell_attributes[?attribute_type=='scalar']"
+              ],
+              "regular-masked-3d-grid/[>=1.2,<2]": [
+                "cell_attributes[?attribute_type=='category']",
+                "cell_attributes[?attribute_type=='scalar']"
+              ],
+              "tensor-3d-grid/[>=1.2,<2]": [
+                "cell_attributes[?attribute_type=='category']",
+                "cell_attributes[?attribute_type=='scalar']"
+              ],
+              "block-model/[>=1.0,<2]": [
+                "attributes[?attribute_type=='Boolean'||attribute_type=='Utf8'||attribute_type=='Int8'||attribute_type=='Int16'||attribute_type=='Int32'||attribute_type=='Int64'||attribute_type=='UInt8'||attribute_type=='UInt16'||attribute_type=='UInt32'||attribute_type=='UInt64']",
+                "attributes[?attribute_type=='Float64']"
+              ]
+            }
+          }
+        },
+        "required": [
+          "object"
+        ],
+        "title": "Source",
+        "type": "object"
+      },
+      "domain_entries": {
+        "description": "Ordered list of domain entries defining the classification hierarchy. Locations are evaluated against entries in order; the first matching entry wins. Each entry is either a VolumeEntry (inside/outside a closed mesh) or a SurfaceEntry (above/below an open mesh surface).",
+        "items": {
+          "description": "A single domain entry defining a mesh object, spatial relationship, and the category label to assign.",
+          "discriminator": "type",
+          "oneOf": [
+            {
+              "additionalProperties": false,
+              "description": "A domain entry that classifies locations as inside or outside a closed mesh volume.",
+              "properties": {
+                "type": {
+                  "const": "volume",
+                  "description": "Discriminator identifying this as a volume (inside/outside) entry.",
+                  "title": "Type"
+                },
+                "domain": {
+                  "discriminator": "type",
+                  "oneOf": [
+                    {
+                      "additionalProperties": false,
+                      "description": "A standalone triangle mesh domain.",
+                      "properties": {
+                        "type": {
+                          "const": "mesh",
+                          "description": "Discriminator identifying a standalone triangle mesh domain.",
+                          "title": "Type"
+                        },
+                        "object": {
+                          "description": "Standalone triangle mesh used as the domain.",
+                          "format": "uri",
+                          "reference_to": "geoscience-object",
+                          "supported_schemas": [
+                            "triangle-mesh/[>=2.0,<3]"
+                          ],
+                          "title": "Triangle Mesh Object",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "object"
+                      ],
+                      "title": "MeshDomainObject",
+                      "type": "object"
+                    },
+                    {
+                      "additionalProperties": false,
+                      "description": "A named volume or surface within a geological-model-meshes object.",
+                      "properties": {
+                        "type": {
+                          "const": "gmm",
+                          "description": "Discriminator identifying a geological-model-meshes domain.",
+                          "title": "Type"
+                        },
+                        "object": {
+                          "description": "Object containing the named domain.",
+                          "format": "uri",
+                          "reference_to": "geoscience-object",
+                          "supported_schemas": [
+                            "geological-model-meshes/[>=2.0,<3]"
+                          ],
+                          "title": "Geological Model Meshes Object",
+                          "type": "string"
+                        },
+                        "name": {
+                          "description": "Name of the volume or surface within the geological-model-meshes object.",
+                          "title": "Name",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "object",
+                        "name"
+                      ],
+                      "title": "GMMDomainObject",
+                      "type": "object"
+                    }
+                  ],
+                  "description": "A closed triangle mesh, or a named volume within a geological-model-meshes object. When a triangle mesh is provided it must be closed; otherwise an error is raised at runtime.",
+                  "title": "Domain"
+                },
+                "relationship": {
+                  "description": "Spatial relationship: 'inside' matches locations enclosed by the volume; 'outside' matches the rest.",
+                  "enum": [
+                    "inside",
+                    "outside"
+                  ],
+                  "title": "Relationship"
+                },
+                "category": {
+                  "description": "Category label assigned to locations matching this entry.",
+                  "title": "Category",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "type",
+                "domain",
+                "relationship",
+                "category"
+              ],
+              "title": "VolumeEntry",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "description": "A domain entry that classifies locations as above or below an open mesh surface.",
+              "properties": {
+                "type": {
+                  "const": "surface",
+                  "description": "Discriminator identifying this as a surface (above/below) entry.",
+                  "title": "Type"
+                },
+                "domain": {
+                  "discriminator": "type",
+                  "oneOf": [
+                    {
+                      "additionalProperties": false,
+                      "description": "A standalone triangle mesh domain.",
+                      "properties": {
+                        "type": {
+                          "const": "mesh",
+                          "description": "Discriminator identifying a standalone triangle mesh domain.",
+                          "title": "Type"
+                        },
+                        "object": {
+                          "description": "Standalone triangle mesh used as the domain.",
+                          "format": "uri",
+                          "reference_to": "geoscience-object",
+                          "supported_schemas": [
+                            "triangle-mesh/[>=2.0,<3]"
+                          ],
+                          "title": "Triangle Mesh Object",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "object"
+                      ],
+                      "title": "MeshDomainObject",
+                      "type": "object"
+                    },
+                    {
+                      "additionalProperties": false,
+                      "description": "A named volume or surface within a geological-model-meshes object.",
+                      "properties": {
+                        "type": {
+                          "const": "gmm",
+                          "description": "Discriminator identifying a geological-model-meshes domain.",
+                          "title": "Type"
+                        },
+                        "object": {
+                          "description": "Object containing the named domain.",
+                          "format": "uri",
+                          "reference_to": "geoscience-object",
+                          "supported_schemas": [
+                            "geological-model-meshes/[>=2.0,<3]"
+                          ],
+                          "title": "Geological Model Meshes Object",
+                          "type": "string"
+                        },
+                        "name": {
+                          "description": "Name of the volume or surface within the geological-model-meshes object.",
+                          "title": "Name",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "object",
+                        "name"
+                      ],
+                      "title": "GMMDomainObject",
+                      "type": "object"
+                    }
+                  ],
+                  "description": "An open triangle mesh surface, or a named surface within a geological-model-meshes object. When a triangle mesh is provided it must NOT be closed; otherwise an error is raised at runtime.",
+                  "title": "Domain"
+                },
+                "relationship": {
+                  "description": "Spatial relationship: 'above' matches locations with a positive Z distance to the surface; 'below' matches the other side.",
+                  "enum": [
+                    "above",
+                    "below"
+                  ],
+                  "title": "Relationship"
+                },
+                "category": {
+                  "description": "Category label assigned to locations matching this entry.",
+                  "title": "Category",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "type",
+                "domain",
+                "relationship",
+                "category"
+              ],
+              "title": "SurfaceEntry",
+              "type": "object"
+            }
+          ],
+          "title": "Domain Entry"
+        },
+        "minItems": 1,
+        "title": "Domain Entries",
+        "type": "array"
+      },
+      "output": {
+        "additionalProperties": false,
+        "description": "Output attribute configuration.",
+        "properties": {
+          "attribute": {
+            "description": "Target category attribute on the source object. Provide a bare attribute path (e.g. \"attributes\") to create a new attribute, or a filtered expression (e.g. \"attributes[?id=='uuid'] | [0]\") to replace an existing one.",
+            "oneOf": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "operation": {
+                    "const": "create",
+                    "description": "The operation to perform on the attribute.",
+                    "title": "Operation"
+                  },
+                  "name": {
+                    "description": "The name of the attribute to create.",
+                    "title": "Name",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "operation",
+                  "name"
+                ],
+                "type": "object"
+              },
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "operation": {
+                    "const": "update",
+                    "description": "The operation to perform on the attribute.",
+                    "title": "Operation"
+                  },
+                  "reference": {
+                    "attribute_from": "3/source/object",
+                    "attribute_path": {
+                      "block-model/[>=1.0,<2]": [
+                        "attributes[?attribute_type=='Boolean'||attribute_type=='Utf8'||attribute_type=='Int8'||attribute_type=='Int16'||attribute_type=='Int32'||attribute_type=='Int64'||attribute_type=='UInt8'||attribute_type=='UInt16'||attribute_type=='UInt32'||attribute_type=='UInt64']"
+                      ],
+                      "downhole-intervals/[>=1.2,<2]": [
+                        "attributes[?attribute_type=='category']"
+                      ],
+                      "pointset/[>=1.2,<2]": [
+                        "locations.attributes[?attribute_type=='category']"
+                      ],
+                      "regular-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='category']"
+                      ],
+                      "regular-masked-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='category']"
+                      ],
+                      "tensor-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='category']"
+                      ]
+                    },
+                    "description": "Reference to an existing attribute to update.",
+                    "reference_to": "attribute",
+                    "title": "Reference",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "operation",
+                  "reference"
+                ],
+                "type": "object"
+              }
+            ],
+            "target": "attribute",
+            "title": "Output Attribute"
+          },
+          "background_label": {
+            "default": "background",
+            "description": "Category label assigned to locations that do not match any domain entry.",
+            "title": "Background Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "attribute"
+        ],
+        "title": "Output",
+        "type": "object"
+      }
+    },
+    "required": [
+      "source",
+      "domain_entries",
+      "output"
+    ],
+    "title": "Parameters",
+    "type": "object"
+  },
+  "results": {
+    "additionalProperties": false,
+    "description": "Results of the classify-by-domain task.",
+    "properties": {
+      "source": {
+        "additionalProperties": false,
+        "description": "The source object updated with the domain classification attribute.",
+        "output": "geoscience-object",
+        "properties": {
+          "reference": {
+            "description": "Reference to a geoscience object.",
+            "format": "uri",
+            "reference_to": "geoscience-object",
+            "supported_schemas": [
+              "pointset/[>=1.2,<2]",
+              "block-model/[>=1.0,<2]",
+              "regular-3d-grid/[>=1.2,<2]",
+              "regular-masked-3d-grid/[>=1.2,<2]",
+              "tensor-3d-grid/[>=1.2,<2]",
+              "downhole-intervals/[>=1.2,<2]"
+            ],
+            "title": "Reference",
+            "type": "string"
+          },
+          "name": {
+            "description": "The name of the geoscience object.",
+            "title": "Name",
+            "type": "string"
+          },
+          "description": {
+            "description": "The description of the geoscience object.",
+            "title": "Description",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "schema_id": {
+            "description": "The ID of the Geoscience Object schema.",
+            "title": "Schema ID",
+            "type": "string"
+          },
+          "attribute": {
+            "additionalProperties": false,
+            "description": "The domain classification attribute added to the source object.",
+            "output": "attribute",
+            "properties": {
+              "reference": {
+                "attribute_from": "2/reference",
+                "attribute_path": {
+                  "block-model/[>=1.0,<2]": [
+                    "attributes[?attribute_type=='Boolean'||attribute_type=='Utf8'||attribute_type=='Int8'||attribute_type=='Int16'||attribute_type=='Int32'||attribute_type=='Int64'||attribute_type=='UInt8'||attribute_type=='UInt16'||attribute_type=='UInt32'||attribute_type=='UInt64']"
+                  ],
+                  "downhole-intervals/[>=1.2,<2]": [
+                    "attributes[?attribute_type=='category']"
+                  ],
+                  "pointset/[>=1.2,<2]": [
+                    "locations.attributes[?attribute_type=='category']"
+                  ],
+                  "regular-3d-grid/[>=1.2,<2]": [
+                    "cell_attributes[?attribute_type=='category']"
+                  ],
+                  "regular-masked-3d-grid/[>=1.2,<2]": [
+                    "cell_attributes[?attribute_type=='category']"
+                  ],
+                  "tensor-3d-grid/[>=1.2,<2]": [
+                    "cell_attributes[?attribute_type=='category']"
+                  ]
+                },
+                "description": "Reference to the attribute in the geoscience object.",
+                "reference_to": "attribute",
+                "title": "Reference",
+                "type": "string"
+              },
+              "name": {
+                "description": "The name of the output attribute.",
+                "title": "Name",
+                "type": "string"
+              }
+            },
+            "required": [
+              "reference",
+              "name"
+            ],
+            "title": "Attribute",
+            "type": "object"
+          }
+        },
+        "required": [
+          "reference",
+          "name",
+          "description",
+          "schema_id",
+          "attribute"
+        ],
+        "type": "object",
+        "title": "Source"
+      },
+      "summary": {
+        "additionalProperties": false,
+        "description": "Classification summary statistics.",
+        "properties": {
+          "total": {
+            "description": "Total number of locations evaluated.",
+            "minimum": 0,
+            "title": "Total",
+            "type": "integer"
+          },
+          "categories": {
+            "description": "Per-category location counts, including the background label.",
+            "items": {
+              "additionalProperties": false,
+              "description": "Location count for a single category.",
+              "properties": {
+                "name": {
+                  "description": "Category label.",
+                  "title": "Name",
+                  "type": "string"
+                },
+                "count": {
+                  "description": "Number of locations assigned this label.",
+                  "minimum": 0,
+                  "title": "Count",
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "name",
+                "count"
+              ],
+              "title": "CategoryCount",
+              "type": "object"
+            },
+            "title": "Categories",
+            "type": "array"
+          }
+        },
+        "required": [
+          "total",
+          "categories"
+        ],
+        "title": "Summary",
+        "type": "object"
+      }
+    },
+    "required": [
+      "source",
+      "summary"
+    ],
+    "title": "Results",
+    "type": "object"
+  }
+}

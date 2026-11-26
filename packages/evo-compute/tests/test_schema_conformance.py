@@ -69,6 +69,17 @@ class TestSchemaAnnotationConformance(unittest.TestCase):
                     offenders[f"{fixture}:{task.name}"] = unknown
         self.assertEqual({}, offenders, f"unknown schema annotations found: {offenders}")
 
+    def test_snapshot_schemas_use_only_known_annotations(self) -> None:
+        """Every committed task schema in the offline stub snapshot must use known annotations."""
+        from evo.compute._stubgen import DEFAULT_SNAPSHOT_DIR, load_snapshot
+
+        tasks = load_snapshot(DEFAULT_SNAPSHOT_DIR)
+        self.assertTrue(tasks, "snapshot directory contained no tasks")
+        offenders = {
+            f"{task.topic}.{task.name}": unknown for task in tasks if (unknown := _unknown_keys_for_task(task))
+        }
+        self.assertEqual({}, offenders, f"unknown schema annotations in snapshot: {offenders}")
+
     def test_unknown_annotation_is_flagged(self) -> None:
         schema = {
             "type": "object",

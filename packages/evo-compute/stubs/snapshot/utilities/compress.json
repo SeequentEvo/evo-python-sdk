@@ -1,0 +1,104 @@
+{
+  "display_name": "Compress",
+  "version": "1.1.0",
+  "feature_flag": "utilities-preview",
+  "description": "Downloads a set of files referenced by File API URLs, bundles them into a single archive (ZIP or TAR with gzip/bzip2/xz compression), uploads the archive back to the File API, and returns a downloadable reference to it.",
+  "parameters": {
+    "additionalProperties": false,
+    "description": "Parameters for the compress compute task.",
+    "properties": {
+      "files": {
+        "description": "File API references (URLs) for the files to include in the archive.",
+        "items": {
+          "description": "File API reference (URL) for a file to include in the archive.",
+          "format": "uri",
+          "reference_to": "file",
+          "title": "Input File",
+          "type": "string"
+        },
+        "minItems": 1,
+        "title": "Input Files",
+        "type": "array"
+      },
+      "destination": {
+        "description": "File API reference (path- or id-based URL) specifying where the resulting archive should be uploaded.",
+        "format": "uri",
+        "reference_to": "file",
+        "title": "Destination",
+        "type": "string"
+      },
+      "output_name": {
+        "default": "download.zip",
+        "description": "Friendly name of the resulting archive returned in the task results.",
+        "title": "Output Name",
+        "type": "string"
+      },
+      "archive_format": {
+        "description": "Archive/compression format: 'zip' (default), 'zip-stored', 'tar', 'tar.gz', 'tar.bz2', or 'tar.xz'.",
+        "enum": [
+          "zip",
+          "zip-stored",
+          "tar",
+          "tar.gz",
+          "tar.bz2",
+          "tar.xz"
+        ],
+        "title": "Archive Format",
+        "default": "zip"
+      },
+      "compression_level": {
+        "default": null,
+        "description": "Compression level (0-9), higher means smaller output but slower. Applies to 'zip', 'tar.gz', 'tar.bz2', and 'tar.xz'. Not supported for 'zip-stored' and 'tar'. Defaults to the format's default level.",
+        "maximum": 9,
+        "minimum": 0,
+        "title": "Compression Level",
+        "type": [
+          "integer",
+          "null"
+        ]
+      }
+    },
+    "required": [
+      "files",
+      "destination"
+    ],
+    "title": "CompressParameters",
+    "type": "object"
+  },
+  "results": {
+    "additionalProperties": false,
+    "description": "Results for the compress compute task.",
+    "properties": {
+      "output": {
+        "additionalProperties": false,
+        "output": "file",
+        "properties": {
+          "reference": {
+            "description": "Reference to a file.",
+            "format": "uri",
+            "reference_to": "file",
+            "title": "File Reference",
+            "type": "string"
+          },
+          "name": {
+            "description": "The name of the file, typically the terminal segment of the path.",
+            "title": "File Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reference",
+          "name"
+        ],
+        "type": "object",
+        "description": "Reference to the uploaded archive, which can be downloaded via the File API.",
+        "title": "Archive"
+      }
+    },
+    "required": [
+      "output"
+    ],
+    "title": "CompressResults",
+    "type": "object"
+  }
+}
