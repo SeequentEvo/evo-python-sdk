@@ -22,7 +22,7 @@ from evo.common.test_tools import ORG as TEST_ORG
 from evo.common.test_tools import TestWithConnector
 
 from data import load_test_data
-from evo.compute import ComputeClient
+from evo.compute import ComputeClient, ParameterValidationError
 
 
 def _task(topic: str, name: str, properties: dict[str, Any], required: list[str] | None = None) -> dict[str, Any]:
@@ -152,13 +152,13 @@ class TestComputeClient(TestWithConnector):
             ),
         ]
         with self.catalogue_response(), self.mock_job_client() as submit:
-            with self.assertRaisesRegex(TypeError, r"mesh_tools\.export\.run\(\):.*'from'"):
+            with self.assertRaisesRegex(ParameterValidationError, r"mesh_tools\.export\.run\(\):.*'from'"):
                 await self.client.mesh_tools.export.run()
-            with self.assertRaisesRegex(TypeError, r"mesh_tools\.export\.run\(\):.*'bogus'"):
+            with self.assertRaisesRegex(ParameterValidationError, r"mesh_tools\.export\.run\(\):.*'bogus'"):
                 await self.client.mesh_tools.export.run(**{"from": "mesh-1", "bogus": 1})
-            with self.assertRaisesRegex(TypeError, r"mesh-tools\.merge\.run\(\):.*'user-info'"):
+            with self.assertRaisesRegex(ParameterValidationError, r"mesh-tools\.merge\.run\(\):.*'user-info'"):
                 await self.client.arun("mesh-tools", "merge", {"user_info": "b"})
-            with self.assertRaisesRegex(TypeError, r"mesh-tools\.merge\.run\(\):.*'bogus'"):
+            with self.assertRaisesRegex(ParameterValidationError, r"mesh-tools\.merge\.run\(\):.*'bogus'"):
                 await self.client.arun("mesh-tools", "merge", {"user-info": "a", "bogus": 1})
 
         submit.assert_not_awaited()
@@ -245,22 +245,24 @@ class TestComputeClient(TestWithConnector):
                 await self.client.geostatistics.does_not_exist.run()
         self.assertIn("declustering", str(ctx.exception))
 
-    async def test_missing_required_parameter_raises_type_error(self) -> None:
+    async def test_missing_required_parameter_raises_validation_error(self) -> None:
         """A missing required parameter is rejected before submission."""
         with self.catalogue_response(), self.mock_job_client() as submit:
-            with self.assertRaises(TypeError) as ctx:
+            with self.assertRaises(ParameterValidationError) as ctx:
                 await self.client.geostatistics.declustering.run()
         self.assertIn("source", str(ctx.exception))
         submit.assert_not_awaited()
 
-    async def test_unexpected_parameter_raises_type_error(self) -> None:
+    async def test_unexpected_parameter_raises_validation_error(self) -> None:
         """An unknown keyword argument is rejected, and the error names the task."""
         with self.catalogue_response(), self.mock_job_client() as submit:
-            with self.assertRaises(TypeError) as ctx:
+            with self.assertRaises(ParameterValidationError) as ctx:
                 await self.client.geostatistics.declustering.run(source="obj-1", bogus=1)
 
         self.assertIn("geostatistics.declustering.run():", str(ctx.exception))
         self.assertIn("bogus", str(ctx.exception))
+        # Binding failures populate ``errors`` too, so callers never have to parse the message.
+        self.assertEqual(["got an unexpected keyword argument 'bogus'"], ctx.exception.errors)
         submit.assert_not_awaited()
 
     # -- progressive ergonomics (cache-backed, no forced discovery) -------- #
