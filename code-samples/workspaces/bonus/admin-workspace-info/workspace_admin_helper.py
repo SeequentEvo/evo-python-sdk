@@ -38,12 +38,20 @@ from evo.common.exceptions import ForbiddenException
 from evo.files import FileAPIClient
 from evo.files.data import FileMetadata
 from evo.notebooks._consts import DEFAULT_DISCOVERY_URL
-from evo.notebooks._helpers import build_img_widget
+from evo.notebooks.assets import get as get_asset
 from evo.objects import ObjectAPIClient
 from evo.objects.data import ObjectMetadata
 from evo.workspaces import User, Workspace, WorkspaceAPIClient
 from evo.workspaces import parse as _parse
 from evo.workspaces.endpoints.api import AdminApi, LicenseAccessApi
+
+
+def build_img_widget(filename: str) -> widgets.Image:
+    return widgets.Image(
+        value=get_asset(filename).read_bytes(),
+        format="png",
+        layout=widgets.Layout(max_height="26px", margin="3px", align_self="center"),
+    )
 
 
 class WorkspaceAdminHelper:

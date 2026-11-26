@@ -12,7 +12,9 @@
 from __future__ import annotations
 
 import copy
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Iterator, Sequence
+from contextlib import contextmanager
+from logging import Logger
 from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias
 
 if TYPE_CHECKING:
@@ -23,6 +25,19 @@ if TYPE_CHECKING:
 
 class EvoClientException(Exception):
     """The base exception class for all Evo client exceptions."""
+
+
+@contextmanager
+def error_context(context: str, *, logger: Logger) -> Iterator[None]:
+    """Re-raise the original exception with a note, or log context on Python 3.10."""
+    try:
+        yield
+    except Exception as exc:
+        if hasattr(exc, "add_note"):
+            exc.add_note(context)
+        else:
+            logger.error(context)
+        raise
 
 
 _Condition: TypeAlias = type[Exception] | tuple[type[Exception], ...] | Callable[[Exception], bool]
@@ -331,7 +346,7 @@ class CustomTypedError(BaseTypedError):
 
         :return: The concrete implementation of the requested type.
         """
-        if type_id is None:
+        if not isinstance(type_id, str):
             return DefaultTypedError
 
         for defined_type_id, error_type in CustomTypedError.__CONCRETE_TYPES.items():
@@ -385,6 +400,7 @@ class GeneralizedTypedError(BaseTypedError):
 
     Generalized error types must subclass GeneralizedTypedError and define the class attribute `STATUS_CODE`, which will
     be used to map service error codes to the corresponding generalization.
+    Subclasses that inherit `STATUS_CODE` do not replace the registered generalization.
 
     This mechanism allows specific error codes to be treated consistently, regardless of service implementation.
     """
@@ -397,8 +413,9 @@ class GeneralizedTypedError(BaseTypedError):
     @classmethod
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
-        status_code = getattr(cls, "STATUS_CODE")
-        GeneralizedTypedError.__GENERALIZED_TYPES[status_code] = cls
+        status_code = cls.STATUS_CODE
+        if "STATUS_CODE" in cls.__dict__:
+            GeneralizedTypedError.__GENERALIZED_TYPES[status_code] = cls
 
     @staticmethod
     def from_status_code(status_code: int) -> type[GeneralizedTypedError] | None:

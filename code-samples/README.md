@@ -5,7 +5,7 @@ Welcome to the Evo Python SDK code samples! This directory contains comprehensiv
 ## 📋 Prerequisites
 
 - **Evo app**: You need a [registered app](https://developer.seequent.com/my-apps)
-- **Python**: Version 3.10 or higher
+- **Python**: Version 3.11.5 or higher
 - **Jupyter Environment**: JupyterLab, VS Code, or another Jupyter notebook editor
 
 ## 🚀 Quick start
@@ -200,6 +200,7 @@ Start with the [Block Model SDK tutorials](blockmodels/README.md), which provide
 - `sdk/01-create-and-query-regular-block-model.ipynb` - Create a regular block model, add columns, and query its data
 - `sdk/02-transform-existing-block-model-attribute.ipynb` - Transform an existing block model attribute and publish the result as a new attribute
 - `sdk/03-block-model-reports.ipynb` - Create resource-estimation reports from a block model
+- `sdk/04-column-groups.ipynb` - Organize block model columns into groups
 - `api/block-model-api-reference-workflows.ipynb` - Advanced direct API reference for debugging and unsupported workflows
 
 The SDK tutorials use high-level Evo interfaces with PyArrow integration. The API reference shows raw service requests, responses, and asynchronous job handling when direct control is required.
@@ -268,7 +269,7 @@ Advanced file processing:
 
 If you encounter issues:
 1. Check that you've completed the authentication setup.
-2. Verify your Python version (3.10+).
+2. Verify your Python version (3.11.5+).
 3. Ensure all requirements are installed.
 4. Visit the [Seequent Community](https://community.seequent.com/group/19-evo) for support.
 5. Check the [GitHub issues](https://github.com/SeequentEvo/evo-python-sdk/issues) for known problems.

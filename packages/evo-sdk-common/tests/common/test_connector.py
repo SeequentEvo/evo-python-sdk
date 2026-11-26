@@ -29,6 +29,7 @@ from evo.common.exceptions import (
     DefaultTypedError,
     EvoAPIException,
     ForbiddenException,
+    GeneralizedTypedError,
     GoneException,
     NotFoundException,
     UnauthorizedException,
@@ -1090,6 +1091,80 @@ class TestAPIConnector(TestWithConnector):
 
             with self.assertRaises(DefaultTypedError):
                 await self._parse_response(expected_type=_ResponseType200, response=mock_response)
+
+    @parameterized.expand(
+        [
+            ("compatible_bad_request", 400, None),
+            ("incompatible_forbidden", 403, ForbiddenException),
+            ("unmapped_status", 422, None),
+        ]
+    )
+    async def test_custom_error_preserves_generalised_catch_compatibility(
+        self, _name: str, status: int, expected_type: type[Exception] | None
+    ) -> None:
+        with self.__temp_register_custom_error():
+
+            class CustomValidationError(CustomTypedError, BadRequestException):
+                TYPE_ID = "/errors/validation"
+
+            self.assertIs(BadRequestException, GeneralizedTypedError.from_status_code(400))
+            response = MockResponse(
+                status_code=status,
+                content=json.dumps({"type": "https://unittest.test/errors/validation", "title": "Invalid data"}),
+            )
+            with self.assertRaises(expected_type or CustomValidationError) as cm:
+                await self._parse_response(expected_type=_ResponseType200, response=response)
+            self.assertIs(type(cm.exception), expected_type or CustomValidationError)
+            if status == 400:
+                self.assertIsInstance(cm.exception, BadRequestException)
+
+    async def test_incompatible_custom_error_does_not_override_bad_request(self) -> None:
+        with self.__temp_register_custom_error():
+
+            class CustomValidationError(CustomTypedError):
+                TYPE_ID = "/errors/validation"
+
+            response = MockResponse(
+                status_code=400,
+                content=json.dumps({"type": "https://unittest.test/errors/validation", "title": "Invalid data"}),
+            )
+            with self.assertRaises(BadRequestException) as cm:
+                await self._parse_response(expected_type=_ResponseType200, response=response)
+            self.assertIs(type(cm.exception), BadRequestException)
+
+    async def test_explicit_error_response_type_is_preserved(self) -> None:
+        with self.__temp_register_custom_error():
+
+            class CustomValidationError(CustomTypedError, BadRequestException):
+                TYPE_ID = "/errors/validation"
+
+            class ExplicitBadRequest(BadRequestException):
+                pass
+
+            self.transport.request.return_value = MockResponse(
+                status_code=400,
+                content=json.dumps({"type": "https://unittest.test/errors/validation", "title": "Invalid data"}),
+            )
+            with self.assertRaises(ExplicitBadRequest) as cm:
+                await self.connector.call_api(
+                    method=RequestMethod.GET, resource_path="", response_types_map={"400": ExplicitBadRequest}
+                )
+            self.assertIs(type(cm.exception), ExplicitBadRequest)
+            self.assertIs(BadRequestException, GeneralizedTypedError.from_status_code(400))
+
+    @parameterized.expand(
+        [
+            (f"{status}_{index}", status, value)
+            for status in (400, 422)
+            for index, value in enumerate((None, 42, {}, []))
+        ]
+    )
+    async def test_malformed_type_does_not_mask_service_errors(self, _name: str, status: int, value: object) -> None:
+        response = MockResponse(status_code=status, content=json.dumps({"type": value, "title": "Invalid data"}))
+        expected = BadRequestException if status == 400 else DefaultTypedError
+        with self.assertRaises(expected) as cm:
+            await self._parse_response(expected_type=_ResponseType200, response=response)
+        self.assertIs(type(cm.exception), expected)
 
     def test_duplicate_custom_typed_error(self) -> None:
         def create_duplicate_custom_error_handle() -> None:

@@ -21,7 +21,7 @@ For more information on using the Geoscience Object API, see the [Geoscience Obj
 
 
 This code is generated from the OpenAPI specification for Geoscience Object API.
-API version: 1.21.0
+API version: 1.26.0
 """
 
 from evo.common.connector import APIConnector
@@ -61,9 +61,9 @@ class MetadataApi:
 
         Update metadata for a geoscience object version. If a version is not specified, the latest version of the object will be used. Setting the metadata property to `null` will remove the metadata from the object version.
 
-        :param object_id:
+        :param object_id: UUID of a geoscience object.
             Format: `uuid`
-            Example: `'object_id_example'`
+            Example: `'355fa5a6-f37d-11ed-93c1-00155d19a71b'`
         :param org_id: The customer's organisation ID
             Format: `uuid`
             Example: `'b208a6c9-6881-4b97-b02d-acb5d81299bb'`

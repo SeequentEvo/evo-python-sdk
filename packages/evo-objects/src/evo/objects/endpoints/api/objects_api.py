@@ -21,7 +21,7 @@ For more information on using the Geoscience Object API, see the [Geoscience Obj
 
 
 This code is generated from the OpenAPI specification for Geoscience Object API.
-API version: 1.21.0
+API version: 1.26.0
 """
 
 from evo.common.connector import APIConnector
@@ -125,9 +125,9 @@ class ObjectsApi:
 
         Delete a geoscience object by UUID. Deleting an object to this endpoint will soft delete the existing object with a corresponding UUID. Note that the value of the `uuid` field in the object must match the value in the URL path.
 
-        :param object_id:
+        :param object_id: UUID of a geoscience object.
             Format: `uuid`
-            Example: `'object_id_example'`
+            Example: `'355fa5a6-f37d-11ed-93c1-00155d19a71b'`
         :param org_id: The customer's organisation ID
             Format: `uuid`
             Example: `'b208a6c9-6881-4b97-b02d-acb5d81299bb'`
@@ -446,9 +446,9 @@ class ObjectsApi:
 
         List specific versions of a Geoscience Object. The response will include all the versions specified in `version_ids` field of the request body. If one or more of the version ids are not found for the geoscience object a 404 error will be returned.
 
-        :param object_id:
+        :param object_id: UUID of a geoscience object.
             Format: `uuid`
-            Example: `'object_id_example'`
+            Example: `'355fa5a6-f37d-11ed-93c1-00155d19a71b'`
         :param org_id: The customer's organisation ID
             Format: `uuid`
             Example: `'b208a6c9-6881-4b97-b02d-acb5d81299bb'`
@@ -545,7 +545,7 @@ class ObjectsApi:
         :param deleted: (optional) When true, only objects that have been deleted will be returned
             Example: `True`
         :param order_by: (optional) A comma separated list of fields to order by, where the default sort order is ascending. To specify the sort order, prefix the field name with either `asc:` or `desc:` for ascending or descending respectively. Field names can either be arbitrary, representing a field nested inside the data, or one of the following known sort fields: `author`, `created_at`, `created_by`, `deleted_at`, `modified_at`, `modified_by`, `object_name`
-            Example: `'order_by=name,desc:created_by,asc:object.a.b.c'`
+            Example: `'object_name,desc:created_by,asc:object.a.b.c'`
         :param author: (optional) (deprecated, use `created_by`) The profile ID that you want to filter by
             Example: `['00000000-0000-0000-0000-000000000000']`
         :param created_by: (optional) The UUID of the user that created an object
@@ -556,7 +556,7 @@ class ObjectsApi:
             Example: `['00000000-0000-0000-0000-000000000000']`
         :param modified_at: (optional)  A date or dates (max 2) to filter objects by. Dates may contain operator prefixes, in the form `<operator>:<datetime>`. The following operators are available (`lt`=less than, `lte`=less than or equal to, `gt`=greater than, `gte`=greater than or equal to). If you omit the operator, then it is assumed the operator is 'equal to'. In this case you may only supply one date. The dates must also be in a valid ISO 8601 format. Dates may include a UTC offset. If the offset is omitted, the timezone is assumed to be UTC.
             Example: `['gte:2023-03-10T22:56:53Z']`
-        :param object_name: (optional) The name of the object to filter on. For backwards compatibility, when no operators are supplied, this will perform a case sensitive prefix match of the object file name. The query `object_name=gold` will match an object with the name `goldcolumns.json`. Providing an operator will query over the entire path to and including the file name.
+        :param object_name: (optional) The name of the object to filter on. For backwards compatibility, when no operators are supplied, this will perform a case sensitive prefix match of the object file name. The query `object_name=gold` will match an object with the name `goldcolumns.json`. Providing an operator will query over the file name.
             Example: `['object.json']`
         :param schema_id: (optional) The type of schema you want to filter by.
             Example: `['/objects/variogram/0.1.0/variogram.schema.json']`
@@ -662,7 +662,6 @@ class ObjectsApi:
         offset: int | None = None,
         limit: int | None = None,
         deleted: bool | None = None,
-        permitted_workspaces_only: bool | None = None,
         order_by: str | None = None,
         created_by: list[str] | None = None,
         created_at: list[str] | None = None,
@@ -689,10 +688,8 @@ class ObjectsApi:
             Example: `5000`
         :param deleted: (optional) When true, only objects that have been deleted will be returned
             Example: `True`
-        :param permitted_workspaces_only: (optional) Only return objects in workspaces the user is permitted to access.
-            Example: `True`
         :param order_by: (optional) A comma separated list of fields to order by, where the default sort order is ascending. To specify the sort order, prefix the field name with either `asc:` or `desc:` for ascending or descending respectively. Field names can either be arbitrary, representing a field nested inside the data, or one of the following known sort fields: `created_at`, `created_by`, `modified_at`, `modified_by`, `object_name`, `deleted_at`
-            Example: `'order_by=name,desc:created_by,asc:object.a.b.c'`
+            Example: `'object_name,desc:created_by,asc:object.a.b.c'`
         :param created_by: (optional) The UUID of the user that created an object
             Example: `['00000000-0000-0000-0000-000000000000']`
         :param created_at: (optional)  A date or dates (max 2) to filter objects by. Dates may contain operator prefixes, in the form `<operator>:<datetime>`. The following operators are available (`lt`=less than, `lte`=less than or equal to, `gt`=greater than, `gte`=greater than or equal to). If you omit the operator, then it is assumed the operator is 'equal to'. In this case you may only supply one date. The dates must also be in a valid ISO 8601 format. Dates may include a UTC offset. If the offset is omitted, the timezone is assumed to be UTC.
@@ -701,7 +698,7 @@ class ObjectsApi:
             Example: `['00000000-0000-0000-0000-000000000000']`
         :param modified_at: (optional)  A date or dates (max 2) to filter objects by. Dates may contain operator prefixes, in the form `<operator>:<datetime>`. The following operators are available (`lt`=less than, `lte`=less than or equal to, `gt`=greater than, `gte`=greater than or equal to). If you omit the operator, then it is assumed the operator is 'equal to'. In this case you may only supply one date. The dates must also be in a valid ISO 8601 format. Dates may include a UTC offset. If the offset is omitted, the timezone is assumed to be UTC.
             Example: `['gte:2023-03-10T22:56:53Z']`
-        :param object_name: (optional) The name of the object to filter on. For backwards compatibility, when no operators are supplied, this will perform a case sensitive prefix match of the object file name. The query `object_name=gold` will match an object with the name `goldcolumns.json`. Providing an operator will query over the entire path to and including the file name.
+        :param object_name: (optional) The name of the object to filter on. For backwards compatibility, when no operators are supplied, this will perform a case sensitive prefix match of the object file name. The query `object_name=gold` will match an object with the name `goldcolumns.json`. Providing an operator will query over the file name.
             Example: `['object.json']`
         :param schema_id: (optional) The type of schema you want to filter by.
             Example: `['/objects/variogram/0.1.0/variogram.schema.json']`
@@ -741,8 +738,6 @@ class ObjectsApi:
             _query_params["limit"] = limit
         if deleted is not None:
             _query_params["deleted"] = deleted
-        if permitted_workspaces_only is not None:
-            _query_params["permitted_workspaces_only"] = permitted_workspaces_only
         if order_by is not None:
             _query_params["order_by"] = order_by
         if created_by is not None:
@@ -799,6 +794,81 @@ class ObjectsApi:
             request_timeout=request_timeout,
         )
 
+    async def move_object_by_id(
+        self,
+        object_id: str,
+        org_id: str,
+        workspace_id: str,
+        move_object_request: MoveObjectRequest,  # noqa: F405
+        additional_headers: dict[str, str] | None = None,
+        request_timeout: int | float | tuple[int | float, int | float] | None = None,
+    ) -> MoveObjectResponse:  # noqa: F405
+        """Move or rename a geoscience object
+
+        Move and/or rename an object without creating a new version. Omitted or null fields are unchanged. An empty JSON object or an unchanged destination returns 204 without changing modification metadata. The object must exist and must not be deleted. Provide just `name` to only rename the object. Provide just `folder_path` and/or `folder_id` to only move the object. Providing both `folder_path` and `folder_id` allows for extra validation of the target folder. Providing either or both folder fields and name field allows for simultaneous move and rename. A real change updates modified_at and modified_by and returns the object, without a versions array.
+
+        :param object_id: UUID of a geoscience object.
+            Format: `uuid`
+            Example: `'355fa5a6-f37d-11ed-93c1-00155d19a71b'`
+        :param org_id: The customer's organisation ID
+            Format: `uuid`
+            Example: `'b208a6c9-6881-4b97-b02d-acb5d81299bb'`
+        :param workspace_id:
+            Format: `uuid`
+            Example: `'032806a8-dcd7-11ed-8d5c-00155d8f28b5'`
+        :param move_object_request:
+            Example: `endpoints.MoveObjectRequest()`
+        :param additional_headers: (optional) Additional headers to send with the request.
+        :param request_timeout: (optional) Timeout setting for this request. If one number is provided, it will be the
+            total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.
+
+        :return: Returns the result object.
+
+        :raise evo.common.exceptions.BadRequestException: If the server responds with HTTP status 400.
+        :raise evo.common.exceptions.UnauthorizedException: If the server responds with HTTP status 401.
+        :raise evo.common.exceptions.ForbiddenException: If the server responds with HTTP status 403.
+        :raise evo.common.exceptions.NotFoundException: If the server responds with HTTP status 404.
+        :raise evo.common.exceptions.BaseTypedError: If the server responds with any other HTTP status between
+            400 and 599, and the body of the response contains a descriptive `type` parameter.
+        :raise evo.common.exceptions.EvoAPIException: If the server responds with any other HTTP status between 400
+            and 599, and the body of the response does not contain a `type` parameter.
+        :raise evo.common.exceptions.UnknownResponseError: For other HTTP status codes with no corresponding response
+            type in `response_types_map`.
+        """
+        # Prepare the path parameters.
+        _path_params = {
+            "object_id": object_id,
+            "org_id": org_id,
+            "workspace_id": workspace_id,
+        }
+
+        # Prepare the header parameters.
+        _header_params = {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        } | get_header_metadata(__name__)
+        if additional_headers is not None:
+            _header_params.update(additional_headers)
+
+        # Define the collection formats.
+        _collection_formats = {}
+
+        _response_types_map = {
+            "200": MoveObjectResponse,  # noqa: F405
+            "204": EmptyResponse,
+        }
+
+        return await self.connector.call_api(
+            method=RequestMethod.PATCH,
+            resource_path="/geoscience-object/orgs/{org_id}/workspaces/{workspace_id}/objects/{object_id}",
+            path_params=_path_params,
+            header_params=_header_params,
+            body=move_object_request,
+            collection_formats=_collection_formats,
+            response_types_map=_response_types_map,
+            request_timeout=request_timeout,
+        )
+
     async def post_objects(
         self,
         org_id: str,
@@ -811,7 +881,7 @@ class ObjectsApi:
     ) -> PostObjectResponse:  # noqa: F405
         """Create a geoscience object
 
-        Create or update a geoscience object.  Upload a geoscience object based on the schema element. Geoscience objects can be stored hierarchically,  by providing the path to the object, including the object name, in the request URL.  A detailed list of the available object schemas can be found in  Seequent's [evo-schemas](https://github.com/seequentevo/evo-schemas) repository.   The submitted properties will be validated against the specified schema properties.  To create a new object, upload it to a unique path with the UUID field set to `null`. The response will contain a reflection of the uploaded object with a newly assigned object ID. This can be used for future requests to update the object.  If a version of the geoscience object already exists at the specified path a new version will be created. To move or rename an existing object, simply upload a new version of it (with the same UUID) to a new, unique path or file name.  Note that every upload of an object is considered a new version, even if no changes have been made.  If required, the object should be compressed, currently gzip compression is supported. Set header `Content-Encoding: gzip` if the content is compressed and `Accept-Encoding: gzip` to receive compressed content.
+        Create or update a geoscience object.  Upload a geoscience object based on the schema element. Geoscience objects can be stored hierarchically, by providing the path to the object, including the object name, in the request URL. A detailed list of the available object schemas can be found in Seequent's [evo-schemas](https://github.com/seequentevo/evo-schemas) repository.  The submitted properties will be validated against the specified schema properties.  To create a new object, upload it to a unique path with the UUID field set to `null`. The response will contain a reflection of the uploaded object with a newly assigned object ID. This can be used for future requests to update the object.  If a version of the geoscience object already exists at the specified path a new version will be created. To move or rename an existing object, simply upload a new version of it (with the same UUID) to a new, unique path or file name.  Note that every upload of an object is considered a new version, even if no changes have been made.  If required, the object should be compressed, currently gzip compression is supported. Set header `Content-Encoding: gzip` if the content is compressed and `Accept-Encoding: gzip` to receive compressed content.
 
         :param org_id: The customer's organisation ID
             Format: `uuid`

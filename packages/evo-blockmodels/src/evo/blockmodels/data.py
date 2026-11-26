@@ -124,7 +124,7 @@ class ColumnMetadataUpdate(CustomBaseModel):
     group: str | None = None
     """The qualified title of the new group for the column (a bare title for a top-level group, or
     segments joined by ``▸`` for a nested group). Send ``""`` to move the column out of any group.
-    Omit this field to leave the column's current group unchanged."""
+    Omit this field (or leave it ``None``) to leave the column's current group unchanged."""
 
     tags: dict[str, Any] | None = None
     """Replacement tags for the column. Send a populated object to replace the column's tags

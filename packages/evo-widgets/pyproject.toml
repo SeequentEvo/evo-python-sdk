@@ -1,8 +1,8 @@
 [project]
 name = "evo-widgets"
 description = "Widgets and presentation layer for Evo SDK - HTML rendering and IPython formatters for Jupyter notebooks"
-version = "0.2.3"
-requires-python = ">=3.10"
+version = "0.4.0"
+requires-python = ">=3.11.5"
 license-files = ["LICENSE.md"]
 dynamic = ["readme"]
 authors = [
@@ -10,7 +10,7 @@ authors = [
 ]
 
 dependencies = [
-    "evo-sdk-common>=0.5.25",
+    "evo-sdk-common>=0.6.0",
     "ipython>=7.0.0",
 ]
 

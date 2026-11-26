@@ -106,7 +106,7 @@ class TestHelperFunctions(unittest.TestCase):
         obj.metadata.environment = MagicMock()
         obj.metadata.environment.org_id = "org-123"
         obj.metadata.environment.workspace_id = "ws-456"
-        obj.metadata.environment.hub_url = "https://test.api.seequent.com"
+        obj.metadata.environment.hub_url = "https://api.test.evo.seequent.net"
         obj.metadata.id = "12345-abcd"
 
         name, title_links, rows = _get_base_metadata(obj)
@@ -129,7 +129,7 @@ class TestHelperFunctions(unittest.TestCase):
         obj.metadata.environment = MagicMock()
         obj.metadata.environment.org_id = "org-123"
         obj.metadata.environment.workspace_id = "ws-456"
-        obj.metadata.environment.hub_url = "https://test.api.seequent.com"
+        obj.metadata.environment.hub_url = "https://api.test.evo.seequent.net"
         obj.metadata.id = "12345-abcd"
 
         extra_links = [("BlockSync", "https://blocksync.seequent.com/test")]
@@ -151,7 +151,7 @@ class TestHelperFunctions(unittest.TestCase):
         obj.metadata.environment = MagicMock()
         obj.metadata.environment.org_id = "org-123"
         obj.metadata.environment.workspace_id = "ws-456"
-        obj.metadata.environment.hub_url = "https://test.api.seequent.com"
+        obj.metadata.environment.hub_url = "https://api.test.evo.seequent.net"
         obj.metadata.id = "12345-abcd"
 
         name, title_links, rows = _get_base_metadata(obj)
@@ -179,7 +179,7 @@ class TestFormatBaseObject(unittest.TestCase):
         obj.metadata.environment = MagicMock()
         obj.metadata.environment.org_id = "org-123"
         obj.metadata.environment.workspace_id = "ws-456"
-        obj.metadata.environment.hub_url = "https://test.api.seequent.com"
+        obj.metadata.environment.hub_url = "https://api.test.evo.seequent.net"
         obj.metadata.id = "12345-abcd"
 
         html = format_base_object(obj)
@@ -211,7 +211,7 @@ class TestFormatBaseObject(unittest.TestCase):
         obj.metadata.environment = MagicMock()
         obj.metadata.environment.org_id = "org-123"
         obj.metadata.environment.workspace_id = "ws-456"
-        obj.metadata.environment.hub_url = "https://test.api.seequent.com"
+        obj.metadata.environment.hub_url = "https://api.test.evo.seequent.net"
         obj.metadata.id = "12345"
 
         html = format_base_object(obj)
@@ -234,7 +234,7 @@ class TestFormatBaseObject(unittest.TestCase):
         obj.metadata.environment = MagicMock()
         obj.metadata.environment.org_id = "org-123"
         obj.metadata.environment.workspace_id = "ws-456"
-        obj.metadata.environment.hub_url = "https://test.api.seequent.com"
+        obj.metadata.environment.hub_url = "https://api.test.evo.seequent.net"
         obj.metadata.id = "12345"
 
         html = format_base_object(obj)
@@ -256,7 +256,7 @@ class TestFormatBaseObject(unittest.TestCase):
         obj.metadata.environment = MagicMock()
         obj.metadata.environment.org_id = "org-123"
         obj.metadata.environment.workspace_id = "ws-456"
-        obj.metadata.environment.hub_url = "https://test.api.seequent.com"
+        obj.metadata.environment.hub_url = "https://api.test.evo.seequent.net"
         obj.metadata.id = "12345"
 
         html = format_base_object(obj)
@@ -284,7 +284,7 @@ class TestFormatBaseObject(unittest.TestCase):
         obj.metadata.environment = MagicMock()
         obj.metadata.environment.org_id = "org-123"
         obj.metadata.environment.workspace_id = "ws-456"
-        obj.metadata.environment.hub_url = "https://test.api.seequent.com"
+        obj.metadata.environment.hub_url = "https://api.test.evo.seequent.net"
         obj.metadata.id = "12345"
 
         html = format_base_object(obj)
@@ -324,7 +324,7 @@ class TestFormatBaseObject(unittest.TestCase):
         obj.metadata.environment = MagicMock()
         obj.metadata.environment.org_id = "org-123"
         obj.metadata.environment.workspace_id = "ws-456"
-        obj.metadata.environment.hub_url = "https://test.api.seequent.com"
+        obj.metadata.environment.hub_url = "https://api.test.evo.seequent.net"
         obj.metadata.id = "12345"
 
         html = format_base_object(obj)
@@ -446,7 +446,7 @@ class TestFormatVariogram(unittest.TestCase):
         obj.metadata.environment = MagicMock()
         obj.metadata.environment.org_id = "org-123"
         obj.metadata.environment.workspace_id = "ws-456"
-        obj.metadata.environment.hub_url = "https://test.api.seequent.com"
+        obj.metadata.environment.hub_url = "https://api.test.evo.seequent.net"
         obj.metadata.id = defaults["uuid"]
 
         return obj
@@ -729,7 +729,7 @@ class TestFormatBlockModel(unittest.TestCase):
         inner_obj.metadata.environment = MagicMock()
         inner_obj.metadata.environment.org_id = "org-123"
         inner_obj.metadata.environment.workspace_id = "ws-456"
-        inner_obj.metadata.environment.hub_url = "https://test.api.seequent.com"
+        inner_obj.metadata.environment.hub_url = "https://api.test.evo.seequent.net"
         inner_obj.metadata.id = defaults["uuid"]
         obj._obj = inner_obj
 
@@ -884,11 +884,13 @@ class TestFormatReport(HtmlFixtureTestCase):
             "columns": [],
             "categories": [],
             "last_result_created_at": None,
+            "volume_filter": None,
         }
         defaults.update(kwargs)
 
         obj = MagicMock()
         obj.id = defaults["id"]
+        obj.volume_filter = defaults["volume_filter"]
         obj.name = defaults["name"]
         obj.revision = defaults["revision"]
         obj._block_model_uuid = defaults["block_model_uuid"]
@@ -906,7 +908,7 @@ class TestFormatReport(HtmlFixtureTestCase):
         env = MagicMock()
         env.org_id = "org-123"
         env.workspace_id = "ws-456"
-        env.hub_url = "https://test.api.seequent.com"
+        env.hub_url = "https://api.test.evo.seequent.net"
         context.get_environment.return_value = env
         obj._context = context
 
@@ -1008,6 +1010,17 @@ class TestFormatReport(HtmlFixtureTestCase):
 
         self.assert_html_matches_fixture(html, "report_non_string_category_values")
 
+    def test_formats_report_with_volume_filter(self):
+        """A report's volume filter is shown with its relation, mesh and version."""
+        volume_filter = SimpleNamespace(
+            mesh_id=UUID("11111111-2222-3333-4444-555555555555"), relation="OUTSIDE", mesh_version_id=None
+        )
+
+        html = format_report(self._create_mock_report(volume_filter=volume_filter))
+
+        self.assertIn("Volume filter:", html)
+        self.assertIn("Outside mesh 11111111-2222-3333-4444-555555555555 (version: latest)", html)
+
 
 class TestFormatReportResult(HtmlFixtureTestCase):
     """Tests for the format_report_result function."""
@@ -1020,10 +1033,14 @@ class TestFormatReportResult(HtmlFixtureTestCase):
             "dataframe": pd.DataFrame(
                 {"cutoff": [0.0, 0.5], "Domain": ["ore", "waste"], "Tonnage": [1000.0, 500.0], "Au Grade": [2.5, 1.2]}
             ),
+            "volume_filter": None,
+            "warnings": [],
         }
         defaults.update(kwargs)
 
         obj = MagicMock()
+        obj.volume_filter = defaults["volume_filter"]
+        obj.warnings = defaults["warnings"]
         obj.version_id = defaults["version_id"]
         obj.created_at = defaults["created_at"]
         obj.to_dataframe.return_value = defaults["dataframe"]
@@ -1066,6 +1083,23 @@ class TestFormatReportResult(HtmlFixtureTestCase):
 
         self.assert_html_matches_fixture(html, "report_result_escaped")
 
+    def test_formats_report_result_volume_filter_and_warnings(self):
+        """The volume filter used for the run and any warnings are shown, with warnings escaped."""
+        volume_filter = SimpleNamespace(
+            mesh_id=UUID("11111111-2222-3333-4444-555555555555"), relation="INSIDE", mesh_version_id="42"
+        )
+        warnings = [
+            {"warning_type": "MESH_FILTER_EXCLUDED_ALL_BLOCKS", "message": "<b>No blocks</b>", "occurrences": 1}
+        ]
+
+        html = format_report_result(self._create_mock_report_result(volume_filter=volume_filter, warnings=warnings))
+
+        self.assertIn("Volume filter: Inside mesh 11111111-2222-3333-4444-555555555555 (version: 42)", html)
+        self.assertIn("Warnings:", html)
+        self.assertIn("MESH_FILTER_EXCLUDED_ALL_BLOCKS", html)
+        self.assertIn("&lt;b&gt;No blocks&lt;/b&gt;", html)
+        self.assertNotIn("Warnings:", format_report_result(self._create_mock_report_result()))
+
 
 class TestFormatTaskResult(HtmlFixtureTestCase):
     """Tests for the format_task_result_with_target function."""
@@ -1078,7 +1112,7 @@ class TestFormatTaskResult(HtmlFixtureTestCase):
             "schema_str": "/objects/regular-3d-grid/1.0.0/regular-3d-grid.schema.json",
             "attribute_name": "kriged_grade",
             "target_reference": (
-                "https://350mt.api.seequent.com/geoscience-object"
+                "https://api.350mt.evo.seequent.net/geoscience-object"
                 "/orgs/12345678-1234-1234-1234-123456789abc"
                 "/workspaces/87654321-4321-4321-4321-abcdef123456"
                 "/objects/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
@@ -1206,7 +1240,7 @@ class TestFormatTaskResult(HtmlFixtureTestCase):
 @unittest.skipUnless(importlib.util.find_spec("evo.compute"), "evo-compute is not installed")
 class TestRealTaskResults(HtmlFixtureTestCase):
     REFERENCE = (
-        "https://350mt.api.seequent.com/geoscience-object"
+        "https://api.350mt.evo.seequent.net/geoscience-object"
         "/orgs/12345678-1234-1234-1234-123456789abc"
         "/workspaces/87654321-4321-4321-4321-abcdef123456"
         "/objects/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
@@ -1470,7 +1504,7 @@ class TestFormatTaskResultList(unittest.TestCase):
             "attribute_name": "kriged_grade",
             "schema_str": "/objects/regular-3d-grid/1.0.0/regular-3d-grid.schema.json",
             "target_reference": (
-                "https://350mt.api.seequent.com/geoscience-object"
+                "https://api.350mt.evo.seequent.net/geoscience-object"
                 "/orgs/12345678-1234-1234-1234-123456789abc"
                 "/workspaces/87654321-4321-4321-4321-abcdef123456"
                 "/objects/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
@@ -1566,7 +1600,7 @@ class TestGetTaskResultPortalUrl(unittest.TestCase):
         result = MagicMock()
         result.target = MagicMock()
         result.target.reference = (
-            "https://350mt.api.seequent.com/geoscience-object"
+            "https://api.350mt.evo.seequent.net/geoscience-object"
             "/orgs/12345678-1234-1234-1234-123456789abc"
             "/workspaces/87654321-4321-4321-4321-abcdef123456"
             "/objects/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"

@@ -21,6 +21,7 @@ from uuid import UUID
 
 from pydantic import (
     Field,
+    RootModel,
     StrictBool,
     StrictFloat,
     StrictInt,
@@ -28,6 +29,23 @@ from pydantic import (
 )
 
 from .._model_config import CustomBaseModel
+
+
+class CoordinateItem(RootModel[list[StrictFloat]]):
+    root: Annotated[list[StrictFloat], Field(max_length=2, min_length=2, title="GeoJSON Point")]
+    """
+    A WGS84 coordinate pair [longitude, latitude]. The longitude must come before the latitude, in order to be considered a valid GeoJSON Point
+    """
+
+
+class Coordinate(RootModel[list[CoordinateItem]]):
+    root: Annotated[
+        list[CoordinateItem],
+        Field(max_length=5, min_length=5, title="GeoJSON LinearRing"),
+    ]
+    """
+    A list of GeoJSON points defining a closed linear ring. In order for the ring to be closed, the last point must be the same as the first point. Only a rectangle is supported, so the ring must be defined by 5 points.
+    """
 
 
 class DataDownloadUrl(CustomBaseModel):
@@ -100,6 +118,39 @@ class MetadataUpdateBody(CustomBaseModel):
     stage_id: Annotated[UUID | None, Field(title="Stage Id")] = None
 
 
+class MoveObjectRequest(CustomBaseModel):
+    """
+    Optional destination fields; omitted or null values leave that field unchanged.
+    """
+
+    folder_id: Annotated[
+        UUID | None,
+        Field(examples=["442daf92-4fde-4c0a-986e-cd231db22eb7"], title="Folder Id"),
+    ] = None
+    """
+    Optional ID of an existing folder to move this object to.
+            The indicated folder must not be deleted and in the same workspace as the object being moved.
+            Can optionally be combined with `folder_path` for extra validation of the target folder.
+            Omit both `folder_id` and `folder_path` to keep the current folder.
+    """
+    folder_path: Annotated[StrictStr | None, Field(examples=["/my/folder/path"], title="Folder Path")] = None
+    """
+    Optional path to a folder to move this object to. Must start with a '/'.
+            Must not end with a '/' (unless the target is the root folder).
+            Does not contain the name of the object itself.
+            Folder names are 1-100 UTF-8 characters with a total max folder_path length of 1520 characters.
+            Will create all intermediate folders if they do not exist.
+            If `folder_id` is also provided then `folder_path` must match the path of the folder specified by `folder_id`.
+            Omit both `folder_id` and `folder_path` to keep the current folder.
+    """
+    name: Annotated[StrictStr | None, Field(examples=["grid_collection.json"], title="Name")] = None
+    """
+    Optional new name for the object. Names are 1-256 characters, must end in .json,
+            and cannot contain path separators or double dots, start with a dot, or start/end with whitespace.
+            Omit to keep the current name.
+    """
+
+
 class ObjectResponseLinks(CustomBaseModel):
     data: Annotated[list[DataDownloadUrl], Field(title="Data")]
     download: Annotated[StrictStr, Field(title="Download")]
@@ -160,12 +211,7 @@ class BoundingBox(CustomBaseModel):
     """
 
     coordinates: Annotated[
-        list[
-            Annotated[
-                list[Annotated[list[StrictFloat], Field(max_length=2, min_length=2, title="GeoJSON Point")]],
-                Field(max_length=5, min_length=5, title="GeoJSON LinearRing"),
-            ]
-        ],
+        list[Coordinate],
         Field(max_length=1, min_length=1, title="GeoJSON Polygon Coordinates"),
     ]
     """
@@ -193,10 +239,14 @@ class GetObjectResponse(CustomBaseModel):
     deleted_at: Annotated[datetime | None, Field(title="Deleted At")] = None
     deleted_by: User | None = None
     etag: Annotated[StrictStr, Field(title="Etag")]
+    folder_id: Annotated[UUID | None, Field(title="Folder Id")] = None
     geojson_bounding_box: BoundingBox | None = None
     geojson_bounding_box_from_workspace_crs: Annotated[
-        StrictBool | None, Field(title="Geojson Bounding Box From Workspace Crs")
-    ] = None
+        StrictBool, Field(title="Geojson Bounding Box From Workspace Crs")
+    ]
+    """
+    True if the bounding box was calculated using the workspace CRS, else False.
+    """
     links: ObjectResponseLinks
     modified_at: Annotated[datetime, Field(title="Modified At")]
     modified_by: User | None = None
@@ -222,10 +272,14 @@ class ListedObject(CustomBaseModel):
     deleted_at: Annotated[datetime | None, Field(title="Deleted At")] = None
     deleted_by: User | None = None
     etag: Annotated[StrictStr, Field(title="Etag")]
+    folder_id: Annotated[UUID | None, Field(title="Folder Id")] = None
     geojson_bounding_box: BoundingBox | None = None
     geojson_bounding_box_from_workspace_crs: Annotated[
-        StrictBool | None, Field(title="Geojson Bounding Box From Workspace Crs")
-    ] = None
+        StrictBool, Field(title="Geojson Bounding Box From Workspace Crs")
+    ]
+    """
+    True if the bounding box was calculated using the workspace CRS, else False.
+    """
     links: ListedObjectLinks
     modified_at: Annotated[datetime, Field(title="Modified At")]
     modified_by: User | None = None
@@ -240,16 +294,48 @@ class ListedObject(CustomBaseModel):
     version_id: Annotated[StrictStr, Field(title="Version Id")]
 
 
+class MoveObjectResponse(CustomBaseModel):
+    created_at: Annotated[datetime, Field(title="Created At")]
+    created_by: User | None = None
+    deleted_at: Annotated[datetime | None, Field(title="Deleted At")] = None
+    deleted_by: User | None = None
+    etag: Annotated[StrictStr, Field(title="Etag")]
+    folder_id: Annotated[UUID | None, Field(title="Folder Id")] = None
+    geojson_bounding_box: BoundingBox | None = None
+    geojson_bounding_box_from_workspace_crs: Annotated[
+        StrictBool, Field(title="Geojson Bounding Box From Workspace Crs")
+    ]
+    """
+    True if the bounding box was calculated using the workspace CRS, else False.
+    """
+    links: ObjectResponseLinks
+    modified_at: Annotated[datetime, Field(title="Modified At")]
+    modified_by: User | None = None
+    object: GeoscienceObject
+    object_id: Annotated[UUID, Field(title="Object Id")]
+    object_path: Annotated[StrictStr | None, Field(title="Object Path")] = None
+    stage: StageResponse | None = None
+    version_id: Annotated[StrictStr, Field(title="Version Id")]
+
+
 class OrgListedObject(CustomBaseModel):
     created_at: Annotated[datetime, Field(title="Created At")]
     created_by: User | None = None
     deleted_at: Annotated[datetime | None, Field(title="Deleted At")] = None
     deleted_by: User | None = None
+    folder_id: Annotated[UUID | None, Field(title="Folder Id")] = None
     geojson_bounding_box: BoundingBox | None = None
+    geojson_bounding_box_from_workspace_crs: Annotated[
+        StrictBool, Field(title="Geojson Bounding Box From Workspace Crs")
+    ]
+    """
+    True if the bounding box was calculated using the workspace CRS, else False.
+    """
     modified_at: Annotated[datetime, Field(title="Modified At")]
     modified_by: User | None = None
     name: Annotated[StrictStr, Field(title="Name")]
     object_id: Annotated[UUID, Field(title="Object Id")]
+    path: Annotated[StrictStr, Field(title="Path")]
     schema_: Annotated[StrictStr, Field(alias="schema", title="Schema")]
     stage: StageResponse | None = None
     workspace_access: RoleEnum | None = None
@@ -263,10 +349,14 @@ class PostObjectResponse(CustomBaseModel):
     deleted_at: Annotated[datetime | None, Field(title="Deleted At")] = None
     deleted_by: User | None = None
     etag: Annotated[StrictStr, Field(title="Etag")]
+    folder_id: Annotated[UUID | None, Field(title="Folder Id")] = None
     geojson_bounding_box: BoundingBox | None = None
     geojson_bounding_box_from_workspace_crs: Annotated[
-        StrictBool | None, Field(title="Geojson Bounding Box From Workspace Crs")
-    ] = None
+        StrictBool, Field(title="Geojson Bounding Box From Workspace Crs")
+    ]
+    """
+    True if the bounding box was calculated using the workspace CRS, else False.
+    """
     links: ObjectResponseLinks
     modified_at: Annotated[datetime, Field(title="Modified At")]
     modified_by: User | None = None

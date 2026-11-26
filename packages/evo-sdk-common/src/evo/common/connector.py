@@ -33,6 +33,7 @@ from .exceptions import (
     ClientTypeError,
     ClientValueError,
     CustomTypedError,
+    DefaultTypedError,
     EvoAPIException,
     EvoClientException,
     GeneralizedTypedError,
@@ -414,9 +415,12 @@ class APIConnector:
         elif response_type is EmptyResponse and response_data != "":
             raise ClientValueError(msg=f"Unexpected content with '{response.status}' status code")
         elif isclass(response_type) and issubclass(response_type, EvoAPIException):  # Raise if API exception.
-            if response_type is EvoAPIException and CustomTypedError.provided_by(response_data):
-                # Use Typed Error types, but don't override generalized error types.
-                response_type = CustomTypedError.from_type_id(response_data.get("type"))
+            if CustomTypedError.provided_by(response_data):
+                typed_error = CustomTypedError.from_type_id(response_data.get("type"))
+                if response_type is EvoAPIException or (
+                    typed_error is not DefaultTypedError and issubclass(typed_error, response_type)
+                ):
+                    response_type = typed_error
             raise response_type(
                 status=response.status, reason=response.reason, content=response_data, headers=response.headers
             )

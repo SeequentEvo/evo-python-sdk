@@ -17,7 +17,8 @@ from collections.abc import Iterator
 from typing import Any, Generic, TypeVar, cast
 from uuid import UUID
 
-import ipywidgets as widgets
+import anywidget
+import traitlets
 from aiohttp.typedefs import StrOrURL
 from IPython.display import display
 
@@ -37,7 +38,7 @@ from ._consts import (
     DEFAULT_DISCOVERY_URL,
     DEFAULT_REDIRECT_URL,
 )
-from ._helpers import FileName, build_button_widget, build_img_widget, init_cache
+from ._helpers import FileName, asset_data_uri, init_cache, read_asset_text
 from .authorizer import AuthorizationCodeAuthorizer
 from .env import DotEnv
 
@@ -52,25 +53,34 @@ __all__ = [
     "WorkspaceSelectorWidget",
 ]
 
+_STYLESHEET = read_asset_text("widgets.css")
 
-class DropdownSelectorWidget(widgets.HBox, Generic[T]):
+
+class DropdownSelectorWidget(anywidget.AnyWidget, Generic[T]):
+    _esm = read_asset_text("selector.js")
+    _css = _STYLESHEET
+
     UNSELECTED: tuple[str, T]
+
+    label = traitlets.Unicode("").tag(sync=True)
+    # Options are serialized to strings because widget state is synchronised to the frontend as JSON.
+    options = traitlets.List(traitlets.List(traitlets.Unicode())).tag(sync=True)
+    value = traitlets.Unicode("").tag(sync=True)
+    disabled = traitlets.Bool(True).tag(sync=True)
+    loading = traitlets.Bool(False).tag(sync=True)
+    spinner = traitlets.Unicode("").tag(sync=True)
 
     def __init__(self, label: str, env: DotEnv) -> None:
         self._env = env
-        self.dropdown_widget = widgets.Dropdown(
-            options=[self.UNSELECTED],
-            description=label,
-            value=self.UNSELECTED[1],
-            layout=widgets.Layout(margin="5px 5px 5px 5px", align_self="flex-start"),
+        unselected_label, unselected_value = self.UNSELECTED
+        super().__init__(
+            label=label,
+            options=[[unselected_label, self._serialize(unselected_value)]],
+            value=self._serialize(unselected_value),
+            disabled=True,
+            spinner=asset_data_uri("loading.gif"),
         )
-        self.dropdown_widget.disabled = True
-        self.dropdown_widget.observe(self._update_selected, names="value")
-
-        self._loading_widget = build_img_widget("loading.gif")
-        self._loading_widget.layout.display = "none"
-
-        super().__init__([self.dropdown_widget, self._loading_widget])
+        self.observe(self._update_selected, names="value")
 
     def _get_options(self) -> list[tuple[str, T]]:
         raise NotImplementedError("Subclasses must implement this method.")
@@ -79,23 +89,24 @@ class DropdownSelectorWidget(widgets.HBox, Generic[T]):
 
     @contextlib.contextmanager
     def _loading(self) -> Iterator[None]:
-        self.dropdown_widget.disabled = True
-        self._loading_widget.layout.display = "flex"
+        self.disabled = True
+        self.loading = True
         try:
             yield
         finally:
-            self._loading_widget.layout.display = "none"
-            self.dropdown_widget.disabled = False
+            self.loading = False
+            self.disabled = False
 
     def _update_selected(self, _: dict) -> None:
-        self.selected = new_value = self.dropdown_widget.value
+        self.selected = new_value = self._deserialize(self.value)
         self._on_selected(new_value if new_value != self.UNSELECTED[1] else None)
 
     def refresh(self) -> None:
         logger.debug(f"Refreshing {self.__class__.__name__} options...")
-        self.dropdown_widget.disabled = True
+        self.disabled = True
         selected = self.selected
-        self.dropdown_widget.options = options = [self.UNSELECTED] + self._get_options()
+        options = [self.UNSELECTED] + self._get_options()
+        self.options = [[label, self._serialize(value)] for label, value in options]
         if len(options) == 2 and selected == self.UNSELECTED[1]:
             # Automatically select the only option if there is only one and no missing option was previously selected.
             self.selected = new_value = options[1][1]
@@ -113,7 +124,7 @@ class DropdownSelectorWidget(widgets.HBox, Generic[T]):
         self._on_selected(new_value if new_value != self.UNSELECTED[1] else None)
 
         # Disable the widget if there are no options to select.
-        self.dropdown_widget.disabled = len(options) <= 1
+        self.disabled = len(options) <= 1
 
     @classmethod
     def _serialize(cls, value: T) -> str:
@@ -131,15 +142,7 @@ class DropdownSelectorWidget(widgets.HBox, Generic[T]):
     @selected.setter
     def selected(self, value: T) -> None:
         self._env.set(f"{self.__class__.__name__}.selected", self._serialize(value))
-        self.dropdown_widget.value = value
-
-    @property
-    def disabled(self) -> bool:
-        return self.dropdown_widget.disabled
-
-    @disabled.setter
-    def disabled(self, value: bool) -> None:
-        self.dropdown_widget.disabled = value
+        self.value = self._serialize(value)
 
 
 _NULL_UUID = UUID(int=0)
@@ -180,7 +183,7 @@ class WorkspaceSelectorWidget(_UUIDSelectorWidget):
     def __init__(self, env: DotEnv, manager: ServiceManager, org_selector: OrgSelectorWidget) -> None:
         self._manager = manager
         super().__init__("Workspace", env)
-        org_selector.dropdown_widget.observe(self._on_org_selected, names="value")
+        org_selector.observe(self._on_org_selected, names="value")
 
     async def refresh_workspaces(self) -> None:
         with self._loading():
@@ -202,14 +205,30 @@ class WorkspaceSelectorWidget(_UUIDSelectorWidget):
 T_client = TypeVar("T_client", bound=BaseAPIClient)
 
 
-class _ServiceManagerWidgetMeta(type(widgets.HBox), type(IContext)):
-    """Metaclass that combines ipywidgets and pure interfaces metaclasses."""
+class _ServiceManagerWidgetMeta(type(anywidget.AnyWidget), type(IContext)):
+    """Metaclass that combines anywidget and pure interfaces metaclasses."""
 
     pass
 
 
-class ServiceManagerWidget(widgets.HBox, IContext, metaclass=_ServiceManagerWidgetMeta):
-    def __init__(self, transport: ITransport, authorizer: IAuthorizer, discovery_url: str, cache: ICache) -> None:
+class ServiceManagerWidget(anywidget.AnyWidget, IContext, metaclass=_ServiceManagerWidgetMeta):
+    _esm = read_asset_text("service_manager.js")
+    _css = _STYLESHEET
+
+    logo = traitlets.Unicode("").tag(sync=True)
+    spinner = traitlets.Unicode("").tag(sync=True)
+    button_text = traitlets.Unicode("").tag(sync=True)
+    disabled = traitlets.Bool(False).tag(sync=True)
+    loading = traitlets.Bool(False).tag(sync=True)
+    message = traitlets.Unicode("").tag(sync=True)
+
+    def __init__(
+        self,
+        transport: ITransport,
+        authorizer: IAuthorizer,
+        discovery_url: str,
+        cache: ICache,
+    ) -> None:
         """
         :param transport: The transport to use for API requests.
         :param authorizer: The authorizer to use for API requests.
@@ -226,36 +245,17 @@ class ServiceManagerWidget(widgets.HBox, IContext, metaclass=_ServiceManagerWidg
         )
         env = DotEnv(cache)
 
-        self._btn = build_button_widget("Sign In")
-        self._btn.on_click(self._on_click)
+        super().__init__(
+            logo=asset_data_uri("EvoBadgeCharcoal_FV.png"),
+            spinner=asset_data_uri("loading.gif"),
+            button_text="Sign In",
+        )
+        self.on_msg(self._handle_frontend_msg)
+
         self._org_selector = OrgSelectorWidget(env, self._service_manager)
         self._workspace_selector = WorkspaceSelectorWidget(env, self._service_manager, self._org_selector)
 
-        self._loading_widget = build_img_widget("loading.gif")
-        self._loading_widget.layout.display = "none"
-
-        self._prompt_area = widgets.Output()
-        self._prompt_area.layout.display = "none"
-
-        col_1 = widgets.VBox(
-            [
-                widgets.HBox([build_img_widget("EvoBadgeCharcoal_FV.png"), self._btn, self._loading_widget]),
-                widgets.HBox([self._org_selector]),
-                widgets.HBox([self._workspace_selector]),
-            ]
-        )
-        col_2 = widgets.VBox([self._prompt_area])
-
-        super().__init__(
-            [col_1, col_2],
-            layout={
-                "display": "flex",
-                "flex_flow": "row",
-                "justify_content": "space-between",
-                "align_items": "center",
-            },
-        )
-        display(self)
+        display(self, self._org_selector, self._workspace_selector)
 
     @classmethod
     def with_auth_code(
@@ -352,22 +352,24 @@ class ServiceManagerWidget(widgets.HBox, IContext, metaclass=_ServiceManagerWidg
 
     def _update_btn(self, signed_in: bool) -> None:
         if signed_in:
-            self._btn.description = "Refresh Evo Services"
+            self.button_text = "Refresh Evo Services"
         else:
-            self._btn.description = "Sign In"
+            self.button_text = "Sign In"
 
-    def _on_click(self, _: widgets.Button) -> asyncio.Future:
-        return asyncio.ensure_future(self.refresh_services())
+    def _handle_frontend_msg(self, _widget: object, content: object, _buffers: list) -> asyncio.Future | None:
+        if isinstance(content, dict) and content.get("type") == "click":
+            return asyncio.ensure_future(self.refresh_services())
+        return None
 
     @contextlib.contextmanager
     def _loading(self) -> Iterator[None]:
-        self._btn.disabled = True
-        self._loading_widget.layout.display = "flex"
+        self.disabled = True
+        self.loading = True
         try:
             yield
         finally:
-            self._loading_widget.layout.display = "none"
-            self._btn.disabled = False
+            self.loading = False
+            self.disabled = False
 
     @contextlib.contextmanager
     def _loading_services(self) -> Iterator[None]:
@@ -377,15 +379,6 @@ class ServiceManagerWidget(widgets.HBox, IContext, metaclass=_ServiceManagerWidg
             yield
         finally:
             self._org_selector.refresh()
-
-    @contextlib.contextmanager
-    def _prompt(self) -> Iterator[widgets.Output]:
-        self._prompt_area.layout.display = "flex"
-        try:
-            yield self._prompt_area
-        finally:
-            self._prompt_area.layout.display = "none"
-            self._prompt_area.clear_output()
 
     async def refresh_services(self) -> None:
         with self._loading():
@@ -459,6 +452,15 @@ class ServiceManagerWidget(widgets.HBox, IContext, metaclass=_ServiceManagerWidg
         return self._service_manager.create_client(client_class, *args, **kwargs)
 
 
+class _ProgressWidget(anywidget.AnyWidget):
+    _esm = read_asset_text("feedback.js")
+    _css = _STYLESHEET
+
+    label = traitlets.Unicode("").tag(sync=True)
+    value = traitlets.Float(0.0).tag(sync=True)
+    message = traitlets.Unicode("").tag(sync=True)
+
+
 class FeedbackWidget(IFeedback):
     """Simple feedback widget for displaying progress and messages to the user."""
 
@@ -466,11 +468,7 @@ class FeedbackWidget(IFeedback):
         """
         :param label: The label for the feedback widget.
         """
-        label = widgets.Label(label)
-        self._progress = widgets.FloatProgress(value=0, min=0, max=1, style={"bar_color": "#265C7F"})
-        self._progress.layout.width = "400px"
-        self._msg = widgets.Label("", style={"font_style": "italic"})
-        self._widget = widgets.HBox([label, self._progress, self._msg])
+        self._widget = _ProgressWidget(label=label)
         self._last_message = ""
         display(self._widget)
 
@@ -482,7 +480,6 @@ class FeedbackWidget(IFeedback):
         :param progress: A float between 0 and 1 representing the progress of the operation as a percentage.
         :param message: An optional message to display to the user.
         """
-        self._progress.value = progress
-        self._progress.description = f"{progress * 100:5.1f}%"
+        self._widget.value = progress
         if message is not None:
-            self._msg.value = message
+            self._widget.message = message

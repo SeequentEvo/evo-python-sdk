@@ -30,7 +30,7 @@ For advanced use cases, you may need the lower-level `evo-schemas` approach (as 
 
 ## Requirements
 
-- Python 3.10+
+- Python 3.11.5+
 - A Seequent account with Evo entitlement
 - An Evo application with client ID and redirect URL (see [Apps and tokens guide](https://developer.seequent.com/docs/guides/getting-started/apps-and-tokens))
 

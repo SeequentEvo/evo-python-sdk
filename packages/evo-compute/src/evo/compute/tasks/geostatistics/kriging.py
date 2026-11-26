@@ -24,7 +24,7 @@ Example::
     ...     source=pointset.attributes["grade"],
     ...     target=Target.new_attribute(block_model, "kriged_grade"),
     ...     variogram=variogram,
-    ...     search=SearchNeighborhood(
+    ...     neighborhood=SearchNeighborhood(
     ...         ellipsoid=Ellipsoid(ranges=EllipsoidRanges(200, 150, 100)),
     ...         max_samples=20,
     ...     ),
@@ -42,6 +42,7 @@ from evo.common import IContext, IFeedback
 from evo.objects import ObjectSchema
 from evo.objects.typed import BaseObject, object_from_reference
 from pydantic import (
+    AliasChoices,
     BaseModel,
     Field,
     PrivateAttr,
@@ -352,11 +353,11 @@ class KrigingParameters(BaseModel):
         ...     source=pointset.attributes["grade"],  # Source attribute
         ...     target=block_model.attributes["kriged_grade"],  # Target attribute (creates if doesn't exist)
         ...     variogram=variogram,  # Variogram model
-        ...     search=SearchNeighborhood(
+        ...     neighborhood=SearchNeighborhood(
         ...         ellipsoid=Ellipsoid(ranges=EllipsoidRanges(200, 150, 100)),
         ...         max_samples=20,
         ...     ),
-        ...     # method defaults to ordinary kriging
+        ...     # kriging_method defaults to ordinary kriging
         ... )
         >>>
         >>> # With a target filter to restrict kriging to specific categories on the target:
@@ -364,7 +365,7 @@ class KrigingParameters(BaseModel):
         ...     source=pointset.attributes["grade"],
         ...     target=block_model.attributes["kriged_grade"],
         ...     variogram=variogram,
-        ...     search=SearchNeighborhood(...),
+        ...     neighborhood=SearchNeighborhood(...),
         ...     target_filter=Filter(
         ...         where=FilterCondition(
         ...             attribute=block_model.attributes["domain"],
@@ -379,7 +380,7 @@ class KrigingParameters(BaseModel):
         ...     source=pointset.attributes["grade"],
         ...     target=block_model.attributes["kriged_grade"],
         ...     variogram=variogram,
-        ...     search=SearchNeighborhood(...),
+        ...     neighborhood=SearchNeighborhood(...),
         ...     diagnostics=KrigingDiagnostics(kriging_variance=True, num_samples=True),
         ... )
     """
@@ -395,11 +396,24 @@ class KrigingParameters(BaseModel):
     variogram: GeoscienceObjectReference
     """Model of the covariance within the domain (Variogram object or reference)."""
 
-    search: SearchNeighborhood = Field(alias="neighborhood")
+    neighborhood: SearchNeighborhood = Field(validation_alias=AliasChoices("neighborhood", "search"))
     """Search neighborhood parameters."""
 
-    method: SimpleKriging | OrdinaryKriging = Field(default_factory=OrdinaryKriging, alias="kriging_method")
+    kriging_method: SimpleKriging | OrdinaryKriging = Field(
+        default_factory=OrdinaryKriging,
+        validation_alias=AliasChoices("kriging_method", "method"),
+    )
     """The kriging method to use. Defaults to ordinary kriging if not specified."""
+
+    @property
+    def search(self) -> SearchNeighborhood:
+        """Backwards-compatible alias for :attr:`neighborhood`."""
+        return self.neighborhood
+
+    @property
+    def method(self) -> SimpleKriging | OrdinaryKriging:
+        """Backwards-compatible alias for :attr:`kriging_method`."""
+        return self.kriging_method
 
     source_filter: Filter | None = Field(None, exclude=True)
     """Optional filter to restrict kriging to a subset of the source data."""

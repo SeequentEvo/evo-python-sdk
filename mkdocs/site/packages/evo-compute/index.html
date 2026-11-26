@@ -92,7 +92,7 @@ params = KrigingParameters(
     source=pointset.attributes[&quot;grade&quot;],
     target=block_model.attributes[&quot;kriged_grade&quot;],  # Creates if new, updates if exists
     variogram=variogram,
-    search=SearchNeighborhood(
+    neighborhood=SearchNeighborhood(
         ellipsoid=Ellipsoid(ranges=EllipsoidRanges(200, 150, 100)),
         max_samples=20,
     ),
@@ -109,13 +109,13 @@ results = await run(manager, [
         source=pointset.attributes[&quot;Au&quot;],
         target=block_model.attributes[&quot;Au_kriged&quot;],
         variogram=au_variogram,
-        search=SearchNeighborhood(...),
+        neighborhood=SearchNeighborhood(...),
     ),
     KrigingParameters(
         source=pointset.attributes[&quot;Cu&quot;],
         target=block_model.attributes[&quot;Cu_kriged&quot;],
         variogram=cu_variogram,
-        search=SearchNeighborhood(...),
+        neighborhood=SearchNeighborhood(...),
     ),
 ], preview=True)
 
@@ -152,7 +152,7 @@ first_result = await run(manager, KrigingParameters(
     source=pointset.attributes[&quot;grade&quot;],
     target=block_model.attributes[&quot;kriged_grade&quot;],
     variogram=variogram,
-    search=SearchNeighborhood(...),
+    neighborhood=SearchNeighborhood(...),
     target_filter=Filter(
         where=FilterCondition(
             attribute=block_model.attributes[&quot;domain&quot;],
@@ -171,7 +171,7 @@ results = await run(manager, [
         source=pointset.attributes[&quot;grade&quot;],
         target=block_model.attributes[&quot;kriged_grade&quot;],  # Exists → update
         variogram=variogram,
-        search=SearchNeighborhood(...),
+        neighborhood=SearchNeighborhood(...),
         target_filter=Filter(
             where=FilterCondition(
                 attribute=block_model.attributes[&quot;domain&quot;],
@@ -184,7 +184,7 @@ results = await run(manager, [
         source=pointset.attributes[&quot;grade&quot;],
         target=block_model.attributes[&quot;kriged_grade&quot;],  # Exists → update
         variogram=variogram,
-        search=SearchNeighborhood(...),
+        neighborhood=SearchNeighborhood(...),
         target_filter=Filter(
             where=FilterCondition(
                 attribute=block_model.attributes[&quot;domain&quot;],

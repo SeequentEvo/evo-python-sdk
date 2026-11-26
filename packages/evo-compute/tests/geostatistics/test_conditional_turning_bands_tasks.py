@@ -198,13 +198,18 @@ class TestConditionalTurningBandsParametersSerialization(unittest.TestCase):
             _params(number_of_lines=1001)
 
     def test_search_limits_are_refused(self):
-        search = SearchNeighborhood(
-            ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=70, semi_major=70, minor=5)),
-            max_samples=40,
-            max_empty_octants=2,
-        )
-        with self.assertRaisesRegex(ValidationError, "does not support max_empty_octants"):
-            _params(neighborhood=search)
+        ellipsoid = Ellipsoid(ranges=EllipsoidRanges(major=70, semi_major=70, minor=5))
+        for kwargs, expected in [
+            ({"max_empty_octants": 2}, "does not support max_empty_octants"),
+            ({"max_drillholes": 4}, "does not support max_drillholes"),
+            ({"min_drillholes": 2}, "does not support min_drillholes"),
+            (
+                {"max_samples_per_drillhole": 2, "drillhole_limit_scope": "quadrant"},
+                "does not support max_samples_per_drillhole, drillhole_limit_scope",
+            ),
+        ]:
+            with self.subTest(**kwargs), self.assertRaisesRegex(ValidationError, expected):
+                _params(neighborhood=SearchNeighborhood(ellipsoid=ellipsoid, max_samples=40, **kwargs))
 
     def test_no_filters_by_default(self):
         d = _dump(_params())

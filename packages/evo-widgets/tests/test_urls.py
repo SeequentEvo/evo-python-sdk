@@ -37,12 +37,12 @@ class TestGetEvoBaseUrl(unittest.TestCase):
 
     def test_production_environment(self):
         """Production environment hub URL returns production portal URL."""
-        result = get_evo_base_url("https://350mt.api.seequent.com")
+        result = get_evo_base_url("https://api.350mt.evo.seequent.net")
         self.assertEqual(result, "https://evo.seequent.com")
 
     def test_production_environment_with_different_hub(self):
         """Production with different hub code still returns production portal URL."""
-        result = get_evo_base_url("https://mining.api.seequent.com")
+        result = get_evo_base_url("https://api.mining.evo.seequent.net")
         self.assertEqual(result, "https://evo.seequent.com")
 
 
@@ -51,12 +51,12 @@ class TestGetHubCode(unittest.TestCase):
 
     def test_extracts_hub_code_from_url(self):
         """Hub code is extracted from URL."""
-        result = get_hub_code("https://350mt.api.seequent.com")
+        result = get_hub_code("https://api.350mt.evo.seequent.net")
         self.assertEqual(result, "350mt")
 
     def test_extracts_hub_code_from_production_url(self):
         """Hub code is extracted from production URL."""
-        result = get_hub_code("https://mining.api.seequent.com")
+        result = get_hub_code("https://api.mining.evo.seequent.net")
         self.assertEqual(result, "mining")
 
     def test_raises_on_invalid_url(self):
@@ -74,7 +74,7 @@ class TestGetPortalUrl(unittest.TestCase):
             org_id="org-123",
             workspace_id="ws-456",
             object_id="obj-789",
-            hub_url="https://350mt.api.seequent.com",
+            hub_url="https://api.350mt.evo.seequent.net",
         )
         self.assertEqual(
             result,
@@ -91,7 +91,7 @@ class TestGetViewerUrl(unittest.TestCase):
             org_id="org-123",
             workspace_id="ws-456",
             object_ids="obj-789",
-            hub_url="https://350mt.api.seequent.com",
+            hub_url="https://api.350mt.evo.seequent.net",
         )
         self.assertEqual(
             result,
@@ -104,7 +104,7 @@ class TestGetViewerUrl(unittest.TestCase):
             org_id="org-123",
             workspace_id="ws-456",
             object_ids=["obj-1", "obj-2", "obj-3"],
-            hub_url="https://350mt.api.seequent.com",
+            hub_url="https://api.350mt.evo.seequent.net",
         )
         self.assertEqual(
             result,
@@ -117,7 +117,7 @@ class TestGetPortalUrlFromReference(unittest.TestCase):
 
     def test_generates_portal_url_from_reference(self):
         """Portal URL is generated from object reference URL."""
-        ref_url = "https://350mt.api.seequent.com/geoscience-object/orgs/00000000-0000-0000-0000-000000000123/workspaces/00000000-0000-0000-0000-000000000456/objects/00000000-0000-0000-0000-000000000789"
+        ref_url = "https://api.350mt.evo.seequent.net/geoscience-object/orgs/00000000-0000-0000-0000-000000000123/workspaces/00000000-0000-0000-0000-000000000456/objects/00000000-0000-0000-0000-000000000789"
         result = get_portal_url_from_reference(ref_url)
         self.assertEqual(
             result,
@@ -130,7 +130,7 @@ class TestGetViewerUrlFromReference(unittest.TestCase):
 
     def test_generates_viewer_url_from_reference(self):
         """Viewer URL is generated from object reference URL."""
-        ref_url = "https://350mt.api.seequent.com/geoscience-object/orgs/00000000-0000-0000-0000-000000000123/workspaces/00000000-0000-0000-0000-000000000456/objects/00000000-0000-0000-0000-000000000789"
+        ref_url = "https://api.350mt.evo.seequent.net/geoscience-object/orgs/00000000-0000-0000-0000-000000000123/workspaces/00000000-0000-0000-0000-000000000456/objects/00000000-0000-0000-0000-000000000789"
         result = get_viewer_url_from_reference(ref_url)
         self.assertEqual(
             result,
@@ -175,7 +175,7 @@ class TestGetPortalUrlForObject(unittest.TestCase):
         obj = MagicMock()
         obj.metadata.environment.org_id = "org-123"
         obj.metadata.environment.workspace_id = "ws-456"
-        obj.metadata.environment.hub_url = "https://350mt.api.seequent.com"
+        obj.metadata.environment.hub_url = "https://api.350mt.evo.seequent.net"
         obj.metadata.id = "obj-789"
 
         result = get_portal_url_for_object(obj)
@@ -193,7 +193,7 @@ class TestGetViewerUrlForObject(unittest.TestCase):
         obj = MagicMock()
         obj.metadata.environment.org_id = "org-123"
         obj.metadata.environment.workspace_id = "ws-456"
-        obj.metadata.environment.hub_url = "https://350mt.api.seequent.com"
+        obj.metadata.environment.hub_url = "https://api.350mt.evo.seequent.net"
         obj.metadata.id = "obj-789"
 
         result = get_viewer_url_for_object(obj)
@@ -212,7 +212,7 @@ class TestGetViewerUrlForObjects(unittest.TestCase):
         env = MagicMock()
         env.org_id = "org-123"
         env.workspace_id = "ws-456"
-        env.hub_url = "https://350mt.api.seequent.com"
+        env.hub_url = "https://api.350mt.evo.seequent.net"
         context.get_environment.return_value = env
         return context
 
@@ -273,13 +273,13 @@ class TestGetBlocksyncBaseUrl(unittest.TestCase):
 
     def test_production_environment(self):
         """Production environment hub URL returns production BlockSync URL."""
-        hub_url = "https://350mt.api.seequent.com"
+        hub_url = "https://api.350mt.evo.seequent.net"
         result = get_blocksync_base_url(hub_url)
         self.assertEqual(result, "https://blocksync.seequent.com")
 
     def test_any_environment_returns_production(self):
         """Any hub URL returns production BlockSync URL (no environment detection)."""
-        hub_url = "https://mining.api.seequent.com"
+        hub_url = "https://api.mining.evo.seequent.net"
         result = get_blocksync_base_url(hub_url)
         self.assertEqual(result, "https://blocksync.seequent.com")
 
@@ -293,7 +293,7 @@ class TestGetBlocksyncBlockModelUrl(unittest.TestCase):
             org_id="org-123",
             workspace_id="ws-456",
             block_model_id="bm-789",
-            hub_url="https://350mt.api.seequent.com",
+            hub_url="https://api.350mt.evo.seequent.net",
         )
         self.assertEqual(
             result,
@@ -310,7 +310,7 @@ class TestGetBlocksyncBlockModelUrl(unittest.TestCase):
             org_id=org_id,
             workspace_id=workspace_id,
             block_model_id=block_model_id,
-            hub_url="https://350mt.api.seequent.com",
+            hub_url="https://api.350mt.evo.seequent.net",
         )
         self.assertEqual(
             result,
@@ -324,7 +324,7 @@ class TestGetBlocksyncBlockModelUrl(unittest.TestCase):
             org_id="ORG-ABC",
             workspace_id="WS-DEF",
             block_model_id="BM-GHI",
-            hub_url="https://350mt.api.seequent.com",
+            hub_url="https://api.350mt.evo.seequent.net",
         )
         self.assertEqual(
             result,
