@@ -1,0 +1,466 @@
+{
+  "display_name": "Declustering",
+  "version": "1.0.1",
+  "feature_flag": "geostatistics-preview",
+  "description": "Computes grid-based declustering weights by measuring each sample's influence on evaluation locations. Supports both KNN (arithmetic mean) and IDW (inverse-distance weighted) modes via an optional power parameter.",
+  "parameters": {
+    "additionalProperties": false,
+    "description": "Parameters for the declustering task.",
+    "properties": {
+      "source": {
+        "additionalProperties": false,
+        "description": "The source sample locations.",
+        "properties": {
+          "object": {
+            "format": "uri",
+            "reference_to": "geoscience-object",
+            "supported_schemas": [
+              "pointset/[>=1.2,<2]",
+              "block-model/[>=1.0,<2]",
+              "regular-3d-grid/[>=1.2,<2]",
+              "regular-masked-3d-grid/[>=1.2,<2]",
+              "tensor-3d-grid/[>=1.2,<2]",
+              "downhole-intervals/[>=1.2,<2]"
+            ],
+            "type": "string",
+            "description": "Spatial locations of samples to compute declustering weights for.",
+            "title": "Sample Locations"
+          }
+        },
+        "required": [
+          "object"
+        ],
+        "title": "Source",
+        "type": "object"
+      },
+      "grid": {
+        "additionalProperties": false,
+        "description": "The evaluation grid for measuring sample influence.",
+        "properties": {
+          "object": {
+            "format": "uri",
+            "reference_to": "geoscience-object",
+            "supported_schemas": [
+              "pointset/[>=1.2,<2]",
+              "block-model/[>=1.0,<2]",
+              "regular-3d-grid/[>=1.2,<2]",
+              "regular-masked-3d-grid/[>=1.2,<2]",
+              "tensor-3d-grid/[>=1.2,<2]",
+              "downhole-intervals/[>=1.2,<2]"
+            ],
+            "type": "string",
+            "description": "Regular grid or set of evaluation locations used to measure each sample's spatial influence.",
+            "title": "Evaluation Grid"
+          }
+        },
+        "required": [
+          "object"
+        ],
+        "title": "Grid",
+        "type": "object"
+      },
+      "target": {
+        "additionalProperties": false,
+        "description": "The target object and attribute to write declustering weights to.",
+        "properties": {
+          "object": {
+            "format": "uri",
+            "reference_to": "geoscience-object",
+            "supported_schemas": [
+              "pointset/[>=1.2,<2]",
+              "block-model/[>=1.0,<2]",
+              "regular-3d-grid/[>=1.2,<2]",
+              "regular-masked-3d-grid/[>=1.2,<2]",
+              "tensor-3d-grid/[>=1.2,<2]",
+              "downhole-intervals/[>=1.2,<2]"
+            ],
+            "type": "string",
+            "description": "Object to write the declustering weight attribute onto. Typically the same object as the source.",
+            "title": "Weight Output Target"
+          },
+          "attribute": {
+            "description": "Name of the attribute to create or update with the computed declustering weights.",
+            "oneOf": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "operation": {
+                    "const": "create",
+                    "description": "The operation to perform on the attribute.",
+                    "title": "Operation"
+                  },
+                  "name": {
+                    "description": "The name of the attribute to create.",
+                    "title": "Name",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "operation",
+                  "name"
+                ],
+                "type": "object"
+              },
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "operation": {
+                    "const": "update",
+                    "description": "The operation to perform on the attribute.",
+                    "title": "Operation"
+                  },
+                  "reference": {
+                    "attribute_from": "2/object",
+                    "attribute_path": {
+                      "block-model/[>=1.0,<2]": [
+                        "attributes[?attribute_type=='Float64']"
+                      ],
+                      "downhole-intervals/[>=1.2,<2]": [
+                        "attributes[?attribute_type=='scalar']"
+                      ],
+                      "pointset/[>=1.2,<2]": [
+                        "locations.attributes[?attribute_type=='scalar']"
+                      ],
+                      "regular-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ],
+                      "regular-masked-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ],
+                      "tensor-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ]
+                    },
+                    "description": "Reference to an existing attribute to update.",
+                    "reference_to": "attribute",
+                    "title": "Reference",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "operation",
+                  "reference"
+                ],
+                "type": "object"
+              }
+            ],
+            "target": "attribute",
+            "title": "Declustering Weights"
+          }
+        },
+        "required": [
+          "object",
+          "attribute"
+        ],
+        "title": "Target",
+        "type": "object"
+      },
+      "neighborhood": {
+        "additionalProperties": false,
+        "description": "Search neighborhood parameters. The search ellipsoid and sample limits control which samples influence each grid location during the estimation used to compute declustering weights.",
+        "properties": {
+          "ellipsoid": {
+            "additionalProperties": false,
+            "description": "The ellipsoid, to search for points within\nAlias: anisotropy",
+            "properties": {
+              "ellipsoid_ranges": {
+                "additionalProperties": false,
+                "description": "The ranges of the ellipsoid",
+                "properties": {
+                  "major": {
+                    "description": "The major axis length of the ellipsoid",
+                    "exclusiveMinimum": 0,
+                    "title": "Major",
+                    "type": "number"
+                  },
+                  "semi_major": {
+                    "description": "The semi major axis length of the ellipsoid",
+                    "exclusiveMinimum": 0,
+                    "title": "Semi Major",
+                    "type": "number"
+                  },
+                  "minor": {
+                    "description": "The minor axis length of the ellipsoid",
+                    "exclusiveMinimum": 0,
+                    "title": "Minor",
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "major",
+                  "semi_major",
+                  "minor"
+                ],
+                "title": "Ellipsoid Ranges",
+                "type": "object"
+              },
+              "rotation": {
+                "additionalProperties": false,
+                "description": "The rotation of the ellipsoid",
+                "properties": {
+                  "dip_azimuth": {
+                    "default": 0,
+                    "description": "first rotation, about the z-axis, in degrees",
+                    "maximum": 360,
+                    "minimum": 0,
+                    "title": "Dip Azimuth",
+                    "type": "number"
+                  },
+                  "dip": {
+                    "default": 0,
+                    "description": "second rotation, about the x-axis, in degrees",
+                    "maximum": 180,
+                    "minimum": 0,
+                    "title": "Dip",
+                    "type": "number"
+                  },
+                  "pitch": {
+                    "default": 0,
+                    "description": "third rotation, about the z-axis, in degrees",
+                    "maximum": 360,
+                    "minimum": 0,
+                    "title": "Pitch",
+                    "type": "number"
+                  }
+                },
+                "required": [],
+                "title": "Rotation",
+                "type": "object"
+              }
+            },
+            "required": [
+              "ellipsoid_ranges",
+              "rotation"
+            ],
+            "title": "Ellipsoid",
+            "type": "object"
+          },
+          "max_samples": {
+            "description": "The maximum number of samples to use for each evaluation point.\nAlias: max-samples",
+            "minimum": 1,
+            "title": "Max Samples",
+            "type": "integer"
+          },
+          "min_samples": {
+            "default": 1,
+            "description": "The minimum number of samples to use for each evaluation point.\nAlias: min-samples",
+            "minimum": 1,
+            "title": "Min Samples",
+            "type": "integer"
+          },
+          "max_empty_octants": {
+            "default": 8,
+            "description": "The maximum number of empty octants (aka sectors) allowed when searching for neighbors. Omitting this, or a value of 8, disables the octant check.",
+            "maximum": 8,
+            "minimum": 0,
+            "title": "Max Empty Octants",
+            "type": "integer"
+          },
+          "max_samples_per_octant": {
+            "default": null,
+            "description": "The maximum number of samples to use from each octant.",
+            "minimum": 1,
+            "title": "Max Samples Per Octant",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "max_samples_per_drillhole": {
+            "default": null,
+            "description": "The maximum number of samples to use from each drillhole (defined by drillhole ID)",
+            "minimum": 1,
+            "title": "Max Samples Per Drillhole",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "max_empty_quadrants": {
+            "default": null,
+            "description": "The maximum number of empty quadrants (2D sectors, ignoring Z) allowed when searching for neighbors. If not specified, quadrant filtering is disabled.",
+            "maximum": 4,
+            "minimum": 0,
+            "title": "Max Empty Quadrants",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "max_samples_per_quadrant": {
+            "default": null,
+            "description": "The maximum number of samples to use from each quadrant (2D sectors, ignoring Z).",
+            "minimum": 1,
+            "title": "Max Samples Per Quadrant",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "max_drillholes": {
+            "default": null,
+            "description": "The maximum number of drillholes to be used in each estimate.\nAlias: max_drillholes_per_estimate",
+            "minimum": 1,
+            "title": "Max Drillholes",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "min_drillholes": {
+            "default": 0,
+            "description": "The minimum number of distinct drillholes required in each estimate. 0 disables the check. Requires Downhole Intervals.\nAlias: min_drillholes_per_estimate",
+            "minimum": 0,
+            "title": "Min Drillholes",
+            "type": "integer"
+          },
+          "drillhole_limit_scope": {
+            "default": "global",
+            "description": "Apply max_samples_per_drillhole globally (the default), independently in each quadrant (ignoring Z), or independently in each octant, in search-ellipsoid coordinates. Requires max_samples_per_drillhole. Limits on the number of distinct drillholes remain global.",
+            "enum": [
+              "global",
+              "quadrant",
+              "octant"
+            ],
+            "title": "Drillhole Limit Scope"
+          }
+        },
+        "required": [
+          "ellipsoid",
+          "max_samples"
+        ],
+        "title": "ExtendedNeighborhood",
+        "type": "object"
+      },
+      "power": {
+        "default": 2.0,
+        "description": "Inverse-distance weighting power. Controls how strongly distance affects influence: higher values give nearer samples more weight. The default (2.0) uses standard inverse-distance-squared weighting. Set to null to use arithmetic-mean KNN (equal neighbour votes, no distance weighting).",
+        "exclusiveMinimum": 0.0,
+        "title": "Power",
+        "type": [
+          "number",
+          "null"
+        ]
+      }
+    },
+    "required": [
+      "source",
+      "grid",
+      "target",
+      "neighborhood"
+    ],
+    "title": "DeclusteringParameters",
+    "type": "object"
+  },
+  "results": {
+    "additionalProperties": false,
+    "description": "Result of the declustering task.",
+    "properties": {
+      "message": {
+        "description": "A message that says what happened in the task.",
+        "title": "Message",
+        "type": "string"
+      },
+      "target": {
+        "additionalProperties": false,
+        "description": "The target that was created or updated with declustering weights.",
+        "output": "geoscience-object",
+        "properties": {
+          "reference": {
+            "description": "Reference to a geoscience object.",
+            "format": "uri",
+            "reference_to": "geoscience-object",
+            "supported_schemas": [
+              "pointset/[>=1.2,<2]",
+              "block-model/[>=1.0,<2]",
+              "regular-3d-grid/[>=1.2,<2]",
+              "regular-masked-3d-grid/[>=1.2,<2]",
+              "tensor-3d-grid/[>=1.2,<2]",
+              "downhole-intervals/[>=1.2,<2]"
+            ],
+            "title": "Reference",
+            "type": "string"
+          },
+          "name": {
+            "description": "The name of the geoscience object.",
+            "title": "Name",
+            "type": "string"
+          },
+          "description": {
+            "description": "The description of the geoscience object.",
+            "title": "Description",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "schema_id": {
+            "description": "The ID of the Geoscience Object schema.",
+            "title": "Schema ID",
+            "type": "string"
+          },
+          "attribute": {
+            "additionalProperties": false,
+            "description": "Attribute containing the declustering weights.",
+            "output": "attribute",
+            "properties": {
+              "reference": {
+                "attribute_from": "2/reference",
+                "attribute_path": {
+                  "block-model/[>=1.0,<2]": [
+                    "attributes[?attribute_type=='Float64']"
+                  ],
+                  "downhole-intervals/[>=1.2,<2]": [
+                    "attributes[?attribute_type=='scalar']"
+                  ],
+                  "pointset/[>=1.2,<2]": [
+                    "locations.attributes[?attribute_type=='scalar']"
+                  ],
+                  "regular-3d-grid/[>=1.2,<2]": [
+                    "cell_attributes[?attribute_type=='scalar']"
+                  ],
+                  "regular-masked-3d-grid/[>=1.2,<2]": [
+                    "cell_attributes[?attribute_type=='scalar']"
+                  ],
+                  "tensor-3d-grid/[>=1.2,<2]": [
+                    "cell_attributes[?attribute_type=='scalar']"
+                  ]
+                },
+                "description": "Reference to the attribute in the geoscience object.",
+                "reference_to": "attribute",
+                "title": "Reference",
+                "type": "string"
+              },
+              "name": {
+                "description": "The name of the output attribute.",
+                "title": "Name",
+                "type": "string"
+              }
+            },
+            "required": [
+              "reference",
+              "name"
+            ],
+            "title": "Attribute",
+            "type": "object"
+          }
+        },
+        "required": [
+          "reference",
+          "name",
+          "description",
+          "schema_id",
+          "attribute"
+        ],
+        "type": "object",
+        "title": "Target"
+      }
+    },
+    "required": [
+      "message",
+      "target"
+    ],
+    "title": "DeclusteringResult",
+    "type": "object"
+  }
+}

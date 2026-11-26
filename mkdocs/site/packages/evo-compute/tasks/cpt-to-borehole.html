@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        
+        <link rel="shortcut icon" href="../../../img/favicon.ico">
+        <title>Cpt to borehole - Evo Python SDK</title>
+        <link href="../../../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../../../css/fontawesome.min.css" rel="stylesheet">
+        <link href="../../../css/brands.min.css" rel="stylesheet">
+        <link href="../../../css/solid.min.css" rel="stylesheet">
+        <link href="../../../css/v4-font-face.min.css" rel="stylesheet">
+        <link href="../../../css/base.css" rel="stylesheet">
+        <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" >
+        <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
+        <link href="../../../assets/_mkdocstrings.css" rel="stylesheet">
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="../../..">Evo Python SDK</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar-collapse" aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+
+                    <ul class="nav navbar-nav ms-md-auto">
+                            <li class="nav-item">
+                                <a rel="prev" href="converter.html" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="geology.html" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-bs-toggle="collapse" data-bs-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-bs-level="1"><a href="#cpt-to-borehole-tasks" class="nav-link">CPT to Borehole Tasks</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-bs-level="2"><a href="#input-shorthands" class="nav-link">Input Shorthands</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#tasks" class="nav-link">Tasks</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<p><a href="https://github.com/SeequentEvo/evo-python-sdk/tree/main/packages/evo-compute/stubs/snapshot/cpt-to-borehole">GitHub source</a></p>
+<h1 id="cpt-to-borehole-tasks">CPT to Borehole Tasks</h1>
+<p>Discoverable compute tasks in the <code>cpt-to-borehole</code> topic. Call any task below through <code>ComputeClient</code> as <code>await client.cpt_to_borehole.&lt;task&gt;.run(...)</code>, or by name via <code>await client.arun("cpt-to-borehole", "&lt;task&gt;", parameters)</code>.</p>
+<h2 id="input-shorthands">Input Shorthands</h2>
+<table>
+<thead>
+<tr>
+<th>Alias</th>
+<th>Accepted Python Types</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ObjectInput</code></td>
+<td><code>str | UUID | BaseObject | DownloadedObject | ObjectMetadata | ObjectReference</code></td>
+<td>Any handle <code>ReferenceResolver</code> can derive a geoscience object URL from.</td>
+</tr>
+<tr>
+<td><code>FileInput</code></td>
+<td><code>str | FileHandle</code></td>
+<td>A File API URL or an SDK file/upload handle exposing <code>.url</code> or <code>.metadata.url</code>.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="tasks">Tasks</h2>
+<h3 id="cpt_reader">cpt_reader</h3>
+<p><code>client.cpt_to_borehole.cpt_reader</code> · Task: <code>cpt-to-borehole/cpt-reader</code> · Version: <code>0.1.72</code> · Preview (<code>preview=True</code> required)</p>
+<p>CPT reader task</p>
+<pre><code class="language-python">await client.cpt_to_borehole.cpt_reader.run(
+    *,
+    cpt_file: FileInput,
+    target_downhole_collection: CptToBoreholeCptReaderTargetDownholeCollection,
+    preview: bool = False,
+) -&gt; CptToBoreholeCptReaderResult
+</code></pre>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cpt_file</code></td>
+<td><code>FileInput</code></td>
+<td>Reference to the file to be read (AGS/GEF/BroXML).</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>target_downhole_collection</code></td>
+<td><code>CptToBoreholeCptReaderTargetDownholeCollection</code></td>
+<td>DownHoleCollection object to which the parsed results will be written.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>preview</code></td>
+<td><code>bool</code></td>
+<td>Opt in to preview execution (required for this preview task: pass <code>preview=True</code>).</td>
+<td><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<p>Results (<code>CptToBoreholeCptReaderResult</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>downhole_collection</code></td>
+<td><code>CptToBoreholeCptReaderResultResultDownholeCollection</code></td>
+<td><code>await result.downhole_collection.load()</code>, <code>await result.downhole_collection.to_dataframe(*keys)</code></td>
+<td>The Downhole Collection object created or updated from the CPT file.</td>
+</tr>
+<tr>
+<td><code>messages</code></td>
+<td><code>list[CptToBoreholeCptReaderResultResultMessagesItem]</code></td>
+<td>—</td>
+<td>List of messages generated during the CPT reading process.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="nested-shapes">Nested Shapes</h4>
+<p><strong><code>CptToBoreholeCptReaderTargetDownholeCollection</code></strong> (<code>TypedDict</code>)</p>
+<p>DownHoleCollection object to which the parsed results will be written.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>ObjectInput</code></td>
+<td>Yes</td>
+<td>Reference to the targeted object. Supported schemas: <code>downhole-collection/[&gt;=1.3,&lt;2]</code>.</td>
+</tr>
+<tr>
+<td><code>overwrite</code></td>
+<td><code>bool</code></td>
+<td>No</td>
+<td>Whether to overwrite the existing object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>No</td>
+<td>Description to put into the target object.</td>
+</tr>
+<tr>
+<td><code>tags</code></td>
+<td><code>dict[str, str]</code></td>
+<td>No</td>
+<td>Tags to put into the target object.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>CptToBoreholeCptReaderResultResultDownholeCollection</code></strong> (<code>ResultNode</code>)</p>
+<p>The Downhole Collection object created or updated from the CPT file.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Reference to a geoscience object. Supported schemas: <code>downhole-collection/[&gt;=1.3,&lt;2]</code>.</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The name of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>—</td>
+<td>The description of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>schema_id</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The ID of the Geoscience Object schema.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>CptToBoreholeCptReaderResultResultMessagesItem</code></strong> (<code>ResultNode</code>)</p>
+<p>A message produced by the task during execution.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>code</code></td>
+<td><code>Literal[100, 101, 102, 103, 105]</code></td>
+<td>—</td>
+<td>Integer code that uniquely identifies this message type within its task. Allows consumers to handle specific messages without relying on text matching.</td>
+</tr>
+<tr>
+<td><code>level</code></td>
+<td><code>Literal["info", "warning", "error"]</code></td>
+<td>—</td>
+<td>The level of the message, e.g., 'info', 'warning', 'error'.</td>
+</tr>
+<tr>
+<td><code>message</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The content of the message.</td>
+</tr>
+<tr>
+<td><code>object_id</code></td>
+<td><code>str | None</code></td>
+<td>—</td>
+<td>Optional identifier of the object (e.g., hole ID) this message relates to. None for global task-level messages.</td>
+</tr>
+<tr>
+<td><code>field</code></td>
+<td><code>str | None</code></td>
+<td>—</td>
+<td>Name of the field this message relates to, such as 'net_area_ratio'. Null when no specific field applies.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="create_clusters">create_clusters</h3>
+<p><code>client.cpt_to_borehole.create_clusters</code> · Task: <code>cpt-to-borehole/create-clusters</code> · Version: <code>0.1.72</code> · Preview (<code>preview=True</code> required)</p>
+<p>Create clusters of related soil regions based on the stratification performed by the stratify task.</p>
+<pre><code class="language-python">await client.cpt_to_borehole.create_clusters.run(
+    *,
+    downhole_collection: ObjectInput,
+    number_of_clusters: int | None = ...,
+    features_option: Literal[&quot;qtAndRf&quot;, &quot;QtnAndFr&quot;] = ...,
+    hole_ids: list[str] | None = ...,
+    uncluster: bool = ...,
+    preview: bool = False,
+) -&gt; CptToBoreholeCreateClustersResult
+</code></pre>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>downhole_collection</code></td>
+<td><code>ObjectInput</code></td>
+<td>The DownholeCollection whose CPT/Hole data will be clustered. Supported schemas: <code>downhole-collection/[&gt;=1.3,&lt;2]</code>.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>number_of_clusters</code></td>
+<td><code>int | None</code></td>
+<td>The number of clusters to create. Will be determined automatically if not provided.</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>features_option</code></td>
+<td><code>Literal["qtAndRf", "QtnAndFr"]</code></td>
+<td>Which CPT/Hole parameters to use to determine clusters. The default (qtAndRf) will use the corrected total cone resistance and the corrected friction ratio.</td>
+<td><code>'qtAndRf'</code></td>
+</tr>
+<tr>
+<td><code>hole_ids</code></td>
+<td><code>list[str] | None</code></td>
+<td>List of Hole IDs to use for clustering. If not provided, all holes in the downhole collection will be used.</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>uncluster</code></td>
+<td><code>bool</code></td>
+<td>When set to true, removes the entire cluster collection and all stored clustering parameters from the downhole collection, then terminates without running the clustering algorithm. Only downhole_collection may be provided alongside this parameter.</td>
+<td><code>False</code></td>
+</tr>
+<tr>
+<td><code>preview</code></td>
+<td><code>bool</code></td>
+<td>Opt in to preview execution (required for this preview task: pass <code>preview=True</code>).</td>
+<td><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<p>Results (<code>CptToBoreholeCreateClustersResult</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>downhole_collection</code></td>
+<td><code>CptToBoreholeCreateClustersResultResultDownholeCollection</code></td>
+<td><code>await result.downhole_collection.load()</code>, <code>await result.downhole_collection.to_dataframe(*keys)</code></td>
+<td>Reference to the DownholeCollection object that was created or updated which will hold the results of clusters creation.</td>
+</tr>
+<tr>
+<td><code>messages</code></td>
+<td><code>list[CptToBoreholeCreateClustersResultResultMessagesItem]</code></td>
+<td>—</td>
+<td>List of messages generated during the clustering process.</td>
+</tr>
+<tr>
+<td><code>inertia_silhouette_score</code></td>
+<td><code>CptToBoreholeCreateClustersResultResultInertiaSilhouetteScore | None</code></td>
+<td>—</td>
+<td>Chart data for the inertia and silhouette score clustering diagnostics.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="nested-shapes_1">Nested Shapes</h4>
+<p><strong><code>CptToBoreholeCreateClustersResultResultDownholeCollection</code></strong> (<code>ResultNode</code>)</p>
+<p>Reference to the DownholeCollection object that was created or updated which will hold the results of clusters creation.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Reference to a geoscience object. Supported schemas: <code>downhole-collection/[&gt;=1.3,&lt;2]</code>.</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The name of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>—</td>
+<td>The description of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>schema_id</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The ID of the Geoscience Object schema.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>CptToBoreholeCreateClustersResultResultMessagesItem</code></strong> (<code>ResultNode</code>)</p>
+<p>A message produced by the task during execution.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>code</code></td>
+<td><code>Literal[300, 301, 302, 305, 307, 309, 310]</code></td>
+<td>—</td>
+<td>Integer code that uniquely identifies this message type within its task. Allows consumers to handle specific messages without relying on text matching.</td>
+</tr>
+<tr>
+<td><code>level</code></td>
+<td><code>Literal["info", "warning", "error"]</code></td>
+<td>—</td>
+<td>The level of the message, e.g., 'info', 'warning', 'error'.</td>
+</tr>
+<tr>
+<td><code>message</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The content of the message.</td>
+</tr>
+<tr>
+<td><code>object_id</code></td>
+<td><code>str | None</code></td>
+<td>—</td>
+<td>Optional identifier of the object (e.g., hole ID) this message relates to. None for global task-level messages.</td>
+</tr>
+<tr>
+<td><code>field</code></td>
+<td><code>str | None</code></td>
+<td>—</td>
+<td>Name of the field this message relates to, such as 'net_area_ratio'. Null when no specific field applies.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>CptToBoreholeCreateClustersResultResultInertiaSilhouetteScore</code></strong> (<code>ResultNode</code>)</p>
+<p>Chart data for the inertia and silhouette score clustering diagnostics.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>optimal_number_of_clusters</code></td>
+<td><code>int</code></td>
+<td>—</td>
+<td>Optimal number of clusters selected by the clustering algorithm.</td>
+</tr>
+<tr>
+<td><code>cluster_counts</code></td>
+<td><code>list[int]</code></td>
+<td>—</td>
+<td>Candidate cluster counts evaluated by the clustering algorithm.</td>
+</tr>
+<tr>
+<td><code>inertias</code></td>
+<td><code>list[float]</code></td>
+<td>—</td>
+<td>KMeans inertia values for each candidate cluster count.</td>
+</tr>
+<tr>
+<td><code>silhouette_scores</code></td>
+<td><code>list[float]</code></td>
+<td>—</td>
+<td>Silhouette scores for each candidate cluster count.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="publish">publish</h3>
+<p><code>client.cpt_to_borehole.publish</code> · Task: <code>cpt-to-borehole/publish</code> · Version: <code>0.1.72</code> · Preview (<code>preview=True</code> required)</p>
+<p>Publish a finalized downhole collection as a new geoscience object for downstream consumption.</p>
+<pre><code class="language-python">await client.cpt_to_borehole.publish.run(
+    *,
+    downhole_collection: ObjectInput,
+    target_downhole_collection: CptToBoreholePublishTargetDownholeCollection,
+    include_clusters: bool,
+    exclude_collections: list[Literal[&quot;measured_cpt_readings&quot;, &quot;derived_cpt_readings&quot;, &quot;geology_layers&quot;]] = ...,
+    cluster_metadata: list[CptToBoreholePublishClusterMetadata] | None = ...,
+    preview: bool = False,
+) -&gt; CptToBoreholePublishResult
+</code></pre>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>downhole_collection</code></td>
+<td><code>ObjectInput</code></td>
+<td>The working clustered DownholeCollection to publish. Read-only; left unchanged. Supported schemas: <code>downhole-collection/[&gt;=1.3,&lt;2]</code>.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>target_downhole_collection</code></td>
+<td><code>CptToBoreholePublishTargetDownholeCollection</code></td>
+<td>The geoscience object where the published DownholeCollection is written as a new object.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>include_clusters</code></td>
+<td><code>bool</code></td>
+<td>When true, retain populated CLUSTER_ID columns (labels and colour map); when false, remove CLUSTER_ID columns entirely from the retained tables.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>exclude_collections</code></td>
+<td><code>list[Literal["measured_cpt_readings", "derived_cpt_readings", "geology_layers"]]</code></td>
+<td>Data collections to drop from the published object. Defaults to none. May not exclude all data collections, or all CLUSTER_ID data tables when including clusters.</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>cluster_metadata</code></td>
+<td><code>list[CptToBoreholePublishClusterMetadata] | None</code></td>
+<td>Name and colour for each cluster, aligned by index with the Clusters rows. Required if include_clusters is true; must be omitted otherwise.</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>preview</code></td>
+<td><code>bool</code></td>
+<td>Opt in to preview execution (required for this preview task: pass <code>preview=True</code>).</td>
+<td><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<p>Results (<code>CptToBoreholePublishResult</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>downhole_collection</code></td>
+<td><code>CptToBoreholePublishResultResultDownholeCollection</code></td>
+<td><code>await result.downhole_collection.load()</code>, <code>await result.downhole_collection.to_dataframe(*keys)</code></td>
+<td>Reference to the newly published DownholeCollection geoscience object.</td>
+</tr>
+<tr>
+<td><code>messages</code></td>
+<td><code>list[CptToBoreholePublishResultResultMessagesItem]</code></td>
+<td>—</td>
+<td>List of messages generated during the publish process.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="nested-shapes_2">Nested Shapes</h4>
+<p><strong><code>CptToBoreholePublishTargetDownholeCollection</code></strong> (<code>TypedDict</code>)</p>
+<p>The geoscience object where the published DownholeCollection is written as a new object.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>ObjectInput</code></td>
+<td>Yes</td>
+<td>Reference to the targeted object. Supported schemas: <code>downhole-collection/[&gt;=1.3,&lt;2]</code>.</td>
+</tr>
+<tr>
+<td><code>overwrite</code></td>
+<td><code>bool</code></td>
+<td>No</td>
+<td>Whether to overwrite the existing object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>No</td>
+<td>Description to put into the target object.</td>
+</tr>
+<tr>
+<td><code>tags</code></td>
+<td><code>dict[str, str]</code></td>
+<td>No</td>
+<td>Tags to put into the target object.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>CptToBoreholePublishClusterMetadata</code></strong> (<code>TypedDict</code>)</p>
+<p>Human-assigned name and colour for a single cluster.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>name</code></td>
+<td><code>str</code></td>
+<td>Yes</td>
+<td>Human-assigned name for the cluster.</td>
+</tr>
+<tr>
+<td><code>color</code></td>
+<td><code>list[int]</code></td>
+<td>Yes</td>
+<td>RGB colour of the cluster as three integers in the range 0-255.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>CptToBoreholePublishResultResultDownholeCollection</code></strong> (<code>ResultNode</code>)</p>
+<p>Reference to the newly published DownholeCollection geoscience object.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Reference to a geoscience object. Supported schemas: <code>downhole-collection/[&gt;=1.3,&lt;2]</code>.</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The name of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>—</td>
+<td>The description of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>schema_id</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The ID of the Geoscience Object schema.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>CptToBoreholePublishResultResultMessagesItem</code></strong> (<code>ResultNode</code>)</p>
+<p>A message produced by the task during execution.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>code</code></td>
+<td><code>Literal[601, 602, 603, 604, 605]</code></td>
+<td>—</td>
+<td>Integer code that uniquely identifies this message type within its task. Allows consumers to handle specific messages without relying on text matching.</td>
+</tr>
+<tr>
+<td><code>level</code></td>
+<td><code>Literal["info", "warning", "error"]</code></td>
+<td>—</td>
+<td>The level of the message, e.g., 'info', 'warning', 'error'.</td>
+</tr>
+<tr>
+<td><code>message</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The content of the message.</td>
+</tr>
+<tr>
+<td><code>object_id</code></td>
+<td><code>str | None</code></td>
+<td>—</td>
+<td>Optional identifier of the object (e.g., hole ID) this message relates to. None for global task-level messages.</td>
+</tr>
+<tr>
+<td><code>field</code></td>
+<td><code>str | None</code></td>
+<td>—</td>
+<td>Name of the field this message relates to, such as 'net_area_ratio'. Null when no specific field applies.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="stratify">stratify</h3>
+<p><code>client.cpt_to_borehole.stratify</code> · Task: <code>cpt-to-borehole/stratify</code> · Version: <code>0.1.72</code> · Preview (<code>preview=True</code> required)</p>
+<p>Classifies and stratifies CPT data into geological layers based on predefined criteria and algorithms, facilitating geotechnical analysis and modeling.</p>
+<pre><code class="language-python">await client.cpt_to_borehole.stratify.run(
+    *,
+    input_downhole_collections: list[ObjectInput],
+    target_downhole_collection: CptToBoreholeStratifyTargetDownholeCollection,
+    cpt_parameters: list[CptToBoreholeStratifyPerHoleParameters] | None = ...,
+    execution_mode: Literal[&quot;inline&quot;, &quot;fan_out&quot;, &quot;auto&quot;] = ...,
+    preview: bool = False,
+) -&gt; CptToBoreholeStratifyResult
+</code></pre>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>input_downhole_collections</code></td>
+<td><code>list[ObjectInput]</code></td>
+<td>A list of DownHoleCollection objects to be used as input for stratification.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>target_downhole_collection</code></td>
+<td><code>CptToBoreholeStratifyTargetDownholeCollection</code></td>
+<td>DownHoleCollection object to which results are written.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>cpt_parameters</code></td>
+<td><code>list[CptToBoreholeStratifyPerHoleParameters] | None</code></td>
+<td>List of stratification and classification parameters per CPT/hole.</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>execution_mode</code></td>
+<td><code>Literal["inline", "fan_out", "auto"]</code></td>
+<td>The execution strategy for classify/stratify steps. When set to 'auto' the task decides automatically based on available memory.</td>
+<td><code>'auto'</code></td>
+</tr>
+<tr>
+<td><code>preview</code></td>
+<td><code>bool</code></td>
+<td>Opt in to preview execution (required for this preview task: pass <code>preview=True</code>).</td>
+<td><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<p>Results (<code>CptToBoreholeStratifyResult</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>downhole_collection</code></td>
+<td><code>CptToBoreholeStratifyResultResultDownholeCollection</code></td>
+<td><code>await result.downhole_collection.load()</code>, <code>await result.downhole_collection.to_dataframe(*keys)</code></td>
+<td>Reference to the DownholeCollection object that was created or updated which will hold the results of the stratification and classification.</td>
+</tr>
+<tr>
+<td><code>messages</code></td>
+<td><code>list[CptToBoreholeStratifyResultResultMessagesItem]</code></td>
+<td>—</td>
+<td>List of messages generated during the stratification process.</td>
+</tr>
+<tr>
+<td><code>normalized_cost_variation</code></td>
+<td><code>list[CptToBoreholeStratifyResultNormalizedCostVariationEntry]</code></td>
+<td>—</td>
+<td>Per-hole normalized cost variation data for holes stratified with the machine learning method.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="nested-shapes_3">Nested Shapes</h4>
+<p><strong><code>CptToBoreholeStratifyTargetDownholeCollection</code></strong> (<code>TypedDict</code>)</p>
+<p>DownHoleCollection object to which results are written.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>ObjectInput</code></td>
+<td>Yes</td>
+<td>Reference to the targeted object. Supported schemas: <code>downhole-collection/[&gt;=1.3,&lt;2]</code>.</td>
+</tr>
+<tr>
+<td><code>overwrite</code></td>
+<td><code>bool</code></td>
+<td>No</td>
+<td>Whether to overwrite the existing object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>No</td>
+<td>Description to put into the target object.</td>
+</tr>
+<tr>
+<td><code>tags</code></td>
+<td><code>dict[str, str]</code></td>
+<td>No</td>
+<td>Tags to put into the target object.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>CptToBoreholeStratifyPerHoleParameters</code></strong> (<code>TypedDict</code>)</p>
+<p>Parameters for each CPT/hole to be stratified.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>hole_id</code></td>
+<td><code>str</code></td>
+<td>Yes</td>
+<td>Identifier for the CPT/hole to be classified and stratified.</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>str | None</code></td>
+<td>No</td>
+<td>A new name for the CPT/hole (this will change the hole_id to the desired name).</td>
+</tr>
+<tr>
+<td><code>water_depth</code></td>
+<td><code>float | None</code></td>
+<td>No</td>
+<td>Water depth at the location of this CPT/hole.</td>
+</tr>
+<tr>
+<td><code>net_area_ratio</code></td>
+<td><code>float | None</code></td>
+<td>No</td>
+<td>Cone area ratio for this CPT/hole.</td>
+</tr>
+<tr>
+<td><code>cone_surface_area</code></td>
+<td><code>float | None</code></td>
+<td>No</td>
+<td>Cone surface area (mm²) for this CPT/hole. Required when an inverse filtering method is used and the source file does not provide it.</td>
+</tr>
+<tr>
+<td><code>filtering_method</code></td>
+<td><code>Literal["no_filtering", "inverse_filtering", "nearfield_inverse_filtering"]</code></td>
+<td>No</td>
+<td>Filtering method to use for the classification of the CPT/hole. Defaults to no filtering.</td>
+</tr>
+<tr>
+<td><code>stratification_method</code></td>
+<td><code>Literal["average", "std_dev", "machine_learning"]</code></td>
+<td>No</td>
+<td>Stratification method to use for the stratification of the CPT/hole.</td>
+</tr>
+<tr>
+<td><code>layering_tolerance</code></td>
+<td><code>float</code></td>
+<td>No</td>
+<td>Layering tolerance to use for the stratification of the CPT/hole. Bounds: <code>&gt; 0.01</code>.</td>
+</tr>
+<tr>
+<td><code>minimum_layer_thickness</code></td>
+<td><code>float</code></td>
+<td>No</td>
+<td>Minimum layer thickness to use for the stratification of the CPT/hole. Bounds: <code>&gt; 0.05</code>.</td>
+</tr>
+<tr>
+<td><code>maximum_number_of_layers</code></td>
+<td><code>int</code></td>
+<td>No</td>
+<td>Maximum number of layers to use for the stratification of the CPT/hole. Bounds: <code>&gt;= 1</code>.</td>
+</tr>
+<tr>
+<td><code>custom_number_of_layers</code></td>
+<td><code>int | None</code></td>
+<td>No</td>
+<td>Custom number of layers to use for the stratification of the CPT/hole.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>CptToBoreholeStratifyResultResultDownholeCollection</code></strong> (<code>ResultNode</code>)</p>
+<p>Reference to the DownholeCollection object that was created or updated which will hold the results of the stratification and classification.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Reference to a geoscience object. Supported schemas: <code>downhole-collection/[&gt;=1.3,&lt;2]</code>.</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The name of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>—</td>
+<td>The description of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>schema_id</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The ID of the Geoscience Object schema.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>CptToBoreholeStratifyResultResultMessagesItem</code></strong> (<code>ResultNode</code>)</p>
+<p>A message produced by the task during execution.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>code</code></td>
+<td><code>Literal[200, 201, 203, 204, 205, 206, 208, 209, 210, 211, 212]</code></td>
+<td>—</td>
+<td>Integer code that uniquely identifies this message type within its task. Allows consumers to handle specific messages without relying on text matching.</td>
+</tr>
+<tr>
+<td><code>level</code></td>
+<td><code>Literal["info", "warning", "error"]</code></td>
+<td>—</td>
+<td>The level of the message, e.g., 'info', 'warning', 'error'.</td>
+</tr>
+<tr>
+<td><code>message</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The content of the message.</td>
+</tr>
+<tr>
+<td><code>object_id</code></td>
+<td><code>str | None</code></td>
+<td>—</td>
+<td>Optional identifier of the object (e.g., hole ID) this message relates to. None for global task-level messages.</td>
+</tr>
+<tr>
+<td><code>field</code></td>
+<td><code>str | None</code></td>
+<td>—</td>
+<td>Name of the field this message relates to, such as 'net_area_ratio'. Null when no specific field applies.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>CptToBoreholeStratifyResultNormalizedCostPoint</code></strong> (<code>ResultNode</code>)</p>
+<p>One point on the normalized cost variation chart.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>number_of_layers</code></td>
+<td><code>int</code></td>
+<td>—</td>
+<td>Candidate number of layers used for the normalized cost calculation.</td>
+</tr>
+<tr>
+<td><code>cost</code></td>
+<td><code>float</code></td>
+<td>—</td>
+<td>Normalized cost value for the candidate number of layers.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>CptToBoreholeStratifyResultNormalizedCostVariationEntry</code></strong> (<code>ResultNode</code>)</p>
+<p>Normalized cost variation chart data for one hole.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>object_id</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Identifier of the object (meaning the hole id, e.g. "CPT_1") this normalized cost variation entry relates to.</td>
+</tr>
+<tr>
+<td><code>optimal_number_of_layers</code></td>
+<td><code>int</code></td>
+<td>—</td>
+<td>Optimal number of layers selected by the machine learning stratification method.</td>
+</tr>
+<tr>
+<td><code>first_minimum_cost_number_of_layers</code></td>
+<td><code>int | None</code></td>
+<td>—</td>
+<td>Number of layers at the first local minimum of the normalized cost curve, if available.</td>
+</tr>
+<tr>
+<td><code>points</code></td>
+<td><code>list[CptToBoreholeStratifyResultNormalizedCostPoint]</code></td>
+<td>—</td>
+<td>Chart points for the normalized cost variation curve.</td>
+</tr>
+</tbody>
+</table></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>

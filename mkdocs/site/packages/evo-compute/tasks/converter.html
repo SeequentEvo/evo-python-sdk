@@ -1,0 +1,2103 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        
+        <link rel="shortcut icon" href="../../../img/favicon.ico">
+        <title>Converter - Evo Python SDK</title>
+        <link href="../../../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../../../css/fontawesome.min.css" rel="stylesheet">
+        <link href="../../../css/brands.min.css" rel="stylesheet">
+        <link href="../../../css/solid.min.css" rel="stylesheet">
+        <link href="../../../css/v4-font-face.min.css" rel="stylesheet">
+        <link href="../../../css/base.css" rel="stylesheet">
+        <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" >
+        <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
+        <link href="../../../assets/_mkdocstrings.css" rel="stylesheet">
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="../../..">Evo Python SDK</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar-collapse" aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+
+                    <ul class="nav navbar-nav ms-md-auto">
+                            <li class="nav-item">
+                                <a rel="prev" href="../TaskResult.html" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="cpt-to-borehole.html" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-bs-toggle="collapse" data-bs-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-bs-level="1"><a href="#converter-tasks" class="nav-link">Converter Tasks</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-bs-level="2"><a href="#input-shorthands" class="nav-link">Input Shorthands</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#tasks" class="nav-link">Tasks</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<p><a href="https://github.com/SeequentEvo/evo-python-sdk/tree/main/packages/evo-compute/stubs/snapshot/converter">GitHub source</a></p>
+<h1 id="converter-tasks">Converter Tasks</h1>
+<p>Discoverable compute tasks in the <code>converter</code> topic. Call any task below through <code>ComputeClient</code> as <code>await client.converter.&lt;task&gt;.run(...)</code>, or by name via <code>await client.arun("converter", "&lt;task&gt;", parameters)</code>.</p>
+<h2 id="input-shorthands">Input Shorthands</h2>
+<table>
+<thead>
+<tr>
+<th>Alias</th>
+<th>Accepted Python Types</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ObjectInput</code></td>
+<td><code>str | UUID | BaseObject | DownloadedObject | ObjectMetadata | ObjectReference</code></td>
+<td>Any handle <code>ReferenceResolver</code> can derive a geoscience object URL from.</td>
+</tr>
+<tr>
+<td><code>FileInput</code></td>
+<td><code>str | FileHandle</code></td>
+<td>A File API URL or an SDK file/upload handle exposing <code>.url</code> or <code>.metadata.url</code>.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="tasks">Tasks</h2>
+<h3 id="detect_converter">detect_converter</h3>
+<p><code>client.converter.detect_converter</code> · Task: <code>converter/detect-converter</code> · Version: <code>0.1.41</code> · Preview (<code>preview=True</code> required)</p>
+<p>Accepts one or more file references, inspects each file's extension, and returns which converter task(s) and geoscience object schema(s) are available for importing each file.</p>
+<pre><code class="language-python">await client.converter.detect_converter.run(
+    *,
+    files: list[FileInput],
+    preview: bool = False,
+) -&gt; ConverterDetectConverterResult
+</code></pre>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>files</code></td>
+<td><code>list[FileInput]</code></td>
+<td>Up to 50 Evo file references to analyse.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>preview</code></td>
+<td><code>bool</code></td>
+<td>Opt in to preview execution (required for this preview task: pass <code>preview=True</code>).</td>
+<td><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<p>Results (<code>ConverterDetectConverterResult</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>groups</code></td>
+<td><code>list[ConverterDetectConverterResultConversionGroup]</code></td>
+<td>—</td>
+<td>Conversion assessments for the supplied files.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="nested-shapes">Nested Shapes</h4>
+<p><strong><code>ConverterDetectConverterResultSourceFileBinding</code></strong> (<code>ResultNode</code>)</p>
+<p>A supplied file bound to the parameter expected by a converter task.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>parameter_name</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The receiving converter task's file parameter name.</td>
+</tr>
+<tr>
+<td><code>file_ref</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The supplied Evo file reference.</td>
+</tr>
+<tr>
+<td><code>filename</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The filename from file metadata.</td>
+</tr>
+<tr>
+<td><code>role</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The file's role in the conversion group.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>ConverterDetectConverterResultCompanionFileRequirement</code></strong> (<code>ResultNode</code>)</p>
+<p>A companion-file parameter expected by a converter task.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>parameter_name</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The receiving converter task's file parameter name.</td>
+</tr>
+<tr>
+<td><code>extension</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The expected companion extension, or an empty string for an extensionless companion.</td>
+</tr>
+<tr>
+<td><code>required</code></td>
+<td><code>bool</code></td>
+<td>—</td>
+<td>Whether the converter requires this companion file.</td>
+</tr>
+<tr>
+<td><code>supplied</code></td>
+<td><code>bool</code></td>
+<td>—</td>
+<td>Whether a matching companion file was supplied.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>ConverterDetectConverterResultConverterOption</code></strong> (<code>ResultNode</code>)</p>
+<p>A converter task that can handle a particular file extension.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>converter_task</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The compute task URL for the converter (e.g. 'https://example.com/compute/orgs/{org_id}/converter/obj-import').</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>A human-readable description of what the converter task does.</td>
+</tr>
+<tr>
+<td><code>schema</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The geoscience object schema the converter produces (e.g. 'triangle-mesh').</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>ConverterDetectConverterResultValidationDiagnostic</code></strong> (<code>ResultNode</code>)</p>
+<p>A non-fatal validation result for a conversion group.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>code</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>A stable machine-readable diagnostic code.</td>
+</tr>
+<tr>
+<td><code>message</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>A human-readable explanation of the diagnostic.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>ConverterDetectConverterResultConversionInvocationPlan</code></strong> (<code>ResultNode</code>)</p>
+<p>A ready-to-submit converter plan when one converter and schema remain.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>converter_task</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The URL of the converter task to invoke.</td>
+</tr>
+<tr>
+<td><code>schema</code></td>
+<td><code>str | None</code></td>
+<td>—</td>
+<td>The output schema when there is exactly one; null for multiple output schemas.</td>
+</tr>
+<tr>
+<td><code>output_schemas</code></td>
+<td><code>list[str]</code></td>
+<td>—</td>
+<td>All geoscience object schemas produced by this invocation.</td>
+</tr>
+<tr>
+<td><code>files</code></td>
+<td><code>list[ConverterDetectConverterResultSourceFileBinding]</code></td>
+<td>—</td>
+<td>Resolved file parameters for the converter task.</td>
+</tr>
+<tr>
+<td><code>required_parameters</code></td>
+<td><code>list[str]</code></td>
+<td>—</td>
+<td>Required non-file converter parameters the caller must still provide.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>ConverterDetectConverterResultConversionGroup</code></strong> (<code>ResultNode</code>)</p>
+<p>The actionable conversion assessment for one primary input file.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>status</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Group status: ready_for_invocation, incomplete, invalid, unsupported, or orphan.</td>
+</tr>
+<tr>
+<td><code>files</code></td>
+<td><code>list[ConverterDetectConverterResultSourceFileBinding]</code></td>
+<td>—</td>
+<td>Files associated with this conversion group.</td>
+</tr>
+<tr>
+<td><code>companion_requirements</code></td>
+<td><code>list[ConverterDetectConverterResultCompanionFileRequirement]</code></td>
+<td>—</td>
+<td>Required and optional companion-file parameters expected by the converter.</td>
+</tr>
+<tr>
+<td><code>converters</code></td>
+<td><code>list[ConverterDetectConverterResultConverterOption]</code></td>
+<td>—</td>
+<td>Content-compatible converter alternatives.</td>
+</tr>
+<tr>
+<td><code>diagnostics</code></td>
+<td><code>list[ConverterDetectConverterResultValidationDiagnostic]</code></td>
+<td>—</td>
+<td>Non-fatal validation diagnostics.</td>
+</tr>
+<tr>
+<td><code>invocation_plan</code></td>
+<td><code>ConverterDetectConverterResultConversionInvocationPlan | None</code></td>
+<td>—</td>
+<td>A ready-to-submit converter plan when one converter and schema remain.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="ers_import">ers_import</h3>
+<p><code>client.converter.ers_import</code> · Task: <code>converter/ers-import</code> · Version: <code>0.1.41</code> · Preview (<code>preview=True</code> required)</p>
+<p>Import ER Mapper Raster (.ers) files into Evo as Regular-2D geoscience objects.</p>
+<pre><code class="language-python">await client.converter.ers_import.run(
+    *,
+    file: FileInput,
+    file_data: FileInput,
+    target: ConverterErsImportTarget,
+    preview: bool = False,
+) -&gt; ConverterErsImportResult
+</code></pre>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>file</code></td>
+<td><code>FileInput</code></td>
+<td>ER Mapper Raster header file (.ers) to import. Supported file extensions: <code>.ers</code>.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>file_data</code></td>
+<td><code>FileInput</code></td>
+<td>ER Mapper Raster binary data file (companion file without extension).</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>target</code></td>
+<td><code>ConverterErsImportTarget</code></td>
+<td>Target specifying where to create or update the Regular2DGrid object. Contains 'reference' (File API URL) and optional 'overwrite' (boolean, only valid for path references).</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>preview</code></td>
+<td><code>bool</code></td>
+<td>Opt in to preview execution (required for this preview task: pass <code>preview=True</code>).</td>
+<td><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<p>Results (<code>ConverterErsImportResult</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>object</code></td>
+<td><code>ConverterErsImportResultResultObject</code></td>
+<td><code>await result.object.load()</code>, <code>await result.object.to_dataframe(*keys)</code></td>
+<td>The Regular2DGrid object created from the input file.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="nested-shapes_1">Nested Shapes</h4>
+<p><strong><code>ConverterErsImportTarget</code></strong> (<code>TypedDict</code>)</p>
+<p>Target specifying where to create or update the Regular2DGrid object. Contains 'reference' (File API URL) and optional 'overwrite' (boolean, only valid for path references).</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>ObjectInput</code></td>
+<td>Yes</td>
+<td>Reference to the targeted object. Supported schemas: <code>regular-2d-grid/[&gt;=1.2,&lt;2]</code>.</td>
+</tr>
+<tr>
+<td><code>overwrite</code></td>
+<td><code>bool</code></td>
+<td>No</td>
+<td>Whether to overwrite the existing object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>No</td>
+<td>Description to put into the target object.</td>
+</tr>
+<tr>
+<td><code>tags</code></td>
+<td><code>dict[str, str]</code></td>
+<td>No</td>
+<td>Tags to put into the target object.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>ConverterErsImportResultResultObject</code></strong> (<code>ResultNode</code>)</p>
+<p>The Regular2DGrid object created from the input file.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Reference to a geoscience object. Supported schemas: <code>regular-2d-grid/[&gt;=1.2,&lt;2]</code>.</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The name of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>—</td>
+<td>The description of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>schema_id</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The ID of the Geoscience Object schema.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="geosoft_grid_import">geosoft_grid_import</h3>
+<p><code>client.converter.geosoft_grid_import</code> · Task: <code>converter/geosoft-grid-import</code> · Version: <code>0.1.41</code> · Preview (<code>preview=True</code> required)</p>
+<p>Import Geosoft Grid (.grd/.grd.gi) files into Evo as Regular-2D geoscience objects.</p>
+<pre><code class="language-python">await client.converter.geosoft_grid_import.run(
+    *,
+    file: FileInput,
+    target: ConverterGeosoftGridImportTarget,
+    file_gi: FileInput | None = ...,
+    preview: bool = False,
+) -&gt; ConverterGeosoftGridImportResult
+</code></pre>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>file</code></td>
+<td><code>FileInput</code></td>
+<td>Geosoft Grid (.grd) file to import. Supported file extensions: <code>.grd</code>.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>target</code></td>
+<td><code>ConverterGeosoftGridImportTarget</code></td>
+<td>Target specifying where to create or update the Regular2DGrid object. Contains 'reference' (File API URL) and optional 'overwrite' (boolean, only valid for path references).</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>file_gi</code></td>
+<td><code>FileInput | None</code></td>
+<td>Optional Geosoft Grid Information (.grd.gi) file containing projection data. Supported file extensions: <code>.gi</code>.</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>preview</code></td>
+<td><code>bool</code></td>
+<td>Opt in to preview execution (required for this preview task: pass <code>preview=True</code>).</td>
+<td><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<p>Results (<code>ConverterGeosoftGridImportResult</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>object</code></td>
+<td><code>ConverterGeosoftGridImportResultResultObject</code></td>
+<td><code>await result.object.load()</code>, <code>await result.object.to_dataframe(*keys)</code></td>
+<td>The Regular2DGrid object created from the input Geosoft Grid file.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="nested-shapes_2">Nested Shapes</h4>
+<p><strong><code>ConverterGeosoftGridImportTarget</code></strong> (<code>TypedDict</code>)</p>
+<p>Target specifying where to create or update the Regular2DGrid object. Contains 'reference' (File API URL) and optional 'overwrite' (boolean, only valid for path references).</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>ObjectInput</code></td>
+<td>Yes</td>
+<td>Reference to the targeted object. Supported schemas: <code>regular-2d-grid/[&gt;=1.2,&lt;2]</code>.</td>
+</tr>
+<tr>
+<td><code>overwrite</code></td>
+<td><code>bool</code></td>
+<td>No</td>
+<td>Whether to overwrite the existing object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>No</td>
+<td>Description to put into the target object.</td>
+</tr>
+<tr>
+<td><code>tags</code></td>
+<td><code>dict[str, str]</code></td>
+<td>No</td>
+<td>Tags to put into the target object.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>ConverterGeosoftGridImportResultResultObject</code></strong> (<code>ResultNode</code>)</p>
+<p>The Regular2DGrid object created from the input Geosoft Grid file.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Reference to a geoscience object. Supported schemas: <code>regular-2d-grid/[&gt;=1.2,&lt;2]</code>.</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The name of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>—</td>
+<td>The description of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>schema_id</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The ID of the Geoscience Object schema.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="geosoft_surface_import">geosoft_surface_import</h3>
+<p><code>client.converter.geosoft_surface_import</code> · Task: <code>converter/geosoft-surface-import</code> · Version: <code>0.1.41</code> · Preview (<code>preview=True</code> required)</p>
+<p>Import Geosoft Surface (.geosoft_surface) files into Evo as GeologicalModelMeshes geoscience objects.</p>
+<pre><code class="language-python">await client.converter.geosoft_surface_import.run(
+    *,
+    file: FileInput,
+    target: ConverterGeosoftSurfaceImportTarget,
+    preview: bool = False,
+) -&gt; ConverterGeosoftSurfaceImportResult
+</code></pre>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>file</code></td>
+<td><code>FileInput</code></td>
+<td>Geosoft Surface file (.geosoft_surface) to import. Supported file extensions: <code>.geosoft_surface</code>.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>target</code></td>
+<td><code>ConverterGeosoftSurfaceImportTarget</code></td>
+<td>Target specifying where to create or update the GeologicalModelMeshes object. Contains 'reference' (File API URL) and optional 'overwrite' (boolean, only valid for path references).</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>preview</code></td>
+<td><code>bool</code></td>
+<td>Opt in to preview execution (required for this preview task: pass <code>preview=True</code>).</td>
+<td><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<p>Results (<code>ConverterGeosoftSurfaceImportResult</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>object</code></td>
+<td><code>ConverterGeosoftSurfaceImportResultResultObject</code></td>
+<td><code>await result.object.load()</code>, <code>await result.object.to_dataframe(*keys)</code></td>
+<td>The GeologicalModelMeshes object created from the input file.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="nested-shapes_3">Nested Shapes</h4>
+<p><strong><code>ConverterGeosoftSurfaceImportTarget</code></strong> (<code>TypedDict</code>)</p>
+<p>Target specifying where to create or update the GeologicalModelMeshes object. Contains 'reference' (File API URL) and optional 'overwrite' (boolean, only valid for path references).</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>ObjectInput</code></td>
+<td>Yes</td>
+<td>Reference to the targeted object. Supported schemas: <code>geological-model-meshes/[&gt;=2.0,&lt;3]</code>.</td>
+</tr>
+<tr>
+<td><code>overwrite</code></td>
+<td><code>bool</code></td>
+<td>No</td>
+<td>Whether to overwrite the existing object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>No</td>
+<td>Description to put into the target object.</td>
+</tr>
+<tr>
+<td><code>tags</code></td>
+<td><code>dict[str, str]</code></td>
+<td>No</td>
+<td>Tags to put into the target object.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>ConverterGeosoftSurfaceImportResultResultObject</code></strong> (<code>ResultNode</code>)</p>
+<p>The GeologicalModelMeshes object created from the input file.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Reference to a geoscience object. Supported schemas: <code>geological-model-meshes/[&gt;=2.0,&lt;3]</code>.</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The name of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>—</td>
+<td>The description of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>schema_id</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The ID of the Geoscience Object schema.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="geosoft_voxel_import">geosoft_voxel_import</h3>
+<p><code>client.converter.geosoft_voxel_import</code> · Task: <code>converter/geosoft-voxel-import</code> · Version: <code>0.1.41</code> · Preview (<code>preview=True</code> required)</p>
+<p>Import Geosoft Voxel (.geosoft_voxel) files into Evo as either Regular-3D or Tensor-3D geoscience objects.</p>
+<pre><code class="language-python">await client.converter.geosoft_voxel_import.run(
+    *,
+    file: FileInput,
+    target: ConverterGeosoftVoxelImportTarget,
+    preview: bool = False,
+) -&gt; ConverterGeosoftVoxelImportResult
+</code></pre>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>file</code></td>
+<td><code>FileInput</code></td>
+<td>Geosoft Voxel (.geosoft_voxel) file to import. Supported file extensions: <code>.geosoft_voxel</code>.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>target</code></td>
+<td><code>ConverterGeosoftVoxelImportTarget</code></td>
+<td>Target specifying where to create or update the Regular3DGrid | Tensor3DGrid object. Contains 'reference' (Geoscience Object API URL) and optional 'overwrite' (boolean, only valid for path references).</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>preview</code></td>
+<td><code>bool</code></td>
+<td>Opt in to preview execution (required for this preview task: pass <code>preview=True</code>).</td>
+<td><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<p>Results (<code>ConverterGeosoftVoxelImportResult</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>voxel_object</code></td>
+<td><code>ConverterGeosoftVoxelImportResultResultVoxelObject</code></td>
+<td><code>await result.voxel_object.load()</code>, <code>await result.voxel_object.to_dataframe(*keys)</code></td>
+<td>The Regular3DGrid or Tensor3DGrid object created from the input Geosoft Voxel file.</td>
+</tr>
+<tr>
+<td><code>colormap</code></td>
+<td><code>ConverterGeosoftVoxelImportResultResultColormap | None</code></td>
+<td>—</td>
+<td>The category colormap created from the input Geosoft Voxel file's thematic data, or null if the file contains no thematic data.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="nested-shapes_4">Nested Shapes</h4>
+<p><strong><code>ConverterGeosoftVoxelImportTarget</code></strong> (<code>TypedDict</code>)</p>
+<p>Target specifying where to create or update the Regular3DGrid | Tensor3DGrid object. Contains 'reference' (Geoscience Object API URL) and optional 'overwrite' (boolean, only valid for path references).</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>ObjectInput</code></td>
+<td>Yes</td>
+<td>Reference to the targeted object. Supported schemas: <code>regular-3d-grid/[&gt;=1.2,&lt;2]</code>, <code>tensor-3d-grid/[&gt;=1.2,&lt;2]</code>.</td>
+</tr>
+<tr>
+<td><code>overwrite</code></td>
+<td><code>bool</code></td>
+<td>No</td>
+<td>Whether to overwrite the existing object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>No</td>
+<td>Description to put into the target object.</td>
+</tr>
+<tr>
+<td><code>tags</code></td>
+<td><code>dict[str, str]</code></td>
+<td>No</td>
+<td>Tags to put into the target object.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>ConverterGeosoftVoxelImportResultResultVoxelObject</code></strong> (<code>ResultNode</code>)</p>
+<p>The Regular3DGrid or Tensor3DGrid object created from the input Geosoft Voxel file.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Reference to a geoscience object. Supported schemas: <code>regular-3d-grid/[&gt;=1.2,&lt;2]</code>, <code>tensor-3d-grid/[&gt;=1.2,&lt;2]</code>.</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The name of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>—</td>
+<td>The description of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>schema_id</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The ID of the Geoscience Object schema.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>ConverterGeosoftVoxelImportResultResultColormap</code></strong> (<code>ResultNode</code>)</p>
+<p>The category colormap created from the input Geosoft Voxel file's thematic data, or null if the file contains no thematic data.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>colormap_id</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Identifier of the CategoryColormap created in the Colormap API.</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Name given to the created colormap.</td>
+</tr>
+<tr>
+<td><code>attribute_id</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Key of the voxel cell attribute the colormap was associated with.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="image_import">image_import</h3>
+<p><code>client.converter.image_import</code> · Task: <code>converter/image-import</code> · Version: <code>0.1.41</code> · Preview (<code>preview=True</code> required)</p>
+<p>Import image files into Evo as Regular-2D geoscience objects.</p>
+<pre><code class="language-python">await client.converter.image_import.run(
+    *,
+    file: FileInput,
+    target: ConverterImageImportTarget,
+    coordinate_reference_system: str = ...,
+    origin: list[float] | None = ...,
+    cell_size: list[float] | None = ...,
+    preview: bool = False,
+) -&gt; ConverterImageImportResult
+</code></pre>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>file</code></td>
+<td><code>FileInput</code></td>
+<td>Image file to import. Supported file extensions: <code>.jpeg</code>, <code>.jpg</code>, <code>.png</code>, <code>.tif</code>, <code>.tiff</code>, <code>.bmp</code>, <code>.gif</code>.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>target</code></td>
+<td><code>ConverterImageImportTarget</code></td>
+<td>Target specifying where to create or update the Regular2DGrid object. Contains 'reference' (Geoscience Object API URL) and optional 'overwrite' (boolean, only valid for path references).</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>coordinate_reference_system</code></td>
+<td><code>str</code></td>
+<td>The coordinate reference system for the grid coordinates, specified as an EPSG code string (e.g., 'EPSG:4326'), an OGC WKT string, or 'unspecified'.</td>
+<td><code>'unspecified'</code></td>
+</tr>
+<tr>
+<td><code>origin</code></td>
+<td><code>list[float] | None</code></td>
+<td>Optional grid origin in [x, y, z] format.</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>cell_size</code></td>
+<td><code>list[float] | None</code></td>
+<td>Optional grid cell size in [dx, dy] format.</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>preview</code></td>
+<td><code>bool</code></td>
+<td>Opt in to preview execution (required for this preview task: pass <code>preview=True</code>).</td>
+<td><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<p>Results (<code>ConverterImageImportResult</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>object</code></td>
+<td><code>ConverterImageImportResultResultObject</code></td>
+<td><code>await result.object.load()</code>, <code>await result.object.to_dataframe(*keys)</code></td>
+<td>The Regular2DGrid object created from the input file.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="nested-shapes_5">Nested Shapes</h4>
+<p><strong><code>ConverterImageImportTarget</code></strong> (<code>TypedDict</code>)</p>
+<p>Target specifying where to create or update the Regular2DGrid object. Contains 'reference' (Geoscience Object API URL) and optional 'overwrite' (boolean, only valid for path references).</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>ObjectInput</code></td>
+<td>Yes</td>
+<td>Reference to the targeted object. Supported schemas: <code>regular-2d-grid/[&gt;=1.2,&lt;2]</code>.</td>
+</tr>
+<tr>
+<td><code>overwrite</code></td>
+<td><code>bool</code></td>
+<td>No</td>
+<td>Whether to overwrite the existing object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>No</td>
+<td>Description to put into the target object.</td>
+</tr>
+<tr>
+<td><code>tags</code></td>
+<td><code>dict[str, str]</code></td>
+<td>No</td>
+<td>Tags to put into the target object.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>ConverterImageImportResultValues</code></strong> (<code>ResultNode</code>)</p>
+<p>Continuous cell attribute containing imported image pixel values.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Reference to the attribute in the geoscience object.</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The name of the output attribute.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>ConverterImageImportResultResultObject</code></strong> (<code>ResultNode</code>)</p>
+<p>The Regular2DGrid object created from the input file.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Reference to a geoscience object. Supported schemas: <code>regular-2d-grid/[&gt;=1.2,&lt;2]</code>.</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The name of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>—</td>
+<td>The description of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>schema_id</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The ID of the Geoscience Object schema.</td>
+</tr>
+<tr>
+<td><code>values</code></td>
+<td><code>ConverterImageImportResultValues</code></td>
+<td><code>await node.values.load()</code>, <code>await node.values.to_dataframe()</code></td>
+<td>Continuous cell attribute containing imported image pixel values.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="kml_import">kml_import</h3>
+<p><code>client.converter.kml_import</code> · Task: <code>converter/kml-import</code> · Version: <code>0.1.41</code> · Preview (<code>preview=True</code> required)</p>
+<p>Task to import KML/KMZ files into Evo as Pointset and LineSegments geoscience objects.</p>
+<pre><code class="language-python">await client.converter.kml_import.run(
+    *,
+    file: FileInput,
+    target: ConverterKmlImportTarget,
+    preview: bool = False,
+) -&gt; ConverterKmlImportResult
+</code></pre>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>file</code></td>
+<td><code>FileInput</code></td>
+<td>KML or KMZ file to import. Supported file extensions: <code>.kml</code>, <code>.kmz</code>.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>target</code></td>
+<td><code>ConverterKmlImportTarget</code></td>
+<td>Target specifying where to create or update the imported geoscience object(s). Contains 'reference' (File API URL) and optional 'overwrite' (boolean, only valid for path references).</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>preview</code></td>
+<td><code>bool</code></td>
+<td>Opt in to preview execution (required for this preview task: pass <code>preview=True</code>).</td>
+<td><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<p>Results (<code>ConverterKmlImportResult</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>objects</code></td>
+<td><code>list[ConverterKmlImportResultResultObjectsItem]</code></td>
+<td><code>await result.objects[i].load()</code>, <code>await result.objects[i].to_dataframe()</code></td>
+<td>The geoscience objects created from the input KML/KMZ file.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="nested-shapes_6">Nested Shapes</h4>
+<p><strong><code>ConverterKmlImportTarget</code></strong> (<code>TypedDict</code>)</p>
+<p>Target specifying where to create or update the imported geoscience object(s). Contains 'reference' (File API URL) and optional 'overwrite' (boolean, only valid for path references).</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>ObjectInput</code></td>
+<td>Yes</td>
+<td>Reference to the targeted object. Supported schemas: <code>pointset/[&gt;=1.3,&lt;2]</code>, <code>line-segments/[&gt;=2.2,&lt;3]</code>.</td>
+</tr>
+<tr>
+<td><code>overwrite</code></td>
+<td><code>bool</code></td>
+<td>No</td>
+<td>Whether to overwrite the existing object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>No</td>
+<td>Description to put into the target object.</td>
+</tr>
+<tr>
+<td><code>tags</code></td>
+<td><code>dict[str, str]</code></td>
+<td>No</td>
+<td>Tags to put into the target object.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>ConverterKmlImportResultResultObjectsItem</code></strong> (<code>ResultNode</code>)</p>
+<p>A geoscience object extracted from the input KML/KMZ file.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Reference to a geoscience object. Supported schemas: <code>pointset/[&gt;=1.3,&lt;2]</code>, <code>line-segments/[&gt;=2.2,&lt;3]</code>.</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The name of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>—</td>
+<td>The description of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>schema_id</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The ID of the Geoscience Object schema.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="obj_import">obj_import</h3>
+<p><code>client.converter.obj_import</code> · Task: <code>converter/obj-import</code> · Version: <code>0.1.41</code> · Preview (<code>preview=True</code> required)</p>
+<p>Import OBJ (Wavefront) files into Evo as Triangle Mesh geoscience objects. Supports triangles, quads (auto-triangulated), and multiple objects within a single file.</p>
+<pre><code class="language-python">await client.converter.obj_import.run(
+    *,
+    file: FileInput,
+    target: ConverterObjImportTarget,
+    coordinate_reference_system: str | None = ...,
+    preview: bool = False,
+) -&gt; ConverterObjImportResult
+</code></pre>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>file</code></td>
+<td><code>FileInput</code></td>
+<td>OBJ file to import. Supported file extensions: <code>.obj</code>.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>target</code></td>
+<td><code>ConverterObjImportTarget</code></td>
+<td>Target specifying where to create or update the Triangle Mesh object. Contains 'reference' (File API URL) and optional 'overwrite' (boolean, only valid for path references).</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>coordinate_reference_system</code></td>
+<td><code>str | None</code></td>
+<td>The coordinate reference system for the mesh coordinates, specified as either an EPSG code string (e.g., 'EPSG:4326') or a WKT2 coordinate reference system definition string. If not provided, the CRS will be marked as unspecified.</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>preview</code></td>
+<td><code>bool</code></td>
+<td>Opt in to preview execution (required for this preview task: pass <code>preview=True</code>).</td>
+<td><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<p>Results (<code>ConverterObjImportResult</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>object</code></td>
+<td><code>ConverterObjImportResultResultObject</code></td>
+<td><code>await result.object.load()</code>, <code>await result.object.to_dataframe(*keys)</code></td>
+<td>The Triangle Mesh object created from the input file.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="nested-shapes_7">Nested Shapes</h4>
+<p><strong><code>ConverterObjImportTarget</code></strong> (<code>TypedDict</code>)</p>
+<p>Target specifying where to create or update the Triangle Mesh object. Contains 'reference' (File API URL) and optional 'overwrite' (boolean, only valid for path references).</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>ObjectInput</code></td>
+<td>Yes</td>
+<td>Reference to the targeted object. Supported schemas: <code>triangle-mesh/[&gt;=2.2,&lt;3]</code>.</td>
+</tr>
+<tr>
+<td><code>overwrite</code></td>
+<td><code>bool</code></td>
+<td>No</td>
+<td>Whether to overwrite the existing object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>No</td>
+<td>Description to put into the target object.</td>
+</tr>
+<tr>
+<td><code>tags</code></td>
+<td><code>dict[str, str]</code></td>
+<td>No</td>
+<td>Tags to put into the target object.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>ConverterObjImportResultResultObject</code></strong> (<code>ResultNode</code>)</p>
+<p>The Triangle Mesh object created from the input file.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Reference to a geoscience object. Supported schemas: <code>triangle-mesh/[&gt;=2.2,&lt;3]</code>.</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The name of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>—</td>
+<td>The description of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>schema_id</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The ID of the Geoscience Object schema.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="shp_import">shp_import</h3>
+<p><code>client.converter.shp_import</code> · Task: <code>converter/shp-import</code> · Version: <code>0.1.41</code> · Preview (<code>preview=True</code> required)</p>
+<p>Task to import SHP files into Evo as Triangle Mesh geoscience objects.</p>
+<pre><code class="language-python">await client.converter.shp_import.run(
+    *,
+    file: FileInput,
+    file_shx: FileInput,
+    file_dbf: FileInput,
+    target: ConverterShpImportTarget,
+    file_prj: FileInput | None = ...,
+    file_cpg: FileInput | None = ...,
+    file_sbn: FileInput | None = ...,
+    file_sbx: FileInput | None = ...,
+    file_xml: FileInput | None = ...,
+    preview: bool = False,
+) -&gt; ConverterShpImportResult
+</code></pre>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>file</code></td>
+<td><code>FileInput</code></td>
+<td>SHP file to import. Supported file extensions: <code>.shp</code>.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>file_shx</code></td>
+<td><code>FileInput</code></td>
+<td>SHX spatial index file (required companion to the .shp file). Supported file extensions: <code>.shx</code>.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>file_dbf</code></td>
+<td><code>FileInput</code></td>
+<td>DBF attribute file (required companion to the .shp file). Supported file extensions: <code>.dbf</code>.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>target</code></td>
+<td><code>ConverterShpImportTarget</code></td>
+<td>Target specifying where to create or update the imported geoscience object. Contains 'reference' (File API URL) and optional 'overwrite' (boolean, only valid for path references).</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>file_prj</code></td>
+<td><code>FileInput | None</code></td>
+<td>Optional PRJ projection file. Supported file extensions: <code>.prj</code>.</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>file_cpg</code></td>
+<td><code>FileInput | None</code></td>
+<td>Optional CPG code page file for character encoding. Supported file extensions: <code>.cpg</code>.</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>file_sbn</code></td>
+<td><code>FileInput | None</code></td>
+<td>Optional SBN spatial index file (not currently used). Supported file extensions: <code>.sbn</code>.</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>file_sbx</code></td>
+<td><code>FileInput | None</code></td>
+<td>Optional SBX spatial index file (not currently used). Supported file extensions: <code>.sbx</code>.</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>file_xml</code></td>
+<td><code>FileInput | None</code></td>
+<td>Optional XML metadata file (not currently used). Supported file extensions: <code>.xml</code>.</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>preview</code></td>
+<td><code>bool</code></td>
+<td>Opt in to preview execution (required for this preview task: pass <code>preview=True</code>).</td>
+<td><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<p>Results (<code>ConverterShpImportResult</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>object</code></td>
+<td><code>ConverterShpImportResultResultObject</code></td>
+<td><code>await result.object.load()</code>, <code>await result.object.to_dataframe(*keys)</code></td>
+<td>The geoscience object created from the input file(s).</td>
+</tr>
+</tbody>
+</table>
+<h4 id="nested-shapes_8">Nested Shapes</h4>
+<p><strong><code>ConverterShpImportTarget</code></strong> (<code>TypedDict</code>)</p>
+<p>Target specifying where to create or update the imported geoscience object. Contains 'reference' (File API URL) and optional 'overwrite' (boolean, only valid for path references).</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>ObjectInput</code></td>
+<td>Yes</td>
+<td>Reference to the targeted object. Supported schemas: <code>triangle-mesh/[&gt;=2.0,&lt;3]</code>, <code>line-segments/[&gt;=2.1,&lt;3]</code>, <code>pointset/[&gt;=1.2,&lt;2]</code>.</td>
+</tr>
+<tr>
+<td><code>overwrite</code></td>
+<td><code>bool</code></td>
+<td>No</td>
+<td>Whether to overwrite the existing object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>No</td>
+<td>Description to put into the target object.</td>
+</tr>
+<tr>
+<td><code>tags</code></td>
+<td><code>dict[str, str]</code></td>
+<td>No</td>
+<td>Tags to put into the target object.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>ConverterShpImportResultResultObject</code></strong> (<code>ResultNode</code>)</p>
+<p>The geoscience object created from the input file(s).</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Reference to a geoscience object. Supported schemas: <code>triangle-mesh/[&gt;=2.0,&lt;3]</code>, <code>line-segments/[&gt;=2.1,&lt;3]</code>, <code>pointset/[&gt;=1.2,&lt;2]</code>.</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The name of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>—</td>
+<td>The description of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>schema_id</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The ID of the Geoscience Object schema.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="ubc_import">ubc_import</h3>
+<p><code>client.converter.ubc_import</code> · Task: <code>converter/ubc-import</code> · Version: <code>0.1.41</code> · Preview (<code>preview=True</code> required)</p>
+<p>Task to import UBC Grids into Evo as Tensor-3D geoscience objects.</p>
+<pre><code class="language-python">await client.converter.ubc_import.run(
+    *,
+    file: FileInput,
+    target: ConverterUbcImportTarget,
+    file_mod: FileInput | None = ...,
+    coordinate_reference_system: str = ...,
+    preview: bool = False,
+) -&gt; ConverterUbcImportResult
+</code></pre>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>file</code></td>
+<td><code>FileInput</code></td>
+<td>UBC file to import. Supported file extensions: <code>.msh</code>.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>target</code></td>
+<td><code>ConverterUbcImportTarget</code></td>
+<td>Target specifying where to create or update the Tensor Grid object. Contains 'reference' (File API URL) and optional 'overwrite' (boolean, only valid for path references).</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>file_mod</code></td>
+<td><code>FileInput | None</code></td>
+<td>Optional numeric property file to import. Supported file extensions: <code>.mod</code>, <code>.sus</code>, <code>.den</code>.</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>coordinate_reference_system</code></td>
+<td><code>str</code></td>
+<td>The coordinate reference system for the grid coordinates, specified as an EPSG code string (e.g., 'EPSG:4326'), an OGC WKT string, or 'unspecified'.</td>
+<td><code>'unspecified'</code></td>
+</tr>
+<tr>
+<td><code>preview</code></td>
+<td><code>bool</code></td>
+<td>Opt in to preview execution (required for this preview task: pass <code>preview=True</code>).</td>
+<td><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<p>Results (<code>ConverterUbcImportResult</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>object</code></td>
+<td><code>ConverterUbcImportResultResultObject</code></td>
+<td><code>await result.object.load()</code>, <code>await result.object.to_dataframe(*keys)</code></td>
+<td>The Tensor Grid object created from the input file(s).</td>
+</tr>
+</tbody>
+</table>
+<h4 id="nested-shapes_9">Nested Shapes</h4>
+<p><strong><code>ConverterUbcImportTarget</code></strong> (<code>TypedDict</code>)</p>
+<p>Target specifying where to create or update the Tensor Grid object. Contains 'reference' (File API URL) and optional 'overwrite' (boolean, only valid for path references).</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>ObjectInput</code></td>
+<td>Yes</td>
+<td>Reference to the targeted object. Supported schemas: <code>tensor-3d-grid/[&gt;=1.2,&lt;2]</code>.</td>
+</tr>
+<tr>
+<td><code>overwrite</code></td>
+<td><code>bool</code></td>
+<td>No</td>
+<td>Whether to overwrite the existing object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>No</td>
+<td>Description to put into the target object.</td>
+</tr>
+<tr>
+<td><code>tags</code></td>
+<td><code>dict[str, str]</code></td>
+<td>No</td>
+<td>Tags to put into the target object.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>ConverterUbcImportResultResultObject</code></strong> (<code>ResultNode</code>)</p>
+<p>The Tensor Grid object created from the input file(s).</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Reference to a geoscience object. Supported schemas: <code>tensor-3d-grid/[&gt;=1.2,&lt;2]</code>.</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The name of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>—</td>
+<td>The description of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>schema_id</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The ID of the Geoscience Object schema.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="vtk_import">vtk_import</h3>
+<p><code>client.converter.vtk_import</code> · Task: <code>converter/vtk-import</code> · Version: <code>0.1.41</code> · Preview (<code>preview=True</code> required)</p>
+<p>VTK Import compute task</p>
+<pre><code class="language-python">await client.converter.vtk_import.run(
+    *,
+    files: list[FileInput],
+    preview: bool = False,
+) -&gt; ConverterVtkImportResult
+</code></pre>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>files</code></td>
+<td><code>list[FileInput]</code></td>
+<td>List of files to convert</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>preview</code></td>
+<td><code>bool</code></td>
+<td>Opt in to preview execution (required for this preview task: pass <code>preview=True</code>).</td>
+<td><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<p>Results (<code>ConverterVtkImportResult</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>objects</code></td>
+<td><code>list[ConverterVtkImportResultResultObjectsItem]</code></td>
+<td><code>await result.objects[i].load()</code>, <code>await result.objects[i].to_dataframe()</code></td>
+<td>List of Geoscience objects that was extracted from the input files.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="nested-shapes_10">Nested Shapes</h4>
+<p><strong><code>ConverterVtkImportResultResultObjectsItem</code></strong> (<code>ResultNode</code>)</p>
+<p>A Geoscience Object that was extracted from the input files</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Reference to a geoscience object. Supported schemas: <code>regular-3d-grid/[&gt;=1.2,&lt;2]</code>, <code>regular-masked-3d-grid/[&gt;=1.2,&lt;2]</code>, <code>tensor-3d-grid/[&gt;=1.2,&lt;2]</code>.</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The name of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>—</td>
+<td>The description of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>schema_id</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The ID of the Geoscience Object schema.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="xyz_import">xyz_import</h3>
+<p><code>client.converter.xyz_import</code> · Task: <code>converter/xyz-import</code> · Version: <code>0.1.41</code> · Preview (<code>preview=True</code> required)</p>
+<p>Task to import XYZ files into Evo as Pointset geoscience objects.</p>
+<pre><code class="language-python">await client.converter.xyz_import.run(
+    *,
+    file: FileInput,
+    target: ConverterXyzImportTarget,
+    x_index: int | None = ...,
+    y_index: int | None = ...,
+    z_index: int | None = ...,
+    epsg_code: int | None = ...,
+    preview: bool = False,
+) -&gt; ConverterXyzImportResult
+</code></pre>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>file</code></td>
+<td><code>FileInput</code></td>
+<td>XYZ file to import. Supported file extensions: <code>.xyz</code>.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>target</code></td>
+<td><code>ConverterXyzImportTarget</code></td>
+<td>Target specifying where to create or update the Pointset object. Contains 'reference' (File API URL) and optional 'overwrite' (boolean, only valid for path references).</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>x_index</code></td>
+<td><code>int | None</code></td>
+<td>Index of the X coordinate in the XYZ file.</td>
+<td><code>-1</code></td>
+</tr>
+<tr>
+<td><code>y_index</code></td>
+<td><code>int | None</code></td>
+<td>Index of the Y coordinate in the XYZ file.</td>
+<td><code>-1</code></td>
+</tr>
+<tr>
+<td><code>z_index</code></td>
+<td><code>int | None</code></td>
+<td>Index of the Z coordinate in the XYZ file.</td>
+<td><code>-1</code></td>
+</tr>
+<tr>
+<td><code>epsg_code</code></td>
+<td><code>int | None</code></td>
+<td>EPSG code for the coordinate reference system.</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>preview</code></td>
+<td><code>bool</code></td>
+<td>Opt in to preview execution (required for this preview task: pass <code>preview=True</code>).</td>
+<td><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<p>Results (<code>ConverterXyzImportResult</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>object</code></td>
+<td><code>ConverterXyzImportResultResultObject</code></td>
+<td><code>await result.object.load()</code>, <code>await result.object.to_dataframe(*keys)</code></td>
+<td>The Pointset object created from the input file.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="nested-shapes_11">Nested Shapes</h4>
+<p><strong><code>ConverterXyzImportTarget</code></strong> (<code>TypedDict</code>)</p>
+<p>Target specifying where to create or update the Pointset object. Contains 'reference' (File API URL) and optional 'overwrite' (boolean, only valid for path references).</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>ObjectInput</code></td>
+<td>Yes</td>
+<td>Reference to the targeted object. Supported schemas: <code>pointset/[&gt;=1.2,&lt;2]</code>, <code>block-model/[&gt;=1.0,&lt;2]</code>, <code>regular-3d-grid/[&gt;=1.2,&lt;2]</code>, <code>regular-masked-3d-grid/[&gt;=1.2,&lt;2]</code>, <code>tensor-3d-grid/[&gt;=1.2,&lt;2]</code>, <code>downhole-intervals/[&gt;=1.2,&lt;2]</code>.</td>
+</tr>
+<tr>
+<td><code>overwrite</code></td>
+<td><code>bool</code></td>
+<td>No</td>
+<td>Whether to overwrite the existing object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>No</td>
+<td>Description to put into the target object.</td>
+</tr>
+<tr>
+<td><code>tags</code></td>
+<td><code>dict[str, str]</code></td>
+<td>No</td>
+<td>Tags to put into the target object.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>ConverterXyzImportResultResultObject</code></strong> (<code>ResultNode</code>)</p>
+<p>The Pointset object created from the input file.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Reference to a geoscience object. Supported schemas: <code>pointset/[&gt;=1.2,&lt;2]</code>, <code>block-model/[&gt;=1.0,&lt;2]</code>, <code>regular-3d-grid/[&gt;=1.2,&lt;2]</code>, <code>regular-masked-3d-grid/[&gt;=1.2,&lt;2]</code>, <code>tensor-3d-grid/[&gt;=1.2,&lt;2]</code>, <code>downhole-intervals/[&gt;=1.2,&lt;2]</code>.</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The name of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>—</td>
+<td>The description of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>schema_id</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The ID of the Geoscience Object schema.</td>
+</tr>
+</tbody>
+</table></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>

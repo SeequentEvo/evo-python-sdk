@@ -38,6 +38,14 @@ To get up and running quickly with the Evo Compute Task SDK, start by configurin
 
 For some interactive Jupyter notebook examples, see the [examples folder](docs/examples).
 
+### Static typing for the generic engine
+
+`ComputeClient` resolves `client.<topic>.<task>.run(...)` from the live task catalogue, so
+there is no hand-written code for a type checker to read. A generated type stub gives
+editors completion, signature help and parameter checking for every task in a checked-in
+catalogue snapshot, while execution stays fully generic. See
+[stubs/README.md](stubs/README.md) for how to regenerate it and refresh the snapshot.
+
 ## Contributing
 
 For instructions on contributing to the development of this library, please refer to the [evo-python-sdk documentation](https://github.com/seequentevo/evo-python-sdk).

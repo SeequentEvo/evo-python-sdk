@@ -167,10 +167,29 @@ def _doc_path_for_entry(
     return docs_packages_dir / package / "typed-objects" / subfolder / f"{entry.class_name}.md"
 
 
+def _discover_compute_topic_docs(repo_root: Path) -> dict[str, str]:
+    """Render per-topic Markdown docs from the ``evo-compute`` schema snapshot when present."""
+    compute_src = str(repo_root / "packages" / "evo-compute" / "src")
+    if compute_src not in sys.path:
+        sys.path.insert(0, compute_src)
+    try:
+        from evo.compute._docgen import DEFAULT_SNAPSHOT_DIR, render_topic_docs
+    except Exception:
+        return {}
+    if not DEFAULT_SNAPSHOT_DIR.is_dir():
+        return {}
+    return render_topic_docs(DEFAULT_SNAPSHOT_DIR)
+
+
+def _topic_doc_path(docs_packages_dir: Path, topic: str) -> Path:
+    return docs_packages_dir / "evo-compute" / "tasks" / f"{topic}.md"
+
+
 def _collect_auto_generated_paths(
     docs_packages_dir: Path,
     api_entries: dict[str, list[DocEntry]],
     discovered: dict[str, dict[str, list[DocEntry]]],
+    topic_docs: dict[str, str] | None = None,
 ) -> set[Path]:
     """Build the full set of expected auto-generated doc paths."""
     paths: set[Path] = set()
@@ -181,6 +200,8 @@ def _collect_auto_generated_paths(
         for subfolder, entries in groups.items():
             for entry in entries:
                 paths.add(_doc_path_for_entry(docs_packages_dir, package, entry, subfolder).resolve())
+    for topic in topic_docs or {}:
+        paths.add(_topic_doc_path(docs_packages_dir, topic).resolve())
     return paths
 
 
@@ -209,8 +230,9 @@ def _generate_all_docs(
     api_entries: dict[str, list[DocEntry]],
     discovered: dict[str, dict[str, list[DocEntry]]],
     mkdocs_dir: Path,
+    topic_docs: dict[str, str] | None = None,
 ) -> None:
-    """Write doc files for every API-client and auto-discovered entry."""
+    """Write doc files for every API-client, auto-discovered, and snapshot topic entry."""
     for package, entries in api_entries.items():
         for entry in entries:
             _generate_doc(_doc_path_for_entry(docs_packages_dir, package, entry), entry, mkdocs_dir)
@@ -223,6 +245,11 @@ def _generate_all_docs(
                     mkdocs_dir,
                     show_labels=False,
                 )
+    for topic, content in sorted((topic_docs or {}).items()):
+        doc_path = _topic_doc_path(docs_packages_dir, topic)
+        doc_path.parent.mkdir(parents=True, exist_ok=True)
+        doc_path.write_text(content, encoding="utf-8")
+        log.info(f"Generated compute topic doc: {doc_path.relative_to(mkdocs_dir)}")
 
 
 def on_startup(command: str, dirty: bool) -> None:
@@ -237,9 +264,13 @@ def on_startup(command: str, dirty: bool) -> None:
     total = sum(len(e) for groups in discovered.values() for e in groups.values())
     log.info(f"Auto-discovered {total} typed objects across {list(discovered.keys())}")
 
-    auto_generated_paths = _collect_auto_generated_paths(docs_packages_dir, api_entries, discovered)
+    topic_docs = _discover_compute_topic_docs(repo_root)
+    if topic_docs:
+        log.info(f"Generated {len(topic_docs)} compute topic pages from schema snapshot")
+
+    auto_generated_paths = _collect_auto_generated_paths(docs_packages_dir, api_entries, discovered, topic_docs)
     _clean_stale_docs(docs_packages_dir, auto_generated_paths, mkdocs_dir)
-    _generate_all_docs(docs_packages_dir, api_entries, discovered, mkdocs_dir)
+    _generate_all_docs(docs_packages_dir, api_entries, discovered, mkdocs_dir, topic_docs)
 
 
 _SCRIPT_RE = re.compile(r"^\s*<script\b[^>]*>.*?</script>\s*\n", re.DOTALL | re.IGNORECASE | re.MULTILINE)

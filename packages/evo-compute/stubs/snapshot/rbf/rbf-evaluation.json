@@ -1,0 +1,623 @@
+{
+  "display_name": "RBF Evaluation",
+  "version": "0.1.0",
+  "feature_flag": "rbf-preview",
+  "description": "Evaluates a radial basis function (RBF) interpolant defined by centres, coefficients, and a basic function at specified target locations. Supports all turbo-rbf basic function types including aspherical, biharmonic, spherical, cubic, exponential, gaussian, multiquadric, normalized multiquadric, and triharmonic.",
+  "parameters": {
+    "additionalProperties": false,
+    "description": "Parameters for the RBF Evaluation compute task.",
+    "properties": {
+      "source": {
+        "additionalProperties": false,
+        "description": "RBF model centres and coefficients.",
+        "properties": {
+          "object": {
+            "format": "uri",
+            "reference_to": "geoscience-object",
+            "supported_schemas": [
+              "pointset/[>=1.2,<2]",
+              "block-model/[>=1.0,<2]",
+              "regular-3d-grid/[>=1.2,<2]",
+              "regular-masked-3d-grid/[>=1.2,<2]",
+              "tensor-3d-grid/[>=1.2,<2]",
+              "downhole-intervals/[>=1.2,<2]"
+            ],
+            "type": "string",
+            "description": "Geoscience object whose coordinates represent the RBF centres.",
+            "title": "Source Object"
+          },
+          "coefficients": {
+            "attribute_from": "1/object",
+            "attribute_path": {
+              "block-model/[>=1.0,<2]": [
+                "attributes[?attribute_type=='Float64']"
+              ],
+              "downhole-intervals/[>=1.2,<2]": [
+                "attributes[?attribute_type=='scalar']"
+              ],
+              "pointset/[>=1.2,<2]": [
+                "locations.attributes[?attribute_type=='scalar']"
+              ],
+              "regular-3d-grid/[>=1.2,<2]": [
+                "cell_attributes[?attribute_type=='scalar']"
+              ],
+              "regular-masked-3d-grid/[>=1.2,<2]": [
+                "cell_attributes[?attribute_type=='scalar']"
+              ],
+              "tensor-3d-grid/[>=1.2,<2]": [
+                "cell_attributes[?attribute_type=='scalar']"
+              ]
+            },
+            "description": "Numeric attribute on the source object containing the RBF coefficients (one per centre).",
+            "reference_to": "attribute",
+            "title": "Coefficients Attribute",
+            "type": "string"
+          }
+        },
+        "required": [
+          "object",
+          "coefficients"
+        ],
+        "title": "Source Configuration",
+        "type": "object"
+      },
+      "basic_function": {
+        "description": "Basic function type and parameters.",
+        "discriminator": "type",
+        "oneOf": [
+          {
+            "additionalProperties": false,
+            "description": "Aspherical basic function: phi(r) = (r^2 + c^2)^(k/2).",
+            "properties": {
+              "type": {
+                "const": "aspherical",
+                "description": "Type of basic function.",
+                "title": "Basic Function Type"
+              },
+              "c": {
+                "description": "Distance scaling parameter.",
+                "exclusiveMinimum": 0,
+                "title": "Distance Scaling Parameter",
+                "type": "number"
+              },
+              "k": {
+                "description": "Shape exponent (negative odd integer, e.g. -1, -3, -5).",
+                "maximum": -1,
+                "title": "Shape Exponent",
+                "type": "integer"
+              },
+              "degree": {
+                "description": "Polynomial degree. -1 for no polynomial.",
+                "minimum": -1,
+                "title": "Polynomial Degree",
+                "type": "integer"
+              }
+            },
+            "required": [
+              "type",
+              "c",
+              "k",
+              "degree"
+            ],
+            "title": "AsphericalFunction",
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "description": "Spherical basic function.",
+            "properties": {
+              "type": {
+                "const": "spherical",
+                "description": "Type of basic function.",
+                "title": "Basic Function Type"
+              },
+              "c": {
+                "description": "Distance scaling parameter.",
+                "exclusiveMinimum": 0,
+                "title": "Distance Scaling Parameter",
+                "type": "number"
+              },
+              "degree": {
+                "description": "Polynomial degree. -1 for no polynomial.",
+                "minimum": -1,
+                "title": "Polynomial Degree",
+                "type": "integer"
+              }
+            },
+            "required": [
+              "type",
+              "c",
+              "degree"
+            ],
+            "title": "SphericalFunction",
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "description": "Biharmonic basic function: phi(r) = r.",
+            "properties": {
+              "type": {
+                "const": "biharmonic",
+                "description": "Type of basic function.",
+                "title": "Basic Function Type"
+              },
+              "degree": {
+                "description": "Polynomial degree. -1 for no polynomial.",
+                "minimum": -1,
+                "title": "Polynomial Degree",
+                "type": "integer"
+              }
+            },
+            "required": [
+              "type",
+              "degree"
+            ],
+            "title": "BiharmonicFunction",
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "description": "Cubic basic function: phi(r) = (r^2 + c^2)^(3/2).",
+            "properties": {
+              "type": {
+                "const": "cubic",
+                "description": "Type of basic function.",
+                "title": "Basic Function Type"
+              },
+              "c": {
+                "description": "Distance scaling parameter.",
+                "exclusiveMinimum": 0,
+                "title": "Distance Scaling Parameter",
+                "type": "number"
+              },
+              "degree": {
+                "description": "Polynomial degree. -1 for no polynomial.",
+                "minimum": -1,
+                "title": "Polynomial Degree",
+                "type": "integer"
+              }
+            },
+            "required": [
+              "type",
+              "c",
+              "degree"
+            ],
+            "title": "CubicFunction",
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "description": "Exponential basic function: phi(r) = exp(-r/c).",
+            "properties": {
+              "type": {
+                "const": "exponential",
+                "description": "Type of basic function.",
+                "title": "Basic Function Type"
+              },
+              "c": {
+                "description": "Distance scaling parameter.",
+                "exclusiveMinimum": 0,
+                "title": "Distance Scaling Parameter",
+                "type": "number"
+              },
+              "degree": {
+                "description": "Polynomial degree. -1 for no polynomial.",
+                "minimum": -1,
+                "title": "Polynomial Degree",
+                "type": "integer"
+              }
+            },
+            "required": [
+              "type",
+              "c",
+              "degree"
+            ],
+            "title": "ExponentialFunction",
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "description": "Gaussian basic function: phi(r) = exp(-r^2/c^2).",
+            "properties": {
+              "type": {
+                "const": "gaussian",
+                "description": "Type of basic function.",
+                "title": "Basic Function Type"
+              },
+              "c": {
+                "description": "Distance scaling parameter.",
+                "exclusiveMinimum": 0,
+                "title": "Distance Scaling Parameter",
+                "type": "number"
+              },
+              "degree": {
+                "description": "Polynomial degree. -1 for no polynomial.",
+                "minimum": -1,
+                "title": "Polynomial Degree",
+                "type": "integer"
+              }
+            },
+            "required": [
+              "type",
+              "c",
+              "degree"
+            ],
+            "title": "GaussianFunction",
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "description": "Multiquadric basic function: phi(r) = (r^2 + c^2)^(k/2).",
+            "properties": {
+              "type": {
+                "const": "multiquadric",
+                "description": "Type of basic function.",
+                "title": "Basic Function Type"
+              },
+              "c": {
+                "description": "Distance scaling parameter.",
+                "exclusiveMinimum": 0,
+                "title": "Distance Scaling Parameter",
+                "type": "number"
+              },
+              "k": {
+                "description": "Shape exponent (positive odd integer, e.g. 1, 3, 5).",
+                "title": "Shape Exponent",
+                "type": "integer"
+              },
+              "degree": {
+                "description": "Polynomial degree. -1 for no polynomial.",
+                "minimum": -1,
+                "title": "Polynomial Degree",
+                "type": "integer"
+              }
+            },
+            "required": [
+              "type",
+              "c",
+              "k",
+              "degree"
+            ],
+            "title": "MultiquadricFunction",
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "description": "Normalized multiquadric basic function: phi(r) = (r^2 + c^2)^(k/2) / c^k.",
+            "properties": {
+              "type": {
+                "const": "normalized_multiquadric",
+                "description": "Type of basic function.",
+                "title": "Basic Function Type"
+              },
+              "c": {
+                "description": "Distance scaling parameter.",
+                "exclusiveMinimum": 0,
+                "title": "Distance Scaling Parameter",
+                "type": "number"
+              },
+              "k": {
+                "description": "Shape exponent (positive odd integer, e.g. 1, 3, 5).",
+                "title": "Shape Exponent",
+                "type": "integer"
+              },
+              "degree": {
+                "description": "Polynomial degree. -1 for no polynomial.",
+                "minimum": -1,
+                "title": "Polynomial Degree",
+                "type": "integer"
+              }
+            },
+            "required": [
+              "type",
+              "c",
+              "k",
+              "degree"
+            ],
+            "title": "NormalizedMultiquadricFunction",
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "description": "Triharmonic basic function: phi(r) = r^3.",
+            "properties": {
+              "type": {
+                "const": "triharmonic",
+                "description": "Type of basic function.",
+                "title": "Basic Function Type"
+              },
+              "degree": {
+                "description": "Polynomial degree. -1 for no polynomial.",
+                "minimum": -1,
+                "title": "Polynomial Degree",
+                "type": "integer"
+              }
+            },
+            "required": [
+              "type",
+              "degree"
+            ],
+            "title": "TriharmonicFunction",
+            "type": "object"
+          }
+        ],
+        "title": "Basic Function Configuration"
+      },
+      "polynomial": {
+        "additionalProperties": false,
+        "default": null,
+        "description": "Optional polynomial configuration. Required when basic function degree >= 0.",
+        "properties": {
+          "coefficients": {
+            "description": "Polynomial coefficient values.",
+            "items": {
+              "description": "Polynomial coefficient value.",
+              "title": "Coefficient",
+              "type": "number"
+            },
+            "minItems": 1,
+            "title": "Polynomial Coefficients",
+            "type": "array"
+          },
+          "base": {
+            "additionalProperties": false,
+            "description": "The 3D polynomial base point.",
+            "examples": [
+              {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+              },
+              {
+                "x": 100.0,
+                "y": 100.0,
+                "z": 100.0
+              }
+            ],
+            "properties": {
+              "x": {
+                "description": "The x coordinate.",
+                "title": "X",
+                "type": "number"
+              },
+              "y": {
+                "description": "The y coordinate.",
+                "title": "Y",
+                "type": "number"
+              },
+              "z": {
+                "description": "The z coordinate.",
+                "title": "Z",
+                "type": "number"
+              }
+            },
+            "required": [
+              "x",
+              "y",
+              "z"
+            ],
+            "title": "Point3D",
+            "type": "object"
+          }
+        },
+        "required": [
+          "coefficients",
+          "base"
+        ],
+        "title": "Polynomial Configuration",
+        "type": [
+          "object",
+          "null"
+        ]
+      },
+      "target": {
+        "additionalProperties": false,
+        "description": "Target object and attribute for evaluation output.",
+        "properties": {
+          "object": {
+            "format": "uri",
+            "reference_to": "geoscience-object",
+            "supported_schemas": [
+              "pointset/[>=1.2,<2]",
+              "block-model/[>=1.0,<2]",
+              "regular-3d-grid/[>=1.2,<2]",
+              "regular-masked-3d-grid/[>=1.2,<2]",
+              "tensor-3d-grid/[>=1.2,<2]",
+              "downhole-intervals/[>=1.2,<2]"
+            ],
+            "type": "string",
+            "description": "Geoscience object with locations where the RBF will be evaluated.",
+            "title": "Target Object"
+          },
+          "attribute": {
+            "description": "Attribute to create or update on the target object with evaluated values.",
+            "oneOf": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "operation": {
+                    "const": "create",
+                    "description": "The operation to perform on the attribute.",
+                    "title": "Operation"
+                  },
+                  "name": {
+                    "description": "The name of the attribute to create.",
+                    "title": "Name",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "operation",
+                  "name"
+                ],
+                "type": "object"
+              },
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "operation": {
+                    "const": "update",
+                    "description": "The operation to perform on the attribute.",
+                    "title": "Operation"
+                  },
+                  "reference": {
+                    "attribute_from": "2/object",
+                    "attribute_path": {
+                      "block-model/[>=1.0,<2]": [
+                        "attributes[?attribute_type=='Float64']"
+                      ],
+                      "downhole-intervals/[>=1.2,<2]": [
+                        "attributes[?attribute_type=='scalar']"
+                      ],
+                      "pointset/[>=1.2,<2]": [
+                        "locations.attributes[?attribute_type=='scalar']"
+                      ],
+                      "regular-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ],
+                      "regular-masked-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ],
+                      "tensor-3d-grid/[>=1.2,<2]": [
+                        "cell_attributes[?attribute_type=='scalar']"
+                      ]
+                    },
+                    "description": "Reference to an existing attribute to update.",
+                    "reference_to": "attribute",
+                    "title": "Reference",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "operation",
+                  "reference"
+                ],
+                "type": "object"
+              }
+            ],
+            "target": "attribute",
+            "title": "Target Attribute"
+          }
+        },
+        "required": [
+          "object",
+          "attribute"
+        ],
+        "title": "Target Configuration",
+        "type": "object"
+      }
+    },
+    "required": [
+      "source",
+      "basic_function",
+      "target"
+    ],
+    "title": "Parameters",
+    "type": "object"
+  },
+  "results": {
+    "additionalProperties": false,
+    "description": "Results for the RBF Evaluation compute task.",
+    "properties": {
+      "target": {
+        "additionalProperties": false,
+        "description": "Target geoscience object containing the evaluated values.",
+        "output": "geoscience-object",
+        "properties": {
+          "reference": {
+            "description": "Reference to a geoscience object.",
+            "format": "uri",
+            "reference_to": "geoscience-object",
+            "supported_schemas": [
+              "pointset/[>=1.2,<2]",
+              "block-model/[>=1.0,<2]",
+              "regular-3d-grid/[>=1.2,<2]",
+              "regular-masked-3d-grid/[>=1.2,<2]",
+              "tensor-3d-grid/[>=1.2,<2]",
+              "downhole-intervals/[>=1.2,<2]"
+            ],
+            "title": "Reference",
+            "type": "string"
+          },
+          "name": {
+            "description": "The name of the geoscience object.",
+            "title": "Name",
+            "type": "string"
+          },
+          "description": {
+            "description": "The description of the geoscience object.",
+            "title": "Description",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "schema_id": {
+            "description": "The ID of the Geoscience Object schema.",
+            "title": "Schema ID",
+            "type": "string"
+          },
+          "attribute": {
+            "additionalProperties": false,
+            "description": "Numeric attribute containing the evaluated RBF values.",
+            "output": "attribute",
+            "properties": {
+              "reference": {
+                "attribute_from": "2/reference",
+                "attribute_path": {
+                  "block-model/[>=1.0,<2]": [
+                    "attributes[?attribute_type=='Float64']"
+                  ],
+                  "downhole-intervals/[>=1.2,<2]": [
+                    "attributes[?attribute_type=='scalar']"
+                  ],
+                  "pointset/[>=1.2,<2]": [
+                    "locations.attributes[?attribute_type=='scalar']"
+                  ],
+                  "regular-3d-grid/[>=1.2,<2]": [
+                    "cell_attributes[?attribute_type=='scalar']"
+                  ],
+                  "regular-masked-3d-grid/[>=1.2,<2]": [
+                    "cell_attributes[?attribute_type=='scalar']"
+                  ],
+                  "tensor-3d-grid/[>=1.2,<2]": [
+                    "cell_attributes[?attribute_type=='scalar']"
+                  ]
+                },
+                "description": "Reference to the attribute in the geoscience object.",
+                "reference_to": "attribute",
+                "title": "Reference",
+                "type": "string"
+              },
+              "name": {
+                "description": "The name of the output attribute.",
+                "title": "Name",
+                "type": "string"
+              }
+            },
+            "required": [
+              "reference",
+              "name"
+            ],
+            "title": "Evaluated Values Attribute",
+            "type": "object"
+          }
+        },
+        "required": [
+          "reference",
+          "name",
+          "description",
+          "schema_id",
+          "attribute"
+        ],
+        "type": "object",
+        "title": "Target Result"
+      }
+    },
+    "required": [
+      "target"
+    ],
+    "title": "Results",
+    "type": "object"
+  }
+}

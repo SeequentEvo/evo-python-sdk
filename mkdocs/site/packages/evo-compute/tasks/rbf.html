@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        
+        <link rel="shortcut icon" href="../../../img/favicon.ico">
+        <title>Rbf - Evo Python SDK</title>
+        <link href="../../../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../../../css/fontawesome.min.css" rel="stylesheet">
+        <link href="../../../css/brands.min.css" rel="stylesheet">
+        <link href="../../../css/solid.min.css" rel="stylesheet">
+        <link href="../../../css/v4-font-face.min.css" rel="stylesheet">
+        <link href="../../../css/base.css" rel="stylesheet">
+        <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" >
+        <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
+        <link href="../../../assets/_mkdocstrings.css" rel="stylesheet">
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="../../..">Evo Python SDK</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar-collapse" aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+
+                    <ul class="nav navbar-nav ms-md-auto">
+                            <li class="nav-item">
+                                <a rel="prev" href="isosurfacing.html" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="utilities.html" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-bs-toggle="collapse" data-bs-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-bs-level="1"><a href="#rbf-tasks" class="nav-link">RBF Tasks</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-bs-level="2"><a href="#input-shorthands" class="nav-link">Input Shorthands</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#tasks" class="nav-link">Tasks</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<p><a href="https://github.com/SeequentEvo/evo-python-sdk/tree/main/packages/evo-compute/stubs/snapshot/rbf">GitHub source</a></p>
+<h1 id="rbf-tasks">RBF Tasks</h1>
+<p>Discoverable compute tasks in the <code>rbf</code> topic. Call any task below through <code>ComputeClient</code> as <code>await client.rbf.&lt;task&gt;.run(...)</code>, or by name via <code>await client.arun("rbf", "&lt;task&gt;", parameters)</code>.</p>
+<h2 id="input-shorthands">Input Shorthands</h2>
+<table>
+<thead>
+<tr>
+<th>Alias</th>
+<th>Accepted Python Types</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ObjectInput</code></td>
+<td><code>str | UUID | BaseObject | DownloadedObject | ObjectMetadata | ObjectReference</code></td>
+<td>Any handle <code>ReferenceResolver</code> can derive a geoscience object URL from.</td>
+</tr>
+<tr>
+<td><code>AttributeInput</code></td>
+<td><code>str | AnyTypedAttribute</code></td>
+<td>A typed attribute, a JMESPath expression, or a bare attribute name.</td>
+</tr>
+<tr>
+<td><code>AnyTypedAttribute</code></td>
+<td><code>Attribute | BlockModelAttribute | PendingAttribute | BlockModelPendingAttribute</code></td>
+<td>A typed attribute handle carrying both its parent geoscience object and attribute name.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="tasks">Tasks</h2>
+<h3 id="rbf_evaluation">rbf_evaluation</h3>
+<p><code>client.rbf.rbf_evaluation</code> · Task: <code>rbf/rbf-evaluation</code> · Version: <code>0.1.0</code> · Preview (<code>preview=True</code> required)</p>
+<p>Evaluates a radial basis function (RBF) interpolant defined by centres, coefficients, and a basic function at specified target locations. Supports all turbo-rbf basic function types including aspherical, biharmonic, spherical, cubic, exponential, gaussian, multiquadric, normalized multiquadric, and triharmonic.</p>
+<pre><code class="language-python">await client.rbf.rbf_evaluation.run(
+    *,
+    source: RbfRbfEvaluationSource,
+    basic_function: RbfRbfEvaluationAsphericalFunction | RbfRbfEvaluationSphericalFunction | RbfRbfEvaluationBiharmonicFunction | RbfRbfEvaluationCubicFunction | RbfRbfEvaluationExponentialFunction | RbfRbfEvaluationGaussianFunction | RbfRbfEvaluationMultiquadricFunction | RbfRbfEvaluationNormalizedMultiquadricFunction | RbfRbfEvaluationTriharmonicFunction,
+    target: RbfRbfEvaluationTarget | AnyTypedAttribute,
+    polynomial: RbfRbfEvaluationPolynomial | None = ...,
+    preview: bool = False,
+) -&gt; RbfRbfEvaluationResult
+</code></pre>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>source</code></td>
+<td><code>RbfRbfEvaluationSource</code></td>
+<td>RBF model centres and coefficients.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>basic_function</code></td>
+<td><code>RbfRbfEvaluationAsphericalFunction | RbfRbfEvaluationSphericalFunction | RbfRbfEvaluationBiharmonicFunction | RbfRbfEvaluationCubicFunction | RbfRbfEvaluationExponentialFunction | RbfRbfEvaluationGaussianFunction | RbfRbfEvaluationMultiquadricFunction | RbfRbfEvaluationNormalizedMultiquadricFunction | RbfRbfEvaluationTriharmonicFunction</code></td>
+<td>Basic function type and parameters.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>target</code></td>
+<td><code>RbfRbfEvaluationTarget | AnyTypedAttribute</code></td>
+<td>Target object and attribute for evaluation output.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>polynomial</code></td>
+<td><code>RbfRbfEvaluationPolynomial | None</code></td>
+<td>Optional polynomial configuration. Required when basic function degree &gt;= 0.</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>preview</code></td>
+<td><code>bool</code></td>
+<td>Opt in to preview execution (required for this preview task: pass <code>preview=True</code>).</td>
+<td><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<p>Results (<code>RbfRbfEvaluationResult</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>target</code></td>
+<td><code>RbfRbfEvaluationResultResultTarget</code></td>
+<td><code>await result.target.load()</code>, <code>await result.target.to_dataframe(*keys)</code></td>
+<td>Target geoscience object containing the evaluated values.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="nested-shapes">Nested Shapes</h4>
+<p><strong><code>RbfRbfEvaluationSource</code></strong> (<code>TypedDict</code>)</p>
+<p>RBF model centres and coefficients.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>object</code></td>
+<td><code>ObjectInput</code></td>
+<td>Yes</td>
+<td>Geoscience object whose coordinates represent the RBF centres. Supported schemas: <code>pointset/[&gt;=1.2,&lt;2]</code>, <code>block-model/[&gt;=1.0,&lt;2]</code>, <code>regular-3d-grid/[&gt;=1.2,&lt;2]</code>, <code>regular-masked-3d-grid/[&gt;=1.2,&lt;2]</code>, <code>tensor-3d-grid/[&gt;=1.2,&lt;2]</code>, <code>downhole-intervals/[&gt;=1.2,&lt;2]</code>.</td>
+</tr>
+<tr>
+<td><code>coefficients</code></td>
+<td><code>AttributeInput</code></td>
+<td>Yes</td>
+<td>Numeric attribute on the source object containing the RBF coefficients (one per centre).</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>RbfRbfEvaluationAsphericalFunction</code></strong> (<code>TypedDict</code>)</p>
+<p>Aspherical basic function: phi(r) = (r^2 + c^2)^(k/2).</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>type</code></td>
+<td><code>Literal["aspherical"]</code></td>
+<td>Yes</td>
+<td>Type of basic function.</td>
+</tr>
+<tr>
+<td><code>c</code></td>
+<td><code>float</code></td>
+<td>Yes</td>
+<td>Distance scaling parameter. Bounds: <code>&gt; 0</code>.</td>
+</tr>
+<tr>
+<td><code>k</code></td>
+<td><code>int</code></td>
+<td>Yes</td>
+<td>Shape exponent (negative odd integer, e.g. -1, -3, -5). Bounds: <code>&lt;= -1</code>.</td>
+</tr>
+<tr>
+<td><code>degree</code></td>
+<td><code>int</code></td>
+<td>Yes</td>
+<td>Polynomial degree. -1 for no polynomial. Bounds: <code>&gt;= -1</code>.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>RbfRbfEvaluationSphericalFunction</code></strong> (<code>TypedDict</code>)</p>
+<p>Spherical basic function.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>type</code></td>
+<td><code>Literal["spherical"]</code></td>
+<td>Yes</td>
+<td>Type of basic function.</td>
+</tr>
+<tr>
+<td><code>c</code></td>
+<td><code>float</code></td>
+<td>Yes</td>
+<td>Distance scaling parameter. Bounds: <code>&gt; 0</code>.</td>
+</tr>
+<tr>
+<td><code>degree</code></td>
+<td><code>int</code></td>
+<td>Yes</td>
+<td>Polynomial degree. -1 for no polynomial. Bounds: <code>&gt;= -1</code>.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>RbfRbfEvaluationBiharmonicFunction</code></strong> (<code>TypedDict</code>)</p>
+<p>Biharmonic basic function: phi(r) = r.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>type</code></td>
+<td><code>Literal["biharmonic"]</code></td>
+<td>Yes</td>
+<td>Type of basic function.</td>
+</tr>
+<tr>
+<td><code>degree</code></td>
+<td><code>int</code></td>
+<td>Yes</td>
+<td>Polynomial degree. -1 for no polynomial. Bounds: <code>&gt;= -1</code>.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>RbfRbfEvaluationCubicFunction</code></strong> (<code>TypedDict</code>)</p>
+<p>Cubic basic function: phi(r) = (r^2 + c^2)^(3/2).</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>type</code></td>
+<td><code>Literal["cubic"]</code></td>
+<td>Yes</td>
+<td>Type of basic function.</td>
+</tr>
+<tr>
+<td><code>c</code></td>
+<td><code>float</code></td>
+<td>Yes</td>
+<td>Distance scaling parameter. Bounds: <code>&gt; 0</code>.</td>
+</tr>
+<tr>
+<td><code>degree</code></td>
+<td><code>int</code></td>
+<td>Yes</td>
+<td>Polynomial degree. -1 for no polynomial. Bounds: <code>&gt;= -1</code>.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>RbfRbfEvaluationExponentialFunction</code></strong> (<code>TypedDict</code>)</p>
+<p>Exponential basic function: phi(r) = exp(-r/c).</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>type</code></td>
+<td><code>Literal["exponential"]</code></td>
+<td>Yes</td>
+<td>Type of basic function.</td>
+</tr>
+<tr>
+<td><code>c</code></td>
+<td><code>float</code></td>
+<td>Yes</td>
+<td>Distance scaling parameter. Bounds: <code>&gt; 0</code>.</td>
+</tr>
+<tr>
+<td><code>degree</code></td>
+<td><code>int</code></td>
+<td>Yes</td>
+<td>Polynomial degree. -1 for no polynomial. Bounds: <code>&gt;= -1</code>.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>RbfRbfEvaluationGaussianFunction</code></strong> (<code>TypedDict</code>)</p>
+<p>Gaussian basic function: phi(r) = exp(-r^2/c^2).</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>type</code></td>
+<td><code>Literal["gaussian"]</code></td>
+<td>Yes</td>
+<td>Type of basic function.</td>
+</tr>
+<tr>
+<td><code>c</code></td>
+<td><code>float</code></td>
+<td>Yes</td>
+<td>Distance scaling parameter. Bounds: <code>&gt; 0</code>.</td>
+</tr>
+<tr>
+<td><code>degree</code></td>
+<td><code>int</code></td>
+<td>Yes</td>
+<td>Polynomial degree. -1 for no polynomial. Bounds: <code>&gt;= -1</code>.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>RbfRbfEvaluationMultiquadricFunction</code></strong> (<code>TypedDict</code>)</p>
+<p>Multiquadric basic function: phi(r) = (r^2 + c^2)^(k/2).</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>type</code></td>
+<td><code>Literal["multiquadric"]</code></td>
+<td>Yes</td>
+<td>Type of basic function.</td>
+</tr>
+<tr>
+<td><code>c</code></td>
+<td><code>float</code></td>
+<td>Yes</td>
+<td>Distance scaling parameter. Bounds: <code>&gt; 0</code>.</td>
+</tr>
+<tr>
+<td><code>k</code></td>
+<td><code>int</code></td>
+<td>Yes</td>
+<td>Shape exponent (positive odd integer, e.g. 1, 3, 5).</td>
+</tr>
+<tr>
+<td><code>degree</code></td>
+<td><code>int</code></td>
+<td>Yes</td>
+<td>Polynomial degree. -1 for no polynomial. Bounds: <code>&gt;= -1</code>.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>RbfRbfEvaluationNormalizedMultiquadricFunction</code></strong> (<code>TypedDict</code>)</p>
+<p>Normalized multiquadric basic function: phi(r) = (r^2 + c^2)^(k/2) / c^k.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>type</code></td>
+<td><code>Literal["normalized_multiquadric"]</code></td>
+<td>Yes</td>
+<td>Type of basic function.</td>
+</tr>
+<tr>
+<td><code>c</code></td>
+<td><code>float</code></td>
+<td>Yes</td>
+<td>Distance scaling parameter. Bounds: <code>&gt; 0</code>.</td>
+</tr>
+<tr>
+<td><code>k</code></td>
+<td><code>int</code></td>
+<td>Yes</td>
+<td>Shape exponent (positive odd integer, e.g. 1, 3, 5).</td>
+</tr>
+<tr>
+<td><code>degree</code></td>
+<td><code>int</code></td>
+<td>Yes</td>
+<td>Polynomial degree. -1 for no polynomial. Bounds: <code>&gt;= -1</code>.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>RbfRbfEvaluationTriharmonicFunction</code></strong> (<code>TypedDict</code>)</p>
+<p>Triharmonic basic function: phi(r) = r^3.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>type</code></td>
+<td><code>Literal["triharmonic"]</code></td>
+<td>Yes</td>
+<td>Type of basic function.</td>
+</tr>
+<tr>
+<td><code>degree</code></td>
+<td><code>int</code></td>
+<td>Yes</td>
+<td>Polynomial degree. -1 for no polynomial. Bounds: <code>&gt;= -1</code>.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>RbfRbfEvaluationTargetAttributeCreate</code></strong> (<code>TypedDict</code>)</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>operation</code></td>
+<td><code>Literal["create"]</code></td>
+<td>Yes</td>
+<td>The operation to perform on the attribute.</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>str</code></td>
+<td>Yes</td>
+<td>The name of the attribute to create.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>RbfRbfEvaluationTargetAttributeUpdate</code></strong> (<code>TypedDict</code>)</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>operation</code></td>
+<td><code>Literal["update"]</code></td>
+<td>Yes</td>
+<td>The operation to perform on the attribute.</td>
+</tr>
+<tr>
+<td><code>reference</code></td>
+<td><code>AttributeInput</code></td>
+<td>Yes</td>
+<td>Reference to an existing attribute to update.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>RbfRbfEvaluationTarget</code></strong> (<code>TypedDict</code>)</p>
+<p>Target object and attribute for evaluation output.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>object</code></td>
+<td><code>ObjectInput</code></td>
+<td>Yes</td>
+<td>Geoscience object with locations where the RBF will be evaluated. Supported schemas: <code>pointset/[&gt;=1.2,&lt;2]</code>, <code>block-model/[&gt;=1.0,&lt;2]</code>, <code>regular-3d-grid/[&gt;=1.2,&lt;2]</code>, <code>regular-masked-3d-grid/[&gt;=1.2,&lt;2]</code>, <code>tensor-3d-grid/[&gt;=1.2,&lt;2]</code>, <code>downhole-intervals/[&gt;=1.2,&lt;2]</code>.</td>
+</tr>
+<tr>
+<td><code>attribute</code></td>
+<td><code>RbfRbfEvaluationTargetAttributeCreate | RbfRbfEvaluationTargetAttributeUpdate | AttributeInput</code></td>
+<td>Yes</td>
+<td>Attribute to create or update on the target object with evaluated values. Accepts a typed attribute, a bare attribute name (updates if present on the target object, otherwise creates), or <code>{"operation": "create" | "update", ...}</code>.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>RbfRbfEvaluationPoint3D</code></strong> (<code>TypedDict</code>)</p>
+<p>The 3D polynomial base point.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>x</code></td>
+<td><code>float</code></td>
+<td>Yes</td>
+<td>The x coordinate.</td>
+</tr>
+<tr>
+<td><code>y</code></td>
+<td><code>float</code></td>
+<td>Yes</td>
+<td>The y coordinate.</td>
+</tr>
+<tr>
+<td><code>z</code></td>
+<td><code>float</code></td>
+<td>Yes</td>
+<td>The z coordinate.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>RbfRbfEvaluationPolynomial</code></strong> (<code>TypedDict</code>)</p>
+<p>Optional polynomial configuration. Required when basic function degree &gt;= 0.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>coefficients</code></td>
+<td><code>list[float]</code></td>
+<td>Yes</td>
+<td>Polynomial coefficient values.</td>
+</tr>
+<tr>
+<td><code>base</code></td>
+<td><code>RbfRbfEvaluationPoint3D</code></td>
+<td>Yes</td>
+<td>The 3D polynomial base point.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>RbfRbfEvaluationResultResultTargetAttribute</code></strong> (<code>ResultNode</code>)</p>
+<p>Numeric attribute containing the evaluated RBF values.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Reference to the attribute in the geoscience object.</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The name of the output attribute.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>RbfRbfEvaluationResultResultTarget</code></strong> (<code>ResultNode</code>)</p>
+<p>Target geoscience object containing the evaluated values.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Reference to a geoscience object. Supported schemas: <code>pointset/[&gt;=1.2,&lt;2]</code>, <code>block-model/[&gt;=1.0,&lt;2]</code>, <code>regular-3d-grid/[&gt;=1.2,&lt;2]</code>, <code>regular-masked-3d-grid/[&gt;=1.2,&lt;2]</code>, <code>tensor-3d-grid/[&gt;=1.2,&lt;2]</code>, <code>downhole-intervals/[&gt;=1.2,&lt;2]</code>.</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The name of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>—</td>
+<td>The description of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>schema_id</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The ID of the Geoscience Object schema.</td>
+</tr>
+<tr>
+<td><code>attribute</code></td>
+<td><code>RbfRbfEvaluationResultResultTargetAttribute</code></td>
+<td><code>await node.attribute.load()</code>, <code>await node.attribute.to_dataframe()</code></td>
+<td>Numeric attribute containing the evaluated RBF values.</td>
+</tr>
+</tbody>
+</table></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>

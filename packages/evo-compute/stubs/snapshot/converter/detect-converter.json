@@ -1,0 +1,300 @@
+{
+  "display_name": "Detect Converter",
+  "version": "0.1.41",
+  "feature_flag": "converter-preview",
+  "description": "Accepts one or more file references, inspects each file's extension, and returns which converter task(s) and geoscience object schema(s) are available for importing each file.",
+  "parameters": {
+    "additionalProperties": false,
+    "description": "Parameters for the detect-converter task.",
+    "properties": {
+      "files": {
+        "description": "Up to 50 Evo file references to analyse.",
+        "items": {
+          "description": "An Evo file reference to analyse.",
+          "format": "uri",
+          "reference_to": "file",
+          "title": "Input File",
+          "type": "string"
+        },
+        "maxItems": 50,
+        "minItems": 1,
+        "title": "Input Files",
+        "type": "array"
+      }
+    },
+    "required": [
+      "files"
+    ],
+    "title": "Parameters",
+    "type": "object"
+  },
+  "results": {
+    "additionalProperties": false,
+    "description": "Results for the detect-converter task.",
+    "properties": {
+      "groups": {
+        "description": "Conversion assessments for the supplied files.",
+        "items": {
+          "additionalProperties": false,
+          "description": "The actionable conversion assessment for one primary input file.",
+          "properties": {
+            "status": {
+              "description": "Group status: ready_for_invocation, incomplete, invalid, unsupported, or orphan.",
+              "title": "Status",
+              "type": "string"
+            },
+            "files": {
+              "description": "Files associated with this conversion group.",
+              "items": {
+                "additionalProperties": false,
+                "description": "A supplied file bound to the parameter expected by a converter task.",
+                "properties": {
+                  "parameter_name": {
+                    "description": "The receiving converter task's file parameter name.",
+                    "title": "Parameter Name",
+                    "type": "string"
+                  },
+                  "file_ref": {
+                    "description": "The supplied Evo file reference.",
+                    "format": "uri",
+                    "reference_to": "file",
+                    "title": "File Ref",
+                    "type": "string"
+                  },
+                  "filename": {
+                    "description": "The filename from file metadata.",
+                    "title": "Filename",
+                    "type": "string"
+                  },
+                  "role": {
+                    "description": "The file's role in the conversion group.",
+                    "title": "Role",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "parameter_name",
+                  "file_ref",
+                  "filename",
+                  "role"
+                ],
+                "title": "SourceFileBinding",
+                "type": "object"
+              },
+              "title": "Files",
+              "type": "array"
+            },
+            "companion_requirements": {
+              "default": [],
+              "description": "Required and optional companion-file parameters expected by the converter.",
+              "items": {
+                "additionalProperties": false,
+                "description": "A companion-file parameter expected by a converter task.",
+                "properties": {
+                  "parameter_name": {
+                    "description": "The receiving converter task's file parameter name.",
+                    "title": "Parameter Name",
+                    "type": "string"
+                  },
+                  "extension": {
+                    "description": "The expected companion extension, or an empty string for an extensionless companion.",
+                    "title": "Extension",
+                    "type": "string"
+                  },
+                  "required": {
+                    "description": "Whether the converter requires this companion file.",
+                    "title": "Required",
+                    "type": "boolean"
+                  },
+                  "supplied": {
+                    "description": "Whether a matching companion file was supplied.",
+                    "title": "Supplied",
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "parameter_name",
+                  "extension",
+                  "required",
+                  "supplied"
+                ],
+                "title": "CompanionFileRequirement",
+                "type": "object"
+              },
+              "title": "Companion Requirements",
+              "type": "array"
+            },
+            "converters": {
+              "description": "Content-compatible converter alternatives.",
+              "items": {
+                "additionalProperties": false,
+                "description": "A converter task that can handle a particular file extension.",
+                "properties": {
+                  "converter_task": {
+                    "description": "The compute task URL for the converter (e.g. 'https://example.com/compute/orgs/{org_id}/converter/obj-import').",
+                    "title": "Converter Task",
+                    "type": "string"
+                  },
+                  "description": {
+                    "description": "A human-readable description of what the converter task does.",
+                    "title": "Description",
+                    "type": "string"
+                  },
+                  "schema": {
+                    "description": "The geoscience object schema the converter produces (e.g. 'triangle-mesh').",
+                    "title": "Schema",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "converter_task",
+                  "description",
+                  "schema"
+                ],
+                "title": "ConverterOption",
+                "type": "object"
+              },
+              "title": "Converters",
+              "type": "array"
+            },
+            "diagnostics": {
+              "description": "Non-fatal validation diagnostics.",
+              "items": {
+                "additionalProperties": false,
+                "description": "A non-fatal validation result for a conversion group.",
+                "properties": {
+                  "code": {
+                    "description": "A stable machine-readable diagnostic code.",
+                    "title": "Code",
+                    "type": "string"
+                  },
+                  "message": {
+                    "description": "A human-readable explanation of the diagnostic.",
+                    "title": "Message",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "message"
+                ],
+                "title": "ValidationDiagnostic",
+                "type": "object"
+              },
+              "title": "Diagnostics",
+              "type": "array"
+            },
+            "invocation_plan": {
+              "additionalProperties": false,
+              "default": null,
+              "description": "A ready-to-submit converter plan when one converter and schema remain.",
+              "properties": {
+                "converter_task": {
+                  "description": "The URL of the converter task to invoke.",
+                  "title": "Converter Task",
+                  "type": "string"
+                },
+                "schema": {
+                  "description": "The output schema when there is exactly one; null for multiple output schemas.",
+                  "title": "Schema",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "output_schemas": {
+                  "description": "All geoscience object schemas produced by this invocation.",
+                  "items": {
+                    "description": "A produced geoscience object schema.",
+                    "title": "Output Schema",
+                    "type": "string"
+                  },
+                  "title": "Output Schemas",
+                  "type": "array"
+                },
+                "files": {
+                  "description": "Resolved file parameters for the converter task.",
+                  "items": {
+                    "additionalProperties": false,
+                    "description": "A supplied file bound to the parameter expected by a converter task.",
+                    "properties": {
+                      "parameter_name": {
+                        "description": "The receiving converter task's file parameter name.",
+                        "title": "Parameter Name",
+                        "type": "string"
+                      },
+                      "file_ref": {
+                        "description": "The supplied Evo file reference.",
+                        "format": "uri",
+                        "reference_to": "file",
+                        "title": "File Ref",
+                        "type": "string"
+                      },
+                      "filename": {
+                        "description": "The filename from file metadata.",
+                        "title": "Filename",
+                        "type": "string"
+                      },
+                      "role": {
+                        "description": "The file's role in the conversion group.",
+                        "title": "Role",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "parameter_name",
+                      "file_ref",
+                      "filename",
+                      "role"
+                    ],
+                    "title": "SourceFileBinding",
+                    "type": "object"
+                  },
+                  "title": "Files",
+                  "type": "array"
+                },
+                "required_parameters": {
+                  "description": "Required non-file converter parameters the caller must still provide.",
+                  "items": {
+                    "description": "The name of a required converter task parameter.",
+                    "title": "Required Parameter",
+                    "type": "string"
+                  },
+                  "title": "Required Parameters",
+                  "type": "array"
+                }
+              },
+              "required": [
+                "converter_task",
+                "schema",
+                "output_schemas",
+                "files",
+                "required_parameters"
+              ],
+              "title": "ConversionInvocationPlan",
+              "type": [
+                "object",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "status",
+            "files",
+            "converters",
+            "diagnostics"
+          ],
+          "title": "ConversionGroup",
+          "type": "object"
+        },
+        "title": "Groups",
+        "type": "array"
+      }
+    },
+    "required": [
+      "groups"
+    ],
+    "title": "Results",
+    "type": "object"
+  }
+}
