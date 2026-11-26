@@ -26,7 +26,7 @@ from evo.common.utils import NoFeedback, PartialFeedback, split_feedback
 from ..exceptions import TableFormatError
 from ..io import _CACHE_SCOPE, ObjectDataDownload, ObjectDataUpload
 from .table_formats import INTEGER_ARRAY_1_INT32, INTEGER_ARRAY_MD_INT32, LOOKUP_TABLE_INT32
-from .tables import KnownTableFormat
+from .tables import ArrowTableFormat, KnownTableFormat, table_to_dataframe
 from .types import ArrayTableInfo, CategoryInfo, LookupTableInfo
 
 try:
@@ -69,27 +69,19 @@ def _iter_refs(target: Any, _key: str | None = None) -> Iterator[str]:
             yield str(value)
 
 
-def _get_schema_from_dataframe(dataframe: "pd.DataFrame") -> pa.Schema:
-    """Get a normalized pyarrow schema from a pandas dataframe.
+def _table_from_dataframe(dataframe: "pd.DataFrame") -> pa.Table:
+    """Convert a pandas dataframe to a pyarrow table for upload.
 
-    This hook centralizes dataframe-to-Arrow schema adjustments before the
-    dataframe is converted to a table. It currently performs these conversions:
-    - large_string -> string
-    - dictionary<*, large_string> -> dictionary<*, string>
+    The dataframe index is not part of any Geoscience Object table format, so it is never stored. Pandas metadata is
+    removed, so readers rely only on the Geoscience Object schema.
 
-    :param dataframe: The pandas dataframe to get the schema from.
-    :return: A pyarrow schema with any configured type conversions applied.
+    :param dataframe: The pandas dataframe to convert.
+    :return: A pyarrow table with the normalized schema from `ArrowTableFormat.from_pandas`.
     """
-    schema = pa.Schema.from_pandas(dataframe)
-    fields = []
-    for field in schema:
-        if pa.types.is_large_string(field.type):
-            fields.append(field.with_type(pa.string()))
-        elif pa.types.is_dictionary(field.type) and pa.types.is_large_string(field.type.value_type):
-            fields.append(field.with_type(pa.dictionary(field.type.index_type, pa.string())))
-        else:
-            fields.append(field)
-    return pa.schema(fields)
+    table_format = ArrowTableFormat.from_pandas(dataframe)
+    return pa.Table.from_pandas(
+        dataframe, schema=table_format.pa_schema, preserve_index=False
+    ).replace_schema_metadata()
 
 
 class ObjectDataClient:
@@ -226,7 +218,8 @@ class ObjectDataClient:
         both the value and lookup tables.
 
         The table columns must be string columns, but can be dictionary encoded. If they are dictionary encoded, this
-        method takes advantage of that, when building the value and lookup tables.
+        method takes advantage of that, when building the value and lookup tables. Large strings are converted to
+        strings.
 
         :param table: The table to be uploaded.
         :param fb: A feedback object for tracking upload progress.
@@ -241,11 +234,13 @@ class ObjectDataClient:
         columns_chunk_range = []
         for column in table.itercolumns():
             column = column.dictionary_encode()
-            if not pa.types.is_string(column.type.value_type):
+            value_type = column.type.value_type
+            if not (pa.types.is_string(value_type) or pa.types.is_large_string(value_type)):
                 raise TableFormatError("Category columns must be of type string")
-            if not pa.types.is_int32(column.type.index_type):
-                # Currently, we only support int32 indices
-                column = pc.cast(column, pa.dictionary(pa.int32(), column.type.value_type))
+            # Currently, we only support int32 indices and string values
+            category_type = pa.dictionary(pa.int32(), pa.string())
+            if column.type != category_type:
+                column = pc.cast(column, category_type)
             start_chunk = len(all_chunks)
             if isinstance(column, pa.ChunkedArray):
                 all_chunks.extend(column.chunks)
@@ -426,8 +421,7 @@ class ObjectDataClient:
                 no table formats are specified, raised when the table does not match any known format.
             :raises StorageFileNotFoundError: If the destination does not exist or is not a directory.
             """
-            schema = _get_schema_from_dataframe(dataframe)
-            table = pa.Table.from_pandas(dataframe, schema)
+            table = _table_from_dataframe(dataframe)
             return self.save_table(table, table_format=table_format)
 
         async def upload_dataframe(
@@ -450,8 +444,7 @@ class ObjectDataClient:
             :raises TableFormatError: If the provided table does not match any of the specified formats. If
                 no table formats are specified, raised when the table does not match any known format.
             """
-            schema = _get_schema_from_dataframe(dataframe)
-            table = pa.Table.from_pandas(dataframe, schema)
+            table = _table_from_dataframe(dataframe)
             table_info = await self.upload_table(table, table_format=table_format, fb=fb)
             return table_info
 
@@ -472,8 +465,8 @@ class ObjectDataClient:
             :raises TableFormatError: If the table isn't a valid category table, or if the number of categories exceeds
                 what int32 type can represent.
             """
-            schema = _get_schema_from_dataframe(dataframe)
-            table = pa.Table.from_pandas(dataframe, schema)
+            # Keep dictionary encoding until the categories are split into value and lookup tables.
+            table = pa.Table.from_pandas(dataframe, preserve_index=False).replace_schema_metadata()
             category_info = await self.upload_category_table(table, fb=fb)
             return category_info
 
@@ -499,6 +492,6 @@ class ObjectDataClient:
             """
             table = await self.download_table(object_id, version_id, table_info, fb)
             try:
-                return table.to_pandas()
+                return table_to_dataframe(table)
             except ModuleNotFoundError:
                 raise RuntimeError("Unable to download dataframe because the `pandas` package is not installed")

@@ -16,6 +16,7 @@ from uuid import UUID
 
 import pandas as pd
 import pyarrow as pa
+import pyarrow.parquet as pq
 from pandas.testing import assert_frame_equal
 from parameterized import parameterized
 
@@ -26,7 +27,7 @@ from evo.common.io.exceptions import DataExistsError
 from evo.common.test_tools import TestWithConnector, TestWithStorage
 from evo.common.utils import NoFeedback, PartialFeedback, get_header_metadata
 from evo.objects.exceptions import TableFormatError
-from evo.objects.utils import KnownTableFormat, ObjectDataClient, table_formats
+from evo.objects.utils import ArrowTableFormat, KnownTableFormat, ObjectDataClient, table_formats
 from helpers import NoImport, UnloadModule, get_sample_table_and_bytes
 
 
@@ -114,10 +115,9 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
         with (
             mock.patch("evo.objects.utils.table_formats.get_known_format") as mock_get_known_format,
             mock.patch("evo.common.io.upload.StorageDestination") as mock_destination,
-            mock.patch("pyarrow.Table") as mock_pyarrow_table,
-            mock.patch("evo.objects.utils.data._get_schema_from_dataframe", return_value=None),
+            mock.patch("evo.objects.utils.data._table_from_dataframe") as mock_table_from_dataframe,
         ):
-            mock_pyarrow_table.from_pandas.return_value = mock_table = mock.Mock()
+            mock_table_from_dataframe.return_value = mock_table = mock.Mock()
             mock_get_known_format.return_value = mock_known_format = mock.Mock(spec=KnownTableFormat)
             mock_known_format.save_table.return_value = mock_table_info = {}
 
@@ -127,6 +127,7 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
             else:
                 actual_table_info = self.data_client.save_dataframe(mock_dataframe)
 
+        mock_table_from_dataframe.assert_called_once_with(mock_dataframe)
         if pass_table_format:
             mock_get_known_format.assert_not_called()
         else:
@@ -137,6 +138,21 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
         mock_destination.upload_file.assert_not_called()
         self.transport.assert_no_requests()
         self.assertIs(mock_table_info, actual_table_info)
+
+    def test_save_dataframe_uses_format_schema_without_pandas_metadata(self) -> None:
+        dataframe = pd.DataFrame({"value": pd.array([2**63 - 1, None], dtype="Int64")}, index=[5, 3])
+        with mock.patch(
+            "evo.objects.utils.data.ArrowTableFormat.from_pandas", wraps=ArrowTableFormat.from_pandas
+        ) as infer_format:
+            table_info = self.data_client.save_dataframe(dataframe)
+
+        infer_format.assert_called_once_with(dataframe)
+        table = pq.ParquetFile(self.data_client.cache_location / table_info["data"]).read()
+        self.assertNotIn(b"pandas", table.schema.metadata or {})
+        self.assertEqual(["value"], table.column_names)
+        self.assertEqual(pa.int64(), table.column("value").type)
+        self.assertEqual([2**63 - 1, None], table.column("value").to_pylist())
+        self.transport.assert_no_requests()
 
     async def test_upload_referenced_data(self) -> None:
         put_data_response = load_test_data("put_data_batch.json")[:5]
@@ -321,10 +337,9 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
             self.transport.set_http_response(status_code=200, content=json.dumps(put_data_response)),
             mock.patch("evo.objects.utils.table_formats.get_known_format") as mock_get_known_format,
             mock.patch("evo.common.io.upload.StorageDestination", autospec=True) as mock_destination,
-            mock.patch("pyarrow.Table") as mock_pyarrow_table,
-            mock.patch("evo.objects.utils.data._get_schema_from_dataframe", return_value=None),
+            mock.patch("evo.objects.utils.data._table_from_dataframe") as mock_table_from_dataframe,
         ):
-            mock_pyarrow_table.from_pandas.return_value = mock_table = mock.Mock()
+            mock_table_from_dataframe.return_value = mock_table = mock.Mock()
             mock_get_known_format.return_value = mock_known_format = mock.Mock(spec=KnownTableFormat)
             mock_known_format.save_table.return_value = mock_table_info = {}
             mock_table_info["data"] = mock_data_id = put_data_response[0]["name"]
@@ -348,6 +363,7 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
             else:
                 actual_table_info = await self.data_client.upload_dataframe(mock_dataframe)
 
+        mock_table_from_dataframe.assert_called_once_with(mock_dataframe)
         if pass_table_format:
             mock_get_known_format.assert_not_called()
         else:
@@ -410,10 +426,9 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
             self.transport.set_http_response(status_code=200, content=json.dumps(put_data_response)),
             mock.patch("evo.objects.utils.table_formats.get_known_format") as mock_get_known_format,
             mock.patch("evo.common.io.upload.StorageDestination", autospec=True) as mock_destination,
-            mock.patch("pyarrow.Table") as mock_pyarrow_table,
-            mock.patch("evo.objects.utils.data._get_schema_from_dataframe", return_value=None),
+            mock.patch("evo.objects.utils.data._table_from_dataframe") as mock_table_from_dataframe,
         ):
-            mock_pyarrow_table.from_pandas.return_value = mock_table = mock.Mock()
+            mock_table_from_dataframe.return_value = mock_table = mock.Mock()
             mock_get_known_format.return_value = mock_known_format = mock.Mock(spec=KnownTableFormat)
             mock_known_format.save_table.return_value = mock_table_info = {}
             mock_table_info["data"] = mock_data_id = put_data_response[0]["name"]
@@ -433,6 +448,7 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
             mock_dataframe = mock.Mock()
             actual_table_info = await self.data_client.upload_dataframe(mock_dataframe)
 
+        mock_table_from_dataframe.assert_called_once_with(mock_dataframe)
         mock_get_known_format.assert_called_once_with(mock_table, table_formats=None)
         mock_known_format.save_table.assert_called_once_with(
             table=mock_table, destination=self.data_client.cache_location
@@ -548,11 +564,71 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
             await self.data_client.upload_category_table(table)
         assert "Category columns must be of type string" in str(cm.exception)
 
+    async def test_upload_category_table_normalizes_mixed_dictionary_types(self) -> None:
+        table = pa.table(
+            {
+                "ordered": pa.chunked_array(
+                    [
+                        pa.DictionaryArray.from_arrays(
+                            pa.array(indices, type=pa.int32()),
+                            pa.array(["B", "A"], type=pa.large_string()),
+                            ordered=True,
+                        )
+                        for indices in ([0, None], [1, 0])
+                    ]
+                ),
+                "unordered": pa.array(["C", "A", None, "B"], type=pa.dictionary(pa.int8(), pa.string())),
+            }
+        )
+        saved_tables: list[pa.Table] = []
+
+        def save_upload(table: pa.Table, *, table_format: KnownTableFormat, fb: IFeedback) -> dict:
+            saved_tables.append(table)
+            return self.data_client.save_table(table, table_format=table_format)
+
+        with mock.patch.object(self.data_client, "upload_table", side_effect=save_upload):
+            category_info = await self.data_client.upload_category_table(table)
+
+        values, lookup = saved_tables
+        self.assertEqual([pa.int32(), pa.int32()], values.schema.types)
+        self.assertEqual([pa.int32(), pa.string()], lookup.schema.types)
+        for name in table.column_names:
+            restored = pa.DictionaryArray.from_arrays(values[name].combine_chunks(), lookup["value"].combine_chunks())
+            self.assertEqual(table[name].to_pylist(), restored.to_pylist())
+        for table_info in (category_info["values"], category_info["table"]):
+            schema = pq.read_schema(self.data_client.cache_location / table_info["data"])
+            self.assertNotIn(b"pandas", schema.metadata or {})
+
     @parameterized.expand(
         [
             (
                 "category",
                 pd.DataFrame({"Category": pd.Categorical(["A", "B", "A", "C"])}),
+                pa.table(
+                    {"key": pa.array([0, 1, 2], type=pa.int32()), "value": pa.array(["A", "B", "C"], type=pa.string())}
+                ),
+                pa.table({"Category": pa.array([0, 1, 0, 2], type=pa.int32())}),
+                table_formats.INTEGER_ARRAY_1_INT32,
+            ),
+            (
+                "ordered_category",
+                pd.DataFrame({"Category": pd.Categorical(["A", "B", "A", "C"], ordered=True)}),
+                pa.table(
+                    {"key": pa.array([0, 1, 2], type=pa.int32()), "value": pa.array(["A", "B", "C"], type=pa.string())}
+                ),
+                pa.table({"Category": pa.array([0, 1, 0, 2], type=pa.int32())}),
+                table_formats.INTEGER_ARRAY_1_INT32,
+            ),
+            (
+                "large_string_category",
+                pd.DataFrame(
+                    {
+                        "Category": pd.Categorical(
+                            ["A", "B", "A", "C"],
+                            categories=pd.Index(pd.array(["A", "B", "C"], dtype="string[pyarrow]")),
+                        )
+                    }
+                ),
                 pa.table(
                     {"key": pa.array([0, 1, 2], type=pa.int32()), "value": pa.array(["A", "B", "C"], type=pa.string())}
                 ),
@@ -611,6 +687,29 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
         self.assertEqual(category_info["table"]["table_format"], table_formats.LOOKUP_TABLE_INT32)
         self.assertEqual(category_info["values"]["table"], values_table)
         self.assertEqual(category_info["values"]["table_format"], values_table_format)
+        for table_info in (category_info["values"], category_info["table"]):
+            table = table_info["table"]
+            self.assertNotIn(b"pandas", table.schema.metadata or {})
+            saved_info = self.data_client.save_table(table, table_format=table_info["table_format"])
+            schema = pq.read_schema(self.data_client.cache_location / saved_info["data"])
+            self.assertNotIn(b"pandas", schema.metadata or {})
+
+    @parameterized.expand([("unordered", False), ("ordered", True)])
+    async def test_category_dataframe_retains_dictionary_encoding(self, _name: str, ordered: bool) -> None:
+        categories = pd.Index(pd.array(["B", "A"], dtype="string[pyarrow]"))
+        dataframe = pd.DataFrame(
+            {"Category": pd.Categorical(["A", "B", None], categories=categories, ordered=ordered)},
+            index=[5, 3, 1],
+        )
+        with mock.patch.object(self.data_client, "upload_category_table", new_callable=mock.AsyncMock) as upload:
+            await self.data_client.upload_category_dataframe(dataframe)
+
+        (table,), _ = upload.await_args
+        self.assertNotIn(b"pandas", table.schema.metadata or {})
+        self.assertEqual(["Category"], table.column_names)
+        self.assertTrue(pa.types.is_dictionary(table.column("Category").type))
+        self.assertEqual(ordered, table.column("Category").type.ordered)
+        self.assertEqual(["A", "B", None], table.column("Category").to_pylist())
 
     async def test_upload_dataframe_converts_large_string_via_schema(self) -> None:
         """Test that upload_dataframe converts large_string columns (from pandas string[pyarrow]) to string via schema."""
@@ -620,6 +719,7 @@ class TestObjectDataClient(TestWithConnector, TestWithStorage):
             await self.data_client.upload_dataframe(dataframe)
 
         (table,), _ = mock_upload.await_args
+        self.assertNotIn(b"pandas", table.schema.metadata or {})
         self.assertTrue(pa.types.is_string(table.schema.field("col").type))
 
     async def test_download_table(self) -> None:
