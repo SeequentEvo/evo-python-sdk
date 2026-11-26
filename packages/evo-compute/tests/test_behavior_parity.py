@@ -137,8 +137,7 @@ class BehaviorParityTestCase(IsolatedAsyncioTestCase):
         return lambda: runner_cls(self.context, runner_cls.params_type(**inputs))
 
     def _engine_call(self, runner_cls, inputs: dict[str, Any]):
-        task = getattr(self.client.geostatistics, runner_cls.task.replace("-", "_"))
-        return lambda: task.run(**inputs)
+        return lambda: self.client._run_generic("geostatistics", runner_cls.task, inputs)
 
     def _catalogue(self, runner_cls):
         """Serve the engine the task's schema, derived from the runner's own parameter model."""
@@ -444,14 +443,8 @@ class TestLocationWiseBehaviorParity(BehaviorParityTestCase):
 class TestWhereTheTwoPathsDiffer(BehaviorParityTestCase):
     """The cases the contract above does not cover, asserted as they are rather than left implied."""
 
-    async def test_a_misspelled_parameter_reaches_the_platform_from_the_runner_only(self) -> None:
-        """DIVERGENCE, the engine is stricter: a parameter model ignores what it does not recognise.
-
-        None of these models set ``extra="forbid"``, so a typo is dropped in silence and the
-        job runs with a default the caller did not intend. The engine binds the call to a
-        signature synthesised from the schema, so the same typo is a refusal -- and one that
-        does not depend on validation being switched on.
-        """
+    async def test_an_extra_parameter_warns_when_the_schema_leaves_its_policy_unspecified(self) -> None:
+        """The legacy model ignores extra fields; the engine warns and preserves them."""
         misspelled = declustering_inputs(powr=2.5)
         del misspelled["power"]
 
@@ -459,8 +452,11 @@ class TestWhereTheTwoPathsDiffer(BehaviorParityTestCase):
         self.assertNotIn("powr", payload)
         self.assertEqual(2.0, payload["power"], "the runner should have fallen back to its own default")
 
-        error = await self.engine_refusal(DeclusteringRunner, **misspelled)
-        self.assertIn("got an unexpected keyword argument 'powr'", str(error))
+        with self.assertLogs("compute.validation", level="WARNING") as logs:
+            payload = await self.assertEngineAccepts(DeclusteringRunner, **misspelled)
+        self.assertEqual(2.5, payload["powr"])
+        self.assertNotIn("power", payload)
+        self.assertTrue(any("'powr'" in message for message in logs.output))
 
     async def test_a_value_the_model_coerces_is_refused_by_the_engine(self) -> None:
         """DIVERGENCE, the engine is stricter: pydantic reads ``"500"`` as ``500``; JSON Schema does not.
@@ -502,14 +498,16 @@ class TestWhereTheTwoPathsDiffer(BehaviorParityTestCase):
             await self.engine_refusal(ConSimRunner, **too_many)
 
     async def test_the_default_engine_still_refuses_the_mistakes_it_can_see(self) -> None:
-        """Deep validation buys value checks, not the whole of them: three refusals survive without it."""
+        """Required parameters and resolvable references are always checked."""
         with self.engine():  # the default
             missing = consim_inputs()
             del missing["variogram_model"]
             self.assertBlames("engine", await self.engine_refusal(ConSimRunner, **missing), "variogram_model")
 
             unknown = consim_inputs(number_of_liness=500)
-            self.assertBlames("engine", await self.engine_refusal(ConSimRunner, **unknown), "number_of_liness")
+            with self.assertLogs("compute.validation", level="WARNING"):
+                payload = await self.assertEngineAccepts(ConSimRunner, **unknown)
+            self.assertEqual(500, payload["number_of_liness"])
 
             unresolvable = consim_inputs(variogram_model="variogram.json")
             self.assertBlames("engine", await self.engine_refusal(ConSimRunner, **unresolvable), "variogram_model")

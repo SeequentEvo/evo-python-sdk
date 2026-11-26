@@ -19,13 +19,16 @@ Developer Portal importer.
 
 from __future__ import annotations
 
+import inspect
 import re
 from pathlib import Path
+from types import ModuleType
 from typing import Any
 
 from ._stubgen import DEFAULT_SNAPSHOT_DIR, _deref, _GeneratedField, _GeneratedType, _TaskRenderer, load_snapshot
 from .endpoints.models import TaskResource
 from .engine import _normalise, _wire_names
+from .overrides import load_override, overridden_tasks
 
 __all__ = [
     "render_topic_docs",
@@ -336,20 +339,214 @@ def _render_shorthands_section(type_blob: str) -> list[str]:
     ]
 
 
+_PARAM_DOC_RE = re.compile(
+    r"^:param\s+(\w+):\s*(.+?)(?=^:(?:param|return|rtype|raises)\b|\Z)", re.MULTILINE | re.DOTALL
+)
+
+
+def _extract_param_docs(docstring: str | None) -> tuple[str, dict[str, str]]:
+    """Split a Sphinx-style docstring into ``(prose_intro, {param_name: description})``."""
+    if not docstring:
+        return "", {}
+    params = {
+        match.group(1): " ".join(line.strip() for line in match.group(2).splitlines() if line.strip())
+        for match in _PARAM_DOC_RE.finditer(docstring)
+    }
+    intro_lines: list[str] = []
+    for line in docstring.splitlines():
+        if line.strip().startswith((":param ", ":return:", ":rtype:", ":raises ")):
+            break
+        intro_lines.append(line)
+    return "\n".join(intro_lines).strip(), params
+
+
+def _expand_private_alias(annotation: str, module: ModuleType) -> str:
+    """Replace private ``_Alias`` tokens from ``module`` with readable public SDK type names."""
+    if annotation == "_ObjectInput":
+        return "ObjectInput"
+
+    def repl(match: re.Match[str]) -> str:
+        token = match.group(0)
+        if token == "_ObjectInput":
+            return "ObjectInput"
+        if not token.startswith("_"):
+            return token
+        val = getattr(module, token, None)
+        if val is None:
+            return token
+        rendered = str(val)
+        # Strip verbose internal package prefixes from runtime Union reprs.
+        rendered = re.sub(r"\bevo\.[A-Za-z0-9_.]+\.([A-Z][A-Za-z0-9_]*)\b", r"\1", rendered)
+        rendered = re.sub(r"\buuid\.UUID\b", "UUID", rendered)
+        return rendered
+
+    return re.sub(r"\b_[A-Za-z0-9_]+\b", repl, annotation)
+
+
+def _render_override_result_members(result_cls: type) -> list[str]:
+    """Render a summary table of public properties and helper methods on a custom result class."""
+    rows: list[str] = []
+    for name, member in inspect.getmembers(result_cls):
+        if name.startswith("_"):
+            continue
+        if isinstance(member, property) and member.fget is not None:
+            sig = inspect.signature(member.fget)
+            ret = sig.return_annotation if sig.return_annotation is not inspect.Signature.empty else "Any"
+            ret_str = ret if isinstance(ret, str) else getattr(ret, "__name__", str(ret))
+            doc_first = (inspect.getdoc(member.fget) or "").splitlines()
+            desc = doc_first[0] if doc_first else ""
+            rows.append(f"| `{name}` | `{ret_str}` | `result.{name}` | {_table_cell(desc)} |")
+        elif inspect.isfunction(member):
+            sig = inspect.signature(member)
+            ret = sig.return_annotation if sig.return_annotation is not inspect.Signature.empty else "Any"
+            ret_str = ret if isinstance(ret, str) else getattr(ret, "__name__", str(ret))
+            is_async = inspect.iscoroutinefunction(member)
+            call_expr = f"{'await ' if is_async else ''}result.{name}()"
+            doc_first = (inspect.getdoc(member) or "").splitlines()
+            desc = doc_first[0] if doc_first else ""
+            rows.append(f"| `{name}()` | `{ret_str}` | `{call_expr}` | {_table_cell(desc)} |")
+    if not rows:
+        return []
+    return [
+        "| Member | Type | Access | Description |",
+        "| --- | --- | --- | --- |",
+        *rows,
+    ]
+
+
+def _render_override_task(
+    topic: str,
+    task_name: str,
+    override_mod: ModuleType,
+    snapshot_task: TaskResource | None,
+) -> tuple[list[str], str]:
+    """Render a task section backed by a custom ``evo.compute.overrides`` runner."""
+    topic_attr = _normalise(topic)
+    task_attr = _normalise(task_name)
+    bind_ret = inspect.signature(override_mod.bind).return_annotation
+    runner_name = bind_ret if isinstance(bind_ret, str) else getattr(bind_ret, "__name__", str(bind_ret))
+    runner_cls = getattr(override_mod, runner_name)
+
+    run_sig = inspect.signature(runner_cls.run)
+    raw_return = run_sig.return_annotation
+    return_type = raw_return if isinstance(raw_return, str) else getattr(raw_return, "__name__", "Any")
+    intro_doc, param_docs = _extract_param_docs(inspect.getdoc(runner_cls.run))
+    description = (snapshot_task.description if snapshot_task and snapshot_task.description else intro_doc) or ""
+
+    wire_topic = snapshot_task.topic if snapshot_task else topic
+    wire_task = snapshot_task.name if snapshot_task else task_name
+    badges = [
+        f"`client.{topic_attr}.{task_attr}`",
+        f"Task: `{wire_topic}/{wire_task}`",
+        f"Custom runner: `{runner_name}`",
+    ]
+    if snapshot_task and snapshot_task.version:
+        badges.append(f"Version: `{snapshot_task.version}`")
+    if snapshot_task and snapshot_task.feature_flag:
+        badges.append("Preview (`preview=True` required)")
+
+    lines: list[str] = [
+        f"### {task_attr}",
+        "",
+        " · ".join(badges),
+        "",
+    ]
+    if description:
+        lines.extend([_sanitize_prose(description), ""])
+
+    param_entries: list[tuple[str, str, Any]] = []
+    for pname, param in run_sig.parameters.items():
+        if pname == "self":
+            continue
+        raw_ann = (
+            param.annotation
+            if isinstance(param.annotation, str)
+            else getattr(param.annotation, "__name__", str(param.annotation))
+        )
+        clean_ann = _expand_private_alias(raw_ann, override_mod)
+        param_entries.append((pname, clean_ann, param.default))
+
+    lines.append("```python")
+    lines.append(f"await client.{topic_attr}.{task_attr}.run(")
+    lines.append("    *,")
+    for pname, clean_ann, default in param_entries:
+        suffix = "" if default is inspect.Parameter.empty else f" = {default!r}"
+        lines.append(f"    {pname}: {clean_ann}{suffix},")
+    lines.append(f") -> {return_type}")
+    if hasattr(runner_cls, "submit"):
+        lines.append("")
+        lines.append(f"await client.{topic_attr}.{task_attr}.submit(")
+        lines.append("    *,")
+        for pname, clean_ann, default in param_entries:
+            suffix = "" if default is inspect.Parameter.empty else f" = {default!r}"
+            lines.append(f"    {pname}: {clean_ann}{suffix},")
+        lines.append(f") -> TaskJob[{return_type}]")
+    lines.append("```")
+    lines.append("")
+
+    lines.extend(
+        [
+            "Parameters:",
+            "",
+            "| Name | Type | Description | Default |",
+            "| --- | --- | --- | --- |",
+        ]
+    )
+    param_schema = (snapshot_task.parameters if snapshot_task else None) or {}
+    schema_props = param_schema.get("properties") or {}
+    for pname, clean_ann, default in param_entries:
+        default_cell = "_required_" if default is inspect.Parameter.empty else f"`{default!r}`"
+        desc = param_docs.get(pname, "")
+        if pname in schema_props and isinstance(schema_props[pname], dict):
+            notes = _schema_notes(schema_props[pname], param_schema)
+            if notes:
+                desc = " ".join(part for part in (desc, *notes) if part)
+        lines.append(f"| `{pname}` | `{clean_ann}` | {_table_cell(desc)} | {default_cell} |")
+    lines.append("")
+
+    lines.append(f"Results (`{return_type}`):")
+    lines.append("")
+    result_cls = getattr(override_mod, return_type, None)
+    member_table = _render_override_result_members(result_cls) if isinstance(result_cls, type) else []
+    if member_table:
+        lines.extend(member_table)
+    else:
+        lines.append(f"Returns `{return_type}`.")
+    lines.append("")
+
+    type_blob = "\n".join(clean_ann for _, clean_ann, _ in param_entries)
+    return lines, type_blob
+
+
 def render_topic_docs(snapshot_dir: Path = DEFAULT_SNAPSHOT_DIR) -> dict[str, str]:
-    """Render ``{topic_slug: markdown}`` reference pages from ``snapshot_dir``."""
+    """Render ``{topic_slug: markdown}`` reference pages from ``snapshot_dir`` and registered overrides."""
     tasks = load_snapshot(snapshot_dir)
-    by_topic: dict[str, list[TaskResource]] = {}
+    by_topic: dict[str, dict[str, TaskResource]] = {}
+    topic_wire_names: dict[str, str] = {}
     for task in tasks:
-        by_topic.setdefault(task.topic, []).append(task)
+        t_norm = _normalise(task.topic)
+        topic_wire_names.setdefault(t_norm, task.topic)
+        by_topic.setdefault(t_norm, {})[_normalise(task.name)] = task
+
+    for ov_topic, ov_task in overridden_tasks():
+        topic_wire_names.setdefault(ov_topic, ov_topic.replace("_", "-"))
+        by_topic.setdefault(ov_topic, {}).setdefault(
+            ov_task,
+            TaskResource(topic=topic_wire_names[ov_topic], name=ov_task.replace("_", "-")),
+        )
 
     pages: dict[str, str] = {}
-    for topic, topic_tasks in sorted(by_topic.items()):
-        topic_attr = _normalise(topic)
+    for topic_attr, task_map in sorted(by_topic.items()):
+        topic = topic_wire_names[topic_attr]
         rendered_sections: list[str] = []
         blobs: list[str] = []
-        for task in sorted(topic_tasks, key=lambda item: item.name):
-            section_lines, blob = _render_generic_task(task)
+        for task_attr, task in sorted(task_map.items()):
+            if (override_mod := load_override(topic_attr, task_attr)) is not None:
+                section_lines, blob = _render_override_task(
+                    topic, task_attr, override_mod, task if task.parameters else None
+                )
+            else:
+                section_lines, blob = _render_generic_task(task)
             rendered_sections.extend(section_lines)
             blobs.append(blob)
 

@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        
+        <link rel="shortcut icon" href="../../../../img/favicon.ico">
+        <title>KrigingOverride - Evo Python SDK</title>
+        <link href="../../../../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../../../../css/fontawesome.min.css" rel="stylesheet">
+        <link href="../../../../css/brands.min.css" rel="stylesheet">
+        <link href="../../../../css/solid.min.css" rel="stylesheet">
+        <link href="../../../../css/v4-font-face.min.css" rel="stylesheet">
+        <link href="../../../../css/base.css" rel="stylesheet">
+        <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" >
+        <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
+        <link href="../../../../assets/_mkdocstrings.css" rel="stylesheet">
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="../../../..">Evo Python SDK</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar-collapse" aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+
+                    <ul class="nav navbar-nav ms-md-auto">
+                            <li class="nav-item">
+                                <a rel="prev" href="KrigingMethod.html" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="KrigingParameters.html" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-bs-toggle="collapse" data-bs-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-bs-level="2"><a href="#evo.compute.overrides.geostatistics.kriging.KrigingOverride" class="nav-link">KrigingOverride</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<p><a href="https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-compute/src/evo/compute/overrides/geostatistics/kriging.py">GitHub source</a>
+</p>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="evo.compute.overrides.geostatistics.kriging.KrigingOverride" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">evo.compute.overrides.geostatistics.kriging.KrigingOverride</span>
+
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>The override's stand-in for the generic task proxy: same <code>run(...)</code>, typed by hand.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.compute.overrides.geostatistics.kriging.KrigingOverride.run" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">run</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">run</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">source</span><span class="p">:</span> <span class="n">_SourceInput</span><span class="p">,</span>
+    <span class="n">target</span><span class="p">:</span> <span class="n">_TargetInput</span><span class="p">,</span>
+    <span class="n">variogram</span><span class="p">:</span> <span class="n">_ObjectInput</span><span class="p">,</span>
+    <span class="n">neighborhood</span><span class="p">:</span> <span class="n">SearchNeighborhood</span><span class="p">,</span>
+    <span class="n">kriging_method</span><span class="p">:</span> <span class="n">SimpleKriging</span> <span class="o">|</span> <span class="n">OrdinaryKriging</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">source_filter</span><span class="p">:</span> <span class="n">Filter</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">target_filter</span><span class="p">:</span> <span class="n">Filter</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">block_discretization</span><span class="p">:</span> <span class="n">BlockDiscretization</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">diagnostics</span><span class="p">:</span> <span class="n">KrigingDiagnostics</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">preview</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">KrigingResult</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Estimate an attribute on a target object by kriging from a source attribute.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>source</code>
+            </td>
+            <td>
+                  <code><span title="evo.compute.overrides.geostatistics.kriging._SourceInput">_SourceInput</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The object and attribute holding the known values, or the typed
+attribute itself.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>target</code>
+            </td>
+            <td>
+                  <code><span title="evo.compute.overrides.geostatistics.kriging._TargetInput">_TargetInput</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Where to write the estimate -- a <code>Target</code>,
+or the typed attribute to create or update.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>variogram</code>
+            </td>
+            <td>
+                  <code><span title="evo.compute.overrides.geostatistics.kriging._ObjectInput">_ObjectInput</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The variogram object, or a reference to it.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>neighborhood</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="evo.compute.tasks.common.search.SearchNeighborhood (evo.compute.tasks.common.SearchNeighborhood)" href="../search/SearchNeighborhood.html#evo.compute.tasks.common.search.SearchNeighborhood">SearchNeighborhood</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The search neighbourhood: the ellipsoid to look in, and how many
+samples to use.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>kriging_method</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="evo.compute.tasks.geostatistics.kriging.SimpleKriging" href="SimpleKriging.html#evo.compute.tasks.geostatistics.kriging.SimpleKriging">SimpleKriging</a> | <a class="autorefs autorefs-internal" title="evo.compute.tasks.geostatistics.kriging.OrdinaryKriging" href="OrdinaryKriging.html#evo.compute.tasks.geostatistics.kriging.OrdinaryKriging">OrdinaryKriging</a> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Ordinary kriging by default; <code>KrigingMethod.simple</code> when the
+mean is known.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>source_filter</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="evo.compute.tasks.geostatistics.kriging.Filter (evo.compute.tasks.common.Filter)" href="Filter.html#evo.compute.tasks.geostatistics.kriging.Filter">Filter</a> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Restrict the estimate to a subset of the source data.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>target_filter</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="evo.compute.tasks.geostatistics.kriging.Filter (evo.compute.tasks.common.Filter)" href="Filter.html#evo.compute.tasks.geostatistics.kriging.Filter">Filter</a> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Restrict the estimate to a subset of the target object.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>block_discretization</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="evo.compute.tasks.geostatistics.kriging.BlockDiscretization" href="BlockDiscretization.html#evo.compute.tasks.geostatistics.kriging.BlockDiscretization">BlockDiscretization</a> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Sub-block discretization for block kriging. Omitted
+means point kriging.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>diagnostics</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="evo.compute.tasks.geostatistics.kriging.KrigingDiagnostics" href="KrigingDiagnostics.html#evo.compute.tasks.geostatistics.kriging.KrigingDiagnostics">KrigingDiagnostics</a> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional diagnostic attributes to write beside the estimate.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>preview</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Opt in to the preview API. Defaults to <code>False</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>ParameterValidationError</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the parameters are inconsistent in a way the
+task schema cannot describe, or fail the engine's own checks.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.compute.overrides.geostatistics.kriging.KrigingOverride.run_parameters" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">run_parameters</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">run_parameters</span><span class="p">(</span>
+    <span class="n">parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">validate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">deep_validation</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">check_schemas</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">KrigingResult</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Run named or typed inputs through the same preparation and checks.</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>

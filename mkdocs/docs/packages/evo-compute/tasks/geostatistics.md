@@ -1743,469 +1743,53 @@ The target that was created or updated.
 
 ### kriging
 
-`client.geostatistics.kriging` · Task: `geostatistics/kriging` · Version: `1.0.1`
+`client.geostatistics.kriging` · Task: `geostatistics/kriging` · Custom runner: `KrigingOverride` · Version: `1.0.1`
 
 For more information, please read the [guide](https://developer.seequent.com/docs/guides/geostatistics-tasks/tasks/kriging)
 
 ```python
 await client.geostatistics.kriging.run(
     *,
-    source: GeostatisticsKrigingSource | AnyTypedAttribute,
-    target: GeostatisticsKrigingTarget | AnyTypedAttribute,
-    kriging_method: GeostatisticsKrigingSimpleKriging | GeostatisticsKrigingOrdinaryKriging,
+    source: Source | Attribute | BlockModelAttribute,
+    target: Target | Attribute | PendingAttribute | BlockModelAttribute | BlockModelPendingAttribute,
     variogram: ObjectInput,
-    neighborhood: GeostatisticsKrigingKrigingNeighborhood | SearchNeighborhood,
-    block_discretization: GeostatisticsKrigingBlockDiscretization | None = ...,
+    neighborhood: SearchNeighborhood,
+    kriging_method: SimpleKriging | OrdinaryKriging | None = None,
+    source_filter: Filter | None = None,
+    target_filter: Filter | None = None,
+    block_discretization: BlockDiscretization | None = None,
+    diagnostics: KrigingDiagnostics | None = None,
     preview: bool = False,
-) -> GeostatisticsKrigingResult
+) -> KrigingResult
 ```
 
 Parameters:
 
 | Name | Type | Description | Default |
 | --- | --- | --- | --- |
-| `source` | `GeostatisticsKrigingSource | AnyTypedAttribute` | The source object and attribute containing known values. | _required_ |
-| `target` | `GeostatisticsKrigingTarget | AnyTypedAttribute` | The target object and attribute to create or update with kriging results. | _required_ |
-| `kriging_method` | `GeostatisticsKrigingSimpleKriging | GeostatisticsKrigingOrdinaryKriging` | The kriging method to use. Either simple or ordinary kriging. | _required_ |
-| `variogram` | `ObjectInput` | Model of the covariance within the domain. Supported schemas: `variogram/[>=1.1,<2]`. | _required_ |
-| `neighborhood` | `GeostatisticsKrigingKrigingNeighborhood | SearchNeighborhood` | In Kriging, the value of each evaluation point is determined by a set of nearby points with known values. The search parameters determines which nearby points to use. | _required_ |
-| `block_discretization` | `GeostatisticsKrigingBlockDiscretization | None` | Sub-block discretization for block kriging. When provided, each target block is subdivided into nx * ny * nz sub-cells and the kriged value is averaged across these sub-cells. When omitted, point kriging is performed. Only applicable when the target is a 3D grid or block model. | `None` |
-| `preview` | `bool` | Whether to include the preview opt-in header. | `False` |
+| `source` | `Source | Attribute | BlockModelAttribute` | The object and attribute holding the known values, or the typed attribute itself. | _required_ |
+| `target` | `Target | Attribute | PendingAttribute | BlockModelAttribute | BlockModelPendingAttribute` | Where to write the estimate -- a ``Target``, or the typed attribute to create or update. | _required_ |
+| `variogram` | `ObjectInput` | The variogram object, or a reference to it. Supported schemas: `variogram/[>=1.1,<2]`. | _required_ |
+| `neighborhood` | `SearchNeighborhood` | The search neighbourhood: the ellipsoid to look in, and how many samples to use. | _required_ |
+| `kriging_method` | `SimpleKriging | OrdinaryKriging | None` | Ordinary kriging by default; ``KrigingMethod.simple`` when the mean is known. | `None` |
+| `source_filter` | `Filter | None` | Restrict the estimate to a subset of the source data. | `None` |
+| `target_filter` | `Filter | None` | Restrict the estimate to a subset of the target object. | `None` |
+| `block_discretization` | `BlockDiscretization | None` | Sub-block discretization for block kriging. Omitted means point kriging. | `None` |
+| `diagnostics` | `KrigingDiagnostics | None` | Optional diagnostic attributes to write beside the estimate. | `None` |
+| `preview` | `bool` | Opt in to the preview API. Defaults to ``False``. | `False` |
 
-Results (`GeostatisticsKrigingResult`):
+Results (`KrigingResult`):
 
-| Field | Type | Hydrated Loader | Description |
+| Member | Type | Access | Description |
 | --- | --- | --- | --- |
-| `message` | `str` | — | A message that says what happened in the task. |
-| `target` | `GeostatisticsKrigingResultTarget` | `await result.target.load()`, `await result.target.to_dataframe(*keys)` | The target that was created or updated. |
-
-#### Nested Shapes
-
-**`GeostatisticsKrigingSourceFilterCondition`** (`TypedDict`)
-
-A leaf filter condition applied to one attribute of the filtered object.
-
-Exactly one operator field must be provided.
-
-- ``in``: Membership test. Provide string category names for
-    ``CategoryAttribute`` objects or integers for integer-coded indices.
-- ``not_in``: Exclusion test.
-- ``equal``, ``not_equal``: Numeric equality/inequality.
-- ``greater_than``, ``greater_than_or_equal_to``, ``less_than``,
-    ``less_than_or_equal_to``: Numeric comparisons on numeric attributes.
-
-| Field | Type | Required | Description |
-| --- | --- | --- | --- |
-| `operator` | `Literal["in", "not_in", "equal", "not_equal", "greater_than", "greater_than_or_equal_to", "less_than", "less_than_or_equal_to"]` | Yes | The filter operator. Use 'in' or 'not_in' for category/membership tests (pair with 'values'). Use 'equal', 'not_equal', 'greater_than', 'greater_than_or_equal_to', 'less_than', or 'less_than_or_equal_to' for numeric comparisons (pair with 'threshold'). |
-| `values` | `list[str] | None` | No | Category values to match. Required when operator is 'in' or 'not_in'. Use strings for string/category-name attributes; use integers for integer-coded attributes. |
-| `threshold` | `float | None` | No | Numeric threshold for comparison. Required when operator is 'equal', 'not_equal', 'greater_than', 'greater_than_or_equal_to', 'less_than', or 'less_than_or_equal_to'. |
-| `type` | `Literal["condition"]` | No | Identifies this as a leaf filter condition. |
-| `attribute` | `AttributeInput` | Yes | Attribute used to filter locations. |
-
-**`GeostatisticsKrigingSourceAnyOfFilter`** (`TypedDict`)
-
-A composite filter that passes locations satisfying ANY child filter (OR logic).
-
-| Field | Type | Required | Description |
-| --- | --- | --- | --- |
-| `type` | `Literal["any_of"]` | No | Identifies this as an OR composite filter. |
-| `filters` | `list[GeostatisticsKrigingSourceFilterCondition | GeostatisticsKrigingSourceAllOfFilter | GeostatisticsKrigingSourceAnyOfFilter]` | Yes | At least one of these filters must be satisfied (OR logic). |
-
-**`GeostatisticsKrigingSourceAllOfFilter`** (`TypedDict`)
-
-A composite filter that passes locations satisfying ALL child filters (AND logic).
-
-| Field | Type | Required | Description |
-| --- | --- | --- | --- |
-| `type` | `Literal["all_of"]` | No | Identifies this as an AND composite filter. |
-| `filters` | `list[GeostatisticsKrigingSourceFilterCondition | GeostatisticsKrigingSourceAllOfFilter | GeostatisticsKrigingSourceAnyOfFilter]` | Yes | All of these filters must be satisfied (AND logic). |
-
-**`GeostatisticsKrigingSourceFilter`** (`TypedDict`)
-
-Optional filter to apply to the source object. This allows kriging to use only a subset of the known data, defined by filtering an attribute on the source object.
-
-| Field | Type | Required | Description |
-| --- | --- | --- | --- |
-| `where` | `GeostatisticsKrigingSourceFilterCondition | GeostatisticsKrigingSourceAllOfFilter | GeostatisticsKrigingSourceAnyOfFilter` | Yes | A filter expression defining which locations to include. Use a FilterCondition for a single predicate, AllOfFilter for AND logic, AnyOfFilter for OR logic, or nest them to build compound predicates. |
-
-**`GeostatisticsKrigingSource`** (`TypedDict`)
-
-The source object and attribute containing known values.
-
-| Field | Type | Required | Description |
-| --- | --- | --- | --- |
-| `object` | `ObjectInput` | Yes | Spatial locations of known values. Supported schemas: `pointset/[>=1.2,<2]`, `block-model/[>=1.0,<2]`, `regular-3d-grid/[>=1.2,<2]`, `regular-masked-3d-grid/[>=1.2,<2]`, `tensor-3d-grid/[>=1.2,<2]`, `downhole-intervals/[>=1.2,<2]`. |
-| `attribute` | `AttributeInput` | Yes | The known values, used to estimate values at unknown locations. |
-| `filter` | `GeostatisticsKrigingSourceFilter | None` | No | Optional filter to apply to the source object. This allows kriging to use only a subset of the known data, defined by filtering an attribute on the source object. |
-
-**`GeostatisticsKrigingTargetAttributeCreate`** (`TypedDict`)
-
-| Field | Type | Required | Description |
-| --- | --- | --- | --- |
-| `operation` | `Literal["create"]` | Yes | The operation to perform on the attribute. |
-| `name` | `str` | Yes | The name of the attribute to create. |
-
-**`GeostatisticsKrigingTargetAttributeUpdate`** (`TypedDict`)
-
-| Field | Type | Required | Description |
-| --- | --- | --- | --- |
-| `operation` | `Literal["update"]` | Yes | The operation to perform on the attribute. |
-| `reference` | `AttributeInput` | Yes | Reference to an existing attribute to update. |
-
-**`GeostatisticsKrigingDiagnostics`** (`TypedDict`)
-
-Optional per-location diagnostic attributes to compute and write alongside the kriging result. Only diagnostics with an explicit attribute target are produced.
-
-| Field | Type | Required | Description |
-| --- | --- | --- | --- |
-| `valid` | `GeostatisticsKrigingTargetAttributeCreate | GeostatisticsKrigingTargetAttributeUpdate | AttributeInput` | No | Attribute to create or update with whether each target location's neighbourhood satisfied the search constraints and produced an estimate. Accepts a typed attribute, a bare attribute name (updates if present on the target object, otherwise creates), or `{"operation": "create" | "update", ...}`. |
-| `kriging_variance` | `GeostatisticsKrigingTargetAttributeCreate | GeostatisticsKrigingTargetAttributeUpdate | AttributeInput` | No | Attribute to create or update with the kriging variance (estimation uncertainty), in the squared units of the estimated attribute. Accepts a typed attribute, a bare attribute name (updates if present on the target object, otherwise creates), or `{"operation": "create" | "update", ...}`. |
-| `slope_of_regression` | `GeostatisticsKrigingTargetAttributeCreate | GeostatisticsKrigingTargetAttributeUpdate | AttributeInput` | No | Attribute to create or update with the slope of regression, a diagnostic for conditional bias. Accepts a typed attribute, a bare attribute name (updates if present on the target object, otherwise creates), or `{"operation": "create" | "update", ...}`. |
-| `kriging_efficiency` | `GeostatisticsKrigingTargetAttributeCreate | GeostatisticsKrigingTargetAttributeUpdate | AttributeInput` | No | Attribute to create or update with the proportion of point or intra-block variance explained by the kriging weights. Accepts a typed attribute, a bare attribute name (updates if present on the target object, otherwise creates), or `{"operation": "create" | "update", ...}`. |
-| `kriging_mean` | `GeostatisticsKrigingTargetAttributeCreate | GeostatisticsKrigingTargetAttributeUpdate | AttributeInput` | No | Attribute to create or update with the GLS mean for ordinary kriging, or the supplied constant mean for simple kriging. Accepts a typed attribute, a bare attribute name (updates if present on the target object, otherwise creates), or `{"operation": "create" | "update", ...}`. |
-| `num_samples` | `GeostatisticsKrigingTargetAttributeCreate | GeostatisticsKrigingTargetAttributeUpdate | AttributeInput` | No | Attribute to create or update with the number of data samples used in the estimate. Accepts a typed attribute, a bare attribute name (updates if present on the target object, otherwise creates), or `{"operation": "create" | "update", ...}`. |
-| `num_drillholes` | `GeostatisticsKrigingTargetAttributeCreate | GeostatisticsKrigingTargetAttributeUpdate | AttributeInput` | No | Attribute to create or update with the number of distinct drillholes contributing to the estimate. Requires a DownholeIntervals source object. Accepts a typed attribute, a bare attribute name (updates if present on the target object, otherwise creates), or `{"operation": "create" | "update", ...}`. |
-| `num_duplicates` | `GeostatisticsKrigingTargetAttributeCreate | GeostatisticsKrigingTargetAttributeUpdate | AttributeInput` | No | Attribute to create or update with the number of duplicate sample locations used in the estimate. Accepts a typed attribute, a bare attribute name (updates if present on the target object, otherwise creates), or `{"operation": "create" | "update", ...}`. |
-| `num_equidistant` | `GeostatisticsKrigingTargetAttributeCreate | GeostatisticsKrigingTargetAttributeUpdate | AttributeInput` | No | Attribute to create or update with a hint of how many other samples could have replaced the last returned sample because they were the same distance from the target location. This is counted after searching and before clipping to the maximum number of samples. Accepts a typed attribute, a bare attribute name (updates if present on the target object, otherwise creates), or `{"operation": "create" | "update", ...}`. |
-| `sum_weights` | `GeostatisticsKrigingTargetAttributeCreate | GeostatisticsKrigingTargetAttributeUpdate | AttributeInput` | No | Attribute to create or update with the sum of kriging weights applied to data samples. Accepts a typed attribute, a bare attribute name (updates if present on the target object, otherwise creates), or `{"operation": "create" | "update", ...}`. |
-| `sum_positive_weights` | `GeostatisticsKrigingTargetAttributeCreate | GeostatisticsKrigingTargetAttributeUpdate | AttributeInput` | No | Attribute to create or update with the sum of positive kriging weights applied to data samples. Accepts a typed attribute, a bare attribute name (updates if present on the target object, otherwise creates), or `{"operation": "create" | "update", ...}`. |
-| `sum_negative_weights` | `GeostatisticsKrigingTargetAttributeCreate | GeostatisticsKrigingTargetAttributeUpdate | AttributeInput` | No | Attribute to create or update with the sum of negative kriging weights applied to data samples (zero when negative-weight removal is enabled). Accepts a typed attribute, a bare attribute name (updates if present on the target object, otherwise creates), or `{"operation": "create" | "update", ...}`. |
-| `min_distance` | `GeostatisticsKrigingTargetAttributeCreate | GeostatisticsKrigingTargetAttributeUpdate | AttributeInput` | No | Attribute to create or update with the minimum isotropic Euclidean distance from the target location to any neighbour. Accepts a typed attribute, a bare attribute name (updates if present on the target object, otherwise creates), or `{"operation": "create" | "update", ...}`. |
-| `mean_distance` | `GeostatisticsKrigingTargetAttributeCreate | GeostatisticsKrigingTargetAttributeUpdate | AttributeInput` | No | Attribute to create or update with the mean isotropic Euclidean distance from the target location to all neighbours. Accepts a typed attribute, a bare attribute name (updates if present on the target object, otherwise creates), or `{"operation": "create" | "update", ...}`. |
-| `aniso_min_distance` | `GeostatisticsKrigingTargetAttributeCreate | GeostatisticsKrigingTargetAttributeUpdate | AttributeInput` | No | Attribute to create or update with the minimum anisotropic (ellipsoid-space) distance from the target location to any neighbour. Accepts a typed attribute, a bare attribute name (updates if present on the target object, otherwise creates), or `{"operation": "create" | "update", ...}`. |
-| `aniso_mean_distance` | `GeostatisticsKrigingTargetAttributeCreate | GeostatisticsKrigingTargetAttributeUpdate | AttributeInput` | No | Attribute to create or update with the mean anisotropic (ellipsoid-space) distance from the target location to all neighbours. Accepts a typed attribute, a bare attribute name (updates if present on the target object, otherwise creates), or `{"operation": "create" | "update", ...}`. |
-
-**`GeostatisticsKrigingAnyOfFilter`** (`TypedDict`)
-
-A composite filter that passes locations satisfying ANY child filter (OR logic).
-
-| Field | Type | Required | Description |
-| --- | --- | --- | --- |
-| `type` | `Literal["any_of"]` | No | Identifies this as an OR composite filter. |
-| `filters` | `list[GeostatisticsKrigingSourceFilterCondition | GeostatisticsKrigingAllOfFilter | GeostatisticsKrigingAnyOfFilter]` | Yes | At least one of these filters must be satisfied (OR logic). |
-
-**`GeostatisticsKrigingAllOfFilter`** (`TypedDict`)
-
-A composite filter that passes locations satisfying ALL child filters (AND logic).
-
-| Field | Type | Required | Description |
-| --- | --- | --- | --- |
-| `type` | `Literal["all_of"]` | No | Identifies this as an AND composite filter. |
-| `filters` | `list[GeostatisticsKrigingSourceFilterCondition | GeostatisticsKrigingAllOfFilter | GeostatisticsKrigingAnyOfFilter]` | Yes | All of these filters must be satisfied (AND logic). |
-
-**`GeostatisticsKrigingFilter`** (`TypedDict`)
-
-Optional filter to apply to the target object. This allows the kriging to only be applied to a subset of the target object, defined by filtering an attribute on the target object.
-
-| Field | Type | Required | Description |
-| --- | --- | --- | --- |
-| `where` | `GeostatisticsKrigingSourceFilterCondition | GeostatisticsKrigingAllOfFilter | GeostatisticsKrigingAnyOfFilter` | Yes | A filter expression defining which locations to include. Use a FilterCondition for a single predicate, AllOfFilter for AND logic, AnyOfFilter for OR logic, or nest them to build compound predicates. |
-
-**`GeostatisticsKrigingTarget`** (`TypedDict`)
-
-The target object and attribute to create or update with kriging results.
-
-| Field | Type | Required | Description |
-| --- | --- | --- | --- |
-| `object` | `ObjectInput` | Yes | Object to evaluate onto. Supported schemas: `pointset/[>=1.2,<2]`, `block-model/[>=1.0,<2]`, `regular-3d-grid/[>=1.2,<2]`, `regular-masked-3d-grid/[>=1.2,<2]`, `tensor-3d-grid/[>=1.2,<2]`, `downhole-intervals/[>=1.2,<2]`. |
-| `attribute` | `GeostatisticsKrigingTargetAttributeCreate | GeostatisticsKrigingTargetAttributeUpdate | AttributeInput` | Yes | Attribute to create or update on the target object with the kriging estimate. Use `{"operation": "create", "name": ...}` to add a new attribute, or `{"operation": "update", "reference": ...}` to overwrite an existing one. Accepts a typed attribute, a bare attribute name (updates if present on the target object, otherwise creates), or `{"operation": "create" | "update", ...}`. |
-| `diagnostics` | `GeostatisticsKrigingDiagnostics | None` | No | Optional per-location diagnostic attributes to compute and write alongside the kriging result. Only diagnostics with an explicit attribute target are produced. |
-| `filter` | `GeostatisticsKrigingFilter | None` | No | Optional filter to apply to the target object. This allows the kriging to only be applied to a subset of the target object, defined by filtering an attribute on the target object. |
-| `update_mode` | `Literal["auto", "merge", "replace"]` | No | How to treat target locations that this run did not estimate, such as locations excluded by the target filter. 'merge' keeps the values those locations already had, so running one domain at a time accumulates results into a single attribute. 'replace' clears them, so the attribute only ever holds the results of the latest run. 'auto' (the default) merges when a target filter is set and replaces otherwise. Merging only applies to attributes that already exist on the target object; a newly created attribute has nothing to merge with. Boolean and integer diagnostic attributes have no way to represent 'not estimated', so within the filter they are always written as produced. |
-
-**`GeostatisticsKrigingSimpleKriging`** (`TypedDict`)
-
-Kriging method with a constant mean value.
-
-| Field | Type | Required | Description |
-| --- | --- | --- | --- |
-| `type` | `Literal["simple"]` | Yes | The type of kriging to use. |
-| `mean` | `float` | Yes | The mean value, assumed to be constant across the domain. |
-
-**`GeostatisticsKrigingOrdinaryKriging`** (`TypedDict`)
-
-Kriging method with a variable mean value.
-
-| Field | Type | Required | Description |
-| --- | --- | --- | --- |
-| `type` | `Literal["ordinary"]` | Yes | The type of kriging to use. |
-
-**`GeostatisticsKrigingNeighborhoodEllipsoidEllipsoidRanges`** (`TypedDict`)
-
-The ranges of the ellipsoid
-
-| Field | Type | Required | Description |
-| --- | --- | --- | --- |
-| `major` | `float` | Yes | The major axis length of the ellipsoid Bounds: `> 0`. |
-| `semi_major` | `float` | Yes | The semi major axis length of the ellipsoid Bounds: `> 0`. |
-| `minor` | `float` | Yes | The minor axis length of the ellipsoid Bounds: `> 0`. |
-
-**`GeostatisticsKrigingRotation`** (`TypedDict`)
-
-The rotation of the ellipsoid
-
-| Field | Type | Required | Description |
-| --- | --- | --- | --- |
-| `dip_azimuth` | `float` | No | first rotation, about the z-axis, in degrees Bounds: `>= 0`, `<= 360`. |
-| `dip` | `float` | No | second rotation, about the x-axis, in degrees Bounds: `>= 0`, `<= 180`. |
-| `pitch` | `float` | No | third rotation, about the z-axis, in degrees Bounds: `>= 0`, `<= 360`. |
-
-**`GeostatisticsKrigingEllipsoid`** (`TypedDict`)
-
-The ellipsoid, to search for points within
-Alias: anisotropy
-
-| Field | Type | Required | Description |
-| --- | --- | --- | --- |
-| `ellipsoid_ranges` | `GeostatisticsKrigingNeighborhoodEllipsoidEllipsoidRanges` | Yes | The ranges of the ellipsoid |
-| `rotation` | `GeostatisticsKrigingRotation` | Yes | The rotation of the ellipsoid |
-
-**`GeostatisticsKrigingFractionalDistance`** (`TypedDict`)
-
-Outlier distance specified as a fraction of the search radius.
-
-| Field | Type | Required | Description |
-| --- | --- | --- | --- |
-| `type` | `Literal["fraction"]` | Yes | Specify the distance as a fraction of the search radius. |
-| `distance` | `float` | Yes | The distance to the outlier limit, as a fraction of the search radius (0.0 to 1.0). For example, a value of 0.5 means the outlier boundary is at 50% of the search radius. Bounds: `>= 0.0`, `<= 1.0`. |
-
-**`GeostatisticsKrigingAbsoluteDistance`** (`TypedDict`)
-
-Outlier distance specified as an absolute value.
-
-| Field | Type | Required | Description |
-| --- | --- | --- | --- |
-| `type` | `Literal["absolute"]` | Yes | Specify the distance as an absolute value. |
-| `distance` | `float` | Yes | The absolute distance to the outlier limit. This cannot be used yet. Bounds: `>= 0.0`, `<= 1.0`. |
-
-**`GeostatisticsKrigingOutlierRestriction`** (`TypedDict`)
-
-Outlier restrictions.
-
-| Field | Type | Required | Description |
-| --- | --- | --- | --- |
-| `action` | `Literal["clamp", "discard"]` | Yes | The action to take on outliers. Clamp the value, or discard the point. |
-| `distance` | `GeostatisticsKrigingFractionalDistance | GeostatisticsKrigingAbsoluteDistance` | Yes | The distance to the outlier limit. |
-| `max_value_threshold` | `float` | No | The maximum allowed value for the outlier limit. Values exceeding this threshold are either discarded or clamped. |
-| `clamp_delta` | `float` | No | The maximum randomly-applied delta value for clamped outlier values.Random delta values in the range [0.0...clamp_limit) are added to clamped values toavoid identical values occurring throughout the samples. Bounds: `>= 0.0`, `<= 1e-05`. |
-
-**`GeostatisticsKrigingKrigingNeighborhood`** (`TypedDict`)
-
-In Kriging, the value of each evaluation point is determined by a set of nearby points with known values. The search parameters determines which nearby points to use.
-
-| Field | Type | Required | Description |
-| --- | --- | --- | --- |
-| `ellipsoid` | `GeostatisticsKrigingEllipsoid` | Yes | The ellipsoid, to search for points within Alias: anisotropy |
-| `max_samples` | `int` | Yes | The maximum number of samples to use for each evaluation point. Alias: max-samples Bounds: `>= 1`. |
-| `min_samples` | `int` | No | The minimum number of samples to use for each evaluation point. Alias: min-samples Bounds: `>= 1`. |
-| `max_empty_octants` | `int` | No | The maximum number of empty octants (aka sectors) allowed when searching for neighbors. Omitting this, or a value of 8, disables the octant check. Bounds: `>= 0`, `<= 8`. |
-| `max_samples_per_octant` | `int | None` | No | The maximum number of samples to use from each octant. Bounds: `>= 1`. |
-| `max_samples_per_drillhole` | `int | None` | No | The maximum number of samples to use from each drillhole (defined by drillhole ID) Bounds: `>= 1`. |
-| `max_empty_quadrants` | `int | None` | No | The maximum number of empty quadrants (2D sectors, ignoring Z) allowed when searching for neighbors. If not specified, quadrant filtering is disabled. Bounds: `>= 0`, `<= 4`. |
-| `max_samples_per_quadrant` | `int | None` | No | The maximum number of samples to use from each quadrant (2D sectors, ignoring Z). Bounds: `>= 1`. |
-| `max_drillholes` | `int | None` | No | The maximum number of drillholes to be used in each estimate. Alias: max_drillholes_per_estimate Bounds: `>= 1`. |
-| `min_drillholes` | `int` | No | The minimum number of distinct drillholes required in each estimate. 0 disables the check. Requires Downhole Intervals. Alias: min_drillholes_per_estimate Bounds: `>= 0`. |
-| `drillhole_limit_scope` | `Literal["global", "quadrant", "octant"]` | No | Apply max_samples_per_drillhole globally (the default), independently in each quadrant (ignoring Z), or independently in each octant, in search-ellipsoid coordinates. Requires max_samples_per_drillhole. Limits on the number of distinct drillholes remain global. |
-| `outliers` | `GeostatisticsKrigingOutlierRestriction | None` | No | Outlier restrictions. |
-
-**`GeostatisticsKrigingBlockDiscretization`** (`TypedDict`)
-
-Sub-block discretization for block kriging. When provided, each target block is subdivided into nx * ny * nz sub-cells and the kriged value is averaged across these sub-cells. When omitted, point kriging is performed. Only applicable when the target is a 3D grid or block model.
-
-| Field | Type | Required | Description |
-| --- | --- | --- | --- |
-| `nx` | `int` | No | Number of subdivisions in the x direction Bounds: `>= 1`, `<= 9`. |
-| `ny` | `int` | No | Number of subdivisions in the y direction Bounds: `>= 1`, `<= 9`. |
-| `nz` | `int` | No | Number of subdivisions in the z direction Bounds: `>= 1`, `<= 9`. |
-
-**`GeostatisticsKrigingResultAttribute`** (`ResultNode`)
-
-Attribute containing the kriging result.
-
-| Field | Type | Hydrated Loader | Description |
-| --- | --- | --- | --- |
-| `reference` | `str` | — | Reference to the attribute in the geoscience object. |
-| `name` | `str` | — | The name of the output attribute. |
-
-**`GeostatisticsKrigingResultValid`** (`ResultNode`)
-
-Attribute containing whether each target location's neighbourhood satisfied the search constraints and produced an estimate.
-
-| Field | Type | Hydrated Loader | Description |
-| --- | --- | --- | --- |
-| `reference` | `str` | — | Reference to the attribute in the geoscience object. |
-| `name` | `str` | — | The name of the output attribute. |
-
-**`GeostatisticsKrigingResultResultTargetDiagnosticsKrigingVariance`** (`ResultNode`)
-
-Attribute containing the kriging variance (estimation uncertainty), in the squared units of the estimated attribute.
-
-| Field | Type | Hydrated Loader | Description |
-| --- | --- | --- | --- |
-| `reference` | `str` | — | Reference to the attribute in the geoscience object. |
-| `name` | `str` | — | The name of the output attribute. |
-
-**`GeostatisticsKrigingResultResultTargetDiagnosticsSlopeOfRegression`** (`ResultNode`)
-
-Attribute containing the diagnostic for conditional bias.
-
-| Field | Type | Hydrated Loader | Description |
-| --- | --- | --- | --- |
-| `reference` | `str` | — | Reference to the attribute in the geoscience object. |
-| `name` | `str` | — | The name of the output attribute. |
-
-**`GeostatisticsKrigingResultResultTargetDiagnosticsKrigingEfficiency`** (`ResultNode`)
-
-Attribute containing the proportion of point or intra-block variance explained by kriging weights.
-
-| Field | Type | Hydrated Loader | Description |
-| --- | --- | --- | --- |
-| `reference` | `str` | — | Reference to the attribute in the geoscience object. |
-| `name` | `str` | — | The name of the output attribute. |
-
-**`GeostatisticsKrigingResultResultTargetDiagnosticsKrigingMean`** (`ResultNode`)
-
-Attribute containing the GLS mean for ordinary kriging, or the supplied constant mean for simple kriging.
-
-| Field | Type | Hydrated Loader | Description |
-| --- | --- | --- | --- |
-| `reference` | `str` | — | Reference to the attribute in the geoscience object. |
-| `name` | `str` | — | The name of the output attribute. |
-
-**`GeostatisticsKrigingResultResultTargetDiagnosticsNumSamples`** (`ResultNode`)
-
-Attribute containing the number of data samples used in the estimate.
-
-| Field | Type | Hydrated Loader | Description |
-| --- | --- | --- | --- |
-| `reference` | `str` | — | Reference to the attribute in the geoscience object. |
-| `name` | `str` | — | The name of the output attribute. |
-
-**`GeostatisticsKrigingResultResultTargetDiagnosticsNumDrillholes`** (`ResultNode`)
-
-Attribute containing the number of distinct drillholes contributing to the estimate.
-
-| Field | Type | Hydrated Loader | Description |
-| --- | --- | --- | --- |
-| `reference` | `str` | — | Reference to the attribute in the geoscience object. |
-| `name` | `str` | — | The name of the output attribute. |
-
-**`GeostatisticsKrigingResultResultTargetDiagnosticsNumDuplicates`** (`ResultNode`)
-
-Attribute containing the number of duplicate sample locations used in the estimate.
-
-| Field | Type | Hydrated Loader | Description |
-| --- | --- | --- | --- |
-| `reference` | `str` | — | Reference to the attribute in the geoscience object. |
-| `name` | `str` | — | The name of the output attribute. |
-
-**`GeostatisticsKrigingResultResultTargetDiagnosticsNumEquidistant`** (`ResultNode`)
-
-Attribute containing a hint of how many other samples could have replaced the last returned sample because they were the same distance from the target location. This is counted after searching and before clipping to the maximum number of samples.
-
-| Field | Type | Hydrated Loader | Description |
-| --- | --- | --- | --- |
-| `reference` | `str` | — | Reference to the attribute in the geoscience object. |
-| `name` | `str` | — | The name of the output attribute. |
-
-**`GeostatisticsKrigingResultResultTargetDiagnosticsSumWeights`** (`ResultNode`)
-
-Attribute containing the sum of kriging weights applied to data samples.
-
-| Field | Type | Hydrated Loader | Description |
-| --- | --- | --- | --- |
-| `reference` | `str` | — | Reference to the attribute in the geoscience object. |
-| `name` | `str` | — | The name of the output attribute. |
-
-**`GeostatisticsKrigingResultResultTargetDiagnosticsSumPositiveWeights`** (`ResultNode`)
-
-Attribute containing the sum of positive kriging weights applied to data samples.
-
-| Field | Type | Hydrated Loader | Description |
-| --- | --- | --- | --- |
-| `reference` | `str` | — | Reference to the attribute in the geoscience object. |
-| `name` | `str` | — | The name of the output attribute. |
-
-**`GeostatisticsKrigingResultResultTargetDiagnosticsSumNegativeWeights`** (`ResultNode`)
-
-Attribute containing the sum of negative kriging weights applied to data samples (zero when negative-weight removal is enabled).
-
-| Field | Type | Hydrated Loader | Description |
-| --- | --- | --- | --- |
-| `reference` | `str` | — | Reference to the attribute in the geoscience object. |
-| `name` | `str` | — | The name of the output attribute. |
-
-**`GeostatisticsKrigingResultResultTargetDiagnosticsMinDistance`** (`ResultNode`)
-
-Attribute containing the minimum isotropic Euclidean distance from the target location to any neighbour.
-
-| Field | Type | Hydrated Loader | Description |
-| --- | --- | --- | --- |
-| `reference` | `str` | — | Reference to the attribute in the geoscience object. |
-| `name` | `str` | — | The name of the output attribute. |
-
-**`GeostatisticsKrigingResultResultTargetDiagnosticsMeanDistance`** (`ResultNode`)
-
-Attribute containing the mean isotropic Euclidean distance from the target location to all neighbours.
-
-| Field | Type | Hydrated Loader | Description |
-| --- | --- | --- | --- |
-| `reference` | `str` | — | Reference to the attribute in the geoscience object. |
-| `name` | `str` | — | The name of the output attribute. |
-
-**`GeostatisticsKrigingResultResultTargetDiagnosticsAnisoMinDistance`** (`ResultNode`)
-
-Attribute containing the minimum anisotropic (ellipsoid-space) distance from the target location to any neighbour.
-
-| Field | Type | Hydrated Loader | Description |
-| --- | --- | --- | --- |
-| `reference` | `str` | — | Reference to the attribute in the geoscience object. |
-| `name` | `str` | — | The name of the output attribute. |
-
-**`GeostatisticsKrigingResultResultTargetDiagnosticsAnisoMeanDistance`** (`ResultNode`)
-
-Attribute containing the mean anisotropic (ellipsoid-space) distance from the target location to all neighbours.
-
-| Field | Type | Hydrated Loader | Description |
-| --- | --- | --- | --- |
-| `reference` | `str` | — | Reference to the attribute in the geoscience object. |
-| `name` | `str` | — | The name of the output attribute. |
-
-**`GeostatisticsKrigingResultDiagnostics`** (`ResultNode`)
-
-Diagnostic attributes produced alongside the kriging result, when requested.
-
-| Field | Type | Hydrated Loader | Description |
-| --- | --- | --- | --- |
-| `valid` | `GeostatisticsKrigingResultValid | None` | `await node.valid.load()`, `await node.valid.to_dataframe()` | Attribute containing whether each target location's neighbourhood satisfied the search constraints and produced an estimate. |
-| `kriging_variance` | `GeostatisticsKrigingResultResultTargetDiagnosticsKrigingVariance | None` | `await node.kriging_variance.load()`, `await node.kriging_variance.to_dataframe()` | Attribute containing the kriging variance (estimation uncertainty), in the squared units of the estimated attribute. |
-| `slope_of_regression` | `GeostatisticsKrigingResultResultTargetDiagnosticsSlopeOfRegression | None` | `await node.slope_of_regression.load()`, `await node.slope_of_regression.to_dataframe()` | Attribute containing the diagnostic for conditional bias. |
-| `kriging_efficiency` | `GeostatisticsKrigingResultResultTargetDiagnosticsKrigingEfficiency | None` | `await node.kriging_efficiency.load()`, `await node.kriging_efficiency.to_dataframe()` | Attribute containing the proportion of point or intra-block variance explained by kriging weights. |
-| `kriging_mean` | `GeostatisticsKrigingResultResultTargetDiagnosticsKrigingMean | None` | `await node.kriging_mean.load()`, `await node.kriging_mean.to_dataframe()` | Attribute containing the GLS mean for ordinary kriging, or the supplied constant mean for simple kriging. |
-| `num_samples` | `GeostatisticsKrigingResultResultTargetDiagnosticsNumSamples | None` | `await node.num_samples.load()`, `await node.num_samples.to_dataframe()` | Attribute containing the number of data samples used in the estimate. |
-| `num_drillholes` | `GeostatisticsKrigingResultResultTargetDiagnosticsNumDrillholes | None` | `await node.num_drillholes.load()`, `await node.num_drillholes.to_dataframe()` | Attribute containing the number of distinct drillholes contributing to the estimate. |
-| `num_duplicates` | `GeostatisticsKrigingResultResultTargetDiagnosticsNumDuplicates | None` | `await node.num_duplicates.load()`, `await node.num_duplicates.to_dataframe()` | Attribute containing the number of duplicate sample locations used in the estimate. |
-| `num_equidistant` | `GeostatisticsKrigingResultResultTargetDiagnosticsNumEquidistant | None` | `await node.num_equidistant.load()`, `await node.num_equidistant.to_dataframe()` | Attribute containing a hint of how many other samples could have replaced the last returned sample because they were the same distance from the target location. This is counted after searching and before clipping to the maximum number of samples. |
-| `sum_weights` | `GeostatisticsKrigingResultResultTargetDiagnosticsSumWeights | None` | `await node.sum_weights.load()`, `await node.sum_weights.to_dataframe()` | Attribute containing the sum of kriging weights applied to data samples. |
-| `sum_positive_weights` | `GeostatisticsKrigingResultResultTargetDiagnosticsSumPositiveWeights | None` | `await node.sum_positive_weights.load()`, `await node.sum_positive_weights.to_dataframe()` | Attribute containing the sum of positive kriging weights applied to data samples. |
-| `sum_negative_weights` | `GeostatisticsKrigingResultResultTargetDiagnosticsSumNegativeWeights | None` | `await node.sum_negative_weights.load()`, `await node.sum_negative_weights.to_dataframe()` | Attribute containing the sum of negative kriging weights applied to data samples (zero when negative-weight removal is enabled). |
-| `min_distance` | `GeostatisticsKrigingResultResultTargetDiagnosticsMinDistance | None` | `await node.min_distance.load()`, `await node.min_distance.to_dataframe()` | Attribute containing the minimum isotropic Euclidean distance from the target location to any neighbour. |
-| `mean_distance` | `GeostatisticsKrigingResultResultTargetDiagnosticsMeanDistance | None` | `await node.mean_distance.load()`, `await node.mean_distance.to_dataframe()` | Attribute containing the mean isotropic Euclidean distance from the target location to all neighbours. |
-| `aniso_min_distance` | `GeostatisticsKrigingResultResultTargetDiagnosticsAnisoMinDistance | None` | `await node.aniso_min_distance.load()`, `await node.aniso_min_distance.to_dataframe()` | Attribute containing the minimum anisotropic (ellipsoid-space) distance from the target location to any neighbour. |
-| `aniso_mean_distance` | `GeostatisticsKrigingResultResultTargetDiagnosticsAnisoMeanDistance | None` | `await node.aniso_mean_distance.load()`, `await node.aniso_mean_distance.to_dataframe()` | Attribute containing the mean anisotropic (ellipsoid-space) distance from the target location to all neighbours. |
-
-**`GeostatisticsKrigingResultTarget`** (`ResultNode`)
-
-The target that was created or updated.
-
-| Field | Type | Hydrated Loader | Description |
-| --- | --- | --- | --- |
-| `reference` | `str` | — | Reference to a geoscience object. Supported schemas: `pointset/[>=1.2,<2]`, `block-model/[>=1.0,<2]`, `regular-3d-grid/[>=1.2,<2]`, `regular-masked-3d-grid/[>=1.2,<2]`, `tensor-3d-grid/[>=1.2,<2]`, `downhole-intervals/[>=1.2,<2]`. |
-| `name` | `str` | — | The name of the geoscience object. |
-| `description` | `str | None` | — | The description of the geoscience object. |
-| `schema_id` | `str` | — | The ID of the Geoscience Object schema. |
-| `attribute` | `GeostatisticsKrigingResultAttribute` | `await node.attribute.load()`, `await node.attribute.to_dataframe()` | Attribute containing the kriging result. |
-| `diagnostics` | `GeostatisticsKrigingResultDiagnostics | None` | — | Diagnostic attributes produced alongside the kriging result, when requested. |
+| `attribute_name` | `str` | `result.attribute_name` | The name of the attribute that was created/updated. |
+| `diagnostics` | `dict[str, TaskAttribute]` | `result.diagnostics` | The diagnostic attributes that were written, keyed by diagnostic name. |
+| `get_target_object()` | `BaseObject` | `await result.get_target_object()` | Load and return the target geoscience object. |
+| `message` | `str` | `result.message` | A message describing what happened in the task. |
+| `schema` | `ObjectSchema` | `result.schema` | The schema type of the target object (e.g., 'regular-masked-3d-grid'). |
+| `target_name` | `str` | `result.target_name` | The name of the target object. |
+| `target_reference` | `str` | `result.target_reference` | Reference URL to the target object. |
+| `to_dataframe()` | `pd.DataFrame` | `await result.to_dataframe()` | Get the task results as a DataFrame. |
 
 ### location_wise
 

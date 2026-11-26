@@ -2,4 +2,6 @@ packages.evo-objects.src.evo.objects.typed
 packages.evo-blockmodels.src.evo.blockmodels.typed
 packages.evo-compute.src.evo.compute.tasks.geostatistics
 packages.evo-compute.src.evo.compute.tasks.common
+packages.evo-compute.src.evo.compute.overrides
+
 

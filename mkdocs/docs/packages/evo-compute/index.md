@@ -34,7 +34,7 @@ updated_pointset = await result.target.load()
 weights_df = await result.target.attribute.to_dataframe()
 ```
 
-`ReferenceResolver` automatically converts typed geoscience objects, attributes, file handles, and target attribute slots into the wire references each task's schema declares (and verifies `supported_schemas` unless `check_schemas=False`). Parameters are validated before submission (`validate=True` by default; `deep_validation=True` for full JSON Schema Draft 2020-12 checks, raising `ParameterValidationError` on failure), and output references hydrate into `TaskResult` / `ResultNode` objects supporting `.load()` and `.to_dataframe()`.
+`ReferenceResolver` automatically converts typed geoscience objects, attributes, file handles, and target attribute slots into the wire references each task's schema declares (and verifies `supported_schemas` unless `check_schemas=False`). Parameters are validated before submission (`validate=True` by default; `deep_validation=True` for full JSON Schema Draft 2020-12 checks, raising `ParameterValidationError` on failure), and output references hydrate into `TaskResult` / `ResultNode` objects supporting `.load()` and `.to_dataframe()`. Tasks with custom SDK runners (such as `client.geostatistics.kriging`, backed by `KrigingOverride`) expose additional cross-field checks, convenience parameters (`source_filter`, `target_filter`, `diagnostics`), and native result wrappers (`KrigingResult`) across both attribute access and `client.arun(...)`.
 
 ### Static Typing and Task Catalogue Reference
 
