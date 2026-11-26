@@ -13,21 +13,24 @@
 
 from __future__ import annotations
 
+import copy
 from collections.abc import Mapping
 from typing import Annotated, Any, Literal
 
 from evo.objects.typed.types import Ellipsoid, EllipsoidRanges, Rotation
 from pydantic import (
     AliasChoices,
-    BaseModel,
     Field,
-    PlainSerializer,
-    PlainValidator,
+    GetCoreSchemaHandler,
+    GetJsonSchemaHandler,
     SerializerFunctionWrapHandler,
-    WithJsonSchema,
     model_serializer,
     model_validator,
 )
+from pydantic.json_schema import JsonSchemaValue
+from pydantic_core import CoreSchema, core_schema
+
+from .models import TaskInputModel, deduplicate_aliases
 
 __all__ = [
     "SearchNeighborhood",
@@ -42,40 +45,64 @@ _SECTOR_AND_DRILLHOLE_LIMITS = (
     "max_drillholes",
 )
 
-_ELLIPSOID_JSON_SCHEMA: dict[str, Any] = {
+_ELLIPSOID_RANGES_JSON_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "title": "Ellipsoid Ranges",
+    "additionalProperties": False,
+    "required": ["major", "semi_major", "minor"],
+    "properties": {
+        "major": {"type": "number", "exclusiveMinimum": 0, "title": "Major"},
+        "semi_major": {"type": "number", "exclusiveMinimum": 0, "title": "Semi Major"},
+        "minor": {"type": "number", "exclusiveMinimum": 0, "title": "Minor"},
+    },
+}
+
+_ROTATION_VALIDATION_JSON_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "title": "Rotation",
+    "additionalProperties": False,
+    "properties": {
+        "dip_azimuth": {"type": "number", "minimum": 0, "maximum": 360, "default": 0, "title": "Dip Azimuth"},
+        "dip": {"type": "number", "minimum": 0, "maximum": 180, "default": 0, "title": "Dip"},
+        "pitch": {"type": "number", "minimum": 0, "maximum": 360, "default": 0, "title": "Pitch"},
+    },
+}
+
+_ROTATION_SERIALIZATION_JSON_SCHEMA: dict[str, Any] = {
+    **_ROTATION_VALIDATION_JSON_SCHEMA,
+    "required": ["dip_azimuth", "dip", "pitch"],
+}
+
+_ELLIPSOID_VALIDATION_JSON_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "title": "Ellipsoid",
+    "additionalProperties": False,
+    "anyOf": [
+        {"required": ["ellipsoid_ranges"]},
+        {"required": ["ranges"]},
+    ],
+    "properties": {
+        "ellipsoid_ranges": _ELLIPSOID_RANGES_JSON_SCHEMA,
+        "ranges": _ELLIPSOID_RANGES_JSON_SCHEMA,
+        "rotation": _ROTATION_VALIDATION_JSON_SCHEMA,
+    },
+}
+
+_ELLIPSOID_SERIALIZATION_JSON_SCHEMA: dict[str, Any] = {
     "type": "object",
     "title": "Ellipsoid",
     "additionalProperties": False,
     "required": ["ellipsoid_ranges", "rotation"],
     "properties": {
-        "ellipsoid_ranges": {
-            "type": "object",
-            "title": "Ellipsoid Ranges",
-            "additionalProperties": False,
-            "required": ["major", "semi_major", "minor"],
-            "properties": {
-                "major": {"type": "number", "exclusiveMinimum": 0, "title": "Major"},
-                "semi_major": {"type": "number", "exclusiveMinimum": 0, "title": "Semi Major"},
-                "minor": {"type": "number", "exclusiveMinimum": 0, "title": "Minor"},
-            },
-        },
-        "rotation": {
-            "type": "object",
-            "title": "Rotation",
-            "additionalProperties": False,
-            "properties": {
-                "dip_azimuth": {"type": "number", "minimum": 0, "maximum": 360, "default": 0, "title": "Dip Azimuth"},
-                "dip": {"type": "number", "minimum": 0, "maximum": 180, "default": 0, "title": "Dip"},
-                "pitch": {"type": "number", "minimum": 0, "maximum": 360, "default": 0, "title": "Pitch"},
-            },
-        },
+        "ellipsoid_ranges": _ELLIPSOID_RANGES_JSON_SCHEMA,
+        "rotation": _ROTATION_SERIALIZATION_JSON_SCHEMA,
     },
 }
 
 
 def _parse_ellipsoid_ranges(raw: Any) -> EllipsoidRanges:
     if isinstance(raw, EllipsoidRanges):
-        return raw
+        return EllipsoidRanges.from_array_like(raw)
     if isinstance(raw, Mapping):
         unknown = set(raw) - {"major", "semi_major", "minor"}
         if unknown:
@@ -93,9 +120,11 @@ def _parse_ellipsoid_ranges(raw: Any) -> EllipsoidRanges:
         raise ValueError(str(exc)) from exc
 
 
-def _parse_rotation(raw: Any) -> Rotation | None:
-    if raw is None or isinstance(raw, Rotation):
-        return raw
+def _parse_rotation(raw: Any) -> Rotation:
+    if raw is None:
+        return Rotation(0.0, 0.0, 0.0)
+    if isinstance(raw, Rotation):
+        return Rotation.from_array_like(raw)
     if isinstance(raw, Mapping):
         unknown = set(raw) - {"dip_azimuth", "dip", "pitch"}
         if unknown:
@@ -116,7 +145,11 @@ def _parse_rotation(raw: Any) -> Rotation | None:
 
 def _validate_ellipsoid(value: Any) -> Ellipsoid:
     if isinstance(value, Ellipsoid):
-        return value
+        ranges = _parse_ellipsoid_ranges(value.ranges)
+        rotation = _parse_rotation(value._rotation)
+        if value._rotation is not None and value.ranges == ranges and value._rotation == rotation:
+            return value
+        return Ellipsoid(ranges=ranges, rotation=rotation)
     if not isinstance(value, Mapping):
         raise ValueError(f"Expected an Ellipsoid or mapping, got {type(value).__name__}.")
     unknown = set(value) - {"ellipsoid_ranges", "ranges", "rotation"}
@@ -141,7 +174,28 @@ def _serialize_ellipsoid(ellipsoid: Ellipsoid) -> dict[str, Any]:
     return ellipsoid.to_dict()
 
 
-class SearchNeighborhood(BaseModel):
+class _EllipsoidPydanticAnnotation:
+    """Mode-aware Pydantic core + JSON schema annotation for :class:`Ellipsoid`."""
+
+    @classmethod
+    def __get_pydantic_core_schema__(cls, _source_type: Any, _handler: GetCoreSchemaHandler) -> CoreSchema:
+        return core_schema.no_info_plain_validator_function(
+            _validate_ellipsoid,
+            serialization=core_schema.plain_serializer_function_ser_schema(
+                _serialize_ellipsoid,
+                info_arg=False,
+                return_schema=core_schema.dict_schema(),
+            ),
+        )
+
+    @classmethod
+    def __get_pydantic_json_schema__(cls, _core_schema: CoreSchema, handler: GetJsonSchemaHandler) -> JsonSchemaValue:
+        if handler.mode == "validation":
+            return copy.deepcopy(_ELLIPSOID_VALIDATION_JSON_SCHEMA)
+        return copy.deepcopy(_ELLIPSOID_SERIALIZATION_JSON_SCHEMA)
+
+
+class SearchNeighborhood(TaskInputModel):
     """Search neighborhood parameters for geostatistical operations.
 
     Defines how to find nearby samples when performing spatial interpolation
@@ -177,12 +231,7 @@ class SearchNeighborhood(BaseModel):
         ... )
     """
 
-    ellipsoid: Annotated[
-        Ellipsoid,
-        PlainValidator(_validate_ellipsoid),
-        PlainSerializer(_serialize_ellipsoid),
-        WithJsonSchema(_ELLIPSOID_JSON_SCHEMA),
-    ]
+    ellipsoid: Annotated[Ellipsoid, _EllipsoidPydanticAnnotation]
     """The ellipsoid defining the spatial extent to search for samples."""
 
     max_samples: int = Field(ge=1)
@@ -250,16 +299,13 @@ class SearchNeighborhood(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def _reject_conflicting_aliases(cls, data: Any) -> Any:
-        if isinstance(data, Mapping):
-            for canonical, legacy in (
+        return deduplicate_aliases(
+            data,
+            (
                 ("max_drillholes", "max_drillholes_per_estimate"),
                 ("min_drillholes", "min_drillholes_per_estimate"),
-            ):
-                if canonical in data and legacy in data and data[canonical] != data[legacy]:
-                    raise ValueError(
-                        f"Conflicting values for {canonical!r} ({data[canonical]!r}) and {legacy!r} ({data[legacy]!r})."
-                    )
-        return data
+            ),
+        )
 
     @model_validator(mode="after")
     def _check_sample_limits(self) -> SearchNeighborhood:
@@ -340,6 +386,17 @@ def _active_kriging_only_drillhole_limits(neighborhood: SearchNeighborhood) -> l
         limits.append("min_drillholes")
     if neighborhood.drillhole_limit_scope not in (None, "global"):
         limits.append("drillhole_limit_scope")
+    return limits
+
+
+def _active_drillhole_limits(neighborhood: SearchNeighborhood) -> list[str]:
+    """Return all active drillhole-specific limits on *neighborhood*."""
+    limits: list[str] = []
+    if neighborhood.max_samples_per_drillhole is not None:
+        limits.append("max_samples_per_drillhole")
+    if neighborhood.max_drillholes is not None:
+        limits.append("max_drillholes")
+    limits.extend(_active_kriging_only_drillhole_limits(neighborhood))
     return limits
 
 

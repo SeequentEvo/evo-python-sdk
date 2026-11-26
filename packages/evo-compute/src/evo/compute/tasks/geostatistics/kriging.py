@@ -34,23 +34,20 @@ Example::
 
 from __future__ import annotations
 
-from typing import Any, ClassVar, Literal, Protocol, runtime_checkable
-from uuid import UUID
+from collections.abc import Callable, Mapping
+from typing import Any, ClassVar, Literal
 
-import pandas as pd
-from evo.common import IContext, IFeedback
-from evo.objects import ObjectSchema
-from evo.objects.typed import BaseObject, object_from_reference
+from evo.common import IContext
+from evo.objects.typed import BaseSpatialObject, DownholeIntervals, Variogram
 from pydantic import (
     AliasChoices,
     BaseModel,
     Field,
     PrivateAttr,
-    SerializerFunctionWrapHandler,
+    TypeAdapter,
     ValidationInfo,
     ValidatorFunctionWrapHandler,
     field_validator,
-    model_serializer,
     model_validator,
 )
 
@@ -62,9 +59,18 @@ from ..common import (
     CreateAttribute,
     Filter,
     GeoscienceObjectReference,
+    OutputTarget,
     SearchNeighborhood,
+    SingleTargetTaskResult,
+    SourceTargetTaskParameters,
+    TaskInputModel,
     UpdateAttribute,
     attribute_spec,
+    canonicalize_attribute_selector,
+    extract_typed_object,
+    object_identity,
+    object_matches_reference,
+    resolve_output_target,
 )
 from ..common.results import TaskAttribute, TaskTarget
 from ..common.runner import TaskRunner
@@ -93,7 +99,7 @@ __all__ = [
 # =============================================================================
 
 
-class SimpleKriging(BaseModel):
+class SimpleKriging(TaskInputModel):
     """Simple kriging method with a known constant mean.
 
     Use when the mean of the variable is known and constant across the domain.
@@ -110,7 +116,7 @@ class SimpleKriging(BaseModel):
     """The mean value, assumed to be constant across the domain."""
 
 
-class OrdinaryKriging(BaseModel):
+class OrdinaryKriging(TaskInputModel):
     """Ordinary kriging method with unknown local mean.
 
     The most common kriging method. Estimates the local mean from nearby samples.
@@ -204,7 +210,7 @@ def _claim_attribute(claimed: dict[str, str], attribute: str, output: str) -> No
     claimed[attribute] = output
 
 
-class KrigingDiagnostics(BaseModel):
+class KrigingDiagnostics(TaskInputModel):
     """Optional per-location diagnostics written alongside the kriging estimate.
 
     Each field selects one diagnostic and says where to write it on the target object.
@@ -235,10 +241,11 @@ class KrigingDiagnostics(BaseModel):
         ... )
     """
 
-    model_config = {"extra": "forbid"}
-
     _source_objects: dict[str, str] = PrivateAttr(default_factory=dict)
     """The object each typed attribute came from, checked against the kriging target."""
+
+    _source_parents: dict[str, Any] = PrivateAttr(default_factory=dict)
+    """The raw parent object of each typed attribute, used for path/UUID equivalence checks."""
 
     _attribute_names: dict[str, str] = PrivateAttr(default_factory=dict)
     """The name of each typed attribute, which an update reference does not carry."""
@@ -320,17 +327,28 @@ class KrigingDiagnostics(BaseModel):
     @classmethod
     def _remember_typed_attributes(cls, data: Any, handler: ValidatorFunctionWrapHandler) -> KrigingDiagnostics:
         """Note the name and parent object of each typed attribute, before it is reduced to a specification."""
-        names, sources = {}, {}
-        if isinstance(data, dict):
+        names: dict[str, str] = {}
+        sources: dict[str, str] = {}
+        parents: dict[str, Any] = {}
+        if isinstance(data, KrigingDiagnostics):
+            names.update(data._attribute_names)
+            sources.update(data._source_objects)
+            parents.update(data._source_parents)
+        elif isinstance(data, Mapping):
             for field, value in data.items():
                 if isinstance(value, AnyTypedAttribute):
                     names[field] = value.name
                     if value._obj is not None:
+                        parents[field] = value._obj
                         sources[field] = str(value._obj.metadata.url)
         diagnostics = handler(data)
         diagnostics._attribute_names.update(names)
         diagnostics._source_objects.update(sources)
+        diagnostics._source_parents.update(parents)
         return diagnostics
+
+
+_KRIGING_METHOD_ADAPTER: TypeAdapter[SimpleKriging | OrdinaryKriging] = TypeAdapter(SimpleKriging | OrdinaryKriging)
 
 
 # =============================================================================
@@ -338,7 +356,7 @@ class KrigingDiagnostics(BaseModel):
 # =============================================================================
 
 
-class KrigingParameters(BaseModel):
+class KrigingParameters(SourceTargetTaskParameters):
     """Parameters for the kriging task.
 
     Defines all inputs needed to run a kriging interpolation task.
@@ -385,7 +403,21 @@ class KrigingParameters(BaseModel):
         ... )
     """
 
-    model_config = {"populate_by_name": True, "extra": "forbid"}
+    _alias_pairs: ClassVar[tuple[tuple[str, str], ...]] = (
+        ("neighborhood", "search"),
+        ("kriging_method", "method"),
+    )
+    _alias_validators: ClassVar[Mapping[str, Callable[[Any], Any]]] = {
+        "neighborhood": SearchNeighborhood.model_validate,
+        "kriging_method": _KRIGING_METHOD_ADAPTER.validate_python,
+    }
+    _nested_target_diagnostics_type: ClassVar[type[BaseModel] | None] = KrigingDiagnostics
+    _object_roles: ClassVar[Mapping[str, tuple[type, ...]]] = {
+        "source": (BaseSpatialObject,),
+        "target": (BaseSpatialObject,),
+        "variogram": (Variogram,),
+    }
+    _drillhole_source_field: ClassVar[str | None] = "source"
 
     source: AnySourceAttribute
     """The source object and attribute containing known values."""
@@ -437,28 +469,40 @@ class KrigingParameters(BaseModel):
     for the available outputs and the shorthands each of them accepts.
     """
 
-    @model_validator(mode="wrap")
-    @classmethod
-    def _validate_outputs(cls, data: Any, handler: ValidatorFunctionWrapHandler) -> KrigingParameters:
+    @model_validator(mode="after")
+    def _validate_outputs(self) -> KrigingParameters:
         """Check that every output writes to its own attribute on the target object."""
-        raw_target = data.get("target") if isinstance(data, dict) else None
-        params = handler(data)
-        diagnostics = params.diagnostics
+        diagnostics = self.diagnostics
         if diagnostics is None:
-            return params
+            return self
 
-        target_object = _object_identity(params.target.object)
+        if diagnostics.num_drillholes is not None:
+            source_obj = extract_typed_object(self.source)
+            if source_obj is not None and not isinstance(source_obj, DownholeIntervals):
+                raise ValueError(
+                    f"Diagnostic 'num_drillholes' requires a DownholeIntervals source object, "
+                    f"got {type(source_obj).__name__}."
+                )
+
+        target_object = object_identity(self.target.object)
+        target_obj = extract_typed_object(self.target) or self._typed_objects.get(target_object)
         for field, source in diagnostics._source_objects.items():
-            if _object_identity(source) != target_object:
+            parent = diagnostics._source_parents.get(field)
+            matches = (
+                object_matches_reference(parent, self.target.object, supplied_obj=target_obj)
+                if parent is not None
+                else object_identity(source) == target_object
+            )
+            if not matches:
                 raise ValueError(
                     f"Diagnostic {field!r} references an attribute of a different object than the kriging "
                     f"target. Diagnostics are written onto the target object, {target_object}."
                 )
 
-        # An update reference does not carry the attribute's name, so it is only known for typed attributes.
-        estimate_name = raw_target.name if isinstance(raw_target, AnyTypedAttribute) else None
+        # An update reference does not carry the attribute's name unless it came from a typed attribute
+        # or can be resolved through the target BaseObject.
         outputs: list[tuple[str, CreateAttribute | UpdateAttribute, str | None]] = [
-            ("the estimate", params.target.attribute, estimate_name)
+            ("the estimate", self.target.attribute, self.target._attribute_name)
         ]
         outputs += [
             (f"diagnostic {field!r}", spec, diagnostics._attribute_names.get(field))
@@ -468,52 +512,66 @@ class KrigingParameters(BaseModel):
 
         claimed_names: dict[str, str] = {}
         claimed_references: dict[str, str] = {}
+        claimed_canonical_refs: dict[str, tuple[str, str]] = {}
+        claimed_aliases: dict[str, tuple[str, str]] = {}
         for label, spec, known_name in outputs:
+            resolved = resolve_output_target(target_object, spec, target_obj=target_obj, known_name=known_name)
             name = spec.name if isinstance(spec, CreateAttribute) else known_name
-            if name is not None:
-                _claim_attribute(claimed_names, name, label)
+            if name is None and isinstance(spec, UpdateAttribute):
+                canonical_sel = canonicalize_attribute_selector(spec.reference)
+                if canonical_sel.startswith("primary:name:"):
+                    name = canonical_sel.removeprefix("primary:name:")
+                else:
+                    for alias in resolved.attribute_aliases or ():
+                        if alias.startswith("primary:name:"):
+                            name = alias.removeprefix("primary:name:")
+                            break
             if isinstance(spec, UpdateAttribute):
                 _claim_attribute(claimed_references, spec.reference, label)
-        return params
+                canonical_sel = canonicalize_attribute_selector(spec.reference)
+                if canonical_sel in claimed_canonical_refs:
+                    prev_label, prev_ref = claimed_canonical_refs[canonical_sel]
+                    raise ValueError(
+                        f"{prev_label} and {label} both write to the attribute {prev_ref!r}. "
+                        "Every kriging output needs its own attribute."
+                    )
+                claimed_canonical_refs[canonical_sel] = (label, spec.reference)
+            if name is not None:
+                _claim_attribute(claimed_names, name, label)
+            for alias in resolved.attribute_aliases or ():
+                if alias in claimed_aliases:
+                    prev_label, prev_display = claimed_aliases[alias]
+                    raise ValueError(
+                        f"{prev_label} and {label} both write to the attribute {prev_display!r}. "
+                        "Every kriging output needs its own attribute."
+                    )
+            display = name or resolved.display_attribute or ""
+            for alias in resolved.attribute_aliases or ():
+                claimed_aliases[alias] = (label, display)
+        return self
 
-    @model_serializer(mode="wrap")
-    def _serialize(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
-        result = handler(self)
-        if self.source_filter is not None:
-            result["source"]["filter"] = self.source_filter.model_dump()
-        if self.target_filter is not None:
-            result["target"]["filter"] = self.target_filter.model_dump()
-        if self.diagnostics is not None:
-            result["target"]["diagnostics"] = self.diagnostics.model_dump(mode="json", exclude_none=True)
-        return result
+    def output_targets(self) -> list[OutputTarget]:
+        targets = super().output_targets()
+        if self.diagnostics is None:
+            return targets
+        target_obj = extract_typed_object(self.target) or self._typed_objects.get(object_identity(self.target.object))
+        for field in KrigingDiagnostics.model_fields:
+            spec = getattr(self.diagnostics, field)
+            if spec is not None:
+                targets.append(
+                    resolve_output_target(
+                        self.target.object,
+                        spec,
+                        target_obj=target_obj,
+                        known_name=self.diagnostics._attribute_names.get(field),
+                    )
+                )
+        return targets
 
 
 # =============================================================================
 # Kriging Result Types
 # =============================================================================
-
-# TODO: tidy up `to_dataframe` implementations for better consistency. in _theory_ and spatial object does implement
-# `to_dataframe()` (and should!!), but `BaseSPatialObject` does not declare this, and the `BlockModel` object has a different
-# signature.
-
-
-@runtime_checkable
-class _ObjToDataframeProtocol(Protocol):
-    """Protocol for objects that can convert themselves to a DataFrame."""
-
-    async def to_dataframe(self, *keys: str, fb: IFeedback = ...) -> pd.DataFrame: ...
-
-
-@runtime_checkable
-class _BlockModelToDataFrameProtocol(Protocol):
-    """Protocol for block models that can convert themselves to a DataFrame."""
-
-    async def to_dataframe(
-        self,
-        columns: list[str] | None = None,
-        version_uuid: UUID | Literal["latest"] | None = None,
-        fb: IFeedback = ...,
-    ) -> pd.DataFrame: ...
 
 
 class KrigingDiagnosticsResult(BaseModel):
@@ -563,33 +621,11 @@ class KrigingResultModel(BaseModel):
     """Target information from the task result."""
 
 
-class KrigingResult:
+class KrigingResult(SingleTargetTaskResult[KrigingTargetResult]):
     TASK_DISPLAY_NAME: ClassVar[str] = "Kriging"
 
     def __init__(self, context: IContext, model: KrigingResultModel) -> None:
-        self._target = model.target
-        self._message = model.message
-        self._context = context
-
-    @property
-    def message(self) -> str:
-        """A message describing what happened in the task."""
-        return self._message
-
-    @property
-    def target_name(self) -> str:
-        """The name of the target object."""
-        return self._target.name
-
-    @property
-    def target_reference(self) -> str:
-        """Reference URL to the target object."""
-        return self._target.reference
-
-    @property
-    def attribute_name(self) -> str:
-        """The name of the attribute that was created/updated."""
-        return self._target.attribute.name
+        super().__init__(context, model)
 
     @property
     def diagnostics(self) -> dict[str, TaskAttribute]:
@@ -612,66 +648,6 @@ class KrigingResult:
             for name in type(diagnostics).model_fields
             if (attribute := getattr(diagnostics, name)) is not None
         }
-
-    @property
-    def schema(self) -> ObjectSchema:
-        """The schema type of the target object (e.g., 'regular-masked-3d-grid').
-
-        Uses ``ObjectSchema.from_id`` to parse the schema ID. Falls back to the
-        raw ``schema_id`` string when it cannot be parsed.
-        """
-        return ObjectSchema.from_id(self._target.schema_id)
-
-    async def get_target_object(self) -> BaseObject:
-        """Load and return the target geoscience object.
-
-        Args:
-            context: Optional context to use. If not provided, uses the context
-                    from when the task was run.
-
-        Returns:
-            The typed geoscience object (e.g., Regular3DGrid, RegularMasked3DGrid, BlockModel)
-
-        Example::
-
-            >>> result = await run(manager, params)
-            >>> target = await result.get_target_object()
-            >>> target  # Pretty-prints with Portal/Viewer links
-        """
-        return await object_from_reference(self._context, self._target.reference)
-
-    async def to_dataframe(self, *columns: str) -> pd.DataFrame:
-        """Get the task results as a DataFrame.
-
-        This is the simplest way to access the task output data. It loads
-        the target object and returns its data as a pandas DataFrame.
-
-        Args:
-            context: Optional context to use. If not provided, uses the context
-                    from when the task was run.
-            columns: Optional list of column names to include. If None, includes
-                    all columns. Use ["*"] to explicitly request all columns.
-
-        Returns:
-            A pandas DataFrame containing the task results.
-
-        Example::
-
-            >>> result = await run(manager, params)
-            >>> df = await result.to_dataframe()
-            >>> df.head()
-        """
-        target_obj = await self.get_target_object()
-
-        if isinstance(target_obj, _ObjToDataframeProtocol):
-            return await target_obj.to_dataframe(*columns)
-        elif isinstance(target_obj, _BlockModelToDataFrameProtocol):
-            return target_obj.to_dataframe(columns=list(columns) if columns else None)
-        else:
-            raise TypeError(
-                f"Don't know how to get DataFrame from {type(target_obj).__name__}. "
-                "Use get_target_object() and access the data manually."
-            )
 
     def __str__(self) -> str:
         """String representation."""

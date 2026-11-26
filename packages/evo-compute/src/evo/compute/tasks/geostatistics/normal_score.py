@@ -42,18 +42,19 @@ Example::
 
 from __future__ import annotations
 
-from typing import ClassVar, Literal, Protocol, runtime_checkable
+from collections.abc import Mapping
+from typing import ClassVar, Literal
 
-import pandas as pd
-from evo.common import IContext, IFeedback
-from evo.objects import ObjectSchema
-from evo.objects.typed import BaseObject, object_from_reference
+from evo.common import IContext
+from evo.objects.typed import BaseSpatialObject
 from pydantic import BaseModel
 
 from ..common import (
     AnySourceAttribute,
     AnyTargetAttribute,
     GeoscienceObjectReference,
+    SingleTargetTaskResult,
+    TaskParameters,
 )
 from ..common.results import TaskTarget
 from ..common.runner import TaskRunner
@@ -71,7 +72,7 @@ __all__ = [
 # =============================================================================
 
 
-class NormalScoreParameters(BaseModel):
+class NormalScoreParameters(TaskParameters):
     """Parameters for the normal-score compute task.
 
     Set ``method="forward"`` to transform from data space to Gaussian,
@@ -89,6 +90,12 @@ class NormalScoreParameters(BaseModel):
         ...     distribution=distribution_url,
         ... )
     """
+
+    _object_roles: ClassVar[Mapping[str, tuple[type, ...]]] = {
+        "source": (BaseSpatialObject,),
+        "target": (BaseSpatialObject,),
+    }
+    _distribution_fields: ClassVar[tuple[str, ...]] = ("distribution",)
 
     method: Literal["forward", "backward"]
     """Transform direction: ``"forward"`` (data → Gaussian) or ``"backward"`` (Gaussian → data)."""
@@ -108,13 +115,6 @@ class NormalScoreParameters(BaseModel):
 # =============================================================================
 
 
-@runtime_checkable
-class _ObjToDataframeProtocol(Protocol):
-    """Protocol for objects that can convert themselves to a DataFrame."""
-
-    async def to_dataframe(self, *keys: str, fb: IFeedback = ...) -> pd.DataFrame: ...
-
-
 class NormalScoreResultModel(BaseModel):
     """Pydantic model for the raw normal-score task result."""
 
@@ -125,7 +125,7 @@ class NormalScoreResultModel(BaseModel):
     """Target information from the task result."""
 
 
-class NormalScoreResult:
+class NormalScoreResult(SingleTargetTaskResult[TaskTarget]):
     """Result of a normal-score transform task.
 
     Provides access to the target object and the created/updated attribute.
@@ -134,61 +134,7 @@ class NormalScoreResult:
     TASK_DISPLAY_NAME: ClassVar[str] = "Normal Score"
 
     def __init__(self, context: IContext, model: NormalScoreResultModel) -> None:
-        self._target = model.target
-        self._message = model.message
-        self._context = context
-
-    @property
-    def message(self) -> str:
-        """A message describing what happened in the task."""
-        return self._message
-
-    @property
-    def target_name(self) -> str:
-        """The name of the target object."""
-        return self._target.name
-
-    @property
-    def target_reference(self) -> str:
-        """The reference URL to the target object."""
-        return self._target.reference
-
-    @property
-    def attribute_name(self) -> str:
-        """The name of the attribute that was created/updated."""
-        return self._target.attribute.name
-
-    @property
-    def schema(self) -> ObjectSchema:
-        """The schema type of the target object."""
-        return ObjectSchema.from_id(self._target.schema_id)
-
-    async def get_target_object(self) -> BaseObject:
-        """Load and return the target geoscience object.
-
-        Returns:
-            The typed geoscience object (e.g., PointSet)
-        """
-        return await object_from_reference(self._context, self._target.reference)
-
-    async def to_dataframe(self, *columns: str) -> pd.DataFrame:
-        """Get the task results as a DataFrame.
-
-        Args:
-            columns: Optional column names to include. If omitted, returns all.
-
-        Returns:
-            A pandas DataFrame containing the transformed attribute values.
-        """
-        target_obj = await self.get_target_object()
-
-        if isinstance(target_obj, _ObjToDataframeProtocol):
-            return await target_obj.to_dataframe(*columns)
-        else:
-            raise TypeError(
-                f"Don't know how to get DataFrame from {type(target_obj).__name__}. "
-                "Use get_target_object() and access the data manually."
-            )
+        super().__init__(context, model)
 
     def __str__(self) -> str:
         """String representation."""

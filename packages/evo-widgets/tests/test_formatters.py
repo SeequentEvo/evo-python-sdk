@@ -1493,6 +1493,137 @@ class TestRealTaskResults(HtmlFixtureTestCase):
             with self.subTest(result=type(result).__name__):
                 self.assertIn(expected, formatter(result))
 
+    def test_all_registered_geostatistics_result_types_render_cleanly(self):
+        from evo.compute.tasks.common.results import TaskAttribute, TaskResultList, TaskTarget
+        from evo.compute.tasks.geostatistics.break_ties import BreakTiesResult, BreakTiesResultModel
+        from evo.compute.tasks.geostatistics.conditional_turning_bands import (
+            ConditionalTurningBandsResult,
+            ConditionalTurningBandsResultModel,
+            ConditionalTurningBandsTargetResult,
+        )
+        from evo.compute.tasks.geostatistics.conditioned_simulator import (
+            ConSimLinks,
+            ConSimResult,
+            ConSimResultModel,
+            ConSimSummaryAttributes,
+            ConSimTargetResult,
+            ConSimValidationReport,
+            ConSimValidationSummary,
+        )
+        from evo.compute.tasks.geostatistics.declustering import DeclusteringResult, DeclusteringResultModel
+        from evo.compute.tasks.geostatistics.idw import IDWResult, IDWResultModel
+        from evo.compute.tasks.geostatistics.knn import KNNResult, KNNResultModel
+        from evo.compute.tasks.geostatistics.kriging import (
+            KrigingDiagnosticsResult,
+            KrigingResult,
+            KrigingResultModel,
+            KrigingTargetResult,
+        )
+        from evo.compute.tasks.geostatistics.location_wise import (
+            LocationWiseResult,
+            LocationWiseResultModel,
+            LocationWiseTargetResult,
+        )
+        from evo.compute.tasks.geostatistics.loss_calculation import LossCalculationResult, LossCalculationResultModel
+        from evo.compute.tasks.geostatistics.normal_score import NormalScoreResult, NormalScoreResultModel
+        from evo.compute.tasks.geostatistics.profit_calculation import (
+            ProfitCalculationResult,
+            ProfitCalculationResultModel,
+        )
+        from evo.widgets.formatters import _TASK_RESULT_DETAILS
+
+        attr = TaskAttribute(reference=self.REFERENCE, name="out_attr")
+        target = TaskTarget(
+            reference=self.REFERENCE,
+            name="TargetGrid",
+            schema_id="/objects/regular-3d-grid/1.3.0/regular-3d-grid.schema.json",
+            attribute=attr,
+        )
+        all_results = [
+            BreakTiesResult(MagicMock(), BreakTiesResultModel(message="ok", target=target)),
+            ConditionalTurningBandsResult(
+                MagicMock(),
+                ConditionalTurningBandsResultModel(
+                    target=ConditionalTurningBandsTargetResult(
+                        reference=self.REFERENCE,
+                        name="TargetGrid",
+                        schema_id="/objects/regular-3d-grid/1.3.0/regular-3d-grid.schema.json",
+                        simulations=attr,
+                    )
+                ),
+            ),
+            ConSimResult(
+                MagicMock(),
+                ConSimResultModel(
+                    target=ConSimTargetResult(
+                        reference=self.REFERENCE,
+                        name="TargetGrid",
+                        schema_id="/objects/regular-3d-grid/1.3.0/regular-3d-grid.schema.json",
+                        summary_attributes=ConSimSummaryAttributes(mean=attr, variance=attr, min=attr, max=attr),
+                    ),
+                    validation_summary=ConSimValidationSummary(reference_mean=1.0, mean=1.1),
+                    validation_report=ConSimValidationReport(
+                        reference="https://example.com/consim-report",
+                        name="QC Report",
+                    ),
+                    links=ConSimLinks(dashboard="https://example.com/consim-dashboard"),
+                ),
+            ),
+            self.make_distribution(),
+            DeclusteringResult(MagicMock(), DeclusteringResultModel(message="ok", target=target)),
+            IDWResult(MagicMock(), IDWResultModel(message="ok", target=target)),
+            KNNResult(MagicMock(), KNNResultModel(message="ok", target=target)),
+            KrigingResult(
+                MagicMock(),
+                KrigingResultModel(
+                    message="ok",
+                    target=KrigingTargetResult(
+                        reference=self.REFERENCE,
+                        name="TargetGrid",
+                        schema_id="/objects/regular-3d-grid/1.3.0/regular-3d-grid.schema.json",
+                        attribute=attr,
+                        diagnostics=KrigingDiagnosticsResult(
+                            kriging_variance=TaskAttribute(reference="kv", name="KV"),
+                        ),
+                    ),
+                ),
+            ),
+            LocationWiseResult(
+                MagicMock(),
+                LocationWiseResultModel(
+                    message="ok",
+                    target=LocationWiseTargetResult(
+                        reference=self.REFERENCE,
+                        name="TargetGrid",
+                        schema_id="/objects/regular-3d-grid/1.3.0/regular-3d-grid.schema.json",
+                        attributes=[attr],
+                    ),
+                ),
+            ),
+            LossCalculationResult(MagicMock(), LossCalculationResultModel(message="ok", target=target)),
+            NormalScoreResult(MagicMock(), NormalScoreResultModel(message="ok", target=target)),
+            ProfitCalculationResult(MagicMock(), ProfitCalculationResultModel(message="ok", target=target)),
+            self.make_report(),
+        ]
+
+        self.assertEqual(
+            {(type(r).__module__, type(r).__name__) for r in all_results},
+            set(_TASK_RESULT_DETAILS),
+        )
+        for result in all_results:
+            with self.subTest(result_type=type(result).__name__):
+                html = format_task_result_with_target(result)
+                self.assertIn(result.TASK_DISPLAY_NAME, html)
+                if isinstance(result, ConSimResult):
+                    self.assertIn("https://example.com/consim-report", html)
+                    self.assertIn("https://example.com/consim-dashboard", html)
+                if isinstance(result, KrigingResult):
+                    self.assertIn("Diagnostics:", html)
+                    self.assertIn("KV", html)
+
+        combined_html = format_task_result_list(TaskResultList(all_results))
+        self.assertIn("13 Break Ties Result(s)", combined_html)
+
 
 class TestFormatTaskResultList(unittest.TestCase):
     """Tests for the format_task_result_list function."""

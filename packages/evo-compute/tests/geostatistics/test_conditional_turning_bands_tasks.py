@@ -406,9 +406,13 @@ class TestSourceAttributeAcceptsTypedAttributes(unittest.TestCase):
         params = _params(source_attribute=_existing_attribute("grade", "abc-key"))
         self.assertEqual(params.source_attribute, "locations.attributes[?key=='abc-key']")
 
-    def test_pending_attribute_resolves_to_name_expression(self):
-        params = _params(source_attribute=PendingAttribute(MagicMock(), "grade"))
-        self.assertEqual(params.source_attribute, "attributes[?name=='grade']")
+    def test_pending_attribute_is_rejected_with_available_attributes(self):
+        parent = MagicMock()
+        parent.__iter__.return_value = iter([type("Attr", (), {"name": "au_ppm"})()])
+        with self.assertRaises(ValidationError) as ctx:
+            _params(source_attribute=PendingAttribute(parent, "grde"))
+        self.assertIn("grde", str(ctx.exception))
+        self.assertIn("au_ppm", str(ctx.exception))
 
     def test_block_model_attribute_resolves_to_name_expression(self):
         bm_attr = BlockModelAttribute(name="grade", attribute_type="Float64")

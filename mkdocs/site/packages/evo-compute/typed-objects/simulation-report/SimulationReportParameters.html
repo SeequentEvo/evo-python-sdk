@@ -156,7 +156,7 @@ nested Source/Target objects. Attribute fields accept a typed attribute such as
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">source_attribute</span><span class="p">:</span> <span class="n">AttributeExpression</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">source_attribute</span><span class="p">:</span> <span class="n">ExistingAttributeExpression</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -197,7 +197,7 @@ or an attribute expression such as <code>"locations.attributes[0]"</code>.</p>
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">point_simulations</span><span class="p">:</span> <span class="n">AttributeExpression</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">point_simulations</span><span class="p">:</span> <span class="n">ExistingAttributeExpression</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -217,7 +217,7 @@ or an attribute expression such as <code>"locations.attributes[0]"</code>.</p>
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">point_simulations_normal_score</span><span class="p">:</span> <span class="n">AttributeExpression</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">point_simulations_normal_score</span><span class="p">:</span> <span class="n">ExistingAttributeExpression</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -237,7 +237,7 @@ or an attribute expression such as <code>"locations.attributes[0]"</code>.</p>
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">block_simulations</span><span class="p">:</span> <span class="n">AttributeExpression</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">block_simulations</span><span class="p">:</span> <span class="n">ExistingAttributeExpression</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -257,7 +257,7 @@ or an attribute expression such as <code>"locations.attributes[0]"</code>.</p>
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">block_simulations_normal_score</span><span class="p">:</span> <span class="n">AttributeExpression</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">block_simulations_normal_score</span><span class="p">:</span> <span class="n">ExistingAttributeExpression</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -357,7 +357,7 @@ or an attribute expression such as <code>"locations.attributes[0]"</code>.</p>
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">number_of_simulations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">number_of_simulations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -417,7 +417,7 @@ or an attribute expression such as <code>"locations.attributes[0]"</code>.</p>
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">number_of_lines</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="mi">500</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">number_of_lines</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="mi">500</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">

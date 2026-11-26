@@ -44,19 +44,21 @@ Example::
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import ClassVar, Literal, Protocol, runtime_checkable
 
 import pandas as pd
 from evo.common import IContext, IFeedback
 from evo.objects import ObjectSchema
-from evo.objects.typed import BaseObject, object_from_reference
+from evo.objects.typed import BaseObject, PointSet, Regular3DGrid, RegularMasked3DGrid, Variogram, object_from_reference
 from pydantic import BaseModel, Field, field_validator
 
 from ..common import (
-    AttributeExpression,
+    ExistingAttributeExpression,
     Filter,
     GeoscienceObjectReference,
     SearchNeighborhood,
+    TaskParameters,
 )
 from ..common.results import TaskAttribute
 from ..common.runner import TaskRunner
@@ -79,7 +81,7 @@ __all__ = [
 # =============================================================================
 
 
-class ConditionalTurningBandsParameters(BaseModel):
+class ConditionalTurningBandsParameters(TaskParameters):
     """Parameters for the conditional turning-band simulation task.
 
     Performs a conditional block turning-bands simulation using a pre-existing
@@ -103,10 +105,23 @@ class ConditionalTurningBandsParameters(BaseModel):
         ... )
     """
 
+    _object_roles: ClassVar[Mapping[str, tuple[type, ...]]] = {
+        "source": (PointSet,),
+        "source_attribute": (PointSet,),
+        "target": (Regular3DGrid, RegularMasked3DGrid),
+        "variogram_model": (Variogram,),
+    }
+    _distribution_fields: ClassVar[tuple[str, ...]] = ("distribution",)
+    _attribute_object_bindings: ClassVar[tuple[tuple[str, str], ...]] = (("source_attribute", "source"),)
+    _filter_bindings: ClassVar[tuple[tuple[str, str], ...]] = (
+        ("source_filter", "source"),
+        ("filter", "target"),
+    )
+
     source: GeoscienceObjectReference
     """Reference to the pointset containing the source conditioning points."""
 
-    source_attribute: AttributeExpression
+    source_attribute: ExistingAttributeExpression
     """The source values. Accepts a typed attribute such as ``pointset.attributes["grade"]``,
     or an attribute expression such as ``"locations.attributes[?name=='grade']"``."""
 
@@ -184,6 +199,9 @@ class ConditionalTurningBandsTargetResult(BaseModel):
     name: str
     """Name of the target grid object."""
 
+    description: str | None = None
+    """Optional description of the target grid object."""
+
     schema_id: str
     """Schema identifier for the target object type."""
 
@@ -213,6 +231,11 @@ class ConditionalTurningBandsResult:
         self._context = context
 
     @property
+    def target(self) -> ConditionalTurningBandsTargetResult:
+        """Target grid result metadata."""
+        return self._target
+
+    @property
     def target_name(self) -> str:
         """The name of the target grid object."""
         return self._target.name
@@ -221,6 +244,11 @@ class ConditionalTurningBandsResult:
     def target_reference(self) -> str:
         """Reference URL to the target grid object."""
         return self._target.reference
+
+    @property
+    def target_description(self) -> str | None:
+        """Optional description of the target grid object."""
+        return self._target.description
 
     @property
     def schema(self) -> ObjectSchema:

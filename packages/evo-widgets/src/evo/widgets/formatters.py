@@ -667,16 +667,13 @@ def format_block_model(obj: Any) -> str:
 def _get_task_result_portal_url(result: Any) -> str | None:
     """Extract Portal URL from a task result's target reference.
 
-    :param result: A result object with ``_target.reference`` attribute.
+    :param result: A result object with ``target_reference`` or ``target.reference`` attribute.
     :return: Portal URL string or None if not available.
     """
-    # Check if result has target attribute (public Pydantic field)
-    target = getattr(result, "target", None) or getattr(result, "_target", None)
-    if target is None:
-        return None
-
-    # Check if target has reference attribute
-    ref = getattr(target, "reference", None)
+    ref = getattr(result, "target_reference", None)
+    if not isinstance(ref, str):
+        target = getattr(result, "target", None) or getattr(result, "_target", None)
+        ref = getattr(target, "reference", None) if target is not None else None
     if not ref or not isinstance(ref, str):
         return None
 
@@ -713,6 +710,9 @@ def _target_result_details(result: Any) -> tuple[list[tuple[str, str]], list[tup
         attribute_name = getattr(result, "attribute_name", None)
         if attribute_name is not None:
             rows.append(("Attribute:", markup(f'<span class="attr-highlight">{escape(attribute_name)}</span>')))
+        diagnostics = getattr(result, "diagnostics", None)
+        if isinstance(diagnostics, dict) and diagnostics:
+            rows.append(("Diagnostics:", ", ".join(attr.name for attr in diagnostics.values())))
     return links, rows, getattr(result, "message", None)
 
 
@@ -727,6 +727,8 @@ def _conditional_simulation_result_details(
     result: Any,
 ) -> tuple[list[tuple[str, str]], list[tuple[str, Any]], str | None]:
     links, rows, message = _target_result_details(result)
+    if getattr(result, "report_reference", None):
+        links.append(("Report", result.report_reference))
     if result.dashboard_url:
         links.append(("Dashboard", result.dashboard_url))
     rows.extend(

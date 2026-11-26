@@ -231,6 +231,29 @@ df = await result.to_dataframe()
 <div class="doc doc-object doc-function">
 
 
+<h3 id="evo.compute.tasks.common.runner.TaskRunner.output_targets" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">output_targets</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">output_targets</span><span class="p">(</span><span class="n">params</span><span class="p">:</span> <span class="n">TParams</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">OutputTarget</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the :class:<code>OutputTarget</code> specifications written by <em>params</em>.</p>
+<p>Used by :func:<code>run_tasks</code> to reject concurrent tasks that would overwrite the
+same output before any remote job is submitted. Subclasses or parameter models
+with custom outputs can override this hook or :meth:<code>TaskParameters.output_targets</code>.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
 <h3 id="evo.compute.tasks.common.runner.TaskRunner.__call__" class="doc doc-heading">
             <span class="doc doc-object-name doc-function-name">__call__</span>
 

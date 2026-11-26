@@ -55,25 +55,38 @@ Example — KNN declustering::
 
 from __future__ import annotations
 
-from typing import Annotated, Any, ClassVar, Protocol, runtime_checkable
+from collections.abc import Mapping
+from typing import Annotated, Any, ClassVar
 
-import pandas as pd
-from evo.common import IContext, IFeedback
-from evo.objects import ObjectSchema
-from evo.objects.typed import BaseObject, object_from_reference
-from pydantic import BaseModel, BeforeValidator, Field, SerializerFunctionWrapHandler, field_validator, model_serializer
+from evo.common import IContext
+from evo.objects.typed import BaseObject, BaseSpatialObject
+from pydantic import (
+    BaseModel,
+    BeforeValidator,
+    Field,
+    PrivateAttr,
+    SerializerFunctionWrapHandler,
+    ValidatorFunctionWrapHandler,
+    field_validator,
+    model_serializer,
+    model_validator,
+)
 
 from ..common import (
     AnyTargetAttribute,
     GeoscienceObjectReference,
     SearchNeighborhood,
+    SingleTargetTaskResult,
+    TaskInputModel,
+    TaskParameters,
+    extract_typed_object,
 )
 from ..common.results import TaskTarget
 from ..common.runner import TaskRunner
 from ..common.search import _reject_kriging_only_drillhole_limits
-from ..common.source_target import _convert_object_reference
 
 __all__ = [
+    "DeclusteringGrid",
     "DeclusteringParameters",
     "DeclusteringResult",
     "DeclusteringResultModel",
@@ -89,32 +102,62 @@ __all__ = [
 # =============================================================================
 
 
-class DeclusteringSource(BaseModel):
+class DeclusteringSource(TaskInputModel):
     """Source sample locations for declustering weight computation."""
+
+    _typed_object: BaseObject | None = PrivateAttr(default=None)
 
     object: GeoscienceObjectReference
     """Reference to the spatial object containing sample locations."""
 
+    @model_validator(mode="wrap")
+    @classmethod
+    def _remember_typed_object(cls, data: Any, handler: ValidatorFunctionWrapHandler) -> DeclusteringSource:
+        typed_obj: BaseObject | None = None
+        if isinstance(data, DeclusteringSource):
+            typed_obj = data._typed_object
+        elif isinstance(data, Mapping):
+            typed_obj = extract_typed_object(data.get("object"))
+        source = handler(data)
+        if typed_obj is not None and source._typed_object is None:
+            source._typed_object = typed_obj
+        return source
 
-class DeclusteringGrid(BaseModel):
+
+class DeclusteringGrid(TaskInputModel):
     """Evaluation grid used for computing sample influence."""
+
+    _typed_object: BaseObject | None = PrivateAttr(default=None)
 
     object: GeoscienceObjectReference
     """Reference to a regular grid or set of evaluation locations."""
 
+    @model_validator(mode="wrap")
+    @classmethod
+    def _remember_typed_object(cls, data: Any, handler: ValidatorFunctionWrapHandler) -> DeclusteringGrid:
+        typed_obj: BaseObject | None = None
+        if isinstance(data, DeclusteringGrid):
+            typed_obj = data._typed_object
+        elif isinstance(data, Mapping):
+            typed_obj = extract_typed_object(data.get("object"))
+        grid = handler(data)
+        if typed_obj is not None and grid._typed_object is None:
+            grid._typed_object = typed_obj
+        return grid
 
-def _wrap_source(v: Any) -> DeclusteringSource:
+
+def _wrap_source(v: Any) -> Any:
     """Accept a raw object reference and wrap it in DeclusteringSource."""
-    if isinstance(v, DeclusteringSource):
+    if isinstance(v, (DeclusteringSource, Mapping)):
         return v
-    return DeclusteringSource(object=_convert_object_reference(v))
+    return DeclusteringSource(object=v)
 
 
-def _wrap_grid(v: Any) -> DeclusteringGrid:
+def _wrap_grid(v: Any) -> Any:
     """Accept a raw object reference and wrap it in DeclusteringGrid."""
-    if isinstance(v, DeclusteringGrid):
+    if isinstance(v, (DeclusteringGrid, Mapping)):
         return v
-    return DeclusteringGrid(object=_convert_object_reference(v))
+    return DeclusteringGrid(object=v)
 
 
 AnyDeclusteringSource = Annotated[DeclusteringSource, BeforeValidator(_wrap_source)]
@@ -126,7 +169,7 @@ AnyDeclusteringGrid = Annotated[DeclusteringGrid, BeforeValidator(_wrap_grid)]
 # =============================================================================
 
 
-class DeclusteringParameters(BaseModel):
+class DeclusteringParameters(TaskParameters):
     """Parameters for the declustering task.
 
     Computes grid-based declustering weights by measuring each sample's
@@ -149,6 +192,13 @@ class DeclusteringParameters(BaseModel):
         ...     ),
         ... )
     """
+
+    _object_roles: ClassVar[Mapping[str, tuple[type, ...]]] = {
+        "source": (BaseSpatialObject,),
+        "grid": (BaseSpatialObject,),
+        "target": (BaseSpatialObject,),
+    }
+    _drillhole_source_field: ClassVar[str | None] = "source"
 
     source: AnyDeclusteringSource
     """Source sample locations (accepts a geoscience object directly)."""
@@ -259,13 +309,6 @@ def knn(
 # =============================================================================
 
 
-@runtime_checkable
-class _ObjToDataframeProtocol(Protocol):
-    """Protocol for objects that can convert themselves to a DataFrame."""
-
-    async def to_dataframe(self, *keys: str, fb: IFeedback = ...) -> pd.DataFrame: ...
-
-
 class DeclusteringResultModel(BaseModel):
     """Pydantic model for the raw declustering task result."""
 
@@ -276,7 +319,7 @@ class DeclusteringResultModel(BaseModel):
     """Target information from the task result."""
 
 
-class DeclusteringResult:
+class DeclusteringResult(SingleTargetTaskResult[TaskTarget]):
     """Rich wrapper around the declustering task result.
 
     Provides convenience properties and methods for accessing the
@@ -286,61 +329,7 @@ class DeclusteringResult:
     TASK_DISPLAY_NAME: ClassVar[str] = "Declustering"
 
     def __init__(self, context: IContext, model: DeclusteringResultModel) -> None:
-        self._target = model.target
-        self._message = model.message
-        self._context = context
-
-    @property
-    def message(self) -> str:
-        """A message describing what happened in the task."""
-        return self._message
-
-    @property
-    def target_name(self) -> str:
-        """The name of the target object."""
-        return self._target.name
-
-    @property
-    def target_reference(self) -> str:
-        """Reference URL to the target object."""
-        return self._target.reference
-
-    @property
-    def attribute_name(self) -> str:
-        """The name of the attribute containing declustering weights."""
-        return self._target.attribute.name
-
-    @property
-    def schema(self) -> ObjectSchema:
-        """The schema type of the target object."""
-        return ObjectSchema.from_id(self._target.schema_id)
-
-    async def get_target_object(self) -> BaseObject:
-        """Load and return the target geoscience object.
-
-        Returns:
-            The typed geoscience object containing the declustering weights.
-        """
-        return await object_from_reference(self._context, self._target.reference)
-
-    async def to_dataframe(self, *columns: str) -> pd.DataFrame:
-        """Get the declustering weights as a DataFrame.
-
-        Args:
-            columns: Optional column names to include. If omitted, returns all columns.
-
-        Returns:
-            A pandas DataFrame containing the declustering weight values.
-        """
-        target_obj = await self.get_target_object()
-
-        if isinstance(target_obj, _ObjToDataframeProtocol):
-            return await target_obj.to_dataframe(*columns)
-        else:
-            raise TypeError(
-                f"Don't know how to get DataFrame from {type(target_obj).__name__}. "
-                "Use get_target_object() and access the data manually."
-            )
+        super().__init__(context, model)
 
     def __str__(self) -> str:
         """String representation."""

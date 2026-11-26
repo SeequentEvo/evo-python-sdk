@@ -41,39 +41,64 @@ Example::
 
 from __future__ import annotations
 
-from typing import ClassVar, Literal, Protocol, runtime_checkable
+from collections.abc import Mapping
+from typing import Any, ClassVar, Literal, Protocol, runtime_checkable
 
 import pandas as pd
 from evo.common import IContext, IFeedback
 from evo.objects import ObjectSchema
-from evo.objects.typed import BaseObject, object_from_reference
-from pydantic import BaseModel, Field, field_validator
+from evo.objects.typed import BaseObject, PointSet, Regular3DGrid, RegularMasked3DGrid, Variogram, object_from_reference
+from pydantic import (
+    BaseModel,
+    Field,
+    PrivateAttr,
+    ValidatorFunctionWrapHandler,
+    field_validator,
+    model_validator,
+)
 
 from ..common import (
-    AttributeExpression,
     BlockDiscretization,
     CreateAttribute,
+    ExistingAttributeExpression,
     Filter,
+    FiniteFloat,
     GeoscienceObjectReference,
+    QuantileFloat,
     SearchNeighborhood,
+    TaskInputModel,
+    TaskParameters,
     UpdateAttribute,
+    object_identity,
+    object_matches_reference,
 )
 from ..common.results import TaskAttribute
 from ..common.runner import TaskRunner
 from ..common.search import _reject_sector_and_drillhole_limits
+from ..common.source_target import AnyTypedAttribute
 
 __all__ = [
     "BlockDiscretization",
+    "ConSimCutoffAttribute",
+    "ConSimLinks",
     "ConSimLossCalculation",
     "ConSimMaterialCategory",
     "ConSimParameters",
+    "ConSimQuantileAttribute",
     "ConSimResult",
     "ConSimResultModel",
     "ConSimRunner",
+    "ConSimSummaryAttributes",
+    "ConSimTargetResult",
+    "ConSimValidationReport",
+    "ConSimValidationSummary",
     "DistributionParams",
     "Filter",
+    "LowerTailParams",
     "ReportContext",
     "ReportMeanThresholds",
+    "TailExtrapolationParams",
+    "UpperTailParams",
     "ValidationReportContextItem",
 ]
 
@@ -83,31 +108,40 @@ __all__ = [
 # =============================================================================
 
 
-class UpperTailParams(BaseModel):
+class UpperTailParams(TaskInputModel):
     """Upper tail extrapolation for the distribution."""
 
     power: float = Field(gt=0.0, le=1.0)
     max: float
 
 
-class LowerTailParams(BaseModel):
+class LowerTailParams(TaskInputModel):
     """Lower tail extrapolation for the distribution."""
 
     power: float = Field(gt=0.0, le=1.0)
     min: float
 
 
-class TailExtrapolationParams(BaseModel):
+class TailExtrapolationParams(TaskInputModel):
     """Tail extrapolation parameters."""
 
     upper: UpperTailParams
     lower: LowerTailParams | None = None
 
+    @model_validator(mode="after")
+    def _validate_tail_bounds(self) -> TailExtrapolationParams:
+        if self.lower is not None and self.lower.min >= self.upper.max:
+            raise ValueError(f"lower.min ({self.lower.min}) must be strictly less than upper.max ({self.upper.max}).")
+        return self
 
-class DistributionParams(BaseModel):
+
+class DistributionParams(TaskInputModel):
     """Parameters for the continuous distribution used for normal-score transformation."""
 
-    weights: AttributeExpression | None = None
+    _weights_object_url: str | None = PrivateAttr(default=None)
+    _weights_parent: Any = PrivateAttr(default=None)
+
+    weights: ExistingAttributeExpression | None = None
     """Optional weights attribute for a weighted (declustered) distribution.
 
     Accepts a typed attribute or an attribute expression.
@@ -116,45 +150,95 @@ class DistributionParams(BaseModel):
     tail_extrapolation: TailExtrapolationParams | None = None
     """Optional tail extrapolation parameters."""
 
+    @model_validator(mode="wrap")
+    @classmethod
+    def _remember_weights_object(cls, data: Any, handler: ValidatorFunctionWrapHandler) -> DistributionParams:
+        weights_url: str | None = None
+        weights_parent: Any = None
+        if isinstance(data, DistributionParams):
+            weights_url = data._weights_object_url
+            weights_parent = data._weights_parent
+        elif isinstance(data, Mapping):
+            raw_weights = data.get("weights")
+            if isinstance(raw_weights, AnyTypedAttribute) and raw_weights._obj is not None:
+                weights_parent = raw_weights._obj
+                try:
+                    weights_url = str(raw_weights._obj.metadata.url)
+                except Exception:
+                    weights_url = None
+        dist = handler(data)
+        if weights_url is not None and dist._weights_object_url is None:
+            dist._weights_object_url = weights_url
+        if weights_parent is not None and dist._weights_parent is None:
+            dist._weights_parent = weights_parent
+        return dist
 
-class ConSimMaterialCategory(BaseModel):
+
+class ConSimMaterialCategory(TaskInputModel):
     """Material category for loss calculation within simulation."""
 
     cutoff_grade: float = Field(ge=0.0)
     metal_price: float = Field(ge=0.0)
-    label: str
+    label: str = Field(min_length=1)
 
 
-class ConSimLossCalculation(BaseModel):
+def _validate_material_category_sequence(categories: list[Any]) -> None:
+    seen_labels: set[str] = set()
+    for index, cat in enumerate(categories):
+        if cat.label in seen_labels:
+            raise ValueError(f"Duplicate material category label {cat.label!r}.")
+        seen_labels.add(cat.label)
+        if index > 0 and cat.cutoff_grade <= categories[index - 1].cutoff_grade:
+            raise ValueError(
+                "material_categories must be ordered by strictly increasing cutoff_grade "
+                f"(got {categories[index - 1].cutoff_grade} followed by {cat.cutoff_grade})."
+            )
+
+
+class ConSimLossCalculation(TaskInputModel):
     """Settings for loss calculation within the simulation."""
 
-    material_categories: list[ConSimMaterialCategory]
+    material_categories: list[ConSimMaterialCategory] = Field(min_length=1)
     processing_cost: float = Field(ge=0.0)
     mining_waste_cost: float = Field(ge=0.0)
     mining_ore_cost: float = Field(ge=0.0)
     metal_recovery_fraction: float = Field(ge=0.0, le=1.0)
     target_attribute: CreateAttribute | UpdateAttribute
 
+    @model_validator(mode="after")
+    def _check_categories(self) -> ConSimLossCalculation:
+        _validate_material_category_sequence(self.material_categories)
+        return self
 
-class ValidationReportContextItem(BaseModel):
+
+class ValidationReportContextItem(TaskInputModel):
     """A single item of contextual information for the validation report."""
 
     label: str
     value: str
 
 
-class ReportContext(BaseModel):
+class ReportContext(TaskInputModel):
     """Context for the validation report."""
 
     title: str
     details: list[ValidationReportContextItem] = Field(min_length=1, max_length=10)
 
 
-class ReportMeanThresholds(BaseModel):
+class ReportMeanThresholds(TaskInputModel):
     """Thresholds for mean comparison in the validation report."""
 
     acceptable: float = Field(ge=0.0)
     marginal: float = Field(ge=0.0)
+
+    @model_validator(mode="after")
+    def _validate_threshold_order(self) -> ReportMeanThresholds:
+        if self.marginal < self.acceptable:
+            raise ValueError(
+                f"marginal threshold ({self.marginal}) must be greater than or equal to "
+                f"acceptable threshold ({self.acceptable})."
+            )
+        return self
 
 
 # =============================================================================
@@ -162,17 +246,29 @@ class ReportMeanThresholds(BaseModel):
 # =============================================================================
 
 
-class ConSimParameters(BaseModel):
+class ConSimParameters(TaskParameters):
     """Parameters for the conditional simulation (consim) task.
 
     This is the most comprehensive geostatistics compute task, supporting
     the full conditional turning-band simulation workflow.
     """
 
+    _object_roles: ClassVar[Mapping[str, tuple[type, ...]]] = {
+        "source_object": (PointSet,),
+        "source_attribute": (PointSet,),
+        "target_object": (Regular3DGrid, RegularMasked3DGrid),
+        "variogram_model": (Variogram,),
+    }
+    _attribute_object_bindings: ClassVar[tuple[tuple[str, str], ...]] = (("source_attribute", "source_object"),)
+    _filter_bindings: ClassVar[tuple[tuple[str, str], ...]] = (
+        ("source_filter", "source_object"),
+        ("filter", "target_object"),
+    )
+
     source_object: GeoscienceObjectReference
     """Reference to the pointset containing source conditioning points."""
 
-    source_attribute: AttributeExpression
+    source_attribute: ExistingAttributeExpression
     """The source values. Accepts a typed attribute such as ``pointset.attributes["grade"]``,
     or an attribute expression such as ``"locations.attributes[?name=='grade']"``."""
 
@@ -215,13 +311,13 @@ class ConSimParameters(BaseModel):
     loss_calculation: ConSimLossCalculation | None = None
     """Optional loss calculation settings."""
 
-    location_wise_quantiles: list[float] | None = None
+    location_wise_quantiles: list[QuantileFloat] | None = Field(None, min_length=1)
     """Optional list of quantiles to compute for each location."""
 
-    probability_above_cutoff: list[float] | None = None
+    probability_above_cutoff: list[FiniteFloat] | None = Field(None, min_length=1)
     """Optional list of cutoff values to compute the probability of being above, for each location."""
 
-    mean_above_cutoff: list[float] | None = None
+    mean_above_cutoff: list[FiniteFloat] | None = Field(None, min_length=1)
     """Optional list of cutoff values to compute the mean of values above, for each location."""
 
     perform_validation: bool = False
@@ -237,6 +333,47 @@ class ConSimParameters(BaseModel):
     @classmethod
     def _check_neighborhood(cls, neighborhood: SearchNeighborhood) -> SearchNeighborhood:
         return _reject_sector_and_drillhole_limits(neighborhood)
+
+    @model_validator(mode="after")
+    def _validate_simulation_invariants(self) -> ConSimParameters:
+        if (
+            "number_of_simulations_to_save" not in self.model_fields_set
+            and self.number_of_simulations_to_save > self.number_of_simulations
+        ):
+            self.number_of_simulations_to_save = self.number_of_simulations
+        elif self.number_of_simulations_to_save > self.number_of_simulations:
+            raise ValueError(
+                f"number_of_simulations_to_save ({self.number_of_simulations_to_save}) "
+                f"cannot exceed number_of_simulations ({self.number_of_simulations})."
+            )
+
+        if self.perform_validation and self.number_of_simulations_to_save < 1:
+            raise ValueError("perform_validation=True requires number_of_simulations_to_save >= 1.")
+
+        if not self.perform_validation:
+            if self.report_context is not None:
+                raise ValueError("report_context requires perform_validation=True.")
+            if self.report_mean_thresholds is not None:
+                raise ValueError("report_mean_thresholds requires perform_validation=True.")
+
+        if self.distribution is not None and self.distribution._weights_parent is not None:
+            source_obj = self._typed_objects.get(object_identity(self.source_object))
+            if not object_matches_reference(
+                self.distribution._weights_parent,
+                self.source_object,
+                supplied_obj=source_obj,
+            ):
+                actual = (
+                    object_identity(self.distribution._weights_object_url)
+                    if self.distribution._weights_object_url
+                    else "unknown"
+                )
+                raise ValueError(
+                    f"distribution.weights belongs to object {actual!r}, "
+                    f"which does not match 'source_object' ({object_identity(self.source_object)!r})."
+                )
+
+        return self
 
 
 # =============================================================================
@@ -332,12 +469,21 @@ class ConSimResult:
         self._context = context
 
     @property
+    def target(self) -> ConSimTargetResult:
+        """Target grid result metadata."""
+        return self._target
+
+    @property
     def target_name(self) -> str:
         return self._target.name
 
     @property
     def target_reference(self) -> str:
         return self._target.reference
+
+    @property
+    def target_description(self) -> str | None:
+        return self._target.description
 
     @property
     def schema(self) -> ObjectSchema:
@@ -365,8 +511,23 @@ class ConSimResult:
 
     @property
     def simulations_attribute(self) -> TaskAttribute | None:
-        """Ensemble attribute containing saved simulations."""
+        """Ensemble attribute containing saved block-scale simulations."""
         return self._target.simulations
+
+    @property
+    def simulations_normal_score_attribute(self) -> TaskAttribute | None:
+        """Ensemble attribute containing saved block-scale normal-score simulations."""
+        return self._target.simulations_normal_score
+
+    @property
+    def point_simulations_attribute(self) -> TaskAttribute | None:
+        """Ensemble attribute containing saved point-scale simulations."""
+        return self._target.point_simulations
+
+    @property
+    def point_simulations_normal_score_attribute(self) -> TaskAttribute | None:
+        """Ensemble attribute containing saved point-scale normal-score simulations."""
+        return self._target.point_simulations_normal_score
 
     @property
     def loss_calculation_attribute(self) -> TaskAttribute | None:
@@ -376,6 +537,23 @@ class ConSimResult:
     @property
     def validation_summary(self) -> ConSimValidationSummary | None:
         return self._validation_summary
+
+    @property
+    def validation_report(self) -> ConSimValidationReport | None:
+        """Validation report metadata, if validation was performed."""
+        return self._validation_report
+
+    @property
+    def report_reference(self) -> str | None:
+        """URL to the generated validation report file, if validation was performed."""
+        if self._validation_report is not None:
+            return self._validation_report.reference
+        return None
+
+    @property
+    def links(self) -> ConSimLinks:
+        """Links related to the simulation task."""
+        return self._links
 
     @property
     def dashboard_url(self) -> str | None:
