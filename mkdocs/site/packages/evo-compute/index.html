@@ -98,17 +98,21 @@
 discovery = DiscoveryClient.from_context(manager)
 topics = await discovery.get_topics()
 
-# Run any advertised task through the dynamic namespace or by name
+# Run any advertised task using typed objects, attributes, and SDK models
 client = ComputeClient(manager)
 result = await client.geostatistics.declustering.run(
-    source=...,
-    grid=...,
-    target=...,
-    neighborhood=...,
+    source=pointset,
+    grid=block_model,
+    target=pointset.attributes[&quot;IDW declus&quot;],
+    neighborhood=neighborhood,
     preview=True,
 )
+
+# Results return a TaskResult (a dict subclass with ResultNode loaders)
+updated_pointset = await result.target.load()
+weights_df = await result.target.attribute.to_dataframe()
 </code></pre>
-<p>Parameters are checked against the task's published JSON Schema before submission (<code>validate=True</code> by default for required fields and nullability; pass <code>deep_validation=True</code> on <code>ComputeClient</code> or <code>arun(...)</code> for full JSON Schema Draft 2020-12 checks, raising <code>ParameterValidationError</code> on failure).</p>
+<p><code>ReferenceResolver</code> automatically converts typed geoscience objects, attributes, file handles, and target attribute slots into the wire references each task's schema declares (and verifies <code>supported_schemas</code> unless <code>check_schemas=False</code>). Parameters are validated before submission (<code>validate=True</code> by default; <code>deep_validation=True</code> for full JSON Schema Draft 2020-12 checks, raising <code>ParameterValidationError</code> on failure), and output references hydrate into <code>TaskResult</code> / <code>ResultNode</code> objects supporting <code>.load()</code> and <code>.to_dataframe()</code>.</p>
 <h2 id="running-typed-geostatistics-tasks">Running Typed Geostatistics Tasks</h2>
 <p>The <code>run()</code> function executes typed task parameter models — either a single task or multiple tasks concurrently.</p>
 <h3 id="single-task">Single task</h3>
