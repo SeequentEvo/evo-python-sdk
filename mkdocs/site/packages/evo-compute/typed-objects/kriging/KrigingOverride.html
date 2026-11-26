@@ -89,7 +89,7 @@
 
 
 
-        <p>The override's stand-in for the generic task proxy: same <code>run(...)</code>, typed by hand.</p>
+        <p>The typed <code>run(...)</code> and <code>submit(...)</code> surface for Kriging.</p>
 
 
 
@@ -138,6 +138,8 @@
     <div class="doc doc-contents ">
 
         <p>Estimate an attribute on a target object by kriging from a source attribute.</p>
+<p>Progress feedback is not a <code>run</code> argument, so it never clashes with a task parameter.
+Set it with <code>ComputeClient(context, fb=...)</code>, or call <code>submit</code> and pass it to <code>job.results(fb=...)</code>.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -351,6 +353,40 @@ task schema cannot describe, or fail the engine's own checks.</p>
 <div class="doc doc-object doc-function">
 
 
+<h3 id="evo.compute.overrides.geostatistics.kriging.KrigingOverride.submit" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">submit</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">submit</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">source</span><span class="p">:</span> <span class="n">_SourceInput</span><span class="p">,</span>
+    <span class="n">target</span><span class="p">:</span> <span class="n">_TargetInput</span><span class="p">,</span>
+    <span class="n">variogram</span><span class="p">:</span> <span class="n">_ObjectInput</span><span class="p">,</span>
+    <span class="n">neighborhood</span><span class="p">:</span> <span class="n">SearchNeighborhood</span><span class="p">,</span>
+    <span class="n">kriging_method</span><span class="p">:</span> <span class="n">SimpleKriging</span> <span class="o">|</span> <span class="n">OrdinaryKriging</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">source_filter</span><span class="p">:</span> <span class="n">Filter</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">target_filter</span><span class="p">:</span> <span class="n">Filter</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">block_discretization</span><span class="p">:</span> <span class="n">BlockDiscretization</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">diagnostics</span><span class="p">:</span> <span class="n">KrigingDiagnostics</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">preview</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TaskJob</span><span class="p">[</span><span class="n">KrigingResult</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Submit with the same arguments and checks as <code>run</code>, without waiting.</p>
+<p><code>await job.results()</code> returns <code>KrigingResult</code>, including its object and
+dataframe helpers. Preview requires an explicit <code>preview=True</code>.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
 <h3 id="evo.compute.overrides.geostatistics.kriging.KrigingOverride.run_parameters" class="doc doc-heading">
             <span class="doc doc-object-name doc-function-name">run_parameters</span>
 
@@ -368,6 +404,52 @@ task schema cannot describe, or fail the engine's own checks.</p>
     <div class="doc doc-contents ">
 
         <p>Run named or typed inputs through the same preparation and checks.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.compute.overrides.geostatistics.kriging.KrigingOverride.submit_parameters" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">submit_parameters</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">submit_parameters</span><span class="p">(</span>
+    <span class="n">parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">validate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">deep_validation</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">check_schemas</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TaskJob</span><span class="p">[</span><span class="n">KrigingResult</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Submit named or typed inputs through the same preparation and checks.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.compute.overrides.geostatistics.kriging.KrigingOverride.convert_result" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">convert_result</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">convert_result</span><span class="p">(</span><span class="n">result</span><span class="p">:</span> <span class="n">TaskResult</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">KrigingResult</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Restore the native result for submitted and reopened jobs alike.</p>
 
 
     </div>

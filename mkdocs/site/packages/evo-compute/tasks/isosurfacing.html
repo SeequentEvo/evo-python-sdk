@@ -80,7 +80,7 @@
 
 <p><a href="https://github.com/SeequentEvo/evo-python-sdk/tree/main/packages/evo-compute/stubs/snapshot/isosurfacing">GitHub source</a></p>
 <h1 id="isosurfacing-tasks">Isosurfacing Tasks</h1>
-<p>Discoverable compute tasks in the <code>isosurfacing</code> topic. Call any task below through <code>ComputeClient</code> as <code>await client.isosurfacing.&lt;task&gt;.run(...)</code>, or by name via <code>await client.arun("isosurfacing", "&lt;task&gt;", parameters)</code>.</p>
+<p>Discoverable compute tasks in the <code>isosurfacing</code> topic. Call any task below through <code>ComputeClient</code> as <code>await client.isosurfacing.&lt;task&gt;.run(...)</code> (or <code>submit(...)</code> for a non-blocking <code>TaskJob</code>), or by name via <code>await client.arun("isosurfacing", "&lt;task&gt;", parameters)</code> / <code>await client.asubmit("isosurfacing", "&lt;task&gt;", parameters)</code>.</p>
 <h2 id="input-shorthands">Input Shorthands</h2>
 <table>
 <thead>
@@ -120,6 +120,15 @@
     settings: IsosurfacingCategoryCategorySettings = ...,
     preview: bool = False,
 ) -&gt; IsosurfacingCategoryResult
+
+await client.isosurfacing.category.submit(
+    *,
+    source: IsosurfacingCategoryCategorySourceInput | AnyTypedAttribute,
+    category: str,
+    target: IsosurfacingCategoryTarget,
+    settings: IsosurfacingCategoryCategorySettings = ...,
+    preview: bool = False,
+) -&gt; TaskJob[IsosurfacingCategoryResult]
 </code></pre>
 <p>Parameters:</p>
 <table>
@@ -367,6 +376,15 @@
     settings: IsosurfacingNumericNumericSettings = ...,
     preview: bool = False,
 ) -&gt; IsosurfacingNumericResult
+
+await client.isosurfacing.numeric.submit(
+    *,
+    source: IsosurfacingNumericNumericSourceInput | AnyTypedAttribute,
+    threshold: float,
+    target: IsosurfacingNumericTarget,
+    settings: IsosurfacingNumericNumericSettings = ...,
+    preview: bool = False,
+) -&gt; TaskJob[IsosurfacingNumericResult]
 </code></pre>
 <p>Parameters:</p>
 <table>

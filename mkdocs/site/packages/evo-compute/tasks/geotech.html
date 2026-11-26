@@ -80,7 +80,7 @@
 
 <p><a href="https://github.com/SeequentEvo/evo-python-sdk/tree/main/packages/evo-compute/stubs/snapshot/geotech">GitHub source</a></p>
 <h1 id="geotechnical-tasks">Geotechnical Tasks</h1>
-<p>Discoverable compute tasks in the <code>geotech</code> topic. Call any task below through <code>ComputeClient</code> as <code>await client.geotech.&lt;task&gt;.run(...)</code>, or by name via <code>await client.arun("geotech", "&lt;task&gt;", parameters)</code>.</p>
+<p>Discoverable compute tasks in the <code>geotech</code> topic. Call any task below through <code>ComputeClient</code> as <code>await client.geotech.&lt;task&gt;.run(...)</code> (or <code>submit(...)</code> for a non-blocking <code>TaskJob</code>), or by name via <code>await client.arun("geotech", "&lt;task&gt;", parameters)</code> / <code>await client.asubmit("geotech", "&lt;task&gt;", parameters)</code>.</p>
 <h2 id="input-shorthands">Input Shorthands</h2>
 <table>
 <thead>
@@ -114,6 +114,19 @@
     coordinate_reference_system: str | None = ...,
     preview: bool = False,
 ) -&gt; GeotechAddToIntersectedGeometryResult
+
+await client.geotech.add_to_intersected_geometry.submit(
+    *,
+    source: ObjectInput,
+    meshes_to_add: list[ObjectInput],
+    target: GeotechAddToIntersectedGeometryTarget,
+    tolerance: float,
+    min_point: GeotechAddToIntersectedGeometryPoint3D = ...,
+    max_point: GeotechAddToIntersectedGeometryPoint3D2 = ...,
+    rotation_angle: float = ...,
+    coordinate_reference_system: str | None = ...,
+    preview: bool = False,
+) -&gt; TaskJob[GeotechAddToIntersectedGeometryResult]
 </code></pre>
 <p>Parameters:</p>
 <table>
@@ -357,6 +370,13 @@
     bin_width: float = ...,
     preview: bool = False,
 ) -&gt; GeotechCalculateMeshQualityHistogramResult
+
+await client.geotech.calculate_mesh_quality_histogram.submit(
+    *,
+    source: ObjectInput,
+    bin_width: float = ...,
+    preview: bool = False,
+) -&gt; TaskJob[GeotechCalculateMeshQualityHistogramResult]
 </code></pre>
 <p>Parameters:</p>
 <table>
@@ -455,6 +475,12 @@
     source: ObjectInput,
     preview: bool = False,
 ) -&gt; GeotechCheckTriangleOrientationResult
+
+await client.geotech.check_triangle_orientation.submit(
+    *,
+    source: ObjectInput,
+    preview: bool = False,
+) -&gt; TaskJob[GeotechCheckTriangleOrientationResult]
 </code></pre>
 <p>Parameters:</p>
 <table>
@@ -516,6 +542,14 @@
     remove_external_volumes: bool = ...,
     preview: bool = False,
 ) -&gt; GeotechCopyGeologicalModelMeshesResult
+
+await client.geotech.copy_geological_model_meshes.submit(
+    *,
+    source: ObjectInput,
+    target: GeotechCopyGeologicalModelMeshesTarget,
+    remove_external_volumes: bool = ...,
+    preview: bool = False,
+) -&gt; TaskJob[GeotechCopyGeologicalModelMeshesResult]
 </code></pre>
 <p>Parameters:</p>
 <table>
@@ -667,6 +701,15 @@
     section_dip_azimuth_degrees: float,
     preview: bool = False,
 ) -&gt; GeotechCreateCrossSectionResult
+
+await client.geotech.create_cross_section.submit(
+    *,
+    source: ObjectInput,
+    target: GeotechCreateCrossSectionTarget,
+    section_origin: GeotechCreateCrossSectionPoint3D,
+    section_dip_azimuth_degrees: float,
+    preview: bool = False,
+) -&gt; TaskJob[GeotechCreateCrossSectionResult]
 </code></pre>
 <p>Parameters:</p>
 <table>
@@ -854,6 +897,13 @@
     target: GeotechCreateGeologicalModelMeshesTarget,
     preview: bool = False,
 ) -&gt; GeotechCreateGeologicalModelMeshesResult
+
+await client.geotech.create_geological_model_meshes.submit(
+    *,
+    source: ObjectInput,
+    target: GeotechCreateGeologicalModelMeshesTarget,
+    preview: bool = False,
+) -&gt; TaskJob[GeotechCreateGeologicalModelMeshesResult]
 </code></pre>
 <p>Parameters:</p>
 <table>
@@ -998,6 +1048,14 @@
     cap_min_angle_degrees: float = ...,
     preview: bool = False,
 ) -&gt; GeotechDetectDegenerateTrianglesResult
+
+await client.geotech.detect_degenerate_triangles.submit(
+    *,
+    source: ObjectInput,
+    needle_threshold_ratio: float = ...,
+    cap_min_angle_degrees: float = ...,
+    preview: bool = False,
+) -&gt; TaskJob[GeotechDetectDegenerateTrianglesResult]
 </code></pre>
 <p>Parameters:</p>
 <table>
@@ -1069,6 +1127,12 @@
     source: ObjectInput,
     preview: bool = False,
 ) -&gt; GeotechDetectDuplicatePointsResult
+
+await client.geotech.detect_duplicate_points.submit(
+    *,
+    source: ObjectInput,
+    preview: bool = False,
+) -&gt; TaskJob[GeotechDetectDuplicatePointsResult]
 </code></pre>
 <p>Parameters:</p>
 <table>
@@ -1128,6 +1192,12 @@
     source: ObjectInput,
     preview: bool = False,
 ) -&gt; GeotechDetectDuplicateTrianglesResult
+
+await client.geotech.detect_duplicate_triangles.submit(
+    *,
+    source: ObjectInput,
+    preview: bool = False,
+) -&gt; TaskJob[GeotechDetectDuplicateTrianglesResult]
 </code></pre>
 <p>Parameters:</p>
 <table>
@@ -1188,6 +1258,13 @@
     max_area_ratio: float = ...,
     preview: bool = False,
 ) -&gt; GeotechDetectFinsResult
+
+await client.geotech.detect_fins.submit(
+    *,
+    source: ObjectInput,
+    max_area_ratio: float = ...,
+    preview: bool = False,
+) -&gt; TaskJob[GeotechDetectFinsResult]
 </code></pre>
 <p>Parameters:</p>
 <table>
@@ -1254,6 +1331,13 @@
     hole_size_ratio_tolerance: float = ...,
     preview: bool = False,
 ) -&gt; GeotechDetectHolesResult
+
+await client.geotech.detect_holes.submit(
+    *,
+    source: ObjectInput,
+    hole_size_ratio_tolerance: float = ...,
+    preview: bool = False,
+) -&gt; TaskJob[GeotechDetectHolesResult]
 </code></pre>
 <p>Parameters:</p>
 <table>
@@ -1319,6 +1403,12 @@
     source: ObjectInput,
     preview: bool = False,
 ) -&gt; GeotechDetectNonManifoldEdgesResult
+
+await client.geotech.detect_non_manifold_edges.submit(
+    *,
+    source: ObjectInput,
+    preview: bool = False,
+) -&gt; TaskJob[GeotechDetectNonManifoldEdgesResult]
 </code></pre>
 <p>Parameters:</p>
 <table>
@@ -1378,6 +1468,12 @@
     source: ObjectInput,
     preview: bool = False,
 ) -&gt; GeotechDetectNonManifoldVerticesResult
+
+await client.geotech.detect_non_manifold_vertices.submit(
+    *,
+    source: ObjectInput,
+    preview: bool = False,
+) -&gt; TaskJob[GeotechDetectNonManifoldVerticesResult]
 </code></pre>
 <p>Parameters:</p>
 <table>
@@ -1439,6 +1535,14 @@
     hole_size_ratio_tolerance: float = ...,
     preview: bool = False,
 ) -&gt; GeotechDetectNonPartitioningSurfacesResult
+
+await client.geotech.detect_non_partitioning_surfaces.submit(
+    *,
+    source: ObjectInput,
+    max_area_ratio: float = ...,
+    hole_size_ratio_tolerance: float = ...,
+    preview: bool = False,
+) -&gt; TaskJob[GeotechDetectNonPartitioningSurfacesResult]
 </code></pre>
 <p>Parameters:</p>
 <table>
@@ -1538,6 +1642,13 @@
     tolerance: float = ...,
     preview: bool = False,
 ) -&gt; GeotechDetectSelfIntersectionsResult
+
+await client.geotech.detect_self_intersections.submit(
+    *,
+    source: ObjectInput,
+    tolerance: float = ...,
+    preview: bool = False,
+) -&gt; TaskJob[GeotechDetectSelfIntersectionsResult]
 </code></pre>
 <p>Parameters:</p>
 <table>
@@ -1606,6 +1717,15 @@
     fill_mode_selection: Literal[&quot;Fill&quot;, &quot;FillAndRefine&quot;, &quot;FillRefineAndFair&quot;],
     preview: bool = False,
 ) -&gt; GeotechFillHolesResult
+
+await client.geotech.fill_holes.submit(
+    *,
+    source: ObjectInput,
+    target: GeotechFillHolesTarget,
+    edges: list[list[int]],
+    fill_mode_selection: Literal[&quot;Fill&quot;, &quot;FillAndRefine&quot;, &quot;FillRefineAndFair&quot;],
+    preview: bool = False,
+) -&gt; TaskJob[GeotechFillHolesResult]
 </code></pre>
 <p>Parameters:</p>
 <table>
@@ -1762,6 +1882,14 @@
     intersect_settings: GeotechFixSelfIntersectionsIntersectSettings,
     preview: bool = False,
 ) -&gt; GeotechFixSelfIntersectionsResult
+
+await client.geotech.fix_self_intersections.submit(
+    *,
+    source: ObjectInput,
+    target: GeotechFixSelfIntersectionsTarget,
+    intersect_settings: GeotechFixSelfIntersectionsIntersectSettings,
+    preview: bool = False,
+) -&gt; TaskJob[GeotechFixSelfIntersectionsResult]
 </code></pre>
 <p>Parameters:</p>
 <table>
@@ -1940,6 +2068,16 @@
     coordinate_reference_system: str | None = ...,
     preview: bool = False,
 ) -&gt; GeotechInitAggregateGeomGmmResult
+
+await client.geotech.init_aggregate_geom_gmm.submit(
+    *,
+    target: GeotechInitAggregateGeomGmmTarget,
+    min_point: GeotechInitAggregateGeomGmmPoint3D,
+    max_point: GeotechInitAggregateGeomGmmPoint3D2,
+    rotation_angle: float = ...,
+    coordinate_reference_system: str | None = ...,
+    preview: bool = False,
+) -&gt; TaskJob[GeotechInitAggregateGeomGmmResult]
 </code></pre>
 <p>Parameters:</p>
 <table>
@@ -2168,6 +2306,16 @@
     radius: float = ...,
     preview: bool = False,
 ) -&gt; GeotechLocalRemeshResult
+
+await client.geotech.local_remesh.submit(
+    *,
+    source: ObjectInput,
+    target: GeotechLocalRemeshTarget,
+    seed_triangle_indices: list[int],
+    remesh_settings: GeotechLocalRemeshRemeshSettings = ...,
+    radius: float = ...,
+    preview: bool = False,
+) -&gt; TaskJob[GeotechLocalRemeshResult]
 </code></pre>
 <p>Parameters:</p>
 <table>
@@ -2418,6 +2566,22 @@
     remesh_settings: GeotechMakeGmmIntoIntersectedGeometryRemeshSettings = ...,
     preview: bool = False,
 ) -&gt; GeotechMakeGmmIntoIntersectedGeometryResult
+
+await client.geotech.make_gmm_into_intersected_geometry.submit(
+    *,
+    source: ObjectInput,
+    target: GeotechMakeGmmIntoIntersectedGeometryTarget,
+    clip_tolerance: float,
+    min_point: GeotechMakeGmmIntoIntersectedGeometryPoint3D = ...,
+    max_point: GeotechMakeGmmIntoIntersectedGeometryPoint3D2 = ...,
+    rotation_angle: float = ...,
+    collapse_settings: GeotechMakeGmmIntoIntersectedGeometryCollapseOverlapsSettings = ...,
+    attempt_conformalization: bool = ...,
+    attempt_auto_fix_on_failure: bool = ...,
+    intersection_tolerance_for_auto_fix: float = ...,
+    remesh_settings: GeotechMakeGmmIntoIntersectedGeometryRemeshSettings = ...,
+    preview: bool = False,
+) -&gt; TaskJob[GeotechMakeGmmIntoIntersectedGeometryResult]
 </code></pre>
 <p>Parameters:</p>
 <table>
@@ -2789,6 +2953,17 @@
     tolerance: float = ...,
     preview: bool = False,
 ) -&gt; GeotechMakeIntoModelInputResult
+
+await client.geotech.make_into_model_input.submit(
+    *,
+    source: ObjectInput,
+    target: GeotechMakeIntoModelInputTarget,
+    min_point: GeotechMakeIntoModelInputMinPoint = ...,
+    max_point: GeotechMakeIntoModelInputMaxPoint = ...,
+    rotation_angle: float = ...,
+    tolerance: float = ...,
+    preview: bool = False,
+) -&gt; TaskJob[GeotechMakeIntoModelInputResult]
 </code></pre>
 <p>Parameters:</p>
 <table>
@@ -3021,6 +3196,14 @@
     settings: GeotechMarkVolumesForRemovalSettings,
     preview: bool = False,
 ) -&gt; GeotechMarkVolumesForRemovalResult
+
+await client.geotech.mark_volumes_for_removal.submit(
+    *,
+    source: ObjectInput,
+    target: GeotechMarkVolumesForRemovalTarget,
+    settings: GeotechMarkVolumesForRemovalSettings,
+    preview: bool = False,
+) -&gt; TaskJob[GeotechMarkVolumesForRemovalResult]
 </code></pre>
 <p>Parameters:</p>
 <table>
@@ -3199,6 +3382,16 @@
     max_repair_iterations: int = ...,
     preview: bool = False,
 ) -&gt; GeotechParameterizeVolumesResult
+
+await client.geotech.parameterize_volumes.submit(
+    *,
+    source: ObjectInput,
+    target: GeotechParameterizeVolumesTarget,
+    distance_unit: Literal[&quot;m&quot;, &quot;angstrom&quot;, &quot;chain&quot;, &quot;chain[BnA]&quot;, &quot;chain[BnB]&quot;, &quot;chain[Cla]&quot;, &quot;chain[Ind37]&quot;, &quot;chain[Se]&quot;, &quot;chain[SeT]&quot;, &quot;chain[US]&quot;, &quot;fathom&quot;, &quot;ft&quot;, &quot;ft[BnA]&quot;, &quot;ft[BnB]&quot;, &quot;ft[Br36]&quot;, &quot;ft[Br65]&quot;, &quot;ft[Cla]&quot;, &quot;ft[GC]&quot;, &quot;ft[Ind]&quot;, &quot;ft[Ind37]&quot;, &quot;ft[Ind62]&quot;, &quot;ft[Ind75]&quot;, &quot;ft[Se]&quot;, &quot;ft[SeT]&quot;, &quot;ft[US]&quot;, &quot;fur[US]&quot;, &quot;in&quot;, &quot;in[US]&quot;, &quot;link&quot;, &quot;link[BnA]&quot;, &quot;link[BnB]&quot;, &quot;link[Cla]&quot;, &quot;link[Se]&quot;, &quot;link[SeT]&quot;, &quot;link[US]&quot;, &quot;m[Ger]&quot;, &quot;mi&quot;, &quot;mi[naut]&quot;, &quot;mi[nautUK]&quot;, &quot;mi[US]&quot;, &quot;mil&quot;, &quot;rod[US]&quot;, &quot;yd&quot;, &quot;yd[BnA]&quot;, &quot;yd[BnB]&quot;, &quot;yd[Cla]&quot;, &quot;yd[Ind]&quot;, &quot;yd[Ind37]&quot;, &quot;yd[Ind62]&quot;, &quot;yd[Ind75]&quot;, &quot;yd[Se]&quot;, &quot;yd[SeT]&quot;, &quot;yd[US]&quot;, &quot;m3/m2&quot;, &quot;0.1 ft&quot;, &quot;0.1 ft[US]&quot;, &quot;0.1 in&quot;, &quot;0.1 yd&quot;, &quot;1/16 in&quot;, &quot;1/2 ft&quot;, &quot;1/32 in&quot;, &quot;1/64 in&quot;, &quot;10 ft&quot;, &quot;10 in&quot;, &quot;10 km&quot;, &quot;100 ft&quot;, &quot;100 km&quot;, &quot;1000 ft&quot;, &quot;30 ft&quot;, &quot;30 m&quot;, &quot;1E6 bbl/acre&quot;, &quot;bbl/acre&quot;, &quot;ft3/ft2&quot;, &quot;cm&quot;, &quot;dam&quot;, &quot;dm&quot;, &quot;Em&quot;, &quot;fm&quot;, &quot;Gm&quot;, &quot;hm&quot;, &quot;km&quot;, &quot;Mm&quot;, &quot;mm&quot;, &quot;nm&quot;, &quot;pm&quot;, &quot;Tm&quot;, &quot;um&quot;],
+    include_hard_edges: bool = ...,
+    max_repair_iterations: int = ...,
+    preview: bool = False,
+) -&gt; TaskJob[GeotechParameterizeVolumesResult]
 </code></pre>
 <p>Parameters:</p>
 <table>
@@ -3371,6 +3564,24 @@
     relax_chunk_interfaces: bool = ...,
     preview: bool = False,
 ) -&gt; GeotechRemeshResult
+
+await client.geotech.remesh.submit(
+    *,
+    source: ObjectInput,
+    target: GeotechRemeshTarget,
+    patch_angle_tolerance: float = ...,
+    max_chordal_error: float = ...,
+    strain_tolerance: float = ...,
+    is_closed: bool = ...,
+    initial_cleanup: bool = ...,
+    line_proximity_detection: bool = ...,
+    optimize: bool = ...,
+    shape_quality_weight: float = ...,
+    target_h: float = ...,
+    regularize_mode: bool = ...,
+    relax_chunk_interfaces: bool = ...,
+    preview: bool = False,
+) -&gt; TaskJob[GeotechRemeshResult]
 </code></pre>
 <p>Parameters:</p>
 <table>
@@ -3581,6 +3792,14 @@
     triangle_indices: list[int],
     preview: bool = False,
 ) -&gt; GeotechRemoveTrianglesResult
+
+await client.geotech.remove_triangles.submit(
+    *,
+    source: ObjectInput,
+    target: GeotechRemoveTrianglesTarget,
+    triangle_indices: list[int],
+    preview: bool = False,
+) -&gt; TaskJob[GeotechRemoveTrianglesResult]
 </code></pre>
 <p>Parameters:</p>
 <table>
@@ -3732,6 +3951,15 @@
     target_selection: GeotechSubsumeEmbeddedVolumeInGmmExplicitTargetSelection | GeotechSubsumeEmbeddedVolumeInGmmLargestNeighbouringVolumeTargetSelection | GeotechSubsumeEmbeddedVolumeInGmmLargestNeighbouringContactAreaTargetSelection,
     preview: bool = False,
 ) -&gt; GeotechSubsumeEmbeddedVolumeInGmmResult
+
+await client.geotech.subsume_embedded_volume_in_gmm.submit(
+    *,
+    source: ObjectInput,
+    target: GeotechSubsumeEmbeddedVolumeInGmmTarget,
+    subsume_source: int,
+    target_selection: GeotechSubsumeEmbeddedVolumeInGmmExplicitTargetSelection | GeotechSubsumeEmbeddedVolumeInGmmLargestNeighbouringVolumeTargetSelection | GeotechSubsumeEmbeddedVolumeInGmmLargestNeighbouringContactAreaTargetSelection,
+    preview: bool = False,
+) -&gt; TaskJob[GeotechSubsumeEmbeddedVolumeInGmmResult]
 </code></pre>
 <p>Parameters:</p>
 <table>
@@ -3952,6 +4180,12 @@
     source: ObjectInput,
     preview: bool = False,
 ) -&gt; GeotechValidateGmmAsIntersectedGeometryResult
+
+await client.geotech.validate_gmm_as_intersected_geometry.submit(
+    *,
+    source: ObjectInput,
+    preview: bool = False,
+) -&gt; TaskJob[GeotechValidateGmmAsIntersectedGeometryResult]
 </code></pre>
 <p>Parameters:</p>
 <table>

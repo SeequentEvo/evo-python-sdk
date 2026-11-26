@@ -80,7 +80,7 @@
 
 <p><a href="https://github.com/SeequentEvo/evo-python-sdk/tree/main/packages/evo-compute/stubs/snapshot/rbf">GitHub source</a></p>
 <h1 id="rbf-tasks">RBF Tasks</h1>
-<p>Discoverable compute tasks in the <code>rbf</code> topic. Call any task below through <code>ComputeClient</code> as <code>await client.rbf.&lt;task&gt;.run(...)</code>, or by name via <code>await client.arun("rbf", "&lt;task&gt;", parameters)</code>.</p>
+<p>Discoverable compute tasks in the <code>rbf</code> topic. Call any task below through <code>ComputeClient</code> as <code>await client.rbf.&lt;task&gt;.run(...)</code> (or <code>submit(...)</code> for a non-blocking <code>TaskJob</code>), or by name via <code>await client.arun("rbf", "&lt;task&gt;", parameters)</code> / <code>await client.asubmit("rbf", "&lt;task&gt;", parameters)</code>.</p>
 <h2 id="input-shorthands">Input Shorthands</h2>
 <table>
 <thead>
@@ -120,6 +120,15 @@
     polynomial: RbfRbfEvaluationPolynomial | None = ...,
     preview: bool = False,
 ) -&gt; RbfRbfEvaluationResult
+
+await client.rbf.rbf_evaluation.submit(
+    *,
+    source: RbfRbfEvaluationSource,
+    basic_function: RbfRbfEvaluationAsphericalFunction | RbfRbfEvaluationSphericalFunction | RbfRbfEvaluationBiharmonicFunction | RbfRbfEvaluationCubicFunction | RbfRbfEvaluationExponentialFunction | RbfRbfEvaluationGaussianFunction | RbfRbfEvaluationMultiquadricFunction | RbfRbfEvaluationNormalizedMultiquadricFunction | RbfRbfEvaluationTriharmonicFunction,
+    target: RbfRbfEvaluationTarget | AnyTypedAttribute,
+    polynomial: RbfRbfEvaluationPolynomial | None = ...,
+    preview: bool = False,
+) -&gt; TaskJob[RbfRbfEvaluationResult]
 </code></pre>
 <p>Parameters:</p>
 <table>

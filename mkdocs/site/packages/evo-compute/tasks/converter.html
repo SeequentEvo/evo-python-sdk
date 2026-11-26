@@ -80,7 +80,7 @@
 
 <p><a href="https://github.com/SeequentEvo/evo-python-sdk/tree/main/packages/evo-compute/stubs/snapshot/converter">GitHub source</a></p>
 <h1 id="converter-tasks">Converter Tasks</h1>
-<p>Discoverable compute tasks in the <code>converter</code> topic. Call any task below through <code>ComputeClient</code> as <code>await client.converter.&lt;task&gt;.run(...)</code>, or by name via <code>await client.arun("converter", "&lt;task&gt;", parameters)</code>.</p>
+<p>Discoverable compute tasks in the <code>converter</code> topic. Call any task below through <code>ComputeClient</code> as <code>await client.converter.&lt;task&gt;.run(...)</code> (or <code>submit(...)</code> for a non-blocking <code>TaskJob</code>), or by name via <code>await client.arun("converter", "&lt;task&gt;", parameters)</code> / <code>await client.asubmit("converter", "&lt;task&gt;", parameters)</code>.</p>
 <h2 id="input-shorthands">Input Shorthands</h2>
 <table>
 <thead>
@@ -112,6 +112,12 @@
     files: list[FileInput],
     preview: bool = False,
 ) -&gt; ConverterDetectConverterResult
+
+await client.converter.detect_converter.submit(
+    *,
+    files: list[FileInput],
+    preview: bool = False,
+) -&gt; TaskJob[ConverterDetectConverterResult]
 </code></pre>
 <p>Parameters:</p>
 <table>
@@ -396,6 +402,14 @@
     target: ConverterErsImportTarget,
     preview: bool = False,
 ) -&gt; ConverterErsImportResult
+
+await client.converter.ers_import.submit(
+    *,
+    file: FileInput,
+    file_data: FileInput,
+    target: ConverterErsImportTarget,
+    preview: bool = False,
+) -&gt; TaskJob[ConverterErsImportResult]
 </code></pre>
 <p>Parameters:</p>
 <table>
@@ -540,6 +554,14 @@
     file_gi: FileInput | None = ...,
     preview: bool = False,
 ) -&gt; ConverterGeosoftGridImportResult
+
+await client.converter.geosoft_grid_import.submit(
+    *,
+    file: FileInput,
+    target: ConverterGeosoftGridImportTarget,
+    file_gi: FileInput | None = ...,
+    preview: bool = False,
+) -&gt; TaskJob[ConverterGeosoftGridImportResult]
 </code></pre>
 <p>Parameters:</p>
 <table>
@@ -683,6 +705,13 @@
     target: ConverterGeosoftSurfaceImportTarget,
     preview: bool = False,
 ) -&gt; ConverterGeosoftSurfaceImportResult
+
+await client.converter.geosoft_surface_import.submit(
+    *,
+    file: FileInput,
+    target: ConverterGeosoftSurfaceImportTarget,
+    preview: bool = False,
+) -&gt; TaskJob[ConverterGeosoftSurfaceImportResult]
 </code></pre>
 <p>Parameters:</p>
 <table>
@@ -820,6 +849,13 @@
     target: ConverterGeosoftVoxelImportTarget,
     preview: bool = False,
 ) -&gt; ConverterGeosoftVoxelImportResult
+
+await client.converter.geosoft_voxel_import.submit(
+    *,
+    file: FileInput,
+    target: ConverterGeosoftVoxelImportTarget,
+    preview: bool = False,
+) -&gt; TaskJob[ConverterGeosoftVoxelImportResult]
 </code></pre>
 <p>Parameters:</p>
 <table>
@@ -998,6 +1034,16 @@
     cell_size: list[float] | None = ...,
     preview: bool = False,
 ) -&gt; ConverterImageImportResult
+
+await client.converter.image_import.submit(
+    *,
+    file: FileInput,
+    target: ConverterImageImportTarget,
+    coordinate_reference_system: str = ...,
+    origin: list[float] | None = ...,
+    cell_size: list[float] | None = ...,
+    preview: bool = False,
+) -&gt; TaskJob[ConverterImageImportResult]
 </code></pre>
 <p>Parameters:</p>
 <table>
@@ -1185,6 +1231,13 @@
     target: ConverterKmlImportTarget,
     preview: bool = False,
 ) -&gt; ConverterKmlImportResult
+
+await client.converter.kml_import.submit(
+    *,
+    file: FileInput,
+    target: ConverterKmlImportTarget,
+    preview: bool = False,
+) -&gt; TaskJob[ConverterKmlImportResult]
 </code></pre>
 <p>Parameters:</p>
 <table>
@@ -1323,6 +1376,14 @@
     coordinate_reference_system: str | None = ...,
     preview: bool = False,
 ) -&gt; ConverterObjImportResult
+
+await client.converter.obj_import.submit(
+    *,
+    file: FileInput,
+    target: ConverterObjImportTarget,
+    coordinate_reference_system: str | None = ...,
+    preview: bool = False,
+) -&gt; TaskJob[ConverterObjImportResult]
 </code></pre>
 <p>Parameters:</p>
 <table>
@@ -1473,6 +1534,20 @@
     file_xml: FileInput | None = ...,
     preview: bool = False,
 ) -&gt; ConverterShpImportResult
+
+await client.converter.shp_import.submit(
+    *,
+    file: FileInput,
+    file_shx: FileInput,
+    file_dbf: FileInput,
+    target: ConverterShpImportTarget,
+    file_prj: FileInput | None = ...,
+    file_cpg: FileInput | None = ...,
+    file_sbn: FileInput | None = ...,
+    file_sbx: FileInput | None = ...,
+    file_xml: FileInput | None = ...,
+    preview: bool = False,
+) -&gt; TaskJob[ConverterShpImportResult]
 </code></pre>
 <p>Parameters:</p>
 <table>
@@ -1654,6 +1729,15 @@
     coordinate_reference_system: str = ...,
     preview: bool = False,
 ) -&gt; ConverterUbcImportResult
+
+await client.converter.ubc_import.submit(
+    *,
+    file: FileInput,
+    target: ConverterUbcImportTarget,
+    file_mod: FileInput | None = ...,
+    coordinate_reference_system: str = ...,
+    preview: bool = False,
+) -&gt; TaskJob[ConverterUbcImportResult]
 </code></pre>
 <p>Parameters:</p>
 <table>
@@ -1802,6 +1886,12 @@
     files: list[FileInput],
     preview: bool = False,
 ) -&gt; ConverterVtkImportResult
+
+await client.converter.vtk_import.submit(
+    *,
+    files: list[FileInput],
+    preview: bool = False,
+) -&gt; TaskJob[ConverterVtkImportResult]
 </code></pre>
 <p>Parameters:</p>
 <table>
@@ -1899,6 +1989,17 @@
     epsg_code: int | None = ...,
     preview: bool = False,
 ) -&gt; ConverterXyzImportResult
+
+await client.converter.xyz_import.submit(
+    *,
+    file: FileInput,
+    target: ConverterXyzImportTarget,
+    x_index: int | None = ...,
+    y_index: int | None = ...,
+    z_index: int | None = ...,
+    epsg_code: int | None = ...,
+    preview: bool = False,
+) -&gt; TaskJob[ConverterXyzImportResult]
 </code></pre>
 <p>Parameters:</p>
 <table>

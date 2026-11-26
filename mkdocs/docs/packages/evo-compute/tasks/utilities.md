@@ -2,7 +2,7 @@
 
 # Utilities Tasks
 
-Discoverable compute tasks in the `utilities` topic. Call any task below through `ComputeClient` as `await client.utilities.<task>.run(...)`, or by name via `await client.arun("utilities", "<task>", parameters)`.
+Discoverable compute tasks in the `utilities` topic. Call any task below through `ComputeClient` as `await client.utilities.<task>.run(...)` (or `submit(...)` for a non-blocking `TaskJob`), or by name via `await client.arun("utilities", "<task>", parameters)` / `await client.asubmit("utilities", "<task>", parameters)`.
 
 ## Input Shorthands
 
@@ -28,6 +28,16 @@ await client.utilities.compress.run(
     compression_level: int | None = ...,
     preview: bool = False,
 ) -> UtilitiesCompressResult
+
+await client.utilities.compress.submit(
+    *,
+    files: list[FileInput],
+    destination: FileInput,
+    output_name: str = ...,
+    archive_format: Literal["zip", "zip-stored", "tar", "tar.gz", "tar.bz2", "tar.xz"] = ...,
+    compression_level: int | None = ...,
+    preview: bool = False,
+) -> TaskJob[UtilitiesCompressResult]
 ```
 
 Parameters:

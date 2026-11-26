@@ -2,7 +2,7 @@
 
 # Geostatistics Tasks
 
-Discoverable compute tasks in the `geostatistics` topic. Call any task below through `ComputeClient` as `await client.geostatistics.<task>.run(...)`, or by name via `await client.arun("geostatistics", "<task>", parameters)`.
+Discoverable compute tasks in the `geostatistics` topic. Call any task below through `ComputeClient` as `await client.geostatistics.<task>.run(...)` (or `submit(...)` for a non-blocking `TaskJob`), or by name via `await client.arun("geostatistics", "<task>", parameters)` / `await client.asubmit("geostatistics", "<task>", parameters)`.
 
 ## Input Shorthands
 
@@ -30,6 +30,15 @@ await client.geostatistics.break_ties.run(
     seed: int = ...,
     preview: bool = False,
 ) -> GeostatisticsBreakTiesResult
+
+await client.geostatistics.break_ties.submit(
+    *,
+    source: GeostatisticsBreakTiesSource | AnyTypedAttribute,
+    target: GeostatisticsBreakTiesTarget | AnyTypedAttribute,
+    neighborhood: GeostatisticsBreakTiesBreakTiesSearch | SearchNeighborhood,
+    seed: int = ...,
+    preview: bool = False,
+) -> TaskJob[GeostatisticsBreakTiesResult]
 ```
 
 Parameters:
@@ -170,6 +179,24 @@ await client.geostatistics.conditional_turning_bands.run(
     random_seed: int = ...,
     preview: bool = False,
 ) -> GeostatisticsConditionalTurningBandsResult
+
+await client.geostatistics.conditional_turning_bands.submit(
+    *,
+    source: ObjectInput,
+    source_attribute: AttributeInput,
+    target: ObjectInput,
+    neighborhood: GeostatisticsConditionalTurningBandsNeighborhood | SearchNeighborhood,
+    distribution: ObjectInput,
+    variogram_model: ObjectInput,
+    block_discretization: GeostatisticsConditionalTurningBandsBlockDiscretization,
+    filter: GeostatisticsConditionalTurningBandsFilter | None = ...,
+    source_filter: GeostatisticsConditionalTurningBandsSourceFilter | None = ...,
+    kriging_method: Literal["simple", "ordinary"] = ...,
+    number_of_lines: int = ...,
+    realizations: int = ...,
+    random_seed: int = ...,
+    preview: bool = False,
+) -> TaskJob[GeostatisticsConditionalTurningBandsResult]
 ```
 
 Parameters:
@@ -375,6 +402,32 @@ await client.geostatistics.consim.run(
     report_mean_thresholds: GeostatisticsConsimReportMeanThresholds | None = ...,
     preview: bool = False,
 ) -> GeostatisticsConsimResult
+
+await client.geostatistics.consim.submit(
+    *,
+    source_object: ObjectInput,
+    source_attribute: AttributeInput,
+    target_object: ObjectInput,
+    neighborhood: GeostatisticsConsimNeighborhood | SearchNeighborhood,
+    variogram_model: ObjectInput,
+    block_discretization: GeostatisticsConsimBlockDiscretization,
+    filter: GeostatisticsConsimFilter | None = ...,
+    source_filter: GeostatisticsConsimSourceFilter | None = ...,
+    distribution: GeostatisticsConsimContinuousDistributionParameters | None = ...,
+    kriging_method: Literal["simple", "ordinary"] = ...,
+    number_of_lines: int = ...,
+    number_of_simulations: int = ...,
+    random_seed: int = ...,
+    number_of_simulations_to_save: int = ...,
+    loss_calculation: GeostatisticsConsimLossCalculation | None = ...,
+    location_wise_quantiles: list[float] = ...,
+    probability_above_cutoff: list[float] | None = ...,
+    mean_above_cutoff: list[float] | None = ...,
+    perform_validation: bool = ...,
+    report_context: GeostatisticsConsimReportContext | None = ...,
+    report_mean_thresholds: GeostatisticsConsimReportMeanThresholds | None = ...,
+    preview: bool = False,
+) -> TaskJob[GeostatisticsConsimResult]
 ```
 
 Parameters:
@@ -823,6 +876,15 @@ await client.geostatistics.continuous_distribution.run(
     tail_extrapolation: GeostatisticsContinuousDistributionTailExtrapolation | None = ...,
     preview: bool = False,
 ) -> GeostatisticsContinuousDistributionResult
+
+await client.geostatistics.continuous_distribution.submit(
+    *,
+    source: GeostatisticsContinuousDistributionSource | AnyTypedAttribute,
+    target: GeostatisticsContinuousDistributionTarget,
+    weights: GeostatisticsContinuousDistributionWeights | None | AnyTypedAttribute = ...,
+    tail_extrapolation: GeostatisticsContinuousDistributionTailExtrapolation | None = ...,
+    preview: bool = False,
+) -> TaskJob[GeostatisticsContinuousDistributionResult]
 ```
 
 Parameters:
@@ -927,6 +989,16 @@ await client.geostatistics.declustering.run(
     power: float | None = ...,
     preview: bool = False,
 ) -> GeostatisticsDeclusteringResult
+
+await client.geostatistics.declustering.submit(
+    *,
+    source: GeostatisticsDeclusteringSource | ObjectInput,
+    grid: GeostatisticsDeclusteringGrid | ObjectInput,
+    target: GeostatisticsDeclusteringTarget | AnyTypedAttribute,
+    neighborhood: GeostatisticsDeclusteringExtendedNeighborhood | SearchNeighborhood,
+    power: float | None = ...,
+    preview: bool = False,
+) -> TaskJob[GeostatisticsDeclusteringResult]
 ```
 
 Parameters:
@@ -1071,6 +1143,14 @@ await client.geostatistics.experimental_variogram.run(
     target: GeostatisticsExperimentalVariogramTarget,
     preview: bool = False,
 ) -> GeostatisticsExperimentalVariogramResult
+
+await client.geostatistics.experimental_variogram.submit(
+    *,
+    source: GeostatisticsExperimentalVariogramSource | AnyTypedAttribute,
+    directions: list[GeostatisticsExperimentalVariogramOmnidirectionalVariogram | GeostatisticsExperimentalVariogramDirectionalVariogram | GeostatisticsExperimentalVariogramDownholeVariogram],
+    target: GeostatisticsExperimentalVariogramTarget,
+    preview: bool = False,
+) -> TaskJob[GeostatisticsExperimentalVariogramResult]
 ```
 
 Parameters:
@@ -1332,6 +1412,15 @@ await client.geostatistics.idw.run(
     power: float,
     preview: bool = False,
 ) -> GeostatisticsIdwResult
+
+await client.geostatistics.idw.submit(
+    *,
+    source: GeostatisticsIdwSource | AnyTypedAttribute,
+    target: GeostatisticsIdwTarget | AnyTypedAttribute,
+    neighborhood: GeostatisticsIdwExtendedNeighborhood | SearchNeighborhood,
+    power: float,
+    preview: bool = False,
+) -> TaskJob[GeostatisticsIdwResult]
 ```
 
 Parameters:
@@ -1544,6 +1633,14 @@ await client.geostatistics.knn.run(
     neighborhood: GeostatisticsKnnExtendedNeighborhood | SearchNeighborhood,
     preview: bool = False,
 ) -> GeostatisticsKnnResult
+
+await client.geostatistics.knn.submit(
+    *,
+    source: GeostatisticsKnnSource | AnyTypedAttribute,
+    target: GeostatisticsKnnTarget | AnyTypedAttribute,
+    neighborhood: GeostatisticsKnnExtendedNeighborhood | SearchNeighborhood,
+    preview: bool = False,
+) -> TaskJob[GeostatisticsKnnResult]
 ```
 
 Parameters:
@@ -1761,6 +1858,20 @@ await client.geostatistics.kriging.run(
     diagnostics: KrigingDiagnostics | None = None,
     preview: bool = False,
 ) -> KrigingResult
+
+await client.geostatistics.kriging.submit(
+    *,
+    source: Source | Attribute | BlockModelAttribute,
+    target: Target | Attribute | PendingAttribute | BlockModelAttribute | BlockModelPendingAttribute,
+    variogram: ObjectInput,
+    neighborhood: SearchNeighborhood,
+    kriging_method: SimpleKriging | OrdinaryKriging | None = None,
+    source_filter: Filter | None = None,
+    target_filter: Filter | None = None,
+    block_discretization: BlockDiscretization | None = None,
+    diagnostics: KrigingDiagnostics | None = None,
+    preview: bool = False,
+) -> TaskJob[KrigingResult]
 ```
 
 Parameters:
@@ -1808,6 +1919,17 @@ await client.geostatistics.location_wise.run(
     mean_above_cutoff: GeostatisticsLocationWiseMeanAboveCutoff | None = ...,
     preview: bool = False,
 ) -> GeostatisticsLocationWiseResult
+
+await client.geostatistics.location_wise.submit(
+    *,
+    source: GeostatisticsLocationWiseSource | AnyTypedAttribute,
+    target: GeostatisticsLocationWiseTarget | ObjectInput,
+    summary: bool | None = ...,
+    quantiles: list[float] | None = ...,
+    probability_above_cutoff: GeostatisticsLocationWiseProbabilityAboveCutoff | None = ...,
+    mean_above_cutoff: GeostatisticsLocationWiseMeanAboveCutoff | None = ...,
+    preview: bool = False,
+) -> TaskJob[GeostatisticsLocationWiseResult]
 ```
 
 Parameters:
@@ -1903,6 +2025,18 @@ await client.geostatistics.loss_calculation.run(
     metal_recovery_fraction: float,
     preview: bool = False,
 ) -> GeostatisticsLossCalculationResult
+
+await client.geostatistics.loss_calculation.submit(
+    *,
+    source: GeostatisticsLossCalculationSource | AnyTypedAttribute,
+    target: GeostatisticsLossCalculationTarget | AnyTypedAttribute,
+    material_categories: list[GeostatisticsLossCalculationMaterialCategories],
+    processing_cost: float,
+    mining_waste_cost: float,
+    mining_ore_cost: float,
+    metal_recovery_fraction: float,
+    preview: bool = False,
+) -> TaskJob[GeostatisticsLossCalculationResult]
 ```
 
 Parameters:
@@ -2006,6 +2140,15 @@ await client.geostatistics.normal_score.run(
     target: GeostatisticsNormalScoreTarget | AnyTypedAttribute,
     preview: bool = False,
 ) -> GeostatisticsNormalScoreResult
+
+await client.geostatistics.normal_score.submit(
+    *,
+    method: Literal["forward", "backward"],
+    source: GeostatisticsNormalScoreSource | AnyTypedAttribute,
+    distribution: ObjectInput,
+    target: GeostatisticsNormalScoreTarget | AnyTypedAttribute,
+    preview: bool = False,
+) -> TaskJob[GeostatisticsNormalScoreResult]
 ```
 
 Parameters:
@@ -2098,6 +2241,18 @@ await client.geostatistics.profit_calculation.run(
     metal_recovery_fraction: float,
     preview: bool = False,
 ) -> GeostatisticsProfitCalculationResult
+
+await client.geostatistics.profit_calculation.submit(
+    *,
+    source: GeostatisticsProfitCalculationSource | AnyTypedAttribute,
+    target: GeostatisticsProfitCalculationTarget | AnyTypedAttribute,
+    material_categories: list[GeostatisticsProfitCalculationMaterialCategories],
+    processing_cost: float,
+    mining_waste_cost: float,
+    mining_ore_cost: float,
+    metal_recovery_fraction: float,
+    preview: bool = False,
+) -> TaskJob[GeostatisticsProfitCalculationResult]
 ```
 
 Parameters:
@@ -2215,6 +2370,29 @@ await client.geostatistics.simulation_report.run(
     report_mean_thresholds: GeostatisticsSimulationReportReportMeanThresholds | None = ...,
     preview: bool = False,
 ) -> GeostatisticsSimulationReportResult
+
+await client.geostatistics.simulation_report.submit(
+    *,
+    simulation_source: ObjectInput,
+    source_attribute: AttributeInput,
+    simulation_target: ObjectInput,
+    point_simulations: AttributeInput,
+    point_simulations_normal_score: AttributeInput,
+    block_simulations: AttributeInput,
+    block_simulations_normal_score: AttributeInput,
+    variogram_model: ObjectInput,
+    neighborhood: GeostatisticsSimulationReportNeighborhood | SearchNeighborhood,
+    block_discretization: GeostatisticsSimulationReportBlockDiscretization,
+    number_of_simulations: int,
+    distribution: GeostatisticsSimulationReportContinuousDistributionParameters | None = ...,
+    kriging_method: Literal["simple", "ordinary"] = ...,
+    number_of_lines: int = ...,
+    random_seed: int = ...,
+    material: GeostatisticsSimulationReportMaterial | None = ...,
+    report_context: GeostatisticsSimulationReportReportContext | None = ...,
+    report_mean_thresholds: GeostatisticsSimulationReportReportMeanThresholds | None = ...,
+    preview: bool = False,
+) -> TaskJob[GeostatisticsSimulationReportResult]
 ```
 
 Parameters:

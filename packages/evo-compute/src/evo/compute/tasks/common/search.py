@@ -138,7 +138,10 @@ def _validate_ellipsoid(value: Any) -> Ellipsoid:
 
 
 def _serialize_ellipsoid(ellipsoid: Ellipsoid) -> dict[str, Any]:
-    return ellipsoid.to_dict()
+    serialized = ellipsoid.to_dict()
+    # Default rotations use integer zeros; keep wire round-trips numerically stable.
+    serialized["rotation"] = {name: float(value) for name, value in serialized["rotation"].items()}
+    return serialized
 
 
 class SearchNeighborhood(BaseModel):

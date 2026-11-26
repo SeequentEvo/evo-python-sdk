@@ -15,16 +15,18 @@
 #
 # The runtime is always live, so tasks published after the snapshot still run --
 # they are simply not statically known until the snapshot is refreshed. Use
-# `ComputeClient.arun(topic, task, parameters)` to reach them.
+# `ComputeClient.arun(topic, task, parameters)` or `asubmit(...)` to reach them.
 
 from typing import Any, Literal, Protocol
 from uuid import UUID
 
 from evo.common import IContext
+from evo.common.interfaces import IFeedback
 from evo.objects import ObjectMetadata, ObjectReference
 from evo.objects.typed import BaseObject, DownloadedObject
 from typing_extensions import NotRequired, TypedDict
 
+from .jobs import TaskJob
 from .outputs import ResultNode, TaskResult
 from .overrides.geostatistics.kriging import KrigingOverride as _GeostatisticsKriging
 from .tasks.common.search import SearchNeighborhood
@@ -4199,6 +4201,19 @@ class _ConverterDetectConverter:
         files: list[FileInput],
         preview: bool = False,
     ) -> ConverterDetectConverterResult:
+        """
+        Accepts one or more file references, inspects each file's extension, and returns which converter task(s) and geoscience object schema(s) are available for importing each file.
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        files: list[FileInput],
+        preview: bool = False,
+    ) -> TaskJob[ConverterDetectConverterResult]:
         """Accepts one or more file references, inspects each file's extension, and returns which converter task(s) and geoscience object schema(s) are available for importing each file."""
         ...
 
@@ -4213,6 +4228,21 @@ class _ConverterErsImport:
         target: ConverterErsImportTarget,
         preview: bool = False,
     ) -> ConverterErsImportResult:
+        """
+        Import ER Mapper Raster (.ers) files into Evo as Regular-2D geoscience objects.
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        file: FileInput,
+        file_data: FileInput,
+        target: ConverterErsImportTarget,
+        preview: bool = False,
+    ) -> TaskJob[ConverterErsImportResult]:
         """Import ER Mapper Raster (.ers) files into Evo as Regular-2D geoscience objects."""
         ...
 
@@ -4227,6 +4257,21 @@ class _ConverterGeosoftGridImport:
         file_gi: FileInput | None = ...,
         preview: bool = False,
     ) -> ConverterGeosoftGridImportResult:
+        """
+        Import Geosoft Grid (.grd/.grd.gi) files into Evo as Regular-2D geoscience objects.
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        file: FileInput,
+        target: ConverterGeosoftGridImportTarget,
+        file_gi: FileInput | None = ...,
+        preview: bool = False,
+    ) -> TaskJob[ConverterGeosoftGridImportResult]:
         """Import Geosoft Grid (.grd/.grd.gi) files into Evo as Regular-2D geoscience objects."""
         ...
 
@@ -4240,6 +4285,20 @@ class _ConverterGeosoftSurfaceImport:
         target: ConverterGeosoftSurfaceImportTarget,
         preview: bool = False,
     ) -> ConverterGeosoftSurfaceImportResult:
+        """
+        Import Geosoft Surface (.geosoft_surface) files into Evo as GeologicalModelMeshes geoscience objects.
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        file: FileInput,
+        target: ConverterGeosoftSurfaceImportTarget,
+        preview: bool = False,
+    ) -> TaskJob[ConverterGeosoftSurfaceImportResult]:
         """Import Geosoft Surface (.geosoft_surface) files into Evo as GeologicalModelMeshes geoscience objects."""
         ...
 
@@ -4253,6 +4312,20 @@ class _ConverterGeosoftVoxelImport:
         target: ConverterGeosoftVoxelImportTarget,
         preview: bool = False,
     ) -> ConverterGeosoftVoxelImportResult:
+        """
+        Import Geosoft Voxel (.geosoft_voxel) files into Evo as either Regular-3D or Tensor-3D geoscience objects.
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        file: FileInput,
+        target: ConverterGeosoftVoxelImportTarget,
+        preview: bool = False,
+    ) -> TaskJob[ConverterGeosoftVoxelImportResult]:
         """Import Geosoft Voxel (.geosoft_voxel) files into Evo as either Regular-3D or Tensor-3D geoscience objects."""
         ...
 
@@ -4269,6 +4342,23 @@ class _ConverterImageImport:
         cell_size: list[float] | None = ...,
         preview: bool = False,
     ) -> ConverterImageImportResult:
+        """
+        Import image files into Evo as Regular-2D geoscience objects.
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        file: FileInput,
+        target: ConverterImageImportTarget,
+        coordinate_reference_system: str = ...,
+        origin: list[float] | None = ...,
+        cell_size: list[float] | None = ...,
+        preview: bool = False,
+    ) -> TaskJob[ConverterImageImportResult]:
         """Import image files into Evo as Regular-2D geoscience objects."""
         ...
 
@@ -4282,6 +4372,20 @@ class _ConverterKmlImport:
         target: ConverterKmlImportTarget,
         preview: bool = False,
     ) -> ConverterKmlImportResult:
+        """
+        Task to import KML/KMZ files into Evo as Pointset and LineSegments geoscience objects.
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        file: FileInput,
+        target: ConverterKmlImportTarget,
+        preview: bool = False,
+    ) -> TaskJob[ConverterKmlImportResult]:
         """Task to import KML/KMZ files into Evo as Pointset and LineSegments geoscience objects."""
         ...
 
@@ -4296,6 +4400,21 @@ class _ConverterObjImport:
         coordinate_reference_system: str | None = ...,
         preview: bool = False,
     ) -> ConverterObjImportResult:
+        """
+        Import OBJ (Wavefront) files into Evo as Triangle Mesh geoscience objects. Supports triangles, quads (auto-triangulated), and multiple objects within a single file.
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        file: FileInput,
+        target: ConverterObjImportTarget,
+        coordinate_reference_system: str | None = ...,
+        preview: bool = False,
+    ) -> TaskJob[ConverterObjImportResult]:
         """Import OBJ (Wavefront) files into Evo as Triangle Mesh geoscience objects. Supports triangles, quads (auto-triangulated), and multiple objects within a single file."""
         ...
 
@@ -4316,6 +4435,27 @@ class _ConverterShpImport:
         file_xml: FileInput | None = ...,
         preview: bool = False,
     ) -> ConverterShpImportResult:
+        """
+        Task to import SHP files into Evo as Triangle Mesh geoscience objects.
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        file: FileInput,
+        file_shx: FileInput,
+        file_dbf: FileInput,
+        target: ConverterShpImportTarget,
+        file_prj: FileInput | None = ...,
+        file_cpg: FileInput | None = ...,
+        file_sbn: FileInput | None = ...,
+        file_sbx: FileInput | None = ...,
+        file_xml: FileInput | None = ...,
+        preview: bool = False,
+    ) -> TaskJob[ConverterShpImportResult]:
         """Task to import SHP files into Evo as Triangle Mesh geoscience objects."""
         ...
 
@@ -4331,6 +4471,22 @@ class _ConverterUbcImport:
         coordinate_reference_system: str = ...,
         preview: bool = False,
     ) -> ConverterUbcImportResult:
+        """
+        Task to import UBC Grids into Evo as Tensor-3D geoscience objects.
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        file: FileInput,
+        target: ConverterUbcImportTarget,
+        file_mod: FileInput | None = ...,
+        coordinate_reference_system: str = ...,
+        preview: bool = False,
+    ) -> TaskJob[ConverterUbcImportResult]:
         """Task to import UBC Grids into Evo as Tensor-3D geoscience objects."""
         ...
 
@@ -4343,6 +4499,19 @@ class _ConverterVtkImport:
         files: list[FileInput],
         preview: bool = False,
     ) -> ConverterVtkImportResult:
+        """
+        VTK Import compute task
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        files: list[FileInput],
+        preview: bool = False,
+    ) -> TaskJob[ConverterVtkImportResult]:
         """VTK Import compute task"""
         ...
 
@@ -4360,6 +4529,24 @@ class _ConverterXyzImport:
         epsg_code: int | None = ...,
         preview: bool = False,
     ) -> ConverterXyzImportResult:
+        """
+        Task to import XYZ files into Evo as Pointset geoscience objects.
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        file: FileInput,
+        target: ConverterXyzImportTarget,
+        x_index: int | None = ...,
+        y_index: int | None = ...,
+        z_index: int | None = ...,
+        epsg_code: int | None = ...,
+        preview: bool = False,
+    ) -> TaskJob[ConverterXyzImportResult]:
         """Task to import XYZ files into Evo as Pointset geoscience objects."""
         ...
 
@@ -4373,6 +4560,20 @@ class _CptToBoreholeCptReader:
         target_downhole_collection: CptToBoreholeCptReaderTargetDownholeCollection,
         preview: bool = False,
     ) -> CptToBoreholeCptReaderResult:
+        """
+        CPT reader task
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        cpt_file: FileInput,
+        target_downhole_collection: CptToBoreholeCptReaderTargetDownholeCollection,
+        preview: bool = False,
+    ) -> TaskJob[CptToBoreholeCptReaderResult]:
         """CPT reader task"""
         ...
 
@@ -4389,6 +4590,23 @@ class _CptToBoreholeCreateClusters:
         uncluster: bool = ...,
         preview: bool = False,
     ) -> CptToBoreholeCreateClustersResult:
+        """
+        Create clusters of related soil regions based on the stratification performed by the stratify task.
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        downhole_collection: ObjectInput,
+        number_of_clusters: int | None = ...,
+        features_option: Literal["qtAndRf", "QtnAndFr"] = ...,
+        hole_ids: list[str] | None = ...,
+        uncluster: bool = ...,
+        preview: bool = False,
+    ) -> TaskJob[CptToBoreholeCreateClustersResult]:
         """Create clusters of related soil regions based on the stratification performed by the stratify task."""
         ...
 
@@ -4405,6 +4623,23 @@ class _CptToBoreholePublish:
         cluster_metadata: list[CptToBoreholePublishClusterMetadata] | None = ...,
         preview: bool = False,
     ) -> CptToBoreholePublishResult:
+        """
+        Publish a finalized downhole collection as a new geoscience object for downstream consumption.
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        downhole_collection: ObjectInput,
+        target_downhole_collection: CptToBoreholePublishTargetDownholeCollection,
+        include_clusters: bool,
+        exclude_collections: list[Literal["measured_cpt_readings", "derived_cpt_readings", "geology_layers"]] = ...,
+        cluster_metadata: list[CptToBoreholePublishClusterMetadata] | None = ...,
+        preview: bool = False,
+    ) -> TaskJob[CptToBoreholePublishResult]:
         """Publish a finalized downhole collection as a new geoscience object for downstream consumption."""
         ...
 
@@ -4420,6 +4655,22 @@ class _CptToBoreholeStratify:
         execution_mode: Literal["inline", "fan_out", "auto"] = ...,
         preview: bool = False,
     ) -> CptToBoreholeStratifyResult:
+        """
+        Classifies and stratifies CPT data into geological layers based on predefined criteria and algorithms, facilitating geotechnical analysis and modeling.
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        input_downhole_collections: list[ObjectInput],
+        target_downhole_collection: CptToBoreholeStratifyTargetDownholeCollection,
+        cpt_parameters: list[CptToBoreholeStratifyPerHoleParameters] | None = ...,
+        execution_mode: Literal["inline", "fan_out", "auto"] = ...,
+        preview: bool = False,
+    ) -> TaskJob[CptToBoreholeStratifyResult]:
         """Classifies and stratifies CPT data into geological layers based on predefined criteria and algorithms, facilitating geotechnical analysis and modeling."""
         ...
 
@@ -4434,6 +4685,21 @@ class _GeologyClassifyByDomain:
         output: GeologyClassifyByDomainOutput,
         preview: bool = False,
     ) -> GeologyClassifyByDomainResult:
+        """
+        Classifies locations from a source geometry object against an ordered list of domain entries (volumes and surfaces), writing a categorical attribute back to the source object.
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        source: GeologyClassifyByDomainSource,
+        domain_entries: list[GeologyClassifyByDomainVolumeEntry | GeologyClassifyByDomainSurfaceEntry],
+        output: GeologyClassifyByDomainOutput,
+        preview: bool = False,
+    ) -> TaskJob[GeologyClassifyByDomainResult]:
         """Classifies locations from a source geometry object against an ordered list of domain entries (volumes and surfaces), writing a categorical attribute back to the source object."""
         ...
 
@@ -4450,6 +4716,23 @@ class _GeophysicsGravityTerrainCorrection:
         water_layer: GeophysicsGravityTerrainCorrectionWaterLayer | None = ...,
         preview: bool = False,
     ) -> GeophysicsGravityTerrainCorrectionResult:
+        """
+        Gravity terrain correction compute task for geophysical surveys
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        surfaces: ObjectInput,
+        observation_points: ObjectInput,
+        correction_radius: float,
+        terrain_layer: GeophysicsGravityTerrainCorrectionTerrainLayer,
+        water_layer: GeophysicsGravityTerrainCorrectionWaterLayer | None = ...,
+        preview: bool = False,
+    ) -> TaskJob[GeophysicsGravityTerrainCorrectionResult]:
         """Gravity terrain correction compute task for geophysical surveys"""
         ...
 
@@ -4464,6 +4747,21 @@ class _GeophysicsRegular2dGridToTrimesh:
         settings: GeophysicsRegular2dGridToTrimeshSettings = ...,
         preview: bool = False,
     ) -> GeophysicsRegular2dGridToTrimeshResult:
+        """
+        Convert a regular 2D grid to a triangle mesh using a cell-centered or vertex-centered scalar attribute as Z values. Supports optional NaN filtering.
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        source: GeophysicsRegular2dGridToTrimeshSourceInput | AnyTypedAttribute,
+        target: GeophysicsRegular2dGridToTrimeshTarget,
+        settings: GeophysicsRegular2dGridToTrimeshSettings = ...,
+        preview: bool = False,
+    ) -> TaskJob[GeophysicsRegular2dGridToTrimeshResult]:
         """Convert a regular 2D grid to a triangle mesh using a cell-centered or vertex-centered scalar attribute as Z values. Supports optional NaN filtering."""
         ...
 
@@ -4479,6 +4777,22 @@ class _GeostatisticsBreakTies:
         seed: int = ...,
         preview: bool = False,
     ) -> GeostatisticsBreakTiesResult:
+        """
+        For more information, please read the <a href='/docs/guides/geostatistics-tasks/tasks/break-ties'>guide</a>
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        source: GeostatisticsBreakTiesSource | AnyTypedAttribute,
+        target: GeostatisticsBreakTiesTarget | AnyTypedAttribute,
+        neighborhood: GeostatisticsBreakTiesBreakTiesSearch | SearchNeighborhood,
+        seed: int = ...,
+        preview: bool = False,
+    ) -> TaskJob[GeostatisticsBreakTiesResult]:
         """For more information, please read the <a href='/docs/guides/geostatistics-tasks/tasks/break-ties'>guide</a>"""
         ...
 
@@ -4503,6 +4817,31 @@ class _GeostatisticsConditionalTurningBands:
         random_seed: int = ...,
         preview: bool = False,
     ) -> GeostatisticsConditionalTurningBandsResult:
+        """
+        Runs the turning band simulator using an existing continuous distribution. For more information, please read the <a href='/docs/guides/geostatistics-tasks/tasks/conditional-turning-bands'>guide</a>
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        source: ObjectInput,
+        source_attribute: AttributeInput,
+        target: ObjectInput,
+        neighborhood: GeostatisticsConditionalTurningBandsNeighborhood | SearchNeighborhood,
+        distribution: ObjectInput,
+        variogram_model: ObjectInput,
+        block_discretization: GeostatisticsConditionalTurningBandsBlockDiscretization,
+        filter: GeostatisticsConditionalTurningBandsFilter | None = ...,
+        source_filter: GeostatisticsConditionalTurningBandsSourceFilter | None = ...,
+        kriging_method: Literal["simple", "ordinary"] = ...,
+        number_of_lines: int = ...,
+        realizations: int = ...,
+        random_seed: int = ...,
+        preview: bool = False,
+    ) -> TaskJob[GeostatisticsConditionalTurningBandsResult]:
         """Runs the turning band simulator using an existing continuous distribution. For more information, please read the <a href='/docs/guides/geostatistics-tasks/tasks/conditional-turning-bands'>guide</a>"""
         ...
 
@@ -4535,6 +4874,39 @@ class _GeostatisticsConsim:
         report_mean_thresholds: GeostatisticsConsimReportMeanThresholds | None = ...,
         preview: bool = False,
     ) -> GeostatisticsConsimResult:
+        """
+        For more information, please read the <a href='/docs/guides/geostatistics-tasks/tasks/conditional-simulation-workflow'>guide</a>
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        source_object: ObjectInput,
+        source_attribute: AttributeInput,
+        target_object: ObjectInput,
+        neighborhood: GeostatisticsConsimNeighborhood | SearchNeighborhood,
+        variogram_model: ObjectInput,
+        block_discretization: GeostatisticsConsimBlockDiscretization,
+        filter: GeostatisticsConsimFilter | None = ...,
+        source_filter: GeostatisticsConsimSourceFilter | None = ...,
+        distribution: GeostatisticsConsimContinuousDistributionParameters | None = ...,
+        kriging_method: Literal["simple", "ordinary"] = ...,
+        number_of_lines: int = ...,
+        number_of_simulations: int = ...,
+        random_seed: int = ...,
+        number_of_simulations_to_save: int = ...,
+        loss_calculation: GeostatisticsConsimLossCalculation | None = ...,
+        location_wise_quantiles: list[float] = ...,
+        probability_above_cutoff: list[float] | None = ...,
+        mean_above_cutoff: list[float] | None = ...,
+        perform_validation: bool = ...,
+        report_context: GeostatisticsConsimReportContext | None = ...,
+        report_mean_thresholds: GeostatisticsConsimReportMeanThresholds | None = ...,
+        preview: bool = False,
+    ) -> TaskJob[GeostatisticsConsimResult]:
         """For more information, please read the <a href='/docs/guides/geostatistics-tasks/tasks/conditional-simulation-workflow'>guide</a>"""
         ...
 
@@ -4550,6 +4922,22 @@ class _GeostatisticsContinuousDistribution:
         tail_extrapolation: GeostatisticsContinuousDistributionTailExtrapolation | None = ...,
         preview: bool = False,
     ) -> GeostatisticsContinuousDistributionResult:
+        """
+        For more information, please read the <a href='/docs/guides/geostatistics-tasks/tasks/continuous-distribution'>guide</a>
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        source: GeostatisticsContinuousDistributionSource | AnyTypedAttribute,
+        target: GeostatisticsContinuousDistributionTarget,
+        weights: GeostatisticsContinuousDistributionWeights | None | AnyTypedAttribute = ...,
+        tail_extrapolation: GeostatisticsContinuousDistributionTailExtrapolation | None = ...,
+        preview: bool = False,
+    ) -> TaskJob[GeostatisticsContinuousDistributionResult]:
         """For more information, please read the <a href='/docs/guides/geostatistics-tasks/tasks/continuous-distribution'>guide</a>"""
         ...
 
@@ -4566,6 +4954,23 @@ class _GeostatisticsDeclustering:
         power: float | None = ...,
         preview: bool = False,
     ) -> GeostatisticsDeclusteringResult:
+        """
+        Computes grid-based declustering weights by measuring each sample's influence on evaluation locations. Supports both KNN (arithmetic mean) and IDW (inverse-distance weighted) modes via an optional power parameter.
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        source: GeostatisticsDeclusteringSource | ObjectInput,
+        grid: GeostatisticsDeclusteringGrid | ObjectInput,
+        target: GeostatisticsDeclusteringTarget | AnyTypedAttribute,
+        neighborhood: GeostatisticsDeclusteringExtendedNeighborhood | SearchNeighborhood,
+        power: float | None = ...,
+        preview: bool = False,
+    ) -> TaskJob[GeostatisticsDeclusteringResult]:
         """Computes grid-based declustering weights by measuring each sample's influence on evaluation locations. Supports both KNN (arithmetic mean) and IDW (inverse-distance weighted) modes via an optional power parameter."""
         ...
 
@@ -4584,6 +4989,25 @@ class _GeostatisticsExperimentalVariogram:
         target: GeostatisticsExperimentalVariogramTarget,
         preview: bool = False,
     ) -> GeostatisticsExperimentalVariogramResult:
+        """
+        Computes one or more experimental (sample) variograms from a points or downhole intervals source object and writes them to a new experimental variogram object. A single call can mix omnidirectional, directional (azimuth/dip tolerance cone with optional bandwidth/bandheight) and downhole variograms, each with its own lag definition.
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        source: GeostatisticsExperimentalVariogramSource | AnyTypedAttribute,
+        directions: list[
+            GeostatisticsExperimentalVariogramOmnidirectionalVariogram
+            | GeostatisticsExperimentalVariogramDirectionalVariogram
+            | GeostatisticsExperimentalVariogramDownholeVariogram
+        ],
+        target: GeostatisticsExperimentalVariogramTarget,
+        preview: bool = False,
+    ) -> TaskJob[GeostatisticsExperimentalVariogramResult]:
         """Computes one or more experimental (sample) variograms from a points or downhole intervals source object and writes them to a new experimental variogram object. A single call can mix omnidirectional, directional (azimuth/dip tolerance cone with optional bandwidth/bandheight) and downhole variograms, each with its own lag definition."""
         ...
 
@@ -4599,6 +5023,22 @@ class _GeostatisticsIdw:
         power: float,
         preview: bool = False,
     ) -> GeostatisticsIdwResult:
+        """
+        Inverse distance weighting estimation using weighted average of nearby sample values, where weights are inversely proportional to distance raised to a specified power.
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        source: GeostatisticsIdwSource | AnyTypedAttribute,
+        target: GeostatisticsIdwTarget | AnyTypedAttribute,
+        neighborhood: GeostatisticsIdwExtendedNeighborhood | SearchNeighborhood,
+        power: float,
+        preview: bool = False,
+    ) -> TaskJob[GeostatisticsIdwResult]:
         """Inverse distance weighting estimation using weighted average of nearby sample values, where weights are inversely proportional to distance raised to a specified power."""
         ...
 
@@ -4613,6 +5053,21 @@ class _GeostatisticsKnn:
         neighborhood: GeostatisticsKnnExtendedNeighborhood | SearchNeighborhood,
         preview: bool = False,
     ) -> GeostatisticsKnnResult:
+        """
+        Nearest neighbor estimation using arithmetic mean of nearby sample values.
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        source: GeostatisticsKnnSource | AnyTypedAttribute,
+        target: GeostatisticsKnnTarget | AnyTypedAttribute,
+        neighborhood: GeostatisticsKnnExtendedNeighborhood | SearchNeighborhood,
+        preview: bool = False,
+    ) -> TaskJob[GeostatisticsKnnResult]:
         """Nearest neighbor estimation using arithmetic mean of nearby sample values."""
         ...
 
@@ -4630,6 +5085,24 @@ class _GeostatisticsLocationWise:
         mean_above_cutoff: GeostatisticsLocationWiseMeanAboveCutoff | None = ...,
         preview: bool = False,
     ) -> GeostatisticsLocationWiseResult:
+        """
+        For more information, please read the <a href='/docs/guides/geostatistics-tasks/tasks/location-wise'>guide</a>
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        source: GeostatisticsLocationWiseSource | AnyTypedAttribute,
+        target: GeostatisticsLocationWiseTarget | ObjectInput,
+        summary: bool | None = ...,
+        quantiles: list[float] | None = ...,
+        probability_above_cutoff: GeostatisticsLocationWiseProbabilityAboveCutoff | None = ...,
+        mean_above_cutoff: GeostatisticsLocationWiseMeanAboveCutoff | None = ...,
+        preview: bool = False,
+    ) -> TaskJob[GeostatisticsLocationWiseResult]:
         """For more information, please read the <a href='/docs/guides/geostatistics-tasks/tasks/location-wise'>guide</a>"""
         ...
 
@@ -4648,6 +5121,25 @@ class _GeostatisticsLossCalculation:
         metal_recovery_fraction: float,
         preview: bool = False,
     ) -> GeostatisticsLossCalculationResult:
+        """
+        Calculate loss given block model and economic parameters
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        source: GeostatisticsLossCalculationSource | AnyTypedAttribute,
+        target: GeostatisticsLossCalculationTarget | AnyTypedAttribute,
+        material_categories: list[GeostatisticsLossCalculationMaterialCategories],
+        processing_cost: float,
+        mining_waste_cost: float,
+        mining_ore_cost: float,
+        metal_recovery_fraction: float,
+        preview: bool = False,
+    ) -> TaskJob[GeostatisticsLossCalculationResult]:
         """Calculate loss given block model and economic parameters"""
         ...
 
@@ -4663,6 +5155,22 @@ class _GeostatisticsNormalScore:
         target: GeostatisticsNormalScoreTarget | AnyTypedAttribute,
         preview: bool = False,
     ) -> GeostatisticsNormalScoreResult:
+        """
+        For more information, please read the <a href='/docs/guides/geostatistics-tasks/tasks/normal-score'>guide</a>
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        method: Literal["forward", "backward"],
+        source: GeostatisticsNormalScoreSource | AnyTypedAttribute,
+        distribution: ObjectInput,
+        target: GeostatisticsNormalScoreTarget | AnyTypedAttribute,
+        preview: bool = False,
+    ) -> TaskJob[GeostatisticsNormalScoreResult]:
         """For more information, please read the <a href='/docs/guides/geostatistics-tasks/tasks/normal-score'>guide</a>"""
         ...
 
@@ -4681,6 +5189,25 @@ class _GeostatisticsProfitCalculation:
         metal_recovery_fraction: float,
         preview: bool = False,
     ) -> GeostatisticsProfitCalculationResult:
+        """
+        Calculate profit given block model and economic parameters
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        source: GeostatisticsProfitCalculationSource | AnyTypedAttribute,
+        target: GeostatisticsProfitCalculationTarget | AnyTypedAttribute,
+        material_categories: list[GeostatisticsProfitCalculationMaterialCategories],
+        processing_cost: float,
+        mining_waste_cost: float,
+        mining_ore_cost: float,
+        metal_recovery_fraction: float,
+        preview: bool = False,
+    ) -> TaskJob[GeostatisticsProfitCalculationResult]:
         """Calculate profit given block model and economic parameters"""
         ...
 
@@ -4710,6 +5237,36 @@ class _GeostatisticsSimulationReport:
         report_mean_thresholds: GeostatisticsSimulationReportReportMeanThresholds | None = ...,
         preview: bool = False,
     ) -> GeostatisticsSimulationReportResult:
+        """
+        For more information, please read the <a href='/docs/guides/geostatistics-tasks/tasks/simulation-report'>guide</a>
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        simulation_source: ObjectInput,
+        source_attribute: AttributeInput,
+        simulation_target: ObjectInput,
+        point_simulations: AttributeInput,
+        point_simulations_normal_score: AttributeInput,
+        block_simulations: AttributeInput,
+        block_simulations_normal_score: AttributeInput,
+        variogram_model: ObjectInput,
+        neighborhood: GeostatisticsSimulationReportNeighborhood | SearchNeighborhood,
+        block_discretization: GeostatisticsSimulationReportBlockDiscretization,
+        number_of_simulations: int,
+        distribution: GeostatisticsSimulationReportContinuousDistributionParameters | None = ...,
+        kriging_method: Literal["simple", "ordinary"] = ...,
+        number_of_lines: int = ...,
+        random_seed: int = ...,
+        material: GeostatisticsSimulationReportMaterial | None = ...,
+        report_context: GeostatisticsSimulationReportReportContext | None = ...,
+        report_mean_thresholds: GeostatisticsSimulationReportReportMeanThresholds | None = ...,
+        preview: bool = False,
+    ) -> TaskJob[GeostatisticsSimulationReportResult]:
         """For more information, please read the <a href='/docs/guides/geostatistics-tasks/tasks/simulation-report'>guide</a>"""
         ...
 
@@ -4729,6 +5286,26 @@ class _GeotechAddToIntersectedGeometry:
         coordinate_reference_system: str | None = ...,
         preview: bool = False,
     ) -> GeotechAddToIntersectedGeometryResult:
+        """
+        Adds one or more triangle mesh objects to an existing intersected Geological Model Meshes object.
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        source: ObjectInput,
+        meshes_to_add: list[ObjectInput],
+        target: GeotechAddToIntersectedGeometryTarget,
+        tolerance: float,
+        min_point: GeotechAddToIntersectedGeometryPoint3D = ...,
+        max_point: GeotechAddToIntersectedGeometryPoint3D2 = ...,
+        rotation_angle: float = ...,
+        coordinate_reference_system: str | None = ...,
+        preview: bool = False,
+    ) -> TaskJob[GeotechAddToIntersectedGeometryResult]:
         """Adds one or more triangle mesh objects to an existing intersected Geological Model Meshes object."""
         ...
 
@@ -4742,6 +5319,20 @@ class _GeotechCalculateMeshQualityHistogram:
         bin_width: float = ...,
         preview: bool = False,
     ) -> GeotechCalculateMeshQualityHistogramResult:
+        """
+        Calculates a normalized inverse condition number histogram for triangles in a Triangle Mesh or Geological Model Meshes object.
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        source: ObjectInput,
+        bin_width: float = ...,
+        preview: bool = False,
+    ) -> TaskJob[GeotechCalculateMeshQualityHistogramResult]:
         """Calculates a normalized inverse condition number histogram for triangles in a Triangle Mesh or Geological Model Meshes object."""
         ...
 
@@ -4754,6 +5345,19 @@ class _GeotechCheckTriangleOrientation:
         source: ObjectInput,
         preview: bool = False,
     ) -> GeotechCheckTriangleOrientationResult:
+        """
+        Identifies triangles with inconsistent normal orientation relative to their neighbors in a Triangle Mesh or Geological Model Meshes object.
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        source: ObjectInput,
+        preview: bool = False,
+    ) -> TaskJob[GeotechCheckTriangleOrientationResult]:
         """Identifies triangles with inconsistent normal orientation relative to their neighbors in a Triangle Mesh or Geological Model Meshes object."""
         ...
 
@@ -4768,6 +5372,21 @@ class _GeotechCopyGeologicalModelMeshes:
         remove_external_volumes: bool = ...,
         preview: bool = False,
     ) -> GeotechCopyGeologicalModelMeshesResult:
+        """
+        Copies an existing set of geological model meshes, optionally removing external volumes from the result.
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        source: ObjectInput,
+        target: GeotechCopyGeologicalModelMeshesTarget,
+        remove_external_volumes: bool = ...,
+        preview: bool = False,
+    ) -> TaskJob[GeotechCopyGeologicalModelMeshesResult]:
         """Copies an existing set of geological model meshes, optionally removing external volumes from the result."""
         ...
 
@@ -4783,6 +5402,22 @@ class _GeotechCreateCrossSection:
         section_dip_azimuth_degrees: float,
         preview: bool = False,
     ) -> GeotechCreateCrossSectionResult:
+        """
+        Intersects parametric volumes in a 3D Design Geometry with a vertical plane defined by a section origin and dip azimuth, producing a 2D Design Geometry with polyline boundaries.
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        source: ObjectInput,
+        target: GeotechCreateCrossSectionTarget,
+        section_origin: GeotechCreateCrossSectionPoint3D,
+        section_dip_azimuth_degrees: float,
+        preview: bool = False,
+    ) -> TaskJob[GeotechCreateCrossSectionResult]:
         """Intersects parametric volumes in a 3D Design Geometry with a vertical plane defined by a section origin and dip azimuth, producing a 2D Design Geometry with polyline boundaries."""
         ...
 
@@ -4796,6 +5431,20 @@ class _GeotechCreateGeologicalModelMeshes:
         target: GeotechCreateGeologicalModelMeshesTarget,
         preview: bool = False,
     ) -> GeotechCreateGeologicalModelMeshesResult:
+        """
+        Decomposes an intersected mesh or existing GMM into per-volume geological model meshes, optionally removing the top (external) volume.
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        source: ObjectInput,
+        target: GeotechCreateGeologicalModelMeshesTarget,
+        preview: bool = False,
+    ) -> TaskJob[GeotechCreateGeologicalModelMeshesResult]:
         """Decomposes an intersected mesh or existing GMM into per-volume geological model meshes, optionally removing the top (external) volume."""
         ...
 
@@ -4810,6 +5459,21 @@ class _GeotechDetectDegenerateTriangles:
         cap_min_angle_degrees: float = ...,
         preview: bool = False,
     ) -> GeotechDetectDegenerateTrianglesResult:
+        """
+        Identifies needle and cap triangles in a Triangle Mesh or Geological Model Meshes object.
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        source: ObjectInput,
+        needle_threshold_ratio: float = ...,
+        cap_min_angle_degrees: float = ...,
+        preview: bool = False,
+    ) -> TaskJob[GeotechDetectDegenerateTrianglesResult]:
         """Identifies needle and cap triangles in a Triangle Mesh or Geological Model Meshes object."""
         ...
 
@@ -4822,6 +5486,19 @@ class _GeotechDetectDuplicatePoints:
         source: ObjectInput,
         preview: bool = False,
     ) -> GeotechDetectDuplicatePointsResult:
+        """
+        Identifies exact duplicate vertices in a Triangle Mesh or Geological Model Meshes object.
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        source: ObjectInput,
+        preview: bool = False,
+    ) -> TaskJob[GeotechDetectDuplicatePointsResult]:
         """Identifies exact duplicate vertices in a Triangle Mesh or Geological Model Meshes object."""
         ...
 
@@ -4834,6 +5511,19 @@ class _GeotechDetectDuplicateTriangles:
         source: ObjectInput,
         preview: bool = False,
     ) -> GeotechDetectDuplicateTrianglesResult:
+        """
+        Identifies duplicate triangles (same vertex indices regardless of order) in a Triangle Mesh or Geological Model Meshes object.
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        source: ObjectInput,
+        preview: bool = False,
+    ) -> TaskJob[GeotechDetectDuplicateTrianglesResult]:
         """Identifies duplicate triangles (same vertex indices regardless of order) in a Triangle Mesh or Geological Model Meshes object."""
         ...
 
@@ -4847,6 +5537,20 @@ class _GeotechDetectFins:
         max_area_ratio: float = ...,
         preview: bool = False,
     ) -> GeotechDetectFinsResult:
+        """
+        Identifies fin-like connected components without closed boundaries in a Triangle Mesh or Geological Model Meshes object.
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        source: ObjectInput,
+        max_area_ratio: float = ...,
+        preview: bool = False,
+    ) -> TaskJob[GeotechDetectFinsResult]:
         """Identifies fin-like connected components without closed boundaries in a Triangle Mesh or Geological Model Meshes object."""
         ...
 
@@ -4860,6 +5564,20 @@ class _GeotechDetectHoles:
         hole_size_ratio_tolerance: float = ...,
         preview: bool = False,
     ) -> GeotechDetectHolesResult:
+        """
+        Identifies holes in a Triangle Mesh or Geological Model Meshes object based on boundary edge analysis.
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        source: ObjectInput,
+        hole_size_ratio_tolerance: float = ...,
+        preview: bool = False,
+    ) -> TaskJob[GeotechDetectHolesResult]:
         """Identifies holes in a Triangle Mesh or Geological Model Meshes object based on boundary edge analysis."""
         ...
 
@@ -4872,6 +5590,19 @@ class _GeotechDetectNonManifoldEdges:
         source: ObjectInput,
         preview: bool = False,
     ) -> GeotechDetectNonManifoldEdgesResult:
+        """
+        Identifies edges shared by more than two triangles in a Triangle Mesh or Geological Model Meshes object.
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        source: ObjectInput,
+        preview: bool = False,
+    ) -> TaskJob[GeotechDetectNonManifoldEdgesResult]:
         """Identifies edges shared by more than two triangles in a Triangle Mesh or Geological Model Meshes object."""
         ...
 
@@ -4884,6 +5615,19 @@ class _GeotechDetectNonManifoldVertices:
         source: ObjectInput,
         preview: bool = False,
     ) -> GeotechDetectNonManifoldVerticesResult:
+        """
+        Identifies vertices with non-manifold topology in a Triangle Mesh or Geological Model Meshes object.
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        source: ObjectInput,
+        preview: bool = False,
+    ) -> TaskJob[GeotechDetectNonManifoldVerticesResult]:
         """Identifies vertices with non-manifold topology in a Triangle Mesh or Geological Model Meshes object."""
         ...
 
@@ -4898,6 +5642,21 @@ class _GeotechDetectNonPartitioningSurfaces:
         hole_size_ratio_tolerance: float = ...,
         preview: bool = False,
     ) -> GeotechDetectNonPartitioningSurfacesResult:
+        """
+        Identifies non-partitioning surfaces that are neither fins nor surfaces with holes in a Triangle Mesh or Geological Model Meshes object.
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        source: ObjectInput,
+        max_area_ratio: float = ...,
+        hole_size_ratio_tolerance: float = ...,
+        preview: bool = False,
+    ) -> TaskJob[GeotechDetectNonPartitioningSurfacesResult]:
         """Identifies non-partitioning surfaces that are neither fins nor surfaces with holes in a Triangle Mesh or Geological Model Meshes object."""
         ...
 
@@ -4911,6 +5670,20 @@ class _GeotechDetectSelfIntersections:
         tolerance: float = ...,
         preview: bool = False,
     ) -> GeotechDetectSelfIntersectionsResult:
+        """
+        Identifies self-intersecting triangles in a Triangle Mesh or Geological Model Meshes object.
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        source: ObjectInput,
+        tolerance: float = ...,
+        preview: bool = False,
+    ) -> TaskJob[GeotechDetectSelfIntersectionsResult]:
         """Identifies self-intersecting triangles in a Triangle Mesh or Geological Model Meshes object."""
         ...
 
@@ -4926,6 +5699,22 @@ class _GeotechFillHoles:
         fill_mode_selection: Literal["Fill", "FillAndRefine", "FillRefineAndFair"],
         preview: bool = False,
     ) -> GeotechFillHolesResult:
+        """
+        Fills holes in the triangle mesh of a GMM object using specified edge identifiers and a configurable fill mode strategy.
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        source: ObjectInput,
+        target: GeotechFillHolesTarget,
+        edges: list[list[int]],
+        fill_mode_selection: Literal["Fill", "FillAndRefine", "FillRefineAndFair"],
+        preview: bool = False,
+    ) -> TaskJob[GeotechFillHolesResult]:
         """Fills holes in the triangle mesh of a GMM object using specified edge identifiers and a configurable fill mode strategy."""
         ...
 
@@ -4940,6 +5729,21 @@ class _GeotechFixSelfIntersections:
         intersect_settings: GeotechFixSelfIntersectionsIntersectSettings,
         preview: bool = False,
     ) -> GeotechFixSelfIntersectionsResult:
+        """
+        Fixes self-intersections in the triangle mesh of a GMM object using configurable intersection detection settings.
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        source: ObjectInput,
+        target: GeotechFixSelfIntersectionsTarget,
+        intersect_settings: GeotechFixSelfIntersectionsIntersectSettings,
+        preview: bool = False,
+    ) -> TaskJob[GeotechFixSelfIntersectionsResult]:
         """Fixes self-intersections in the triangle mesh of a GMM object using configurable intersection detection settings."""
         ...
 
@@ -4956,6 +5760,23 @@ class _GeotechInitAggregateGeomGmm:
         coordinate_reference_system: str | None = ...,
         preview: bool = False,
     ) -> GeotechInitAggregateGeomGmmResult:
+        """
+        Creates a rotated bounding box as a Geological Model Meshes object, used as the initial intersected geometry when creating a model.
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        target: GeotechInitAggregateGeomGmmTarget,
+        min_point: GeotechInitAggregateGeomGmmPoint3D,
+        max_point: GeotechInitAggregateGeomGmmPoint3D2,
+        rotation_angle: float = ...,
+        coordinate_reference_system: str | None = ...,
+        preview: bool = False,
+    ) -> TaskJob[GeotechInitAggregateGeomGmmResult]:
         """Creates a rotated bounding box as a Geological Model Meshes object, used as the initial intersected geometry when creating a model."""
         ...
 
@@ -4972,6 +5793,23 @@ class _GeotechLocalRemesh:
         radius: float = ...,
         preview: bool = False,
     ) -> GeotechLocalRemeshResult:
+        """
+        Locally remeshes the region around selected seed triangles in a Geological Model Meshes object using configurable remeshing parameters and radius-based region growth.
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        source: ObjectInput,
+        target: GeotechLocalRemeshTarget,
+        seed_triangle_indices: list[int],
+        remesh_settings: GeotechLocalRemeshRemeshSettings = ...,
+        radius: float = ...,
+        preview: bool = False,
+    ) -> TaskJob[GeotechLocalRemeshResult]:
         """Locally remeshes the region around selected seed triangles in a Geological Model Meshes object using configurable remeshing parameters and radius-based region growth."""
         ...
 
@@ -4994,6 +5832,29 @@ class _GeotechMakeGmmIntoIntersectedGeometry:
         remesh_settings: GeotechMakeGmmIntoIntersectedGeometryRemeshSettings = ...,
         preview: bool = False,
     ) -> GeotechMakeGmmIntoIntersectedGeometryResult:
+        """
+        Clips a Geological Model Meshes object and processes it to create an intersected geometry mesh.
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        source: ObjectInput,
+        target: GeotechMakeGmmIntoIntersectedGeometryTarget,
+        clip_tolerance: float,
+        min_point: GeotechMakeGmmIntoIntersectedGeometryPoint3D = ...,
+        max_point: GeotechMakeGmmIntoIntersectedGeometryPoint3D2 = ...,
+        rotation_angle: float = ...,
+        collapse_settings: GeotechMakeGmmIntoIntersectedGeometryCollapseOverlapsSettings = ...,
+        attempt_conformalization: bool = ...,
+        attempt_auto_fix_on_failure: bool = ...,
+        intersection_tolerance_for_auto_fix: float = ...,
+        remesh_settings: GeotechMakeGmmIntoIntersectedGeometryRemeshSettings = ...,
+        preview: bool = False,
+    ) -> TaskJob[GeotechMakeGmmIntoIntersectedGeometryResult]:
         """Clips a Geological Model Meshes object and processes it to create an intersected geometry mesh."""
         ...
 
@@ -5011,6 +5872,24 @@ class _GeotechMakeIntoModelInput:
         tolerance: float = ...,
         preview: bool = False,
     ) -> GeotechMakeIntoModelInputResult:
+        """
+        Clips a triangle mesh loosely to the specified bounds, merges duplicate points, and translates the result so it can be used as model input.
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        source: ObjectInput,
+        target: GeotechMakeIntoModelInputTarget,
+        min_point: GeotechMakeIntoModelInputMinPoint = ...,
+        max_point: GeotechMakeIntoModelInputMaxPoint = ...,
+        rotation_angle: float = ...,
+        tolerance: float = ...,
+        preview: bool = False,
+    ) -> TaskJob[GeotechMakeIntoModelInputResult]:
         """Clips a triangle mesh loosely to the specified bounds, merges duplicate points, and translates the result so it can be used as model input."""
         ...
 
@@ -5025,6 +5904,21 @@ class _GeotechMarkVolumesForRemoval:
         settings: GeotechMarkVolumesForRemovalSettings,
         preview: bool = False,
     ) -> GeotechMarkVolumesForRemovalResult:
+        """
+        Marks specified volumes in a Geological Model Meshes for removal by setting their material to external, or clears the marking.
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        source: ObjectInput,
+        target: GeotechMarkVolumesForRemovalTarget,
+        settings: GeotechMarkVolumesForRemovalSettings,
+        preview: bool = False,
+    ) -> TaskJob[GeotechMarkVolumesForRemovalResult]:
         """Marks specified volumes in a Geological Model Meshes for removal by setting their material to external, or clears the marking."""
         ...
 
@@ -5129,6 +6023,111 @@ class _GeotechParameterizeVolumes:
         max_repair_iterations: int = ...,
         preview: bool = False,
     ) -> GeotechParameterizeVolumesResult:
+        """
+        Parameterizes closed volumes from Triangle Mesh or Geological Model Meshes inputs and writes the result as a Design Geometry object.
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        source: ObjectInput,
+        target: GeotechParameterizeVolumesTarget,
+        distance_unit: Literal[
+            "m",
+            "angstrom",
+            "chain",
+            "chain[BnA]",
+            "chain[BnB]",
+            "chain[Cla]",
+            "chain[Ind37]",
+            "chain[Se]",
+            "chain[SeT]",
+            "chain[US]",
+            "fathom",
+            "ft",
+            "ft[BnA]",
+            "ft[BnB]",
+            "ft[Br36]",
+            "ft[Br65]",
+            "ft[Cla]",
+            "ft[GC]",
+            "ft[Ind]",
+            "ft[Ind37]",
+            "ft[Ind62]",
+            "ft[Ind75]",
+            "ft[Se]",
+            "ft[SeT]",
+            "ft[US]",
+            "fur[US]",
+            "in",
+            "in[US]",
+            "link",
+            "link[BnA]",
+            "link[BnB]",
+            "link[Cla]",
+            "link[Se]",
+            "link[SeT]",
+            "link[US]",
+            "m[Ger]",
+            "mi",
+            "mi[naut]",
+            "mi[nautUK]",
+            "mi[US]",
+            "mil",
+            "rod[US]",
+            "yd",
+            "yd[BnA]",
+            "yd[BnB]",
+            "yd[Cla]",
+            "yd[Ind]",
+            "yd[Ind37]",
+            "yd[Ind62]",
+            "yd[Ind75]",
+            "yd[Se]",
+            "yd[SeT]",
+            "yd[US]",
+            "m3/m2",
+            "0.1 ft",
+            "0.1 ft[US]",
+            "0.1 in",
+            "0.1 yd",
+            "1/16 in",
+            "1/2 ft",
+            "1/32 in",
+            "1/64 in",
+            "10 ft",
+            "10 in",
+            "10 km",
+            "100 ft",
+            "100 km",
+            "1000 ft",
+            "30 ft",
+            "30 m",
+            "1E6 bbl/acre",
+            "bbl/acre",
+            "ft3/ft2",
+            "cm",
+            "dam",
+            "dm",
+            "Em",
+            "fm",
+            "Gm",
+            "hm",
+            "km",
+            "Mm",
+            "mm",
+            "nm",
+            "pm",
+            "Tm",
+            "um",
+        ],
+        include_hard_edges: bool = ...,
+        max_repair_iterations: int = ...,
+        preview: bool = False,
+    ) -> TaskJob[GeotechParameterizeVolumesResult]:
         """Parameterizes closed volumes from Triangle Mesh or Geological Model Meshes inputs and writes the result as a Design Geometry object."""
         ...
 
@@ -5153,6 +6152,31 @@ class _GeotechRemesh:
         relax_chunk_interfaces: bool = ...,
         preview: bool = False,
     ) -> GeotechRemeshResult:
+        """
+        Remeshes the full Geological Model Meshes object using configurable remeshing parameters to improve triangle quality while preserving the model structure.
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        source: ObjectInput,
+        target: GeotechRemeshTarget,
+        patch_angle_tolerance: float = ...,
+        max_chordal_error: float = ...,
+        strain_tolerance: float = ...,
+        is_closed: bool = ...,
+        initial_cleanup: bool = ...,
+        line_proximity_detection: bool = ...,
+        optimize: bool = ...,
+        shape_quality_weight: float = ...,
+        target_h: float = ...,
+        regularize_mode: bool = ...,
+        relax_chunk_interfaces: bool = ...,
+        preview: bool = False,
+    ) -> TaskJob[GeotechRemeshResult]:
         """Remeshes the full Geological Model Meshes object using configurable remeshing parameters to improve triangle quality while preserving the model structure."""
         ...
 
@@ -5167,6 +6191,21 @@ class _GeotechRemoveTriangles:
         triangle_indices: list[int],
         preview: bool = False,
     ) -> GeotechRemoveTrianglesResult:
+        """
+        Removes the selected triangle indices from a Geological Model Meshes object and uploads the updated mesh as a new object.
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        source: ObjectInput,
+        target: GeotechRemoveTrianglesTarget,
+        triangle_indices: list[int],
+        preview: bool = False,
+    ) -> TaskJob[GeotechRemoveTrianglesResult]:
         """Removes the selected triangle indices from a Geological Model Meshes object and uploads the updated mesh as a new object."""
         ...
 
@@ -5184,6 +6223,24 @@ class _GeotechSubsumeEmbeddedVolumeInGmm:
         | GeotechSubsumeEmbeddedVolumeInGmmLargestNeighbouringContactAreaTargetSelection,
         preview: bool = False,
     ) -> GeotechSubsumeEmbeddedVolumeInGmmResult:
+        """
+        Merges a specified source embedded volume into a target volume in a GMM, either by explicit index or by automatic selection strategy.
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        source: ObjectInput,
+        target: GeotechSubsumeEmbeddedVolumeInGmmTarget,
+        subsume_source: int,
+        target_selection: GeotechSubsumeEmbeddedVolumeInGmmExplicitTargetSelection
+        | GeotechSubsumeEmbeddedVolumeInGmmLargestNeighbouringVolumeTargetSelection
+        | GeotechSubsumeEmbeddedVolumeInGmmLargestNeighbouringContactAreaTargetSelection,
+        preview: bool = False,
+    ) -> TaskJob[GeotechSubsumeEmbeddedVolumeInGmmResult]:
         """Merges a specified source embedded volume into a target volume in a GMM, either by explicit index or by automatic selection strategy."""
         ...
 
@@ -5196,6 +6253,19 @@ class _GeotechValidateGmmAsIntersectedGeometry:
         source: ObjectInput,
         preview: bool = False,
     ) -> GeotechValidateGmmAsIntersectedGeometryResult:
+        """
+        Checks whether a Geological Model Meshes object is valid as intersected geometry and returns human-readable descriptions of any issues found.
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        source: ObjectInput,
+        preview: bool = False,
+    ) -> TaskJob[GeotechValidateGmmAsIntersectedGeometryResult]:
         """Checks whether a Geological Model Meshes object is valid as intersected geometry and returns human-readable descriptions of any issues found."""
         ...
 
@@ -5211,6 +6281,22 @@ class _IsosurfacingCategory:
         settings: IsosurfacingCategoryCategorySettings = ...,
         preview: bool = False,
     ) -> IsosurfacingCategoryResult:
+        """
+        Generate closed volume meshes or boundary surfaces from category attributes on 3D grids. Supports single-category extraction.
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        source: IsosurfacingCategoryCategorySourceInput | AnyTypedAttribute,
+        category: str,
+        target: IsosurfacingCategoryTarget,
+        settings: IsosurfacingCategoryCategorySettings = ...,
+        preview: bool = False,
+    ) -> TaskJob[IsosurfacingCategoryResult]:
         """Generate closed volume meshes or boundary surfaces from category attributes on 3D grids. Supports single-category extraction."""
         ...
 
@@ -5226,6 +6312,22 @@ class _IsosurfacingNumeric:
         settings: IsosurfacingNumericNumericSettings = ...,
         preview: bool = False,
     ) -> IsosurfacingNumericResult:
+        """
+        Generate an isosurface at a specified threshold value from numeric attributes on 3D grids. Supports regular, tensor, masked, block model, and unstructured hexahedral and tetrahedral grids.
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        source: IsosurfacingNumericNumericSourceInput | AnyTypedAttribute,
+        threshold: float,
+        target: IsosurfacingNumericTarget,
+        settings: IsosurfacingNumericNumericSettings = ...,
+        preview: bool = False,
+    ) -> TaskJob[IsosurfacingNumericResult]:
         """Generate an isosurface at a specified threshold value from numeric attributes on 3D grids. Supports regular, tensor, masked, block model, and unstructured hexahedral and tetrahedral grids."""
         ...
 
@@ -5249,6 +6351,30 @@ class _RbfRbfEvaluation:
         polynomial: RbfRbfEvaluationPolynomial | None = ...,
         preview: bool = False,
     ) -> RbfRbfEvaluationResult:
+        """
+        Evaluates a radial basis function (RBF) interpolant defined by centres, coefficients, and a basic function at specified target locations. Supports all turbo-rbf basic function types including aspherical, biharmonic, spherical, cubic, exponential, gaussian, multiquadric, normalized multiquadric, and triharmonic.
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        source: RbfRbfEvaluationSource,
+        basic_function: RbfRbfEvaluationAsphericalFunction
+        | RbfRbfEvaluationSphericalFunction
+        | RbfRbfEvaluationBiharmonicFunction
+        | RbfRbfEvaluationCubicFunction
+        | RbfRbfEvaluationExponentialFunction
+        | RbfRbfEvaluationGaussianFunction
+        | RbfRbfEvaluationMultiquadricFunction
+        | RbfRbfEvaluationNormalizedMultiquadricFunction
+        | RbfRbfEvaluationTriharmonicFunction,
+        target: RbfRbfEvaluationTarget | AnyTypedAttribute,
+        polynomial: RbfRbfEvaluationPolynomial | None = ...,
+        preview: bool = False,
+    ) -> TaskJob[RbfRbfEvaluationResult]:
         """Evaluates a radial basis function (RBF) interpolant defined by centres, coefficients, and a basic function at specified target locations. Supports all turbo-rbf basic function types including aspherical, biharmonic, spherical, cubic, exponential, gaussian, multiquadric, normalized multiquadric, and triharmonic."""
         ...
 
@@ -5265,13 +6391,36 @@ class _UtilitiesCompress:
         compression_level: int | None = ...,
         preview: bool = False,
     ) -> UtilitiesCompressResult:
+        """
+        Downloads a set of files referenced by File API URLs, bundles them into a single archive (ZIP or TAR with gzip/bzip2/xz compression), uploads the archive back to the File API, and returns a downloadable reference to it.
+
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(
+        self,
+        *,
+        files: list[FileInput],
+        destination: FileInput,
+        output_name: str = ...,
+        archive_format: Literal["zip", "zip-stored", "tar", "tar.gz", "tar.bz2", "tar.xz"] = ...,
+        compression_level: int | None = ...,
+        preview: bool = False,
+    ) -> TaskJob[UtilitiesCompressResult]:
         """Downloads a set of files referenced by File API URLs, bundles them into a single archive (ZIP or TAR with gzip/bzip2/xz compression), uploads the archive back to the File API, and returns a downloadable reference to it."""
         ...
 
 class _UnknownTask:
     """A task this stub does not describe. It still runs, with generic arguments."""
 
-    async def run(self, **parameters: Any) -> TaskResult: ...
+    async def run(self, **parameters: Any) -> TaskResult:
+        """
+        Progress feedback is not a ``run`` argument, so it never clashes with a task parameter.
+        Set it with ``ComputeClient(context, fb=...)``, or call ``submit`` and pass it to ``job.results(fb=...)``.
+        """
+        ...
+    async def submit(self, **parameters: Any) -> TaskJob[TaskResult]: ...
 
 class _UnknownTopic:
     """A topic this stub does not describe. Its tasks still resolve at run time."""
@@ -5404,6 +6553,7 @@ class ComputeClient:
         validate: bool = ...,
         deep_validation: bool = ...,
         check_schemas: bool | None = ...,
+        fb: IFeedback = ...,
     ) -> None: ...
     @property
     def context(self) -> IContext: ...
@@ -5417,7 +6567,24 @@ class ComputeClient:
         deep_validation: bool | None = ...,
         check_schemas: bool | None = ...,
     ) -> Any:
-        """Run any task by name, including one this stub does not know about."""
+        """
+        Run any task by name, including one this stub does not know about.
+
+        Feedback comes from the client; for one call, use ``asubmit`` and pass ``fb`` to
+        ``job.results``.
+        """
+        ...
+    async def asubmit(
+        self,
+        topic: str,
+        task: str,
+        parameters: dict[str, Any],
+        *,
+        validate: bool | None = ...,
+        deep_validation: bool | None = ...,
+        check_schemas: bool | None = ...,
+    ) -> TaskJob[Any]:
+        """Submit any task by name without waiting for its results."""
         ...
     def __dir__(self) -> list[str]: ...
     def __repr__(self) -> str: ...

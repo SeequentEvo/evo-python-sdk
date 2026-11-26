@@ -80,7 +80,7 @@
 
 <p><a href="https://github.com/SeequentEvo/evo-python-sdk/tree/main/packages/evo-compute/stubs/snapshot/utilities">GitHub source</a></p>
 <h1 id="utilities-tasks">Utilities Tasks</h1>
-<p>Discoverable compute tasks in the <code>utilities</code> topic. Call any task below through <code>ComputeClient</code> as <code>await client.utilities.&lt;task&gt;.run(...)</code>, or by name via <code>await client.arun("utilities", "&lt;task&gt;", parameters)</code>.</p>
+<p>Discoverable compute tasks in the <code>utilities</code> topic. Call any task below through <code>ComputeClient</code> as <code>await client.utilities.&lt;task&gt;.run(...)</code> (or <code>submit(...)</code> for a non-blocking <code>TaskJob</code>), or by name via <code>await client.arun("utilities", "&lt;task&gt;", parameters)</code> / <code>await client.asubmit("utilities", "&lt;task&gt;", parameters)</code>.</p>
 <h2 id="input-shorthands">Input Shorthands</h2>
 <table>
 <thead>
@@ -111,6 +111,16 @@
     compression_level: int | None = ...,
     preview: bool = False,
 ) -&gt; UtilitiesCompressResult
+
+await client.utilities.compress.submit(
+    *,
+    files: list[FileInput],
+    destination: FileInput,
+    output_name: str = ...,
+    archive_format: Literal[&quot;zip&quot;, &quot;zip-stored&quot;, &quot;tar&quot;, &quot;tar.gz&quot;, &quot;tar.bz2&quot;, &quot;tar.xz&quot;] = ...,
+    compression_level: int | None = ...,
+    preview: bool = False,
+) -&gt; TaskJob[UtilitiesCompressResult]
 </code></pre>
 <p>Parameters:</p>
 <table>

@@ -27,6 +27,7 @@ from evo.compute.tasks.geostatistics.location_wise import (
     MeanAboveCutoff,
     ProbabilityAboveCutoff,
 )
+from test_payload_parity import runner_catalogue
 
 # ---------------------------------------------------------------------------
 # Test helpers
@@ -268,18 +269,21 @@ class TestLocationWiseRunnerAsync(unittest.IsolatedAsyncioTestCase):
 
     def _make_job(self):
         job = AsyncMock()
-        job.wait_for_results.return_value = _make_result_model()
+        job.wait_for_results.return_value = _make_result_model().model_dump(mode="json")
         return job
 
     async def test_runner_submits_with_correct_topic_and_task(self):
         context = self._make_context()
         params = _params(summary=True, quantiles=[0.1, 0.5, 0.9])
 
-        with patch(
-            "evo.compute.tasks.common.runner.JobClient.submit",
-            new_callable=AsyncMock,
-            return_value=self._make_job(),
-        ) as mock_submit:
+        with (
+            runner_catalogue(LocationWiseRunner),
+            patch(
+                "evo.compute.engine.JobClient.submit",
+                new_callable=AsyncMock,
+                return_value=self._make_job(),
+            ) as mock_submit,
+        ):
             result = await LocationWiseRunner(context, params)
 
         mock_submit.assert_called_once()
@@ -292,11 +296,14 @@ class TestLocationWiseRunnerAsync(unittest.IsolatedAsyncioTestCase):
         context = self._make_context()
         params = _params(summary=True)
 
-        with patch(
-            "evo.compute.tasks.common.runner.JobClient.submit",
-            new_callable=AsyncMock,
-            return_value=self._make_job(),
-        ) as mock_submit:
+        with (
+            runner_catalogue(LocationWiseRunner),
+            patch(
+                "evo.compute.engine.JobClient.submit",
+                new_callable=AsyncMock,
+                return_value=self._make_job(),
+            ) as mock_submit,
+        ):
             await LocationWiseRunner(context, params)
 
         _, kwargs = mock_submit.call_args

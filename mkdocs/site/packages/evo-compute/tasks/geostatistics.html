@@ -80,7 +80,7 @@
 
 <p><a href="https://github.com/SeequentEvo/evo-python-sdk/tree/main/packages/evo-compute/stubs/snapshot/geostatistics">GitHub source</a></p>
 <h1 id="geostatistics-tasks">Geostatistics Tasks</h1>
-<p>Discoverable compute tasks in the <code>geostatistics</code> topic. Call any task below through <code>ComputeClient</code> as <code>await client.geostatistics.&lt;task&gt;.run(...)</code>, or by name via <code>await client.arun("geostatistics", "&lt;task&gt;", parameters)</code>.</p>
+<p>Discoverable compute tasks in the <code>geostatistics</code> topic. Call any task below through <code>ComputeClient</code> as <code>await client.geostatistics.&lt;task&gt;.run(...)</code> (or <code>submit(...)</code> for a non-blocking <code>TaskJob</code>), or by name via <code>await client.arun("geostatistics", "&lt;task&gt;", parameters)</code> / <code>await client.asubmit("geostatistics", "&lt;task&gt;", parameters)</code>.</p>
 <h2 id="input-shorthands">Input Shorthands</h2>
 <table>
 <thead>
@@ -125,6 +125,15 @@
     seed: int = ...,
     preview: bool = False,
 ) -&gt; GeostatisticsBreakTiesResult
+
+await client.geostatistics.break_ties.submit(
+    *,
+    source: GeostatisticsBreakTiesSource | AnyTypedAttribute,
+    target: GeostatisticsBreakTiesTarget | AnyTypedAttribute,
+    neighborhood: GeostatisticsBreakTiesBreakTiesSearch | SearchNeighborhood,
+    seed: int = ...,
+    preview: bool = False,
+) -&gt; TaskJob[GeostatisticsBreakTiesResult]
 </code></pre>
 <p>Parameters:</p>
 <table>
@@ -511,6 +520,24 @@ The search parameters determines which nearby points to use.</p>
     random_seed: int = ...,
     preview: bool = False,
 ) -&gt; GeostatisticsConditionalTurningBandsResult
+
+await client.geostatistics.conditional_turning_bands.submit(
+    *,
+    source: ObjectInput,
+    source_attribute: AttributeInput,
+    target: ObjectInput,
+    neighborhood: GeostatisticsConditionalTurningBandsNeighborhood | SearchNeighborhood,
+    distribution: ObjectInput,
+    variogram_model: ObjectInput,
+    block_discretization: GeostatisticsConditionalTurningBandsBlockDiscretization,
+    filter: GeostatisticsConditionalTurningBandsFilter | None = ...,
+    source_filter: GeostatisticsConditionalTurningBandsSourceFilter | None = ...,
+    kriging_method: Literal[&quot;simple&quot;, &quot;ordinary&quot;] = ...,
+    number_of_lines: int = ...,
+    realizations: int = ...,
+    random_seed: int = ...,
+    preview: bool = False,
+) -&gt; TaskJob[GeostatisticsConditionalTurningBandsResult]
 </code></pre>
 <p>Parameters:</p>
 <table>
@@ -1079,6 +1106,32 @@ Alias: anisotropy</p>
     report_mean_thresholds: GeostatisticsConsimReportMeanThresholds | None = ...,
     preview: bool = False,
 ) -&gt; GeostatisticsConsimResult
+
+await client.geostatistics.consim.submit(
+    *,
+    source_object: ObjectInput,
+    source_attribute: AttributeInput,
+    target_object: ObjectInput,
+    neighborhood: GeostatisticsConsimNeighborhood | SearchNeighborhood,
+    variogram_model: ObjectInput,
+    block_discretization: GeostatisticsConsimBlockDiscretization,
+    filter: GeostatisticsConsimFilter | None = ...,
+    source_filter: GeostatisticsConsimSourceFilter | None = ...,
+    distribution: GeostatisticsConsimContinuousDistributionParameters | None = ...,
+    kriging_method: Literal[&quot;simple&quot;, &quot;ordinary&quot;] = ...,
+    number_of_lines: int = ...,
+    number_of_simulations: int = ...,
+    random_seed: int = ...,
+    number_of_simulations_to_save: int = ...,
+    loss_calculation: GeostatisticsConsimLossCalculation | None = ...,
+    location_wise_quantiles: list[float] = ...,
+    probability_above_cutoff: list[float] | None = ...,
+    mean_above_cutoff: list[float] | None = ...,
+    perform_validation: bool = ...,
+    report_context: GeostatisticsConsimReportContext | None = ...,
+    report_mean_thresholds: GeostatisticsConsimReportMeanThresholds | None = ...,
+    preview: bool = False,
+) -&gt; TaskJob[GeostatisticsConsimResult]
 </code></pre>
 <p>Parameters:</p>
 <table>
@@ -2473,6 +2526,15 @@ Alias: anisotropy</p>
     tail_extrapolation: GeostatisticsContinuousDistributionTailExtrapolation | None = ...,
     preview: bool = False,
 ) -&gt; GeostatisticsContinuousDistributionResult
+
+await client.geostatistics.continuous_distribution.submit(
+    *,
+    source: GeostatisticsContinuousDistributionSource | AnyTypedAttribute,
+    target: GeostatisticsContinuousDistributionTarget,
+    weights: GeostatisticsContinuousDistributionWeights | None | AnyTypedAttribute = ...,
+    tail_extrapolation: GeostatisticsContinuousDistributionTailExtrapolation | None = ...,
+    preview: bool = False,
+) -&gt; TaskJob[GeostatisticsContinuousDistributionResult]
 </code></pre>
 <p>Parameters:</p>
 <table>
@@ -2761,6 +2823,16 @@ Alias: anisotropy</p>
     power: float | None = ...,
     preview: bool = False,
 ) -&gt; GeostatisticsDeclusteringResult
+
+await client.geostatistics.declustering.submit(
+    *,
+    source: GeostatisticsDeclusteringSource | ObjectInput,
+    grid: GeostatisticsDeclusteringGrid | ObjectInput,
+    target: GeostatisticsDeclusteringTarget | AnyTypedAttribute,
+    neighborhood: GeostatisticsDeclusteringExtendedNeighborhood | SearchNeighborhood,
+    power: float | None = ...,
+    preview: bool = False,
+) -&gt; TaskJob[GeostatisticsDeclusteringResult]
 </code></pre>
 <p>Parameters:</p>
 <table>
@@ -3204,6 +3276,14 @@ Alias: anisotropy</p>
     target: GeostatisticsExperimentalVariogramTarget,
     preview: bool = False,
 ) -&gt; GeostatisticsExperimentalVariogramResult
+
+await client.geostatistics.experimental_variogram.submit(
+    *,
+    source: GeostatisticsExperimentalVariogramSource | AnyTypedAttribute,
+    directions: list[GeostatisticsExperimentalVariogramOmnidirectionalVariogram | GeostatisticsExperimentalVariogramDirectionalVariogram | GeostatisticsExperimentalVariogramDownholeVariogram],
+    target: GeostatisticsExperimentalVariogramTarget,
+    preview: bool = False,
+) -&gt; TaskJob[GeostatisticsExperimentalVariogramResult]
 </code></pre>
 <p>Parameters:</p>
 <table>
@@ -4047,6 +4127,15 @@ Alias: anisotropy</p>
     power: float,
     preview: bool = False,
 ) -&gt; GeostatisticsIdwResult
+
+await client.geostatistics.idw.submit(
+    *,
+    source: GeostatisticsIdwSource | AnyTypedAttribute,
+    target: GeostatisticsIdwTarget | AnyTypedAttribute,
+    neighborhood: GeostatisticsIdwExtendedNeighborhood | SearchNeighborhood,
+    power: float,
+    preview: bool = False,
+) -&gt; TaskJob[GeostatisticsIdwResult]
 </code></pre>
 <p>Parameters:</p>
 <table>
@@ -4685,6 +4774,14 @@ Alias: anisotropy</p>
     neighborhood: GeostatisticsKnnExtendedNeighborhood | SearchNeighborhood,
     preview: bool = False,
 ) -&gt; GeostatisticsKnnResult
+
+await client.geostatistics.knn.submit(
+    *,
+    source: GeostatisticsKnnSource | AnyTypedAttribute,
+    target: GeostatisticsKnnTarget | AnyTypedAttribute,
+    neighborhood: GeostatisticsKnnExtendedNeighborhood | SearchNeighborhood,
+    preview: bool = False,
+) -&gt; TaskJob[GeostatisticsKnnResult]
 </code></pre>
 <p>Parameters:</p>
 <table>
@@ -5323,6 +5420,20 @@ Alias: anisotropy</p>
     diagnostics: KrigingDiagnostics | None = None,
     preview: bool = False,
 ) -&gt; KrigingResult
+
+await client.geostatistics.kriging.submit(
+    *,
+    source: Source | Attribute | BlockModelAttribute,
+    target: Target | Attribute | PendingAttribute | BlockModelAttribute | BlockModelPendingAttribute,
+    variogram: ObjectInput,
+    neighborhood: SearchNeighborhood,
+    kriging_method: SimpleKriging | OrdinaryKriging | None = None,
+    source_filter: Filter | None = None,
+    target_filter: Filter | None = None,
+    block_discretization: BlockDiscretization | None = None,
+    diagnostics: KrigingDiagnostics | None = None,
+    preview: bool = False,
+) -&gt; TaskJob[KrigingResult]
 </code></pre>
 <p>Parameters:</p>
 <table>
@@ -5471,6 +5582,17 @@ Alias: anisotropy</p>
     mean_above_cutoff: GeostatisticsLocationWiseMeanAboveCutoff | None = ...,
     preview: bool = False,
 ) -&gt; GeostatisticsLocationWiseResult
+
+await client.geostatistics.location_wise.submit(
+    *,
+    source: GeostatisticsLocationWiseSource | AnyTypedAttribute,
+    target: GeostatisticsLocationWiseTarget | ObjectInput,
+    summary: bool | None = ...,
+    quantiles: list[float] | None = ...,
+    probability_above_cutoff: GeostatisticsLocationWiseProbabilityAboveCutoff | None = ...,
+    mean_above_cutoff: GeostatisticsLocationWiseMeanAboveCutoff | None = ...,
+    preview: bool = False,
+) -&gt; TaskJob[GeostatisticsLocationWiseResult]
 </code></pre>
 <p>Parameters:</p>
 <table>
@@ -5723,6 +5845,18 @@ Alias: anisotropy</p>
     metal_recovery_fraction: float,
     preview: bool = False,
 ) -&gt; GeostatisticsLossCalculationResult
+
+await client.geostatistics.loss_calculation.submit(
+    *,
+    source: GeostatisticsLossCalculationSource | AnyTypedAttribute,
+    target: GeostatisticsLossCalculationTarget | AnyTypedAttribute,
+    material_categories: list[GeostatisticsLossCalculationMaterialCategories],
+    processing_cost: float,
+    mining_waste_cost: float,
+    mining_ore_cost: float,
+    metal_recovery_fraction: float,
+    preview: bool = False,
+) -&gt; TaskJob[GeostatisticsLossCalculationResult]
 </code></pre>
 <p>Parameters:</p>
 <table>
@@ -6027,6 +6161,15 @@ Each category is defined by a cutoff grade, metal price, and label.</p>
     target: GeostatisticsNormalScoreTarget | AnyTypedAttribute,
     preview: bool = False,
 ) -&gt; GeostatisticsNormalScoreResult
+
+await client.geostatistics.normal_score.submit(
+    *,
+    method: Literal[&quot;forward&quot;, &quot;backward&quot;],
+    source: GeostatisticsNormalScoreSource | AnyTypedAttribute,
+    distribution: ObjectInput,
+    target: GeostatisticsNormalScoreTarget | AnyTypedAttribute,
+    preview: bool = False,
+) -&gt; TaskJob[GeostatisticsNormalScoreResult]
 </code></pre>
 <p>Parameters:</p>
 <table>
@@ -6283,6 +6426,18 @@ Each category is defined by a cutoff grade, metal price, and label.</p>
     metal_recovery_fraction: float,
     preview: bool = False,
 ) -&gt; GeostatisticsProfitCalculationResult
+
+await client.geostatistics.profit_calculation.submit(
+    *,
+    source: GeostatisticsProfitCalculationSource | AnyTypedAttribute,
+    target: GeostatisticsProfitCalculationTarget | AnyTypedAttribute,
+    material_categories: list[GeostatisticsProfitCalculationMaterialCategories],
+    processing_cost: float,
+    mining_waste_cost: float,
+    mining_ore_cost: float,
+    metal_recovery_fraction: float,
+    preview: bool = False,
+) -&gt; TaskJob[GeostatisticsProfitCalculationResult]
 </code></pre>
 <p>Parameters:</p>
 <table>
@@ -6601,6 +6756,29 @@ Each category is defined by a cutoff grade, metal price, and label.</p>
     report_mean_thresholds: GeostatisticsSimulationReportReportMeanThresholds | None = ...,
     preview: bool = False,
 ) -&gt; GeostatisticsSimulationReportResult
+
+await client.geostatistics.simulation_report.submit(
+    *,
+    simulation_source: ObjectInput,
+    source_attribute: AttributeInput,
+    simulation_target: ObjectInput,
+    point_simulations: AttributeInput,
+    point_simulations_normal_score: AttributeInput,
+    block_simulations: AttributeInput,
+    block_simulations_normal_score: AttributeInput,
+    variogram_model: ObjectInput,
+    neighborhood: GeostatisticsSimulationReportNeighborhood | SearchNeighborhood,
+    block_discretization: GeostatisticsSimulationReportBlockDiscretization,
+    number_of_simulations: int,
+    distribution: GeostatisticsSimulationReportContinuousDistributionParameters | None = ...,
+    kriging_method: Literal[&quot;simple&quot;, &quot;ordinary&quot;] = ...,
+    number_of_lines: int = ...,
+    random_seed: int = ...,
+    material: GeostatisticsSimulationReportMaterial | None = ...,
+    report_context: GeostatisticsSimulationReportReportContext | None = ...,
+    report_mean_thresholds: GeostatisticsSimulationReportReportMeanThresholds | None = ...,
+    preview: bool = False,
+) -&gt; TaskJob[GeostatisticsSimulationReportResult]
 </code></pre>
 <p>Parameters:</p>
 <table>

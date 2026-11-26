@@ -374,7 +374,7 @@ def _permits_null(root: dict[str, Any], prop_schema: Any) -> bool:
     return Draft202012Validator(root).evolve(schema=prop_schema).is_valid(None)
 
 
-def _validate_required(spec: TaskResource, parameters: dict[str, Any], label: str) -> None:
+def _validate_required(spec: TaskResource, parameters: dict[str, Any], label: str, operation: str = "run") -> None:
     """Shallow check: every required field is supplied, and not as ``None`` unless nullable."""
     schema = spec.parameters or {}
     properties = schema.get("properties", {}) or {}
@@ -387,7 +387,7 @@ def _validate_required(spec: TaskResource, parameters: dict[str, Any], label: st
     if missing:
         errors = [f"missing required parameter {name!r}" for name in missing]
         raise ParameterValidationError(
-            f"{label}.run(): missing required parameter(s): {', '.join(missing)}",
+            f"{label}.{operation}(): missing required parameter(s): {', '.join(missing)}",
             task=label,
             errors=errors,
         )
@@ -400,6 +400,7 @@ def _warn_unknown_fields(
     label: str,
     *,
     root: dict[str, Any] | None = None,
+    operation: str = "run",
 ) -> None:
     """Check extra fields and warn only when the schema leaves their policy unspecified."""
     properties = node.get("properties")
@@ -418,7 +419,7 @@ def _warn_unknown_fields(
     location = ".".join(str(part) for part in path) or "parameters"
     if additional is False:
         message = f"{location}: unexpected parameter(s): {', '.join(repr(name) for name in unknown)}"
-        raise ParameterValidationError(f"{label}.run(): {message}", task=label, errors=[message])
+        raise ParameterValidationError(f"{label}.{operation}(): {message}", task=label, errors=[message])
     if isinstance(additional, dict):
         schema = _relax_reference_leaves(node if root is None else root)
         validator = Draft202012Validator(schema).evolve(
@@ -432,7 +433,7 @@ def _warn_unknown_fields(
             prefix = f"{location}." if path else ""
             messages = [f"{prefix}{_describe(error)}" for error in errors]
             raise ParameterValidationError(
-                f"{label}.run(): parameters do not match the task schema:\n  - " + "\n  - ".join(messages),
+                f"{label}.{operation}(): parameters do not match the task schema:\n  - " + "\n  - ".join(messages),
                 task=label,
                 errors=messages,
             )
@@ -446,7 +447,7 @@ def _warn_unknown_fields(
     )
 
 
-def _validate_deep(spec: TaskResource, parameters: dict[str, Any], label: str) -> None:
+def _validate_deep(spec: TaskResource, parameters: dict[str, Any], label: str, operation: str = "run") -> None:
     """Check the published constraints, relaxing only reference input shapes."""
     schema = _relax_reference_leaves(spec.parameters or {})
     validator = Draft202012Validator(schema)
@@ -456,7 +457,7 @@ def _validate_deep(spec: TaskResource, parameters: dict[str, Any], label: str) -
         messages = [_describe(error) for error in errors]
         detail = "\n  - ".join(messages)
         raise ParameterValidationError(
-            f"{label}.run(): parameters do not match the task schema:\n  - {detail}",
+            f"{label}.{operation}(): parameters do not match the task schema:\n  - {detail}",
             task=label,
             errors=messages,
         )
@@ -468,6 +469,7 @@ def validate_parameters(
     *,
     deep: bool = False,
     task_label: str | None = None,
+    operation: str = "run",
 ) -> None:
     """Validate a resolved parameter payload against a task's schema.
 
@@ -476,11 +478,12 @@ def validate_parameters(
     :param deep: When ``True``, check the full JSON Schema Draft 2020-12 constraints.
     :param task_label: A ``topic.task`` label for error messages; derived from ``spec``
         when omitted.
+    :param operation: The method named in error messages, such as ``run`` or ``submit``.
 
     :raises ParameterValidationError: If the payload is missing a required field or, when
         ``deep`` is set, fails schema validation.
     """
     label = task_label or _default_label(spec)
-    _validate_required(spec, parameters, label)
+    _validate_required(spec, parameters, label, operation)
     if deep:
-        _validate_deep(spec, parameters, label)
+        _validate_deep(spec, parameters, label, operation)

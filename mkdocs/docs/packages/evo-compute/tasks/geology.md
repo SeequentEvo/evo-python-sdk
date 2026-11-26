@@ -2,7 +2,7 @@
 
 # Geology Tasks
 
-Discoverable compute tasks in the `geology` topic. Call any task below through `ComputeClient` as `await client.geology.<task>.run(...)`, or by name via `await client.arun("geology", "<task>", parameters)`.
+Discoverable compute tasks in the `geology` topic. Call any task below through `ComputeClient` as `await client.geology.<task>.run(...)` (or `submit(...)` for a non-blocking `TaskJob`), or by name via `await client.arun("geology", "<task>", parameters)` / `await client.asubmit("geology", "<task>", parameters)`.
 
 ## Input Shorthands
 
@@ -27,6 +27,14 @@ await client.geology.classify_by_domain.run(
     output: GeologyClassifyByDomainOutput,
     preview: bool = False,
 ) -> GeologyClassifyByDomainResult
+
+await client.geology.classify_by_domain.submit(
+    *,
+    source: GeologyClassifyByDomainSource,
+    domain_entries: list[GeologyClassifyByDomainVolumeEntry | GeologyClassifyByDomainSurfaceEntry],
+    output: GeologyClassifyByDomainOutput,
+    preview: bool = False,
+) -> TaskJob[GeologyClassifyByDomainResult]
 ```
 
 Parameters:
