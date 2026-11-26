@@ -54,6 +54,15 @@ class TestTopicDocGen(unittest.TestCase):
         self.assertIn("#### Nested Shapes", geostats)
         self.assertIn("await node.attribute.load()", geostats)
 
+    def test_documents_custom_override_runners(self) -> None:
+        geostats = self.pages["geostatistics"]
+        self.assertIn("Custom runner: `KrigingOverride`", geostats)
+        self.assertIn("await client.geostatistics.kriging.run(", geostats)
+        self.assertIn(") -> KrigingResult", geostats)
+        self.assertIn("`source_filter`", geostats)
+        self.assertIn("`diagnostics`", geostats)
+        self.assertIn("`await result.to_dataframe()`", geostats)
+
     def test_portal_and_mdx_formatting_invariants(self) -> None:
         for topic, content in self.pages.items():
             with self.subTest(topic=topic):
