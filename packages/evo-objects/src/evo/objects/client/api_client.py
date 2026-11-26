@@ -449,7 +449,7 @@ class ObjectAPIClient(BaseAPIClient):
         :param request_timeout: Timeout setting for this request. If one number is provided, it will be the
             total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.
 
-        :return: A tuple containing the object metadata and a data model of the requested geoscience object.
+        :return: A DownloadedObject containing the metadata and access methods for the requested geoscience object.
         """
         reference = ObjectReference.new(environment=self._environment, object_path=path, version_id=version)
         return await DownloadedObject.from_reference(
@@ -477,7 +477,7 @@ class ObjectAPIClient(BaseAPIClient):
             still returned. Use `metadata.is_deleted` to check whether the downloaded object is deleted. By default,
             downloading a deleted object raises a `GoneException`.
 
-        :return: A tuple containing the object metadata and a data model of the requested geoscience object.
+        :return: A DownloadedObject containing the metadata and access methods for the requested geoscience object.
         """
         reference = ObjectReference.new(environment=self._environment, object_id=object_id, version_id=version)
         return await DownloadedObject.from_reference(
