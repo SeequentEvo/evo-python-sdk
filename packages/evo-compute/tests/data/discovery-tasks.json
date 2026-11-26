@@ -15,7 +15,9 @@
         "type": "object",
         "properties": {
           "source": {"type": "object", "reference_to": "geoscience-object"},
-          "power": {"type": ["number", "null"], "default": null}
+          "power": {"type": ["number", "null"], "default": null},
+          "method": {"type": "string", "enum": ["cell", "polygon"], "default": "cell"},
+          "options": {"default": null}
         },
         "required": ["source"]
       },

@@ -25,7 +25,7 @@ sub-packages and optional dependencies (e.g. Jupyter notebook support), or choos
 | [evo-colormaps](evo-python-sdk/evo-colormaps)                                 | <a href="https://pypi.org/project/evo-colormaps/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/evo-colormaps" /></a> | A service client to create colour mappings and associate them to geoscience data with the Colormap API.|
 | [evo-blockmodels](evo-python-sdk/evo-blockmodels)                       | <a href="https://pypi.org/project/evo-blockmodels/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/evo-blockmodels" /></a> | Typed block model interactions, reports, and an API client for managing block models in Evo. |
 | [evo-widgets](evo-python-sdk/evo-widgets)                                                                                          | <a href="https://pypi.org/project/evo-widgets/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/evo-widgets" /></a> | Widgets and presentation layer — rich HTML rendering of typed geoscience objects in Jupyter notebooks. |
-| [evo-compute](evo-python-sdk/evo-compute)                                             | <a href="https://pypi.org/project/evo-compute/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/evo-compute" /></a> | Run compute tasks (e.g. kriging estimation) via the Compute Tasks API.|
+| [evo-compute](evo-python-sdk/evo-compute)                                             | <a href="https://pypi.org/project/evo-compute/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/evo-compute" /></a> | Discover and run compute tasks via `ComputeClient`, typed task models, and `JobClient`.|
 
 ### Quick start for notebooks
 
@@ -103,5 +103,5 @@ For next steps and more information about using Evo APIs directly, see:
 * [`evo-objects`](evo-python-sdk/evo-objects/ObjectAPIClient): Geoscience Object API client
 * [`evo-colormaps`](evo-python-sdk/evo-colormaps/ColormapAPIClient): Colormap API client
 * [`evo-blockmodels`](evo-python-sdk/evo-blockmodels/BlockModelAPIClient): Block Model API client
-* [`evo-compute`](evo-python-sdk/evo-compute/JobClient): Compute Tasks API client
+* `evo-compute` ([`ComputeClient`](evo-python-sdk/evo-compute/ComputeClient), [`DiscoveryClient`](evo-python-sdk/evo-compute/DiscoveryClient), and [`JobClient`](evo-python-sdk/evo-compute/JobClient)): Compute Tasks API clients
 * [Seequent Developer Portal](https://developer.seequent.com/docs/guides/getting-started/quick-start-guide): guides, tutorials, and API references

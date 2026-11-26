@@ -39,7 +39,7 @@
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a rel="next" href="DiscoveryClient.html" class="nav-link">
+                                <a rel="next" href="ComputeClient.html" class="nav-link">
                                     Next <i class="fa fa-arrow-right"></i>
                                 </a>
                             </li>
@@ -63,7 +63,11 @@
             
             <li class="nav-item" data-bs-level="1"><a href="#evo-compute" class="nav-link">evo-compute</a>
               <ul class="nav flex-column">
-            <li class="nav-item" data-bs-level="2"><a href="#running-compute-tasks" class="nav-link">Running Compute Tasks</a>
+            <li class="nav-item" data-bs-level="2"><a href="#running-any-catalogued-task-with-computeclient" class="nav-link">Running Any Catalogued Task with ComputeClient</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#running-typed-geostatistics-tasks" class="nav-link">Running Typed Geostatistics Tasks</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -80,10 +84,32 @@
 
 <h1 id="evo-compute">evo-compute</h1>
 <p><a href="https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-compute/src/evo/compute/">GitHub source</a></p>
-<p>The <code>evo-compute</code> package provides a client for running compute tasks on Evo. Tasks are submitted to the Compute Tasks API and polled for results.
-JobClient provides low-level access to the API, while the <code>run()</code> function is a high-level interface for executing tasks with convenient result handling.</p>
-<h2 id="running-compute-tasks">Running Compute Tasks</h2>
-<p>The <code>run()</code> function is the main entry point for executing compute tasks. It supports running a single task or multiple tasks concurrently.</p>
+<p>The <code>evo-compute</code> package provides clients for discovering and running compute tasks on Evo:</p>
+<ul>
+<li><strong><code>ComputeClient</code></strong> — a discovery-driven async client (<code>client.&lt;topic&gt;.&lt;task&gt;.run(...)</code> and <code>client.arun(...)</code>) that runs any task advertised in your organization's compute catalogue without requiring a dedicated hand-written task module.</li>
+<li><strong><code>evo.compute.tasks.run()</code></strong> — typed Pydantic parameter models and result helpers for geostatistics workflows, supporting single-task and concurrent batch execution.</li>
+<li><strong><code>DiscoveryClient</code> and <code>JobClient</code></strong> — direct access to task catalogue discovery (<code>TaskResource</code>) and low-level job submission/polling.</li>
+</ul>
+<h2 id="running-any-catalogued-task-with-computeclient">Running Any Catalogued Task with <code>ComputeClient</code></h2>
+<p><code>ComputeClient</code> resolves topics, tasks, and keyword arguments live from the discovery catalogue (replacing hyphens with underscores in Python identifiers):</p>
+<pre><code class="language-python">from evo.compute import ComputeClient, DiscoveryClient
+
+# Inspect available topics and task schemas
+discovery = DiscoveryClient.from_context(manager)
+topics = await discovery.get_topics()
+
+# Run any advertised task through the dynamic namespace or by name
+client = ComputeClient(manager)
+result = await client.geostatistics.declustering.run(
+    source=...,
+    grid=...,
+    target=...,
+    neighborhood=...,
+    preview=True,
+)
+</code></pre>
+<h2 id="running-typed-geostatistics-tasks">Running Typed Geostatistics Tasks</h2>
+<p>The <code>run()</code> function executes typed task parameter models — either a single task or multiple tasks concurrently.</p>
 <h3 id="single-task">Single task</h3>
 <pre><code class="language-python">from evo.compute.tasks import run, SearchNeighborhood, Ellipsoid, EllipsoidRanges
 from evo.compute.tasks.geostatistics.kriging import KrigingParameters
