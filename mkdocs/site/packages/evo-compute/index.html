@@ -108,6 +108,7 @@ result = await client.geostatistics.declustering.run(
     preview=True,
 )
 </code></pre>
+<p>Parameters are checked against the task's published JSON Schema before submission (<code>validate=True</code> by default for required fields and nullability; pass <code>deep_validation=True</code> on <code>ComputeClient</code> or <code>arun(...)</code> for full JSON Schema Draft 2020-12 checks, raising <code>ParameterValidationError</code> on failure).</p>
 <h2 id="running-typed-geostatistics-tasks">Running Typed Geostatistics Tasks</h2>
 <p>The <code>run()</code> function executes typed task parameter models — either a single task or multiple tasks concurrently.</p>
 <h3 id="single-task">Single task</h3>
