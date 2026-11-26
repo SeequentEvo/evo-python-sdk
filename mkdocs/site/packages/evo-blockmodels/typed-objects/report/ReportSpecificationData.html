@@ -39,7 +39,7 @@
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a rel="next" href="../types/BoundingBox.html" class="nav-link">
+                                <a rel="next" href="SpatialRelation.html" class="nav-link">
                                     Next <i class="fa fa-arrow-right"></i>
                                 </a>
                             </li>
@@ -299,6 +299,23 @@ Do NOT use with <code>density_value</code> or <code>density_unit_id</code>.</p>
             <td>
               <div class="doc-md-description">
                 <p>Whether to run the report immediately after creation.</p>
+              </div>
+            </td>
+            <td>
+                  <code>True</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>volume_filter</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="evo.blockmodels.typed.report.VolumeFilter" href="VolumeFilter.html#evo.blockmodels.typed.report.VolumeFilter">VolumeFilter</a> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional <code>VolumeFilter</code> that restricts the report to blocks inside or
+    outside a triangle mesh. Requires <code>preview=True</code> when creating the report.</p>
 <p>Example with density column::</p>
 <pre><code>&gt;&gt;&gt; data = ReportSpecificationData(
 ...     name="Gold Resource Report",
@@ -330,7 +347,7 @@ Do NOT use with <code>density_value</code> or <code>density_unit_id</code>.</p>
               </div>
             </td>
             <td>
-                  <code>True</code>
+                  <code>None</code>
             </td>
           </tr>
       </tbody>

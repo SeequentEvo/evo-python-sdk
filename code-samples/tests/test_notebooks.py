@@ -21,6 +21,8 @@ import nbformat
 import pytest
 from notebook_auth_patch import patch_notebook_auth_for_ci
 from notebook_helpers import (
+    CI_AUTH_NOTEBOOKS,
+    CODE_SAMPLES_DIR,
     discover_notebooks,
     get_auth_credentials,
     is_auth_notebook,
@@ -32,8 +34,6 @@ from notebook_helpers import (
 # ---------------------------------------------------------------------------
 # Paths
 # ---------------------------------------------------------------------------
-REPO_ROOT = Path(__file__).resolve().parents[1]
-CODE_SAMPLES_DIR = REPO_ROOT / "code-samples"
 AUTH_HELPER_DIR = CODE_SAMPLES_DIR
 
 # ---------------------------------------------------------------------------
@@ -41,7 +41,9 @@ AUTH_HELPER_DIR = CODE_SAMPLES_DIR
 # ---------------------------------------------------------------------------
 ALL_NOTEBOOKS: list[Path] = discover_notebooks()
 EXEC_NOTEBOOKS: list[Path] = [nb for nb in ALL_NOTEBOOKS if is_executable(nb)]
-AUTH_NOTEBOOKS: list[Path] = sort_by_dependencies([nb for nb in ALL_NOTEBOOKS if is_auth_notebook(nb)])
+AUTH_NOTEBOOKS: list[Path] = sort_by_dependencies(
+    [nb for nb in ALL_NOTEBOOKS if notebook_id(nb) in CI_AUTH_NOTEBOOKS and is_auth_notebook(nb)]
+)
 
 # Standard-library top-level module names (Python 3.10+).  We skip these
 # during the import check because they are always available and never need
@@ -184,7 +186,7 @@ class TestAuthNotebookExecution:
     (either in environment or in .github/scripts/.env).
     """
 
-    def test_executes_with_auth(self, notebook_path: Path) -> None:
+    def test_executes_with_auth(self, notebook_path: Path, ci_workspace: str) -> None:
         """Notebook must run to completion with valid credentials."""
         import os
 
@@ -202,6 +204,7 @@ class TestAuthNotebookExecution:
         env = {
             **os.environ,
             "CI": "true",
+            "EVO_WORKSPACE_ID": ci_workspace,
             **{_FIELD_TO_ENV[k]: v for k, v in creds.items() if v},
         }
 
@@ -209,6 +212,14 @@ class TestAuthNotebookExecution:
         nb = patch_notebook_auth_for_ci(
             nb,
             auth_helper_dir=AUTH_HELPER_DIR,
+        )
+        nb.cells.insert(
+            0,
+            nbformat.v4.new_code_cell(
+                f"import sys\nsys.path.insert(0, {str(Path(__file__).parent)!r})\n"
+                "from notebook_helpers import reuse_ci_objects\n"
+                f"reuse_ci_objects({notebook_path.stem!r})"
+            ),
         )
 
         client = NotebookClient(
@@ -221,7 +232,7 @@ class TestAuthNotebookExecution:
 
 
 # ---------------------------------------------------------------------------
-# Per-run workspace fixture
+# Shared workspace fixture
 # ---------------------------------------------------------------------------
 
 
@@ -252,51 +263,47 @@ def _build_workspace_client(creds: dict):
     return WorkspaceAPIClient(connector=connector, org_id=UUID(org_id)), UUID(org_id)
 
 
-async def _create_workspace(creds: dict) -> str | None:
-    """Create a fresh test workspace and return its ID, or None if credentials are missing."""
+CI_WORKSPACE_NAME = "evo-sdk-notebook-tests-ci"
+
+
+async def _get_or_create_ci_workspace(creds: dict) -> str | None:
+    """Return the ID of the shared CI workspace, creating it only if none exists.
+
+    The workspace is reused across runs and never deleted, so CI does not leave a
+    soft-deleted workspace behind on every run.
+    """
     ws_client, _ = _build_workspace_client(creds)
     if ws_client is None:
-        print("\n[workspace] Skipping workspace creation: missing credentials.")
         return None
 
-    import uuid
-
-    workspace = await ws_client.create_workspace(name=f"evo-sdk-notebook-tests-ci-{uuid.uuid4().hex[:8]}")
-    workspace_id = str(workspace.id)
-    print(f"\n[workspace] Created workspace: {workspace_id}")
-    return workspace_id
-
-
-async def _delete_workspace(creds: dict, workspace_id: str) -> None:
-    """Delete the workspace with the given ID."""
-    from uuid import UUID
-
-    ws_client, _ = _build_workspace_client(creds)
-    if ws_client is None:
-        print("\n[workspace] Skipping workspace deletion: missing credentials.")
-        return
-
-    print(f"\n[workspace] Deleting workspace: {workspace_id}")
-    try:
-        await ws_client.delete_workspace(UUID(workspace_id))
-        print("[workspace] Workspace deleted.")
-    except Exception as e:
-        print(f"[workspace] Warning: failed to delete workspace {workspace_id}: {e}")
+    existing = [
+        ws
+        for ws in await ws_client.list_all_workspaces(name=CI_WORKSPACE_NAME, deleted=False)
+        if ws.display_name == CI_WORKSPACE_NAME
+    ]
+    if existing:
+        # If concurrent runs ever created duplicates, always pick the same one.
+        workspace = min(existing, key=lambda ws: (ws.created_at, str(ws.id)))
+        print(f"\n[workspace] Reusing workspace: {workspace.id}")
+    else:
+        workspace = await ws_client.create_workspace(name=CI_WORKSPACE_NAME)
+        print(f"\n[workspace] Created workspace: {workspace.id}")
+    return str(workspace.id)
 
 
-@pytest.fixture(scope="session", autouse=True)
-def workspace_for_tests():
-    """Create a fresh workspace before all tests and delete it after, regardless of failures."""
+@pytest.fixture(scope="session")
+def ci_workspace():
+    """Provide the shared CI workspace to notebooks that need authentication."""
     import os
 
-    creds = get_auth_credentials()
-    workspace_id = asyncio.run(_create_workspace(creds))
+    run_auth = os.environ.get("EVO_RUN_AUTH_NOTEBOOKS")
+    if run_auth == "false":
+        pytest.skip("Authenticated notebooks run in the designated CI job only.")
 
-    if workspace_id:
-        os.environ["EVO_WORKSPACE_ID"] = workspace_id
+    workspace_id = asyncio.run(_get_or_create_ci_workspace(get_auth_credentials()))
+    if workspace_id is None:
+        if run_auth == "true":
+            pytest.fail("Missing Evo credentials for the authenticated notebook CI job.")
+        pytest.skip("Missing Evo credentials for authenticated notebooks.")
 
-    try:
-        yield workspace_id
-    finally:
-        if workspace_id:
-            asyncio.run(_delete_workspace(creds, workspace_id))
+    return workspace_id
