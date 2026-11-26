@@ -67,3 +67,26 @@ class JobPendingError(EvoClientException):
 
     def __init__(self, url: str, status: str) -> None:
         super().__init__(f"Job at {url} is still pending with status: {status}")
+
+
+class ParameterValidationError(ValueError):
+    """Raised when task parameters fail validation against the task's schema.
+
+    Subclasses ``ValueError``. ``errors`` holds one actionable message per
+    individual validation failure; ``task`` is the ``topic.task`` label when known.
+
+    :param message: Summary message describing the validation failure(s).
+    :param task: The ``topic.task`` label of the task whose parameters failed validation.
+    :param errors: Path-prefixed descriptions for each individual validation failure.
+    """
+
+    task: str | None
+    """The ``topic.task`` label for the task being validated, when known."""
+
+    errors: list[str]
+    """Actionable messages for each individual parameter validation failure."""
+
+    def __init__(self, message: str, *, task: str | None = None, errors: list[str] | None = None) -> None:
+        super().__init__(message)
+        self.task = task
+        self.errors = errors or []
