@@ -189,7 +189,10 @@ class ChunkedIOManager:
         :param destination: The destination to write data to.
         :param fb: A feedback object for reporting transfer progress.
         """
-        fb = NoFeedback if fb is None else IFeedback.adapt(fb, allow_implicit=True)
+        if fb is None:
+            fb = NoFeedback
+        elif not isinstance(fb, IFeedback):
+            raise TypeError(f"{fb!r} does not implement IFeedback")
         async for handler in self._retry:
             with handler.suppress_errors(ChunkedIOError):
                 await self._attempt_transfer(source, destination, fb, handler)

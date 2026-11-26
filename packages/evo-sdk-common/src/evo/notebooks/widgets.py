@@ -206,7 +206,7 @@ T_client = TypeVar("T_client", bound=BaseAPIClient)
 
 
 class _ServiceManagerWidgetMeta(type(anywidget.AnyWidget), type(IContext)):
-    """Metaclass that combines anywidget and pure interfaces metaclasses."""
+    """Metaclass that combines anywidget and interfaces metaclasses."""
 
     pass
 

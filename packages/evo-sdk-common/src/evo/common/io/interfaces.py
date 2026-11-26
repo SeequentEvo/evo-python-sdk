@@ -9,7 +9,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from pure_interface import Interface
+from abc import abstractmethod
+from typing import Protocol, runtime_checkable
 
 __all__ = [
     "IDestination",
@@ -17,26 +18,31 @@ __all__ = [
 ]
 
 
-class IDestination(Interface):
+@runtime_checkable
+class IDestination(Protocol):
     """A local or remote destination for managed file IO.
 
     IDestination implementations should raise a subtype of ChunkedIOError when a recoverable error occurs. The specific
     error will depend on the implementation and must be capable of recovering the IDestination from the failure state.
     """
 
+    @abstractmethod
     async def write_chunk(self, offset: int, data: bytes) -> None:
         """Write raw data to the destination at the provided offset"""
 
 
-class ISource(Interface):
+@runtime_checkable
+class ISource(Protocol):
     """A local or remote source for managed file IO.
 
     ISource implementations should raise a subtype of ChunkedIOError when a recoverable error occurs. The specific
     error will depend on the implementation and must be capable of recovering the ISource from the failure state.
     """
 
+    @abstractmethod
     async def get_size(self) -> int:
         """Get the size of the source data"""
 
+    @abstractmethod
     async def read_chunk(self, offset: int, length: int) -> bytes:
         """Read <length> bytes of raw data from the source, starting at the given offset"""

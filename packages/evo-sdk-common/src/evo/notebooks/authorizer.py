@@ -57,8 +57,6 @@ class _OAuthEnv(Generic[_T_token]):
 
 
 class _NotebookAuthorizerMixin(_BaseAuthorizer[_T_token]):
-    pi_partial_implementation = True  # Indicate to pure-interface that this is a mixin.
-
     _env: _OAuthEnv[_T_token]
 
     async def reuse_token(self) -> bool:

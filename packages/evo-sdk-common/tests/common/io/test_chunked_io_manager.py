@@ -277,3 +277,14 @@ class TestChunkedIOManager(unittest.IsolatedAsyncioTestCase):
 
         # Verify results.
         self.assertTrue(self.manager.is_complete())
+
+    async def test_run_rejects_invalid_feedback(self) -> None:
+        source = _TestIO(content=self.DATA)
+        destination = _TestIO()
+
+        with self.assertRaisesRegex(TypeError, "does not implement IFeedback"):
+            await self.manager.run(source, destination, fb=object())
+
+        # The isinstance check runs before any transfer starts.
+        self.assertFalse(self.manager.is_complete())
+        self.assertEqual(b"", destination.get_raw_content())

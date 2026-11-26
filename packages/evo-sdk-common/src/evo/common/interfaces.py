@@ -11,12 +11,11 @@
 
 from __future__ import annotations
 
+from abc import abstractmethod
 from pathlib import Path
 from types import TracebackType
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 from uuid import UUID
-
-from pure_interface import Interface
 
 from .data import Environment, HTTPHeaderDict, HTTPResponse, RequestMethod
 
@@ -26,7 +25,8 @@ if TYPE_CHECKING:
 __all__ = ["IAuthorizer", "ICache", "IContext", "IFeedback", "ITransport"]
 
 
-class ITransport(Interface):
+@runtime_checkable
+class ITransport(Protocol):
     """Interface for HTTP Transport.
 
     ITransport is responsible for sending HTTP requests and receiving responses. The open and close methods are
@@ -36,6 +36,7 @@ class ITransport(Interface):
     should only release resources when the counter reaches zero.
     """
 
+    @abstractmethod
     async def open(self) -> None:
         """Open the HTTP transport.
 
@@ -48,6 +49,7 @@ class ITransport(Interface):
         """
         ...  # pragma: no cover
 
+    @abstractmethod
     async def close(self) -> None:
         """Close the transport.
 
@@ -57,6 +59,7 @@ class ITransport(Interface):
         """
         ...  # pragma: no cover
 
+    @abstractmethod
     async def __aenter__(self) -> ITransport:
         """ITransport should be an asynchronous context manager that opens the transport when entered, and closes it when
         exited.
@@ -65,6 +68,7 @@ class ITransport(Interface):
         """
         ...
 
+    @abstractmethod
     async def __aexit__(
         self, exc_type: type[Exception] | None, exc_val: Exception | None, exc_tb: TracebackType | None
     ) -> None:
@@ -75,6 +79,7 @@ class ITransport(Interface):
         """
         ...
 
+    @abstractmethod
     async def request(
         self,
         method: RequestMethod,
@@ -105,7 +110,8 @@ class ITransport(Interface):
         ...  # pragma: no cover
 
 
-class IAuthorizer(Interface):
+@runtime_checkable
+class IAuthorizer(Protocol):
     """Interface for authorizing HTTP requests.
 
     IAuthorizer is responsible for providing the necessary headers to authorize HTTP requests. The get_default_headers
@@ -116,6 +122,7 @@ class IAuthorizer(Interface):
     refresh_token is running.
     """
 
+    @abstractmethod
     async def get_default_headers(self) -> HTTPHeaderDict:
         """Get the default headers for authorizing HTTP requests.
 
@@ -127,6 +134,7 @@ class IAuthorizer(Interface):
         """
         ...  # pragma: no cover
 
+    @abstractmethod
     async def refresh_token(self) -> bool:
         """Refresh the authorization token.
 
@@ -138,9 +146,11 @@ class IAuthorizer(Interface):
         ...  # pragma: no cover
 
 
-class IFeedback(Interface):
+@runtime_checkable
+class IFeedback(Protocol):
     """An interface for providing live feedback to the user."""
 
+    @abstractmethod
     def progress(self, progress: float, message: str | None = None) -> None:
         """Progress the feedback and update the text to message.
 
@@ -152,7 +162,8 @@ class IFeedback(Interface):
         ...  # pragma: no cover
 
 
-class ICache(Interface):
+@runtime_checkable
+class ICache(Protocol):
     """An interface for managing cache directories for service data.
 
     The cache may be used to store transient binary data, such as files from File API or parquet files from
@@ -162,6 +173,7 @@ class ICache(Interface):
     root: Path
     """The absolute path to the root cache directory."""
 
+    @abstractmethod
     def get_location(self, environment: Environment, scope: str) -> Path:
         """Get the cache location for the specified environment and scope.
 
@@ -174,6 +186,7 @@ class ICache(Interface):
         """
         ...
 
+    @abstractmethod
     def clear_cache(self, environment: Environment | None = None, scope: str | None = None) -> None:
         """Clear the cache for the specified environment and scope.
 
@@ -187,9 +200,11 @@ class ICache(Interface):
         ...
 
 
-class IContext(Interface):
+@runtime_checkable
+class IContext(Protocol):
     """An interface for providing context information for service clients."""
 
+    @abstractmethod
     def get_environment(self) -> Environment:
         """Gets the Environment associated with this context.
 
@@ -197,6 +212,7 @@ class IContext(Interface):
         :raises ContextError: If the context does not have sufficient information to create an Environment.
         """
 
+    @abstractmethod
     def get_org_id(self) -> UUID:
         """Gets the organization ID associated with this context.
 
@@ -204,6 +220,7 @@ class IContext(Interface):
         :raises ContextError: If the context does not have an organization ID.
         """
 
+    @abstractmethod
     def get_connector(self) -> APIConnector:
         """Gets the APIConnector associated with this context.
 
@@ -211,6 +228,7 @@ class IContext(Interface):
         :raises ContextError: If the context does not have sufficient information to create an APIConnector.
         """
 
+    @abstractmethod
     def get_cache(self) -> ICache | None:
         """Gets the ICache associated with this context, if any.
 
