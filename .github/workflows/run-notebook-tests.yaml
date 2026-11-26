@@ -24,6 +24,11 @@ jobs:
           - "3.12"
           - "3.13"
           - "3.14"
+        # Only one job runs the authenticated notebooks, so CI shares one Evo workspace.
+        include:
+          - os: ubuntu-latest
+            python-version: "3.14"
+            run-auth-notebooks: true
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v6
@@ -34,10 +39,10 @@ jobs:
 
       - name: Run notebook tests
         env:
-          EVO_CLIENT_ID: ${{ secrets.EVO_CLIENT_ID }}
-          EVO_CLIENT_SECRET: ${{ secrets.EVO_CLIENT_SECRET }}
-          EVO_ORG_ID: ${{ secrets.EVO_ORG_ID }}
-          EVO_HUB_URL: ${{ secrets.EVO_HUB_URL }}
+          EVO_CLIENT_ID: ${{ matrix.run-auth-notebooks && secrets.EVO_CLIENT_ID || '' }}
+          EVO_CLIENT_SECRET: ${{ matrix.run-auth-notebooks && secrets.EVO_CLIENT_SECRET || '' }}
+          EVO_ORG_ID: ${{ matrix.run-auth-notebooks && secrets.EVO_ORG_ID || '' }}
+          EVO_HUB_URL: ${{ matrix.run-auth-notebooks && secrets.EVO_HUB_URL || '' }}
         run: >
           uv run
           --directory code-samples

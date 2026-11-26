@@ -177,6 +177,7 @@ class TestNotebookExecution:
 
 
 @pytest.mark.parametrize("notebook_path", AUTH_NOTEBOOKS, ids=[notebook_id(nb) for nb in AUTH_NOTEBOOKS])
+@pytest.mark.usefixtures("ci_workspace")
 class TestAuthNotebookExecution:
     """Execute notebooks that require authentication credentials.
 
@@ -252,51 +253,42 @@ def _build_workspace_client(creds: dict):
     return WorkspaceAPIClient(connector=connector, org_id=UUID(org_id)), UUID(org_id)
 
 
-async def _create_workspace(creds: dict) -> str | None:
-    """Create a fresh test workspace and return its ID, or None if credentials are missing."""
+CI_WORKSPACE_NAME = "evo-sdk-notebook-tests-ci"
+
+
+async def _get_or_create_ci_workspace(creds: dict) -> str | None:
+    """Return the ID of the shared CI workspace, creating it only if none exists.
+
+    The workspace is reused across runs and never deleted, so CI does not leave a
+    soft-deleted workspace behind on every run.
+    """
     ws_client, _ = _build_workspace_client(creds)
     if ws_client is None:
-        print("\n[workspace] Skipping workspace creation: missing credentials.")
         return None
 
-    import uuid
-
-    workspace = await ws_client.create_workspace(name=f"evo-sdk-notebook-tests-ci-{uuid.uuid4().hex[:8]}")
-    workspace_id = str(workspace.id)
-    print(f"\n[workspace] Created workspace: {workspace_id}")
-    return workspace_id
-
-
-async def _delete_workspace(creds: dict, workspace_id: str) -> None:
-    """Delete the workspace with the given ID."""
-    from uuid import UUID
-
-    ws_client, _ = _build_workspace_client(creds)
-    if ws_client is None:
-        print("\n[workspace] Skipping workspace deletion: missing credentials.")
-        return
-
-    print(f"\n[workspace] Deleting workspace: {workspace_id}")
-    try:
-        await ws_client.delete_workspace(UUID(workspace_id))
-        print("[workspace] Workspace deleted.")
-    except Exception as e:
-        print(f"[workspace] Warning: failed to delete workspace {workspace_id}: {e}")
+    existing = [
+        ws
+        for ws in await ws_client.list_all_workspaces(name=CI_WORKSPACE_NAME, deleted=False)
+        if ws.display_name == CI_WORKSPACE_NAME
+    ]
+    if existing:
+        # If concurrent runs ever created duplicates, always pick the same one.
+        workspace = min(existing, key=lambda ws: (ws.created_at, str(ws.id)))
+        print(f"\n[workspace] Reusing workspace: {workspace.id}")
+    else:
+        workspace = await ws_client.create_workspace(name=CI_WORKSPACE_NAME)
+        print(f"\n[workspace] Created workspace: {workspace.id}")
+    return str(workspace.id)
 
 
-@pytest.fixture(scope="session", autouse=True)
-def workspace_for_tests():
-    """Create a fresh workspace before all tests and delete it after, regardless of failures."""
+@pytest.fixture(scope="session")
+def ci_workspace():
+    """Provide the shared CI workspace to notebooks that need authentication."""
     import os
 
-    creds = get_auth_credentials()
-    workspace_id = asyncio.run(_create_workspace(creds))
+    workspace_id = asyncio.run(_get_or_create_ci_workspace(get_auth_credentials()))
+    if workspace_id is None:
+        pytest.skip("Missing Evo credentials for authenticated notebooks.")
 
-    if workspace_id:
-        os.environ["EVO_WORKSPACE_ID"] = workspace_id
-
-    try:
-        yield workspace_id
-    finally:
-        if workspace_id:
-            asyncio.run(_delete_workspace(creds, workspace_id))
+    os.environ["EVO_WORKSPACE_ID"] = workspace_id
+    return workspace_id
