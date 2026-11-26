@@ -17,11 +17,13 @@ The Geoscience Object API enables technological integrations at the object level
 
 A Geoscience Object is a data structure that represents a concrete geological, geotechnical, or geophysical concept. Geoscience Objects can be referenced by their UUID or by a user-defined object path.
 
+Objects are organised in workspace folders managed by the Folders API. Moving or renaming a folder changes the contained objects' paths. Deleting or restoring a folder also affects access to its contained objects.
+
 For more information on using the Geoscience Object API, see the [Geoscience Object API overview](/docs/guides/objects), or the API references here.
 
 
 This code is generated from the OpenAPI specification for Geoscience Object API.
-API version: 1.26.0
+API version: 1.26.1
 """
 
 from evo.common.connector import APIConnector

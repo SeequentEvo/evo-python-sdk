@@ -449,7 +449,7 @@ class ObjectAPIClient(BaseAPIClient):
         :param request_timeout: Timeout setting for this request. If one number is provided, it will be the
             total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.
 
-        :return: A tuple containing the object metadata and a data model of the requested geoscience object.
+        :return: A DownloadedObject containing the metadata and access methods for the requested geoscience object.
         """
         reference = ObjectReference.new(environment=self._environment, object_path=path, version_id=version)
         return await DownloadedObject.from_reference(
@@ -464,6 +464,7 @@ class ObjectAPIClient(BaseAPIClient):
         object_id: UUID,
         version: str | None = None,
         request_timeout: int | float | tuple[int | float, int | float] | None = None,
+        deleted: bool = False,
     ) -> DownloadedObject:
         """Download a geoscience object definition (by UUID).
 
@@ -472,8 +473,11 @@ class ObjectAPIClient(BaseAPIClient):
             default.
         :param request_timeout: Timeout setting for this request. If one number is provided, it will be the
             total request timeout. It can also be a pair (tuple) of (connection, read) timeouts.
+        :param deleted: When true, include deleted objects, including objects in deleted folders. Active objects are
+            still returned. Use `metadata.is_deleted` to check whether the downloaded object is deleted. By default,
+            downloading a deleted object raises a `GoneException`.
 
-        :return: A tuple containing the object metadata and a data model of the requested geoscience object.
+        :return: A DownloadedObject containing the metadata and access methods for the requested geoscience object.
         """
         reference = ObjectReference.new(environment=self._environment, object_id=object_id, version_id=version)
         return await DownloadedObject.from_reference(
@@ -481,6 +485,7 @@ class ObjectAPIClient(BaseAPIClient):
             reference=reference,
             cache=self._cache,
             request_timeout=request_timeout,
+            deleted=deleted,
         )
 
     async def get_latest_object_versions(

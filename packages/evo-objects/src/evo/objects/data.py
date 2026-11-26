@@ -178,6 +178,23 @@ class ObjectMetadata(ResourceMetadata):
     stage: Stage | None
     """The stage of the object, if available."""
 
+    deleted_at: datetime | None = None
+    """The date and time when the object was deleted, or None if the object is not deleted.
+
+    For an object inside a deleted folder, this is the time the folder was deleted.
+    """
+
+    deleted_by: ServiceUser | None = None
+    """The user who deleted the object, or None if the object is not deleted.
+
+    For an object inside a deleted folder, this is the user who deleted the folder.
+    """
+
+    @property
+    def is_deleted(self) -> bool:
+        """Whether the object is deleted, either individually or through deletion of its parent folder."""
+        return self.deleted_at is not None
+
     @property
     def path(self) -> str:
         """The full path of the object, formed by joining the parent and name, separated by a slash ('/')."""

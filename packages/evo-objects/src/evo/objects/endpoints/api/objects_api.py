@@ -17,11 +17,13 @@ The Geoscience Object API enables technological integrations at the object level
 
 A Geoscience Object is a data structure that represents a concrete geological, geotechnical, or geophysical concept. Geoscience Objects can be referenced by their UUID or by a user-defined object path.
 
+Objects are organised in workspace folders managed by the Folders API. Moving or renaming a folder changes the contained objects' paths. Deleting or restoring a folder also affects access to its contained objects.
+
 For more information on using the Geoscience Object API, see the [Geoscience Object API overview](/docs/guides/objects), or the API references here.
 
 
 This code is generated from the OpenAPI specification for Geoscience Object API.
-API version: 1.26.0
+API version: 1.26.1
 """
 
 from evo.common.connector import APIConnector
@@ -57,7 +59,7 @@ class ObjectsApi:
     ) -> EmptyResponse:
         """Soft delete a geoscience object by path
 
-        Soft delete a geoscience object by path. This endpoint will mark the object as deleted but won't actually remove it from the database.
+        Soft delete a geoscience object by path.
 
         :param org_id: The customer's organisation ID
             Format: `uuid`
@@ -123,7 +125,7 @@ class ObjectsApi:
     ) -> EmptyResponse:
         """Soft delete a geoscience object
 
-        Delete a geoscience object by UUID. Deleting an object to this endpoint will soft delete the existing object with a corresponding UUID. Note that the value of the `uuid` field in the object must match the value in the URL path.
+        Delete a geoscience object by UUID. An object already deleted is left unchanged. Restore an individual object using the update-by-UUID endpoint with `deleted=false`.
 
         :param object_id: UUID of a geoscience object.
             Format: `uuid`
@@ -193,7 +195,7 @@ class ObjectsApi:
     ) -> GetObjectResponse:  # noqa: F405
         """Download a geoscience object
 
-        Download a geoscience object from the provided path. If required, the object can be compressed, currently gzip compression is supported. To receive a compressed payload set header `Accept-Encoding: gzip`.
+        Download a geoscience object using its current path.  To retrieve a deleted object, including one in a deleted folder, use the download-by-UUID endpoint with `deleted=true`.  If required, the object can be compressed, currently only gzip compression is supported. To receive a compressed payload set header `Accept-Encoding: gzip`.
 
         :param org_id: The customer's organisation ID
             Format: `uuid`
@@ -282,7 +284,7 @@ class ObjectsApi:
     ) -> GetObjectResponse:  # noqa: F405
         """Download a geoscience object by UUID
 
-        Download a geoscience object with the provided UUID. If required, the object can be compressed, currently gzip compression is supported. To receive a compressed payload set header `Accept-Encoding: gzip`.
+        Download a geoscience object with the provided UUID. Use `deleted=true` to also retrieve deleted objects, including those in deleted folders.  If required, the object can be compressed, currently only gzip compression is supported. To receive a compressed payload set header `Accept-Encoding: gzip`.
 
         :param object_id: UUID of a geoscience object.
             Format: `uuid`
@@ -297,7 +299,7 @@ class ObjectsApi:
             Example: `'1746593470905878783'`
         :param include_versions: (optional) Whether to return all versions of the object
             Example: `False`
-        :param deleted: (optional) When true, only objects that have been deleted will be returned
+        :param deleted: (optional) When true, also allows retrieval of an object that was deleted individually or implicitly through deletion of its parent folder. Active objects can still be returned. Defaults to false.
             Example: `True`
         :param if_none_match: (optional) Optional header used to check if there are any more recent versions of an object than the one specified. Returns 304 (Not Modified) if there are no newer versions.
             Example: `'1706583776404684724'`
@@ -372,7 +374,7 @@ class ObjectsApi:
     ) -> list[LatestObjectVersionIdResponse]:  # noqa: F405
         """List the latest version IDs for geoscience objects
 
-        Request to fetch the latest version IDs for a collection of geoscience objects (maximum of 500). The request body must only contain a list of UUIDs of the objects to check. The response will contain a list of objects with their UUIDs and the latest version ID. If the object from a given UUID does not exist or has been deleted, the request will be successful, but the version ID will be `null`.
+        Request to fetch the latest version IDs for a collection of geoscience objects (maximum of 500). The request body must only contain a list of UUIDs of the objects to check. The response will contain a list of objects with their UUIDs and the latest version ID. If the object from a given UUID does not exist or has been deleted, including implicitly through deletion of its parent folder, the request will be successful, but the version ID will be `null`.
 
         :param org_id: The customer's organisation ID
             Format: `uuid`
@@ -444,7 +446,7 @@ class ObjectsApi:
     ) -> ListVersionsResponse:  # noqa: F405
         """Gets specified versions of a Geoscience Object.
 
-        List specific versions of a Geoscience Object. The response will include all the versions specified in `version_ids` field of the request body. If one or more of the version ids are not found for the geoscience object a 404 error will be returned.
+        List specific versions of a Geoscience Object. The response will include all the versions specified in `version_ids` field of the request body. If one or more of the version IDs are not found for the geoscience object a 404 error will be returned.  Download links use the object's current path.
 
         :param object_id: UUID of a geoscience object.
             Format: `uuid`
@@ -513,6 +515,8 @@ class ObjectsApi:
         workspace_id: str,
         limit: int | None = None,
         offset: int | None = None,
+        folder_id: str | None = None,
+        folder_depth: int | None = None,
         deleted: bool | None = None,
         order_by: str | None = None,
         author: list[str] | None = None,
@@ -530,7 +534,7 @@ class ObjectsApi:
     ) -> ListObjectsResponse:  # noqa: F405
         """List geoscience objects
 
-        List geoscience objects. The response will include all geoscience objects matching the given filters.The geoscience objects will be the latest version of the object. If there are no objects matching the given filters, an empty list is returned.
+        The response will include all geoscience objects matching the given filters. The geoscience objects will be the latest versions of each object. If there are no objects matching the given filters, an empty list is returned.
 
         :param org_id: The customer's organisation ID
             Format: `uuid`
@@ -542,7 +546,12 @@ class ObjectsApi:
             Example: `5000`
         :param offset: (optional) Number of results to skip before returning `limit` number of results.
             Example: `0`
-        :param deleted: (optional) When true, only objects that have been deleted will be returned
+        :param folder_id: (optional) The UUID of a folder in this workspace. Returns objects in that folder and its descendants, subject to `folder_depth` and the other filters. Omit to search the whole workspace. The folder must match the state selected by `deleted`: active by default or false, or deleted when true. An unknown folder or a mismatched deletion state returns no objects.
+            Format: `uuid`
+            Example: `'00000000-0000-0000-0000-000000000000'`
+        :param folder_depth: (optional) Maximum descendant folder levels to include beneath `folder_id`. Use `0` for objects directly in the selected folder, `1` to also include its immediate child folders, or omit for all descendant levels. Requires `folder_id`; supplying a depth alone returns 400.
+            Example: `0`
+        :param deleted: (optional) Defaults to false for active objects. When true, returns only deleted objects, including objects implicitly deleted because their parent folder was deleted.
             Example: `True`
         :param order_by: (optional) A comma separated list of fields to order by, where the default sort order is ascending. To specify the sort order, prefix the field name with either `asc:` or `desc:` for ascending or descending respectively. Field names can either be arbitrary, representing a field nested inside the data, or one of the following known sort fields: `author`, `created_at`, `created_by`, `deleted_at`, `modified_at`, `modified_by`, `object_name`
             Example: `'object_name,desc:created_by,asc:object.a.b.c'`
@@ -595,6 +604,10 @@ class ObjectsApi:
             _query_params["limit"] = limit
         if offset is not None:
             _query_params["offset"] = offset
+        if folder_id is not None:
+            _query_params["folder_id"] = folder_id
+        if folder_depth is not None:
+            _query_params["folder_depth"] = folder_depth
         if deleted is not None:
             _query_params["deleted"] = deleted
         if order_by is not None:
@@ -686,7 +699,7 @@ class ObjectsApi:
             Example: `0`
         :param limit: (optional) Max number of results per page.
             Example: `5000`
-        :param deleted: (optional) When true, only objects that have been deleted will be returned
+        :param deleted: (optional) Defaults to false for active objects. When true, returns only deleted objects, including objects implicitly deleted because their parent folder was deleted.
             Example: `True`
         :param order_by: (optional) A comma separated list of fields to order by, where the default sort order is ascending. To specify the sort order, prefix the field name with either `asc:` or `desc:` for ascending or descending respectively. Field names can either be arbitrary, representing a field nested inside the data, or one of the following known sort fields: `created_at`, `created_by`, `modified_at`, `modified_by`, `object_name`, `deleted_at`
             Example: `'object_name,desc:created_by,asc:object.a.b.c'`
@@ -881,7 +894,7 @@ class ObjectsApi:
     ) -> PostObjectResponse:  # noqa: F405
         """Create a geoscience object
 
-        Create or update a geoscience object.  Upload a geoscience object based on the schema element. Geoscience objects can be stored hierarchically, by providing the path to the object, including the object name, in the request URL. A detailed list of the available object schemas can be found in Seequent's [evo-schemas](https://github.com/seequentevo/evo-schemas) repository.  The submitted properties will be validated against the specified schema properties.  To create a new object, upload it to a unique path with the UUID field set to `null`. The response will contain a reflection of the uploaded object with a newly assigned object ID. This can be used for future requests to update the object.  If a version of the geoscience object already exists at the specified path a new version will be created. To move or rename an existing object, simply upload a new version of it (with the same UUID) to a new, unique path or file name.  Note that every upload of an object is considered a new version, even if no changes have been made.  If required, the object should be compressed, currently gzip compression is supported. Set header `Content-Encoding: gzip` if the content is compressed and `Accept-Encoding: gzip` to receive compressed content.
+        Create or update a geoscience object.  Upload a geoscience object based on the schema element. Geoscience objects can be stored hierarchically, by providing the path to the object, including the object name, in the request URL. Folders in the path that do not already exist are created automatically. An object name without parent segments places the object in the workspace root folder. A detailed list of the available object schemas can be found in Seequent's [evo-schemas](https://github.com/seequentevo/evo-schemas) repository.  The submitted properties will be validated against the specified schema properties.  To create a new object, upload it to a unique path with the UUID field set to `null`. The response will contain a reflection of the uploaded object with a newly assigned object ID. This can be used for future requests to update the object.  If a version of the geoscience object already exists at the specified path a new version will be created.  An existing object whose parent folder is deleted must be restored before it can be updated or moved.  Note that every upload of an object is considered a new version, even if no changes have been made.  If required, the object should be compressed, currently gzip compression is supported. Set header `Content-Encoding: gzip` if the content is compressed and `Accept-Encoding: gzip` to receive compressed content.
 
         :param org_id: The customer's organisation ID
             Format: `uuid`
@@ -960,7 +973,7 @@ class ObjectsApi:
     ) -> PostObjectResponse:  # noqa: F405
         """Update a geoscience object
 
-        Update or restore a geoscience object by UUID. Uploading an object to this endpoint will update (replace, i.e. no partial updates) the existing object with a corresponding UUID. If the object was previously deleted, and the `deleted` parameter is set to `false`, this operation will attempt to restore the object. You cannot provide an object body when attempting to restore an object. Note that the value of the `uuid` field in the object must match the value in the URL path. New objects must be uploaded by path.
+        Update or restore a geoscience object by UUID.  Uploading an object to this endpoint will update (replace, i.e. no partial updates) the existing object with a corresponding UUID.  Note that the value of the `uuid` field in the object must match the value in the URL path. New objects must be uploaded by path.  To restore an object that was previously deleted, send a request with the `deleted` parameter set to `false` and no message body. This operation will attempt to restore the object to its original path. Folders at the original path are recreated if missing. If the original path is occupied, Goose appends a number to the filename (for example, `object.json` becomes `object(1).json`). For an object implicitly deleted through its parent folder, a name conflict instead returns 409.
 
         :param object_id: UUID of a geoscience object.
             Format: `uuid`

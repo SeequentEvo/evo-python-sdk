@@ -109,6 +109,7 @@ class DownloadedObject(IContext):
         reference: ObjectReference | str,
         cache: ICache | None = None,
         request_timeout: int | float | tuple[int | float, int | float] | None = None,
+        deleted: bool = False,
     ) -> DownloadedObject:
         """Download a geoscience object from the service, given an object reference.
 
@@ -117,8 +118,11 @@ class DownloadedObject(IContext):
             a reference.
         :param cache: An optional cache to use for data downloads.
         :param request_timeout: An optional timeout to use for API requests. See evo.common.APIConnector for details.
+        :param deleted: When true, deleted objects can also be downloaded, including objects in deleted folders.
+            Active objects are still returned. Only supported for references by object ID.
 
-        :raises ValueError: If the reference is invalid, or if the connector base URL does not match the reference hub URL.
+        :raises ValueError: If the reference is invalid, if the connector base URL does not match the reference hub
+            URL, or if `deleted` is true for a reference by object path.
         """
         ref = ObjectReference(reference)  # Parse the reference if it's a string
 
@@ -141,8 +145,12 @@ class DownloadedObject(IContext):
             raise ValueError("Only one of object_id or object_path should be provided")
 
         if ref.object_id is not None:
+            if deleted:
+                request_kwargs["deleted"] = True
             response = await api.get_object_by_id(object_id=ref.object_id, **request_kwargs)
         elif ref.object_path is not None:
+            if deleted:
+                raise ValueError("Downloading deleted objects is only supported by object ID")
             response = await api.get_object(objects_path=ref.object_path, **request_kwargs)
         else:
             raise ValueError("Either object_id or object_path must be provided")

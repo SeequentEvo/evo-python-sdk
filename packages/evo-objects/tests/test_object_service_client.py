@@ -21,14 +21,17 @@ from dateutil.parser import parse as dateutil_parse
 from data import load_test_data
 from evo.common import HealthCheckType, Page, RequestMethod, ServiceUser, StaticContext
 from evo.common.data import OrderByOperatorEnum
+from evo.common.exceptions import GoneException
 from evo.common.io.exceptions import DataNotFoundError
 from evo.common.test_tools import MockResponse, TestWithConnector, TestWithStorage
 from evo.common.utils import get_header_metadata
 from evo.objects import (
+    DownloadedObject,
     ObjectAPIClient,
     ObjectDataDownload,
     ObjectDataUpload,
     ObjectMetadata,
+    ObjectReference,
     ObjectSchema,
     ObjectVersion,
     SchemaVersion,
@@ -1254,6 +1257,61 @@ class TestObjectAPIClient(TestWithConnector, TestWithStorage):
         # Check geoscience object.
         self.assertEqual(expected_object_dict, actual_object.as_dict())
         self.assertIs(actual_object.schema, actual_metadata.schema_id)
+        self.assertFalse(actual_metadata.is_deleted)
+        self.assertIsNone(actual_metadata.deleted_at)
+        self.assertIsNone(actual_metadata.deleted_by)
+
+    async def test_download_object_by_id_deleted(self) -> None:
+        get_object_response = load_test_data("get_object.json")
+        get_object_response["deleted_at"] = "2023-08-05T05:47:18Z"
+        get_object_response["deleted_by"] = {
+            "id": "00000000-0000-0000-0000-0000000003e9",
+            "name": "Deleting User",
+            "email": "d.user@example.com",
+        }
+        expected_uuid = UUID(int=2)
+        with self.transport.set_http_response(status_code=200, content=json.dumps(get_object_response)):
+            actual_object = await self.object_client.download_object_by_id(expected_uuid, deleted=True)
+
+        self.assert_request_made(
+            method=RequestMethod.GET,
+            path=f"{self.base_path}/objects/{expected_uuid}?deleted=True",
+            headers={"Accept": "application/json", "Accept-Encoding": "gzip"},
+        )
+        actual_metadata = actual_object.metadata
+        self.assertTrue(actual_metadata.is_deleted)
+        self.assertEqual(dateutil_parse("2023-08-05T05:47:18Z"), actual_metadata.deleted_at)
+        self.assertEqual(
+            ServiceUser(id=UUID(int=1001), name="Deleting User", email="d.user@example.com"),
+            actual_metadata.deleted_by,
+        )
+
+    async def test_download_object_by_id_deleted_with_version(self) -> None:
+        get_object_response = load_test_data("get_object.json")
+        expected_uuid = UUID(int=2)
+        expected_version = "2023-08-03T05:47:18.3402289Z"
+        with self.transport.set_http_response(status_code=200, content=json.dumps(get_object_response)):
+            actual_object = await self.object_client.download_object_by_id(
+                expected_uuid, expected_version, deleted=True
+            )
+
+        self.assert_request_made(
+            method=RequestMethod.GET,
+            path=f"{self.base_path}/objects/{expected_uuid}?version={quote(expected_version)}&deleted=True",
+            headers={"Accept": "application/json", "Accept-Encoding": "gzip"},
+        )
+        self.assertFalse(actual_object.metadata.is_deleted)
+
+    async def test_download_object_by_id_deleted_without_flag_raises_gone(self) -> None:
+        with self.transport.set_http_response(status_code=410, content=json.dumps({"status": 410})):
+            with self.assertRaises(GoneException):
+                await self.object_client.download_object_by_id(UUID(int=2))
+
+    async def test_download_deleted_object_by_path_reference_raises(self) -> None:
+        reference = ObjectReference.new(environment=self.environment, object_path="A/m.json")
+        with self.assertRaisesRegex(ValueError, "only supported by object ID"):
+            await DownloadedObject.from_reference(self.connector, reference, deleted=True)
+        self.transport.assert_no_requests()
 
     async def test_download_object_alternate_validation(self) -> None:
         """Test downloading an object with alternate representation of confusable types.
