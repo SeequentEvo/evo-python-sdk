@@ -2,7 +2,7 @@
 
 # RBF Tasks
 
-Discoverable compute tasks in the `rbf` topic. Call any task below through `ComputeClient` as `await client.rbf.<task>.run(...)`, or by name via `await client.arun("rbf", "<task>", parameters)`.
+Discoverable compute tasks in the `rbf` topic. Call any task below through `ComputeClient` as `await client.rbf.<task>.run(...)` (or `submit(...)` for a non-blocking `TaskJob`), or by name via `await client.arun("rbf", "<task>", parameters)` / `await client.asubmit("rbf", "<task>", parameters)`.
 
 ## Input Shorthands
 
@@ -29,6 +29,15 @@ await client.rbf.rbf_evaluation.run(
     polynomial: RbfRbfEvaluationPolynomial | None = ...,
     preview: bool = False,
 ) -> RbfRbfEvaluationResult
+
+await client.rbf.rbf_evaluation.submit(
+    *,
+    source: RbfRbfEvaluationSource,
+    basic_function: RbfRbfEvaluationAsphericalFunction | RbfRbfEvaluationSphericalFunction | RbfRbfEvaluationBiharmonicFunction | RbfRbfEvaluationCubicFunction | RbfRbfEvaluationExponentialFunction | RbfRbfEvaluationGaussianFunction | RbfRbfEvaluationMultiquadricFunction | RbfRbfEvaluationNormalizedMultiquadricFunction | RbfRbfEvaluationTriharmonicFunction,
+    target: RbfRbfEvaluationTarget | AnyTypedAttribute,
+    polynomial: RbfRbfEvaluationPolynomial | None = ...,
+    preview: bool = False,
+) -> TaskJob[RbfRbfEvaluationResult]
 ```
 
 Parameters:

@@ -80,7 +80,7 @@
 
 <p><a href="https://github.com/SeequentEvo/evo-python-sdk/tree/main/packages/evo-compute/stubs/snapshot/geology">GitHub source</a></p>
 <h1 id="geology-tasks">Geology Tasks</h1>
-<p>Discoverable compute tasks in the <code>geology</code> topic. Call any task below through <code>ComputeClient</code> as <code>await client.geology.&lt;task&gt;.run(...)</code>, or by name via <code>await client.arun("geology", "&lt;task&gt;", parameters)</code>.</p>
+<p>Discoverable compute tasks in the <code>geology</code> topic. Call any task below through <code>ComputeClient</code> as <code>await client.geology.&lt;task&gt;.run(...)</code> (or <code>submit(...)</code> for a non-blocking <code>TaskJob</code>), or by name via <code>await client.arun("geology", "&lt;task&gt;", parameters)</code> / <code>await client.asubmit("geology", "&lt;task&gt;", parameters)</code>.</p>
 <h2 id="input-shorthands">Input Shorthands</h2>
 <table>
 <thead>
@@ -114,6 +114,14 @@
     output: GeologyClassifyByDomainOutput,
     preview: bool = False,
 ) -&gt; GeologyClassifyByDomainResult
+
+await client.geology.classify_by_domain.submit(
+    *,
+    source: GeologyClassifyByDomainSource,
+    domain_entries: list[GeologyClassifyByDomainVolumeEntry | GeologyClassifyByDomainSurfaceEntry],
+    output: GeologyClassifyByDomainOutput,
+    preview: bool = False,
+) -&gt; TaskJob[GeologyClassifyByDomainResult]
 </code></pre>
 <p>Parameters:</p>
 <table>

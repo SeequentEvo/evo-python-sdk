@@ -80,7 +80,7 @@
 
 <p><a href="https://github.com/SeequentEvo/evo-python-sdk/tree/main/packages/evo-compute/stubs/snapshot/geophysics">GitHub source</a></p>
 <h1 id="geophysics-tasks">Geophysics Tasks</h1>
-<p>Discoverable compute tasks in the <code>geophysics</code> topic. Call any task below through <code>ComputeClient</code> as <code>await client.geophysics.&lt;task&gt;.run(...)</code>, or by name via <code>await client.arun("geophysics", "&lt;task&gt;", parameters)</code>.</p>
+<p>Discoverable compute tasks in the <code>geophysics</code> topic. Call any task below through <code>ComputeClient</code> as <code>await client.geophysics.&lt;task&gt;.run(...)</code> (or <code>submit(...)</code> for a non-blocking <code>TaskJob</code>), or by name via <code>await client.arun("geophysics", "&lt;task&gt;", parameters)</code> / <code>await client.asubmit("geophysics", "&lt;task&gt;", parameters)</code>.</p>
 <h2 id="input-shorthands">Input Shorthands</h2>
 <table>
 <thead>
@@ -121,6 +121,16 @@
     water_layer: GeophysicsGravityTerrainCorrectionWaterLayer | None = ...,
     preview: bool = False,
 ) -&gt; GeophysicsGravityTerrainCorrectionResult
+
+await client.geophysics.gravity_terrain_correction.submit(
+    *,
+    surfaces: ObjectInput,
+    observation_points: ObjectInput,
+    correction_radius: float,
+    terrain_layer: GeophysicsGravityTerrainCorrectionTerrainLayer,
+    water_layer: GeophysicsGravityTerrainCorrectionWaterLayer | None = ...,
+    preview: bool = False,
+) -&gt; TaskJob[GeophysicsGravityTerrainCorrectionResult]
 </code></pre>
 <p>Parameters:</p>
 <table>
@@ -323,6 +333,14 @@
     settings: GeophysicsRegular2dGridToTrimeshSettings = ...,
     preview: bool = False,
 ) -&gt; GeophysicsRegular2dGridToTrimeshResult
+
+await client.geophysics.regular_2d_grid_to_trimesh.submit(
+    *,
+    source: GeophysicsRegular2dGridToTrimeshSourceInput | AnyTypedAttribute,
+    target: GeophysicsRegular2dGridToTrimeshTarget,
+    settings: GeophysicsRegular2dGridToTrimeshSettings = ...,
+    preview: bool = False,
+) -&gt; TaskJob[GeophysicsRegular2dGridToTrimeshResult]
 </code></pre>
 <p>Parameters:</p>
 <table>

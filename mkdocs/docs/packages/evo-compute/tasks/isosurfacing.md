@@ -2,7 +2,7 @@
 
 # Isosurfacing Tasks
 
-Discoverable compute tasks in the `isosurfacing` topic. Call any task below through `ComputeClient` as `await client.isosurfacing.<task>.run(...)`, or by name via `await client.arun("isosurfacing", "<task>", parameters)`.
+Discoverable compute tasks in the `isosurfacing` topic. Call any task below through `ComputeClient` as `await client.isosurfacing.<task>.run(...)` (or `submit(...)` for a non-blocking `TaskJob`), or by name via `await client.arun("isosurfacing", "<task>", parameters)` / `await client.asubmit("isosurfacing", "<task>", parameters)`.
 
 ## Input Shorthands
 
@@ -29,6 +29,15 @@ await client.isosurfacing.category.run(
     settings: IsosurfacingCategoryCategorySettings = ...,
     preview: bool = False,
 ) -> IsosurfacingCategoryResult
+
+await client.isosurfacing.category.submit(
+    *,
+    source: IsosurfacingCategoryCategorySourceInput | AnyTypedAttribute,
+    category: str,
+    target: IsosurfacingCategoryTarget,
+    settings: IsosurfacingCategoryCategorySettings = ...,
+    preview: bool = False,
+) -> TaskJob[IsosurfacingCategoryResult]
 ```
 
 Parameters:
@@ -116,6 +125,15 @@ await client.isosurfacing.numeric.run(
     settings: IsosurfacingNumericNumericSettings = ...,
     preview: bool = False,
 ) -> IsosurfacingNumericResult
+
+await client.isosurfacing.numeric.submit(
+    *,
+    source: IsosurfacingNumericNumericSourceInput | AnyTypedAttribute,
+    threshold: float,
+    target: IsosurfacingNumericTarget,
+    settings: IsosurfacingNumericNumericSettings = ...,
+    preview: bool = False,
+) -> TaskJob[IsosurfacingNumericResult]
 ```
 
 Parameters:

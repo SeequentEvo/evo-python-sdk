@@ -2,7 +2,7 @@
 
 # CPT to Borehole Tasks
 
-Discoverable compute tasks in the `cpt-to-borehole` topic. Call any task below through `ComputeClient` as `await client.cpt_to_borehole.<task>.run(...)`, or by name via `await client.arun("cpt-to-borehole", "<task>", parameters)`.
+Discoverable compute tasks in the `cpt-to-borehole` topic. Call any task below through `ComputeClient` as `await client.cpt_to_borehole.<task>.run(...)` (or `submit(...)` for a non-blocking `TaskJob`), or by name via `await client.arun("cpt-to-borehole", "<task>", parameters)` / `await client.asubmit("cpt-to-borehole", "<task>", parameters)`.
 
 ## Input Shorthands
 
@@ -26,6 +26,13 @@ await client.cpt_to_borehole.cpt_reader.run(
     target_downhole_collection: CptToBoreholeCptReaderTargetDownholeCollection,
     preview: bool = False,
 ) -> CptToBoreholeCptReaderResult
+
+await client.cpt_to_borehole.cpt_reader.submit(
+    *,
+    cpt_file: FileInput,
+    target_downhole_collection: CptToBoreholeCptReaderTargetDownholeCollection,
+    preview: bool = False,
+) -> TaskJob[CptToBoreholeCptReaderResult]
 ```
 
 Parameters:
@@ -95,6 +102,16 @@ await client.cpt_to_borehole.create_clusters.run(
     uncluster: bool = ...,
     preview: bool = False,
 ) -> CptToBoreholeCreateClustersResult
+
+await client.cpt_to_borehole.create_clusters.submit(
+    *,
+    downhole_collection: ObjectInput,
+    number_of_clusters: int | None = ...,
+    features_option: Literal["qtAndRf", "QtnAndFr"] = ...,
+    hole_ids: list[str] | None = ...,
+    uncluster: bool = ...,
+    preview: bool = False,
+) -> TaskJob[CptToBoreholeCreateClustersResult]
 ```
 
 Parameters:
@@ -168,6 +185,16 @@ await client.cpt_to_borehole.publish.run(
     cluster_metadata: list[CptToBoreholePublishClusterMetadata] | None = ...,
     preview: bool = False,
 ) -> CptToBoreholePublishResult
+
+await client.cpt_to_borehole.publish.submit(
+    *,
+    downhole_collection: ObjectInput,
+    target_downhole_collection: CptToBoreholePublishTargetDownholeCollection,
+    include_clusters: bool,
+    exclude_collections: list[Literal["measured_cpt_readings", "derived_cpt_readings", "geology_layers"]] = ...,
+    cluster_metadata: list[CptToBoreholePublishClusterMetadata] | None = ...,
+    preview: bool = False,
+) -> TaskJob[CptToBoreholePublishResult]
 ```
 
 Parameters:
@@ -248,6 +275,15 @@ await client.cpt_to_borehole.stratify.run(
     execution_mode: Literal["inline", "fan_out", "auto"] = ...,
     preview: bool = False,
 ) -> CptToBoreholeStratifyResult
+
+await client.cpt_to_borehole.stratify.submit(
+    *,
+    input_downhole_collections: list[ObjectInput],
+    target_downhole_collection: CptToBoreholeStratifyTargetDownholeCollection,
+    cpt_parameters: list[CptToBoreholeStratifyPerHoleParameters] | None = ...,
+    execution_mode: Literal["inline", "fan_out", "auto"] = ...,
+    preview: bool = False,
+) -> TaskJob[CptToBoreholeStratifyResult]
 ```
 
 Parameters:

@@ -2,7 +2,7 @@
 
 # Geophysics Tasks
 
-Discoverable compute tasks in the `geophysics` topic. Call any task below through `ComputeClient` as `await client.geophysics.<task>.run(...)`, or by name via `await client.arun("geophysics", "<task>", parameters)`.
+Discoverable compute tasks in the `geophysics` topic. Call any task below through `ComputeClient` as `await client.geophysics.<task>.run(...)` (or `submit(...)` for a non-blocking `TaskJob`), or by name via `await client.arun("geophysics", "<task>", parameters)` / `await client.asubmit("geophysics", "<task>", parameters)`.
 
 ## Input Shorthands
 
@@ -30,6 +30,16 @@ await client.geophysics.gravity_terrain_correction.run(
     water_layer: GeophysicsGravityTerrainCorrectionWaterLayer | None = ...,
     preview: bool = False,
 ) -> GeophysicsGravityTerrainCorrectionResult
+
+await client.geophysics.gravity_terrain_correction.submit(
+    *,
+    surfaces: ObjectInput,
+    observation_points: ObjectInput,
+    correction_radius: float,
+    terrain_layer: GeophysicsGravityTerrainCorrectionTerrainLayer,
+    water_layer: GeophysicsGravityTerrainCorrectionWaterLayer | None = ...,
+    preview: bool = False,
+) -> TaskJob[GeophysicsGravityTerrainCorrectionResult]
 ```
 
 Parameters:
@@ -104,6 +114,14 @@ await client.geophysics.regular_2d_grid_to_trimesh.run(
     settings: GeophysicsRegular2dGridToTrimeshSettings = ...,
     preview: bool = False,
 ) -> GeophysicsRegular2dGridToTrimeshResult
+
+await client.geophysics.regular_2d_grid_to_trimesh.submit(
+    *,
+    source: GeophysicsRegular2dGridToTrimeshSourceInput | AnyTypedAttribute,
+    target: GeophysicsRegular2dGridToTrimeshTarget,
+    settings: GeophysicsRegular2dGridToTrimeshSettings = ...,
+    preview: bool = False,
+) -> TaskJob[GeophysicsRegular2dGridToTrimeshResult]
 ```
 
 Parameters:

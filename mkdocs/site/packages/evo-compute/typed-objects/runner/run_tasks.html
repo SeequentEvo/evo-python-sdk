@@ -89,9 +89,9 @@
 
     <div class="doc doc-contents first">
 
-        <p>Run multiple tasks concurrently, dispatching based on parameter types.</p>
-<p>This function looks up the appropriate runner for each parameter based on
-its type, allowing different task types to be run together.</p>
+        <p>Run multiple tasks through the generic engine, preserving native results.</p>
+<p>Registered runners supply task identities and native result conversion.
+The engine handles discovery, validation, resolution and job submission.</p>
 <p>Args:
     context: The context providing connector and org_id.
     parameters: List of parameter objects (can be mixed types).
