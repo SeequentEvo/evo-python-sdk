@@ -20,7 +20,10 @@ import nbformat
 import pytest
 import test_notebooks
 from notebook_auth_patch import patch_notebook_auth_for_ci
-from notebook_helpers import CI_AUTH_NOTEBOOKS, CODE_SAMPLES_DIR, notebook_id
+from notebook_helpers import CI_AUTH_NOTEBOOKS, CODE_SAMPLES_DIR, notebook_id, reuse_ci_objects
+
+from evo.common.exceptions import ForbiddenException, NotFoundException
+from evo.objects import ObjectAPIClient
 
 
 def test_selected_auth_notebooks_are_discovered_and_patchable():
@@ -108,3 +111,42 @@ def test_auth_execution_passes_workspace_to_notebook(monkeypatch):
     test_notebooks.TestAuthNotebookExecution().test_executes_with_auth(path, "shared")
 
     assert client.execute.call_args.kwargs["env"]["EVO_WORKSPACE_ID"] == "shared"
+    setup = nbclient.NotebookClient.call_args.args[0].cells[0].source
+    assert f"reuse_ci_objects({path.stem!r})" in setup
+
+
+def _publish_in_new_kernel(monkeypatch, create, client):
+    monkeypatch.setattr(ObjectAPIClient, "create_geoscience_object", create)
+    reuse_ci_objects("sample")
+    return asyncio.run(ObjectAPIClient.create_geoscience_object(client, "a/Name_1.json", {"uuid": None}))
+
+
+def test_reuse_ci_objects_creates_then_updates_same_path(monkeypatch):
+    metadata = SimpleNamespace(id=UUID(int=1))
+    updated = SimpleNamespace(metadata=SimpleNamespace(id=metadata.id))
+    existing = SimpleNamespace(metadata=metadata, update=AsyncMock(return_value=updated))
+    create = AsyncMock(return_value=metadata)
+    client = SimpleNamespace(
+        download_object_by_path=AsyncMock(side_effect=[NotFoundException(404, "Not Found", None, None), existing])
+    )
+
+    assert _publish_in_new_kernel(monkeypatch, create, client) is metadata
+    assert _publish_in_new_kernel(monkeypatch, create, client) is updated.metadata
+
+    assert [call.args[0] for call in client.download_object_by_path.await_args_list] == [
+        "notebook-ci/sample/1.json",
+        "notebook-ci/sample/1.json",
+    ]
+    create.assert_awaited_once_with(client, "notebook-ci/sample/1.json", {"uuid": None})
+    existing.update.assert_awaited_once_with({"uuid": metadata.id})
+
+
+def test_reuse_ci_objects_propagates_lookup_errors(monkeypatch):
+    create = AsyncMock()
+    client = SimpleNamespace(
+        download_object_by_path=AsyncMock(side_effect=ForbiddenException(403, "Forbidden", None, None))
+    )
+
+    with pytest.raises(ForbiddenException):
+        _publish_in_new_kernel(monkeypatch, create, client)
+    create.assert_not_awaited()

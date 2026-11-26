@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+from typing import Any
 
 # Root directories
 CODE_SAMPLES_DIR = Path(__file__).resolve().parent.parent
@@ -167,3 +168,31 @@ def get_auth_credentials(env_file: Path | None = None) -> dict[str, str | None]:
         field: os.environ.get(env_key) or file_env.get(env_key)
         for field, env_key in zip(_AUTH_FIELD_NAMES, _AUTH_ENV_KEYS)
     }
+
+
+CI_OBJECT_FOLDER = "notebook-ci"
+
+
+def reuse_ci_objects(notebook_name: str) -> None:
+    """Make a CI notebook publish new versions of fixed objects instead of creating new ones.
+
+    Runs inside the notebook kernel. Each create call maps to a stable path based on the
+    notebook name and call order, so repeated CI runs update the same objects.
+    """
+    from evo.common.exceptions import NotFoundException
+    from evo.objects import ObjectAPIClient
+
+    create = ObjectAPIClient.create_geoscience_object
+    calls = 0
+
+    async def create_or_update(self: ObjectAPIClient, path: str, object_dict: dict[str, Any], *args, **kwargs):
+        nonlocal calls
+        calls += 1
+        ci_path = f"{CI_OBJECT_FOLDER}/{notebook_name}/{calls}.json"
+        try:
+            existing = await self.download_object_by_path(ci_path)
+        except NotFoundException:
+            return await create(self, ci_path, object_dict, *args, **kwargs)
+        return (await existing.update({**object_dict, "uuid": existing.metadata.id})).metadata
+
+    ObjectAPIClient.create_geoscience_object = create_or_update

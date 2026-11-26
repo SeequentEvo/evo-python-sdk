@@ -213,6 +213,14 @@ class TestAuthNotebookExecution:
             nb,
             auth_helper_dir=AUTH_HELPER_DIR,
         )
+        nb.cells.insert(
+            0,
+            nbformat.v4.new_code_cell(
+                f"import sys\nsys.path.insert(0, {str(Path(__file__).parent)!r})\n"
+                "from notebook_helpers import reuse_ci_objects\n"
+                f"reuse_ci_objects({notebook_path.stem!r})"
+            ),
+        )
 
         client = NotebookClient(
             nb,
