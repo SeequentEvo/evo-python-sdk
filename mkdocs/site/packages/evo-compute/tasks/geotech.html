@@ -1,0 +1,4055 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        
+        <link rel="shortcut icon" href="../../../img/favicon.ico">
+        <title>Geotech - Evo Python SDK</title>
+        <link href="../../../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../../../css/fontawesome.min.css" rel="stylesheet">
+        <link href="../../../css/brands.min.css" rel="stylesheet">
+        <link href="../../../css/solid.min.css" rel="stylesheet">
+        <link href="../../../css/v4-font-face.min.css" rel="stylesheet">
+        <link href="../../../css/base.css" rel="stylesheet">
+        <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" >
+        <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
+        <link href="../../../assets/_mkdocstrings.css" rel="stylesheet">
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="../../..">Evo Python SDK</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar-collapse" aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+
+                    <ul class="nav navbar-nav ms-md-auto">
+                            <li class="nav-item">
+                                <a rel="prev" href="geostatistics.html" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="isosurfacing.html" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-bs-toggle="collapse" data-bs-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-bs-level="1"><a href="#geotechnical-tasks" class="nav-link">Geotechnical Tasks</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-bs-level="2"><a href="#input-shorthands" class="nav-link">Input Shorthands</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#tasks" class="nav-link">Tasks</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<p><a href="https://github.com/SeequentEvo/evo-python-sdk/tree/main/packages/evo-compute/stubs/snapshot/geotech">GitHub source</a></p>
+<h1 id="geotechnical-tasks">Geotechnical Tasks</h1>
+<p>Discoverable compute tasks in the <code>geotech</code> topic. Call any task below through <code>ComputeClient</code> as <code>await client.geotech.&lt;task&gt;.run(...)</code>, or by name via <code>await client.arun("geotech", "&lt;task&gt;", parameters)</code>.</p>
+<h2 id="input-shorthands">Input Shorthands</h2>
+<table>
+<thead>
+<tr>
+<th>Alias</th>
+<th>Accepted Python Types</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ObjectInput</code></td>
+<td><code>str | UUID | BaseObject | DownloadedObject | ObjectMetadata | ObjectReference</code></td>
+<td>Any handle <code>ReferenceResolver</code> can derive a geoscience object URL from.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="tasks">Tasks</h2>
+<h3 id="add_to_intersected_geometry">add_to_intersected_geometry</h3>
+<p><code>client.geotech.add_to_intersected_geometry</code> · Task: <code>geotech/add-to-intersected-geometry</code> · Version: <code>1.6.3</code> · Preview (<code>preview=True</code> required)</p>
+<p>Adds one or more triangle mesh objects to an existing intersected Geological Model Meshes object.</p>
+<pre><code class="language-python">await client.geotech.add_to_intersected_geometry.run(
+    *,
+    source: ObjectInput,
+    meshes_to_add: list[ObjectInput],
+    target: GeotechAddToIntersectedGeometryTarget,
+    tolerance: float,
+    min_point: GeotechAddToIntersectedGeometryPoint3D = ...,
+    max_point: GeotechAddToIntersectedGeometryPoint3D2 = ...,
+    rotation_angle: float = ...,
+    coordinate_reference_system: str | None = ...,
+    preview: bool = False,
+) -&gt; GeotechAddToIntersectedGeometryResult
+</code></pre>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>source</code></td>
+<td><code>ObjectInput</code></td>
+<td>The existing intersected geometry (Geological Model Meshes) to add meshes to. Supported schemas: <code>geological-model-meshes/[&gt;=2.0,&lt;3]</code>.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>meshes_to_add</code></td>
+<td><code>list[ObjectInput]</code></td>
+<td>List of triangle mesh objects to add to the intersected geometry.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>target</code></td>
+<td><code>GeotechAddToIntersectedGeometryTarget</code></td>
+<td>Target specifying where to create the new Geological Model Meshes object. Provide an object with a reference field containing a path-based geoscience object URL and an overwrite field containing a boolean value. Only path-based object references can be used for creating a new object.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>tolerance</code></td>
+<td><code>float</code></td>
+<td>Tolerance distance for the intersection operation. Bounds: <code>&gt; 0</code>.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>min_point</code></td>
+<td><code>GeotechAddToIntersectedGeometryPoint3D</code></td>
+<td>Minimum bounding point to clip to.</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>max_point</code></td>
+<td><code>GeotechAddToIntersectedGeometryPoint3D2</code></td>
+<td>Maximum bounding point to clip to.</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>rotation_angle</code></td>
+<td><code>float</code></td>
+<td>Rotation angle around the bounds center.</td>
+<td><code>0.0</code></td>
+</tr>
+<tr>
+<td><code>coordinate_reference_system</code></td>
+<td><code>str | None</code></td>
+<td>The coordinate reference system that min_point and max_point are defined in. Specified as either an EPSG code string (e.g., 'EPSG:32611') or a WKT2 coordinate reference system definition string. Use the same CRS and bounds that were used to initialize the intersected geometry. If not provided, the CRS will be marked as unspecified.</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>preview</code></td>
+<td><code>bool</code></td>
+<td>Opt in to preview execution (required for this preview task: pass <code>preview=True</code>).</td>
+<td><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<p>Results (<code>GeotechAddToIntersectedGeometryResult</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>object</code></td>
+<td><code>GeotechAddToIntersectedGeometryResultResultObject</code></td>
+<td><code>await result.object.load()</code>, <code>await result.object.to_dataframe(*keys)</code></td>
+<td>The new Geological Model Meshes object with added meshes.</td>
+</tr>
+<tr>
+<td><code>message</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Description of the result of the operation.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="nested-shapes">Nested Shapes</h4>
+<p><strong><code>GeotechAddToIntersectedGeometryTarget</code></strong> (<code>TypedDict</code>)</p>
+<p>Target specifying where to create the new Geological Model Meshes object. Provide an object with a reference field containing a path-based geoscience object URL and an overwrite field containing a boolean value. Only path-based object references can be used for creating a new object.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>ObjectInput</code></td>
+<td>Yes</td>
+<td>Reference to the targeted object. Supported schemas: <code>geological-model-meshes/[&gt;=2.0,&lt;3]</code>.</td>
+</tr>
+<tr>
+<td><code>overwrite</code></td>
+<td><code>bool</code></td>
+<td>No</td>
+<td>Whether to overwrite the existing object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>No</td>
+<td>Description to put into the target object.</td>
+</tr>
+<tr>
+<td><code>tags</code></td>
+<td><code>dict[str, str]</code></td>
+<td>No</td>
+<td>Tags to put into the target object.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>GeotechAddToIntersectedGeometryPoint3D</code></strong> (<code>TypedDict</code>)</p>
+<p>Minimum bounding point to clip to.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>x</code></td>
+<td><code>float</code></td>
+<td>Yes</td>
+<td>The x coordinate.</td>
+</tr>
+<tr>
+<td><code>y</code></td>
+<td><code>float</code></td>
+<td>Yes</td>
+<td>The y coordinate.</td>
+</tr>
+<tr>
+<td><code>z</code></td>
+<td><code>float</code></td>
+<td>Yes</td>
+<td>The z coordinate.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>GeotechAddToIntersectedGeometryPoint3D2</code></strong> (<code>TypedDict</code>)</p>
+<p>Maximum bounding point to clip to.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>x</code></td>
+<td><code>float</code></td>
+<td>Yes</td>
+<td>The x coordinate.</td>
+</tr>
+<tr>
+<td><code>y</code></td>
+<td><code>float</code></td>
+<td>Yes</td>
+<td>The y coordinate.</td>
+</tr>
+<tr>
+<td><code>z</code></td>
+<td><code>float</code></td>
+<td>Yes</td>
+<td>The z coordinate.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>GeotechAddToIntersectedGeometryResultResultObject</code></strong> (<code>ResultNode</code>)</p>
+<p>The new Geological Model Meshes object with added meshes.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Reference to a geoscience object. Supported schemas: <code>geological-model-meshes/[&gt;=2.0,&lt;3]</code>.</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The name of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>—</td>
+<td>The description of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>schema_id</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The ID of the Geoscience Object schema.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="calculate_mesh_quality_histogram">calculate_mesh_quality_histogram</h3>
+<p><code>client.geotech.calculate_mesh_quality_histogram</code> · Task: <code>geotech/calculate-mesh-quality-histogram</code> · Version: <code>1.6.3</code> · Preview (<code>preview=True</code> required)</p>
+<p>Calculates a normalized inverse condition number histogram for triangles in a Triangle Mesh or Geological Model Meshes object.</p>
+<pre><code class="language-python">await client.geotech.calculate_mesh_quality_histogram.run(
+    *,
+    source: ObjectInput,
+    bin_width: float = ...,
+    preview: bool = False,
+) -&gt; GeotechCalculateMeshQualityHistogramResult
+</code></pre>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>source</code></td>
+<td><code>ObjectInput</code></td>
+<td>The mesh to analyze. Supports Triangle Mesh and Geological Model Meshes. Supported schemas: <code>triangle-mesh/[&gt;=2.0,&lt;3]</code>, <code>geological-model-meshes/[&gt;=2.0,&lt;3]</code>.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>bin_width</code></td>
+<td><code>float</code></td>
+<td>Width of each quality bin. Bins span the quality range from 0.0 to 1.0. Bounds: <code>&gt; 0</code>, <code>&lt;= 1</code>.</td>
+<td><code>0.1</code></td>
+</tr>
+<tr>
+<td><code>preview</code></td>
+<td><code>bool</code></td>
+<td>Opt in to preview execution (required for this preview task: pass <code>preview=True</code>).</td>
+<td><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<p>Results (<code>GeotechCalculateMeshQualityHistogramResult</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>bins</code></td>
+<td><code>list[GeotechCalculateMeshQualityHistogramResultResultBinsItem]</code></td>
+<td>—</td>
+<td>Ordered quality bins spanning the range from 0.0 to 1.0.</td>
+</tr>
+<tr>
+<td><code>message</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Description of the result of the operation.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="nested-shapes_1">Nested Shapes</h4>
+<p><strong><code>GeotechCalculateMeshQualityHistogramResultResultBinsItem</code></strong> (<code>ResultNode</code>)</p>
+<p>A mesh quality range.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>lower_bound</code></td>
+<td><code>float</code></td>
+<td>—</td>
+<td>Inclusive lower bound of the quality range.</td>
+</tr>
+<tr>
+<td><code>upper_bound</code></td>
+<td><code>float</code></td>
+<td>—</td>
+<td>Upper bound of the quality range.</td>
+</tr>
+<tr>
+<td><code>triangle_count</code></td>
+<td><code>int</code></td>
+<td>—</td>
+<td>Number of triangles in this quality range. Bounds: <code>&gt;= 0</code>.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="check_triangle_orientation">check_triangle_orientation</h3>
+<p><code>client.geotech.check_triangle_orientation</code> · Task: <code>geotech/check-triangle-orientation</code> · Version: <code>1.6.3</code> · Preview (<code>preview=True</code> required)</p>
+<p>Identifies triangles with inconsistent normal orientation relative to their neighbors in a Triangle Mesh or Geological Model Meshes object.</p>
+<pre><code class="language-python">await client.geotech.check_triangle_orientation.run(
+    *,
+    source: ObjectInput,
+    preview: bool = False,
+) -&gt; GeotechCheckTriangleOrientationResult
+</code></pre>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>source</code></td>
+<td><code>ObjectInput</code></td>
+<td>The mesh to check for inconsistently oriented triangles. Supports Triangle Mesh and Geological Model Meshes. Supported schemas: <code>triangle-mesh/[&gt;=2.0,&lt;3]</code>, <code>geological-model-meshes/[&gt;=2.0,&lt;3]</code>.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>preview</code></td>
+<td><code>bool</code></td>
+<td>Opt in to preview execution (required for this preview task: pass <code>preview=True</code>).</td>
+<td><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<p>Results (<code>GeotechCheckTriangleOrientationResult</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>triangles</code></td>
+<td><code>list[int]</code></td>
+<td>—</td>
+<td>Indices of triangles with inconsistent orientation relative to their neighbors.</td>
+</tr>
+<tr>
+<td><code>message</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Description of the result of the operation.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="copy_geological_model_meshes">copy_geological_model_meshes</h3>
+<p><code>client.geotech.copy_geological_model_meshes</code> · Task: <code>geotech/copy-geological-model-meshes</code> · Version: <code>1.6.3</code> · Preview (<code>preview=True</code> required)</p>
+<p>Copies an existing set of geological model meshes, optionally removing external volumes from the result.</p>
+<pre><code class="language-python">await client.geotech.copy_geological_model_meshes.run(
+    *,
+    source: ObjectInput,
+    target: GeotechCopyGeologicalModelMeshesTarget,
+    remove_external_volumes: bool = ...,
+    preview: bool = False,
+) -&gt; GeotechCopyGeologicalModelMeshesResult
+</code></pre>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>source</code></td>
+<td><code>ObjectInput</code></td>
+<td>The source Geological Model Meshes object to copy. Supported schemas: <code>geological-model-meshes/[&gt;=2.0,&lt;3]</code>.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>target</code></td>
+<td><code>GeotechCopyGeologicalModelMeshesTarget</code></td>
+<td>Target specifying where to create the new Geological Model Meshes object. Provide an object with a reference field containing a path-based geoscience object URL and an overwrite field containing a boolean value. Only path-based object references can be used for creating a new object.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>remove_external_volumes</code></td>
+<td><code>bool</code></td>
+<td>Whether to remove external volumes from the result.</td>
+<td><code>False</code></td>
+</tr>
+<tr>
+<td><code>preview</code></td>
+<td><code>bool</code></td>
+<td>Opt in to preview execution (required for this preview task: pass <code>preview=True</code>).</td>
+<td><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<p>Results (<code>GeotechCopyGeologicalModelMeshesResult</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>object</code></td>
+<td><code>GeotechCopyGeologicalModelMeshesResultResultObject</code></td>
+<td><code>await result.object.load()</code>, <code>await result.object.to_dataframe(*keys)</code></td>
+<td>The new Geological Model Meshes object.</td>
+</tr>
+<tr>
+<td><code>message</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Description of the result of the operation.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="nested-shapes_2">Nested Shapes</h4>
+<p><strong><code>GeotechCopyGeologicalModelMeshesTarget</code></strong> (<code>TypedDict</code>)</p>
+<p>Target specifying where to create the new Geological Model Meshes object. Provide an object with a reference field containing a path-based geoscience object URL and an overwrite field containing a boolean value. Only path-based object references can be used for creating a new object.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>ObjectInput</code></td>
+<td>Yes</td>
+<td>Reference to the targeted object. Supported schemas: <code>geological-model-meshes/[&gt;=2.0,&lt;3]</code>.</td>
+</tr>
+<tr>
+<td><code>overwrite</code></td>
+<td><code>bool</code></td>
+<td>No</td>
+<td>Whether to overwrite the existing object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>No</td>
+<td>Description to put into the target object.</td>
+</tr>
+<tr>
+<td><code>tags</code></td>
+<td><code>dict[str, str]</code></td>
+<td>No</td>
+<td>Tags to put into the target object.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>GeotechCopyGeologicalModelMeshesResultResultObject</code></strong> (<code>ResultNode</code>)</p>
+<p>The new Geological Model Meshes object.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Reference to a geoscience object. Supported schemas: <code>geological-model-meshes/[&gt;=2.0,&lt;3]</code>.</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The name of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>—</td>
+<td>The description of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>schema_id</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The ID of the Geoscience Object schema.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="create_cross_section">create_cross_section</h3>
+<p><code>client.geotech.create_cross_section</code> · Task: <code>geotech/create-cross-section</code> · Version: <code>1.6.3</code> · Preview (<code>preview=True</code> required)</p>
+<p>Intersects parametric volumes in a 3D Design Geometry with a vertical plane defined by a section origin and dip azimuth, producing a 2D Design Geometry with polyline boundaries.</p>
+<pre><code class="language-python">await client.geotech.create_cross_section.run(
+    *,
+    source: ObjectInput,
+    target: GeotechCreateCrossSectionTarget,
+    section_origin: GeotechCreateCrossSectionPoint3D,
+    section_dip_azimuth_degrees: float,
+    preview: bool = False,
+) -&gt; GeotechCreateCrossSectionResult
+</code></pre>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>source</code></td>
+<td><code>ObjectInput</code></td>
+<td>The input 3D Design Geometry (Domain3D) containing parameterized volumes. Supports Design Geometry schema version 1.1+. Supported schemas: <code>design-geometry/[&gt;=1.0,&lt;2]</code>.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>target</code></td>
+<td><code>GeotechCreateCrossSectionTarget</code></td>
+<td>Target specifying where to create the 2D cross-section Design Geometry result. Provide an object with a reference field containing a path-based geoscience object URL and an overwrite field containing a boolean value.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>section_origin</code></td>
+<td><code>GeotechCreateCrossSectionPoint3D</code></td>
+<td>Origin point of the cross-section plane.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>section_dip_azimuth_degrees</code></td>
+<td><code>float</code></td>
+<td>Azimuth angle in degrees for the cross-section plane. Bounds: <code>&gt;= 0.0</code>, <code>&lt; 360.0</code>.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>preview</code></td>
+<td><code>bool</code></td>
+<td>Opt in to preview execution (required for this preview task: pass <code>preview=True</code>).</td>
+<td><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<p>Results (<code>GeotechCreateCrossSectionResult</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>object</code></td>
+<td><code>GeotechCreateCrossSectionResultResultObject</code></td>
+<td><code>await result.object.load()</code>, <code>await result.object.to_dataframe(*keys)</code></td>
+<td>The 2D cross-section design geometry output.</td>
+</tr>
+<tr>
+<td><code>message</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Summary of the task outcome.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="nested-shapes_3">Nested Shapes</h4>
+<p><strong><code>GeotechCreateCrossSectionTarget</code></strong> (<code>TypedDict</code>)</p>
+<p>Target specifying where to create the 2D cross-section Design Geometry result. Provide an object with a reference field containing a path-based geoscience object URL and an overwrite field containing a boolean value.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>ObjectInput</code></td>
+<td>Yes</td>
+<td>Reference to the targeted object. Supported schemas: <code>design-geometry/[&gt;=1.0,&lt;2]</code>.</td>
+</tr>
+<tr>
+<td><code>overwrite</code></td>
+<td><code>bool</code></td>
+<td>No</td>
+<td>Whether to overwrite the existing object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>No</td>
+<td>Description to put into the target object.</td>
+</tr>
+<tr>
+<td><code>tags</code></td>
+<td><code>dict[str, str]</code></td>
+<td>No</td>
+<td>Tags to put into the target object.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>GeotechCreateCrossSectionPoint3D</code></strong> (<code>TypedDict</code>)</p>
+<p>Origin point of the cross-section plane.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>x</code></td>
+<td><code>float</code></td>
+<td>Yes</td>
+<td>The x coordinate.</td>
+</tr>
+<tr>
+<td><code>y</code></td>
+<td><code>float</code></td>
+<td>Yes</td>
+<td>The y coordinate.</td>
+</tr>
+<tr>
+<td><code>z</code></td>
+<td><code>float</code></td>
+<td>Yes</td>
+<td>The z coordinate.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>GeotechCreateCrossSectionResultResultObject</code></strong> (<code>ResultNode</code>)</p>
+<p>The 2D cross-section design geometry output.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Reference to a geoscience object. Supported schemas: <code>design-geometry/[&gt;=1.0,&lt;2]</code>.</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The name of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>—</td>
+<td>The description of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>schema_id</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The ID of the Geoscience Object schema.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="create_geological_model_meshes">create_geological_model_meshes</h3>
+<p><code>client.geotech.create_geological_model_meshes</code> · Task: <code>geotech/create-geological-model-meshes</code> · Version: <code>1.6.3</code> · Preview (<code>preview=True</code> required)</p>
+<p>Decomposes an intersected mesh or existing GMM into per-volume geological model meshes, optionally removing the top (external) volume.</p>
+<pre><code class="language-python">await client.geotech.create_geological_model_meshes.run(
+    *,
+    source: ObjectInput,
+    target: GeotechCreateGeologicalModelMeshesTarget,
+    preview: bool = False,
+) -&gt; GeotechCreateGeologicalModelMeshesResult
+</code></pre>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>source</code></td>
+<td><code>ObjectInput</code></td>
+<td>The Geological Model Meshes object to process. Supported schemas: <code>geological-model-meshes/[&gt;=2.0,&lt;3]</code>.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>target</code></td>
+<td><code>GeotechCreateGeologicalModelMeshesTarget</code></td>
+<td>Target specifying where to create the new Geological Model Meshes object. Provide an object with a reference field containing a path-based geoscience object URL and an overwrite field containing a boolean value. Only path-based object references can be used for creating a new object.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>preview</code></td>
+<td><code>bool</code></td>
+<td>Opt in to preview execution (required for this preview task: pass <code>preview=True</code>).</td>
+<td><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<p>Results (<code>GeotechCreateGeologicalModelMeshesResult</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>object</code></td>
+<td><code>GeotechCreateGeologicalModelMeshesResultResultObject</code></td>
+<td><code>await result.object.load()</code>, <code>await result.object.to_dataframe(*keys)</code></td>
+<td>The new Geological Model Meshes object.</td>
+</tr>
+<tr>
+<td><code>message</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Description of the result of the operation.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="nested-shapes_4">Nested Shapes</h4>
+<p><strong><code>GeotechCreateGeologicalModelMeshesTarget</code></strong> (<code>TypedDict</code>)</p>
+<p>Target specifying where to create the new Geological Model Meshes object. Provide an object with a reference field containing a path-based geoscience object URL and an overwrite field containing a boolean value. Only path-based object references can be used for creating a new object.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>ObjectInput</code></td>
+<td>Yes</td>
+<td>Reference to the targeted object. Supported schemas: <code>geological-model-meshes/[&gt;=2.0,&lt;3]</code>.</td>
+</tr>
+<tr>
+<td><code>overwrite</code></td>
+<td><code>bool</code></td>
+<td>No</td>
+<td>Whether to overwrite the existing object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>No</td>
+<td>Description to put into the target object.</td>
+</tr>
+<tr>
+<td><code>tags</code></td>
+<td><code>dict[str, str]</code></td>
+<td>No</td>
+<td>Tags to put into the target object.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>GeotechCreateGeologicalModelMeshesResultResultObject</code></strong> (<code>ResultNode</code>)</p>
+<p>The new Geological Model Meshes object.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Reference to a geoscience object. Supported schemas: <code>geological-model-meshes/[&gt;=2.0,&lt;3]</code>.</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The name of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>—</td>
+<td>The description of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>schema_id</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The ID of the Geoscience Object schema.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="detect_degenerate_triangles">detect_degenerate_triangles</h3>
+<p><code>client.geotech.detect_degenerate_triangles</code> · Task: <code>geotech/detect-degenerate-triangles</code> · Version: <code>1.6.3</code> · Preview (<code>preview=True</code> required)</p>
+<p>Identifies needle and cap triangles in a Triangle Mesh or Geological Model Meshes object.</p>
+<pre><code class="language-python">await client.geotech.detect_degenerate_triangles.run(
+    *,
+    source: ObjectInput,
+    needle_threshold_ratio: float = ...,
+    cap_min_angle_degrees: float = ...,
+    preview: bool = False,
+) -&gt; GeotechDetectDegenerateTrianglesResult
+</code></pre>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>source</code></td>
+<td><code>ObjectInput</code></td>
+<td>The mesh to check for degenerate triangles. Supports Triangle Mesh and Geological Model Meshes. Supported schemas: <code>triangle-mesh/[&gt;=2.0,&lt;3]</code>, <code>geological-model-meshes/[&gt;=2.0,&lt;3]</code>.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>needle_threshold_ratio</code></td>
+<td><code>float</code></td>
+<td>Longest-to-shortest edge ratio threshold for needle detection. Bounds: <code>&gt; 0</code>.</td>
+<td><code>1000.0</code></td>
+</tr>
+<tr>
+<td><code>cap_min_angle_degrees</code></td>
+<td><code>float</code></td>
+<td>Minimum angle in degrees for cap detection. Bounds: <code>&gt; 0</code>, <code>&lt; 180</code>.</td>
+<td><code>177.5</code></td>
+</tr>
+<tr>
+<td><code>preview</code></td>
+<td><code>bool</code></td>
+<td>Opt in to preview execution (required for this preview task: pass <code>preview=True</code>).</td>
+<td><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<p>Results (<code>GeotechDetectDegenerateTrianglesResult</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>triangles</code></td>
+<td><code>list[int]</code></td>
+<td>—</td>
+<td>Indices of detected degenerate triangles.</td>
+</tr>
+<tr>
+<td><code>message</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Description of the result of the operation.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="detect_duplicate_points">detect_duplicate_points</h3>
+<p><code>client.geotech.detect_duplicate_points</code> · Task: <code>geotech/detect-duplicate-points</code> · Version: <code>1.6.3</code> · Preview (<code>preview=True</code> required)</p>
+<p>Identifies exact duplicate vertices in a Triangle Mesh or Geological Model Meshes object.</p>
+<pre><code class="language-python">await client.geotech.detect_duplicate_points.run(
+    *,
+    source: ObjectInput,
+    preview: bool = False,
+) -&gt; GeotechDetectDuplicatePointsResult
+</code></pre>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>source</code></td>
+<td><code>ObjectInput</code></td>
+<td>The mesh to check for duplicate points. Supports Triangle Mesh and Geological Model Meshes. Supported schemas: <code>triangle-mesh/[&gt;=2.0,&lt;3]</code>, <code>geological-model-meshes/[&gt;=2.0,&lt;3]</code>.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>preview</code></td>
+<td><code>bool</code></td>
+<td>Opt in to preview execution (required for this preview task: pass <code>preview=True</code>).</td>
+<td><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<p>Results (<code>GeotechDetectDuplicatePointsResult</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>points</code></td>
+<td><code>list[int]</code></td>
+<td>—</td>
+<td>Indices of duplicate vertices (excluding first occurrence).</td>
+</tr>
+<tr>
+<td><code>message</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Description of the result of the operation.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="detect_duplicate_triangles">detect_duplicate_triangles</h3>
+<p><code>client.geotech.detect_duplicate_triangles</code> · Task: <code>geotech/detect-duplicate-triangles</code> · Version: <code>1.6.3</code> · Preview (<code>preview=True</code> required)</p>
+<p>Identifies duplicate triangles (same vertex indices regardless of order) in a Triangle Mesh or Geological Model Meshes object.</p>
+<pre><code class="language-python">await client.geotech.detect_duplicate_triangles.run(
+    *,
+    source: ObjectInput,
+    preview: bool = False,
+) -&gt; GeotechDetectDuplicateTrianglesResult
+</code></pre>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>source</code></td>
+<td><code>ObjectInput</code></td>
+<td>The mesh to check for duplicate triangles. Supports Triangle Mesh and Geological Model Meshes. Supported schemas: <code>triangle-mesh/[&gt;=2.0,&lt;3]</code>, <code>geological-model-meshes/[&gt;=2.0,&lt;3]</code>.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>preview</code></td>
+<td><code>bool</code></td>
+<td>Opt in to preview execution (required for this preview task: pass <code>preview=True</code>).</td>
+<td><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<p>Results (<code>GeotechDetectDuplicateTrianglesResult</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>triangles</code></td>
+<td><code>list[int]</code></td>
+<td>—</td>
+<td>Indices of detected duplicate triangles (excluding first occurrence).</td>
+</tr>
+<tr>
+<td><code>message</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Description of the result of the operation.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="detect_fins">detect_fins</h3>
+<p><code>client.geotech.detect_fins</code> · Task: <code>geotech/detect-fins</code> · Version: <code>1.6.3</code> · Preview (<code>preview=True</code> required)</p>
+<p>Identifies fin-like connected components without closed boundaries in a Triangle Mesh or Geological Model Meshes object.</p>
+<pre><code class="language-python">await client.geotech.detect_fins.run(
+    *,
+    source: ObjectInput,
+    max_area_ratio: float = ...,
+    preview: bool = False,
+) -&gt; GeotechDetectFinsResult
+</code></pre>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>source</code></td>
+<td><code>ObjectInput</code></td>
+<td>The mesh to check for fins. Supports Triangle Mesh and Geological Model Meshes. Supported schemas: <code>triangle-mesh/[&gt;=2.0,&lt;3]</code>, <code>geological-model-meshes/[&gt;=2.0,&lt;3]</code>.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>max_area_ratio</code></td>
+<td><code>float</code></td>
+<td>Components with surface area larger than the largest component times this ratio are ignored. Bounds: <code>&gt; 0</code>.</td>
+<td><code>1.0</code></td>
+</tr>
+<tr>
+<td><code>preview</code></td>
+<td><code>bool</code></td>
+<td>Opt in to preview execution (required for this preview task: pass <code>preview=True</code>).</td>
+<td><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<p>Results (<code>GeotechDetectFinsResult</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>fins</code></td>
+<td><code>list[list[int]]</code></td>
+<td>—</td>
+<td>Each fin is a list of triangle indices forming a connected component without a closed boundary.</td>
+</tr>
+<tr>
+<td><code>message</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Description of the result of the operation.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="detect_holes">detect_holes</h3>
+<p><code>client.geotech.detect_holes</code> · Task: <code>geotech/detect-holes</code> · Version: <code>1.6.3</code> · Preview (<code>preview=True</code> required)</p>
+<p>Identifies holes in a Triangle Mesh or Geological Model Meshes object based on boundary edge analysis.</p>
+<pre><code class="language-python">await client.geotech.detect_holes.run(
+    *,
+    source: ObjectInput,
+    hole_size_ratio_tolerance: float = ...,
+    preview: bool = False,
+) -&gt; GeotechDetectHolesResult
+</code></pre>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>source</code></td>
+<td><code>ObjectInput</code></td>
+<td>The mesh to check for holes. Supports Triangle Mesh and Geological Model Meshes. Supported schemas: <code>triangle-mesh/[&gt;=2.0,&lt;3]</code>, <code>geological-model-meshes/[&gt;=2.0,&lt;3]</code>.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>hole_size_ratio_tolerance</code></td>
+<td><code>float</code></td>
+<td>A boundary line is considered a hole if the ratio of the hole bounding box diagonal to the mesh bounding box diagonal is smaller than this tolerance. Bounds: <code>&gt; 0</code>, <code>&lt;= 1</code>.</td>
+<td><code>0.05</code></td>
+</tr>
+<tr>
+<td><code>preview</code></td>
+<td><code>bool</code></td>
+<td>Opt in to preview execution (required for this preview task: pass <code>preview=True</code>).</td>
+<td><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<p>Results (<code>GeotechDetectHolesResult</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>holes</code></td>
+<td><code>list[list[list[int]]]</code></td>
+<td>—</td>
+<td>Each hole is a list of boundary edges, where each edge is a pair of vertex indices.</td>
+</tr>
+<tr>
+<td><code>message</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Description of the result of the operation.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="detect_non_manifold_edges">detect_non_manifold_edges</h3>
+<p><code>client.geotech.detect_non_manifold_edges</code> · Task: <code>geotech/detect-non-manifold-edges</code> · Version: <code>1.6.3</code> · Preview (<code>preview=True</code> required)</p>
+<p>Identifies edges shared by more than two triangles in a Triangle Mesh or Geological Model Meshes object.</p>
+<pre><code class="language-python">await client.geotech.detect_non_manifold_edges.run(
+    *,
+    source: ObjectInput,
+    preview: bool = False,
+) -&gt; GeotechDetectNonManifoldEdgesResult
+</code></pre>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>source</code></td>
+<td><code>ObjectInput</code></td>
+<td>The mesh to check for non-manifold edges. Supports Triangle Mesh and Geological Model Meshes. Supported schemas: <code>triangle-mesh/[&gt;=2.0,&lt;3]</code>, <code>geological-model-meshes/[&gt;=2.0,&lt;3]</code>.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>preview</code></td>
+<td><code>bool</code></td>
+<td>Opt in to preview execution (required for this preview task: pass <code>preview=True</code>).</td>
+<td><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<p>Results (<code>GeotechDetectNonManifoldEdgesResult</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>edges</code></td>
+<td><code>list[list[int]]</code></td>
+<td>—</td>
+<td>Non-manifold edges, each as a pair of vertex indices.</td>
+</tr>
+<tr>
+<td><code>message</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Description of the result of the operation.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="detect_non_manifold_vertices">detect_non_manifold_vertices</h3>
+<p><code>client.geotech.detect_non_manifold_vertices</code> · Task: <code>geotech/detect-non-manifold-vertices</code> · Version: <code>1.6.3</code> · Preview (<code>preview=True</code> required)</p>
+<p>Identifies vertices with non-manifold topology in a Triangle Mesh or Geological Model Meshes object.</p>
+<pre><code class="language-python">await client.geotech.detect_non_manifold_vertices.run(
+    *,
+    source: ObjectInput,
+    preview: bool = False,
+) -&gt; GeotechDetectNonManifoldVerticesResult
+</code></pre>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>source</code></td>
+<td><code>ObjectInput</code></td>
+<td>The mesh to check for non-manifold vertices. Supports Triangle Mesh and Geological Model Meshes. Supported schemas: <code>triangle-mesh/[&gt;=2.0,&lt;3]</code>, <code>geological-model-meshes/[&gt;=2.0,&lt;3]</code>.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>preview</code></td>
+<td><code>bool</code></td>
+<td>Opt in to preview execution (required for this preview task: pass <code>preview=True</code>).</td>
+<td><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<p>Results (<code>GeotechDetectNonManifoldVerticesResult</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>points</code></td>
+<td><code>list[int]</code></td>
+<td>—</td>
+<td>Indices of vertices with non-manifold topology.</td>
+</tr>
+<tr>
+<td><code>message</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Description of the result of the operation.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="detect_non_partitioning_surfaces">detect_non_partitioning_surfaces</h3>
+<p><code>client.geotech.detect_non_partitioning_surfaces</code> · Task: <code>geotech/detect-non-partitioning-surfaces</code> · Version: <code>1.6.3</code> · Preview (<code>preview=True</code> required)</p>
+<p>Identifies non-partitioning surfaces that are neither fins nor surfaces with holes in a Triangle Mesh or Geological Model Meshes object.</p>
+<pre><code class="language-python">await client.geotech.detect_non_partitioning_surfaces.run(
+    *,
+    source: ObjectInput,
+    max_area_ratio: float = ...,
+    hole_size_ratio_tolerance: float = ...,
+    preview: bool = False,
+) -&gt; GeotechDetectNonPartitioningSurfacesResult
+</code></pre>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>source</code></td>
+<td><code>ObjectInput</code></td>
+<td>The mesh to check for non-partitioning surfaces. Supports Triangle Mesh and Geological Model Meshes. Supported schemas: <code>triangle-mesh/[&gt;=2.0,&lt;3]</code>, <code>geological-model-meshes/[&gt;=2.0,&lt;3]</code>.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>max_area_ratio</code></td>
+<td><code>float</code></td>
+<td>Components with surface area larger than the largest component times this ratio are ignored. Bounds: <code>&gt; 0</code>.</td>
+<td><code>1.0</code></td>
+</tr>
+<tr>
+<td><code>hole_size_ratio_tolerance</code></td>
+<td><code>float</code></td>
+<td>A boundary line is considered a hole if the ratio of the hole bounding box diagonal to the mesh bounding box diagonal is smaller than this tolerance. Bounds: <code>&gt; 0</code>, <code>&lt;= 1</code>.</td>
+<td><code>0.05</code></td>
+</tr>
+<tr>
+<td><code>preview</code></td>
+<td><code>bool</code></td>
+<td>Opt in to preview execution (required for this preview task: pass <code>preview=True</code>).</td>
+<td><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<p>Results (<code>GeotechDetectNonPartitioningSurfacesResult</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>surfaces</code></td>
+<td><code>list[GeotechDetectNonPartitioningSurfacesResultNonPartitioningSurfaceResult]</code></td>
+<td>—</td>
+<td>Detected non-partitioning surfaces with their triangles and edges.</td>
+</tr>
+<tr>
+<td><code>message</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Description of the result of the operation.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="nested-shapes_5">Nested Shapes</h4>
+<p><strong><code>GeotechDetectNonPartitioningSurfacesResultNonPartitioningSurfaceResult</code></strong> (<code>ResultNode</code>)</p>
+<p>A single non-partitioning surface.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>triangles</code></td>
+<td><code>list[int]</code></td>
+<td>—</td>
+<td>Indices of triangles forming this surface.</td>
+</tr>
+<tr>
+<td><code>edges</code></td>
+<td><code>list[list[int]]</code></td>
+<td>—</td>
+<td>Boundary edges of this surface, each as a pair of vertex indices.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="detect_self_intersections">detect_self_intersections</h3>
+<p><code>client.geotech.detect_self_intersections</code> · Task: <code>geotech/detect-self-intersections</code> · Version: <code>1.6.3</code> · Preview (<code>preview=True</code> required)</p>
+<p>Identifies self-intersecting triangles in a Triangle Mesh or Geological Model Meshes object.</p>
+<pre><code class="language-python">await client.geotech.detect_self_intersections.run(
+    *,
+    source: ObjectInput,
+    tolerance: float = ...,
+    preview: bool = False,
+) -&gt; GeotechDetectSelfIntersectionsResult
+</code></pre>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>source</code></td>
+<td><code>ObjectInput</code></td>
+<td>The mesh to check for self-intersections. Supports Triangle Mesh and Geological Model Meshes. Supported schemas: <code>triangle-mesh/[&gt;=2.0,&lt;3]</code>, <code>geological-model-meshes/[&gt;=2.0,&lt;3]</code>.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>tolerance</code></td>
+<td><code>float</code></td>
+<td>Tolerance for self-intersection detection. Bounds: <code>&gt;= 0</code>.</td>
+<td><code>1e-06</code></td>
+</tr>
+<tr>
+<td><code>preview</code></td>
+<td><code>bool</code></td>
+<td>Opt in to preview execution (required for this preview task: pass <code>preview=True</code>).</td>
+<td><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<p>Results (<code>GeotechDetectSelfIntersectionsResult</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>triangles</code></td>
+<td><code>list[int]</code></td>
+<td>—</td>
+<td>Indices of triangles involved in self-intersections.</td>
+</tr>
+<tr>
+<td><code>message</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Description of the result of the operation.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="fill_holes">fill_holes</h3>
+<p><code>client.geotech.fill_holes</code> · Task: <code>geotech/fill-holes</code> · Version: <code>1.6.3</code> · Preview (<code>preview=True</code> required)</p>
+<p>Fills holes in the triangle mesh of a GMM object using specified edge identifiers and a configurable fill mode strategy.</p>
+<pre><code class="language-python">await client.geotech.fill_holes.run(
+    *,
+    source: ObjectInput,
+    target: GeotechFillHolesTarget,
+    edges: list[list[int]],
+    fill_mode_selection: Literal[&quot;Fill&quot;, &quot;FillAndRefine&quot;, &quot;FillRefineAndFair&quot;],
+    preview: bool = False,
+) -&gt; GeotechFillHolesResult
+</code></pre>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>source</code></td>
+<td><code>ObjectInput</code></td>
+<td>The mesh to process. Supports Triangle Mesh and Geological Model Meshes. Supported schemas: <code>triangle-mesh/[&gt;=2.0,&lt;3]</code>, <code>geological-model-meshes/[&gt;=2.0,&lt;3]</code>.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>target</code></td>
+<td><code>GeotechFillHolesTarget</code></td>
+<td>Target specifying where to create the output mesh object. Provide an object with a reference field containing a path-based geoscience object URL and an overwrite field containing a boolean value.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>edges</code></td>
+<td><code>list[list[int]]</code></td>
+<td>List of edges that identify holes to fill. Each edge is a pair of vertex indices. One edge per hole is sufficient to identify it.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>fill_mode_selection</code></td>
+<td><code>Literal["Fill", "FillAndRefine", "FillRefineAndFair"]</code></td>
+<td>The hole filling strategy to use.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>preview</code></td>
+<td><code>bool</code></td>
+<td>Opt in to preview execution (required for this preview task: pass <code>preview=True</code>).</td>
+<td><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<p>Results (<code>GeotechFillHolesResult</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>object</code></td>
+<td><code>GeotechFillHolesResultResultObject</code></td>
+<td><code>await result.object.load()</code>, <code>await result.object.to_dataframe(*keys)</code></td>
+<td>The new mesh object with holes filled.</td>
+</tr>
+<tr>
+<td><code>message</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Description of the result of the operation.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="nested-shapes_6">Nested Shapes</h4>
+<p><strong><code>GeotechFillHolesTarget</code></strong> (<code>TypedDict</code>)</p>
+<p>Target specifying where to create the output mesh object. Provide an object with a reference field containing a path-based geoscience object URL and an overwrite field containing a boolean value.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>ObjectInput</code></td>
+<td>Yes</td>
+<td>Reference to the targeted object. Supported schemas: <code>triangle-mesh/[&gt;=2.0,&lt;3]</code>, <code>geological-model-meshes/[&gt;=2.0,&lt;3]</code>.</td>
+</tr>
+<tr>
+<td><code>overwrite</code></td>
+<td><code>bool</code></td>
+<td>No</td>
+<td>Whether to overwrite the existing object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>No</td>
+<td>Description to put into the target object.</td>
+</tr>
+<tr>
+<td><code>tags</code></td>
+<td><code>dict[str, str]</code></td>
+<td>No</td>
+<td>Tags to put into the target object.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>GeotechFillHolesResultResultObject</code></strong> (<code>ResultNode</code>)</p>
+<p>The new mesh object with holes filled.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Reference to a geoscience object. Supported schemas: <code>triangle-mesh/[&gt;=2.0,&lt;3]</code>, <code>geological-model-meshes/[&gt;=2.0,&lt;3]</code>.</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The name of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>—</td>
+<td>The description of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>schema_id</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The ID of the Geoscience Object schema.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="fix_self_intersections">fix_self_intersections</h3>
+<p><code>client.geotech.fix_self_intersections</code> · Task: <code>geotech/fix-self-intersections</code> · Version: <code>1.6.3</code> · Preview (<code>preview=True</code> required)</p>
+<p>Fixes self-intersections in the triangle mesh of a GMM object using configurable intersection detection settings.</p>
+<pre><code class="language-python">await client.geotech.fix_self_intersections.run(
+    *,
+    source: ObjectInput,
+    target: GeotechFixSelfIntersectionsTarget,
+    intersect_settings: GeotechFixSelfIntersectionsIntersectSettings,
+    preview: bool = False,
+) -&gt; GeotechFixSelfIntersectionsResult
+</code></pre>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>source</code></td>
+<td><code>ObjectInput</code></td>
+<td>The mesh to process. Supports Triangle Mesh and Geological Model Meshes. Supported schemas: <code>triangle-mesh/[&gt;=2.0,&lt;3]</code>, <code>geological-model-meshes/[&gt;=2.0,&lt;3]</code>.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>target</code></td>
+<td><code>GeotechFixSelfIntersectionsTarget</code></td>
+<td>Target specifying where to create the output mesh object. Provide an object with a reference field containing a path-based geoscience object URL and an overwrite field containing a boolean value.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>intersect_settings</code></td>
+<td><code>GeotechFixSelfIntersectionsIntersectSettings</code></td>
+<td>Settings that control the intersection detection behaviour.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>preview</code></td>
+<td><code>bool</code></td>
+<td>Opt in to preview execution (required for this preview task: pass <code>preview=True</code>).</td>
+<td><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<p>Results (<code>GeotechFixSelfIntersectionsResult</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>object</code></td>
+<td><code>GeotechFixSelfIntersectionsResultResultObject</code></td>
+<td><code>await result.object.load()</code>, <code>await result.object.to_dataframe(*keys)</code></td>
+<td>The new mesh object with self-intersections fixed.</td>
+</tr>
+<tr>
+<td><code>message</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Description of the result of the operation.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="nested-shapes_7">Nested Shapes</h4>
+<p><strong><code>GeotechFixSelfIntersectionsTarget</code></strong> (<code>TypedDict</code>)</p>
+<p>Target specifying where to create the output mesh object. Provide an object with a reference field containing a path-based geoscience object URL and an overwrite field containing a boolean value.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>ObjectInput</code></td>
+<td>Yes</td>
+<td>Reference to the targeted object. Supported schemas: <code>triangle-mesh/[&gt;=2.0,&lt;3]</code>, <code>geological-model-meshes/[&gt;=2.0,&lt;3]</code>.</td>
+</tr>
+<tr>
+<td><code>overwrite</code></td>
+<td><code>bool</code></td>
+<td>No</td>
+<td>Whether to overwrite the existing object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>No</td>
+<td>Description to put into the target object.</td>
+</tr>
+<tr>
+<td><code>tags</code></td>
+<td><code>dict[str, str]</code></td>
+<td>No</td>
+<td>Tags to put into the target object.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>GeotechFixSelfIntersectionsIntersectSettings</code></strong> (<code>TypedDict</code>)</p>
+<p>Settings that control the intersection detection behaviour.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>assume_no_self_intersections_in_parts</code></td>
+<td><code>bool</code></td>
+<td>No</td>
+<td>When true, skip checking each part for self-intersections and only check between parts.</td>
+</tr>
+<tr>
+<td><code>tolerance</code></td>
+<td><code>float</code></td>
+<td>No</td>
+<td>Numerical tolerance used when detecting intersections. Bounds: <code>&gt; 0</code>.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>GeotechFixSelfIntersectionsResultResultObject</code></strong> (<code>ResultNode</code>)</p>
+<p>The new mesh object with self-intersections fixed.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Reference to a geoscience object. Supported schemas: <code>triangle-mesh/[&gt;=2.0,&lt;3]</code>, <code>geological-model-meshes/[&gt;=2.0,&lt;3]</code>.</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The name of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>—</td>
+<td>The description of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>schema_id</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The ID of the Geoscience Object schema.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="init_aggregate_geom_gmm">init_aggregate_geom_gmm</h3>
+<p><code>client.geotech.init_aggregate_geom_gmm</code> · Task: <code>geotech/init-aggregate-geom-gmm</code> · Version: <code>1.6.3</code> · Preview (<code>preview=True</code> required)</p>
+<p>Creates a rotated bounding box as a Geological Model Meshes object, used as the initial intersected geometry when creating a model.</p>
+<pre><code class="language-python">await client.geotech.init_aggregate_geom_gmm.run(
+    *,
+    target: GeotechInitAggregateGeomGmmTarget,
+    min_point: GeotechInitAggregateGeomGmmPoint3D,
+    max_point: GeotechInitAggregateGeomGmmPoint3D2,
+    rotation_angle: float = ...,
+    coordinate_reference_system: str | None = ...,
+    preview: bool = False,
+) -&gt; GeotechInitAggregateGeomGmmResult
+</code></pre>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>target</code></td>
+<td><code>GeotechInitAggregateGeomGmmTarget</code></td>
+<td>Target specifying where to create the new Geological Model Meshes object. Provide an object with a reference field containing a path-based geoscience object URL and an overwrite field containing a boolean value. Only path-based object references can be used for creating a new object.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>min_point</code></td>
+<td><code>GeotechInitAggregateGeomGmmPoint3D</code></td>
+<td>The minimum corner of the bounding box.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>max_point</code></td>
+<td><code>GeotechInitAggregateGeomGmmPoint3D2</code></td>
+<td>The maximum corner of the bounding box.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>rotation_angle</code></td>
+<td><code>float</code></td>
+<td>The rotation angle for the bounding box, in radians.</td>
+<td><code>0.0</code></td>
+</tr>
+<tr>
+<td><code>coordinate_reference_system</code></td>
+<td><code>str | None</code></td>
+<td>The coordinate reference system that the other parameters are defined in. Specified as either an EPSG code string (e.g., 'EPSG:32611') or a WKT2 coordinate reference system definition string. If not provided, the CRS will be marked as unspecified.</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>preview</code></td>
+<td><code>bool</code></td>
+<td>Opt in to preview execution (required for this preview task: pass <code>preview=True</code>).</td>
+<td><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<p>Results (<code>GeotechInitAggregateGeomGmmResult</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>object</code></td>
+<td><code>GeotechInitAggregateGeomGmmResultResultObject</code></td>
+<td><code>await result.object.load()</code>, <code>await result.object.to_dataframe(*keys)</code></td>
+<td>The new Geological Model Meshes object.</td>
+</tr>
+<tr>
+<td><code>message</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Description of the result of the operation.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="nested-shapes_8">Nested Shapes</h4>
+<p><strong><code>GeotechInitAggregateGeomGmmTarget</code></strong> (<code>TypedDict</code>)</p>
+<p>Target specifying where to create the new Geological Model Meshes object. Provide an object with a reference field containing a path-based geoscience object URL and an overwrite field containing a boolean value. Only path-based object references can be used for creating a new object.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>ObjectInput</code></td>
+<td>Yes</td>
+<td>Reference to the targeted object. Supported schemas: <code>geological-model-meshes/[&gt;=2.0,&lt;3]</code>.</td>
+</tr>
+<tr>
+<td><code>overwrite</code></td>
+<td><code>bool</code></td>
+<td>No</td>
+<td>Whether to overwrite the existing object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>No</td>
+<td>Description to put into the target object.</td>
+</tr>
+<tr>
+<td><code>tags</code></td>
+<td><code>dict[str, str]</code></td>
+<td>No</td>
+<td>Tags to put into the target object.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>GeotechInitAggregateGeomGmmPoint3D</code></strong> (<code>TypedDict</code>)</p>
+<p>The minimum corner of the bounding box.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>x</code></td>
+<td><code>float</code></td>
+<td>Yes</td>
+<td>The x coordinate.</td>
+</tr>
+<tr>
+<td><code>y</code></td>
+<td><code>float</code></td>
+<td>Yes</td>
+<td>The y coordinate.</td>
+</tr>
+<tr>
+<td><code>z</code></td>
+<td><code>float</code></td>
+<td>Yes</td>
+<td>The z coordinate.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>GeotechInitAggregateGeomGmmPoint3D2</code></strong> (<code>TypedDict</code>)</p>
+<p>The maximum corner of the bounding box.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>x</code></td>
+<td><code>float</code></td>
+<td>Yes</td>
+<td>The x coordinate.</td>
+</tr>
+<tr>
+<td><code>y</code></td>
+<td><code>float</code></td>
+<td>Yes</td>
+<td>The y coordinate.</td>
+</tr>
+<tr>
+<td><code>z</code></td>
+<td><code>float</code></td>
+<td>Yes</td>
+<td>The z coordinate.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>GeotechInitAggregateGeomGmmResultResultObject</code></strong> (<code>ResultNode</code>)</p>
+<p>The new Geological Model Meshes object.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Reference to a geoscience object. Supported schemas: <code>geological-model-meshes/[&gt;=2.0,&lt;3]</code>.</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The name of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>—</td>
+<td>The description of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>schema_id</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The ID of the Geoscience Object schema.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="local_remesh">local_remesh</h3>
+<p><code>client.geotech.local_remesh</code> · Task: <code>geotech/local-remesh</code> · Version: <code>1.6.3</code> · Preview (<code>preview=True</code> required)</p>
+<p>Locally remeshes the region around selected seed triangles in a Geological Model Meshes object using configurable remeshing parameters and radius-based region growth.</p>
+<pre><code class="language-python">await client.geotech.local_remesh.run(
+    *,
+    source: ObjectInput,
+    target: GeotechLocalRemeshTarget,
+    seed_triangle_indices: list[int],
+    remesh_settings: GeotechLocalRemeshRemeshSettings = ...,
+    radius: float = ...,
+    preview: bool = False,
+) -&gt; GeotechLocalRemeshResult
+</code></pre>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>source</code></td>
+<td><code>ObjectInput</code></td>
+<td>The mesh to process. Supports Triangle Mesh and Geological Model Meshes. Supported schemas: <code>triangle-mesh/[&gt;=2.0,&lt;3]</code>, <code>geological-model-meshes/[&gt;=2.0,&lt;3]</code>.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>target</code></td>
+<td><code>GeotechLocalRemeshTarget</code></td>
+<td>Target specifying where to create the output mesh object. Provide an object with a reference field containing a path-based geoscience object URL and an overwrite field containing a boolean value.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>seed_triangle_indices</code></td>
+<td><code>list[int]</code></td>
+<td>Triangle indices used as seeds for the local remeshing region.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>remesh_settings</code></td>
+<td><code>GeotechLocalRemeshRemeshSettings</code></td>
+<td>Settings that control the underlying remeshing algorithm.</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>radius</code></td>
+<td><code>float</code></td>
+<td>Flood-fill radius around the seed triangles used to select the local remeshing region. Bounds: <code>&gt;= 0</code>.</td>
+<td><code>0.0</code></td>
+</tr>
+<tr>
+<td><code>preview</code></td>
+<td><code>bool</code></td>
+<td>Opt in to preview execution (required for this preview task: pass <code>preview=True</code>).</td>
+<td><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<p>Results (<code>GeotechLocalRemeshResult</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>object</code></td>
+<td><code>GeotechLocalRemeshResultResultObject</code></td>
+<td><code>await result.object.load()</code>, <code>await result.object.to_dataframe(*keys)</code></td>
+<td>The new mesh object with the local remeshing applied.</td>
+</tr>
+<tr>
+<td><code>message</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Description of the result of the operation.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="nested-shapes_9">Nested Shapes</h4>
+<p><strong><code>GeotechLocalRemeshTarget</code></strong> (<code>TypedDict</code>)</p>
+<p>Target specifying where to create the output mesh object. Provide an object with a reference field containing a path-based geoscience object URL and an overwrite field containing a boolean value.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>ObjectInput</code></td>
+<td>Yes</td>
+<td>Reference to the targeted object. Supported schemas: <code>triangle-mesh/[&gt;=2.0,&lt;3]</code>, <code>geological-model-meshes/[&gt;=2.0,&lt;3]</code>.</td>
+</tr>
+<tr>
+<td><code>overwrite</code></td>
+<td><code>bool</code></td>
+<td>No</td>
+<td>Whether to overwrite the existing object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>No</td>
+<td>Description to put into the target object.</td>
+</tr>
+<tr>
+<td><code>tags</code></td>
+<td><code>dict[str, str]</code></td>
+<td>No</td>
+<td>Tags to put into the target object.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>GeotechLocalRemeshRemeshSettings</code></strong> (<code>TypedDict</code>)</p>
+<p>Settings that control the underlying remeshing algorithm.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>patch_angle_tolerance</code></td>
+<td><code>float</code></td>
+<td>No</td>
+<td>Angle change in degrees used to define a patch skeleton line. Bounds: <code>&gt; 0</code>.</td>
+</tr>
+<tr>
+<td><code>max_chordal_error</code></td>
+<td><code>float</code></td>
+<td>No</td>
+<td>Maximum relative local error. -0.005 corresponds to 0.5%.</td>
+</tr>
+<tr>
+<td><code>strain_tolerance</code></td>
+<td><code>float</code></td>
+<td>No</td>
+<td>Relative quality difference before and after unfolding to a plane. Bounds: <code>&gt;= 0</code>.</td>
+</tr>
+<tr>
+<td><code>is_closed</code></td>
+<td><code>bool</code></td>
+<td>No</td>
+<td>Whether the mesh is closed; should be true for manifold GMVs.</td>
+</tr>
+<tr>
+<td><code>initial_cleanup</code></td>
+<td><code>bool</code></td>
+<td>No</td>
+<td>Whether to run initial cleanup such as node merging, gap filling, and topological fixing.</td>
+</tr>
+<tr>
+<td><code>line_proximity_detection</code></td>
+<td><code>bool</code></td>
+<td>No</td>
+<td>Whether to consider distance between skeleton lines when sizing elements.</td>
+</tr>
+<tr>
+<td><code>optimize</code></td>
+<td><code>bool</code></td>
+<td>No</td>
+<td>Whether to perform final optimization.</td>
+</tr>
+<tr>
+<td><code>shape_quality_weight</code></td>
+<td><code>float</code></td>
+<td>No</td>
+<td>Size-versus-shape weight from 0 to 1. Bounds: <code>&gt;= 0</code>.</td>
+</tr>
+<tr>
+<td><code>target_h</code></td>
+<td><code>float</code></td>
+<td>No</td>
+<td>Target element size. Zero bases the size on skeleton lines. Bounds: <code>&gt;= 0</code>.</td>
+</tr>
+<tr>
+<td><code>regularize_mode</code></td>
+<td><code>bool</code></td>
+<td>No</td>
+<td>If true, do not remesh; only regularize the mesh.</td>
+</tr>
+<tr>
+<td><code>relax_chunk_interfaces</code></td>
+<td><code>bool</code></td>
+<td>No</td>
+<td>Whether to relax chunk interfaces during remeshing.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>GeotechLocalRemeshResultResultObject</code></strong> (<code>ResultNode</code>)</p>
+<p>The new mesh object with the local remeshing applied.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Reference to a geoscience object. Supported schemas: <code>triangle-mesh/[&gt;=2.0,&lt;3]</code>, <code>geological-model-meshes/[&gt;=2.0,&lt;3]</code>.</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The name of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>—</td>
+<td>The description of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>schema_id</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The ID of the Geoscience Object schema.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="make_gmm_into_intersected_geometry">make_gmm_into_intersected_geometry</h3>
+<p><code>client.geotech.make_gmm_into_intersected_geometry</code> · Task: <code>geotech/make-gmm-into-intersected-geometry</code> · Version: <code>1.6.3</code> · Preview (<code>preview=True</code> required)</p>
+<p>Clips a Geological Model Meshes object and processes it to create an intersected geometry mesh.</p>
+<pre><code class="language-python">await client.geotech.make_gmm_into_intersected_geometry.run(
+    *,
+    source: ObjectInput,
+    target: GeotechMakeGmmIntoIntersectedGeometryTarget,
+    clip_tolerance: float,
+    min_point: GeotechMakeGmmIntoIntersectedGeometryPoint3D = ...,
+    max_point: GeotechMakeGmmIntoIntersectedGeometryPoint3D2 = ...,
+    rotation_angle: float = ...,
+    collapse_settings: GeotechMakeGmmIntoIntersectedGeometryCollapseOverlapsSettings = ...,
+    attempt_conformalization: bool = ...,
+    attempt_auto_fix_on_failure: bool = ...,
+    intersection_tolerance_for_auto_fix: float = ...,
+    remesh_settings: GeotechMakeGmmIntoIntersectedGeometryRemeshSettings = ...,
+    preview: bool = False,
+) -&gt; GeotechMakeGmmIntoIntersectedGeometryResult
+</code></pre>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>source</code></td>
+<td><code>ObjectInput</code></td>
+<td>The Geological Model Meshes object to process. Supported schemas: <code>geological-model-meshes/[&gt;=2.0,&lt;3]</code>.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>target</code></td>
+<td><code>GeotechMakeGmmIntoIntersectedGeometryTarget</code></td>
+<td>Target specifying where to create the new Geological Model Meshes object. Provide an object with a reference field containing a path-based geoscience object URL and an overwrite field containing a boolean value. Only path-based object references can be used for creating a new object.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>clip_tolerance</code></td>
+<td><code>float</code></td>
+<td>Clip tolerance distance. Bounds: <code>&gt; 0</code>.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>min_point</code></td>
+<td><code>GeotechMakeGmmIntoIntersectedGeometryPoint3D</code></td>
+<td>Minimum bounding point to clip to.</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>max_point</code></td>
+<td><code>GeotechMakeGmmIntoIntersectedGeometryPoint3D2</code></td>
+<td>Maximum bounding point to clip to.</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>rotation_angle</code></td>
+<td><code>float</code></td>
+<td>Rotation angle around the bounds center.</td>
+<td><code>0.0</code></td>
+</tr>
+<tr>
+<td><code>collapse_settings</code></td>
+<td><code>GeotechMakeGmmIntoIntersectedGeometryCollapseOverlapsSettings</code></td>
+<td>Settings for collapsing overlapping mesh regions.</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>attempt_conformalization</code></td>
+<td><code>bool</code></td>
+<td>Whether to attempt conformalization of the intersected geometry.</td>
+<td><code>False</code></td>
+</tr>
+<tr>
+<td><code>attempt_auto_fix_on_failure</code></td>
+<td><code>bool</code></td>
+<td>Whether to attempt automatic fix on failure.</td>
+<td><code>False</code></td>
+</tr>
+<tr>
+<td><code>intersection_tolerance_for_auto_fix</code></td>
+<td><code>float</code></td>
+<td>Intersection tolerance for automatic fix. Bounds: <code>&gt; 0</code>.</td>
+<td><code>0.001</code></td>
+</tr>
+<tr>
+<td><code>remesh_settings</code></td>
+<td><code>GeotechMakeGmmIntoIntersectedGeometryRemeshSettings</code></td>
+<td>Settings for remeshing during automatic fix.</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>preview</code></td>
+<td><code>bool</code></td>
+<td>Opt in to preview execution (required for this preview task: pass <code>preview=True</code>).</td>
+<td><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<p>Results (<code>GeotechMakeGmmIntoIntersectedGeometryResult</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>object</code></td>
+<td><code>GeotechMakeGmmIntoIntersectedGeometryResultResultObject</code></td>
+<td><code>await result.object.load()</code>, <code>await result.object.to_dataframe(*keys)</code></td>
+<td>The new Geological Model Meshes object with intersected geometry.</td>
+</tr>
+<tr>
+<td><code>message</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Description of the result of the operation.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="nested-shapes_10">Nested Shapes</h4>
+<p><strong><code>GeotechMakeGmmIntoIntersectedGeometryTarget</code></strong> (<code>TypedDict</code>)</p>
+<p>Target specifying where to create the new Geological Model Meshes object. Provide an object with a reference field containing a path-based geoscience object URL and an overwrite field containing a boolean value. Only path-based object references can be used for creating a new object.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>ObjectInput</code></td>
+<td>Yes</td>
+<td>Reference to the targeted object. Supported schemas: <code>geological-model-meshes/[&gt;=2.0,&lt;3]</code>.</td>
+</tr>
+<tr>
+<td><code>overwrite</code></td>
+<td><code>bool</code></td>
+<td>No</td>
+<td>Whether to overwrite the existing object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>No</td>
+<td>Description to put into the target object.</td>
+</tr>
+<tr>
+<td><code>tags</code></td>
+<td><code>dict[str, str]</code></td>
+<td>No</td>
+<td>Tags to put into the target object.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>GeotechMakeGmmIntoIntersectedGeometryPoint3D</code></strong> (<code>TypedDict</code>)</p>
+<p>Minimum bounding point to clip to.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>x</code></td>
+<td><code>float</code></td>
+<td>Yes</td>
+<td>The x coordinate.</td>
+</tr>
+<tr>
+<td><code>y</code></td>
+<td><code>float</code></td>
+<td>Yes</td>
+<td>The y coordinate.</td>
+</tr>
+<tr>
+<td><code>z</code></td>
+<td><code>float</code></td>
+<td>Yes</td>
+<td>The z coordinate.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>GeotechMakeGmmIntoIntersectedGeometryPoint3D2</code></strong> (<code>TypedDict</code>)</p>
+<p>Maximum bounding point to clip to.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>x</code></td>
+<td><code>float</code></td>
+<td>Yes</td>
+<td>The x coordinate.</td>
+</tr>
+<tr>
+<td><code>y</code></td>
+<td><code>float</code></td>
+<td>Yes</td>
+<td>The y coordinate.</td>
+</tr>
+<tr>
+<td><code>z</code></td>
+<td><code>float</code></td>
+<td>Yes</td>
+<td>The z coordinate.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>GeotechMakeGmmIntoIntersectedGeometryCollapseOverlapsSettings</code></strong> (<code>TypedDict</code>)</p>
+<p>Settings for collapsing overlapping mesh regions.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>distance_tolerance</code></td>
+<td><code>float</code></td>
+<td>No</td>
+<td>Distance tolerance for collapse, relative to the plane of one of the triangles. Bounds: <code>&gt; 0</code>.</td>
+</tr>
+<tr>
+<td><code>overlap_threshold</code></td>
+<td><code>float</code></td>
+<td>No</td>
+<td>Overlap threshold fraction. Bounds: <code>&gt; 0</code>, <code>&lt;= 1</code>.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>GeotechMakeGmmIntoIntersectedGeometryRemeshSettings</code></strong> (<code>TypedDict</code>)</p>
+<p>Settings for remeshing during automatic fix.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>patch_angle_tolerance</code></td>
+<td><code>float</code></td>
+<td>No</td>
+<td>Angle change in degrees used to define a patch skeleton line. Bounds: <code>&gt; 0</code>.</td>
+</tr>
+<tr>
+<td><code>max_chordal_error</code></td>
+<td><code>float</code></td>
+<td>No</td>
+<td>Maximum relative local error. -0.005 corresponds to 0.5%.</td>
+</tr>
+<tr>
+<td><code>strain_tolerance</code></td>
+<td><code>float</code></td>
+<td>No</td>
+<td>Relative quality difference before and after unfolding to a plane. Bounds: <code>&gt;= 0</code>.</td>
+</tr>
+<tr>
+<td><code>is_closed</code></td>
+<td><code>bool</code></td>
+<td>No</td>
+<td>Whether the mesh is closed; should be true for manifold GMVs.</td>
+</tr>
+<tr>
+<td><code>initial_cleanup</code></td>
+<td><code>bool</code></td>
+<td>No</td>
+<td>Whether to run initial cleanup such as node merging, gap filling, and topological fixing.</td>
+</tr>
+<tr>
+<td><code>line_proximity_detection</code></td>
+<td><code>bool</code></td>
+<td>No</td>
+<td>Whether to consider distance between skeleton lines when sizing elements.</td>
+</tr>
+<tr>
+<td><code>optimize</code></td>
+<td><code>bool</code></td>
+<td>No</td>
+<td>Whether to perform final optimization.</td>
+</tr>
+<tr>
+<td><code>shape_quality_weight</code></td>
+<td><code>float</code></td>
+<td>No</td>
+<td>Size-versus-shape weight from 0 to 1. Bounds: <code>&gt;= 0</code>.</td>
+</tr>
+<tr>
+<td><code>target_h</code></td>
+<td><code>float</code></td>
+<td>No</td>
+<td>Target element size. Zero bases the size on skeleton lines. Bounds: <code>&gt;= 0</code>.</td>
+</tr>
+<tr>
+<td><code>regularize_mode</code></td>
+<td><code>bool</code></td>
+<td>No</td>
+<td>If true, do not remesh; only regularize the mesh.</td>
+</tr>
+<tr>
+<td><code>relax_chunk_interfaces</code></td>
+<td><code>bool</code></td>
+<td>No</td>
+<td>Whether to relax chunk interfaces during remeshing.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>GeotechMakeGmmIntoIntersectedGeometryResultResultObject</code></strong> (<code>ResultNode</code>)</p>
+<p>The new Geological Model Meshes object with intersected geometry.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Reference to a geoscience object. Supported schemas: <code>geological-model-meshes/[&gt;=2.0,&lt;3]</code>.</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The name of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>—</td>
+<td>The description of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>schema_id</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The ID of the Geoscience Object schema.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="make_into_model_input">make_into_model_input</h3>
+<p><code>client.geotech.make_into_model_input</code> · Task: <code>geotech/make-into-model-input</code> · Version: <code>1.6.3</code> · Preview (<code>preview=True</code> required)</p>
+<p>Clips a triangle mesh loosely to the specified bounds, merges duplicate points, and translates the result so it can be used as model input.</p>
+<pre><code class="language-python">await client.geotech.make_into_model_input.run(
+    *,
+    source: ObjectInput,
+    target: GeotechMakeIntoModelInputTarget,
+    min_point: GeotechMakeIntoModelInputMinPoint = ...,
+    max_point: GeotechMakeIntoModelInputMaxPoint = ...,
+    rotation_angle: float = ...,
+    tolerance: float = ...,
+    preview: bool = False,
+) -&gt; GeotechMakeIntoModelInputResult
+</code></pre>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>source</code></td>
+<td><code>ObjectInput</code></td>
+<td>The triangle mesh object to prepare for use in a model. Supported schemas: <code>triangle-mesh/[&gt;=2.0,&lt;3]</code>.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>target</code></td>
+<td><code>GeotechMakeIntoModelInputTarget</code></td>
+<td>Target specifying where to create the new Triangle Mesh object. Provide an object with a reference field containing a path-based geoscience object URL and an overwrite field containing a boolean value. Only path-based object references can be used for creating a new object.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>min_point</code></td>
+<td><code>GeotechMakeIntoModelInputMinPoint</code></td>
+<td>Minimum bounding point to clip the triangle mesh to.</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>max_point</code></td>
+<td><code>GeotechMakeIntoModelInputMaxPoint</code></td>
+<td>Maximum bounding point to clip the triangle mesh to.</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>rotation_angle</code></td>
+<td><code>float</code></td>
+<td>Rotation angle, in radians, used when evaluating the clipping bounds.</td>
+<td><code>0.0</code></td>
+</tr>
+<tr>
+<td><code>tolerance</code></td>
+<td><code>float</code></td>
+<td>Tolerance used when clipping the mesh and merging duplicate points. Bounds: <code>&gt; 0</code>.</td>
+<td><code>1e-12</code></td>
+</tr>
+<tr>
+<td><code>preview</code></td>
+<td><code>bool</code></td>
+<td>Opt in to preview execution (required for this preview task: pass <code>preview=True</code>).</td>
+<td><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<p>Results (<code>GeotechMakeIntoModelInputResult</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>object</code></td>
+<td><code>GeotechMakeIntoModelInputResultResultObject</code></td>
+<td><code>await result.object.load()</code>, <code>await result.object.to_dataframe(*keys)</code></td>
+<td>The prepared Triangle Mesh object.</td>
+</tr>
+<tr>
+<td><code>message</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Description of the result of the operation.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="nested-shapes_11">Nested Shapes</h4>
+<p><strong><code>GeotechMakeIntoModelInputTarget</code></strong> (<code>TypedDict</code>)</p>
+<p>Target specifying where to create the new Triangle Mesh object. Provide an object with a reference field containing a path-based geoscience object URL and an overwrite field containing a boolean value. Only path-based object references can be used for creating a new object.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>ObjectInput</code></td>
+<td>Yes</td>
+<td>Reference to the targeted object. Supported schemas: <code>triangle-mesh/[&gt;=2.0,&lt;3]</code>.</td>
+</tr>
+<tr>
+<td><code>overwrite</code></td>
+<td><code>bool</code></td>
+<td>No</td>
+<td>Whether to overwrite the existing object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>No</td>
+<td>Description to put into the target object.</td>
+</tr>
+<tr>
+<td><code>tags</code></td>
+<td><code>dict[str, str]</code></td>
+<td>No</td>
+<td>Tags to put into the target object.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>GeotechMakeIntoModelInputMinPoint</code></strong> (<code>TypedDict</code>)</p>
+<p>Minimum bounding point to clip the triangle mesh to.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>x</code></td>
+<td><code>float</code></td>
+<td>Yes</td>
+<td>The x coordinate.</td>
+</tr>
+<tr>
+<td><code>y</code></td>
+<td><code>float</code></td>
+<td>Yes</td>
+<td>The y coordinate.</td>
+</tr>
+<tr>
+<td><code>z</code></td>
+<td><code>float</code></td>
+<td>Yes</td>
+<td>The z coordinate.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>GeotechMakeIntoModelInputMaxPoint</code></strong> (<code>TypedDict</code>)</p>
+<p>Maximum bounding point to clip the triangle mesh to.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>x</code></td>
+<td><code>float</code></td>
+<td>Yes</td>
+<td>The x coordinate.</td>
+</tr>
+<tr>
+<td><code>y</code></td>
+<td><code>float</code></td>
+<td>Yes</td>
+<td>The y coordinate.</td>
+</tr>
+<tr>
+<td><code>z</code></td>
+<td><code>float</code></td>
+<td>Yes</td>
+<td>The z coordinate.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>GeotechMakeIntoModelInputResultResultObject</code></strong> (<code>ResultNode</code>)</p>
+<p>The prepared Triangle Mesh object.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Reference to a geoscience object. Supported schemas: <code>triangle-mesh/[&gt;=2.0,&lt;3]</code>.</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The name of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>—</td>
+<td>The description of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>schema_id</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The ID of the Geoscience Object schema.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="mark_volumes_for_removal">mark_volumes_for_removal</h3>
+<p><code>client.geotech.mark_volumes_for_removal</code> · Task: <code>geotech/mark-volumes-for-removal</code> · Version: <code>1.6.3</code> · Preview (<code>preview=True</code> required)</p>
+<p>Marks specified volumes in a Geological Model Meshes for removal by setting their material to external, or clears the marking.</p>
+<pre><code class="language-python">await client.geotech.mark_volumes_for_removal.run(
+    *,
+    source: ObjectInput,
+    target: GeotechMarkVolumesForRemovalTarget,
+    settings: GeotechMarkVolumesForRemovalSettings,
+    preview: bool = False,
+) -&gt; GeotechMarkVolumesForRemovalResult
+</code></pre>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>source</code></td>
+<td><code>ObjectInput</code></td>
+<td>The source Geological Model Meshes object. Supported schemas: <code>geological-model-meshes/[&gt;=2.0,&lt;3]</code>.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>target</code></td>
+<td><code>GeotechMarkVolumesForRemovalTarget</code></td>
+<td>Target specifying where to create the new Geological Model Meshes object. Provide an object with a reference field containing a path-based geoscience object URL and an overwrite field containing a boolean value. Only path-based object references can be used for creating a new object.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>settings</code></td>
+<td><code>GeotechMarkVolumesForRemovalSettings</code></td>
+<td>Settings for marking volumes for removal.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>preview</code></td>
+<td><code>bool</code></td>
+<td>Opt in to preview execution (required for this preview task: pass <code>preview=True</code>).</td>
+<td><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<p>Results (<code>GeotechMarkVolumesForRemovalResult</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>object</code></td>
+<td><code>GeotechMarkVolumesForRemovalResultResultObject</code></td>
+<td><code>await result.object.load()</code>, <code>await result.object.to_dataframe(*keys)</code></td>
+<td>The new Geological Model Meshes object with volumes marked for removal.</td>
+</tr>
+<tr>
+<td><code>message</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Description of the result of the operation.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="nested-shapes_12">Nested Shapes</h4>
+<p><strong><code>GeotechMarkVolumesForRemovalTarget</code></strong> (<code>TypedDict</code>)</p>
+<p>Target specifying where to create the new Geological Model Meshes object. Provide an object with a reference field containing a path-based geoscience object URL and an overwrite field containing a boolean value. Only path-based object references can be used for creating a new object.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>ObjectInput</code></td>
+<td>Yes</td>
+<td>Reference to the targeted object. Supported schemas: <code>geological-model-meshes/[&gt;=2.0,&lt;3]</code>.</td>
+</tr>
+<tr>
+<td><code>overwrite</code></td>
+<td><code>bool</code></td>
+<td>No</td>
+<td>Whether to overwrite the existing object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>No</td>
+<td>Description to put into the target object.</td>
+</tr>
+<tr>
+<td><code>tags</code></td>
+<td><code>dict[str, str]</code></td>
+<td>No</td>
+<td>Tags to put into the target object.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>GeotechMarkVolumesForRemovalSettings</code></strong> (<code>TypedDict</code>)</p>
+<p>Settings for marking volumes for removal.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>volume_indices</code></td>
+<td><code>list[int]</code></td>
+<td>Yes</td>
+<td>Indices of volumes to mark or unmark for removal.</td>
+</tr>
+<tr>
+<td><code>should_remove</code></td>
+<td><code>bool</code></td>
+<td>No</td>
+<td>When true, mark the specified volumes for removal. When false, clear the removal marking.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>GeotechMarkVolumesForRemovalResultResultObject</code></strong> (<code>ResultNode</code>)</p>
+<p>The new Geological Model Meshes object with volumes marked for removal.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Reference to a geoscience object. Supported schemas: <code>geological-model-meshes/[&gt;=2.0,&lt;3]</code>.</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The name of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>—</td>
+<td>The description of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>schema_id</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The ID of the Geoscience Object schema.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="parameterize_volumes">parameterize_volumes</h3>
+<p><code>client.geotech.parameterize_volumes</code> · Task: <code>geotech/parameterize-volumes</code> · Version: <code>1.6.3</code> · Preview (<code>preview=True</code> required)</p>
+<p>Parameterizes closed volumes from Triangle Mesh or Geological Model Meshes inputs and writes the result as a Design Geometry object.</p>
+<pre><code class="language-python">await client.geotech.parameterize_volumes.run(
+    *,
+    source: ObjectInput,
+    target: GeotechParameterizeVolumesTarget,
+    distance_unit: Literal[&quot;m&quot;, &quot;angstrom&quot;, &quot;chain&quot;, &quot;chain[BnA]&quot;, &quot;chain[BnB]&quot;, &quot;chain[Cla]&quot;, &quot;chain[Ind37]&quot;, &quot;chain[Se]&quot;, &quot;chain[SeT]&quot;, &quot;chain[US]&quot;, &quot;fathom&quot;, &quot;ft&quot;, &quot;ft[BnA]&quot;, &quot;ft[BnB]&quot;, &quot;ft[Br36]&quot;, &quot;ft[Br65]&quot;, &quot;ft[Cla]&quot;, &quot;ft[GC]&quot;, &quot;ft[Ind]&quot;, &quot;ft[Ind37]&quot;, &quot;ft[Ind62]&quot;, &quot;ft[Ind75]&quot;, &quot;ft[Se]&quot;, &quot;ft[SeT]&quot;, &quot;ft[US]&quot;, &quot;fur[US]&quot;, &quot;in&quot;, &quot;in[US]&quot;, &quot;link&quot;, &quot;link[BnA]&quot;, &quot;link[BnB]&quot;, &quot;link[Cla]&quot;, &quot;link[Se]&quot;, &quot;link[SeT]&quot;, &quot;link[US]&quot;, &quot;m[Ger]&quot;, &quot;mi&quot;, &quot;mi[naut]&quot;, &quot;mi[nautUK]&quot;, &quot;mi[US]&quot;, &quot;mil&quot;, &quot;rod[US]&quot;, &quot;yd&quot;, &quot;yd[BnA]&quot;, &quot;yd[BnB]&quot;, &quot;yd[Cla]&quot;, &quot;yd[Ind]&quot;, &quot;yd[Ind37]&quot;, &quot;yd[Ind62]&quot;, &quot;yd[Ind75]&quot;, &quot;yd[Se]&quot;, &quot;yd[SeT]&quot;, &quot;yd[US]&quot;, &quot;m3/m2&quot;, &quot;0.1 ft&quot;, &quot;0.1 ft[US]&quot;, &quot;0.1 in&quot;, &quot;0.1 yd&quot;, &quot;1/16 in&quot;, &quot;1/2 ft&quot;, &quot;1/32 in&quot;, &quot;1/64 in&quot;, &quot;10 ft&quot;, &quot;10 in&quot;, &quot;10 km&quot;, &quot;100 ft&quot;, &quot;100 km&quot;, &quot;1000 ft&quot;, &quot;30 ft&quot;, &quot;30 m&quot;, &quot;1E6 bbl/acre&quot;, &quot;bbl/acre&quot;, &quot;ft3/ft2&quot;, &quot;cm&quot;, &quot;dam&quot;, &quot;dm&quot;, &quot;Em&quot;, &quot;fm&quot;, &quot;Gm&quot;, &quot;hm&quot;, &quot;km&quot;, &quot;Mm&quot;, &quot;mm&quot;, &quot;nm&quot;, &quot;pm&quot;, &quot;Tm&quot;, &quot;um&quot;],
+    include_hard_edges: bool = ...,
+    max_repair_iterations: int = ...,
+    preview: bool = False,
+) -&gt; GeotechParameterizeVolumesResult
+</code></pre>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>source</code></td>
+<td><code>ObjectInput</code></td>
+<td>The input mesh to parameterize. Supports Triangle Mesh and Geological Model Meshes schema version 2+. Supported schemas: <code>triangle-mesh/[&gt;=2.0,&lt;3]</code>, <code>geological-model-meshes/[&gt;=2.0,&lt;3]</code>.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>target</code></td>
+<td><code>GeotechParameterizeVolumesTarget</code></td>
+<td>Target specifying where to create the Design Geometry result. Provide an object with a reference field containing a path-based geoscience object URL and an overwrite field containing a boolean value.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>distance_unit</code></td>
+<td><code>Literal["m", "angstrom", "chain", "chain[BnA]", "chain[BnB]", "chain[Cla]", "chain[Ind37]", "chain[Se]", "chain[SeT]", "chain[US]", "fathom", "ft", "ft[BnA]", "ft[BnB]", "ft[Br36]", "ft[Br65]", "ft[Cla]", "ft[GC]", "ft[Ind]", "ft[Ind37]", "ft[Ind62]", "ft[Ind75]", "ft[Se]", "ft[SeT]", "ft[US]", "fur[US]", "in", "in[US]", "link", "link[BnA]", "link[BnB]", "link[Cla]", "link[Se]", "link[SeT]", "link[US]", "m[Ger]", "mi", "mi[naut]", "mi[nautUK]", "mi[US]", "mil", "rod[US]", "yd", "yd[BnA]", "yd[BnB]", "yd[Cla]", "yd[Ind]", "yd[Ind37]", "yd[Ind62]", "yd[Ind75]", "yd[Se]", "yd[SeT]", "yd[US]", "m3/m2", "0.1 ft", "0.1 ft[US]", "0.1 in", "0.1 yd", "1/16 in", "1/2 ft", "1/32 in", "1/64 in", "10 ft", "10 in", "10 km", "100 ft", "100 km", "1000 ft", "30 ft", "30 m", "1E6 bbl/acre", "bbl/acre", "ft3/ft2", "cm", "dam", "dm", "Em", "fm", "Gm", "hm", "km", "Mm", "mm", "nm", "pm", "Tm", "um"]</code></td>
+<td>Distance unit for the created design geometry.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>include_hard_edges</code></td>
+<td><code>bool</code></td>
+<td>Whether to include hard edges, defined as edges where adjacent faces exceed the hard-edge angle threshold.</td>
+<td><code>False</code></td>
+</tr>
+<tr>
+<td><code>max_repair_iterations</code></td>
+<td><code>int</code></td>
+<td>Maximum number of parameterization repair iterations. Set to 0 to skip repair attempts. Bounds: <code>&gt;= 0</code>.</td>
+<td><code>20</code></td>
+</tr>
+<tr>
+<td><code>preview</code></td>
+<td><code>bool</code></td>
+<td>Opt in to preview execution (required for this preview task: pass <code>preview=True</code>).</td>
+<td><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<p>Results (<code>GeotechParameterizeVolumesResult</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>object</code></td>
+<td><code>GeotechParameterizeVolumesResultResultObject</code></td>
+<td><code>await result.object.load()</code>, <code>await result.object.to_dataframe(*keys)</code></td>
+<td>The parameterized design geometry output.</td>
+</tr>
+<tr>
+<td><code>message</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Summary of the task outcome.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="nested-shapes_13">Nested Shapes</h4>
+<p><strong><code>GeotechParameterizeVolumesTarget</code></strong> (<code>TypedDict</code>)</p>
+<p>Target specifying where to create the Design Geometry result. Provide an object with a reference field containing a path-based geoscience object URL and an overwrite field containing a boolean value.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>ObjectInput</code></td>
+<td>Yes</td>
+<td>Reference to the targeted object. Supported schemas: <code>design-geometry/[&gt;=1.0,&lt;2]</code>.</td>
+</tr>
+<tr>
+<td><code>overwrite</code></td>
+<td><code>bool</code></td>
+<td>No</td>
+<td>Whether to overwrite the existing object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>No</td>
+<td>Description to put into the target object.</td>
+</tr>
+<tr>
+<td><code>tags</code></td>
+<td><code>dict[str, str]</code></td>
+<td>No</td>
+<td>Tags to put into the target object.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>GeotechParameterizeVolumesResultResultObject</code></strong> (<code>ResultNode</code>)</p>
+<p>The parameterized design geometry output.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Reference to a geoscience object. Supported schemas: <code>design-geometry/[&gt;=1.0,&lt;2]</code>.</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The name of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>—</td>
+<td>The description of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>schema_id</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The ID of the Geoscience Object schema.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="remesh">remesh</h3>
+<p><code>client.geotech.remesh</code> · Task: <code>geotech/remesh</code> · Version: <code>1.6.3</code> · Preview (<code>preview=True</code> required)</p>
+<p>Remeshes the full Geological Model Meshes object using configurable remeshing parameters to improve triangle quality while preserving the model structure.</p>
+<pre><code class="language-python">await client.geotech.remesh.run(
+    *,
+    source: ObjectInput,
+    target: GeotechRemeshTarget,
+    patch_angle_tolerance: float = ...,
+    max_chordal_error: float = ...,
+    strain_tolerance: float = ...,
+    is_closed: bool = ...,
+    initial_cleanup: bool = ...,
+    line_proximity_detection: bool = ...,
+    optimize: bool = ...,
+    shape_quality_weight: float = ...,
+    target_h: float = ...,
+    regularize_mode: bool = ...,
+    relax_chunk_interfaces: bool = ...,
+    preview: bool = False,
+) -&gt; GeotechRemeshResult
+</code></pre>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>source</code></td>
+<td><code>ObjectInput</code></td>
+<td>The mesh to process. Supports Triangle Mesh and Geological Model Meshes. Supported schemas: <code>triangle-mesh/[&gt;=2.0,&lt;3]</code>, <code>geological-model-meshes/[&gt;=2.0,&lt;3]</code>.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>target</code></td>
+<td><code>GeotechRemeshTarget</code></td>
+<td>Target specifying where to create the output mesh object. Provide an object with a reference field containing a path-based geoscience object URL and an overwrite field containing a boolean value.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>patch_angle_tolerance</code></td>
+<td><code>float</code></td>
+<td>Angle change in degrees used to define a patch skeleton line. Bounds: <code>&gt; 0</code>.</td>
+<td><code>10.0</code></td>
+</tr>
+<tr>
+<td><code>max_chordal_error</code></td>
+<td><code>float</code></td>
+<td>Maximum relative local error. -0.005 corresponds to 0.5%.</td>
+<td><code>-0.005</code></td>
+</tr>
+<tr>
+<td><code>strain_tolerance</code></td>
+<td><code>float</code></td>
+<td>Relative quality difference before and after unfolding to a plane. Bounds: <code>&gt;= 0</code>.</td>
+<td><code>0.3</code></td>
+</tr>
+<tr>
+<td><code>is_closed</code></td>
+<td><code>bool</code></td>
+<td>Whether the mesh is closed; should be true for manifold GMVs.</td>
+<td><code>False</code></td>
+</tr>
+<tr>
+<td><code>initial_cleanup</code></td>
+<td><code>bool</code></td>
+<td>Whether to run initial cleanup such as node merging, gap filling, and topological fixing.</td>
+<td><code>True</code></td>
+</tr>
+<tr>
+<td><code>line_proximity_detection</code></td>
+<td><code>bool</code></td>
+<td>Whether to consider distance between skeleton lines when sizing elements.</td>
+<td><code>False</code></td>
+</tr>
+<tr>
+<td><code>optimize</code></td>
+<td><code>bool</code></td>
+<td>Whether to perform final optimization.</td>
+<td><code>True</code></td>
+</tr>
+<tr>
+<td><code>shape_quality_weight</code></td>
+<td><code>float</code></td>
+<td>Size-versus-shape weight from 0 to 1. Bounds: <code>&gt;= 0</code>.</td>
+<td><code>0.6</code></td>
+</tr>
+<tr>
+<td><code>target_h</code></td>
+<td><code>float</code></td>
+<td>Target element size. Zero bases the size on skeleton lines. Bounds: <code>&gt;= 0</code>.</td>
+<td><code>0.0</code></td>
+</tr>
+<tr>
+<td><code>regularize_mode</code></td>
+<td><code>bool</code></td>
+<td>If true, do not remesh; only regularize the mesh.</td>
+<td><code>False</code></td>
+</tr>
+<tr>
+<td><code>relax_chunk_interfaces</code></td>
+<td><code>bool</code></td>
+<td>Whether to relax chunk interfaces during remeshing.</td>
+<td><code>False</code></td>
+</tr>
+<tr>
+<td><code>preview</code></td>
+<td><code>bool</code></td>
+<td>Opt in to preview execution (required for this preview task: pass <code>preview=True</code>).</td>
+<td><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<p>Results (<code>GeotechRemeshResult</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>object</code></td>
+<td><code>GeotechRemeshResultResultObject</code></td>
+<td><code>await result.object.load()</code>, <code>await result.object.to_dataframe(*keys)</code></td>
+<td>The new mesh object with the remeshing applied.</td>
+</tr>
+<tr>
+<td><code>message</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Description of the result of the operation.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="nested-shapes_14">Nested Shapes</h4>
+<p><strong><code>GeotechRemeshTarget</code></strong> (<code>TypedDict</code>)</p>
+<p>Target specifying where to create the output mesh object. Provide an object with a reference field containing a path-based geoscience object URL and an overwrite field containing a boolean value.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>ObjectInput</code></td>
+<td>Yes</td>
+<td>Reference to the targeted object. Supported schemas: <code>triangle-mesh/[&gt;=2.0,&lt;3]</code>, <code>geological-model-meshes/[&gt;=2.0,&lt;3]</code>.</td>
+</tr>
+<tr>
+<td><code>overwrite</code></td>
+<td><code>bool</code></td>
+<td>No</td>
+<td>Whether to overwrite the existing object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>No</td>
+<td>Description to put into the target object.</td>
+</tr>
+<tr>
+<td><code>tags</code></td>
+<td><code>dict[str, str]</code></td>
+<td>No</td>
+<td>Tags to put into the target object.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>GeotechRemeshResultResultObject</code></strong> (<code>ResultNode</code>)</p>
+<p>The new mesh object with the remeshing applied.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Reference to a geoscience object. Supported schemas: <code>triangle-mesh/[&gt;=2.0,&lt;3]</code>, <code>geological-model-meshes/[&gt;=2.0,&lt;3]</code>.</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The name of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>—</td>
+<td>The description of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>schema_id</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The ID of the Geoscience Object schema.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="remove_triangles">remove_triangles</h3>
+<p><code>client.geotech.remove_triangles</code> · Task: <code>geotech/remove-triangles</code> · Version: <code>1.6.3</code> · Preview (<code>preview=True</code> required)</p>
+<p>Removes the selected triangle indices from a Geological Model Meshes object and uploads the updated mesh as a new object.</p>
+<pre><code class="language-python">await client.geotech.remove_triangles.run(
+    *,
+    source: ObjectInput,
+    target: GeotechRemoveTrianglesTarget,
+    triangle_indices: list[int],
+    preview: bool = False,
+) -&gt; GeotechRemoveTrianglesResult
+</code></pre>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>source</code></td>
+<td><code>ObjectInput</code></td>
+<td>The mesh to process. Supports Triangle Mesh and Geological Model Meshes. Supported schemas: <code>triangle-mesh/[&gt;=2.0,&lt;3]</code>, <code>geological-model-meshes/[&gt;=2.0,&lt;3]</code>.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>target</code></td>
+<td><code>GeotechRemoveTrianglesTarget</code></td>
+<td>Target specifying where to create the output mesh object. Provide an object with a reference field containing a path-based geoscience object URL and an overwrite field containing a boolean value.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>triangle_indices</code></td>
+<td><code>list[int]</code></td>
+<td>Indices of triangles to remove from the mesh.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>preview</code></td>
+<td><code>bool</code></td>
+<td>Opt in to preview execution (required for this preview task: pass <code>preview=True</code>).</td>
+<td><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<p>Results (<code>GeotechRemoveTrianglesResult</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>object</code></td>
+<td><code>GeotechRemoveTrianglesResultResultObject</code></td>
+<td><code>await result.object.load()</code>, <code>await result.object.to_dataframe(*keys)</code></td>
+<td>The new mesh object with the selected triangles removed.</td>
+</tr>
+<tr>
+<td><code>message</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Description of the result of the operation.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="nested-shapes_15">Nested Shapes</h4>
+<p><strong><code>GeotechRemoveTrianglesTarget</code></strong> (<code>TypedDict</code>)</p>
+<p>Target specifying where to create the output mesh object. Provide an object with a reference field containing a path-based geoscience object URL and an overwrite field containing a boolean value.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>ObjectInput</code></td>
+<td>Yes</td>
+<td>Reference to the targeted object. Supported schemas: <code>triangle-mesh/[&gt;=2.0,&lt;3]</code>, <code>geological-model-meshes/[&gt;=2.0,&lt;3]</code>.</td>
+</tr>
+<tr>
+<td><code>overwrite</code></td>
+<td><code>bool</code></td>
+<td>No</td>
+<td>Whether to overwrite the existing object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>No</td>
+<td>Description to put into the target object.</td>
+</tr>
+<tr>
+<td><code>tags</code></td>
+<td><code>dict[str, str]</code></td>
+<td>No</td>
+<td>Tags to put into the target object.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>GeotechRemoveTrianglesResultResultObject</code></strong> (<code>ResultNode</code>)</p>
+<p>The new mesh object with the selected triangles removed.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Reference to a geoscience object. Supported schemas: <code>triangle-mesh/[&gt;=2.0,&lt;3]</code>, <code>geological-model-meshes/[&gt;=2.0,&lt;3]</code>.</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The name of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>—</td>
+<td>The description of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>schema_id</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The ID of the Geoscience Object schema.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="subsume_embedded_volume_in_gmm">subsume_embedded_volume_in_gmm</h3>
+<p><code>client.geotech.subsume_embedded_volume_in_gmm</code> · Task: <code>geotech/subsume-embedded-volume-in-gmm</code> · Version: <code>1.6.3</code> · Preview (<code>preview=True</code> required)</p>
+<p>Merges a specified source embedded volume into a target volume in a GMM, either by explicit index or by automatic selection strategy.</p>
+<pre><code class="language-python">await client.geotech.subsume_embedded_volume_in_gmm.run(
+    *,
+    source: ObjectInput,
+    target: GeotechSubsumeEmbeddedVolumeInGmmTarget,
+    subsume_source: int,
+    target_selection: GeotechSubsumeEmbeddedVolumeInGmmExplicitTargetSelection | GeotechSubsumeEmbeddedVolumeInGmmLargestNeighbouringVolumeTargetSelection | GeotechSubsumeEmbeddedVolumeInGmmLargestNeighbouringContactAreaTargetSelection,
+    preview: bool = False,
+) -&gt; GeotechSubsumeEmbeddedVolumeInGmmResult
+</code></pre>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>source</code></td>
+<td><code>ObjectInput</code></td>
+<td>The Geological Model Meshes object to process. Supported schemas: <code>geological-model-meshes/[&gt;=2.0,&lt;3]</code>.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>target</code></td>
+<td><code>GeotechSubsumeEmbeddedVolumeInGmmTarget</code></td>
+<td>Target specifying where to create the new Geological Model Meshes object. Provide an object with a reference field containing a path-based geoscience object URL and an overwrite field containing a boolean value. Only path-based object references can be used for creating a new object.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>subsume_source</code></td>
+<td><code>int</code></td>
+<td>The index of the embedded volume to subsume (source). Bounds: <code>&gt;= 0</code>.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>target_selection</code></td>
+<td><code>GeotechSubsumeEmbeddedVolumeInGmmExplicitTargetSelection | GeotechSubsumeEmbeddedVolumeInGmmLargestNeighbouringVolumeTargetSelection | GeotechSubsumeEmbeddedVolumeInGmmLargestNeighbouringContactAreaTargetSelection</code></td>
+<td>Target volume selection. Either an explicit volume index or an automatic selection strategy.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>preview</code></td>
+<td><code>bool</code></td>
+<td>Opt in to preview execution (required for this preview task: pass <code>preview=True</code>).</td>
+<td><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<p>Results (<code>GeotechSubsumeEmbeddedVolumeInGmmResult</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>object</code></td>
+<td><code>GeotechSubsumeEmbeddedVolumeInGmmResultResultObject</code></td>
+<td><code>await result.object.load()</code>, <code>await result.object.to_dataframe(*keys)</code></td>
+<td>The new Geological Model Meshes object with the volume subsumed.</td>
+</tr>
+<tr>
+<td><code>message</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Description of the result of the operation.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="nested-shapes_16">Nested Shapes</h4>
+<p><strong><code>GeotechSubsumeEmbeddedVolumeInGmmTarget</code></strong> (<code>TypedDict</code>)</p>
+<p>Target specifying where to create the new Geological Model Meshes object. Provide an object with a reference field containing a path-based geoscience object URL and an overwrite field containing a boolean value. Only path-based object references can be used for creating a new object.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>ObjectInput</code></td>
+<td>Yes</td>
+<td>Reference to the targeted object. Supported schemas: <code>geological-model-meshes/[&gt;=2.0,&lt;3]</code>.</td>
+</tr>
+<tr>
+<td><code>overwrite</code></td>
+<td><code>bool</code></td>
+<td>No</td>
+<td>Whether to overwrite the existing object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>No</td>
+<td>Description to put into the target object.</td>
+</tr>
+<tr>
+<td><code>tags</code></td>
+<td><code>dict[str, str]</code></td>
+<td>No</td>
+<td>Tags to put into the target object.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>GeotechSubsumeEmbeddedVolumeInGmmExplicitTargetSelection</code></strong> (<code>TypedDict</code>)</p>
+<p>Select the target volume by its explicit index.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>selection_mode</code></td>
+<td><code>Literal["Explicit"]</code></td>
+<td>Yes</td>
+<td>Explicit target selection mode.</td>
+</tr>
+<tr>
+<td><code>volume_index</code></td>
+<td><code>int</code></td>
+<td>Yes</td>
+<td>The index of the target volume. Bounds: <code>&gt;= 0</code>.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>GeotechSubsumeEmbeddedVolumeInGmmLargestNeighbouringVolumeTargetSelection</code></strong> (<code>TypedDict</code>)</p>
+<p>Automatically select the neighbouring volume with the largest volume.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>selection_mode</code></td>
+<td><code>Literal["LargestNeighbouringVolume"]</code></td>
+<td>Yes</td>
+<td>Largest neighbouring volume selection mode.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>GeotechSubsumeEmbeddedVolumeInGmmLargestNeighbouringContactAreaTargetSelection</code></strong> (<code>TypedDict</code>)</p>
+<p>Automatically select the neighbouring volume with the largest shared contact area.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>selection_mode</code></td>
+<td><code>Literal["LargestNeighbouringContactArea"]</code></td>
+<td>Yes</td>
+<td>Largest neighbouring contact area selection mode.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>GeotechSubsumeEmbeddedVolumeInGmmResultResultObject</code></strong> (<code>ResultNode</code>)</p>
+<p>The new Geological Model Meshes object with the volume subsumed.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Reference to a geoscience object. Supported schemas: <code>geological-model-meshes/[&gt;=2.0,&lt;3]</code>.</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The name of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>—</td>
+<td>The description of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>schema_id</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The ID of the Geoscience Object schema.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="validate_gmm_as_intersected_geometry">validate_gmm_as_intersected_geometry</h3>
+<p><code>client.geotech.validate_gmm_as_intersected_geometry</code> · Task: <code>geotech/validate-gmm-as-intersected-geometry</code> · Version: <code>1.6.3</code> · Preview (<code>preview=True</code> required)</p>
+<p>Checks whether a Geological Model Meshes object is valid as intersected geometry and returns human-readable descriptions of any issues found.</p>
+<pre><code class="language-python">await client.geotech.validate_gmm_as_intersected_geometry.run(
+    *,
+    source: ObjectInput,
+    preview: bool = False,
+) -&gt; GeotechValidateGmmAsIntersectedGeometryResult
+</code></pre>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>source</code></td>
+<td><code>ObjectInput</code></td>
+<td>The Geological Model Meshes object to validate as intersected geometry. Supported schemas: <code>geological-model-meshes/[&gt;=2.0,&lt;3]</code>.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>preview</code></td>
+<td><code>bool</code></td>
+<td>Opt in to preview execution (required for this preview task: pass <code>preview=True</code>).</td>
+<td><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<p>Results (<code>GeotechValidateGmmAsIntersectedGeometryResult</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>issues</code></td>
+<td><code>list[str]</code></td>
+<td>—</td>
+<td>Descriptions of validation issues found. Empty if the geometry is valid.</td>
+</tr>
+<tr>
+<td><code>message</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Description of the result of the operation.</td>
+</tr>
+</tbody>
+</table></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>

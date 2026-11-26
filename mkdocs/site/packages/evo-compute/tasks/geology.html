@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        
+        <link rel="shortcut icon" href="../../../img/favicon.ico">
+        <title>Geology - Evo Python SDK</title>
+        <link href="../../../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../../../css/fontawesome.min.css" rel="stylesheet">
+        <link href="../../../css/brands.min.css" rel="stylesheet">
+        <link href="../../../css/solid.min.css" rel="stylesheet">
+        <link href="../../../css/v4-font-face.min.css" rel="stylesheet">
+        <link href="../../../css/base.css" rel="stylesheet">
+        <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" >
+        <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
+        <link href="../../../assets/_mkdocstrings.css" rel="stylesheet">
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="../../..">Evo Python SDK</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar-collapse" aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+
+                    <ul class="nav navbar-nav ms-md-auto">
+                            <li class="nav-item">
+                                <a rel="prev" href="cpt-to-borehole.html" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="geophysics.html" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-bs-toggle="collapse" data-bs-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-bs-level="1"><a href="#geology-tasks" class="nav-link">Geology Tasks</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-bs-level="2"><a href="#input-shorthands" class="nav-link">Input Shorthands</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#tasks" class="nav-link">Tasks</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<p><a href="https://github.com/SeequentEvo/evo-python-sdk/tree/main/packages/evo-compute/stubs/snapshot/geology">GitHub source</a></p>
+<h1 id="geology-tasks">Geology Tasks</h1>
+<p>Discoverable compute tasks in the <code>geology</code> topic. Call any task below through <code>ComputeClient</code> as <code>await client.geology.&lt;task&gt;.run(...)</code>, or by name via <code>await client.arun("geology", "&lt;task&gt;", parameters)</code>.</p>
+<h2 id="input-shorthands">Input Shorthands</h2>
+<table>
+<thead>
+<tr>
+<th>Alias</th>
+<th>Accepted Python Types</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ObjectInput</code></td>
+<td><code>str | UUID | BaseObject | DownloadedObject | ObjectMetadata | ObjectReference</code></td>
+<td>Any handle <code>ReferenceResolver</code> can derive a geoscience object URL from.</td>
+</tr>
+<tr>
+<td><code>AttributeInput</code></td>
+<td><code>str | AnyTypedAttribute</code></td>
+<td>A typed attribute, a JMESPath expression, or a bare attribute name.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="tasks">Tasks</h2>
+<h3 id="classify_by_domain">classify_by_domain</h3>
+<p><code>client.geology.classify_by_domain</code> · Task: <code>geology/classify-by-domain</code> · Version: <code>0.1.0</code> · Preview (<code>preview=True</code> required)</p>
+<p>Classifies locations from a source geometry object against an ordered list of domain entries (volumes and surfaces), writing a categorical attribute back to the source object.</p>
+<pre><code class="language-python">await client.geology.classify_by_domain.run(
+    *,
+    source: GeologyClassifyByDomainSource,
+    domain_entries: list[GeologyClassifyByDomainVolumeEntry | GeologyClassifyByDomainSurfaceEntry],
+    output: GeologyClassifyByDomainOutput,
+    preview: bool = False,
+) -&gt; GeologyClassifyByDomainResult
+</code></pre>
+<p>Parameters:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>source</code></td>
+<td><code>GeologyClassifyByDomainSource</code></td>
+<td>Source geometry object whose locations will be classified.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>domain_entries</code></td>
+<td><code>list[GeologyClassifyByDomainVolumeEntry | GeologyClassifyByDomainSurfaceEntry]</code></td>
+<td>Ordered list of domain entries defining the classification hierarchy. Locations are evaluated against entries in order; the first matching entry wins. Each entry is either a VolumeEntry (inside/outside a closed mesh) or a SurfaceEntry (above/below an open mesh surface).</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>output</code></td>
+<td><code>GeologyClassifyByDomainOutput</code></td>
+<td>Output attribute configuration.</td>
+<td><em>required</em></td>
+</tr>
+<tr>
+<td><code>preview</code></td>
+<td><code>bool</code></td>
+<td>Opt in to preview execution (required for this preview task: pass <code>preview=True</code>).</td>
+<td><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<p>Results (<code>GeologyClassifyByDomainResult</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>source</code></td>
+<td><code>GeologyClassifyByDomainResultSource</code></td>
+<td><code>await result.source.load()</code>, <code>await result.source.to_dataframe(*keys)</code></td>
+<td>The source object updated with the domain classification attribute.</td>
+</tr>
+<tr>
+<td><code>summary</code></td>
+<td><code>GeologyClassifyByDomainResultSummary</code></td>
+<td>—</td>
+<td>Classification summary statistics.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="nested-shapes">Nested Shapes</h4>
+<p><strong><code>GeologyClassifyByDomainFilterCondition</code></strong> (<code>TypedDict</code>)</p>
+<p>A leaf filter condition applied to one attribute of the filtered object.</p>
+<p>Exactly one operator field must be provided.</p>
+<ul>
+<li><code>in</code>: Membership test. Provide string category names for
+    <code>CategoryAttribute</code> objects or integers for integer-coded indices.</li>
+<li><code>not_in</code>: Exclusion test.</li>
+<li><code>equal</code>, <code>not_equal</code>: Numeric equality/inequality.</li>
+<li><code>greater_than</code>, <code>greater_than_or_equal_to</code>, <code>less_than</code>,
+    <code>less_than_or_equal_to</code>: Numeric comparisons on numeric attributes.</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>operator</code></td>
+<td><code>Literal["in", "not_in", "equal", "not_equal", "greater_than", "greater_than_or_equal_to", "less_than", "less_than_or_equal_to"]</code></td>
+<td>Yes</td>
+<td>The filter operator. Use 'in' or 'not_in' for category/membership tests (pair with 'values'). Use 'equal', 'not_equal', 'greater_than', 'greater_than_or_equal_to', 'less_than', or 'less_than_or_equal_to' for numeric comparisons (pair with 'threshold').</td>
+</tr>
+<tr>
+<td><code>values</code></td>
+<td><code>list[str] | None</code></td>
+<td>No</td>
+<td>Category values to match. Required when operator is 'in' or 'not_in'. Use strings for string/category-name attributes; use integers for integer-coded attributes.</td>
+</tr>
+<tr>
+<td><code>threshold</code></td>
+<td><code>float | None</code></td>
+<td>No</td>
+<td>Numeric threshold for comparison. Required when operator is 'equal', 'not_equal', 'greater_than', 'greater_than_or_equal_to', 'less_than', or 'less_than_or_equal_to'.</td>
+</tr>
+<tr>
+<td><code>type</code></td>
+<td><code>Literal["condition"]</code></td>
+<td>No</td>
+<td>Identifies this as a leaf filter condition.</td>
+</tr>
+<tr>
+<td><code>attribute</code></td>
+<td><code>AttributeInput</code></td>
+<td>Yes</td>
+<td>Attribute used to filter locations.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>GeologyClassifyByDomainAnyOfFilter</code></strong> (<code>TypedDict</code>)</p>
+<p>A composite filter that passes locations satisfying ANY child filter (OR logic).</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>type</code></td>
+<td><code>Literal["any_of"]</code></td>
+<td>No</td>
+<td>Identifies this as an OR composite filter.</td>
+</tr>
+<tr>
+<td><code>filters</code></td>
+<td><code>list[GeologyClassifyByDomainFilterCondition | GeologyClassifyByDomainAllOfFilter | GeologyClassifyByDomainAnyOfFilter]</code></td>
+<td>Yes</td>
+<td>At least one of these filters must be satisfied (OR logic).</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>GeologyClassifyByDomainAllOfFilter</code></strong> (<code>TypedDict</code>)</p>
+<p>A composite filter that passes locations satisfying ALL child filters (AND logic).</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>type</code></td>
+<td><code>Literal["all_of"]</code></td>
+<td>No</td>
+<td>Identifies this as an AND composite filter.</td>
+</tr>
+<tr>
+<td><code>filters</code></td>
+<td><code>list[GeologyClassifyByDomainFilterCondition | GeologyClassifyByDomainAllOfFilter | GeologyClassifyByDomainAnyOfFilter]</code></td>
+<td>Yes</td>
+<td>All of these filters must be satisfied (AND logic).</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>GeologyClassifyByDomainFilter</code></strong> (<code>TypedDict</code>)</p>
+<p>Optional filter to restrict which locations are classified. Filtered-out locations are written as null in the output attribute.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>where</code></td>
+<td><code>GeologyClassifyByDomainFilterCondition | GeologyClassifyByDomainAllOfFilter | GeologyClassifyByDomainAnyOfFilter</code></td>
+<td>Yes</td>
+<td>A filter expression defining which locations to include. Use a FilterCondition for a single predicate, AllOfFilter for AND logic, AnyOfFilter for OR logic, or nest them to build compound predicates.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>GeologyClassifyByDomainSource</code></strong> (<code>TypedDict</code>)</p>
+<p>Source geometry object whose locations will be classified.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>object</code></td>
+<td><code>ObjectInput</code></td>
+<td>Yes</td>
+<td>The source geometry object whose locations will be classified. Supports pointsets, block models, regular 3D grids, masked 3D grids, tensor 3D grids, and downhole intervals (midpoints). Supported schemas: <code>pointset/[&gt;=1.2,&lt;2]</code>, <code>block-model/[&gt;=1.0,&lt;2]</code>, <code>regular-3d-grid/[&gt;=1.2,&lt;2]</code>, <code>regular-masked-3d-grid/[&gt;=1.2,&lt;2]</code>, <code>tensor-3d-grid/[&gt;=1.2,&lt;2]</code>, <code>downhole-intervals/[&gt;=1.2,&lt;2]</code>.</td>
+</tr>
+<tr>
+<td><code>filter</code></td>
+<td><code>GeologyClassifyByDomainFilter | None</code></td>
+<td>No</td>
+<td>Optional filter to restrict which locations are classified. Filtered-out locations are written as null in the output attribute.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>GeologyClassifyByDomainMeshDomainObject</code></strong> (<code>TypedDict</code>)</p>
+<p>A standalone triangle mesh domain.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>type</code></td>
+<td><code>Literal["mesh"]</code></td>
+<td>Yes</td>
+<td>Discriminator identifying a standalone triangle mesh domain.</td>
+</tr>
+<tr>
+<td><code>object</code></td>
+<td><code>ObjectInput</code></td>
+<td>Yes</td>
+<td>Standalone triangle mesh used as the domain. Supported schemas: <code>triangle-mesh/[&gt;=2.0,&lt;3]</code>.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>GeologyClassifyByDomainGMMDomainObject</code></strong> (<code>TypedDict</code>)</p>
+<p>A named volume or surface within a geological-model-meshes object.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>type</code></td>
+<td><code>Literal["gmm"]</code></td>
+<td>Yes</td>
+<td>Discriminator identifying a geological-model-meshes domain.</td>
+</tr>
+<tr>
+<td><code>object</code></td>
+<td><code>ObjectInput</code></td>
+<td>Yes</td>
+<td>Object containing the named domain. Supported schemas: <code>geological-model-meshes/[&gt;=2.0,&lt;3]</code>.</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>str</code></td>
+<td>Yes</td>
+<td>Name of the volume or surface within the geological-model-meshes object.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>GeologyClassifyByDomainVolumeEntry</code></strong> (<code>TypedDict</code>)</p>
+<p>A domain entry that classifies locations as inside or outside a closed mesh volume.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>type</code></td>
+<td><code>Literal["volume"]</code></td>
+<td>Yes</td>
+<td>Discriminator identifying this as a volume (inside/outside) entry.</td>
+</tr>
+<tr>
+<td><code>domain</code></td>
+<td><code>GeologyClassifyByDomainMeshDomainObject | GeologyClassifyByDomainGMMDomainObject</code></td>
+<td>Yes</td>
+<td>A closed triangle mesh, or a named volume within a geological-model-meshes object. When a triangle mesh is provided it must be closed; otherwise an error is raised at runtime.</td>
+</tr>
+<tr>
+<td><code>relationship</code></td>
+<td><code>Literal["inside", "outside"]</code></td>
+<td>Yes</td>
+<td>Spatial relationship: 'inside' matches locations enclosed by the volume; 'outside' matches the rest.</td>
+</tr>
+<tr>
+<td><code>category</code></td>
+<td><code>str</code></td>
+<td>Yes</td>
+<td>Category label assigned to locations matching this entry.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>GeologyClassifyByDomainSurfaceEntry</code></strong> (<code>TypedDict</code>)</p>
+<p>A domain entry that classifies locations as above or below an open mesh surface.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>type</code></td>
+<td><code>Literal["surface"]</code></td>
+<td>Yes</td>
+<td>Discriminator identifying this as a surface (above/below) entry.</td>
+</tr>
+<tr>
+<td><code>domain</code></td>
+<td><code>GeologyClassifyByDomainMeshDomainObject | GeologyClassifyByDomainGMMDomainObject</code></td>
+<td>Yes</td>
+<td>An open triangle mesh surface, or a named surface within a geological-model-meshes object. When a triangle mesh is provided it must NOT be closed; otherwise an error is raised at runtime.</td>
+</tr>
+<tr>
+<td><code>relationship</code></td>
+<td><code>Literal["above", "below"]</code></td>
+<td>Yes</td>
+<td>Spatial relationship: 'above' matches locations with a positive Z distance to the surface; 'below' matches the other side.</td>
+</tr>
+<tr>
+<td><code>category</code></td>
+<td><code>str</code></td>
+<td>Yes</td>
+<td>Category label assigned to locations matching this entry.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>GeologyClassifyByDomainOutputAttributeCreate</code></strong> (<code>TypedDict</code>)</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>operation</code></td>
+<td><code>Literal["create"]</code></td>
+<td>Yes</td>
+<td>The operation to perform on the attribute.</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>str</code></td>
+<td>Yes</td>
+<td>The name of the attribute to create.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>GeologyClassifyByDomainOutputAttributeUpdate</code></strong> (<code>TypedDict</code>)</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>operation</code></td>
+<td><code>Literal["update"]</code></td>
+<td>Yes</td>
+<td>The operation to perform on the attribute.</td>
+</tr>
+<tr>
+<td><code>reference</code></td>
+<td><code>AttributeInput</code></td>
+<td>Yes</td>
+<td>Reference to an existing attribute to update.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>GeologyClassifyByDomainOutput</code></strong> (<code>TypedDict</code>)</p>
+<p>Output attribute configuration.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>attribute</code></td>
+<td><code>GeologyClassifyByDomainOutputAttributeCreate | GeologyClassifyByDomainOutputAttributeUpdate | AttributeInput</code></td>
+<td>Yes</td>
+<td>Target category attribute on the source object. Provide a bare attribute path (e.g. "attributes") to create a new attribute, or a filtered expression (e.g. "attributes[?id=='uuid'] | [0]") to replace an existing one. Accepts a typed attribute, a bare attribute name (updates if present on the target object, otherwise creates), or <code>{"operation": "create" | "update", ...}</code>.</td>
+</tr>
+<tr>
+<td><code>background_label</code></td>
+<td><code>str</code></td>
+<td>No</td>
+<td>Category label assigned to locations that do not match any domain entry.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>GeologyClassifyByDomainResultAttribute</code></strong> (<code>ResultNode</code>)</p>
+<p>The domain classification attribute added to the source object.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Reference to the attribute in the geoscience object.</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The name of the output attribute.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>GeologyClassifyByDomainResultSource</code></strong> (<code>ResultNode</code>)</p>
+<p>The source object updated with the domain classification attribute.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Reference to a geoscience object. Supported schemas: <code>pointset/[&gt;=1.2,&lt;2]</code>, <code>block-model/[&gt;=1.0,&lt;2]</code>, <code>regular-3d-grid/[&gt;=1.2,&lt;2]</code>, <code>regular-masked-3d-grid/[&gt;=1.2,&lt;2]</code>, <code>tensor-3d-grid/[&gt;=1.2,&lt;2]</code>, <code>downhole-intervals/[&gt;=1.2,&lt;2]</code>.</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The name of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str | None</code></td>
+<td>—</td>
+<td>The description of the geoscience object.</td>
+</tr>
+<tr>
+<td><code>schema_id</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>The ID of the Geoscience Object schema.</td>
+</tr>
+<tr>
+<td><code>attribute</code></td>
+<td><code>GeologyClassifyByDomainResultAttribute</code></td>
+<td><code>await node.attribute.load()</code>, <code>await node.attribute.to_dataframe()</code></td>
+<td>The domain classification attribute added to the source object.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>GeologyClassifyByDomainResultCategoryCount</code></strong> (<code>ResultNode</code>)</p>
+<p>Location count for a single category.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>name</code></td>
+<td><code>str</code></td>
+<td>—</td>
+<td>Category label.</td>
+</tr>
+<tr>
+<td><code>count</code></td>
+<td><code>int</code></td>
+<td>—</td>
+<td>Number of locations assigned this label. Bounds: <code>&gt;= 0</code>.</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>GeologyClassifyByDomainResultSummary</code></strong> (<code>ResultNode</code>)</p>
+<p>Classification summary statistics.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Hydrated Loader</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>total</code></td>
+<td><code>int</code></td>
+<td>—</td>
+<td>Total number of locations evaluated. Bounds: <code>&gt;= 0</code>.</td>
+</tr>
+<tr>
+<td><code>categories</code></td>
+<td><code>list[GeologyClassifyByDomainResultCategoryCount]</code></td>
+<td>—</td>
+<td>Per-category location counts, including the background label.</td>
+</tr>
+</tbody>
+</table></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>
