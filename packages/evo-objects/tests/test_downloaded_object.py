@@ -466,6 +466,20 @@ class TestDownloadedObject(TestWithConnector, TestWithStorage):
         expected_dataframe = pd.DataFrame({"value": [np.nan, np.nan, 3.4, 5.3, np.nan, np.nan]})
         assert_frame_equal(expected_dataframe, actual_dataframe)
 
+    async def test_download_dataframe_preserves_nullable_integers_and_sentinels(self) -> None:
+        values_path = "locations.attributes[1].values"
+        dataframe = pd.DataFrame(
+            {"value": pd.array([2**63 - 1, -999, None], dtype="Int64")},
+            index=pd.RangeIndex(5, 8),
+        )
+        self._set_property(f"{values_path}.data_type", "int64")
+        self._setup_table(values_path, pa.Table.from_pandas(dataframe))
+
+        actual_dataframe = await self.object.download_dataframe(values_path, nan_values=[-999], column_names=["count"])
+
+        expected_dataframe = pd.DataFrame({"count": pd.array([2**63 - 1, None, None], dtype="Int64")})
+        assert_frame_equal(expected_dataframe, actual_dataframe)
+
     async def test_download_dataframe_column_names(self):
         with self._patch_downloading_table_in_memory("locations.coordinates") as sample_table:
             actual_dataframe = await self.object.download_dataframe(
