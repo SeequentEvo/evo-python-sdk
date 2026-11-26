@@ -1312,6 +1312,8 @@ class TestObjectAPIClient(TestWithConnector, TestWithStorage):
         with self.assertRaisesRegex(ValueError, "only supported by object ID"):
             await DownloadedObject.from_reference(self.connector, reference, deleted=True)
         self.transport.assert_no_requests()
+
+    async def test_download_object_alternate_validation(self) -> None:
         """Test downloading an object with alternate representation of confusable types.
 
         E.g.:
