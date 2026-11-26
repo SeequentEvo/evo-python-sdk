@@ -17,13 +17,22 @@ async function createVerifiedCommit({ github, owner, repo, commitMessage }) {
 
     const treeData = [];
     for (const file of changedFiles) {
-      const content = fs.readFileSync(file, 'utf8');
-      treeData.push({
-        path: file,
-        mode: '100644',
-        type: 'blob',
-        content: content
-      });
+      if (fs.existsSync(file)) {
+        const content = fs.readFileSync(file, 'utf8');
+        treeData.push({
+          path: file,
+          mode: '100644',
+          type: 'blob',
+          content: content
+        });
+      } else {
+        treeData.push({
+          path: file,
+          mode: '100644',
+          type: 'blob',
+          sha: null
+        });
+      }
     }
 
     const tree = await github.rest.git.createTree({

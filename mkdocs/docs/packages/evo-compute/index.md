@@ -2,12 +2,37 @@
 
 [GitHub source](https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-compute/src/evo/compute/)
 
-The `evo-compute` package provides a client for running compute tasks on Evo. Tasks are submitted to the Compute Tasks API and polled for results.
-JobClient provides low-level access to the API, while the `run()` function is a high-level interface for executing tasks with convenient result handling.
+The `evo-compute` package provides clients for discovering and running compute tasks on Evo:
 
-## Running Compute Tasks
+- **`ComputeClient`** — a discovery-driven async client (`client.<topic>.<task>.run(...)` and `client.arun(...)`) that runs any task advertised in your organization's compute catalogue without requiring a dedicated hand-written task module.
+- **`evo.compute.tasks.run()`** — typed Pydantic parameter models and result helpers for geostatistics workflows, supporting single-task and concurrent batch execution.
+- **`DiscoveryClient` and `JobClient`** — direct access to task catalogue discovery (`TaskResource`) and low-level job submission/polling.
 
-The `run()` function is the main entry point for executing compute tasks. It supports running a single task or multiple tasks concurrently.
+## Running Any Catalogued Task with `ComputeClient`
+
+`ComputeClient` resolves topics, tasks, and keyword arguments live from the discovery catalogue (replacing hyphens with underscores in Python identifiers):
+
+```python
+from evo.compute import ComputeClient, DiscoveryClient
+
+# Inspect available topics and task schemas
+discovery = DiscoveryClient.from_context(manager)
+topics = await discovery.get_topics()
+
+# Run any advertised task through the dynamic namespace or by name
+client = ComputeClient(manager)
+result = await client.geostatistics.declustering.run(
+    source=...,
+    grid=...,
+    target=...,
+    neighborhood=...,
+    preview=True,
+)
+```
+
+## Running Typed Geostatistics Tasks
+
+The `run()` function executes typed task parameter models — either a single task or multiple tasks concurrently.
 
 ### Single task
 

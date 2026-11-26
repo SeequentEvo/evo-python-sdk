@@ -17,7 +17,8 @@ from collections import defaultdict
 from pathlib import Path
 from typing import NamedTuple
 
-GITHUB_BASE_URL = "https://github.com/SeequentEvo/evo-python-sdk/blob/main"
+GITHUB_REPO_URL = "https://github.com/SeequentEvo/evo-python-sdk"
+GITHUB_BASE_URL = f"{GITHUB_REPO_URL}/blob/main"
 
 log = logging.getLogger("mkdocs.gen_api_docs")
 
@@ -92,8 +93,14 @@ def _discover_typed_entries(
         if not abs_dir.is_dir():
             log.warning(f"Typed source dir not found: {abs_dir}")
             continue
-        for py_file in sorted(abs_dir.glob("*.py")):
-            entries = _entries_from_file(py_file, src_dir, import_prefix)
+        for py_file in sorted(abs_dir.rglob("*.py")):
+            rel_parts = py_file.relative_to(abs_dir).with_suffix("").parts
+            if any(part.startswith("_") for part in rel_parts):
+                continue
+            parent_parts = rel_parts[:-1]
+            file_src_dir = "/".join([src_dir, *parent_parts]) if parent_parts else src_dir
+            file_import_prefix = ".".join([import_prefix, *parent_parts]) if parent_parts else import_prefix
+            entries = _entries_from_file(py_file, file_src_dir, file_import_prefix)
             if entries:
                 subfolder = py_file.stem.replace("_", "-")
                 result[package][subfolder].extend(entries)
@@ -134,7 +141,18 @@ def _generate_doc(doc_path: Path, entry: DocEntry, mkdocs_dir: Path, *, show_lab
     log.info(f"Generated doc: {doc_path.relative_to(mkdocs_dir)}")
 
 
+_AUTO_GENERATED_PREFIX = f"[GitHub source]({GITHUB_REPO_URL}/"
 _PRESERVED_FILENAMES = frozenset({"evo-python-sdk.md", "index.md"})
+
+
+def _is_auto_generated_doc(doc_path: Path) -> bool:
+    """Return True if ``doc_path`` begins with the auto-generated source header."""
+    try:
+        with doc_path.open(encoding="utf-8") as handle:
+            first_line = handle.readline()
+    except OSError:
+        return False
+    return first_line.startswith(_AUTO_GENERATED_PREFIX)
 
 
 def _doc_path_for_entry(
@@ -172,14 +190,18 @@ def _clean_stale_docs(
     mkdocs_dir: Path,
 ) -> None:
     """Delete previously auto-generated docs so removed entries don't linger."""
-    for old_md in docs_packages_dir.rglob("*.md"):
+    for old_md in sorted(docs_packages_dir.rglob("*.md")):
         if old_md.name in _PRESERVED_FILENAMES:
             continue
-        if old_md.resolve() in auto_generated_paths:
+        if old_md.resolve() in auto_generated_paths or _is_auto_generated_doc(old_md):
             old_md.unlink()
             log.info(f"Deleted auto-generated doc: {old_md.relative_to(mkdocs_dir)}")
         else:
             log.info(f"Preserved manual doc: {old_md.relative_to(mkdocs_dir)}")
+
+    for directory in sorted(docs_packages_dir.rglob("*"), reverse=True):
+        if directory.is_dir() and not any(directory.iterdir()):
+            directory.rmdir()
 
 
 def _generate_all_docs(

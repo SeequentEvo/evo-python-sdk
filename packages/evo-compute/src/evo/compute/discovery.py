@@ -14,7 +14,7 @@
 ``DiscoveryClient`` lists the tasks available to an organization, with the full parameter
 and result schemas for each. The catalogue is paginated by the service; this client fetches
 every page and caches the combined result with a time-to-live. The convenience accessors
-(:meth:`get_topics`, :meth:`get_topic_tasks`, :meth:`get_task`) read from that cache.
+(``get_topics``, ``get_topic_tasks``, ``get_task``) read from that cache.
 """
 
 from __future__ import annotations
@@ -95,6 +95,20 @@ class DiscoveryClient:
 
     def _cache_is_valid(self) -> bool:
         return self._cache_expiry is not None and time.monotonic() < self._cache_expiry
+
+    def peek_tasks(self) -> list[TaskResource]:
+        """Return the cached catalogue without fetching it.
+
+        This is the synchronous counterpart to ``list_tasks``, for callers that can use the
+        catalogue if it is already there (tab-completion, signature help) but must not block or
+        make a request. The result is empty until the first fetch, and empty again once the
+        cache has expired.
+
+        :return: The cached tasks, or an empty list if the cache is unset or expired.
+        """
+        if not self._cache_is_valid():
+            return []
+        return [task.model_copy(deep=True) for task in self._cache]
 
     async def _fetch(self) -> None:
         """Fetch every page of the catalogue and refresh the cache."""
