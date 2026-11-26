@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        
+        <link rel="shortcut icon" href="../../../../img/favicon.ico">
+        <title>CrossValidationResult - Evo Python SDK</title>
+        <link href="../../../../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../../../../css/fontawesome.min.css" rel="stylesheet">
+        <link href="../../../../css/brands.min.css" rel="stylesheet">
+        <link href="../../../../css/solid.min.css" rel="stylesheet">
+        <link href="../../../../css/v4-font-face.min.css" rel="stylesheet">
+        <link href="../../../../css/base.css" rel="stylesheet">
+        <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" >
+        <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
+        <link href="../../../../assets/_mkdocstrings.css" rel="stylesheet">
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="../../../..">Evo Python SDK</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar-collapse" aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+
+                    <ul class="nav navbar-nav ms-md-auto">
+                            <li class="nav-item">
+                                <a rel="prev" href="CrossValidationParameters.html" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="CrossValidationResultModel.html" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-bs-toggle="collapse" data-bs-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-bs-level="2"><a href="#evo.compute.tasks.geostatistics.cross_validation.CrossValidationResult" class="nav-link">CrossValidationResult</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<p><a href="https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-compute/src/evo/compute/tasks/geostatistics/cross_validation.py">GitHub source</a>
+</p>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="evo.compute.tasks.geostatistics.cross_validation.CrossValidationResult" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">evo.compute.tasks.geostatistics.cross_validation.CrossValidationResult</span>
+
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>Rich result object for the cross-validation task.</p>
+<p>Provides typed access to the updated source object, output attributes,
+kriging diagnostics, common summary statistics, and kriging-only
+standardized error statistics.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.cross_validation.CrossValidationResult.message" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">message</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">message</span><span class="p">:</span> <span class="nb">str</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>A message describing what happened in the task.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.cross_validation.CrossValidationResult.source" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">source</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">source</span><span class="p">:</span> <span class="n">CrossValidationSourceResult</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Metadata and written attribute references for the updated source object.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.cross_validation.CrossValidationResult.source_name" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">source_name</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">source_name</span><span class="p">:</span> <span class="nb">str</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The name of the source object updated with cross-validation attributes.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.cross_validation.CrossValidationResult.source_reference" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">source_reference</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">source_reference</span><span class="p">:</span> <span class="nb">str</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Reference URL to the updated source object.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.cross_validation.CrossValidationResult.estimate_attribute" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">estimate_attribute</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">estimate_attribute</span><span class="p">:</span> <span class="n">TaskAttribute</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The attribute containing each sample's cross-validated estimate.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.cross_validation.CrossValidationResult.estimate_name" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">estimate_name</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">estimate_name</span><span class="p">:</span> <span class="nb">str</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The name of the attribute containing each sample's cross-validated estimate.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.cross_validation.CrossValidationResult.error_attribute" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">error_attribute</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">error_attribute</span><span class="p">:</span> <span class="n">TaskAttribute</span> <span class="o">|</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The attribute containing each sample's signed error, or <code>None</code> if not requested.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.cross_validation.CrossValidationResult.error_name" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">error_name</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">error_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The name of the signed-error attribute, or <code>None</code> if not requested.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.cross_validation.CrossValidationResult.diagnostics" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">diagnostics</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">diagnostics</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">TaskAttribute</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The kriging diagnostic attributes that were written, keyed by diagnostic name.</p>
+<p>Empty when no diagnostics were requested or when the estimator is KNN or IDW.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.cross_validation.CrossValidationResult.statistics" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">statistics</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">statistics</span><span class="p">:</span> <span class="n">CrossValidationStatistics</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Summary statistics comparing held-out true values with their estimates.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.cross_validation.CrossValidationResult.kriging_statistics" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">kriging_statistics</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">kriging_statistics</span><span class="p">:</span> <span class="n">KrigingCrossValidationStatistics</span> <span class="o">|</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Kriging standardized error statistics, or <code>None</code> for KNN and IDW.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.cross_validation.CrossValidationResult.schema" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">schema</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">schema</span><span class="p">:</span> <span class="n">ObjectSchema</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The schema type of the source object (e.g., <code>'pointset'</code> or <code>'downhole-intervals'</code>).</p>
+
+    </div>
+
+</div>
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.compute.tasks.geostatistics.cross_validation.CrossValidationResult.get_source_object" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">get_source_object</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_source_object</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">BaseObject</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Load and return the updated source geoscience object.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.compute.tasks.geostatistics.cross_validation.CrossValidationResult.to_dataframe" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">to_dataframe</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">to_dataframe</span><span class="p">(</span><span class="o">*</span><span class="n">columns</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Load the updated source object and return its data as a DataFrame.</p>
+<p>Args:
+    *columns: Optional column names to select. If omitted, returns all columns.</p>
+<p>Returns:
+    A pandas DataFrame containing the source data and written cross-validation attributes.</p>
+<p>Raises:
+    TypeError: If the source object type does not support DataFrame export.</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>

@@ -100,7 +100,7 @@ class TaskResultList(Generic[T]):
         result_type = getattr(self._results[0], "TASK_DISPLAY_NAME", "Task")
         lines = [f"✓ {len(self._results)} {result_type} Result(s)"]
         for i, result in enumerate(self._results):
-            target = getattr(result, "target_name", "?")
-            attr = getattr(result, "attribute_name", "?")
+            target = getattr(result, "target_name", None) or getattr(result, "source_name", "?")
+            attr = getattr(result, "attribute_name", None) or getattr(result, "estimate_name", "?")
             lines.append(f"  {i + 1}. {target} → {attr}")
         return "\n".join(lines)

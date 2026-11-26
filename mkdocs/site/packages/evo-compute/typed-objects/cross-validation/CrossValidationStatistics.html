@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        
+        <link rel="shortcut icon" href="../../../../img/favicon.ico">
+        <title>CrossValidationStatistics - Evo Python SDK</title>
+        <link href="../../../../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../../../../css/fontawesome.min.css" rel="stylesheet">
+        <link href="../../../../css/brands.min.css" rel="stylesheet">
+        <link href="../../../../css/solid.min.css" rel="stylesheet">
+        <link href="../../../../css/v4-font-face.min.css" rel="stylesheet">
+        <link href="../../../../css/base.css" rel="stylesheet">
+        <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" >
+        <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
+        <link href="../../../../assets/_mkdocstrings.css" rel="stylesheet">
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="../../../..">Evo Python SDK</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar-collapse" aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+
+                    <ul class="nav navbar-nav ms-md-auto">
+                            <li class="nav-item">
+                                <a rel="prev" href="CrossValidationSourceResult.html" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="IDWEstimator.html" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-bs-toggle="collapse" data-bs-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-bs-level="2"><a href="#evo.compute.tasks.geostatistics.cross_validation.CrossValidationStatistics" class="nav-link">CrossValidationStatistics</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<p><a href="https://github.com/SeequentEvo/evo-python-sdk/blob/main/packages/evo-compute/src/evo/compute/tasks/geostatistics/cross_validation.py">GitHub source</a>
+</p>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="evo.compute.tasks.geostatistics.cross_validation.CrossValidationStatistics" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">evo.compute.tasks.geostatistics.cross_validation.CrossValidationStatistics</span>
+
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>Summary statistics comparing held-out true values with their estimates.</p>
+<p>Statistics are computed over samples that produced a valid estimate
+(<code>valid_count</code>). Samples without a valid estimate are counted in
+<code>invalid_count</code>, carry <code>NaN</code> in the written attributes, and are excluded
+from the summary statistics. Any statistic that is undefined for the
+available valid samples (such as <code>correlation</code> when fewer than two samples
+are valid or variance is zero) is <code>None</code>.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.cross_validation.CrossValidationStatistics.evaluated_count" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">evaluated_count</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">evaluated_count</span><span class="p">:</span> <span class="nb">int</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Number of samples cross-validated after applying any source filter.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.cross_validation.CrossValidationStatistics.valid_count" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">valid_count</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">valid_count</span><span class="p">:</span> <span class="nb">int</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Number of cross-validated samples that produced a finite estimate.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.cross_validation.CrossValidationStatistics.invalid_count" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">invalid_count</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">invalid_count</span><span class="p">:</span> <span class="nb">int</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Number of cross-validated samples that produced no estimate.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.cross_validation.CrossValidationStatistics.mean_true" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">mean_true</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">mean_true</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Mean of the held-out true values over the valid samples.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.cross_validation.CrossValidationStatistics.mean_estimate" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">mean_estimate</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">mean_estimate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Mean of the cross-validated estimates over the valid samples.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.cross_validation.CrossValidationStatistics.variance_true" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">variance_true</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">variance_true</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Population variance of the held-out true values over the valid samples.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.cross_validation.CrossValidationStatistics.variance_estimate" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">variance_estimate</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">variance_estimate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Population variance of the cross-validated estimates over the valid samples.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.cross_validation.CrossValidationStatistics.mean_error" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">mean_error</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">mean_error</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Mean of <code>estimate - true</code>. Positive values indicate overestimation bias.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.cross_validation.CrossValidationStatistics.mean_absolute_error" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">mean_absolute_error</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">mean_absolute_error</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Mean of <code>|estimate - true|</code>.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.cross_validation.CrossValidationStatistics.mean_squared_error" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">mean_squared_error</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">mean_squared_error</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Mean of <code>(estimate - true) ** 2</code>.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.cross_validation.CrossValidationStatistics.root_mean_squared_error" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">root_mean_squared_error</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">root_mean_squared_error</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Square root of <code>mean_squared_error</code>, in the units of the estimated attribute.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.cross_validation.CrossValidationStatistics.error_variance" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">error_variance</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">error_variance</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Population variance of <code>estimate - true</code>.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.cross_validation.CrossValidationStatistics.correlation" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">correlation</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">correlation</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Pearson correlation coefficient between true values and estimates, or <code>None</code> when undefined.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.cross_validation.CrossValidationStatistics.regression_slope" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">regression_slope</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">regression_slope</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Slope of true values regressed on estimates, or <code>None</code> when undefined.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="evo.compute.tasks.geostatistics.cross_validation.CrossValidationStatistics.regression_intercept" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">regression_intercept</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">regression_intercept</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Intercept of true values regressed on estimates, or <code>None</code> when <code>regression_slope</code> is <code>None</code>.</p>
+
+    </div>
+
+</div>
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>

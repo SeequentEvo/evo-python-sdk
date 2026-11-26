@@ -103,6 +103,8 @@ class SimpleKriging(BaseModel):
         >>> method = SimpleKriging(mean=100.0)
     """
 
+    model_config = {"extra": "forbid"}
+
     type: Literal["simple"] = "simple"
     """The method type discriminator."""
 
@@ -116,6 +118,8 @@ class OrdinaryKriging(BaseModel):
     The most common kriging method. Estimates the local mean from nearby samples.
     This is the default kriging method if none is specified.
     """
+
+    model_config = {"extra": "forbid"}
 
     type: Literal["ordinary"] = "ordinary"
     """The method type discriminator."""
