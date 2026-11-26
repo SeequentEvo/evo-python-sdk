@@ -21,6 +21,8 @@ import nbformat
 import pytest
 from notebook_auth_patch import patch_notebook_auth_for_ci
 from notebook_helpers import (
+    CI_AUTH_NOTEBOOKS,
+    CODE_SAMPLES_DIR,
     discover_notebooks,
     get_auth_credentials,
     is_auth_notebook,
@@ -32,8 +34,6 @@ from notebook_helpers import (
 # ---------------------------------------------------------------------------
 # Paths
 # ---------------------------------------------------------------------------
-REPO_ROOT = Path(__file__).resolve().parents[1]
-CODE_SAMPLES_DIR = REPO_ROOT / "code-samples"
 AUTH_HELPER_DIR = CODE_SAMPLES_DIR
 
 # ---------------------------------------------------------------------------
@@ -41,7 +41,9 @@ AUTH_HELPER_DIR = CODE_SAMPLES_DIR
 # ---------------------------------------------------------------------------
 ALL_NOTEBOOKS: list[Path] = discover_notebooks()
 EXEC_NOTEBOOKS: list[Path] = [nb for nb in ALL_NOTEBOOKS if is_executable(nb)]
-AUTH_NOTEBOOKS: list[Path] = sort_by_dependencies([nb for nb in ALL_NOTEBOOKS if is_auth_notebook(nb)])
+AUTH_NOTEBOOKS: list[Path] = sort_by_dependencies(
+    [nb for nb in ALL_NOTEBOOKS if notebook_id(nb) in CI_AUTH_NOTEBOOKS and is_auth_notebook(nb)]
+)
 
 # Standard-library top-level module names (Python 3.10+).  We skip these
 # during the import check because they are always available and never need
@@ -177,7 +179,6 @@ class TestNotebookExecution:
 
 
 @pytest.mark.parametrize("notebook_path", AUTH_NOTEBOOKS, ids=[notebook_id(nb) for nb in AUTH_NOTEBOOKS])
-@pytest.mark.usefixtures("ci_workspace")
 class TestAuthNotebookExecution:
     """Execute notebooks that require authentication credentials.
 
@@ -185,7 +186,7 @@ class TestAuthNotebookExecution:
     (either in environment or in .github/scripts/.env).
     """
 
-    def test_executes_with_auth(self, notebook_path: Path) -> None:
+    def test_executes_with_auth(self, notebook_path: Path, ci_workspace: str) -> None:
         """Notebook must run to completion with valid credentials."""
         import os
 
@@ -203,6 +204,7 @@ class TestAuthNotebookExecution:
         env = {
             **os.environ,
             "CI": "true",
+            "EVO_WORKSPACE_ID": ci_workspace,
             **{_FIELD_TO_ENV[k]: v for k, v in creds.items() if v},
         }
 
@@ -222,7 +224,7 @@ class TestAuthNotebookExecution:
 
 
 # ---------------------------------------------------------------------------
-# Per-run workspace fixture
+# Shared workspace fixture
 # ---------------------------------------------------------------------------
 
 
@@ -286,9 +288,14 @@ def ci_workspace():
     """Provide the shared CI workspace to notebooks that need authentication."""
     import os
 
+    run_auth = os.environ.get("EVO_RUN_AUTH_NOTEBOOKS")
+    if run_auth == "false":
+        pytest.skip("Authenticated notebooks run in the designated CI job only.")
+
     workspace_id = asyncio.run(_get_or_create_ci_workspace(get_auth_credentials()))
     if workspace_id is None:
+        if run_auth == "true":
+            pytest.fail("Missing Evo credentials for the authenticated notebook CI job.")
         pytest.skip("Missing Evo credentials for authenticated notebooks.")
 
-    os.environ["EVO_WORKSPACE_ID"] = workspace_id
     return workspace_id

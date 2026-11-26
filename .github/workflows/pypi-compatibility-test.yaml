@@ -63,6 +63,9 @@ jobs:
             python-version: "3.14"
             run-auth-notebooks: true
     runs-on: ${{ matrix.os }}
+    concurrency:
+      group: ${{ matrix.run-auth-notebooks && 'notebook-ci-workspace' || format('notebook-{0}-{1}-{2}-{3}', github.run_id, github.run_attempt, matrix.os, matrix.python-version) }}
+      queue: max
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/install-uv
@@ -75,6 +78,7 @@ jobs:
 
       - name: Run notebook tests
         env:
+          EVO_RUN_AUTH_NOTEBOOKS: ${{ matrix.run-auth-notebooks && 'true' || 'false' }}
           EVO_CLIENT_ID: ${{ matrix.run-auth-notebooks && secrets.EVO_CLIENT_ID || '' }}
           EVO_CLIENT_SECRET: ${{ matrix.run-auth-notebooks && secrets.EVO_CLIENT_SECRET || '' }}
           EVO_ORG_ID: ${{ matrix.run-auth-notebooks && secrets.EVO_ORG_ID || '' }}

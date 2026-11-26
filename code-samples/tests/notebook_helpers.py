@@ -46,9 +46,13 @@ AUTH_NOTEBOOK_DEPENDENCIES: dict[str, list[str]] = {
     ],
 }
 
-# Auth notebooks are auto-detected by scanning code cells for CI-compatible auth
-# patterns.
-_CI_AUTH_MARKERS = ("_create_ci_manager", "get_manual_auth")
+# Only notebooks reviewed for unattended execution should run against the CI workspace.
+CI_AUTH_NOTEBOOKS: set[str] = {
+    "code-samples/geoscience-objects/publish-pointset/publish-pointset.ipynb",
+    "code-samples/geoscience-objects/download-pointset/download-pointset.ipynb",
+}
+
+_CI_AUTH_MARKERS = ("_create_ci_manager", "get_manual_auth", "ServiceManagerWidget.with_auth_code")
 
 
 # Directory name patterns to ignore during notebook discovery.
