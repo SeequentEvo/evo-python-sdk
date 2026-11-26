@@ -14,7 +14,7 @@
       "parameters": {
         "type": "object",
         "properties": {
-          "source": {"type": "object", "reference_to": "geoscience-object"},
+          "source": {"type": "string", "format": "uri", "reference_to": "geoscience-object"},
           "mode": {"type": "string", "enum": ["fast", "accurate"]},
           "iterations": {"type": "integer", "minimum": 1, "default": null}
         },

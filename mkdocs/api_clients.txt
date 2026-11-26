@@ -5,6 +5,9 @@ packages.evo-compute.src.evo.compute.discovery.DiscoveryClient
 packages.evo-compute.src.evo.compute.endpoints.models.TaskResource
 packages.evo-compute.src.evo.compute.engine.ComputeClient
 packages.evo-compute.src.evo.compute.exceptions.ParameterValidationError
+packages.evo-compute.src.evo.compute.outputs.ResultNode
+packages.evo-compute.src.evo.compute.outputs.TaskResult
+packages.evo-compute.src.evo.compute.resolution.ReferenceResolver
 packages.evo-sdk-common.src.evo.discovery.client.DiscoveryAPIClient
 packages.evo-files.src.evo.files.client.FileAPIClient
 packages.evo-objects.src.evo.objects.client.api_client.ObjectAPIClient
