@@ -21,6 +21,7 @@ from pydantic import ValidationError
 from evo.compute.tasks import (
     CreateAttribute,
     SearchNeighborhood,
+    SimpleSearchNeighborhood,
     Source,
     Target,
     UpdateAttribute,
@@ -140,7 +141,9 @@ class TestBreakTiesParametersSerialization(TestCase):
         self.assertEqual(d["target"]["attribute"]["reference"], "locations.attributes[?name=='grade']")
 
     def test_neighborhood_serializes_correctly(self):
-        d = self._dump(self._params())
+        params = self._params()
+        self.assertIs(type(params.neighborhood), SimpleSearchNeighborhood)
+        d = self._dump(params)
         nbh = d["neighborhood"]
         self.assertIn("ellipsoid", nbh)
         self.assertEqual(nbh["max_samples"], 20)
@@ -148,6 +151,8 @@ class TestBreakTiesParametersSerialization(TestCase):
         self.assertEqual(ellipsoid["ellipsoid_ranges"]["major"], 200.0)
         self.assertEqual(ellipsoid["ellipsoid_ranges"]["semi_major"], 150.0)
         self.assertEqual(ellipsoid["ellipsoid_ranges"]["minor"], 100.0)
+        nbh_schema = BreakTiesParameters.model_json_schema()["$defs"]["SimpleSearchNeighborhood"]
+        self.assertEqual(set(nbh_schema["properties"]), {"ellipsoid", "max_samples", "min_samples"})
 
     def test_min_samples_included_when_set(self):
         params = self._params(

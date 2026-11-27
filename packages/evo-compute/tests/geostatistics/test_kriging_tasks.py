@@ -1224,8 +1224,8 @@ class TestSearchNeighborhoodAlias(TestCase):
         )
         self.assertEqual(default_dict["neighborhood"]["max_drillholes"], 5)
         self.assertNotIn("max_drillholes_per_estimate", default_dict["neighborhood"])
-        self.assertNotIn("min_drillholes", default_dict["neighborhood"])
-        self.assertNotIn("drillhole_limit_scope", default_dict["neighborhood"])
+        self.assertEqual(default_dict["neighborhood"]["min_drillholes"], 0)
+        self.assertEqual(default_dict["neighborhood"]["drillhole_limit_scope"], "global")
 
     def test_can_construct_with_field_name_search(self):
         """Users should be able to construct KrigingParameters with search=..."""

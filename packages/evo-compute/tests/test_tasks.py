@@ -18,7 +18,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from evo.objects.exceptions import SchemaIDFormatError
 from pydantic import ValidationError
 
-from evo.compute.tasks import SearchNeighborhood, run
+from evo.compute.tasks import SearchNeighborhood, SimpleSearchNeighborhood, run
 from evo.compute.tasks.common import Ellipsoid, EllipsoidRanges, Rotation
 from evo.compute.tasks.common.results import TaskAttribute, TaskResultList, TaskTarget
 from evo.compute.tasks.common.runner import TaskRegistry, run_tasks
@@ -328,16 +328,53 @@ class TestSearchNeighborhood(unittest.TestCase):
             **limits,
         )
 
+    def test_canonical_and_legacy_exports(self):
+        from importlib import import_module
+
+        for module_name in (
+            "evo.compute.tasks",
+            "evo.compute.tasks.geostatistics",
+            "evo.compute.tasks.geostatistics.search",
+        ):
+            with self.subTest(module=module_name):
+                module = import_module(module_name)
+                self.assertIs(module.SearchNeighborhood, SearchNeighborhood)
+                self.assertIs(module.SimpleSearchNeighborhood, SimpleSearchNeighborhood)
+                self.assertFalse(issubclass(SearchNeighborhood, SimpleSearchNeighborhood))
+                self.assertFalse(issubclass(SimpleSearchNeighborhood, SearchNeighborhood))
+
+        for module_name in ("evo.compute.tasks.common", "evo.compute.tasks.common.search"):
+            with self.subTest(legacy_module=module_name):
+                module = import_module(module_name)
+                self.assertIs(module.SearchNeighborhood, SearchNeighborhood)
+                self.assertFalse(hasattr(module, "SimpleSearchNeighborhood"))
+
+        plain_search = self._search(min_samples=4, min_drillholes=0, drillhole_limit_scope="global")
+        coerced = SimpleSearchNeighborhood.model_validate(plain_search)
+        self.assertIs(type(coerced), SimpleSearchNeighborhood)
+        self.assertIs(coerced.ellipsoid, plain_search.ellipsoid)
+        self.assertEqual((coerced.max_samples, coerced.min_samples), (24, 4))
+
     def test_limits_are_omitted_unless_set(self):
         search = self._search()
         self.assertIsNone(search.min_samples)
         self.assertIsNone(search.max_drillholes)
         self.assertIsNone(search.min_drillholes)
         self.assertIsNone(search.drillhole_limit_scope)
-        self.assertEqual(set(search.model_dump(mode="json")), {"ellipsoid", "max_samples"})
+        wire = search.model_dump(mode="json", by_alias=True, exclude_none=True)
+        self.assertEqual(set(wire), {"ellipsoid", "max_samples"})
+
+        simple = SimpleSearchNeighborhood(
+            ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=200, semi_major=150, minor=100)),
+            max_samples=24,
+        )
+        self.assertIsNone(simple.min_samples)
+        self.assertEqual(
+            set(simple.model_dump(mode="json", by_alias=True, exclude_none=True)), {"ellipsoid", "max_samples"}
+        )
 
     def test_sample_limit_boundaries_are_accepted(self):
-        single = self._search(max_samples=1).model_dump(mode="json")
+        single = self._search(max_samples=1).model_dump(mode="json", by_alias=True, exclude_none=True)
         self.assertEqual(single["max_samples"], 1)
         self.assertNotIn("min_samples", single)
 
@@ -348,16 +385,18 @@ class TestSearchNeighborhood(unittest.TestCase):
                 self.assertEqual(dumped["min_samples"], min_samples)
 
     def test_invalid_sample_limits_are_refused(self):
-        for kwargs in [
-            {"max_samples": 0},
-            {"max_samples": -1},
-            {"max_samples": 20, "min_samples": 0},
-            {"max_samples": 20, "min_samples": -1},
-            {"max_samples": 20, "min_samples": 21},
-            {"max_samples": 1, "min_samples": 2},
-        ]:
-            with self.subTest(**kwargs), self.assertRaises(ValidationError):
-                self._search(**kwargs)
+        ellipsoid = Ellipsoid(ranges=EllipsoidRanges(major=200, semi_major=150, minor=100))
+        for cls in (SimpleSearchNeighborhood, SearchNeighborhood):
+            for kwargs in [
+                {"max_samples": 0},
+                {"max_samples": -1},
+                {"max_samples": 20, "min_samples": 0},
+                {"max_samples": 20, "min_samples": -1},
+                {"max_samples": 20, "min_samples": 21},
+                {"max_samples": 1, "min_samples": 2},
+            ]:
+                with self.subTest(cls=cls.__name__, **kwargs), self.assertRaises(ValidationError):
+                    cls(ellipsoid=ellipsoid, **kwargs)
 
     def test_limits_are_sent_when_set(self):
         dumped = self._search(**self.LIMITS).model_dump(mode="json")
@@ -382,6 +421,7 @@ class TestSearchNeighborhood(unittest.TestCase):
             ("min_drillholes", -1),
             ("min_drillholes_per_estimate", -1),
             ("drillhole_limit_scope", "sector"),
+            ("unexpected_field", 1),
         ]:
             with self.subTest(name=name, value=value), self.assertRaises(ValidationError):
                 self._search(**{name: value})
@@ -404,50 +444,39 @@ class TestSearchNeighborhood(unittest.TestCase):
         with self.assertRaises(AttributeError):
             via_canonical.max_drillholes_per_estimate = 4  # type: ignore[misc]
 
-    def test_conflicting_drillhole_aliases_are_rejected(self):
+    def test_both_drillhole_alias_spellings_are_rejected(self):
         ellipsoid = Ellipsoid(ranges=EllipsoidRanges(major=200, semi_major=150, minor=100))
-        equal = SearchNeighborhood.model_validate(
-            {
-                "ellipsoid": ellipsoid,
-                "max_samples": 24,
-                "max_drillholes": 6,
-                "max_drillholes_per_estimate": 6,
-                "min_drillholes": 2,
-                "min_drillholes_per_estimate": 2,
-            }
-        )
-        self.assertEqual(equal.max_drillholes, 6)
-        self.assertEqual(equal.min_drillholes, 2)
-
-        for conflicting in [
+        for both in [
+            {"max_drillholes": 6, "max_drillholes_per_estimate": 6},
             {"max_drillholes": 6, "max_drillholes_per_estimate": 4},
-            {"max_drillholes": None, "max_drillholes_per_estimate": 4},
-            {"min_drillholes": 2, "min_drillholes_per_estimate": 3},
+            {"min_drillholes": 2, "min_drillholes_per_estimate": 2},
             {"min_drillholes": 0, "min_drillholes_per_estimate": 2},
         ]:
-            with self.subTest(**conflicting), self.assertRaisesRegex(ValidationError, "Conflicting values"):
-                SearchNeighborhood.model_validate({"ellipsoid": ellipsoid, "max_samples": 24, **conflicting})
+            with self.subTest(**both), self.assertRaisesRegex(ValidationError, "Extra inputs are not permitted"):
+                SearchNeighborhood.model_validate({"ellipsoid": ellipsoid, "max_samples": 24, **both})
 
-    def test_min_drillholes_omitted_when_none_or_zero_and_emitted_when_positive(self):
-        for kwargs in [{}, {"min_drillholes": None}, {"min_drillholes": 0}, {"min_drillholes_per_estimate": 0}]:
+    def test_min_drillholes_is_omitted_only_when_unset(self):
+        for kwargs in [{}, {"min_drillholes": None}]:
             with self.subTest(**kwargs):
                 dumped = self._search(**kwargs).model_dump(mode="json", by_alias=True, exclude_none=True)
                 self.assertNotIn("min_drillholes", dumped)
-                self.assertNotIn("min_drillholes_per_estimate", dumped)
 
-        for kwargs in [{"min_drillholes": 3}, {"min_drillholes_per_estimate": 3}]:
+        for kwargs, expected in [
+            ({"min_drillholes": 0}, 0),
+            ({"min_drillholes_per_estimate": 0}, 0),
+            ({"min_drillholes": 3}, 3),
+            ({"min_drillholes_per_estimate": 3}, 3),
+        ]:
             with self.subTest(**kwargs):
                 dumped = self._search(**kwargs).model_dump(mode="json", by_alias=True, exclude_none=True)
-                self.assertEqual(dumped["min_drillholes"], 3)
+                self.assertEqual(dumped["min_drillholes"], expected)
                 self.assertNotIn("min_drillholes_per_estimate", dumped)
 
-    def test_drillhole_limit_scope_omitted_when_global_and_requires_samples_per_drillhole(self):
-        for scope in (None, "global"):
-            with self.subTest(scope=scope):
-                dumped = self._search(drillhole_limit_scope=scope).model_dump(
-                    mode="json", by_alias=True, exclude_none=True
-                )
-                self.assertNotIn("drillhole_limit_scope", dumped)
+    def test_drillhole_limit_scope_is_sent_as_given_and_sectors_require_samples_per_drillhole(self):
+        dumped = self._search().model_dump(mode="json", by_alias=True, exclude_none=True)
+        self.assertNotIn("drillhole_limit_scope", dumped)
+        dumped = self._search(drillhole_limit_scope="global").model_dump(mode="json", by_alias=True, exclude_none=True)
+        self.assertEqual(dumped["drillhole_limit_scope"], "global")
 
         for scope in ("quadrant", "octant"):
             with self.subTest(scope=scope):
@@ -542,16 +571,24 @@ class TestSearchNeighborhood(unittest.TestCase):
         }
         for mode in ("validation", "serialization"):
             with self.subTest(mode=mode):
+                simple_schema = SimpleSearchNeighborhood.model_json_schema(mode=mode)
+                self.assertEqual(set(simple_schema["properties"]), {"ellipsoid", "max_samples", "min_samples"})
+                self.assertEqual(simple_schema["required"], ["ellipsoid", "max_samples"])
+                self.assertFalse(simple_schema["additionalProperties"])
+
                 schema = SearchNeighborhood.model_json_schema(mode=mode)
                 self.assertEqual(set(schema["properties"]), expected_fields)
                 self.assertEqual(schema["required"], ["ellipsoid", "max_samples"])
-                ellipsoid_schema = schema["properties"]["ellipsoid"]
+                self.assertFalse(schema["additionalProperties"])
+                self.assertEqual(schema["properties"]["ellipsoid"], {"$ref": "#/$defs/Ellipsoid"})
+                ellipsoid_schema = schema["$defs"]["Ellipsoid"]
+                self.assertEqual(ellipsoid_schema["required"], ["ellipsoid_ranges"])
                 self.assertIn("ellipsoid_ranges", ellipsoid_schema["properties"])
                 self.assertIn("rotation", ellipsoid_schema["properties"])
                 self.assertNotIn("ranges", ellipsoid_schema["properties"])
                 self.assertNotIn("_rotation", ellipsoid_schema["properties"])
                 self.assertEqual(
-                    set(ellipsoid_schema["properties"]["ellipsoid_ranges"]["properties"]),
+                    set(schema["$defs"]["EllipsoidRanges"]["properties"]),
                     {"major", "semi_major", "minor"},
                 )
 

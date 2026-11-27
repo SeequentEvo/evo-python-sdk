@@ -18,7 +18,7 @@ from evo.objects import ObjectReference
 from evo.objects.typed.attributes import Attribute, BlockModelAttribute, PendingAttribute
 from pydantic import ValidationError
 
-from evo.compute.tasks import SearchNeighborhood
+from evo.compute.tasks import SearchNeighborhood, SimpleSearchNeighborhood
 from evo.compute.tasks.common import Ellipsoid, EllipsoidRanges
 from evo.compute.tasks.common.runner import TaskRegistry
 from evo.compute.tasks.geostatistics.conditioned_simulator import TailExtrapolationParams, UpperTailParams
@@ -142,6 +142,7 @@ class TestSimulationReportParametersSerialization(unittest.TestCase):
         self.assertEqual(d["neighborhood"]["max_samples"], 20)
 
     def test_search_limits_are_refused(self):
+        self.assertIs(type(_params().neighborhood), SimpleSearchNeighborhood)
         ellipsoid = Ellipsoid(ranges=EllipsoidRanges(major=200.0, semi_major=150.0, minor=100.0))
         for kwargs, expected in [
             ({"max_samples_per_quadrant": 4}, "does not support max_samples_per_quadrant"),
