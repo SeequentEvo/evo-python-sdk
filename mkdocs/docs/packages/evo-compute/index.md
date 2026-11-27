@@ -20,7 +20,7 @@ params = KrigingParameters(
     target=block_model.attributes["kriged_grade"],  # Creates if new, updates if exists
     variogram=variogram,
     neighborhood=SearchNeighborhood(
-        ellipsoid=Ellipsoid(ranges=EllipsoidRanges(200, 150, 100)),
+        ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=200, semi_major=150, minor=100)),
         max_samples=20,
     ),
 )

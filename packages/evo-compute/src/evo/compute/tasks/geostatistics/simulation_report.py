@@ -21,7 +21,7 @@ optional interactive dashboard.
 
 Example::
 
-    >>> from evo.compute.tasks import run, SearchNeighborhood
+    >>> from evo.compute.tasks import run, SimpleSearchNeighborhood
     >>> from evo.compute.tasks.geostatistics.simulation_report import (
     ...     SimulationReportParameters,
     ...     SimulationReportBlockDiscretization,
@@ -36,7 +36,7 @@ Example::
     ...     block_simulations=grid.attributes["block_sims"],
     ...     block_simulations_normal_score=grid.attributes["block_sims_ns"],
     ...     variogram_model=variogram_url,
-    ...     neighborhood=SearchNeighborhood(...),
+    ...     neighborhood=SimpleSearchNeighborhood(...),
     ...     block_discretization=SimulationReportBlockDiscretization(nx=2, ny=2, nz=2),
     ...     number_of_simulations=50,
     ...     random_seed=38239342,
@@ -49,16 +49,15 @@ from __future__ import annotations
 from typing import ClassVar, Literal
 
 from evo.common import IContext
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 
 from ..common import (
     AttributeExpression,
     GeoscienceObjectReference,
-    SearchNeighborhood,
 )
 from ..common.runner import TaskRunner
-from ..common.search import _reject_sector_and_drillhole_limits
 from .conditioned_simulator import TailExtrapolationParams
+from .search import SimpleSearchNeighborhood
 
 __all__ = [
     "SimReportContext",
@@ -167,7 +166,7 @@ class SimulationReportParameters(BaseModel):
         ...     block_simulations=grid.attributes["block_sims"],
         ...     block_simulations_normal_score=grid.attributes["block_sims_ns"],
         ...     variogram_model=variogram_url,
-        ...     neighborhood=SearchNeighborhood(...),
+        ...     neighborhood=SimpleSearchNeighborhood(...),
         ...     number_of_simulations=50,
         ...     random_seed=38239342,
         ... )
@@ -198,7 +197,7 @@ class SimulationReportParameters(BaseModel):
     variogram_model: GeoscienceObjectReference
     """Reference URL to the variogram model object."""
 
-    neighborhood: SearchNeighborhood
+    neighborhood: SimpleSearchNeighborhood
     """Search neighborhood parameters for kriging within the report."""
 
     block_discretization: SimulationReportBlockDiscretization = Field(
@@ -226,11 +225,6 @@ class SimulationReportParameters(BaseModel):
 
     report_mean_thresholds: SimReportThresholds | None = None
     """Optional thresholds for mean comparison validation."""
-
-    @field_validator("neighborhood")
-    @classmethod
-    def _check_neighborhood(cls, neighborhood: SearchNeighborhood) -> SearchNeighborhood:
-        return _reject_sector_and_drillhole_limits(neighborhood)
 
 
 # =============================================================================

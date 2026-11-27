@@ -17,14 +17,14 @@ the Break Ties task (geostatistics/break-ties).
 
 Example::
 
-    >>> from evo.compute.tasks import run, SearchNeighborhood, Ellipsoid, EllipsoidRanges
+    >>> from evo.compute.tasks import run, SimpleSearchNeighborhood, Ellipsoid, EllipsoidRanges
     >>> from evo.compute.tasks.geostatistics.break_ties import BreakTiesParameters
     >>>
     >>> params = BreakTiesParameters(
     ...     source=pointset.attributes["grade"],
     ...     target=Target.new_attribute(pointset, "grade_tiebroken"),
-    ...     neighborhood=SearchNeighborhood(
-    ...         ellipsoid=Ellipsoid(ranges=EllipsoidRanges(200, 150, 100)),
+    ...     neighborhood=SimpleSearchNeighborhood(
+    ...         ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=200, semi_major=150, minor=100)),
     ...         max_samples=20,
     ...     ),
     ... )
@@ -39,16 +39,15 @@ import pandas as pd
 from evo.common import IContext, IFeedback
 from evo.objects import ObjectSchema
 from evo.objects.typed import BaseObject, object_from_reference
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel
 
 from ..common import (
     AnySourceAttribute,
     AnyTargetAttribute,
-    SearchNeighborhood,
 )
 from ..common.results import TaskTarget
 from ..common.runner import TaskRunner
-from ..common.search import _reject_sector_and_drillhole_limits
+from .search import SimpleSearchNeighborhood
 
 __all__ = [
     "BreakTiesParameters",
@@ -70,14 +69,14 @@ class BreakTiesParameters(BaseModel):
 
     Example::
 
-        >>> from evo.compute.tasks import run, SearchNeighborhood, Ellipsoid, EllipsoidRanges, Target
+        >>> from evo.compute.tasks import run, SimpleSearchNeighborhood, Ellipsoid, EllipsoidRanges, Target
         >>> from evo.compute.tasks.geostatistics.break_ties import BreakTiesParameters
         >>>
         >>> params = BreakTiesParameters(
         ...     source=pointset.attributes["grade"],
         ...     target=Target.new_attribute(pointset, "grade_tiebroken"),
-        ...     neighborhood=SearchNeighborhood(
-        ...         ellipsoid=Ellipsoid(ranges=EllipsoidRanges(200, 150, 100)),
+        ...     neighborhood=SimpleSearchNeighborhood(
+        ...         ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=200, semi_major=150, minor=100)),
         ...         max_samples=20,
         ...     ),
         ... )
@@ -90,7 +89,7 @@ class BreakTiesParameters(BaseModel):
     target: AnyTargetAttribute
     """The target object and attribute to create or update with tie-broken results."""
 
-    neighborhood: SearchNeighborhood
+    neighborhood: SimpleSearchNeighborhood
     """Search neighborhood parameters.
 
     In this break-ties algorithm, the final value of each tied point is influenced
@@ -99,11 +98,6 @@ class BreakTiesParameters(BaseModel):
 
     seed: int = 38239342
     """Seed for the random number generator."""
-
-    @field_validator("neighborhood")
-    @classmethod
-    def _check_neighborhood(cls, neighborhood: SearchNeighborhood) -> SearchNeighborhood:
-        return _reject_sector_and_drillhole_limits(neighborhood)
 
 
 # =============================================================================

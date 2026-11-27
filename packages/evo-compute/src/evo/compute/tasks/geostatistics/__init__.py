@@ -63,6 +63,7 @@ from .kriging import (
     KrigingResult,
 )
 from .location_wise import LocationWiseResult
+from .search import SearchNeighborhood, SimpleSearchNeighborhood
 
 __all__ = [
     "BlockDiscretization",
@@ -75,4 +76,6 @@ __all__ = [
     "KrigingDiagnostics",
     "KrigingResult",
     "LocationWiseResult",
+    "SearchNeighborhood",
+    "SimpleSearchNeighborhood",
 ]
