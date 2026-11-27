@@ -100,7 +100,7 @@ accepted neighbours found within the search ellipsoid.</p>
 ...     source=Source(object=pointset, attribute="locations.attributes[?name=='grade']"),
 ...     target=Target.new_attribute(grid, "knn_grade"),
 ...     neighborhood=SearchNeighborhood(
-...         ellipsoid=Ellipsoid(ranges=EllipsoidRanges(200, 150, 100)),
+...         ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=200, semi_major=150, minor=100)),
 ...         max_samples=20,
 ...     ),
 ... )

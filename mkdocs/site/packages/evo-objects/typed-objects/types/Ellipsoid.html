@@ -94,9 +94,11 @@
 degrees and ordered dip azimuth [0, 360], dip [0, 180], pitch [0, 360].
 They specify clockwise intrinsic rotations about the successive Z, X,
 and Z axes, respectively.</p>
-<p>Ranges accept an EllipsoidRanges instance or a three-value list, tuple,
-or 1D NumPy array. Rotation accepts a Rotation instance or the same
-three-value sequence forms; omitting it applies no rotation.</p>
+<p><code>ranges</code> accepts an <code>EllipsoidRanges</code> instance, a mapping, or a three-value
+list, tuple, or 1D NumPy array. <code>rotation</code> accepts a <code>Rotation</code> instance, a
+mapping, or the same three-value forms; omitting it applies no rotation.
+Pass both as keyword arguments, for example
+<code>Ellipsoid(ranges=[200, 150, 100], rotation=[45, 0, 0])</code>.</p>
 
 
 
@@ -120,17 +122,39 @@ three-value sequence forms; omitting it applies no rotation.</p>
 
 
 
+<h3 id="evo.objects.typed.types.Ellipsoid.ranges" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">ranges</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">ranges</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">EllipsoidRanges</span><span class="p">,</span> <span class="n">_from_three_values</span><span class="p">(</span><span class="n">EllipsoidRanges</span><span class="p">)]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+    <span class="n">validation_alias</span><span class="o">=</span><span class="n">AliasChoices</span><span class="p">(</span><span class="s2">&quot;ellipsoid_ranges&quot;</span><span class="p">,</span> <span class="s2">&quot;ranges&quot;</span><span class="p">),</span> <span class="n">serialization_alias</span><span class="o">=</span><span class="s2">&quot;ellipsoid_ranges&quot;</span>
+<span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The semi-axis ranges (<code>major</code>, <code>semi_major</code>, <code>minor</code>) of the ellipsoid.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
 <h3 id="evo.objects.typed.types.Ellipsoid.rotation" class="doc doc-heading">
             <span class="doc doc-object-name doc-attribute-name">rotation</span>
 
 
 </h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">rotation</span><span class="p">:</span> <span class="n">Rotation</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">rotation</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Rotation</span><span class="p">,</span> <span class="n">_from_three_values</span><span class="p">(</span><span class="n">Rotation</span><span class="p">)]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">Rotation</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>The rotation of the ellipsoid, defaulting to no rotation if not specified.</p>
+        <p>The rotation of the ellipsoid, defaulting to no rotation.</p>
 
     </div>
 
@@ -138,6 +162,26 @@ three-value sequence forms; omitting it applies no rotation.</p>
 
 
 
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="evo.objects.typed.types.Ellipsoid.to_dict" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">to_dict</span>
+
+
+</h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">to_dict</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the schema form of the ellipsoid, with the ranges under <code>ellipsoid_ranges</code>.</p>
+
+
+    </div>
+
+</div>
 
 <div class="doc doc-object doc-function">
 
