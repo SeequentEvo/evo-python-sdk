@@ -18,10 +18,11 @@ from typing import Annotated, Any, overload
 import numpy as np
 import numpy.typing as npt
 import pydantic
+from pydantic import AliasChoices, BaseModel, BeforeValidator, ConfigDict, Field
 
 # Import basic geometry types from evo.common and re-export
 from evo.common.crs import EpsgCode, parse_crs
-from evo.common.typed import FloatArrayLike3, Point3, Size3d, Size3i, _validate_array_like
+from evo.common.typed import FloatArrayLike3, Point3, Size3d, Size3i, _ArrayLike1D, _validate_array_like
 
 __all__ = [
     "BoundingBox",
@@ -203,6 +204,27 @@ class BoundingBox:
         )
 
 
+def _require_real(value: Any) -> float:
+    if not isinstance(value, Real) or isinstance(value, bool):
+        raise ValueError("value must be a finite real number")
+    return float(value)
+
+
+_RealFloat = Annotated[float, BeforeValidator(_require_real)]
+
+
+def _from_three_values(model: Any) -> BeforeValidator:
+    """Let a field also accept a three-value list, tuple, or 1D array, converted by `model.from_array_like`.
+
+    Only those inputs are converted. `from_array_like` raises `TypeError` for anything else, and Pydantic does
+    not turn a `TypeError` into a validation error, so all other inputs are passed through for Pydantic to
+    validate and report.
+    """
+    return BeforeValidator(
+        lambda value: model.from_array_like(value) if isinstance(value, (list, tuple, _ArrayLike1D)) else value
+    )
+
+
 @dataclass(frozen=True)
 class Rotation:
     """A clockwise intrinsic ZXZ Euler rotation in degrees.
@@ -212,9 +234,11 @@ class Rotation:
     the rotation matrix is Rz(dip azimuth) @ Rx(dip) @ Rz(pitch).
     """
 
-    dip_azimuth: float
-    dip: float
-    pitch: float
+    __pydantic_config__ = ConfigDict(extra="forbid")
+
+    dip_azimuth: Annotated[_RealFloat, Field(ge=0, le=360, allow_inf_nan=False)] = 0.0
+    dip: Annotated[_RealFloat, Field(ge=0, le=180, allow_inf_nan=False)] = 0.0
+    pitch: Annotated[_RealFloat, Field(ge=0, le=360, allow_inf_nan=False)] = 0.0
 
     def __post_init__(self) -> None:
         for name, value, lower, upper in (
@@ -224,6 +248,7 @@ class Rotation:
         ):
             if not isinstance(value, Real) or isinstance(value, bool) or not lower <= value <= upper:
                 raise ValueError(f"{name} must be a finite angle between {lower} and {upper} degrees (inclusive)")
+            object.__setattr__(self, name, float(value))
 
     def as_rotation_matrix(self) -> np.ndarray:
         """Convert the rotation to a rotation matrix.
@@ -268,23 +293,19 @@ class Rotation:
         return cls(*_validate_array_like(value, kind=Real, positive=False))
 
 
-@dataclass
-class EllipsoidRanges:
+class EllipsoidRanges(BaseModel):
     """The ranges (semi-axes lengths) of an ellipsoid."""
 
-    major: float
-    semi_major: float
-    minor: float
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
-    def __init__(self, major: float, semi_major: float, minor: float):
-        self.major, self.semi_major, self.minor = _validate_array_like(
-            (major, semi_major, minor), kind=Real, positive=True
-        )
+    major: _RealFloat = Field(gt=0, allow_inf_nan=False)
+    semi_major: _RealFloat = Field(gt=0, allow_inf_nan=False)
+    minor: _RealFloat = Field(gt=0, allow_inf_nan=False)
 
     def to_dict(self) -> dict[str, Any]:
-        return {"major": self.major, "semi_major": self.semi_major, "minor": self.minor}
+        return self.model_dump()
 
-    def scaled(self, factor: float) -> "EllipsoidRanges":
+    def scaled(self, factor: float) -> EllipsoidRanges:
         return EllipsoidRanges(
             major=self.major * factor,
             semi_major=self.semi_major * factor,
@@ -294,12 +315,12 @@ class EllipsoidRanges:
     @classmethod
     def from_array_like(cls, value: EllipsoidRanges | FloatArrayLike3) -> EllipsoidRanges:
         if isinstance(value, EllipsoidRanges):
-            value = (value.major, value.semi_major, value.minor)
-        return cls(*_validate_array_like(value, kind=Real, positive=True))
+            return value
+        major, semi_major, minor = _validate_array_like(value, kind=Real, positive=True)
+        return cls(major=major, semi_major=semi_major, minor=minor)
 
 
-@dataclass
-class Ellipsoid:
+class Ellipsoid(BaseModel):
     """An ellipsoid defining a spatial region.
 
     Ranges are ordered major, semi-major, minor. Rotation angles are in
@@ -307,46 +328,30 @@ class Ellipsoid:
     They specify clockwise intrinsic rotations about the successive Z, X,
     and Z axes, respectively.
 
-    Ranges accept an EllipsoidRanges instance or a three-value list, tuple,
-    or 1D NumPy array. Rotation accepts a Rotation instance or the same
-    three-value sequence forms; omitting it applies no rotation.
+    `ranges` accepts an `EllipsoidRanges` instance, a mapping, or a three-value
+    list, tuple, or 1D NumPy array. `rotation` accepts a `Rotation` instance, a
+    mapping, or the same three-value forms; omitting it applies no rotation.
+    Pass both as keyword arguments, for example
+    `Ellipsoid(ranges=[200, 150, 100], rotation=[45, 0, 0])`.
     """
 
-    ranges: EllipsoidRanges
-    _rotation: Rotation | None = None
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
-    def __init__(
-        self,
-        ranges: EllipsoidRanges | FloatArrayLike3,
-        rotation: Rotation | FloatArrayLike3 | None = None,
-    ):
-        self.ranges = EllipsoidRanges.from_array_like(ranges)
-        self._rotation = Rotation.from_array_like(rotation) if rotation is not None else None
+    ranges: Annotated[EllipsoidRanges, _from_three_values(EllipsoidRanges)] = Field(
+        validation_alias=AliasChoices("ellipsoid_ranges", "ranges"),
+        serialization_alias="ellipsoid_ranges",
+    )
+    """The semi-axis ranges (`major`, `semi_major`, `minor`) of the ellipsoid."""
 
-    @property
-    def rotation(self) -> Rotation:
-        """The rotation of the ellipsoid, defaulting to no rotation if not specified."""
-        return self._rotation or Rotation(0, 0, 0)
+    rotation: Annotated[Rotation, _from_three_values(Rotation)] = Field(default_factory=Rotation)
+    """The rotation of the ellipsoid, defaulting to no rotation."""
 
     def to_dict(self) -> dict[str, Any]:
-        return {
-            "ellipsoid_ranges": self.ranges.to_dict(),
-            "rotation": {
-                "dip_azimuth": self.rotation.dip_azimuth,
-                "dip": self.rotation.dip,
-                "pitch": self.rotation.pitch,
-            },
-        }
+        """Return the schema form of the ellipsoid, with the ranges under `ellipsoid_ranges`."""
+        return self.model_dump(by_alias=True)
 
-    def scaled(self, factor: float) -> "Ellipsoid":
-        return Ellipsoid(
-            ranges=self.ranges.scaled(factor),
-            rotation=Rotation(
-                dip_azimuth=self.rotation.dip_azimuth,
-                dip=self.rotation.dip,
-                pitch=self.rotation.pitch,
-            ),
-        )
+    def scaled(self, factor: float) -> Ellipsoid:
+        return Ellipsoid(ranges=self.ranges.scaled(factor), rotation=self.rotation)
 
     def surface_points(
         self,

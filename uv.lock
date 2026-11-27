@@ -950,7 +950,7 @@ test = [
 
 [[package]]
 name = "evo-compute"
-version = "0.1.1"
+version = "0.2.0"
 source = { editable = "packages/evo-compute" }
 dependencies = [
     { name = "evo-blockmodels", extra = ["utils"] },
@@ -1077,7 +1077,7 @@ test = [
 
 [[package]]
 name = "evo-objects"
-version = "0.9.1"
+version = "0.10.0"
 source = { editable = "packages/evo-objects" }
 dependencies = [
     { name = "evo-sdk-common", extra = ["jmespath"] },

@@ -9,7 +9,11 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-"""Common primitives shared across geostatistics compute tasks."""
+"""Common task runner, source/target, and filter primitives for compute tasks."""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
 
 from evo.objects.typed.types import Ellipsoid, EllipsoidRanges, Rotation
 
@@ -17,7 +21,6 @@ from .discretization import BlockDiscretization
 from .filters import AllOfFilter, AnyOfFilter, Filter, FilterCondition, FilterExpression, FilterOperator
 from .results import TaskAttribute, TaskResultList, TaskTarget
 from .runner import TaskRegistry, TaskRunner, TParams, TResult, TResultModel, run_tasks
-from .search import SearchNeighborhood
 from .source_target import (
     AnySourceAttribute,
     AnyTargetAttribute,
@@ -29,6 +32,18 @@ from .source_target import (
     UpdateAttribute,
     attribute_spec,
 )
+
+if TYPE_CHECKING:
+    from ..geostatistics.search import SearchNeighborhood  # noqa: F401
+
+
+def __getattr__(name: str) -> Any:
+    if name == "SearchNeighborhood":
+        from ..geostatistics.search import SearchNeighborhood
+
+        return SearchNeighborhood
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
 
 __all__ = [
     "AllOfFilter",
@@ -46,7 +61,6 @@ __all__ = [
     "FilterOperator",
     "GeoscienceObjectReference",
     "Rotation",
-    "SearchNeighborhood",
     "Source",
     "TParams",
     "TResult",

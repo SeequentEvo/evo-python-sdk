@@ -18,7 +18,7 @@ from evo.objects import ObjectReference
 from evo.objects.typed.attributes import Attribute, BlockModelAttribute, PendingAttribute
 from pydantic import ValidationError
 
-from evo.compute.tasks import SearchNeighborhood
+from evo.compute.tasks import SearchNeighborhood, SimpleSearchNeighborhood
 from evo.compute.tasks.common import (
     AllOfFilter,
     AnyOfFilter,
@@ -198,6 +198,7 @@ class TestConditionalTurningBandsParametersSerialization(unittest.TestCase):
             _params(number_of_lines=1001)
 
     def test_search_limits_are_refused(self):
+        self.assertIs(type(_params().neighborhood), SimpleSearchNeighborhood)
         ellipsoid = Ellipsoid(ranges=EllipsoidRanges(major=70, semi_major=70, minor=5))
         for kwargs, expected in [
             ({"max_empty_octants": 2}, "does not support max_empty_octants"),

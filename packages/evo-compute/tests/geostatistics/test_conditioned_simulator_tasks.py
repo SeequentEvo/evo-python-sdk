@@ -10,7 +10,7 @@ from evo.objects import ObjectReference
 from evo.objects.typed.attributes import Attribute, BlockModelAttribute, PendingAttribute
 from pydantic import ValidationError
 
-from evo.compute.tasks import SearchNeighborhood
+from evo.compute.tasks import SearchNeighborhood, SimpleSearchNeighborhood
 from evo.compute.tasks.common import (
     AllOfFilter,
     CreateAttribute,
@@ -152,6 +152,7 @@ class TestConSimParametersSerialization(unittest.TestCase):
         self.assertEqual(d["block_discretization"]["nx"], 1)
 
     def test_search_limits_are_refused(self):
+        self.assertIs(type(_params().neighborhood), SimpleSearchNeighborhood)
         ellipsoid = Ellipsoid(ranges=EllipsoidRanges(major=300, semi_major=200, minor=100))
         for kwargs, expected in [
             ({"max_samples_per_drillhole": 3}, "does not support max_samples_per_drillhole"),

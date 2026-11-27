@@ -236,8 +236,8 @@ class TestIDWParametersSerialization(unittest.TestCase):
         self.assertEqual(d["neighborhood"]["max_empty_quadrants"], 1)
         self.assertEqual(d["neighborhood"]["max_drillholes"], 4)
         self.assertNotIn("max_drillholes_per_estimate", d["neighborhood"])
-        self.assertNotIn("min_drillholes", d["neighborhood"])
-        self.assertNotIn("drillhole_limit_scope", d["neighborhood"])
+        self.assertEqual(d["neighborhood"]["min_drillholes"], 0)
+        self.assertEqual(d["neighborhood"]["drillhole_limit_scope"], "global")
 
         legacy = SearchNeighborhood(
             ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=200, semi_major=150, minor=100)),
@@ -248,15 +248,19 @@ class TestIDWParametersSerialization(unittest.TestCase):
         self.assertEqual(d_legacy["neighborhood"]["max_drillholes"], 4)
         self.assertNotIn("max_drillholes_per_estimate", d_legacy["neighborhood"])
 
-    def test_kriging_only_drillhole_limits_rejected(self):
+    def test_extended_drillhole_limits_serialize_when_enabled(self):
         ellipsoid = Ellipsoid(ranges=EllipsoidRanges(major=200, semi_major=150, minor=100))
         for limits in [
             {"min_drillholes": 2},
             {"max_samples_per_drillhole": 2, "drillhole_limit_scope": "quadrant"},
             {"max_samples_per_drillhole": 2, "drillhole_limit_scope": "octant"},
         ]:
-            with self.subTest(**limits), self.assertRaisesRegex(ValidationError, "only supported by Kriging"):
-                _params(neighborhood=SearchNeighborhood(ellipsoid=ellipsoid, max_samples=20, **limits))
+            with self.subTest(**limits):
+                nbh = _dump(_params(neighborhood=SearchNeighborhood(ellipsoid=ellipsoid, max_samples=20, **limits)))[
+                    "neighborhood"
+                ]
+                for key, expected in limits.items():
+                    self.assertEqual(nbh[key], expected)
 
     def test_sample_limit_boundaries_in_neighborhood(self):
         ellipsoid = Ellipsoid(ranges=EllipsoidRanges(major=200, semi_major=150, minor=100))

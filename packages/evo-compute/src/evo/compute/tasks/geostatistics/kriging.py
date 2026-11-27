@@ -25,7 +25,7 @@ Example::
     ...     target=Target.new_attribute(block_model, "kriged_grade"),
     ...     variogram=variogram,
     ...     neighborhood=SearchNeighborhood(
-    ...         ellipsoid=Ellipsoid(ranges=EllipsoidRanges(200, 150, 100)),
+    ...         ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=200, semi_major=150, minor=100)),
     ...         max_samples=20,
     ...     ),
     ... )
@@ -62,13 +62,13 @@ from ..common import (
     CreateAttribute,
     Filter,
     GeoscienceObjectReference,
-    SearchNeighborhood,
     UpdateAttribute,
     attribute_spec,
 )
 from ..common.results import TaskAttribute, TaskTarget
 from ..common.runner import TaskRunner
 from ..common.source_target import AnyTypedAttribute
+from .search import SearchNeighborhood
 
 __all__ = [
     # Kriging-specific (users import from evo.compute.tasks.kriging)
@@ -354,7 +354,7 @@ class KrigingParameters(BaseModel):
         ...     target=block_model.attributes["kriged_grade"],  # Target attribute (creates if doesn't exist)
         ...     variogram=variogram,  # Variogram model
         ...     neighborhood=SearchNeighborhood(
-        ...         ellipsoid=Ellipsoid(ranges=EllipsoidRanges(200, 150, 100)),
+        ...         ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=200, semi_major=150, minor=100)),
         ...         max_samples=20,
         ...     ),
         ...     # kriging_method defaults to ordinary kriging

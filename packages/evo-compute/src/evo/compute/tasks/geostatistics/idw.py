@@ -26,7 +26,7 @@ Example::
     ...     source=Source(object=pointset, attribute="locations.attributes[?name=='grade']"),
     ...     target=Target.new_attribute(grid, "idw_grade"),
     ...     neighborhood=SearchNeighborhood(
-    ...         ellipsoid=Ellipsoid(ranges=EllipsoidRanges(200, 150, 100)),
+    ...         ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=200, semi_major=150, minor=100)),
     ...         max_samples=20,
     ...     ),
     ...     power=2.0,
@@ -42,17 +42,16 @@ import pandas as pd
 from evo.common import IContext, IFeedback
 from evo.objects import ObjectSchema
 from evo.objects.typed import BaseObject, object_from_reference
-from pydantic import BaseModel, Field, SerializerFunctionWrapHandler, field_validator, model_serializer
+from pydantic import BaseModel, Field, SerializerFunctionWrapHandler, model_serializer
 
 from ..common import (
     AnySourceAttribute,
     AnyTargetAttribute,
     Filter,
-    SearchNeighborhood,
 )
 from ..common.results import TaskTarget
 from ..common.runner import TaskRunner
-from ..common.search import _reject_kriging_only_drillhole_limits
+from .search import SearchNeighborhood
 
 __all__ = [
     "IDWParameters",
@@ -82,7 +81,7 @@ class IDWParameters(BaseModel):
         ...     source=Source(object=pointset, attribute="locations.attributes[?name=='grade']"),
         ...     target=Target.new_attribute(grid, "idw_grade"),
         ...     neighborhood=SearchNeighborhood(
-        ...         ellipsoid=Ellipsoid(ranges=EllipsoidRanges(200, 150, 100)),
+        ...         ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=200, semi_major=150, minor=100)),
         ...         max_samples=20,
         ...     ),
         ...     power=2.0,
@@ -134,11 +133,6 @@ class IDWParameters(BaseModel):
     Excluded from top-level serialisation (``exclude=True``) and injected as
     ``target["filter"]`` by the custom serialiser.
     """
-
-    @field_validator("neighborhood")
-    @classmethod
-    def _check_neighborhood(cls, neighborhood: SearchNeighborhood) -> SearchNeighborhood:
-        return _reject_kriging_only_drillhole_limits(neighborhood)
 
     @model_serializer(mode="wrap")
     def _serialize(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:

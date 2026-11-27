@@ -18,7 +18,7 @@ location-wise quantile/summary statistics, and validation reporting.
 
 Example::
 
-    >>> from evo.compute.tasks import run
+    >>> from evo.compute.tasks import SimpleSearchNeighborhood, run
     >>> from evo.compute.tasks.geostatistics.conditioned_simulator import (
     ...     ConSimParameters,
     ...     BlockDiscretization,
@@ -29,8 +29,8 @@ Example::
     ...     source_attribute=pointset.attributes["grade"],
     ...     target_object=grid,
     ...     variogram_model=variogram,
-    ...     neighborhood=SearchNeighborhood(
-    ...         ellipsoid=Ellipsoid(ranges=EllipsoidRanges(300, 200, 100)),
+    ...     neighborhood=SimpleSearchNeighborhood(
+    ...         ellipsoid=Ellipsoid(ranges=EllipsoidRanges(major=300, semi_major=200, minor=100)),
     ...         max_samples=24,
     ...     ),
     ...     block_discretization=BlockDiscretization(nx=3, ny=3, nz=2),
@@ -47,7 +47,7 @@ import pandas as pd
 from evo.common import IContext, IFeedback
 from evo.objects import ObjectSchema
 from evo.objects.typed import BaseObject, object_from_reference
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 
 from ..common import (
     AttributeExpression,
@@ -55,12 +55,11 @@ from ..common import (
     CreateAttribute,
     Filter,
     GeoscienceObjectReference,
-    SearchNeighborhood,
     UpdateAttribute,
 )
 from ..common.results import TaskAttribute
 from ..common.runner import TaskRunner
-from ..common.search import _reject_sector_and_drillhole_limits
+from .search import SimpleSearchNeighborhood
 
 __all__ = [
     "BlockDiscretization",
@@ -185,7 +184,7 @@ class ConSimParameters(BaseModel):
     source_filter: Filter | None = None
     """Optional filter restricting conditioning to a subset of the source data."""
 
-    neighborhood: SearchNeighborhood
+    neighborhood: SimpleSearchNeighborhood
     """Search neighborhood for conditioning."""
 
     variogram_model: GeoscienceObjectReference
@@ -232,11 +231,6 @@ class ConSimParameters(BaseModel):
 
     report_mean_thresholds: ReportMeanThresholds | None = None
     """Optional thresholds for mean comparison in the validation report."""
-
-    @field_validator("neighborhood")
-    @classmethod
-    def _check_neighborhood(cls, neighborhood: SearchNeighborhood) -> SearchNeighborhood:
-        return _reject_sector_and_drillhole_limits(neighborhood)
 
 
 # =============================================================================

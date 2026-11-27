@@ -16,7 +16,7 @@ from unittest import TestCase
 import numpy as np
 import numpy.testing as npt
 from parameterized import parameterized
-from pydantic import TypeAdapter, ValidationError
+from pydantic import BaseModel, TypeAdapter, ValidationError
 
 from evo.common import EpsgCode as CommonEpsgCode
 from evo.objects.typed import (
@@ -29,6 +29,7 @@ from evo.objects.typed import (
     Rotation,
     Size3d,
     Size3i,
+    SphericalStructure,
 )
 from evo.objects.typed.spatial import BaseSpatialObject
 from evo.objects.typed.types import EpsgCode as TypesEpsgCode
@@ -215,32 +216,33 @@ class TestEllipsoidRanges(TestCase):
 
     def test_creation(self):
         """Should create ellipsoid ranges."""
-        ranges = EllipsoidRanges(100, 50, 25)
+        ranges = EllipsoidRanges(major=100, semi_major=50, minor=25)
         self.assertEqual(ranges.major, 100)
         self.assertEqual(ranges.semi_major, 50)
         self.assertEqual(ranges.minor, 25)
 
     @parameterized.expand(
         [
-            ("zero", 100, 0, 25),
-            ("negative", 100, -50, 25),
-            ("nan", 100, np.nan, 25),
-            ("infinite", 100, 50, np.inf),
+            ("zero", 100, 0, 25, "semi_major"),
+            ("negative", 100, -50, 25, "semi_major"),
+            ("nan", 100, np.nan, 25, "semi_major"),
+            ("infinite", 100, 50, np.inf, "minor"),
+            ("bool", True, 50, 25, "major"),
         ]
     )
-    def test_invalid_ranges(self, _name, major, semi_major, minor):
-        with self.assertRaisesRegex(ValueError, "three positive finite real numbers"):
-            EllipsoidRanges(major, semi_major, minor)
+    def test_invalid_ranges(self, _name, major, semi_major, minor, field):
+        with self.assertRaisesRegex(ValueError, field):
+            EllipsoidRanges(major=major, semi_major=semi_major, minor=minor)
 
     def test_to_dict(self):
         """Should serialize to dictionary."""
-        ranges = EllipsoidRanges(100, 50, 25)
+        ranges = EllipsoidRanges(major=100, semi_major=50, minor=25)
         d = ranges.to_dict()
         self.assertEqual(d, {"major": 100, "semi_major": 50, "minor": 25})
 
     def test_scaled(self):
         """Should create scaled ranges."""
-        ranges = EllipsoidRanges(100, 50, 25)
+        ranges = EllipsoidRanges(major=100, semi_major=50, minor=25)
         scaled = ranges.scaled(2.0)
         self.assertEqual(scaled.major, 200)
         self.assertEqual(scaled.semi_major, 100)
@@ -251,17 +253,15 @@ class TestEllipsoid(TestCase):
     """Tests for the Ellipsoid class."""
 
     def test_ranges_from_existing_instance(self):
-        ranges = EllipsoidRanges(100, 50, 25)
-        self.assertEqual(EllipsoidRanges.from_array_like(ranges), ranges)
-
-        ranges.minor = 0
-        with self.assertRaises(ValueError):
-            EllipsoidRanges.from_array_like(ranges)
+        ranges = EllipsoidRanges(major=100, semi_major=50, minor=25)
+        self.assertIs(EllipsoidRanges.from_array_like(ranges), ranges)
+        with self.assertRaises(ValidationError):
+            ranges.minor = 0  # type: ignore[misc]
 
     def test_basic_creation(self):
         """Should create ellipsoid with ranges and rotation."""
         ell = Ellipsoid(
-            ranges=EllipsoidRanges(100, 50, 25),
+            ranges=EllipsoidRanges(major=100, semi_major=50, minor=25),
             rotation=Rotation(45, 30, 0),
         )
         self.assertEqual(ell.ranges.major, 100)
@@ -298,7 +298,9 @@ class TestEllipsoid(TestCase):
 
     def test_invalid_ranges_type(self):
         with self.assertRaises(TypeError):
-            Ellipsoid(ranges="100, 50, 25")
+            EllipsoidRanges.from_array_like("100, 50, 25")  # type: ignore[arg-type]
+        with self.assertRaises(ValidationError):
+            Ellipsoid(ranges="100, 50, 25")  # type: ignore[arg-type]
 
     @parameterized.expand(
         [
@@ -383,7 +385,9 @@ class TestEllipsoid(TestCase):
 
     def test_invalid_rotation_type(self):
         with self.assertRaises(TypeError):
-            Ellipsoid(ranges=[100, 50, 25], rotation="45, 30, 15")
+            Rotation.from_array_like("45, 30, 15")  # type: ignore[arg-type]
+        with self.assertRaises(ValidationError):
+            Ellipsoid(ranges=[100, 50, 25], rotation="45, 30, 15")  # type: ignore[arg-type]
 
     def test_invalid_rotation_sequence_angle(self):
         with self.assertRaisesRegex(ValueError, "dip_azimuth"):
@@ -391,7 +395,7 @@ class TestEllipsoid(TestCase):
 
     def test_default_rotation(self):
         """Should use default rotation when not specified."""
-        ell = Ellipsoid(ranges=EllipsoidRanges(100, 50, 25))
+        ell = Ellipsoid(ranges=EllipsoidRanges(major=100, semi_major=50, minor=25))
         self.assertEqual(ell.rotation.dip_azimuth, 0)
         self.assertEqual(ell.rotation.dip, 0)
         self.assertEqual(ell.rotation.pitch, 0)
@@ -399,7 +403,7 @@ class TestEllipsoid(TestCase):
     def test_scaled(self):
         """Should create scaled ellipsoid."""
         ell = Ellipsoid(
-            ranges=EllipsoidRanges(100, 50, 25),
+            ranges=EllipsoidRanges(major=100, semi_major=50, minor=25),
             rotation=Rotation(45, 30, 0),
         )
         scaled = ell.scaled(2.0)
@@ -412,7 +416,7 @@ class TestEllipsoid(TestCase):
     def test_to_dict(self):
         """Should serialize to dictionary."""
         ell = Ellipsoid(
-            ranges=EllipsoidRanges(100, 50, 25),
+            ranges=EllipsoidRanges(major=100, semi_major=50, minor=25),
             rotation=Rotation(45, 30, 0),
         )
         d = ell.to_dict()
@@ -421,7 +425,7 @@ class TestEllipsoid(TestCase):
 
     def test_surface_points(self):
         """Should generate surface points as 1D arrays."""
-        ell = Ellipsoid(ranges=EllipsoidRanges(100, 50, 25))
+        ell = Ellipsoid(ranges=EllipsoidRanges(major=100, semi_major=50, minor=25))
         x, y, z = ell.surface_points(center=(0, 0, 0), n_points=10)
         self.assertEqual(len(x), 100)  # 10 x 10
         self.assertEqual(len(y), 100)
@@ -429,7 +433,7 @@ class TestEllipsoid(TestCase):
 
     def test_surface_points_with_center(self):
         """Should offset surface points by center."""
-        ell = Ellipsoid(ranges=EllipsoidRanges(100, 50, 25))
+        ell = Ellipsoid(ranges=EllipsoidRanges(major=100, semi_major=50, minor=25))
         x1, y1, z1 = ell.surface_points(center=(0, 0, 0))
         x2, y2, z2 = ell.surface_points(center=(100, 200, 50))
         # Second ellipsoid should be offset
@@ -439,7 +443,7 @@ class TestEllipsoid(TestCase):
 
     def test_wireframe_points(self):
         """Should generate wireframe points with NaN separators."""
-        ell = Ellipsoid(ranges=EllipsoidRanges(100, 50, 25))
+        ell = Ellipsoid(ranges=EllipsoidRanges(major=100, semi_major=50, minor=25))
         x, y, z = ell.wireframe_points(center=(0, 0, 0))
         # Should have NaN separators
         self.assertTrue(np.any(np.isnan(x)))
@@ -448,7 +452,7 @@ class TestEllipsoid(TestCase):
 
     def test_wireframe_bounds(self):
         """Wireframe points should be within ellipsoid bounds."""
-        ell = Ellipsoid(ranges=EllipsoidRanges(100, 50, 25))
+        ell = Ellipsoid(ranges=EllipsoidRanges(major=100, semi_major=50, minor=25))
         x, y, z = ell.wireframe_points(n_points=30)
         # Filter out NaN separators
         valid = ~np.isnan(x)
@@ -458,9 +462,154 @@ class TestEllipsoid(TestCase):
 
     def test_wireframe_with_rotation(self):
         """Wireframe should apply rotation."""
-        ell_no_rot = Ellipsoid(ranges=EllipsoidRanges(100, 50, 25), rotation=Rotation(0, 0, 0))
-        ell_rot = Ellipsoid(ranges=EllipsoidRanges(100, 50, 25), rotation=Rotation(45, 30, 0))
+        ell_no_rot = Ellipsoid(ranges=EllipsoidRanges(major=100, semi_major=50, minor=25), rotation=Rotation(0, 0, 0))
+        ell_rot = Ellipsoid(ranges=EllipsoidRanges(major=100, semi_major=50, minor=25), rotation=Rotation(45, 30, 0))
         x1, y1, z1 = ell_no_rot.wireframe_points()
         x2, y2, z2 = ell_rot.wireframe_points()
         # Rotated should have different coordinates
         self.assertFalse(np.allclose(x1, x2, equal_nan=True))
+
+
+class _EllipsoidContainer(BaseModel):
+    ellipsoid: Ellipsoid
+
+
+class TestEllipsoidPydantic(TestCase):
+    """Tests for frozen Ellipsoid/EllipsoidRanges Pydantic validation, serialization, and JSON schema."""
+
+    def test_frozen_hashable_and_clean_repr(self):
+        ranges = EllipsoidRanges(major=200.0, semi_major=150.0, minor=100.0)
+        ell = Ellipsoid(ranges=ranges)
+        self.assertIsInstance(hash(ranges), int)
+        self.assertIsInstance(hash(ell), int)
+        structure = SphericalStructure(contribution=0.5, anisotropy=ell)
+        self.assertIsInstance(hash(structure), int)
+        self.assertNotIn("_rotation", repr(ell))
+        self.assertIn("rotation=", repr(ell))
+        with self.assertRaises(ValidationError):
+            ell.ranges = EllipsoidRanges(major=10.0, semi_major=10.0, minor=10.0)  # type: ignore[misc]
+
+    @parameterized.expand(
+        [
+            ("unrotated", Ellipsoid(ranges=EllipsoidRanges(major=200.0, semi_major=150.0, minor=100.0))),
+            (
+                "rotated",
+                Ellipsoid(
+                    ranges=EllipsoidRanges(major=200.0, semi_major=150.0, minor=100.0),
+                    rotation=Rotation(dip_azimuth=45.0, dip=30.0, pitch=15.0),
+                ),
+            ),
+        ]
+    )
+    def test_wire_round_trip_and_json_schema(self, _name: str, original: Ellipsoid):
+        container = _EllipsoidContainer(ellipsoid=original)
+        dumped = container.model_dump(mode="json", by_alias=True)
+        self.assertEqual(dumped, {"ellipsoid": original.to_dict()})
+        self.assertEqual(list(original.to_dict()), ["ellipsoid_ranges", "rotation"])
+
+        reloaded = _EllipsoidContainer.model_validate(dumped)
+        self.assertEqual(reloaded, container)
+        self.assertEqual(reloaded.ellipsoid, original)
+        self.assertEqual(Ellipsoid.model_validate(original.to_dict()), original)
+
+        for mode in ("validation", "serialization"):
+            schema = Ellipsoid.model_json_schema(mode=mode)
+            self.assertEqual(schema["required"], ["ellipsoid_ranges"])
+            self.assertFalse(schema["additionalProperties"])
+            self.assertEqual(set(schema["properties"]), {"ellipsoid_ranges", "rotation"})
+            ranges_schema = schema["$defs"]["EllipsoidRanges"]
+            self.assertEqual(set(ranges_schema["properties"]), {"major", "semi_major", "minor"})
+            self.assertFalse(ranges_schema["additionalProperties"])
+            rotation_schema = schema["$defs"]["Rotation"]
+            self.assertEqual(set(rotation_schema["properties"]), {"dip_azimuth", "dip", "pitch"})
+            self.assertFalse(rotation_schema["additionalProperties"])
+
+    @parameterized.expand(
+        [
+            (
+                "wire_ranges_default_rotation",
+                {"ellipsoid_ranges": {"major": 200.0, "semi_major": 150.0, "minor": 100.0}},
+                Rotation(0.0, 0.0, 0.0),
+            ),
+            (
+                "attr_ranges_partial_rotation",
+                {"ranges": {"major": 200.0, "semi_major": 150.0, "minor": 100.0}, "rotation": {"dip_azimuth": 60.0}},
+                Rotation(60.0, 0.0, 0.0),
+            ),
+            (
+                "tuple_ranges_and_rotation",
+                {"ellipsoid_ranges": (200.0, 150.0, 100.0), "rotation": (10.0, 20.0, 30.0)},
+                Rotation(10.0, 20.0, 30.0),
+            ),
+        ]
+    )
+    def test_valid_ellipsoid_mappings(self, _name: str, payload, expected_rotation: Rotation):
+        parsed = _EllipsoidContainer.model_validate({"ellipsoid": payload}).ellipsoid
+        self.assertEqual(parsed.ranges, EllipsoidRanges(major=200.0, semi_major=150.0, minor=100.0))
+        self.assertEqual(parsed.rotation, expected_rotation)
+
+    @parameterized.expand(
+        [
+            ("non_mapping", "not_an_ellipsoid", ("ellipsoid",)),
+            ("empty_mapping", {}, ("ellipsoid", "ellipsoid_ranges")),
+            ("null_ranges", {"ellipsoid_ranges": None}, ("ellipsoid", "ellipsoid_ranges")),
+            (
+                "missing_minor",
+                {"ellipsoid_ranges": {"major": 200.0, "semi_major": 150.0}},
+                ("ellipsoid", "ellipsoid_ranges", "minor"),
+            ),
+            (
+                "extra_range_key",
+                {"ellipsoid_ranges": {"major": 200.0, "semi_major": 150.0, "minor": 100.0, "extra": 1.0}},
+                ("ellipsoid", "ellipsoid_ranges", "extra"),
+            ),
+            (
+                "both_range_keys",
+                {
+                    "ellipsoid_ranges": {"major": 200.0, "semi_major": 150.0, "minor": 100.0},
+                    "ranges": {"major": 200.0, "semi_major": 150.0, "minor": 100.0},
+                },
+                ("ellipsoid", "ranges"),
+            ),
+            (
+                "extra_rotation_key",
+                {
+                    "ellipsoid_ranges": {"major": 200.0, "semi_major": 150.0, "minor": 100.0},
+                    "rotation": {"extra": 10.0},
+                },
+                ("ellipsoid", "rotation", "extra"),
+            ),
+            (
+                "out_of_range_rotation_dip",
+                {
+                    "ellipsoid_ranges": {"major": 200.0, "semi_major": 150.0, "minor": 100.0},
+                    "rotation": {"dip": 200.0},
+                },
+                ("ellipsoid", "rotation", "dip"),
+            ),
+            (
+                "invalid_rotation_type",
+                {
+                    "ellipsoid_ranges": {"major": 200.0, "semi_major": 150.0, "minor": 100.0},
+                    "rotation": "none",
+                },
+                ("ellipsoid", "rotation"),
+            ),
+            (
+                "null_rotation",
+                {
+                    "ellipsoid_ranges": {"major": 200.0, "semi_major": 150.0, "minor": 100.0},
+                    "rotation": None,
+                },
+                ("ellipsoid", "rotation"),
+            ),
+            ("non_string_key", {1: 2}, ("ellipsoid", 1)),
+        ]
+    )
+    def test_invalid_ellipsoid_payloads_raise_structured_validation_error(
+        self, _name: str, bad_payload, expected_loc: tuple
+    ):
+        with self.assertRaises(ValidationError) as ctx:
+            _EllipsoidContainer.model_validate({"ellipsoid": bad_payload})
+        locs = [err["loc"] for err in ctx.exception.errors()]
+        self.assertIn(expected_loc, locs)

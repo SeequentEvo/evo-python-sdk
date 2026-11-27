@@ -32,7 +32,7 @@ class TestEllipsoidWireframe(unittest.TestCase):
 
     def test_wireframe_shape(self):
         """Wireframe should return coordinate arrays of same length."""
-        ell = Ellipsoid(ranges=EllipsoidRanges(100, 50, 25))
+        ell = Ellipsoid(ranges=EllipsoidRanges(major=100, semi_major=50, minor=25))
         x, y, z = ell.wireframe_points(n_points=20)
         self.assertEqual(len(x), len(y))
         self.assertEqual(len(y), len(z))
@@ -40,7 +40,7 @@ class TestEllipsoidWireframe(unittest.TestCase):
 
     def test_wireframe_bounds(self):
         """Wireframe points should be within ellipsoid bounds."""
-        ell = Ellipsoid(ranges=EllipsoidRanges(100, 50, 25))
+        ell = Ellipsoid(ranges=EllipsoidRanges(major=100, semi_major=50, minor=25))
         x, y, z = ell.wireframe_points(n_points=30)
 
         # Filter out NaN separators
@@ -51,14 +51,14 @@ class TestEllipsoidWireframe(unittest.TestCase):
 
     def test_wireframe_has_nan_separators(self):
         """Wireframe should have NaN values separating line segments."""
-        ell = Ellipsoid(ranges=EllipsoidRanges(100, 50, 25))
+        ell = Ellipsoid(ranges=EllipsoidRanges(major=100, semi_major=50, minor=25))
         x, y, z = ell.wireframe_points()
         self.assertTrue(np.any(np.isnan(x)))
 
     def test_wireframe_with_rotation(self):
         """Wireframe should apply rotation."""
-        ell_no_rot = Ellipsoid(ranges=EllipsoidRanges(100, 50, 25), rotation=Rotation(0, 0, 0))
-        ell_rot = Ellipsoid(ranges=EllipsoidRanges(100, 50, 25), rotation=Rotation(45, 30, 0))
+        ell_no_rot = Ellipsoid(ranges=EllipsoidRanges(major=100, semi_major=50, minor=25), rotation=Rotation(0, 0, 0))
+        ell_rot = Ellipsoid(ranges=EllipsoidRanges(major=100, semi_major=50, minor=25), rotation=Rotation(45, 30, 0))
         x1, y1, z1 = ell_no_rot.wireframe_points()
         x2, y2, z2 = ell_rot.wireframe_points()
         # Rotated should have different coordinates
@@ -70,7 +70,7 @@ class TestEllipsoidSurface(unittest.TestCase):
 
     def test_surface_shape(self):
         """Surface should return flattened 1D arrays."""
-        ell = Ellipsoid(ranges=EllipsoidRanges(100, 50, 25))
+        ell = Ellipsoid(ranges=EllipsoidRanges(major=100, semi_major=50, minor=25))
         x, y, z = ell.surface_points(n_points=15)
         self.assertEqual(x.ndim, 1)
         self.assertEqual(y.ndim, 1)
@@ -79,7 +79,7 @@ class TestEllipsoidSurface(unittest.TestCase):
 
     def test_surface_bounds(self):
         """Surface points should be within ellipsoid bounds."""
-        ell = Ellipsoid(ranges=EllipsoidRanges(100, 50, 25))
+        ell = Ellipsoid(ranges=EllipsoidRanges(major=100, semi_major=50, minor=25))
         x, y, z = ell.surface_points()
         self.assertTrue(np.all(np.abs(x) <= 100 * 1.01))
         self.assertTrue(np.all(np.abs(y) <= 50 * 1.01))
@@ -554,7 +554,7 @@ class TestEllipsoidClass(unittest.TestCase):
     def test_basic_creation(self):
         """Should create ellipsoid with ranges and rotation."""
         ell = Ellipsoid(
-            ranges=EllipsoidRanges(100, 50, 25),
+            ranges=EllipsoidRanges(major=100, semi_major=50, minor=25),
             rotation=Rotation(45, 30, 0),
         )
         self.assertEqual(ell.ranges.major, 100)
@@ -564,7 +564,7 @@ class TestEllipsoidClass(unittest.TestCase):
 
     def test_surface_points(self):
         """Should generate surface points as 1D arrays."""
-        ell = Ellipsoid(ranges=EllipsoidRanges(100, 50, 25))
+        ell = Ellipsoid(ranges=EllipsoidRanges(major=100, semi_major=50, minor=25))
         x, y, z = ell.surface_points(center=(0, 0, 0), n_points=10)
 
         self.assertEqual(len(x), 100)  # 10 x 10
@@ -573,7 +573,7 @@ class TestEllipsoidClass(unittest.TestCase):
 
     def test_surface_points_with_center(self):
         """Should offset surface points by center."""
-        ell = Ellipsoid(ranges=EllipsoidRanges(100, 50, 25))
+        ell = Ellipsoid(ranges=EllipsoidRanges(major=100, semi_major=50, minor=25))
         x1, y1, z1 = ell.surface_points(center=(0, 0, 0))
         x2, y2, z2 = ell.surface_points(center=(100, 200, 50))
 
@@ -584,7 +584,7 @@ class TestEllipsoidClass(unittest.TestCase):
 
     def test_wireframe_points(self):
         """Should generate wireframe points with NaN separators."""
-        ell = Ellipsoid(ranges=EllipsoidRanges(100, 50, 25))
+        ell = Ellipsoid(ranges=EllipsoidRanges(major=100, semi_major=50, minor=25))
         x, y, z = ell.wireframe_points(center=(0, 0, 0))
 
         # Should have NaN separators
@@ -595,7 +595,7 @@ class TestEllipsoidClass(unittest.TestCase):
     def test_scaled(self):
         """Should create scaled ellipsoid."""
         ell = Ellipsoid(
-            ranges=EllipsoidRanges(100, 50, 25),
+            ranges=EllipsoidRanges(major=100, semi_major=50, minor=25),
             rotation=Rotation(45, 30, 0),
         )
         scaled = ell.scaled(2.0)
@@ -609,7 +609,7 @@ class TestEllipsoidClass(unittest.TestCase):
     def test_to_dict(self):
         """Should serialize to dictionary."""
         ell = Ellipsoid(
-            ranges=EllipsoidRanges(100, 50, 25),
+            ranges=EllipsoidRanges(major=100, semi_major=50, minor=25),
             rotation=Rotation(45, 30, 0),
         )
         d = ell.to_dict()
@@ -663,7 +663,7 @@ class TestEllipsoidWireframeAxisAlignment(unittest.TestCase):
         minor_range = 100
 
         ell = Ellipsoid(
-            ranges=EllipsoidRanges(major_range, semi_major_range, minor_range),
+            ranges=EllipsoidRanges(major=major_range, semi_major=semi_major_range, minor=minor_range),
             rotation=Rotation(dip_azimuth, dip, pitch),
         )
         wireframe = ell.wireframe_points()
@@ -797,7 +797,7 @@ class TestEllipsoidWireframeAxisAlignment(unittest.TestCase):
         minor_range = 100
 
         ell = Ellipsoid(
-            ranges=EllipsoidRanges(major_range, semi_major_range, minor_range),
+            ranges=EllipsoidRanges(major=major_range, semi_major=semi_major_range, minor=minor_range),
             rotation=Rotation(0, 0, 0),
         )
         wireframe = ell.wireframe_points()
